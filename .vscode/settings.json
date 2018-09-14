@@ -1,0 +1,19 @@
+{
+    "files.exclude": {
+        "**/.vscode": true,
+        "**/.git*": true,
+        "**/.hg*": true,
+        "**/.svn": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/.dub*": true,
+        "**/bin": true,
+        "**/dub*": true,        
+        "**/*.sublime-*": true,
+        "**/doc": true,        
+        "**/lib": true,        
+        "**/License*": true,        
+        "**/README*": true,        
+        "**/data": true,        
+    }
+}

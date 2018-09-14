@@ -1,0 +1,9 @@
+{
+	"name": "test",
+	"targetType": "executable",
+	"dependencies": {
+		"grimoire": {"path": "../"}
+	},
+	"targetPath": "bin",
+	"workingDirectory": "script"
+}

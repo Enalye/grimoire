@@ -1,0 +1,17 @@
+{
+	"name": "grimoire",
+	"description": "Grimoire Scripting Language",
+	"copyright": "Copyright © 2018, Enalye",
+	"license": "Zlib",
+	"authors": [
+		"Enalye"
+	],
+	"targetName": "grimoire",
+	"targetType": "library",
+	"targetPath": "lib",
+	"workingDirectory": "lib",
+
+	"subPackages": [
+		"./test/"
+	]
+}

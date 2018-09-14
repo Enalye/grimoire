@@ -1,0 +1,85 @@
+/*func operator+(vec2 a, vec2 b) vec2 {
+    a.x += b.x;
+    a.y += b.y;
+    return a;
+}
+*/
+main {
+    var i = 3.2;
+    print(i as int);
+    /*let a = vec2(2.1, 5.2);
+    let b = vec2(0.7, 1.1);
+    let c = a + b;
+    print(c.x);
+    print(c.y);*/
+}
+
+
+/*
+Todo:
+    - déclaration d'une variable locale et d'une fonction du même nom
+
+    Suggestions:
+    Système de channel comme mosaiq
+    raise "Error" try catch
+    Variables globales
+    Conversion entre Array et String
+    Initialiser une structure par une array
+    Opérateur de conversion
+
+    Surchage d'opérateur unaire
+    Surcharge d'opérateur de conversion
+*/
+/*
+main {
+    func() func(int) foo;
+    
+    foo = &test;
+    func(int) p = foo();
+    p(5);
+}
+
+func test() func(int) {
+    let a = func(int t) {
+        print(t);
+    };
+    return a;
+}
+
+*/
+
+/*
+    Structures
+
+    struct Foo {
+        int a; //register 0 int
+        float b; //register 1 float
+        bool c; //register 2 bool
+    }
+
+    main {
+        Foo foo;
+        foo.a //parse identifier avec opérateur '.'
+        //On récupère le type Foo et récupère a dans Foo
+        //comme une variable locale dans une fonction
+    }
+
+*/
+/*
+struct vec2 {
+    float x;
+    float y;
+}
+
+vec2 v;//register 2 int
+v.x = 0;
+v.y = 0;
+*/
+
+
+
+/*To do:
+    (x) vec2 a = b;
+    () a = [2.0, 5.0];
+    () return a;
+*/
