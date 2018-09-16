@@ -22,11 +22,13 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module grimoire;
+module lib.math.vec2;
 
-public {
-    import assembly.all;
-    import compiler.all;
-    import runtime.all;
-    import lib.all;
+import lib.api;
+
+void grLib_std_math_vec2_load() {
+    auto defVec2 = grType_addStructure("vec2", ["x", "y"], [grFloat, grFloat]);
+    grType_addPrimitive(&makeVec2, "vec2", defVec2, [grFloat, grFloat]);
 }
+
+private void makeVec2(GrCoroutine coro) {}

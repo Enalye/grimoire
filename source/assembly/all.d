@@ -22,11 +22,9 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module grimoire;
+module assembly.all;
 
 public {
-    import assembly.all;
-    import compiler.all;
-    import runtime.all;
-    import lib.all;
+	import assembly.bytecode;
+	import assembly.dump;
 }

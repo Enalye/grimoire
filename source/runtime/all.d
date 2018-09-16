@@ -22,20 +22,11 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module script.std.vec2;
+module runtime.all;
 
-import script.parser;
-import script.vm;
-import script.coroutine;
-import script.any;
-import script.array;
-import script.type;
-import script.mangle;
-import script.primitive;
-
-void loadVec2Library() {
-    auto defVec2 = defineStructure("vec2", ["x", "y"], [sFloatType, sFloatType]);
-    bindPrimitive(&makeVec2, "vec2", defVec2, [sFloatType, sFloatType]);
+public {
+	import runtime.vm;
+	import runtime.coroutine;
+	import runtime.dynamic;
+	import runtime.array;
 }
-
-private void makeVec2(Coroutine coro) {}

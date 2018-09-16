@@ -22,11 +22,26 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module grimoire;
+module lib.all;
 
-public {
-    import assembly.all;
-    import compiler.all;
-    import runtime.all;
-    import lib.all;
+import lib.array.all;
+import lib.ffi.all;
+import lib.io.all;
+import lib.math.all;
+import lib.string.all;
+import lib.type.all;
+
+private bool _isStdLibLoaded;
+
+void grLib_std_load() {
+    if(_isStdLibLoaded)
+        return;
+    _isStdLibLoaded = true;
+
+	grLib_std_array_load();
+	grLib_std_ffi_load();
+	grLib_std_io_load();
+	grLib_std_math_load();
+	grLib_std_string_load();
+	grLib_std_type_load();
 }

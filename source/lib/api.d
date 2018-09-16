@@ -22,11 +22,11 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module grimoire;
+module lib.api;
 
-public {
-    import assembly.all;
-    import compiler.all;
-    import runtime.all;
-    import lib.all;
-}
+public import compiler.all;
+public import runtime.all;
+
+alias grLib_addStructure = grType_addStructure;
+alias grLib_addPrimitive = grType_addPrimitive;
+alias grLib_addOperator = grType_addOperator;

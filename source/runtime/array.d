@@ -22,20 +22,20 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module script.array;
+module runtime.array;
 
 import core.all;
 
-import script.any;
+import runtime.dynamic;
 
-class ArrayValue {
-	//alias ArrayStorage = IndexedArray!(AnyValue, 1024u);
-	private AnyValue[] _storage;
+class GrArrayValue {
+	//alias ArrayStorage = IndexedArray!(GrDynamicValue, 1024u);
+	private GrDynamicValue[] _storage;
 
 	dstring getString() {
 		dstring result = "["d;
         int index;
-		foreach(AnyValue value; _storage) {
+		foreach(GrDynamicValue value; _storage) {
 			result ~= value.getString();
 
 			if((index + 1) < _storage.length)
@@ -50,12 +50,12 @@ class ArrayValue {
         return cast(int)_storage.length;
     }
 
-    AnyValue getAt(int index) {
+    GrDynamicValue getAt(int index) {
         return _storage[index];
     }
 
     int push(int ivalue) {
-        AnyValue value;
+        GrDynamicValue value;
         value.setInteger(ivalue);
         auto id = cast(int)_storage.length;
         _storage ~= value;
@@ -63,7 +63,7 @@ class ArrayValue {
     }
 
     int push(float fvalue) {
-        AnyValue value;
+        GrDynamicValue value;
         value.setFloat(fvalue);
         auto id = cast(int)_storage.length;
         _storage ~= value;
@@ -71,14 +71,14 @@ class ArrayValue {
     }
 
     int push(dstring svalue) {
-        AnyValue value;
+        GrDynamicValue value;
         value.setString(svalue);
         auto id = cast(int)_storage.length;
         _storage ~= value;
         return id;
     }
 
-    int push(AnyValue value) {
+    int push(GrDynamicValue value) {
         auto id = cast(int)_storage.length;
         _storage ~= value;
         return id;

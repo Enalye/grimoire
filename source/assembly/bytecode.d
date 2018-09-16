@@ -22,7 +22,7 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module script.bytecode;
+module assembly.bytecode;
 
 import std.stdio;
 import std.file;
@@ -30,7 +30,7 @@ import std.outbuffer;
 
 import core.all;
 
-enum Opcode {
+enum GrOpcode {
     Kill, Yield, Task, AnonymousTask,
     PopStack_Int, PopStack_Float, PopStack_String, PopStack_Array, PopStack_Any, PopStack_Object,
     LocalStore_Int, LocalStore_Float, LocalStore_String, LocalStore_Array, LocalStore_Any, LocalStore_Ref, LocalStore_Object,
@@ -69,7 +69,7 @@ enum Opcode {
     ArrayBuild, ArrayLength, ArrayIndex, ArrayIndexRef
 }
 
-struct Bytecode {
+struct GrBytecode {
 	uint[] opcodes;
 	int[] iconsts;
 	float[] fconsts;
@@ -92,8 +92,8 @@ struct Bytecode {
 	}
 }
 
-Bytecode getBytecodeFromFile(string fileName) {
-	Bytecode bytecode;
+GrBytecode grBytecode_newFromFile(string fileName) {
+	GrBytecode bytecode;
 	File file = File(fileName, "rb");
 	uint[4] header;
 	file.rawRead(header);
@@ -116,8 +116,8 @@ Bytecode getBytecodeFromFile(string fileName) {
 	return bytecode;
 }
 
-Bytecode getBytecodeFromFile(File file) {
-	Bytecode bytecode;
+GrBytecode grBytecode_newFromFile(File file) {
+	GrBytecode bytecode;
 	uint[4] header;
 	file.rawRead(header);
 	bytecode.iconsts.length = cast(size_t)header[0];
@@ -138,18 +138,18 @@ Bytecode getBytecodeFromFile(File file) {
 	return bytecode;
 }
 
-pure uint getValue(uint opcode) {
+pure uint grBytecode_getUnsignedValue(uint opcode) {
     return (opcode >> 8u) & 0xffffff;
 }
 
-pure int getSignedValue(uint opcode) {
+pure int grBytecode_getSignedValue(uint opcode) {
     return (cast(int)((opcode >> 8u) & 0xffffff)) - 0x800000;
 }
 
-pure uint getInstruction(uint opcode) {
+pure uint grBytecode_getOpcode(uint opcode) {
     return opcode & 0xff;
 }
 
-pure uint makeOpcode(uint instr, uint value1, uint value2) {
+pure uint grBytecode_makeInstruction(uint instr, uint value1, uint value2) {
     return ((value2 << 16u) & 0xffff0000) | ((value1 << 8u) & 0xff00) | (instr & 0xff);
 }

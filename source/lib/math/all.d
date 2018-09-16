@@ -22,11 +22,10 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module grimoire;
+module lib.math.all;
 
-public {
-    import assembly.all;
-    import compiler.all;
-    import runtime.all;
-    import lib.all;
+import lib.math.vec2;
+
+void grLib_std_math_load() {
+    grLib_std_math_vec2_load();
 }

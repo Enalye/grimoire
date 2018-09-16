@@ -22,18 +22,10 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module script.all;
+module lib.io.all;
 
-public {
-	import script.vm;
-	import script.coroutine;
-	import script.any;
-	import script.array;
-	import script.compiler;
-	import script.lexer;
-	import script.parser;
-	import script.primitive;
-	import script.bytecode;
-	import script.dump;
-	import script.std.all;
+import lib.io.print;
+
+void grLib_std_io_load() {
+    grLib_std_io_print_load();
 }

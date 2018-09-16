@@ -22,7 +22,7 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module script.compiler;
+module compiler.compiler;
 
 import std.stdio;
 import std.string;
@@ -31,13 +31,16 @@ import std.conv;
 import std.math;
 import std.file;
 
-import script.vm;
-import script.lexer;
-import script.parser;
-import script.bytecode;
+import runtime.all;
+import assembly.all;
+import compiler.lexer;
+import compiler.parser;
+import lib.all;
 
-Bytecode compileFile(string fileName) {
-	Lexer lexer = new Lexer;
+GrBytecode grCompiler_compileFile(string fileName) {
+	grLib_std_load();
+
+	GrLexer lexer = new GrLexer;
 	lexer.scanFile(to!dstring(fileName));
 
 	Parser parser = new Parser;
@@ -51,7 +54,7 @@ private {
 		return ((value << 8u) & 0xffffff00) | (instr & 0xff);
 	}
 
-	Bytecode generate(Parser parser) {
+	GrBytecode generate(Parser parser) {
 		uint nbOpcodes, lastOpcodeCount;
 
 		foreach(func; parser.functions)
@@ -92,7 +95,7 @@ private {
 		}
 		parser.solveFunctionCalls(opcodes);
 
-		Bytecode bytecode;
+		GrBytecode bytecode;
 		bytecode.iconsts = parser.iconsts;
 		bytecode.fconsts = parser.fconsts;
 		bytecode.sconsts = parser.sconsts;

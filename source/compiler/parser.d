@@ -22,7 +22,7 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module script.parser;
+module compiler.parser;
 
 import std.stdio;
 import std.string;
@@ -32,12 +32,13 @@ import std.math;
 import std.file;
 import std.meta;
 
-import script.vm;
-import script.lexer;
-import script.mangle;
-import script.type;
-import script.primitive;
-import script.bytecode;
+import runtime.all;
+import assembly.all;
+import compiler.lexer;
+import compiler.mangle;
+import compiler.type;
+import compiler.primitive;
+
 
 class Parser {
 	int[] iconsts;
@@ -46,20 +47,20 @@ class Parser {
 
 	uint scopeLevel;
 
-	Variable[dstring] globalVariables;
-	Function[dstring] functions;
-	Function[] anonymousFunctions;
+	GrVariable[dstring] globalVariables;
+	GrFunction[dstring] functions;
+	GrFunction[] anonymousFunctions;
 
 	uint current;
-	Function currentFunction;
-	Function[] functionStack;
-	FunctionCall[] functionCalls;
+	GrFunction currentFunction;
+	GrFunction[] functionStack;
+	GrFunctionCall[] functionCalls;
 
 	uint[][] breaksJumps;
 	uint[][] continuesJumps;
 	uint[] continuesDestinations;
 
-	Lexeme[] lexemes;
+	GrLexeme[] lexemes;
 
 	void reset() {
 		current = 0u;
@@ -95,7 +96,7 @@ class Parser {
 		return (current + offset) >= cast(uint)lexemes.length;
 	}
 
-	Lexeme get(int offset = 0) {
+	GrLexeme get(int offset = 0) {
 		uint position = current + offset;
 		if(position < 0 || position >= cast(uint)lexemes.length) {
 			logError("Unexpected end of file");
@@ -130,9 +131,9 @@ class Parser {
 		return cast(uint)sconsts.length - 1;
 	}
 
-	Variable registerSpecialVariable(dstring name, VarType type) {
+	GrVariable registerSpecialVariable(dstring name, GrType type) {
 		name = "~"d ~ name;
-		Variable specialVariable;
+		GrVariable specialVariable;
 		auto previousVariable = (name in currentFunction.localVariables);
 		if(previousVariable is null)
 			specialVariable = registerLocalVariable(name, type);
@@ -143,10 +144,10 @@ class Parser {
 		return specialVariable;
 	}
 
-	Variable registerLocalVariable(dstring name, VarType type) {
-        if(type.baseType == BaseType.StructType) {
+	GrVariable registerLocalVariable(dstring name, GrType type) {
+        if(type.baseType == GrBaseType.StructType) {
             //Register each field
-            auto structure = getStructure(type.mangledType);
+            auto structure = grType_getStruct(type.mangledType);
             for(int i; i < structure.signature.length; i ++) {
                 registerLocalVariable(name ~ "." ~ structure.fields[i], structure.signature[i]);
             }
@@ -155,7 +156,7 @@ class Parser {
             if(previousVariable !is null)
                 logError("Multiple declaration", "The local variable \'" ~ to!string(name) ~ "\' is already declared.");
 
-            Variable variable = new Variable;
+            GrVariable variable = new GrVariable;
             variable.index = currentFunction.localVariableIndex;
             variable.isGlobal = false;
             variable.type = type;
@@ -171,7 +172,7 @@ class Parser {
 		if(previousVariable !is null)
 			logError("Multiple declaration", "The local variable \'" ~ to!string(name) ~ "\' is already declared.");
 
-		Variable variable = new Variable;
+		GrVariable variable = new GrVariable;
         if(currentFunction.localFreeVariables.length) {
             variable.index = currentFunction.localFreeVariables[$ - 1];
             currentFunction.localFreeVariables.length --;
@@ -188,8 +189,8 @@ class Parser {
 		return variable;
 	}
 
-	void beginFunction(dstring name, VarType[] signature, dstring[] inputVariables, bool isTask, VarType returnType = BaseType.VoidType) {
-		dstring mangledName = mangleName(name, signature);
+	void beginFunction(dstring name, GrType[] signature, dstring[] inputVariables, bool isTask, GrType returnType = GrBaseType.VoidType) {
+		dstring mangledName = grType_mangleNamedFunction(name, signature);
 
 		auto func = mangledName in functions;
 		if(func is null)
@@ -199,8 +200,8 @@ class Parser {
 		currentFunction = *func;
 	}
 
-	void preBeginFunction(dstring name, VarType[] signature, dstring[] inputVariables, bool isTask, VarType returnType = BaseType.VoidType, bool isAnonymous = false) {
-		Function func = new Function;
+	void preBeginFunction(dstring name, GrType[] signature, dstring[] inputVariables, bool isTask, GrType returnType = GrBaseType.VoidType, bool isAnonymous = false) {
+		GrFunction func = new GrFunction;
 		func.isTask = isTask;
 		func.signature = signature;
 		func.returnType = returnType;
@@ -213,7 +214,7 @@ class Parser {
 			anonymousFunctions ~= func;
 
 			//Is replaced by the addr of the function later (see solveFunctionCalls).
-			addInstruction(Opcode.LocalStore_Int, 0u);
+			addInstruction(GrOpcode.LocalStore_Int, 0u);
 
 			//Reserve constant for the function's address.
 			func.anonIndex = cast(uint)iconsts.length;
@@ -223,7 +224,7 @@ class Parser {
 			func.index = cast(uint)functions.length;
 			func.name = name;
 
-			dstring mangledName = mangleName(name, signature);
+			dstring mangledName = grType_mangleNamedFunction(name, signature);
 			auto previousFunc = (mangledName in functions);
 			if(previousFunc !is null)
 				logError("Multiple declaration", "The function \'" ~ to!string(name) ~ "\' is already declared.");
@@ -233,10 +234,10 @@ class Parser {
 
 		functionStack ~= currentFunction;
 		currentFunction = func;
-		addInstruction(Opcode.LocalStack, 0u);
+		addInstruction(GrOpcode.LocalStack, 0u);
 
-		void fetchParameter(dstring name, VarType type) {
-            final switch(type.baseType) with(BaseType) {
+		void fetchParameter(dstring name, GrType type) {
+            final switch(type.baseType) with(GrBaseType) {
             case VoidType:
                 logError("Invalid type", "Void is not a valid parameter type");
                 break;
@@ -246,35 +247,35 @@ class Parser {
             case TaskType:
                 func.nbIntegerParameters ++;
                 if(func.isTask)
-                    addInstruction(Opcode.GlobalPop_Int, 0u);
+                    addInstruction(GrOpcode.GlobalPop_Int, 0u);
                 break;
             case FloatType:
                 func.nbFloatParameters ++;
                 if(func.isTask)
-                    addInstruction(Opcode.GlobalPop_Float, 0u);
+                    addInstruction(GrOpcode.GlobalPop_Float, 0u);
                 break;
             case StringType:
                 func.nbStringParameters ++;
                 if(func.isTask)
-                    addInstruction(Opcode.GlobalPop_String, 0u);
+                    addInstruction(GrOpcode.GlobalPop_String, 0u);
                 break;
             case ArrayType:
                 func.nbStringParameters ++;
                 if(func.isTask)
-                    addInstruction(Opcode.GlobalPop_Array, 0u);
+                    addInstruction(GrOpcode.GlobalPop_Array, 0u);
                 break;
-            case AnyType:
+            case DynamicType:
                 func.nbAnyParameters ++;
                 if(func.isTask)
-                    addInstruction(Opcode.GlobalPop_Any, 0u);
+                    addInstruction(GrOpcode.GlobalPop_Any, 0u);
                 break;
             case ObjectType:
                 func.nbObjectParameters ++;
                 if(func.isTask)
-                    addInstruction(Opcode.GlobalPop_Object, 0u);
+                    addInstruction(GrOpcode.GlobalPop_Object, 0u);
                 break;
             case StructType:
-                auto structure = getStructure(type.mangledType);
+                auto structure = grType_getStruct(type.mangledType);
                 const auto nbFields = structure.signature.length;
                 for(int i = 1; i <= structure.signature.length; i ++) {
                     fetchParameter(name ~ "." ~ structure.fields[nbFields - i], structure.signature[nbFields - i]);
@@ -282,16 +283,16 @@ class Parser {
                 break;
             }
 
-            Variable newVar = new Variable;
+            GrVariable newVar = new GrVariable;
             newVar.type = type;
             newVar.isInitialized = true;
             newVar.index = func.localVariableIndex;
-            if(type.baseType != BaseType.StructType)
+            if(type.baseType != GrBaseType.StructType)
                 func.localVariableIndex ++;
             newVar.isGlobal = false;
             newVar.name = name;
             func.localVariables[name] = newVar;
-            if(type.baseType != BaseType.StructType)
+            if(type.baseType != GrBaseType.StructType)
                 addSetInstruction(newVar);
         }
 
@@ -301,17 +302,17 @@ class Parser {
         
 
 		/+if(func.nbIntegerParameters > 0u)
-			addInstruction(Opcode.PopStack_Int, func.nbIntegerParameters);
+			addInstruction(GrOpcode.PopStack_Int, func.nbIntegerParameters);
         if(func.nbFloatParameters > 0u)
-			addInstruction(Opcode.PopStack_Float, func.nbFloatParameters);
+			addInstruction(GrOpcode.PopStack_Float, func.nbFloatParameters);
 		if(func.nbStringParameters > 0u)
-			addInstruction(Opcode.PopStack_String, func.nbStringParameters);
+			addInstruction(GrOpcode.PopStack_String, func.nbStringParameters);
 		if(func.nbAnyParameters > 0u)
-			addInstruction(Opcode.PopStack_Any, func.nbAnyParameters);+/
+			addInstruction(GrOpcode.PopStack_Any, func.nbAnyParameters);+/
 	}
 
 	void endFunction() {
-		setInstruction(Opcode.LocalStack, 0u, currentFunction.localVariableIndex);
+		setInstruction(GrOpcode.LocalStack, 0u, currentFunction.localVariableIndex);
 		if(!functionStack.length)
 			logError("Missing symbol", "A \'}\' is missing, causing a mismatch");
 		currentFunction = functionStack[$ - 1];
@@ -323,14 +324,14 @@ class Parser {
 		currentFunction = functionStack[$ - 1];
 	}
 
-	Function* getFunction(dstring name) {
+	GrFunction* getFunction(dstring name) {
 		auto func = (name in functions);
 		if(func is null)
 			logError("Undeclared function", "The function \'" ~ to!string(name) ~ "\' is not declared");
 		return func;
 	}
 
-	Variable getVariable(dstring name) {
+	GrVariable getVariable(dstring name) {
 		auto var = (name in currentFunction.localVariables);
 		if(var is null)
 		    logError("Undeclared variable", "The variable \'" ~ to!string(name) ~ "\' is not declared");
@@ -338,26 +339,26 @@ class Parser {
 	}
 
 	void addIntConstant(int value) {
-		addInstruction(Opcode.Const_Int, registerIntConstant(value));
+		addInstruction(GrOpcode.Const_Int, registerIntConstant(value));
 	}
 
 	void addFloatConstant(float value) {
-		addInstruction(Opcode.Const_Float, registerFloatConstant(value));
+		addInstruction(GrOpcode.Const_Float, registerFloatConstant(value));
 	}
 
 	void addBoolConstant(bool value) {
-		addInstruction(Opcode.Const_Bool, value);
+		addInstruction(GrOpcode.Const_Bool, value);
 	}
 
 	void addStringConstant(dstring value) {
-		addInstruction(Opcode.Const_String, registerStringConstant(value));
+		addInstruction(GrOpcode.Const_String, registerStringConstant(value));
 	}
 
-	void addInstruction(Opcode opcode, int value = 0, bool isSigned = false) {
+	void addInstruction(GrOpcode opcode, int value = 0, bool isSigned = false) {
 		if(currentFunction is null)
 			logError("Not in function", "The expression is located outside of a function or task, which is forbidden");
 
-		Instruction instruction;
+		GrInstruction instruction;
 		instruction.opcode = opcode;
 		if(isSigned) {
 			if((value >= 0x800000) || (-value >= 0x800000))
@@ -369,14 +370,14 @@ class Parser {
 		currentFunction.instructions ~= instruction;
 	}
 
-	void setInstruction(Opcode opcode, uint index, int value = 0u, bool isSigned = false) {
+	void setInstruction(GrOpcode opcode, uint index, int value = 0u, bool isSigned = false) {
 		if(currentFunction is null)
 			logError("Not in function", "The expression is located outside of a function or task, which is forbidden");
 
 		if(index >= currentFunction.instructions.length)
 			logError("Internal failure", "An instruction's index is exeeding the function size");
 
-		Instruction instruction;
+		GrInstruction instruction;
 		instruction.opcode = opcode;
 		if(isSigned) {
 			if((value >= 0x800000) || (-value >= 0x800000))
@@ -388,26 +389,26 @@ class Parser {
 		currentFunction.instructions[index] = instruction;
 	}
 
-    bool isBinaryOperator(LexemeType lexType) {
-        if(lexType >= LexemeType.Add && lexType <= LexemeType.Xor)
+    bool isBinaryOperator(GrLexemeType lexType) {
+        if(lexType >= GrLexemeType.Add && lexType <= GrLexemeType.Xor)
             return true;
         else
             return false;
     }
 
-    VarType addCustomBinaryOperator(LexemeType lexType, VarType leftType, VarType rightType) {
-        VarType resultType = BaseType.VoidType;
-        dstring mangledName = mangleName("@op_" ~ getLexemeTypeStr(lexType), [leftType, rightType]);
+    GrType addCustomBinaryOperator(GrLexemeType lexType, GrType leftType, GrType rightType) {
+        GrType resultType = GrBaseType.VoidType;
+        dstring mangledName = grType_mangleNamedFunction("@op_" ~ grLexer_getTypeDisplay(lexType), [leftType, rightType]);
         
-        //Primitive check
+        //GrPrimitive check
         if(isPrimitiveDeclared(mangledName)) {
-            Primitive primitive = getPrimitive(mangledName);
-            addInstruction(Opcode.PrimitiveCall, primitive.index);
+            GrPrimitive primitive = grType_getPrimitive(mangledName);
+            addInstruction(GrOpcode.PrimitiveCall, primitive.index);
             resultType = primitive.returnType;
         }
 
-        //Function check
-        if(resultType.baseType == BaseType.VoidType) {
+        //GrFunction check
+        if(resultType.baseType == GrBaseType.VoidType) {
     		auto func = (mangledName in functions);
             if(func !is null) {
                 resultType = addFunctionCall(mangledName);
@@ -417,39 +418,39 @@ class Parser {
         return resultType;     
     }
 
-    VarType addBinaryOperator(LexemeType lexType, VarType leftType, VarType rightType) {
-        VarType resultType = BaseType.VoidType;
+    GrType addBinaryOperator(GrLexemeType lexType, GrType leftType, GrType rightType) {
+        GrType resultType = GrBaseType.VoidType;
 
         if(leftType != rightType) {
             //Check custom operator
             resultType = addCustomBinaryOperator(lexType, leftType, rightType);
 
             //If there is no custom operator defined, we try to convert and then try again
-            if(resultType.baseType == BaseType.VoidType) {
+            if(resultType.baseType == GrBaseType.VoidType) {
                 resultType = convertType(rightType, leftType, true);
-                if(resultType.baseType != BaseType.VoidType) {
+                if(resultType.baseType != GrBaseType.VoidType) {
                     resultType = addBinaryOperator(lexType, resultType, resultType);
                 }
             }
         }
         else {
             resultType = addInternalOperator(lexType, leftType);
-            if(resultType.baseType == BaseType.VoidType) {
+            if(resultType.baseType == GrBaseType.VoidType) {
                 resultType = addCustomBinaryOperator(lexType, leftType, rightType);
             }
         }
-        if(resultType.baseType == BaseType.VoidType)
+        if(resultType.baseType == GrBaseType.VoidType)
             logError("Operator Undefined", "There is no "
-                ~ to!string(getLexemeTypeStr(lexType))
+                ~ to!string(grLexer_getTypeDisplay(lexType))
                 ~ " operator defined for \'"
-                ~ displayType(leftType)
+                ~ grType_getDisplay(leftType)
                 ~ "\' and \'"
-                ~ displayType(rightType)
+                ~ grType_getDisplay(rightType)
                 ~ "\'");
         return resultType;
     }
 
-	VarType addOperator(LexemeType lexType, ref VarType[] typeStack) {
+	GrType addOperator(GrLexemeType lexType, ref GrType[] typeStack) {
         if(isBinaryOperator(lexType)) {
             typeStack[$ - 2] = addBinaryOperator(lexType, typeStack[$ - 2], typeStack[$ - 1]);
             typeStack.length --;
@@ -459,199 +460,199 @@ class Parser {
             //Todo: unary operator
         }*/
 
-        return VarType(BaseType.VoidType);		
+        return GrType(GrBaseType.VoidType);		
 	}
 
-    VarType addInternalOperator(LexemeType lexType, VarType varType) {
-        switch(varType.baseType) with(BaseType) {
+    GrType addInternalOperator(GrLexemeType lexType, GrType varType) {
+        switch(varType.baseType) with(GrBaseType) {
         case BoolType:
-            switch(lexType) with(LexemeType) {
+            switch(lexType) with(GrLexemeType) {
             case And:
-				addInstruction(Opcode.AndInt);
-                return VarType(BaseType.BoolType);
+				addInstruction(GrOpcode.AndInt);
+                return GrType(GrBaseType.BoolType);
 			case Or:
-				addInstruction(Opcode.OrInt);
-                return VarType(BaseType.BoolType);
+				addInstruction(GrOpcode.OrInt);
+                return GrType(GrBaseType.BoolType);
 			case Not:
-				addInstruction(Opcode.NotInt);
-                return VarType(BaseType.BoolType);				
+				addInstruction(GrOpcode.NotInt);
+                return GrType(GrBaseType.BoolType);				
             default:
                 break;
             }
             break;
 		case IntType:
-			switch(lexType) with(LexemeType) {
+			switch(lexType) with(GrLexemeType) {
 			case Add:
-				addInstruction(Opcode.AddInt);
-				return VarType(BaseType.IntType);
+				addInstruction(GrOpcode.AddInt);
+				return GrType(GrBaseType.IntType);
 			case Substract:
-				addInstruction(Opcode.SubstractInt);
-				return VarType(BaseType.IntType);
+				addInstruction(GrOpcode.SubstractInt);
+				return GrType(GrBaseType.IntType);
 			case Multiply:
-				addInstruction(Opcode.MultiplyInt);
-				return VarType(BaseType.IntType);
+				addInstruction(GrOpcode.MultiplyInt);
+				return GrType(GrBaseType.IntType);
 			case Divide:
-				addInstruction(Opcode.DivideInt);
-				return VarType(BaseType.IntType);
+				addInstruction(GrOpcode.DivideInt);
+				return GrType(GrBaseType.IntType);
             case Remainder:
-				addInstruction(Opcode.RemainderInt);
-				return VarType(BaseType.IntType);
+				addInstruction(GrOpcode.RemainderInt);
+				return GrType(GrBaseType.IntType);
 			case Minus:
-				addInstruction(Opcode.NegativeInt);
-				return VarType(BaseType.IntType);
+				addInstruction(GrOpcode.NegativeInt);
+				return GrType(GrBaseType.IntType);
 			case Plus:
-				return VarType(BaseType.IntType);
+				return GrType(GrBaseType.IntType);
 			case Increment:
-				addInstruction(Opcode.IncrementInt);
-				return VarType(BaseType.IntType);
+				addInstruction(GrOpcode.IncrementInt);
+				return GrType(GrBaseType.IntType);
 			case Decrement:
-				addInstruction(Opcode.DecrementInt);
-				return VarType(BaseType.IntType);
+				addInstruction(GrOpcode.DecrementInt);
+				return GrType(GrBaseType.IntType);
 			case Equal:
-				addInstruction(Opcode.Equal_Int);
-				return VarType(BaseType.BoolType);
+				addInstruction(GrOpcode.Equal_Int);
+				return GrType(GrBaseType.BoolType);
 			case NotEqual:
-				addInstruction(Opcode.NotEqual_Int);
-				return VarType(BaseType.BoolType);
+				addInstruction(GrOpcode.NotEqual_Int);
+				return GrType(GrBaseType.BoolType);
 			case Greater:
-				addInstruction(Opcode.GreaterInt);
-				return VarType(BaseType.BoolType);
+				addInstruction(GrOpcode.GreaterInt);
+				return GrType(GrBaseType.BoolType);
 			case GreaterOrEqual:
-				addInstruction(Opcode.GreaterOrEqual_Int);
-				return VarType(BaseType.BoolType);
+				addInstruction(GrOpcode.GreaterOrEqual_Int);
+				return GrType(GrBaseType.BoolType);
 			case Lesser:
-				addInstruction(Opcode.LesserInt);
-				return VarType(BaseType.BoolType);
+				addInstruction(GrOpcode.LesserInt);
+				return GrType(GrBaseType.BoolType);
 			case LesserOrEqual:
-				addInstruction(Opcode.LesserOrEqual_Int);
-                return VarType(BaseType.BoolType);				
+				addInstruction(GrOpcode.LesserOrEqual_Int);
+                return GrType(GrBaseType.BoolType);				
 			default:
 				break;
 			}
 			break;
 		case FloatType:
-			switch(lexType) with(LexemeType) {
+			switch(lexType) with(GrLexemeType) {
 			case Add:
-				addInstruction(Opcode.AddFloat);
-				return VarType(BaseType.FloatType);
+				addInstruction(GrOpcode.AddFloat);
+				return GrType(GrBaseType.FloatType);
 			case Substract:
-				addInstruction(Opcode.SubstractFloat);
-				return VarType(BaseType.FloatType);
+				addInstruction(GrOpcode.SubstractFloat);
+				return GrType(GrBaseType.FloatType);
 			case Multiply:
-				addInstruction(Opcode.MultiplyFloat);
-				return VarType(BaseType.FloatType);
+				addInstruction(GrOpcode.MultiplyFloat);
+				return GrType(GrBaseType.FloatType);
 			case Divide:
-				addInstruction(Opcode.DivideFloat);
-				return VarType(BaseType.FloatType);
+				addInstruction(GrOpcode.DivideFloat);
+				return GrType(GrBaseType.FloatType);
             case Remainder:
-				addInstruction(Opcode.RemainderFloat);
-				return VarType(BaseType.FloatType);
+				addInstruction(GrOpcode.RemainderFloat);
+				return GrType(GrBaseType.FloatType);
 			case Minus:
-				addInstruction(Opcode.NegativeFloat);
-				return VarType(BaseType.FloatType);
+				addInstruction(GrOpcode.NegativeFloat);
+				return GrType(GrBaseType.FloatType);
 			case Plus:
-				return VarType(BaseType.FloatType);
+				return GrType(GrBaseType.FloatType);
 			case Increment:
-				addInstruction(Opcode.IncrementFloat);
-				return VarType(BaseType.FloatType);
+				addInstruction(GrOpcode.IncrementFloat);
+				return GrType(GrBaseType.FloatType);
 			case Decrement:
-				addInstruction(Opcode.DecrementFloat);
-				return VarType(BaseType.FloatType);
+				addInstruction(GrOpcode.DecrementFloat);
+				return GrType(GrBaseType.FloatType);
 			case Equal:
-				addInstruction(Opcode.Equal_Float);
-				return VarType(BaseType.BoolType);
+				addInstruction(GrOpcode.Equal_Float);
+				return GrType(GrBaseType.BoolType);
 			case NotEqual:
-				addInstruction(Opcode.NotEqual_Float);
-				return VarType(BaseType.BoolType);
+				addInstruction(GrOpcode.NotEqual_Float);
+				return GrType(GrBaseType.BoolType);
 			case Greater:
-				addInstruction(Opcode.GreaterFloat);
-				return VarType(BaseType.BoolType);
+				addInstruction(GrOpcode.GreaterFloat);
+				return GrType(GrBaseType.BoolType);
 			case GreaterOrEqual:
-				addInstruction(Opcode.GreaterOrEqual_Float);
-				return VarType(BaseType.BoolType);
+				addInstruction(GrOpcode.GreaterOrEqual_Float);
+				return GrType(GrBaseType.BoolType);
 			case Lesser:
-				addInstruction(Opcode.LesserFloat);
-				return VarType(BaseType.BoolType);
+				addInstruction(GrOpcode.LesserFloat);
+				return GrType(GrBaseType.BoolType);
 			case LesserOrEqual:
-				addInstruction(Opcode.LesserOrEqual_Float);
-				return VarType(BaseType.BoolType);
+				addInstruction(GrOpcode.LesserOrEqual_Float);
+				return GrType(GrBaseType.BoolType);
 			default:
 				break;
 			}
 			break;
 		case StringType:
-			switch(lexType) with(LexemeType) {
+			switch(lexType) with(GrLexemeType) {
 			case Concatenate:
-				addInstruction(Opcode.ConcatenateString);
-				return VarType(BaseType.StringType);
+				addInstruction(GrOpcode.ConcatenateString);
+				return GrType(GrBaseType.StringType);
 			case Equal:
-				addInstruction(Opcode.Equal_String);
-				return VarType(BaseType.BoolType);
+				addInstruction(GrOpcode.Equal_String);
+				return GrType(GrBaseType.BoolType);
 			case NotEqual:
-				addInstruction(Opcode.NotEqual_String);
-				return VarType(BaseType.BoolType);
+				addInstruction(GrOpcode.NotEqual_String);
+				return GrType(GrBaseType.BoolType);
 			default:
 				break;
 			}
 			break;
-		case AnyType:
-			switch(lexType) with(LexemeType) {
+		case DynamicType:
+			switch(lexType) with(GrLexemeType) {
 			case Add:
-				addInstruction(Opcode.AddAny);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.AddAny);
+				return GrType(GrBaseType.DynamicType);
 			case Substract:
-				addInstruction(Opcode.SubstractAny);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.SubstractAny);
+				return GrType(GrBaseType.DynamicType);
 			case Multiply:
-				addInstruction(Opcode.MultiplyAny);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.MultiplyAny);
+				return GrType(GrBaseType.DynamicType);
 			case Divide:
-				addInstruction(Opcode.DivideAny);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.DivideAny);
+				return GrType(GrBaseType.DynamicType);
             case Remainder:
-				addInstruction(Opcode.RemainderAny);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.RemainderAny);
+				return GrType(GrBaseType.DynamicType);
 			case Minus:
-				addInstruction(Opcode.NegativeAny);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.NegativeAny);
+				return GrType(GrBaseType.DynamicType);
 			case Plus:
-				return VarType(BaseType.AnyType);
+				return GrType(GrBaseType.DynamicType);
 			case Increment:
-				addInstruction(Opcode.IncrementAny);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.IncrementAny);
+				return GrType(GrBaseType.DynamicType);
 			case Decrement:
-				addInstruction(Opcode.DecrementAny);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.DecrementAny);
+				return GrType(GrBaseType.DynamicType);
 			case Concatenate:
-				addInstruction(Opcode.ConcatenateAny);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.ConcatenateAny);
+				return GrType(GrBaseType.DynamicType);
 			case Equal:
-				addInstruction(Opcode.Equal_Any);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.Equal_Any);
+				return GrType(GrBaseType.DynamicType);
 			case NotEqual:
-				addInstruction(Opcode.NotEqual_Any);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.NotEqual_Any);
+				return GrType(GrBaseType.DynamicType);
 			case Greater:
-				addInstruction(Opcode.GreaterAny);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.GreaterAny);
+				return GrType(GrBaseType.DynamicType);
 			case GreaterOrEqual:
-				addInstruction(Opcode.GreaterOrEqual_Any);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.GreaterOrEqual_Any);
+				return GrType(GrBaseType.DynamicType);
 			case Lesser:
-				addInstruction(Opcode.LesserAny);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.LesserAny);
+				return GrType(GrBaseType.DynamicType);
 			case LesserOrEqual:
-				addInstruction(Opcode.LesserOrEqual_Any);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.LesserOrEqual_Any);
+				return GrType(GrBaseType.DynamicType);
 			case And:
-				addInstruction(Opcode.AndAny);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.AndAny);
+				return GrType(GrBaseType.DynamicType);
 			case Or:
-				addInstruction(Opcode.OrAny);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.OrAny);
+				return GrType(GrBaseType.DynamicType);
 			case Not:
-				addInstruction(Opcode.NotAny);
-				return VarType(BaseType.AnyType);
+				addInstruction(GrOpcode.NotAny);
+				return GrType(GrBaseType.DynamicType);
 			default:
 				break;
 			}
@@ -659,12 +660,12 @@ class Parser {
 		default:
             break;
 		}
-        return VarType(BaseType.VoidType);
+        return GrType(GrBaseType.VoidType);
     }
 
-	void addSetInstruction(Variable variable, VarType valueType = BaseType.VoidType, bool isGettingValue = false) {
+	void addSetInstruction(GrVariable variable, GrType valueType = GrBaseType.VoidType, bool isGettingValue = false) {
         if(variable is null) {
-			addInstruction(isGettingValue ? Opcode.LocalStore2_Ref : Opcode.LocalStore_Ref);
+			addInstruction(isGettingValue ? GrOpcode.LocalStore2_Ref : GrOpcode.LocalStore_Ref);
             return;
         }
         
@@ -672,18 +673,18 @@ class Parser {
             variable.isInitialized = true;
             variable.isAuto = false;
             variable.type = valueType;
-            if(valueType.baseType == BaseType.StructType) {
+            if(valueType.baseType == GrBaseType.StructType) {
                 currentFunction.localFreeVariables ~= variable.index;
-                auto structure = getStructure(valueType.mangledType);
+                auto structure = grType_getStruct(valueType.mangledType);
                 for(int i; i < structure.signature.length; i ++) {
                     registerLocalVariable(variable.name ~ "." ~ structure.fields[i], structure.signature[i]);
                 }
             }
-            else if(valueType.baseType == BaseType.VoidType)
-                logError("Variable type error", "Cannot infer the type of variable");
+            else if(valueType.baseType == GrBaseType.VoidType)
+                logError("GrVariable type error", "Cannot infer the type of variable");
         }
         
-        if(valueType.baseType != BaseType.VoidType)
+        if(valueType.baseType != GrBaseType.VoidType)
             convertType(valueType, variable.type);
 
 		if(variable.isGlobal) {
@@ -693,30 +694,30 @@ class Parser {
             if(!variable.isInitialized && isGettingValue)
                 logError("Uninitialized variable", "The variable is being used without being assigned");
             variable.isInitialized = true;
-			switch(variable.type.baseType) with(BaseType) {
+			switch(variable.type.baseType) with(GrBaseType) {
 			case BoolType:
 			case IntType:
 			case FunctionType:
 			case TaskType:
-				addInstruction(isGettingValue ? Opcode.LocalStore2_Int : Opcode.LocalStore_Int, variable.index);
+				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Int : GrOpcode.LocalStore_Int, variable.index);
 				break;
 			case FloatType:
-				addInstruction(isGettingValue ? Opcode.LocalStore2_Float : Opcode.LocalStore_Float, variable.index);
+				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Float : GrOpcode.LocalStore_Float, variable.index);
 				break;
 			case StringType:
-				addInstruction(isGettingValue ? Opcode.LocalStore2_String : Opcode.LocalStore_String, variable.index);
+				addInstruction(isGettingValue ? GrOpcode.LocalStore2_String : GrOpcode.LocalStore_String, variable.index);
 				break;
             case ArrayType:
-				addInstruction(isGettingValue ? Opcode.LocalStore2_Array : Opcode.LocalStore_Array, variable.index);
+				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Array : GrOpcode.LocalStore_Array, variable.index);
 				break;
-			case AnyType:
-				addInstruction(isGettingValue ? Opcode.LocalStore2_Any : Opcode.LocalStore_Any, variable.index);
+			case DynamicType:
+				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Any : GrOpcode.LocalStore_Any, variable.index);
 				break;
 			case ObjectType:
-				addInstruction(isGettingValue ? Opcode.LocalStore2_Object : Opcode.LocalStore_Object, variable.index);
+				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Object : GrOpcode.LocalStore_Object, variable.index);
 				break;
             case StructType:
-                auto structure = getStructure(variable.type.mangledType);
+                auto structure = grType_getStruct(variable.type.mangledType);
                 const auto nbFields = structure.signature.length;
                 for(int i = 1; i <= nbFields; i ++) {
                     addSetInstruction(getVariable(variable.name ~ "." ~ structure.fields[nbFields - i]), structure.signature[nbFields - i]);
@@ -728,37 +729,37 @@ class Parser {
 		}
 	}
 
-	void addGetInstruction(Variable variable, VarType expectedType = BaseType.VoidType) {
+	void addGetInstruction(GrVariable variable, GrType expectedType = GrBaseType.VoidType) {
         if(variable.isGlobal) {
 			logError("Internal failure", "Global variable not implemented");
 		}
 		else {
             if(!variable.isInitialized)
                 logError("Uninitialized variable", "The variable is being used without being assigned");
-			switch(variable.type.baseType) with(BaseType) {
+			switch(variable.type.baseType) with(GrBaseType) {
 			case BoolType:
 			case IntType:
 			case FunctionType:
 			case TaskType:
-				addInstruction(Opcode.LocalLoad_Int, variable.index);
+				addInstruction(GrOpcode.LocalLoad_Int, variable.index);
 				break;
 			case FloatType:
-				addInstruction(Opcode.LocalLoad_Float, variable.index);
+				addInstruction(GrOpcode.LocalLoad_Float, variable.index);
 				break;
 			case StringType:
-				addInstruction(Opcode.LocalLoad_String, variable.index);
+				addInstruction(GrOpcode.LocalLoad_String, variable.index);
 				break;
 			case ArrayType:
-				addInstruction(Opcode.LocalLoad_Array, variable.index);
+				addInstruction(GrOpcode.LocalLoad_Array, variable.index);
 				break;
-			case AnyType:
-				addInstruction(Opcode.LocalLoad_Any, variable.index);
+			case DynamicType:
+				addInstruction(GrOpcode.LocalLoad_Any, variable.index);
 				break;
 			case ObjectType:			
-				addInstruction(Opcode.LocalLoad_Object, variable.index);
+				addInstruction(GrOpcode.LocalLoad_Object, variable.index);
 				break;
             case StructType:
-                auto structure = getStructure(variable.type.mangledType);
+                auto structure = grType_getStruct(variable.type.mangledType);
                 for(int i; i < structure.signature.length; i ++) {
                     addGetInstruction(getVariable(variable.name ~ "." ~ structure.fields[i]), structure.signature[i]);
                 }
@@ -769,8 +770,8 @@ class Parser {
 		}
 	}
 
-    VarType addFunctionAddress(dstring mangledName) {
-        FunctionCall call = new FunctionCall;
+    GrType addFunctionAddress(dstring mangledName) {
+        GrFunctionCall call = new GrFunctionCall;
 		call.mangledName = mangledName;
 		call.caller = currentFunction;
 		functionCalls ~= call;
@@ -782,16 +783,16 @@ class Parser {
 		    call.functionToCall = *func;
             call.isAddress = true;
             call.position = cast(uint)currentFunction.instructions.length;
-            addInstruction(Opcode.Const_Int, 0);
+            addInstruction(GrOpcode.Const_Int, 0);
 
             return functionToVarType(*func);
         }
 
-		return VarType(BaseType.VoidType);
+		return GrType(GrBaseType.VoidType);
     }
 
-	VarType addFunctionCall(dstring mangledName) {
-		FunctionCall call = new FunctionCall;
+	GrType addFunctionCall(dstring mangledName) {
+		GrFunctionCall call = new GrFunctionCall;
 		call.mangledName = mangledName;
 		call.caller = currentFunction;
 		functionCalls ~= call;
@@ -803,30 +804,30 @@ class Parser {
 			call.functionToCall = *func;
             if(func.isTask) {
                 if(func.nbStringParameters > 0)
-                    addInstruction(Opcode.GlobalPush_String, func.nbStringParameters);
+                    addInstruction(GrOpcode.GlobalPush_String, func.nbStringParameters);
                 if(func.nbFloatParameters > 0)
-                    addInstruction(Opcode.GlobalPush_Float, func.nbFloatParameters);
+                    addInstruction(GrOpcode.GlobalPush_Float, func.nbFloatParameters);
                 if(func.nbIntegerParameters > 0)
-                    addInstruction(Opcode.GlobalPush_Int, func.nbIntegerParameters);
+                    addInstruction(GrOpcode.GlobalPush_Int, func.nbIntegerParameters);
                 if(func.nbAnyParameters > 0)
-                    addInstruction(Opcode.GlobalPush_Any, func.nbAnyParameters);
+                    addInstruction(GrOpcode.GlobalPush_Any, func.nbAnyParameters);
                 if(func.nbObjectParameters > 0)
-                    addInstruction(Opcode.GlobalPush_Object, func.nbObjectParameters);
+                    addInstruction(GrOpcode.GlobalPush_Object, func.nbObjectParameters);
             }
 
             call.position = cast(uint)currentFunction.instructions.length;
-            addInstruction(Opcode.Call, 0);
+            addInstruction(GrOpcode.Call, 0);
 
 			return func.returnType;
 		}
 		else
 			logError("Undeclared function", "The function \'" ~ to!string(call.mangledName) ~ "\' is not declared");
 
-		return VarType(BaseType.VoidType);
+		return GrType(GrBaseType.VoidType);
 	}
 
-	void setOpcode(ref uint[] opcodes, uint position, Opcode opcode, uint value = 0u, bool isSigned = false) {
-		Instruction instruction;
+	void setOpcode(ref uint[] opcodes, uint position, GrOpcode opcode, uint value = 0u, bool isSigned = false) {
+		GrInstruction instruction;
 		instruction.opcode = opcode;
 		if(isSigned) {
 			if((value >= 0x800000) || (-value >= 0x800000))
@@ -843,15 +844,15 @@ class Parser {
 	}
 
 	void solveFunctionCalls(ref uint[] opcodes) {
-		foreach(FunctionCall call; functionCalls) {
+		foreach(GrFunctionCall call; functionCalls) {
 			auto func = (call.mangledName in functions);
 			if(func !is null) {
                 if(call.isAddress)
-                    setOpcode(opcodes, call.position, Opcode.Const_Int, registerIntConstant(func.position));
+                    setOpcode(opcodes, call.position, GrOpcode.Const_Int, registerIntConstant(func.position));
 				else if(func.isTask)
-					setOpcode(opcodes, call.position, Opcode.Task, func.position);
+					setOpcode(opcodes, call.position, GrOpcode.Task, func.position);
 				else
-					setOpcode(opcodes, call.position, Opcode.Call, func.position);
+					setOpcode(opcodes, call.position, GrOpcode.Call, func.position);
 			}
 			else
 				logError("Undeclared function", "The function \'" ~ to!string(call.mangledName) ~ "\' is not declared");
@@ -859,7 +860,7 @@ class Parser {
 
 		foreach(func; anonymousFunctions) {
 			iconsts[func.anonIndex] = func.position;
-			setOpcode(opcodes, func.anonParent.position + func.anonReference, Opcode.Const_Int, func.anonIndex);
+			setOpcode(opcodes, func.anonParent.position + func.anonReference, GrOpcode.Const_Int, func.anonIndex);
 		}
 	}
 
@@ -874,27 +875,27 @@ class Parser {
 		foreach(uint i, dstring svalue; sconsts)
 			writeln(".sconst " ~ to!string(svalue) ~ "\t;" ~ to!string(i));
 
-		foreach(dstring funcName, Function func; functions) {
+		foreach(dstring funcName, GrFunction func; functions) {
 			if(func.isTask)
 				writeln("\n.task " ~ funcName);
 			else
 				writeln("\n.function " ~ funcName);
 
-			foreach(uint i, Instruction instruction; func.instructions) {
+			foreach(uint i, GrInstruction instruction; func.instructions) {
 				writeln("[" ~ to!string(i) ~ "] " ~ to!string(instruction.opcode) ~ " " ~ to!string(instruction.value));
 			}
 		}
 	}
 
-	void parseScript(Lexer lexer) {
+	void parseScript(GrLexer lexer) {
 		preParseScript(lexer);
 		reset();
 
 		lexemes = lexer.lexemes;
 
 		while(!isEnd()) {
-			Lexeme lex = get();
-			switch(lex.type) with(LexemeType) {
+			GrLexeme lex = get();
+			switch(lex.type) with(GrLexemeType) {
             case Struct:
                 skipDeclaration();
                 break;
@@ -913,13 +914,13 @@ class Parser {
 		}
 	}
 
-	void preParseScript(Lexer lexer) {
+	void preParseScript(GrLexer lexer) {
 		lexemes = lexer.lexemes;
 
         //Structure definitions
         while(!isEnd()) {
-			Lexeme lex = get();
-			switch(lex.type) with(LexemeType) {
+			GrLexeme lex = get();
+			switch(lex.type) with(GrLexemeType) {
             case Struct:
                 parseStructureDeclaration();
                 break;
@@ -934,13 +935,13 @@ class Parser {
 		}
 
         //Resolve all unresolved struct field types
-        resolveStructuresDefinition();
+        grType_resolveStructSignature();
         
-        //Function definitions
+        //GrFunction definitions
         reset();
 		while(!isEnd()) {
-			Lexeme lex = get();
-			switch(lex.type) with(LexemeType) {
+			GrLexeme lex = get();
+			switch(lex.type) with(GrLexemeType) {
             case Struct:
                 skipDeclaration();
                 break;
@@ -961,30 +962,30 @@ class Parser {
 
     void parseStructureDeclaration() {
 		checkAdvance();
-        if(get().type != LexemeType.Identifier)
+        if(get().type != GrLexemeType.Identifier)
             logError("Missing Identifier", "struct must have a name");
         dstring structName = get().svalue;
         checkAdvance();
-        if(get().type != LexemeType.LeftCurlyBrace)
+        if(get().type != GrLexemeType.LeftCurlyBrace)
             logError("Missing {", "struct does not have a body");
         checkAdvance();
 
         dstring[] fields;
-        VarType[] signature;
+        GrType[] signature;
         while(!isEnd()) {
-            if(get().type == LexemeType.VoidType)
+            if(get().type == GrLexemeType.VoidType)
                 logError("No void plz", "svp");
             //Lazy check because we can't know about other structures
             auto fieldType = parseType(false);
             checkAdvance();
 
             //Unresolved type
-            if(fieldType.baseType == BaseType.VoidType) {
+            if(fieldType.baseType == GrBaseType.VoidType) {
                 fieldType.mangledType = get().svalue;
                 checkAdvance();
             }
             
-            if(get().type != LexemeType.Identifier)
+            if(get().type != GrLexemeType.Identifier)
                 logError("Missing Identifier", "struct field must have a name");
 
             auto fieldName = get().svalue;
@@ -993,22 +994,22 @@ class Parser {
             signature ~= fieldType;
             fields ~= fieldName;
 
-            if(get().type != LexemeType.Semicolon) 
+            if(get().type != GrLexemeType.Semicolon) 
                 logError("Missing ;", "right there");
             checkAdvance();
 
-            if(get().type == LexemeType.RightCurlyBrace) {
+            if(get().type == GrLexemeType.RightCurlyBrace) {
                 checkAdvance();
                 break;
             }
         }
-        defineStructure(structName, fields, signature);
+        grType_addStructure(structName, fields, signature);
     }
 
     void skipDeclaration() {
         checkAdvance();
         while(!isEnd()) {
-            if(get().type != LexemeType.LeftCurlyBrace) {
+            if(get().type != GrLexemeType.LeftCurlyBrace) {
                 checkAdvance();
             }
             else {
@@ -1018,13 +1019,13 @@ class Parser {
         }
     }
 
-    VarType parseType(bool mustBeType = true) {
-        VarType currentType = BaseType.VoidType;
+    GrType parseType(bool mustBeType = true) {
+        GrType currentType = GrBaseType.VoidType;
 
-        Lexeme lex = get();
+        GrLexeme lex = get();
         if(!lex.isType) {
-            if(lex.type == LexemeType.Identifier && isStructureType(lex.svalue)) {
-                currentType.baseType = BaseType.StructType;
+            if(lex.type == GrLexemeType.Identifier && grType_isStruct(lex.svalue)) {
+                currentType.baseType = GrBaseType.StructType;
                 currentType.mangledType = lex.svalue;
                 return currentType;
             }
@@ -1037,42 +1038,42 @@ class Parser {
             }
         }
 
-        switch(lex.type) with(LexemeType) {
+        switch(lex.type) with(GrLexemeType) {
         case VoidType:
-            currentType.baseType = BaseType.VoidType;
+            currentType.baseType = GrBaseType.VoidType;
             break;
         case IntType:
-            currentType.baseType = BaseType.IntType;
+            currentType.baseType = GrBaseType.IntType;
             break;
         case FloatType:
-            currentType.baseType = BaseType.FloatType;
+            currentType.baseType = GrBaseType.FloatType;
             break;
         case BoolType:
-            currentType.baseType = BaseType.BoolType;
+            currentType.baseType = GrBaseType.BoolType;
             break;
         case StringType:
-            currentType.baseType = BaseType.StringType;
+            currentType.baseType = GrBaseType.StringType;
             break;
         case ObjectType:
-            currentType.baseType = BaseType.ObjectType;
+            currentType.baseType = GrBaseType.ObjectType;
             break;
         case ArrayType:
-            currentType.baseType = BaseType.ArrayType;
+            currentType.baseType = GrBaseType.ArrayType;
             break;
-        case AnyType:
-            currentType.baseType = BaseType.AnyType;
+        case DynamicType:
+            currentType.baseType = GrBaseType.DynamicType;
             break;
         case FunctionType:
-            currentType.baseType = BaseType.FunctionType;
+            currentType.baseType = GrBaseType.FunctionType;
             dstring[] temp; 
-            currentType.mangledType = mangleName("", parseSignature(temp, true));
-            currentType.mangledReturnType = mangleName("", [parseType(false)]);
+            currentType.mangledType = grType_mangleNamedFunction("", parseSignature(temp, true));
+            currentType.mangledReturnType = grType_mangleNamedFunction("", [parseType(false)]);
             break;
         case TaskType:
-            currentType.baseType = BaseType.TaskType;
+            currentType.baseType = GrBaseType.TaskType;
             dstring[] temp; 
-            currentType.mangledType = mangleName("", parseSignature(temp, true));
-            currentType.mangledReturnType = mangleName("", [parseType(false)]);
+            currentType.mangledType = grType_mangleNamedFunction("", parseSignature(temp, true));
+            currentType.mangledReturnType = grType_mangleNamedFunction("", [parseType(false)]);
             break;
         default:
             logError("Invalid type", "Cannot call a function with a parameter of type \'" ~ to!string(lex.type) ~ "\'");
@@ -1081,8 +1082,8 @@ class Parser {
         return currentType;
     }
 
-    void addGlobalPop(VarType type) {
-        final switch(type.baseType) with(BaseType) {
+    void addGlobalPop(GrType type) {
+        final switch(type.baseType) with(GrBaseType) {
         case VoidType:
             logError("Invalid type", "Void is not a valid parameter type");
             break;
@@ -1090,25 +1091,25 @@ class Parser {
         case BoolType:
         case FunctionType:
         case TaskType:
-            addInstruction(Opcode.GlobalPop_Int, 0u);
+            addInstruction(GrOpcode.GlobalPop_Int, 0u);
             break;
         case FloatType:
-            addInstruction(Opcode.GlobalPop_Float, 0u);
+            addInstruction(GrOpcode.GlobalPop_Float, 0u);
             break;
         case StringType:
-            addInstruction(Opcode.GlobalPop_String, 0u);
+            addInstruction(GrOpcode.GlobalPop_String, 0u);
             break;
         case ArrayType:
-            addInstruction(Opcode.GlobalPop_Array, 0u);
+            addInstruction(GrOpcode.GlobalPop_Array, 0u);
             break;
-        case AnyType:
-            addInstruction(Opcode.GlobalPop_Any, 0u);
+        case DynamicType:
+            addInstruction(GrOpcode.GlobalPop_Any, 0u);
             break;
         case ObjectType:
-            addInstruction(Opcode.GlobalPop_Object, 0u);
+            addInstruction(GrOpcode.GlobalPop_Object, 0u);
             break;
         case StructType:
-            auto structure = getStructure(type.mangledType);
+            auto structure = grType_getStruct(type.mangledType);
             for(int i; i < structure.signature.length; i ++) {
                 addGlobalPop(structure.signature[i]);
             }
@@ -1116,8 +1117,8 @@ class Parser {
         }
     }
 
-    void addGlobalPush(VarType type, int nbPush = 1u) {
-        final switch(type.baseType) with(BaseType) {
+    void addGlobalPush(GrType type, int nbPush = 1u) {
+        final switch(type.baseType) with(GrBaseType) {
         case VoidType:
             logError("Invalid type", "Void is not a valid parameter type");
             break;
@@ -1125,25 +1126,25 @@ class Parser {
         case BoolType:
         case FunctionType:
         case TaskType:
-            addInstruction(Opcode.GlobalPush_Int, nbPush);
+            addInstruction(GrOpcode.GlobalPush_Int, nbPush);
             break;
         case FloatType:
-            addInstruction(Opcode.GlobalPush_Float, nbPush);
+            addInstruction(GrOpcode.GlobalPush_Float, nbPush);
             break;
         case StringType:
-            addInstruction(Opcode.GlobalPush_String, nbPush);
+            addInstruction(GrOpcode.GlobalPush_String, nbPush);
             break;
         case ArrayType:
-            addInstruction(Opcode.GlobalPush_Array, nbPush);
+            addInstruction(GrOpcode.GlobalPush_Array, nbPush);
             break;
-        case AnyType:
-            addInstruction(Opcode.GlobalPush_Any, nbPush);
+        case DynamicType:
+            addInstruction(GrOpcode.GlobalPush_Any, nbPush);
             break;
         case ObjectType:
-            addInstruction(Opcode.GlobalPush_Object, nbPush);
+            addInstruction(GrOpcode.GlobalPush_Object, nbPush);
             break;
         case StructType:
-            auto structure = getStructure(type.mangledType);
+            auto structure = grType_getStruct(type.mangledType);
             for(int i = 1; i <= structure.signature.length; i ++) {
                 addGlobalPush(structure.signature[structure.signature.length - i], nbPush);
             }
@@ -1151,19 +1152,19 @@ class Parser {
         }
     }
 
-	VarType[] parseSignature(ref dstring[] inputVariables, bool asType = false) {
-		VarType[] signature;
+	GrType[] parseSignature(ref dstring[] inputVariables, bool asType = false) {
+		GrType[] signature;
 
 		checkAdvance();
-		if(get().type != LexemeType.LeftParenthesis)
+		if(get().type != GrLexemeType.LeftParenthesis)
 			logError("Missing symbol", "A signature should always start with \'(\'");
 
         bool startLoop = true;
 		for(;;) {
 			checkAdvance();
-			Lexeme lex = get();
+			GrLexeme lex = get();
 
-			if(startLoop && lex.type == LexemeType.RightParenthesis)
+			if(startLoop && lex.type == GrLexemeType.RightParenthesis)
 				break;
             startLoop = false;
 
@@ -1175,16 +1176,16 @@ class Parser {
             if(!asType) {
                 checkAdvance();
                 lex = get();
-                if(get().type != LexemeType.Identifier)
+                if(get().type != GrLexemeType.Identifier)
                     logError("Missing identifier", "Expected a name such as \'foo\'");
                 inputVariables ~= lex.svalue;
             }
 
 			checkAdvance();
 			lex = get();
-			if(lex.type == LexemeType.RightParenthesis)
+			if(lex.type == GrLexemeType.RightParenthesis)
 				break;
-			else if(lex.type != LexemeType.Comma)
+			else if(lex.type != GrLexemeType.Comma)
 				logError("Missing symbol", "Either a \',\' or a \')\' is expected");
 		}
 
@@ -1197,7 +1198,7 @@ class Parser {
 		checkAdvance();
 		beginFunction("main", [], [], false);
 		parseBlock();
-		addInstruction(Opcode.Kill);
+		addInstruction(GrOpcode.Kill);
 		endFunction();
 	}
 
@@ -1210,24 +1211,24 @@ class Parser {
 
 	void parseTaskDeclaration() {
 		checkAdvance();
-		if(get().type != LexemeType.Identifier)
+		if(get().type != GrLexemeType.Identifier)
 			logError("Missing identifier", "Expected a name such as \'foo\'");
 		dstring name = get().svalue;
 		dstring[] inputs;
-		VarType[] signature = parseSignature(inputs);
+		GrType[] signature = parseSignature(inputs);
 		beginFunction(name, signature, inputs, true);
 		parseBlock();
-		addInstruction(Opcode.Kill);
+		addInstruction(GrOpcode.Kill);
 		endFunction();
 	}
 
 	void preParseTaskDeclaration() {
 		checkAdvance();
-		if(get().type != LexemeType.Identifier)
+		if(get().type != GrLexemeType.Identifier)
 			logError("Missing identifier", "Expected a name such as \'foo\'");
 		dstring name = get().svalue;
 		dstring[] inputs;
-		VarType[] signature = parseSignature(inputs);
+		GrType[] signature = parseSignature(inputs);
 		preBeginFunction(name, signature, inputs, true);
 		skipBlock();
 		preEndFunction();
@@ -1235,20 +1236,20 @@ class Parser {
 
 	void parseFunctionDeclaration() {
 		checkAdvance();
-		if(get().type != LexemeType.Identifier)
+		if(get().type != GrLexemeType.Identifier)
 			logError("Missing identifier", "Expected a name such as \'foo\'");
 		dstring name = get().svalue;
         if(name == "operator") {
             checkAdvance();
-            if(get().type >= LexemeType.Add && get().type <= LexemeType.Not) {
-                name = "@op_" ~ getLexemeTypeStr(get().type);
+            if(get().type >= GrLexemeType.Add && get().type <= GrLexemeType.Not) {
+                name = "@op_" ~ grLexer_getTypeDisplay(get().type);
             }
             else
                 logError("Invalid Operator", "The specified operator must be valid");
         }
         writeln("parse: ", name);
 		dstring[] inputs;
-		VarType[] signature = parseSignature(inputs);
+		GrType[] signature = parseSignature(inputs);
 
 		parseType(false);
         checkAdvance();
@@ -1256,30 +1257,30 @@ class Parser {
 		beginFunction(name, signature, inputs, false);
 		parseBlock();
         if(currentFunction.instructions.length
-            && currentFunction.instructions[$ - 1].opcode != Opcode.Return)
-		    addInstruction(Opcode.Return);
+            && currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
+		    addInstruction(GrOpcode.Return);
 		endFunction();
 	}
 
 	void preParseFunctionDeclaration() {
 		checkAdvance();
-		if(get().type != LexemeType.Identifier)
+		if(get().type != GrLexemeType.Identifier)
 			logError("Missing identifier", "Expected a name such as \'foo\'");
 		dstring name = get().svalue;
         if(name == "operator") {
             checkAdvance();
-            if(get().type >= LexemeType.Add && get().type <= LexemeType.Not) {
-                name = "@op_" ~ getLexemeTypeStr(get().type);
+            if(get().type >= GrLexemeType.Add && get().type <= GrLexemeType.Not) {
+                name = "@op_" ~ grLexer_getTypeDisplay(get().type);
             }
             else
                 logError("Invalid Operator", "The specified operator must be valid");
         }
         writeln("preparse: ", name);
 		dstring[] inputs;
-		VarType[] signature = parseSignature(inputs);
+		GrType[] signature = parseSignature(inputs);
 
 		//Return Type.
-        VarType returnType = parseType(false);
+        GrType returnType = parseType(false);
         checkAdvance();
 
 		preBeginFunction(name, signature, inputs, false, returnType);
@@ -1287,10 +1288,10 @@ class Parser {
 		preEndFunction();
 	}
 
-	VarType parseAnonymousFunction(bool isTask) {
+	GrType parseAnonymousFunction(bool isTask) {
 		dstring[] inputs;
-		VarType returnType = BaseType.VoidType;
-		VarType[] signature = parseSignature(inputs);
+		GrType returnType = GrBaseType.VoidType;
+		GrType[] signature = parseSignature(inputs);
 
 		if(!isTask) {
 			//Return Type.
@@ -1300,18 +1301,18 @@ class Parser {
 
 		preBeginFunction("$anon"d, signature, inputs, isTask, returnType, true);
 		parseBlock();
-		addInstruction(Opcode.Return);
+		addInstruction(GrOpcode.Return);
 		endFunction();
 
-        VarType functionType = isTask ? BaseType.TaskType : BaseType.FunctionType;
-        functionType.mangledType = mangleName("", signature);
-        functionType.mangledReturnType = mangleName("", [returnType]);
+        GrType functionType = isTask ? GrBaseType.TaskType : GrBaseType.FunctionType;
+        functionType.mangledType = grType_mangleNamedFunction("", signature);
+        functionType.mangledReturnType = grType_mangleNamedFunction("", [returnType]);
 
         return functionType;
 	}
 
 	void parseBlock() {
-		if(get().type != LexemeType.LeftCurlyBrace)
+		if(get().type != GrLexemeType.LeftCurlyBrace)
 			logError("Missing symbol", "A block should always start with \'{\'");
 		openBlock();
 
@@ -1319,8 +1320,8 @@ class Parser {
 			logError("Unexpected end of file");
 
 		whileLoop: while(!isEnd()) {
-			Lexeme lex = get();
-            switch(lex.type) with(LexemeType) {
+			GrLexeme lex = get();
+            switch(lex.type) with(GrLexemeType) {
             case Semicolon:
                 advance();
                 break;
@@ -1357,7 +1358,7 @@ class Parser {
                 parseLocalDeclaration();
                 break;
             case Identifier:
-                if(isStructureType(lex.svalue))
+                if(grType_isStruct(lex.svalue))
                     parseLocalDeclaration();
                 else
                     goto default;
@@ -1368,14 +1369,14 @@ class Parser {
             }
 		}
 
-		if(get().type != LexemeType.RightCurlyBrace)
+		if(get().type != GrLexemeType.RightCurlyBrace)
 			logError("Missing symbol", "A block should always end with \'}\'");
 		closeBlock();
 		checkAdvance();
 	}
 
 	void skipBlock() {
-		if(get().type != LexemeType.LeftCurlyBrace)
+		if(get().type != GrLexemeType.LeftCurlyBrace)
 			logError("Missing symbol", "A block should always start with \'{\'");
 		openBlock();
 
@@ -1383,8 +1384,8 @@ class Parser {
 			logError("Unexpected end of file");
 
 		whileLoop: while(!isEnd()) {
-			Lexeme lex = get();
-			switch(lex.type) with(LexemeType) {
+			GrLexeme lex = get();
+			switch(lex.type) with(GrLexemeType) {
 			case RightCurlyBrace:
 				break whileLoop;
 			case LeftCurlyBrace:
@@ -1396,14 +1397,14 @@ class Parser {
 			}
 		}
 		
-		if(get().type != LexemeType.RightCurlyBrace)
+		if(get().type != GrLexemeType.RightCurlyBrace)
 			logError("Missing symbol", "A block should always end with \'}\'");
 		closeBlock();
 		checkAdvance();
 	}
 
     void parseYield() {
-		addInstruction(Opcode.Yield, 0u);
+		addInstruction(GrOpcode.Yield, 0u);
         advance();                    
     }
 
@@ -1420,7 +1421,7 @@ class Parser {
 		breaksJumps.length --;
 
 		foreach(position; continues)
-			setInstruction(Opcode.Jump, position, cast(int)(position - currentFunction.instructions.length), true);
+			setInstruction(GrOpcode.Jump, position, cast(int)(position - currentFunction.instructions.length), true);
 	}
 
 	void parseBreak() {
@@ -1428,7 +1429,7 @@ class Parser {
 			logError("Non breakable statement", "The break statement is not inside a breakable statement");
 
 		breaksJumps[$ - 1] ~= cast(uint)currentFunction.instructions.length;
-		addInstruction(Opcode.Jump);
+		addInstruction(GrOpcode.Jump);
 		advance();
 	}
 
@@ -1447,7 +1448,7 @@ class Parser {
 		continuesDestinations.length --;
 
 		foreach(position; continues)
-			setInstruction(Opcode.Jump, position, cast(int)(position - destination), true);
+			setInstruction(GrOpcode.Jump, position, cast(int)(position - destination), true);
 	}
 
 	void setContinuableSectionDestination() {
@@ -1459,40 +1460,40 @@ class Parser {
 			logError("Non continuable statement", "The continue statement is not inside a continuable statement");
 
 		continuesJumps[$ - 1] ~= cast(uint)currentFunction.instructions.length;
-		addInstruction(Opcode.Jump);
+		addInstruction(GrOpcode.Jump);
 		advance();
 	}
 
 	//Type Identifier [= EXPRESSION] ;
 	void parseLocalDeclaration() {
-        //Variable type
-        VarType type = BaseType.VoidType;
+        //GrVariable type
+        GrType type = GrBaseType.VoidType;
         bool isAuto;
-        if(get().type == LexemeType.AutoType)
+        if(get().type == GrLexemeType.AutoType)
             isAuto = true;
         else
             type = parseType();
         checkAdvance();
 
         //Identifier
-		if(get().type != LexemeType.Identifier)
+		if(get().type != GrLexemeType.Identifier)
 			logError("Missing identifier", "Expected a name such as \'foo\'");
 
 		dstring identifier = get().svalue;
 
         //Registering
-		Variable variable = registerLocalVariable(identifier, type);
+		GrVariable variable = registerLocalVariable(identifier, type);
         variable.isAuto = isAuto;
 
         //A structure does not need to be initialized.
-        if(variable.type == BaseType.StructType)
+        if(variable.type == GrBaseType.StructType)
             variable.isInitialized = true;
 		
 		checkAdvance();
-		switch(get().type) with(LexemeType) {
+		switch(get().type) with(GrLexemeType) {
 		case Assign:
 			checkAdvance();
-			VarType expressionType = parseSubExpression(false);
+			GrType expressionType = parseSubExpression(false);
 			addSetInstruction(variable, expressionType);
 			break;
 		case Semicolon:
@@ -1502,41 +1503,41 @@ class Parser {
 		}
 	}
 
-    VarType parseFunctionReturnType() {
-        VarType returnType = BaseType.VoidType;
+    GrType parseFunctionReturnType() {
+        GrType returnType = GrBaseType.VoidType;
         if(get().isType) {
-            switch(get().type) with(LexemeType) {
+            switch(get().type) with(GrLexemeType) {
             case IntType:
-                returnType = VarType(BaseType.IntType);
+                returnType = GrType(GrBaseType.IntType);
                 break;
             case FloatType:
-                returnType = VarType(BaseType.FloatType);
+                returnType = GrType(GrBaseType.FloatType);
                 break;
             case BoolType:
-                returnType = VarType(BaseType.BoolType);
+                returnType = GrType(GrBaseType.BoolType);
                 break;
             case StringType:
-                returnType = VarType(BaseType.StringType);
+                returnType = GrType(GrBaseType.StringType);
                 break;
             case ObjectType:
-                returnType = VarType(BaseType.ObjectType);
+                returnType = GrType(GrBaseType.ObjectType);
                 break;
             case ArrayType:
-                returnType = VarType(BaseType.ArrayType);
+                returnType = GrType(GrBaseType.ArrayType);
                 break;
-            case AnyType:
-                returnType = VarType(BaseType.AnyType);
+            case DynamicType:
+                returnType = GrType(GrBaseType.DynamicType);
                 break;
             case FunctionType:
-                VarType type = BaseType.FunctionType;
+                GrType type = GrBaseType.FunctionType;
                 dstring[] temp; 
-                type.mangledType = mangleName("", parseSignature(temp, true));
+                type.mangledType = grType_mangleNamedFunction("", parseSignature(temp, true));
                 returnType = type;
                 break;
             case TaskType:
-                VarType type = BaseType.TaskType;
+                GrType type = GrBaseType.TaskType;
                 dstring[] temp; 
-                type.mangledType = mangleName("", parseSignature(temp, true));
+                type.mangledType = grType_mangleNamedFunction("", parseSignature(temp, true));
                 returnType = type;
                 break;
             default:
@@ -1551,7 +1552,7 @@ class Parser {
 
 	void parseIfStatement() {
 		advance();
-		if(get().type != LexemeType.LeftParenthesis)
+		if(get().type != GrLexemeType.LeftParenthesis)
 			logError("Missing symbol", "A condition should always start with \'(\'");
 
 		advance();
@@ -1559,43 +1560,43 @@ class Parser {
 		advance();
 
 		uint jumpPosition = cast(uint)currentFunction.instructions.length;
-		addInstruction(Opcode.JumpEqual); //Jumps to if(0).
+		addInstruction(GrOpcode.JumpEqual); //Jumps to if(0).
 
 		parseBlock(); //{ .. }
 
 		//If(1){}, jumps out.
 		uint[] exitJumps;
 		exitJumps ~= cast(uint)currentFunction.instructions.length;
-		addInstruction(Opcode.Jump);
+		addInstruction(GrOpcode.Jump);
 
 		//If(0) destination.
-		setInstruction(Opcode.JumpEqual, jumpPosition, cast(int)(currentFunction.instructions.length - jumpPosition), true);
+		setInstruction(GrOpcode.JumpEqual, jumpPosition, cast(int)(currentFunction.instructions.length - jumpPosition), true);
 
 		bool isElseIf;
 		do {
 			isElseIf = false;
-			if(get().type == LexemeType.Else) {
+			if(get().type == GrLexemeType.Else) {
 				checkAdvance();
-				if(get().type == LexemeType.If) {
+				if(get().type == GrLexemeType.If) {
 					isElseIf = true;
 					checkAdvance();
-					if(get().type != LexemeType.LeftParenthesis)
+					if(get().type != GrLexemeType.LeftParenthesis)
 						logError("Missing symbol", "A condition should always start with \'(\'");
 					checkAdvance();
 
 					parseSubExpression();
 
 					jumpPosition = cast(uint)currentFunction.instructions.length;
-					addInstruction(Opcode.JumpEqual); //Jumps to if(0).
+					addInstruction(GrOpcode.JumpEqual); //Jumps to if(0).
 
 					parseBlock(); //{ .. }
 
 					//If(1){}, jumps out.
 					exitJumps ~= cast(uint)currentFunction.instructions.length;
-					addInstruction(Opcode.Jump);
+					addInstruction(GrOpcode.Jump);
 
 					//If(0) destination.
-					setInstruction(Opcode.JumpEqual, jumpPosition, cast(int)(currentFunction.instructions.length - jumpPosition), true);
+					setInstruction(GrOpcode.JumpEqual, jumpPosition, cast(int)(currentFunction.instructions.length - jumpPosition), true);
 				}
 				else
 					parseBlock();
@@ -1604,12 +1605,12 @@ class Parser {
 		while(isElseIf);
 
 		foreach(uint position; exitJumps)
-			setInstruction(Opcode.Jump, position, cast(int)(currentFunction.instructions.length - position), true);
+			setInstruction(GrOpcode.Jump, position, cast(int)(currentFunction.instructions.length - position), true);
 	}
 
 	void parseWhileStatement() {
 		advance();
-		if(get().type != LexemeType.LeftParenthesis)
+		if(get().type != GrLexemeType.LeftParenthesis)
 			logError("Missing symbol", "A condition should always start with \'(\'");
 
 		/* While is breakable and continuable. */
@@ -1627,12 +1628,12 @@ class Parser {
 
 		advance();
 		conditionPosition = cast(uint)currentFunction.instructions.length;
-		addInstruction(Opcode.JumpEqual);
+		addInstruction(GrOpcode.JumpEqual);
 
 		parseBlock();
 
-		addInstruction(Opcode.Jump, cast(int)(blockPosition - currentFunction.instructions.length), true);
-		setInstruction(Opcode.JumpEqual, conditionPosition, cast(int)(currentFunction.instructions.length - conditionPosition), true);
+		addInstruction(GrOpcode.Jump, cast(int)(blockPosition - currentFunction.instructions.length), true);
+		setInstruction(GrOpcode.JumpEqual, conditionPosition, cast(int)(currentFunction.instructions.length - conditionPosition), true);
 
 		/* While is breakable and continuable. */
 		closeBreakableSection();
@@ -1649,21 +1650,21 @@ class Parser {
 		uint blockPosition = cast(uint)currentFunction.instructions.length;
 
 		parseBlock();
-		if(get().type != LexemeType.While)
+		if(get().type != GrLexemeType.While)
 			logError("Missing while", "A do-while statement expects the keyword while after \'}\'");
 		advance();
 
 		/* Continue jump. */
 		setContinuableSectionDestination();
 
-		if(get().type != LexemeType.LeftParenthesis)
+		if(get().type != GrLexemeType.LeftParenthesis)
 			logError("Missing symbol", "A condition should always start with \'(\'");
 
 		advance();
 		parseSubExpression();
 		advance();
 
-		addInstruction(Opcode.JumpNotEqual, cast(int)(blockPosition - currentFunction.instructions.length), true);
+		addInstruction(GrOpcode.JumpNotEqual, cast(int)(blockPosition - currentFunction.instructions.length), true);
 
 		/* While is breakable and continuable. */
 		closeBreakableSection();
@@ -1672,30 +1673,30 @@ class Parser {
 
 	void parseForStatement() {
 		advance();
-		if(get().type != LexemeType.LeftParenthesis)
+		if(get().type != GrLexemeType.LeftParenthesis)
 			logError("Missing symbol", "A condition should always start with \'(\'");
 
 		advance();
-		Lexeme identifier = get();
-		if(identifier.type != LexemeType.Identifier)
+		GrLexeme identifier = get();
+		if(identifier.type != GrLexemeType.Identifier)
 			logError("Missing identifier", "For syntax: for(identifier, array) {}");
-		Variable variable = getVariable(identifier.svalue);
+		GrVariable variable = getVariable(identifier.svalue);
 		 
 		advance();
-		if(get().type != LexemeType.Comma)
+		if(get().type != GrLexemeType.Comma)
 			logError("Missing symbol", "Did you forget the \',\' ?");
 		advance();
 
 		/* Init */
-		Variable iterator = registerSpecialVariable("iterator"d ~ to!dstring(scopeLevel), VarType(BaseType.IntType));
-		Variable index = registerSpecialVariable("index"d ~ to!dstring(scopeLevel), VarType(BaseType.IntType));
-		Variable array = registerSpecialVariable("array"d ~ to!dstring(scopeLevel), VarType(BaseType.ArrayType));
+		GrVariable iterator = registerSpecialVariable("iterator"d ~ to!dstring(scopeLevel), GrType(GrBaseType.IntType));
+		GrVariable index = registerSpecialVariable("index"d ~ to!dstring(scopeLevel), GrType(GrBaseType.IntType));
+		GrVariable array = registerSpecialVariable("array"d ~ to!dstring(scopeLevel), GrType(GrBaseType.ArrayType));
 		
 		//From length to 0
-		VarType arrayType = parseSubExpression();
-		addSetInstruction(array, VarType(BaseType.VoidType), true);
-		addInstruction(Opcode.ArrayLength);
-		addInstruction(Opcode.LocalStore_upIterator);		
+		GrType arrayType = parseSubExpression();
+		addSetInstruction(array, GrType(GrBaseType.VoidType), true);
+		addInstruction(GrOpcode.ArrayLength);
+		addInstruction(GrOpcode.LocalStore_upIterator);		
 		addSetInstruction(iterator);
 
 		//Set index to -1
@@ -1713,27 +1714,27 @@ class Parser {
 		advance();
 		uint blockPosition = cast(uint)currentFunction.instructions.length;
 
-		addGetInstruction(iterator, VarType(BaseType.IntType));
-		addInstruction(Opcode.DecrementInt);
+		addGetInstruction(iterator, GrType(GrBaseType.IntType));
+		addInstruction(GrOpcode.DecrementInt);
 		addSetInstruction(iterator);
 
-		addGetInstruction(iterator, VarType(BaseType.IntType));
+		addGetInstruction(iterator, GrType(GrBaseType.IntType));
 		uint jumpPosition = cast(uint)currentFunction.instructions.length;
-		addInstruction(Opcode.JumpEqual);
+		addInstruction(GrOpcode.JumpEqual);
 
 		//Set Index
 		addGetInstruction(array);
 		addGetInstruction(index);
-		addInstruction(Opcode.IncrementInt);
-		addSetInstruction(index, VarType(BaseType.VoidType), true);
-		addInstruction(Opcode.ArrayIndex);
-		convertType(VarType(BaseType.AnyType), variable.type);
+		addInstruction(GrOpcode.IncrementInt);
+		addSetInstruction(index, GrType(GrBaseType.VoidType), true);
+		addInstruction(GrOpcode.ArrayIndex);
+		convertType(GrType(GrBaseType.DynamicType), variable.type);
 		addSetInstruction(variable);
 
 		parseBlock();
 
-		addInstruction(Opcode.Jump, cast(int)(blockPosition - currentFunction.instructions.length), true);
-		setInstruction(Opcode.JumpEqual, jumpPosition, cast(int)(currentFunction.instructions.length - jumpPosition), true);
+		addInstruction(GrOpcode.Jump, cast(int)(blockPosition - currentFunction.instructions.length), true);
+		setInstruction(GrOpcode.JumpEqual, jumpPosition, cast(int)(currentFunction.instructions.length - jumpPosition), true);
 
 		/* For is breakable and continuable. */
 		closeBreakableSection();
@@ -1742,18 +1743,18 @@ class Parser {
 
 	void parseLoopStatement() {
 		advance();
-		if(get().type != LexemeType.LeftParenthesis)
+		if(get().type != GrLexemeType.LeftParenthesis)
 			logError("Missing symbol", "A condition should always start with \'(\'");
 
 		advance();
 
 		/* Init */
-		Variable iterator = registerSpecialVariable("iterator"d ~ to!dstring(scopeLevel), VarType(BaseType.IntType));
+		GrVariable iterator = registerSpecialVariable("iterator"d ~ to!dstring(scopeLevel), GrType(GrBaseType.IntType));
 	
 		//Init counter
-		VarType type = parseSubExpression();
-		convertType(type, VarType(BaseType.IntType));
-		addInstruction(Opcode.LocalStore_upIterator);
+		GrType type = parseSubExpression();
+		convertType(type, GrType(GrBaseType.IntType));
+		addInstruction(GrOpcode.LocalStore_upIterator);
 		addSetInstruction(iterator);
 
 		/* For is breakable and continuable. */
@@ -1767,18 +1768,18 @@ class Parser {
 		advance();
 		uint blockPosition = cast(uint)currentFunction.instructions.length;
 
-		addGetInstruction(iterator, VarType(BaseType.IntType));
-		addInstruction(Opcode.DecrementInt);
+		addGetInstruction(iterator, GrType(GrBaseType.IntType));
+		addInstruction(GrOpcode.DecrementInt);
 		addSetInstruction(iterator);
 
-		addGetInstruction(iterator, VarType(BaseType.IntType));
+		addGetInstruction(iterator, GrType(GrBaseType.IntType));
 		uint jumpPosition = cast(uint)currentFunction.instructions.length;
-		addInstruction(Opcode.JumpEqual);
+		addInstruction(GrOpcode.JumpEqual);
 
 		parseBlock();
 
-		addInstruction(Opcode.Jump, cast(int)(blockPosition - currentFunction.instructions.length), true);
-		setInstruction(Opcode.JumpEqual, jumpPosition, cast(int)(currentFunction.instructions.length - jumpPosition), true);
+		addInstruction(GrOpcode.Jump, cast(int)(blockPosition - currentFunction.instructions.length), true);
+		setInstruction(GrOpcode.JumpEqual, jumpPosition, cast(int)(currentFunction.instructions.length - jumpPosition), true);
 
 		/* For is breakable and continuable. */
 		closeBreakableSection();
@@ -1788,22 +1789,22 @@ class Parser {
 	void parseReturnStatement() {
 		checkAdvance();
         if(currentFunction.name == "main") {
-            addInstruction(Opcode.Kill);            
+            addInstruction(GrOpcode.Kill);            
         }
-        else if(currentFunction.returnType == VarType(BaseType.VoidType)) {
-            addInstruction(Opcode.Return);
+        else if(currentFunction.returnType == GrType(GrBaseType.VoidType)) {
+            addInstruction(GrOpcode.Return);
         }
         else {
-            VarType returnedType = parseSubExpression(false);
+            GrType returnedType = parseSubExpression(false);
             if(returnedType != currentFunction.returnType)
                 logError("Invalid return type", "The returned type \'" ~ to!string(returnedType) ~ "\' does not match the function definition \'" ~ to!string(currentFunction.returnType) ~ "\'");
 
-            addInstruction(Opcode.Return);
+            addInstruction(GrOpcode.Return);
         }
 	}
 
-    uint getLeftOperatorPriority(LexemeType type) {
-		switch(type) with(LexemeType) {
+    uint getLeftOperatorPriority(GrLexemeType type) {
+		switch(type) with(GrLexemeType) {
         case Assign: .. case PowerAssign:
             return 6;
         case Or:
@@ -1834,8 +1835,8 @@ class Parser {
 		}
 	}
 
-	uint getRightOperatorPriority(LexemeType type) {
-		switch(type) with(LexemeType) {
+	uint getRightOperatorPriority(GrLexemeType type) {
+		switch(type) with(GrLexemeType) {
         case Assign: .. case PowerAssign:
             return 20;
         case Or:
@@ -1866,114 +1867,114 @@ class Parser {
 		}
 	}
 
-	VarType convertType(VarType src, VarType dst, bool noFail = false, bool isExplicit = false) {
-		switch(src.baseType) with(BaseType) {
+	GrType convertType(GrType src, GrType dst, bool noFail = false, bool isExplicit = false) {
+		switch(src.baseType) with(GrBaseType) {
         case FunctionType:
-            switch(dst.baseType) with(BaseType) {
+            switch(dst.baseType) with(GrBaseType) {
 			case FunctionType:
                 if(src.mangledType == dst.mangledType && src.mangledReturnType == dst.mangledReturnType)
 				    return dst;
                 break;
-			/+case AnyType:
-				addInstruction(Opcode.ConvertFunctionToAny);
-				return AnyType;+/
+			/+case DynamicType:
+				addInstruction(GrOpcode.ConvertFunctionToAny);
+				return DynamicType;+/
 			default:
 				break;
 			}
 			break;
         case TaskType:
-            switch(dst.baseType) with(BaseType) {
+            switch(dst.baseType) with(GrBaseType) {
 			case TaskType:
 				if(src.mangledType == dst.mangledType && src.mangledReturnType == dst.mangledReturnType)
 				    return dst;
                 break;
-			/+case AnyType:
-				addInstruction(Opcode.ConvertTaskToAny);
-				return AnyType;+/
+			/+case DynamicType:
+				addInstruction(GrOpcode.ConvertTaskToAny);
+				return DynamicType;+/
 			default:
 				break;
 			}
 			break;
         case BoolType:
-            switch(dst.baseType) with(BaseType) {
+            switch(dst.baseType) with(GrBaseType) {
 			case BoolType:
-				return VarType(BoolType);
-			case AnyType:
-				addInstruction(Opcode.ConvertBoolToAny);
-				return VarType(AnyType);
+				return GrType(BoolType);
+			case DynamicType:
+				addInstruction(GrOpcode.ConvertBoolToAny);
+				return GrType(DynamicType);
 			default:
 				break;
 			}
 			break;
 		case IntType:
-			switch(dst.baseType) with(BaseType) {
+			switch(dst.baseType) with(GrBaseType) {
 			case IntType:
-				return VarType(IntType);
-			case AnyType:
-				addInstruction(Opcode.ConvertIntToAny);
-				return VarType(AnyType);
+				return GrType(IntType);
+			case DynamicType:
+				addInstruction(GrOpcode.ConvertIntToAny);
+				return GrType(DynamicType);
 			default:
 				break;
 			}
 			break;
 		case FloatType:
-			switch(dst.baseType) with(BaseType) {
+			switch(dst.baseType) with(GrBaseType) {
 			case FloatType:
-				return VarType(FloatType);
-			case AnyType:
-				addInstruction(Opcode.ConvertFloatToAny);
-				return VarType(AnyType);
+				return GrType(FloatType);
+			case DynamicType:
+				addInstruction(GrOpcode.ConvertFloatToAny);
+				return GrType(DynamicType);
 			default:
 				break;
 			}
 			break;
 		case StringType:
-			switch(dst.baseType) with(BaseType) {
+			switch(dst.baseType) with(GrBaseType) {
 			case StringType:
-				return VarType(StringType);
-			case AnyType:
-				addInstruction(Opcode.ConvertStringToAny);
-				return VarType(AnyType);
+				return GrType(StringType);
+			case DynamicType:
+				addInstruction(GrOpcode.ConvertStringToAny);
+				return GrType(DynamicType);
 			default:
 				break;
 			}
 			break;
-		case AnyType:
-			switch(dst.baseType) with(BaseType) {
-			case AnyType:
-				return VarType(AnyType);
+		case DynamicType:
+			switch(dst.baseType) with(GrBaseType) {
+			case DynamicType:
+				return GrType(DynamicType);
             case BoolType:
-				addInstruction(Opcode.ConvertAnyToBool);
-				return VarType(BoolType);
+				addInstruction(GrOpcode.ConvertAnyToBool);
+				return GrType(BoolType);
 			case IntType:
-				addInstruction(Opcode.ConvertAnyToInt);
-				return VarType(IntType);
+				addInstruction(GrOpcode.ConvertAnyToInt);
+				return GrType(IntType);
 			case FloatType:
-				addInstruction(Opcode.ConvertAnyToFloat);
-				return VarType(FloatType);
+				addInstruction(GrOpcode.ConvertAnyToFloat);
+				return GrType(FloatType);
 			case StringType:
-				addInstruction(Opcode.ConvertAnyToString);
-				return VarType(StringType);
+				addInstruction(GrOpcode.ConvertAnyToString);
+				return GrType(StringType);
             case ArrayType:
-				addInstruction(Opcode.ConvertAnyToArray);
-				return VarType(ArrayType);
+				addInstruction(GrOpcode.ConvertAnyToArray);
+				return GrType(ArrayType);
 			default:
 				break;
 			}
 			break;
 		case ArrayType:
-            switch(dst.baseType) with(BaseType) {
+            switch(dst.baseType) with(GrBaseType) {
 			case ArrayType:
-				return VarType(ArrayType);
-			case AnyType:
-				addInstruction(Opcode.ConvertArrayToAny);
-				return VarType(AnyType);
+				return GrType(ArrayType);
+			case DynamicType:
+				addInstruction(GrOpcode.ConvertArrayToAny);
+				return GrType(DynamicType);
 			default:
 				break;
 			}
             break;
         case StructType:
-            switch(dst.baseType) with(BaseType) {
+            switch(dst.baseType) with(GrBaseType) {
             case StructType:
                 if(dst.mangledType != src.mangledType)
                     break;
@@ -1987,73 +1988,73 @@ class Parser {
 		}
 
         if(!noFail)
-		    logError("Incompatible types", "Cannot convert \'" ~ displayType(src) ~ "\' to \'" ~ displayType(dst) ~ "\'");
-		return VarType(BaseType.VoidType);	
+		    logError("Incompatible types", "Cannot convert \'" ~ grType_getDisplay(src) ~ "\' to \'" ~ grType_getDisplay(dst) ~ "\'");
+		return GrType(GrBaseType.VoidType);	
 	}
 
     void parseArrayBuilder() {
-        if(get().type != LexemeType.LeftBracket)
+        if(get().type != GrLexemeType.LeftBracket)
             logError("Missing [", "Missing [");
         advance();
 
         int arraySize;
-        while(get().type != LexemeType.RightBracket) {
-            convertType(parseSubExpression(), sAnyType);
+        while(get().type != GrLexemeType.RightBracket) {
+            convertType(parseSubExpression(), grDynamic);
             arraySize ++;
 
-            if(get().type == LexemeType.RightBracket)
+            if(get().type == GrLexemeType.RightBracket)
                 break;
-            if(get().type != LexemeType.Comma)
+            if(get().type != GrLexemeType.Comma)
                 logError("Missing comma or ]", "bottom text");
             checkAdvance();
         }
 
-        addInstruction(Opcode.ArrayBuild, arraySize);
+        addInstruction(GrOpcode.ArrayBuild, arraySize);
         advance();
     }
 
     void parseArrayIndex(bool asRefType) {
-        if(get().type != LexemeType.LeftBracket)
+        if(get().type != GrLexemeType.LeftBracket)
             logError("Missing [", "Missing [");
         advance();
 
         for(;;) {
-            if(get().type == LexemeType.Comma)
+            if(get().type == GrLexemeType.Comma)
                 logError("Missing value", "bottom text");
             auto index = parseSubExpression();
-            if(index.baseType == BaseType.VoidType)
+            if(index.baseType == GrBaseType.VoidType)
                 logError("Syntax Error", "right there");
-            convertType(index, sIntType);
+            convertType(index, grInt);
 
-            if(get().type == LexemeType.RightBracket) {
-                addInstruction(asRefType ? Opcode.ArrayIndexRef : Opcode.ArrayIndex);
+            if(get().type == GrLexemeType.RightBracket) {
+                addInstruction(asRefType ? GrOpcode.ArrayIndexRef : GrOpcode.ArrayIndex);
                 break;
             }
-            if(get().type != LexemeType.Comma)
+            if(get().type != GrLexemeType.Comma)
                 logError("Missing comma or ]", "bottom text");
             checkAdvance();
-            if(get().type == LexemeType.RightBracket)
+            if(get().type == GrLexemeType.RightBracket)
                 logError("Missing comma or ]", "bottom text");
 
-            addInstruction(asRefType ? Opcode.ArrayIndexRef : Opcode.ArrayIndex);
+            addInstruction(asRefType ? GrOpcode.ArrayIndexRef : GrOpcode.ArrayIndex);
             asRefType = true;
         }
 
         advance();
     }
 
-    VarType parseStructureField(VarType type) {
+    GrType parseStructureField(GrType type) {
         dstring fieldName;
-        VarType fieldType = BaseType.VoidType;
+        GrType fieldType = GrBaseType.VoidType;
 
         advance();
-        if(type.baseType != BaseType.StructType)
+        if(type.baseType != GrBaseType.StructType)
             logError("Invalid type", "Cannot access struct field");
-        if(get().type != LexemeType.Identifier)
+        if(get().type != GrLexemeType.Identifier)
             logError("Missing struct field", "Missing struct field");
         fieldName = get().svalue;
         advance();
-        auto structure = getStructure(type.mangledType);
+        auto structure = grType_getStruct(type.mangledType);
         const auto nbFields = structure.fields.length;
         for(int i = 1; i <= structure.fields.length; i ++) {
             if(fieldName == structure.fields[nbFields - i]) {
@@ -2067,7 +2068,7 @@ class Parser {
         return fieldType;
     }
 
-    VarType parseConversionOperator(VarType[] typeStack) {
+    GrType parseConversionOperator(GrType[] typeStack) {
         if(!typeStack.length)
             logError("Conversion Error", "You can only convert a value");
         advance();
@@ -2078,22 +2079,22 @@ class Parser {
         return asType;
     }
 
-	void parseExpression(VarType currentType = BaseType.VoidType) {
-		Variable[] lvalues;
-		LexemeType[] operatorsStack;
-		VarType[] typeStack;
-        VarType lastType = currentType;
+	void parseExpression(GrType currentType = GrBaseType.VoidType) {
+		GrVariable[] lvalues;
+		GrLexemeType[] operatorsStack;
+		GrType[] typeStack;
+        GrType lastType = currentType;
 		bool isReturningValue = false,
 			hasValue = false, hadValue = false,
             hasLValue = false, hadLValue = false,
             hasReference = false, hadReference = false,
 			isRightUnaryOperator = true, isEndOfExpression = false;
 
-		if(lastType != VarType(BaseType.VoidType))
+		if(lastType != GrType(GrBaseType.VoidType))
 			isReturningValue = true;
 
 		do {
-			if(hasValue && currentType != lastType && lastType != VarType(BaseType.VoidType)) {
+			if(hasValue && currentType != lastType && lastType != GrType(GrBaseType.VoidType)) {
                 lastType = currentType;//convertType(currentType, lastType);
 				currentType = lastType;
 			}
@@ -2110,8 +2111,8 @@ class Parser {
             hadReference = hasReference;
             hasReference = false;
 
-			Lexeme lex = get();
-			switch(lex.type) with(LexemeType) {
+			GrLexeme lex = get();
+			switch(lex.type) with(GrLexemeType) {
 			case Comma:
 			case Semicolon:
 			case RightParenthesis:
@@ -2127,15 +2128,15 @@ class Parser {
                 //Index
                 if(hadValue) {
                     hadValue = false;
-                    currentType = VarType(BaseType.AnyType);
-                    lastType = VarType(BaseType.AnyType);
+                    currentType = GrType(GrBaseType.DynamicType);
+                    lastType = GrType(GrBaseType.DynamicType);
                     parseArrayIndex(hadReference);
                     hasLValue = true;
                     lvalues ~= null;
                 }
                 //Build new array
                 else {
-                    currentType = VarType(BaseType.ArrayType);
+                    currentType = GrType(GrBaseType.ArrayType);
                     parseArrayBuilder();
                 }
                 hasValue = true;
@@ -2148,28 +2149,28 @@ class Parser {
                 //Type stack
                 break;
 			case Integer:
-				currentType = VarType(BaseType.IntType);
+				currentType = GrType(GrBaseType.IntType);
 				addIntConstant(lex.ivalue);
 				hasValue = true;
                 typeStack ~= currentType;
 				checkAdvance();
 				break;
 			case Float:
-				currentType = VarType(BaseType.FloatType);
+				currentType = GrType(GrBaseType.FloatType);
 				addFloatConstant(lex.fvalue);
 				hasValue = true;
                 typeStack ~= currentType;
 				checkAdvance();
 				break;
 			case Boolean:
-				currentType = VarType(BaseType.BoolType);
+				currentType = GrType(GrBaseType.BoolType);
 				addBoolConstant(lex.bvalue);
 				hasValue = true;
                 typeStack ~= currentType;
 				checkAdvance();
 				break;
 			case String:
-				currentType = VarType(BaseType.StringType);
+				currentType = GrType(GrBaseType.StringType);
 				addStringConstant(lex.svalue);
 				hasValue = true;
                 typeStack ~= currentType;
@@ -2204,29 +2205,29 @@ class Parser {
 				goto case Multiply;
 			case Add:
 				if(!hadValue)
-					lex.type = LexemeType.Plus;
+					lex.type = GrLexemeType.Plus;
 				goto case Multiply;
 			case Substract:
 				if(!hadValue)
-					lex.type = LexemeType.Minus;
+					lex.type = GrLexemeType.Minus;
 				goto case Multiply;
 			case Increment: .. case Decrement:
 				isRightUnaryOperator = true;
 				goto case Multiply;
 			case Multiply: .. case Xor:
-				if(!hadValue && lex.type != LexemeType.Plus && lex.type != LexemeType.Minus && lex.type != LexemeType.Not)
+				if(!hadValue && lex.type != GrLexemeType.Plus && lex.type != GrLexemeType.Minus && lex.type != GrLexemeType.Not)
 					logError("Expected value", "A value is missing");
 
 				while(operatorsStack.length && getLeftOperatorPriority(operatorsStack[$ - 1]) > getRightOperatorPriority(lex.type)) {
-					LexemeType operator = operatorsStack[$ - 1];
+					GrLexemeType operator = operatorsStack[$ - 1];
                     writeln("1: ", typeStack);
-					switch(operator) with(LexemeType) {
+					switch(operator) with(GrLexemeType) {
 					case Assign:
 						addSetInstruction(lvalues[$ - 1], currentType, true);
 						lvalues.length --;
 						break;
 					case AddAssign: .. case PowerAssign:
-						currentType = addOperator(operator - (LexemeType.AddAssign - LexemeType.Add), typeStack);
+						currentType = addOperator(operator - (GrLexemeType.AddAssign - GrLexemeType.Add), typeStack);
 						addSetInstruction(lvalues[$ - 1], currentType, true);
 						lvalues.length --;
 						break;
@@ -2253,7 +2254,7 @@ class Parser {
 				checkAdvance();
 				break;
 			case Identifier:
-				Variable lvalue;
+				GrVariable lvalue;
 				currentType = parseIdentifier(lvalue, lastType);
 				
                 //Check if there is an assignement or not, discard if it's only a rvalue
@@ -2266,10 +2267,10 @@ class Parser {
                         hasValue = true;
 				}
 
-                if(!hasLValue && nextLexeme.type == LexemeType.LeftBracket)
+                if(!hasLValue && nextLexeme.type == GrLexemeType.LeftBracket)
                     hasReference = true;
 
-				if(currentType != VarType(BaseType.VoidType)) {
+				if(currentType != GrType(GrBaseType.VoidType)) {
 					hasValue = true;
                     typeStack ~= currentType;
                 }
@@ -2294,13 +2295,13 @@ class Parser {
 
 		while(operatorsStack.length) {
                     writeln("2: ", typeStack);
-			LexemeType operator = operatorsStack[$ - 1];
+			GrLexemeType operator = operatorsStack[$ - 1];
 
-			switch(operator) with(LexemeType) {
+			switch(operator) with(GrLexemeType) {
 			case Assign:
                 if(operatorsStack.length == 1 && !isReturningValue) {
 				    addSetInstruction(lvalues[$ - 1], currentType, false);
-                    currentType = VarType(BaseType.VoidType);
+                    currentType = GrType(GrBaseType.VoidType);
                 }
                 else {
 				    addSetInstruction(lvalues[$ - 1], currentType, true);
@@ -2308,10 +2309,10 @@ class Parser {
 				lvalues.length --;
 				break;
 			case AddAssign: .. case PowerAssign:
-				currentType = addOperator(operator - (LexemeType.AddAssign - LexemeType.Add), typeStack);
+				currentType = addOperator(operator - (GrLexemeType.AddAssign - GrLexemeType.Add), typeStack);
 				if(operatorsStack.length == 1 && !isReturningValue) {
 				    addSetInstruction(lvalues[$ - 1], currentType, false);
-                    currentType = VarType(BaseType.VoidType);
+                    currentType = GrType(GrBaseType.VoidType);
                 }
                 else {
 				    addSetInstruction(lvalues[$ - 1], currentType, true);
@@ -2322,7 +2323,7 @@ class Parser {
 				currentType = addOperator(operator, typeStack);
 				if(operatorsStack.length == 1 && !isReturningValue) {
 				    addSetInstruction(lvalues[$ - 1], currentType, false);
-                    currentType = VarType(BaseType.VoidType);
+                    currentType = GrType(GrBaseType.VoidType);
                 }
                 else {
 				    addSetInstruction(lvalues[$ - 1], currentType, true);
@@ -2336,40 +2337,40 @@ class Parser {
 			operatorsStack.length --;
 		}
 
-		if(currentType != VarType(BaseType.VoidType) && !isReturningValue)
+		if(currentType != GrType(GrBaseType.VoidType) && !isReturningValue)
 			decreaseStack(currentType, 1u);
 	}
 
-    void decreaseStack(VarType type, ushort count) {
-        switch(type.baseType) with(BaseType) {
+    void decreaseStack(GrType type, ushort count) {
+        switch(type.baseType) with(GrBaseType) {
         case IntType:
         case BoolType:
         case FunctionType:
         case TaskType:
-            addInstruction(Opcode.PopStack_Int, count);
+            addInstruction(GrOpcode.PopStack_Int, count);
             break;
         case FloatType:
-            addInstruction(Opcode.PopStack_Float, count);
+            addInstruction(GrOpcode.PopStack_Float, count);
             break;
         case StringType:
-            addInstruction(Opcode.PopStack_String, count);
+            addInstruction(GrOpcode.PopStack_String, count);
             break;
         case ArrayType:
-            addInstruction(Opcode.PopStack_Array, count);
+            addInstruction(GrOpcode.PopStack_Array, count);
             break;
-        case AnyType:
-            addInstruction(Opcode.PopStack_Any, count);
+        case DynamicType:
+            addInstruction(GrOpcode.PopStack_Any, count);
             break;
         case ObjectType:
-            addInstruction(Opcode.PopStack_Object, count);
+            addInstruction(GrOpcode.PopStack_Object, count);
             break;
         default:
             break;
         }
     }
 
-    bool requireLValue(LexemeType operatorType) {
-        switch(operatorType) with(LexemeType) {
+    bool requireLValue(GrLexemeType operatorType) {
+        switch(operatorType) with(GrLexemeType) {
         case Increment:
         case Decrement:
         case Assign: .. case PowerAssign:
@@ -2379,43 +2380,43 @@ class Parser {
         }
     }
 
-    VarType parseFunctionPointer(VarType currentType) {
+    GrType parseFunctionPointer(GrType currentType) {
         checkAdvance();
-        if(get().type == LexemeType.LeftParenthesis) {
+        if(get().type == GrLexemeType.LeftParenthesis) {
             checkAdvance();
-            VarType refType = parseType();
+            GrType refType = parseType();
             checkAdvance();
-            if(get().type != LexemeType.RightParenthesis)
+            if(get().type != GrLexemeType.RightParenthesis)
                 logError("Missing symbol", "Expected a \')\' after the type");
             checkAdvance();
-            if(currentType.baseType == BaseType.VoidType)
+            if(currentType.baseType == GrBaseType.VoidType)
                 currentType = refType;
             else
                 currentType = convertType(refType, currentType);
         }
-        if(get().type != LexemeType.Identifier)
-            logError("Function name expected", "The name of the func or task is required after \'&\'");
-        if(currentType.baseType != BaseType.FunctionType && currentType.baseType != BaseType.TaskType)
-            logError("Function ref error", "Cannot infer the type of \'" ~ to!string(get().svalue) ~ "\'");
+        if(get().type != GrLexemeType.Identifier)
+            logError("GrFunction name expected", "The name of the func or task is required after \'&\'");
+        if(currentType.baseType != GrBaseType.FunctionType && currentType.baseType != GrBaseType.TaskType)
+            logError("GrFunction ref error", "Cannot infer the type of \'" ~ to!string(get().svalue) ~ "\'");
 
-        VarType funcType = addFunctionAddress(get().svalue ~ currentType.mangledType);
+        GrType funcType = addFunctionAddress(get().svalue ~ currentType.mangledType);
         convertType(funcType, currentType);
         checkAdvance();
         return currentType;
     }
 
-	VarType parseSubExpression(bool useParenthesis = true) {
-		Variable[] lvalues;
-		LexemeType[] operatorsStack;
-		VarType[] typeStack;
-		VarType currentType = VarType(BaseType.VoidType), lastType = VarType(BaseType.VoidType);
+	GrType parseSubExpression(bool useParenthesis = true) {
+		GrVariable[] lvalues;
+		GrLexemeType[] operatorsStack;
+		GrType[] typeStack;
+		GrType currentType = GrType(GrBaseType.VoidType), lastType = GrType(GrBaseType.VoidType);
 		bool hasValue = false, hadValue = false,
         hasLValue = false, hadLValue = false,
         hasReference = false, hadReference = false,
 		isRightUnaryOperator = true, isEndOfExpression = false;
 
 		do {
-			if(hasValue && currentType != lastType && lastType != VarType(BaseType.VoidType)) {
+			if(hasValue && currentType != lastType && lastType != GrType(GrBaseType.VoidType)) {
 				lastType = currentType;//convertType(currentType, lastType);
 				currentType = lastType;
 			}
@@ -2432,8 +2433,8 @@ class Parser {
             hadReference = hasReference;
             hasReference = false;
 
-			Lexeme lex = get();
-			switch(lex.type) with(LexemeType) {
+			GrLexeme lex = get();
+			switch(lex.type) with(GrLexemeType) {
 			case Semicolon:
 				if(useParenthesis)
 					logError("Unexpected symbol", "A \';\' cannot exist inside this expression");
@@ -2468,15 +2469,15 @@ class Parser {
                 //Index
                 if(hadValue) {
                     hadValue = false;
-                    currentType = VarType(BaseType.AnyType);
-                    lastType = VarType(BaseType.AnyType);
+                    currentType = GrType(GrBaseType.DynamicType);
+                    lastType = GrType(GrBaseType.DynamicType);
                     parseArrayIndex(hadReference);
                     hasLValue = true;
                     lvalues ~= null;
                 }
                 //Build new array
                 else {
-                    currentType = VarType(BaseType.ArrayType);
+                    currentType = GrType(GrBaseType.ArrayType);
                     parseArrayBuilder();
                 }
                 hasValue = true;
@@ -2488,28 +2489,28 @@ class Parser {
                 hasValue = true;
                 break;
 			case Integer:
-				currentType = VarType(BaseType.IntType);
+				currentType = GrType(GrBaseType.IntType);
 				addIntConstant(lex.ivalue);
 				hasValue = true;
                 typeStack ~= currentType;
 				checkAdvance();
 				break;
 			case Float:
-				currentType = VarType(BaseType.FloatType);
+				currentType = GrType(GrBaseType.FloatType);
 				addFloatConstant(lex.fvalue);
 				hasValue = true;
                 typeStack ~= currentType;
 				checkAdvance();
 				break;
 			case Boolean:
-				currentType = VarType(BaseType.BoolType);
+				currentType = GrType(GrBaseType.BoolType);
 				addBoolConstant(lex.bvalue);
 				hasValue = true;
                 typeStack ~= currentType;
 				checkAdvance();
 				break;
 			case String:
-				currentType = VarType(BaseType.StringType);
+				currentType = GrType(GrBaseType.StringType);
 				addStringConstant(lex.svalue);
 				hasValue = true;
                 typeStack ~= currentType;
@@ -2544,29 +2545,29 @@ class Parser {
 				goto case Multiply;
 			case Add:
 				if(!hadValue)
-					lex.type = LexemeType.Plus;
+					lex.type = GrLexemeType.Plus;
 				goto case Multiply;
 			case Substract:
 				if(!hadValue)
-					lex.type = LexemeType.Minus;
+					lex.type = GrLexemeType.Minus;
 				goto case Multiply;
 			case Increment: .. case Decrement:
 				isRightUnaryOperator = true;
 				goto case Multiply;
 			case Multiply: .. case Xor:
-				if(!hadValue && lex.type != LexemeType.Plus && lex.type != LexemeType.Minus && lex.type != LexemeType.Not)
+				if(!hadValue && lex.type != GrLexemeType.Plus && lex.type != GrLexemeType.Minus && lex.type != GrLexemeType.Not)
 					logError("Expected value", "A value is missing");
 
 				while(operatorsStack.length && getLeftOperatorPriority(operatorsStack[$ - 1]) > getRightOperatorPriority(lex.type)) {
-					LexemeType operator = operatorsStack[$ - 1];
+					GrLexemeType operator = operatorsStack[$ - 1];
 	
-					switch(operator) with(LexemeType) {
+					switch(operator) with(GrLexemeType) {
 					case Assign:
 						addSetInstruction(lvalues[$ - 1], currentType, true);
 						lvalues.length --;
 						break;
 					case AddAssign: .. case PowerAssign:
-						currentType = addOperator(operator - (LexemeType.AddAssign - LexemeType.Add), typeStack);
+						currentType = addOperator(operator - (GrLexemeType.AddAssign - GrLexemeType.Add), typeStack);
 						addSetInstruction(lvalues[$ - 1], currentType, true);
 						lvalues.length --;
 						break;
@@ -2593,7 +2594,7 @@ class Parser {
 				checkAdvance();
 				break;
 			case Identifier:
-				Variable lvalue;
+				GrVariable lvalue;
 				currentType = parseIdentifier(lvalue, lastType);
 
                 //Check if there is an assignement or not, discard if it's only a rvalue
@@ -2606,10 +2607,10 @@ class Parser {
                         hasValue = true;
 				}
 
-                if(!hasLValue && nextLexeme.type == LexemeType.LeftBracket)
+                if(!hasLValue && nextLexeme.type == GrLexemeType.LeftBracket)
                     hasReference = true;
 
-				if(currentType != VarType(BaseType.VoidType)) {
+				if(currentType != GrType(GrBaseType.VoidType)) {
 					hasValue = true;
                     typeStack ~= currentType;
                 }
@@ -2633,15 +2634,15 @@ class Parser {
 		}
 
 		while(operatorsStack.length) {
-			LexemeType operator = operatorsStack[$ - 1];
+			GrLexemeType operator = operatorsStack[$ - 1];
 	
-			switch(operator) with(LexemeType) {
+			switch(operator) with(GrLexemeType) {
 			case Assign:
 				addSetInstruction(lvalues[$ - 1], currentType, true);
 				lvalues.length --;
 				break;
 			case AddAssign: .. case PowerAssign:
-				currentType = addOperator(operator - (LexemeType.AddAssign - LexemeType.Add), typeStack);
+				currentType = addOperator(operator - (GrLexemeType.AddAssign - GrLexemeType.Add), typeStack);
 				addSetInstruction(lvalues[$ - 1], currentType, true);			
 				lvalues.length --;
 				break;
@@ -2662,49 +2663,49 @@ class Parser {
 	}
 
 	//Parse an identifier or function call and return the deduced return type and lvalue.
-	VarType parseIdentifier(ref Variable variable, VarType expectedType = BaseType.VoidType) {
-		VarType returnType = BaseType.VoidType;
-		Lexeme identifier = get();		
+	GrType parseIdentifier(ref GrVariable variable, GrType expectedType = GrBaseType.VoidType) {
+		GrType returnType = GrBaseType.VoidType;
+		GrLexeme identifier = get();		
 		bool isFunctionCall = false;
         dstring identifierName = identifier.svalue;
 
 		advance();
 
-        if(get().type == LexemeType.Period) {
+        if(get().type == GrLexemeType.Period) {
 			auto structVar = getVariable(identifier.svalue);
-            if(structVar is null || structVar.type.baseType != BaseType.StructType)
+            if(structVar is null || structVar.type.baseType != GrBaseType.StructType)
                 logError("Invalid symbol", "You can only access a field from a struct");
             else {
                 do {
                     checkAdvance();
-                    if(get().type != LexemeType.Identifier)
+                    if(get().type != GrLexemeType.Identifier)
                         logError("Missing identifier", "A struct field must have a name");
                     identifierName ~= "." ~ get().svalue;
                     checkAdvance();
                 }
-                while(get().type == LexemeType.Period);
+                while(get().type == GrLexemeType.Period);
             }
         }
 
-		if(get().type == LexemeType.LeftParenthesis)
+		if(get().type == GrLexemeType.LeftParenthesis)
 			isFunctionCall = true;
 
 		if(isFunctionCall) {
-			VarType[] signature;
+			GrType[] signature;
 			advance();
 
 			auto var = (identifierName in currentFunction.localVariables);
 			if(var !is null) {
                 //Signature parsing with type conversion
-                VarType[] anonSignature = unmangleSignature(var.type.mangledType);
+                GrType[] anonSignature = grType_unmangleSignature(var.type.mangledType);
                 int i;
-                if(get().type != LexemeType.RightParenthesis) {
+                if(get().type != GrLexemeType.RightParenthesis) {
                     for(;;) {
                         if(i >= anonSignature.length)
                             logError("Invalid anonymous call", "The number of parameters does not match");
-                        VarType subType = parseSubExpression();
+                        GrType subType = parseSubExpression();
                         signature ~= convertType(subType, anonSignature[i]);
-                        if(get().type == LexemeType.RightParenthesis)
+                        if(get().type == GrLexemeType.RightParenthesis)
                             break;
                         advance();
                         i ++;
@@ -2716,12 +2717,12 @@ class Parser {
 				bool hasAnonFunc = false;
 				addGetInstruction(*var);
                 
-				returnType = unmangleType(var.type.mangledReturnType);
+				returnType = grType_unmangle(var.type.mangledReturnType);
 
-				if(var.type.baseType == BaseType.FunctionType)
-					addInstruction(Opcode.AnonymousCall, 0u);
-				else if(var.type.baseType == BaseType.TaskType)
-					addInstruction(Opcode.AnonymousTask, 0u);
+				if(var.type.baseType == GrBaseType.FunctionType)
+					addInstruction(GrOpcode.AnonymousCall, 0u);
+				else if(var.type.baseType == GrBaseType.TaskType)
+					addInstruction(GrOpcode.AnonymousTask, 0u);
 				else
 					logError("Invalid anonymous type", "debug");
 
@@ -2735,10 +2736,10 @@ class Parser {
 			}
 			else {
                 //Signature parsing, no coercion is made
-                if(get().type != LexemeType.RightParenthesis) {
+                if(get().type != GrLexemeType.RightParenthesis) {
                     for(;;) {
                         signature ~= parseSubExpression();
-                        if(get().type == LexemeType.RightParenthesis)
+                        if(get().type == GrLexemeType.RightParenthesis)
                             break;
                         advance();
                     }
@@ -2746,15 +2747,15 @@ class Parser {
                 checkAdvance();
 
                 //Mangling function name
-				dstring mangledName = mangleName(identifierName, signature);
+				dstring mangledName = grType_mangleNamedFunction(identifierName, signature);
 				
-				//Primitive call.
+				//GrPrimitive call.
 				if(isPrimitiveDeclared(mangledName)) {
-					Primitive primitive = getPrimitive(mangledName);
-					addInstruction(Opcode.PrimitiveCall, primitive.index);
+					GrPrimitive primitive = grType_getPrimitive(mangledName);
+					addInstruction(GrOpcode.PrimitiveCall, primitive.index);
 					returnType = primitive.returnType;
 				}
-				else //Function/Task call.
+				else //GrFunction/Task call.
 					returnType = addFunctionCall(mangledName);
 			}
 		}
@@ -2764,11 +2765,11 @@ class Parser {
 			returnType = variable.type;
             //If it's an assignement, we want the GET instruction to be after the assignement, not there.
             const auto nextLexeme = get();
-            if(nextLexeme.type == LexemeType.LeftBracket) {
-                addInstruction(Opcode.LocalLoad_Ref);
-                returnType = VarType(BaseType.AnyType);
+            if(nextLexeme.type == GrLexemeType.LeftBracket) {
+                addInstruction(GrOpcode.LocalLoad_Ref);
+                returnType = GrType(GrBaseType.DynamicType);
             }
-            else if(nextLexeme.type != LexemeType.Assign)
+            else if(nextLexeme.type != GrLexemeType.Assign)
                 addGetInstruction(variable, expectedType);
 		}
 		return returnType;
@@ -2777,7 +2778,7 @@ class Parser {
 	//Error handling
 	struct Error {
 		dstring msg, info;
-		Lexeme lex;
+		GrLexeme lex;
 		bool mustHalt;
 	}
 

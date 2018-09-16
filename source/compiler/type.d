@@ -22,104 +22,101 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module script.type;
+module compiler.type;
 
 import std.conv: to;
 
-import script.vm;
-import script.coroutine;
-import script.mangle;
-import script.bytecode;
+import runtime.all;
+import assembly.all;
+import compiler.mangle;
 
-struct VarType {
-    enum BaseType {
-        VoidType, IntType, FloatType, BoolType, StringType,
-        ArrayType, ObjectType, AnyType, FunctionType, TaskType,
-        StructType
-    }
+enum GrBaseType {
+    VoidType, IntType, FloatType, BoolType, StringType,
+    ArrayType, ObjectType, DynamicType, FunctionType, TaskType,
+    StructType
+}
 
-    BaseType baseType;
+struct GrType {
+    GrBaseType baseType;
     dstring mangledType, mangledReturnType;
 
-    this(BaseType newBaseType) {
+    this(GrBaseType newBaseType) {
         baseType = newBaseType;
     }
 
-    VarType opOpAssign(string op)(BaseType t) {
+    GrType opOpAssign(string op)(GrBaseType t) {
 		mixin("baseType = baseType" ~ op ~ "t;");
 		return this;
 	}
 
-    bool opEquals(const BaseType v) const {
+    bool opEquals(const GrBaseType v) const {
 		return (baseType == v);
 	}
 
-    bool opEquals(const VarType v) const {
+    bool opEquals(const GrType v) const {
         if(baseType != v.baseType)
             return false;
-        if(baseType == BaseType.FunctionType || baseType == BaseType.TaskType)
+        if(baseType == GrBaseType.FunctionType || baseType == GrBaseType.TaskType)
            return mangledType == v.mangledType && mangledReturnType && v.mangledReturnType; 
         return true;
 	}
 }
 
-alias BaseType = VarType.BaseType;
-
-const VarType sVoidType = VarType(BaseType.VoidType);
-const VarType sIntType = VarType(BaseType.IntType);
-const VarType sFloatType = VarType(BaseType.FloatType);
-const VarType sBoolType = VarType(BaseType.BoolType);
-const VarType sStringType = VarType(BaseType.StringType);
-const VarType sArrayType = VarType(BaseType.ArrayType);
-const VarType sObjectType = VarType(BaseType.ObjectType);
-const VarType sAnyType = VarType(BaseType.AnyType);
+const GrType grVoid = GrType(GrBaseType.VoidType);
+const GrType grInt = GrType(GrBaseType.IntType);
+const GrType grFloat = GrType(GrBaseType.FloatType);
+const GrType grBool = GrType(GrBaseType.BoolType);
+const GrType grString = GrType(GrBaseType.StringType);
+const GrType grArray = GrType(GrBaseType.ArrayType);
+const GrType grObject = GrType(GrBaseType.ObjectType);
+const GrType grDynamic = GrType(GrBaseType.DynamicType);
 
 
-class Variable {
-	VarType type;
+class GrVariable {
+	GrType type;
 	uint index;
 	bool isGlobal, isInitialized, isAuto;
     dstring name;
 }
 
-class Structure {
-    VarType[] signature;
+class GrStructure {
+    GrType[] signature;
     dstring[] fields;
 }
-Structure[dstring] structures;
+GrStructure[dstring] structures;
 
-VarType defineStructure(dstring name, dstring[] fields, VarType[] signature) {
+GrType grType_addStructure(dstring name, dstring[] fields, GrType[] signature) {
     if(fields.length != signature.length)
-        throw new Exception("Structure signature mismatch");
-    Structure st = new Structure;
+        throw new Exception("GrStructure signature mismatch");
+    GrStructure st = new GrStructure;
     st.signature = signature;
     st.fields = fields;
     structures[name] = st;
 
-    VarType stType = BaseType.StructType;
+    GrType stType = GrBaseType.StructType;
     stType.mangledType = name;
     return stType;
 }
 
-bool isStructureType(dstring name) {
+bool grType_isStruct(dstring name) {
     if(name in structures)
         return true;
     return false;
 }
 
-Structure getStructure(dstring name) {
+GrStructure grType_getStruct(dstring name) {
     auto structure = (name in structures);
     if(structure is null)
         throw new Exception("Undefined struct \'" ~ to!string(name) ~ "\'");
     return *structure;
 }
 
-void resolveStructuresDefinition() {
+void grType_resolveStructSignature() {
     foreach(structure; structures) {
         for(int i; i < structure.signature.length; i ++) {
-            if(structure.signature[i].baseType == BaseType.VoidType) {
-                if(isStructureType(structure.signature[i].mangledType)) {
-                    structure.signature[i].baseType = BaseType.StructType;
+            if(structure.signature[i].baseType == GrBaseType.VoidType) {
+                if(grType_isStruct(structure.signature[i].mangledType)) {
+                    structure.signature[i].baseType = GrBaseType.StructType;
                 }
                 else
                     throw new Exception("Cannot resolve def field");
@@ -128,34 +125,34 @@ void resolveStructuresDefinition() {
     }
 }
 
-struct Instruction {
-	Opcode opcode;
+struct GrInstruction {
+	GrOpcode opcode;
 	uint value;
 }
 
-class Function {
-	Variable[dstring] localVariables;
+class GrFunction {
+	GrVariable[dstring] localVariables;
     uint[] localFreeVariables;
-	Instruction[] instructions;
+	GrInstruction[] instructions;
 	uint stackSize, index;
 
 	dstring name;
-	VarType[] signature;
-	VarType returnType;
+	GrType[] signature;
+	GrType returnType;
 	bool isTask, isAnonymous;
 
-	FunctionCall[] functionCalls;
-	Function anonParent;
+	GrFunctionCall[] functionCalls;
+	GrFunction anonParent;
 	uint position, anonReference, anonIndex, localVariableIndex;
 
 	uint nbStringParameters, nbIntegerParameters, nbFloatParameters,
 		nbAnyParameters, nbObjectParameters;
 }
 
-class FunctionCall {
+class GrFunctionCall {
 	dstring mangledName;
 	uint position;
-	Function caller, functionToCall;
-	VarType expectedType;
+	GrFunction caller, functionToCall;
+	GrType expectedType;
     bool isAddress;
 }

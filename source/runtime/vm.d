@@ -22,7 +22,7 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module script.vm;
+module runtime.vm;
 
 import std.stdio;
 import std.string;
@@ -31,15 +31,13 @@ import std.conv;
 import std.math;
 
 import core.indexedarray;
-import script.primitive;
-import script.compiler;
-import script.coroutine;
-import script.any;
-import script.array;
-import script.type;
-import script.bytecode;
+import compiler.all;
+import assembly.all;
+import runtime.coroutine;
+import runtime.dynamic;
+import runtime.array;
 
-class GrimoireVM {
+class GrVM {
 	uint[] opcodes;
 
 	int[] iconsts;
@@ -53,11 +51,11 @@ class GrimoireVM {
 	int[] iglobalStack;
 	float[] fglobalStack;
 	dstring[] sglobalStack;
-	AnyValue[][] nglobalStack;
-	AnyValue[] aglobalStack;
+	GrDynamicValue[][] nglobalStack;
+	GrDynamicValue[] aglobalStack;
 	void*[] oglobalStack;
 
-	IndexedArray!(Coroutine, 256u) coroutines = new IndexedArray!(Coroutine, 256u)();
+	IndexedArray!(GrCoroutine, 256u) coroutines = new IndexedArray!(GrCoroutine, 256u)();
 
     __gshared bool isRunning = true;
 
@@ -67,11 +65,11 @@ class GrimoireVM {
 
 	this() {}
 
-	this(Bytecode bytecode) {
+	this(GrBytecode bytecode) {
 		load(bytecode);
 	}
 
-	void load(Bytecode bytecode) {
+	void load(GrBytecode bytecode) {
 		iconsts = bytecode.iconsts;
 		fconsts = bytecode.fconsts;
 		sconsts = bytecode.sconsts;
@@ -79,23 +77,23 @@ class GrimoireVM {
 	}
 
     void spawn() {
-		coroutines.push(new Coroutine(this));
+		coroutines.push(new GrCoroutine(this));
 	}
 
 	void process() {
 		coroutinesLabel: for(uint index = 0u; index < coroutines.length; index ++) {
-			Coroutine coro = coroutines.data[index];
+			GrCoroutine coro = coroutines.data[index];
 			while(isRunning) {
 				uint opcode = opcodes[coro.pc];
-				switch (getInstruction(opcode)) with(Opcode) {
+				switch (grBytecode_getOpcode(opcode)) with(GrOpcode) {
 				case Task:
-					Coroutine newCoro = new Coroutine(this);
-					newCoro.pc = getValue(opcode);
+					GrCoroutine newCoro = new GrCoroutine(this);
+					newCoro.pc = grBytecode_getUnsignedValue(opcode);
 					coroutines.push(newCoro);
 					coro.pc ++;
 					break;
 				case AnonymousTask:
-					Coroutine newCoro = new Coroutine(this);
+					GrCoroutine newCoro = new GrCoroutine(this);
 					newCoro.pc = coro.istack[$ - 1];
 					coro.istack.length --;
 					coroutines.push(newCoro);
@@ -108,51 +106,51 @@ class GrimoireVM {
 					coro.pc ++;
 					continue coroutinesLabel;
 				case PopStack_Int:
-					coro.istack.length -= getValue(opcode);
+					coro.istack.length -= grBytecode_getUnsignedValue(opcode);
 					coro.pc ++;
 					break;
 				case PopStack_Float:
-					coro.fstack.length -= getValue(opcode);
+					coro.fstack.length -= grBytecode_getUnsignedValue(opcode);
 					coro.pc ++;
 					break;
 				case PopStack_String:
-					coro.sstack.length -= getValue(opcode);
+					coro.sstack.length -= grBytecode_getUnsignedValue(opcode);
 					coro.pc ++;
 					break;
                 case PopStack_Array:
-					coro.nstack.length -= getValue(opcode);
+					coro.nstack.length -= grBytecode_getUnsignedValue(opcode);
 					coro.pc ++;
 					break;
 				case PopStack_Any:
-					coro.astack.length -= getValue(opcode);
+					coro.astack.length -= grBytecode_getUnsignedValue(opcode);
 					coro.pc ++;
 					break;
 				case PopStack_Object:
-					coro.ostack.length -= getValue(opcode);
+					coro.ostack.length -= grBytecode_getUnsignedValue(opcode);
 					coro.pc ++;
 					break;
 				case LocalStore_Int:
-					coro.ivalues[coro.valuesPos + getValue(opcode)] = coro.istack[$ - 1];
+					coro.ivalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)] = coro.istack[$ - 1];
                     coro.istack.length --;	
 					coro.pc ++;
 					break;
 				case LocalStore_Float:
-					coro.fvalues[coro.valuesPos + getValue(opcode)] = coro.fstack[$ - 1];
+					coro.fvalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)] = coro.fstack[$ - 1];
                     coro.fstack.length --;	
 					coro.pc ++;
 					break;
 				case LocalStore_String:
-					coro.svalues[coro.valuesPos + getValue(opcode)] = coro.sstack[$ - 1];		
+					coro.svalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)] = coro.sstack[$ - 1];		
                     coro.sstack.length --;	
 					coro.pc ++;
 					break;
                 case LocalStore_Array:
-					coro.nvalues[coro.valuesPos + getValue(opcode)] = coro.nstack[$ - 1];		
+					coro.nvalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)] = coro.nstack[$ - 1];		
                     coro.nstack.length --;	
 					coro.pc ++;
 					break;
 				case LocalStore_Any:
-					coro.avalues[coro.valuesPos + getValue(opcode)] = coro.astack[$ - 1];
+					coro.avalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)] = coro.astack[$ - 1];
                     coro.astack.length --;	
 					coro.pc ++;
 					break;
@@ -162,28 +160,28 @@ class GrimoireVM {
                     coro.pc ++;
                     break;
 				case LocalStore_Object:
-					coro.ovalues[coro.valuesPos + getValue(opcode)] = coro.ostack[$ - 1];
+					coro.ovalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)] = coro.ostack[$ - 1];
                     coro.ostack.length --;	
 					coro.pc ++;
 					break;
                 case LocalStore2_Int:
-					coro.ivalues[coro.valuesPos + getValue(opcode)] = coro.istack[$ - 1];
+					coro.ivalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)] = coro.istack[$ - 1];
 					coro.pc ++;
 					break;
 				case LocalStore2_Float:
-					coro.fvalues[coro.valuesPos + getValue(opcode)] = coro.fstack[$ - 1];
+					coro.fvalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)] = coro.fstack[$ - 1];
 					coro.pc ++;
 					break;
 				case LocalStore2_String:
-					coro.svalues[coro.valuesPos + getValue(opcode)] = coro.sstack[$ - 1];		
+					coro.svalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)] = coro.sstack[$ - 1];		
 					coro.pc ++;
 					break;
                 case LocalStore2_Array:
-					coro.nvalues[coro.valuesPos + getValue(opcode)] = coro.nstack[$ - 1];		
+					coro.nvalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)] = coro.nstack[$ - 1];		
 					coro.pc ++;
 					break;
 				case LocalStore2_Any:
-					coro.avalues[coro.valuesPos + getValue(opcode)] = coro.astack[$ - 1];
+					coro.avalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)] = coro.astack[$ - 1];
 					coro.pc ++;
 					break;
                 case LocalStore2_Ref:
@@ -192,92 +190,92 @@ class GrimoireVM {
                     coro.pc ++;
                     break;
 				case LocalStore2_Object:
-					coro.ovalues[coro.valuesPos + getValue(opcode)] = coro.ostack[$ - 1];
+					coro.ovalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)] = coro.ostack[$ - 1];
 					coro.pc ++;
 					break;
 				case LocalLoad_Int:
-					coro.istack ~= coro.ivalues[coro.valuesPos + getValue(opcode)];
+					coro.istack ~= coro.ivalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)];
 					coro.pc ++;
 					break;
 				case LocalLoad_Float:
-					coro.fstack ~= coro.fvalues[coro.valuesPos + getValue(opcode)];
+					coro.fstack ~= coro.fvalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)];
 					coro.pc ++;
 					break;
 				case LocalLoad_String:
-					coro.sstack ~= coro.svalues[coro.valuesPos + getValue(opcode)];
+					coro.sstack ~= coro.svalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)];
 					coro.pc ++;
 					break;
                 case LocalLoad_Array:
-					coro.nstack ~= coro.nvalues[coro.valuesPos + getValue(opcode)];
+					coro.nstack ~= coro.nvalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)];
 					coro.pc ++;
 					break;
 				case LocalLoad_Any:
-					coro.astack ~= coro.avalues[coro.valuesPos + getValue(opcode)];
+					coro.astack ~= coro.avalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)];
 					coro.pc ++;
 					break;
                 case LocalLoad_Ref:
-                    AnyValue value;
-                    value.setRefArray(&coro.nvalues[coro.valuesPos + getValue(opcode)]);
+                    GrDynamicValue value;
+                    value.setRefArray(&coro.nvalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)]);
                     coro.astack ~= value;					
 					coro.pc ++;
 					break;
 				case LocalLoad_Object:
-					coro.ostack ~= coro.ovalues[coro.valuesPos + getValue(opcode)];
+					coro.ostack ~= coro.ovalues[coro.valuesPos + grBytecode_getUnsignedValue(opcode)];
 					coro.pc ++;
 					break;
 				case Const_Int:
-					coro.istack ~= iconsts[getValue(opcode)];
+					coro.istack ~= iconsts[grBytecode_getUnsignedValue(opcode)];
 					coro.pc ++;
 					break;
 				case Const_Float:
-					coro.fstack ~= fconsts[getValue(opcode)];
+					coro.fstack ~= fconsts[grBytecode_getUnsignedValue(opcode)];
 					coro.pc ++;
 					break;
 				case Const_Bool:
-					coro.istack ~= getValue(opcode);
+					coro.istack ~= grBytecode_getUnsignedValue(opcode);
 					coro.pc ++;
 					break;
 				case Const_String:
-					coro.sstack ~= sconsts[getValue(opcode)];
+					coro.sstack ~= sconsts[grBytecode_getUnsignedValue(opcode)];
 					coro.pc ++;
 					break;
 				case GlobalPush_Int:
-					uint nbParams = getValue(opcode);
+					uint nbParams = grBytecode_getUnsignedValue(opcode);
 					for(uint i = 0u; i < nbParams; i++)
 						iglobalStack ~= coro.istack[($ - nbParams) + i];
 					coro.istack.length -= nbParams;
 					coro.pc ++;
 					break;
 				case GlobalPush_Float:
-					uint nbParams = getValue(opcode);
+					uint nbParams = grBytecode_getUnsignedValue(opcode);
 					for(uint i = 0u; i < nbParams; i++)
 						fglobalStack ~= coro.fstack[($ - nbParams) + i];
 					coro.fstack.length -= nbParams;
 					coro.pc ++;
 					break;
 				case GlobalPush_String:
-					uint nbParams = getValue(opcode);
+					uint nbParams = grBytecode_getUnsignedValue(opcode);
 					for(uint i = 0u; i < nbParams; i++)
 						sglobalStack ~= coro.sstack[($ - nbParams) + i];
 					coro.sstack.length -= nbParams;
 					coro.pc ++;
 					break;
                 case GlobalPush_Array:
-					uint nbParams = getValue(opcode);
+					uint nbParams = grBytecode_getUnsignedValue(opcode);
 					for(uint i = 0u; i < nbParams; i++)
 						nglobalStack ~= coro.nstack[($ - nbParams) + i];
 					coro.nstack.length -= nbParams;
 					coro.pc ++;
 					break;
 				case GlobalPush_Any:
-					uint nbParams = getValue(opcode);
+					uint nbParams = grBytecode_getUnsignedValue(opcode);
 					for(uint i = 0u; i < nbParams; i++)
 						aglobalStack ~= coro.astack[($ - nbParams) + i];
 					coro.astack.length -= nbParams;
 					coro.pc ++;
 					break;
 				case GlobalPush_Object:
-					uint nbParams = getValue(opcode);
+					uint nbParams = grBytecode_getUnsignedValue(opcode);
 					for(uint i = 0u; i < nbParams; i++)
 						oglobalStack ~= coro.ostack[($ - nbParams) + i];
 					coro.ostack.length -= nbParams;
@@ -314,35 +312,35 @@ class GrimoireVM {
 					coro.pc ++;
 					break;
                 case ConvertBoolToAny:
-					AnyValue value;
+					GrDynamicValue value;
 					value.setBool(coro.istack[$ - 1]);
 					coro.istack.length --;
 					coro.astack ~= value;
 					coro.pc ++;
 					break;
 				case ConvertIntToAny:
-					AnyValue value;
+					GrDynamicValue value;
 					value.setInteger(coro.istack[$ - 1]);
 					coro.istack.length --;
 					coro.astack ~= value;
 					coro.pc ++;
 					break;
 				case ConvertFloatToAny:
-					AnyValue value;
+					GrDynamicValue value;
 					value.setFloat(coro.fstack[$ - 1]);
 					coro.fstack.length --;
 					coro.astack ~= value;
 					coro.pc ++;
 					break;
 				case ConvertStringToAny:
-					AnyValue value;
+					GrDynamicValue value;
 					value.setString(coro.sstack[$ - 1]);
 					coro.sstack.length --;
 					coro.astack ~= value;
 					coro.pc ++;
 					break;
                 case ConvertArrayToAny:
-					AnyValue value;
+					GrDynamicValue value;
 					value.setArray(coro.nstack[$ - 1]);
 					coro.nstack.length --;
 					coro.astack ~= value;
@@ -597,7 +595,7 @@ class GrimoireVM {
 					coro.valuesPos -= coro.callStack[coro.stackPos];
 					break;
 				case LocalStack:
-                    auto stackSize = getValue(opcode);
+                    auto stackSize = grBytecode_getUnsignedValue(opcode);
 					coro.callStack[coro.stackPos] = stackSize;
                     stackSize = coro.valuesPos + stackSize;
                     coro.ivalues.length = stackSize;
@@ -612,7 +610,7 @@ class GrimoireVM {
 					coro.valuesPos += coro.callStack[coro.stackPos];
 					coro.callStack[coro.stackPos + 1u] = coro.pc + 1u;
 					coro.stackPos += 2;
-					coro.pc = getValue(opcode);
+					coro.pc = grBytecode_getUnsignedValue(opcode);
 					break;
 				case AnonymousCall:
 					coro.valuesPos += coro.callStack[coro.stackPos];
@@ -622,29 +620,29 @@ class GrimoireVM {
 					coro.istack.length --;
 					break;
 				case PrimitiveCall:
-					primitives[getValue(opcode)].callback(coro);
+					primitives[grBytecode_getUnsignedValue(opcode)].callback(coro);
 					coro.pc ++;
 					break;
 				case Jump:
-					coro.pc += getSignedValue(opcode);
+					coro.pc += grBytecode_getSignedValue(opcode);
 					break;
 				case JumpEqual:
 					if(coro.istack[$ - 1])
 						coro.pc ++;
 					else
-						coro.pc += getSignedValue(opcode);
+						coro.pc += grBytecode_getSignedValue(opcode);
 					coro.istack.length --;
 					break;
 				case JumpNotEqual:
 					if(coro.istack[$ - 1])
-						coro.pc += getSignedValue(opcode);
+						coro.pc += grBytecode_getSignedValue(opcode);
 					else
 						coro.pc ++;
 					coro.istack.length --;
 					break;
                 case ArrayBuild:
-                    AnyValue[] ary;
-                    const auto arySize = getValue(opcode);
+                    GrDynamicValue[] ary;
+                    const auto arySize = grBytecode_getUnsignedValue(opcode);
                     for(int i = arySize; i > 0; i --) {
                         ary ~= coro.astack[$ - i];
                     }

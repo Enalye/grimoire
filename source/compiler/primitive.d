@@ -22,44 +22,41 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module script.primitive;
+module compiler.primitive;
 
 import std.exception;
 import std.conv;
 import std.stdio;
 
-import script.parser;
-import script.vm;
-import script.coroutine;
-import script.any;
-import script.array;
-import script.type;
-import script.mangle;
+import runtime.all;
+import compiler.parser;
+import compiler.type;
+import compiler.mangle;
 
 
-Primitive[] primitives;
+GrPrimitive[] primitives;
 
-class Primitive {
-	void function(Coroutine) callback;
-	VarType[] signature;
-	VarType returnType;
+class GrPrimitive {
+	void function(GrCoroutine) callback;
+	GrType[] signature;
+	GrType returnType;
 	dstring name, mangledName;
 	uint index;
 }
 
-void bindPrimitive(void function(Coroutine) callback, dstring name, VarType retType, VarType[] signature) {
-	Primitive primitive = new Primitive;
+void grType_addPrimitive(void function(GrCoroutine) callback, dstring name, GrType retType, GrType[] signature) {
+	GrPrimitive primitive = new GrPrimitive;
 	primitive.callback = callback;
 	primitive.signature = signature;
 	primitive.returnType = retType;
 	primitive.name = name;
-	primitive.mangledName = mangleName(name, signature);
+	primitive.mangledName = grType_mangleNamedFunction(name, signature);
 	primitive.index = cast(uint)primitives.length;
 	primitives ~= primitive;
 }
 
-void bindOperator(void function(Coroutine) callback, dstring name, VarType retType, VarType[] signature) {
-	bindPrimitive(callback, "@op_" ~ name, retType, signature);
+void grType_addOperator(void function(GrCoroutine) callback, dstring name, GrType retType, GrType[] signature) {
+	grType_addPrimitive(callback, "@op_" ~ name, retType, signature);
 }
 
 bool isPrimitiveDeclared(dstring mangledName) {
@@ -70,7 +67,7 @@ bool isPrimitiveDeclared(dstring mangledName) {
 	return false;
 }
 
-Primitive getPrimitive(dstring mangledName) {
+GrPrimitive grType_getPrimitive(dstring mangledName) {
 	foreach(primitive; primitives) {
 		if(primitive.mangledName == mangledName)
 			return primitive;

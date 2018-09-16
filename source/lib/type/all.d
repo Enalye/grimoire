@@ -22,11 +22,10 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module grimoire;
+module lib.type.all;
 
-public {
-    import assembly.all;
-    import compiler.all;
-    import runtime.all;
-    import lib.all;
+import lib.type.conv;
+
+void grLib_std_type_load() {
+    grLib_std_type_conv_load();
 }

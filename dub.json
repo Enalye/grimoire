@@ -8,8 +8,8 @@
 	],
 	"targetName": "grimoire",
 	"targetType": "library",
-	"targetPath": "lib",
-	"workingDirectory": "lib",
+	"targetPath": "bin",
+	"workingDirectory": "bin",
 
 	"subPackages": [
 		"./test/"

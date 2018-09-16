@@ -5,13 +5,12 @@ import grimoire;
 
 void main() {
 	try {
-		loadStandardLibrary();
         auto startTime = MonoTime.currTime();
-        auto bytecode = compileFile("test.grimoire");
+        auto bytecode = grCompiler_compileFile("test.grimoire");
         auto compilationTime = MonoTime.currTime() - startTime;
 
-        dumpBytecode(bytecode);
-        GrimoireVM vm = new GrimoireVM;
+        writeln(grBytecode_dump(bytecode));
+        GrVM vm = new GrVM;
         vm.load(bytecode);
         vm.spawn();
         

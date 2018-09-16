@@ -22,35 +22,8 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module script.coroutine;
+module lib.string.all;
 
-import script.vm;
-import script.any;
-import script.array;
-
-class Coroutine {
-    this(GrimoireVM parentVm) { vm = parentVm; }
-
-    GrimoireVM vm;
-
-    //Local variables
-    int[] ivalues;
-    float[] fvalues;
-    dstring[] svalues;
-    AnyValue[][] nvalues;
-    AnyValue[] avalues;
-    void*[] ovalues;
-
-    //Stack
-    uint[64] callStack;
-    int[] istack;
-    float[] fstack;
-    dstring[] sstack;
-    AnyValue[][] nstack;
-    AnyValue[] astack;
-    void*[] ostack;
-
-    uint pc,
-        valuesPos, //Local variables: Access with ivalues[valuesPos + variableIndex]
-        stackPos;	
+void grLib_std_string_load() {
+    
 }

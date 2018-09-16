@@ -22,18 +22,18 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module script.any;
+module runtime.dynamic;
 
 import std.conv: to;
 
-struct AnyValue {
+struct GrDynamicValue {
     private union {
         int ivalue;
         float fvalue;
         dstring svalue;
-        AnyValue[] nvalue;
-        AnyValue* refindex;
-        AnyValue[]* refvalue;
+        GrDynamicValue[] nvalue;
+        GrDynamicValue* refindex;
+        GrDynamicValue[]* refvalue;
     }
 
     enum Type {
@@ -62,12 +62,12 @@ struct AnyValue {
         svalue = value;
     }
 
-    void setArray(AnyValue[] value) {
+    void setArray(GrDynamicValue[] value) {
         type = Type.ArrayType;
         nvalue = value;
     }
 
-    void setRefArray(AnyValue[]* value) {
+    void setRefArray(GrDynamicValue[]* value) {
         type = Type.RefArrayType;
         refvalue = value;
     }
@@ -93,7 +93,7 @@ struct AnyValue {
         }
     }
 
-    void setRef(AnyValue value) {
+    void setRef(GrDynamicValue value) {
         if(type != Type.RefIndex)
             throw new Exception("setRefArrayIndex: Any type error");
         *refindex = value;
@@ -183,7 +183,7 @@ struct AnyValue {
         }
     }
 
-    AnyValue[] getArray() {
+    GrDynamicValue[] getArray() {
         switch(type) with(Type) {
         case BoolType:
             return [];
@@ -204,7 +204,7 @@ struct AnyValue {
         }
     }
     
-    AnyValue opOpAssign(string op)(AnyValue v) {
+    GrDynamicValue opOpAssign(string op)(GrDynamicValue v) {
         static if(op == "+" || op == "-" || op == "*" || op == "/" || op == "%") {
             switch(type) with(Type) {
             case BoolType:
@@ -271,7 +271,7 @@ struct AnyValue {
         return this;
     }
 
-    AnyValue opUnaryRight(string op)() {	
+    GrDynamicValue opUnaryRight(string op)() {	
         switch(type) with(Type) {
         case IntType:
             mixin("ivalue" ~ op ~ ";");
@@ -287,7 +287,7 @@ struct AnyValue {
         return this;
     }
 
-    AnyValue opUnary(string op)() {	
+    GrDynamicValue opUnary(string op)() {	
         switch(type) with(Type) {
         case IntType:
             mixin("ivalue = " ~ op ~ " ivalue;");

@@ -22,13 +22,12 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module script.dump;
+module assembly.dump;
 
-import std.stdio;
 import std.conv: to;
 import std.string: leftJustify;
 
-import script.bytecode;
+import assembly.bytecode;
 
 private string[] instructions = [
     "kill", "yield", "task", "anon_task",
@@ -69,37 +68,40 @@ private string[] instructions = [
     "newarray", "length.n", "index.n", "index.r"
 ];
 
-void dumpBytecode(Bytecode bytecode) {
+string grBytecode_dump(GrBytecode bytecode) {
     /*writeln("\n----- VM DUMP ------");
     writeln("iconsts: ", bytecode.iconsts);
     writeln("fconsts: ", bytecode.fconsts);
     writeln("sconsts: ", bytecode.sconsts);
     writeln("\nOpcodes:");*/
 
+    string result;
     uint i;
     foreach(uint opcode; bytecode.opcodes) {
-        Opcode op = cast(Opcode)getInstruction(opcode);
+        GrOpcode op = cast(GrOpcode)grBytecode_getOpcode(opcode);
 
         string line = leftJustify("[" ~ to!string(i) ~ "]", 10) ~ leftJustify(instructions[op], 15);
-        if((op == Opcode.Task) ||
-            (op >= Opcode.PopStack_Int && op <= Opcode.PopStack_Object) ||
-            (op >= Opcode.LocalStore_Int && op <= Opcode.LocalLoad_Object) ||
-            (op >= Opcode.GlobalPush_Int && op <= Opcode.GlobalPush_Object) ||
-            (op >= Opcode.LocalStack && op <= Opcode.PrimitiveCall) ||
-            (op == Opcode.ArrayBuild)
+        if((op == GrOpcode.Task) ||
+            (op >= GrOpcode.PopStack_Int && op <= GrOpcode.PopStack_Object) ||
+            (op >= GrOpcode.LocalStore_Int && op <= GrOpcode.LocalLoad_Object) ||
+            (op >= GrOpcode.GlobalPush_Int && op <= GrOpcode.GlobalPush_Object) ||
+            (op >= GrOpcode.LocalStack && op <= GrOpcode.PrimitiveCall) ||
+            (op == GrOpcode.ArrayBuild)
             )
-            line ~= to!string(getValue(opcode));
-        else if(op == Opcode.Const_Int)
-            line ~= to!string(bytecode.iconsts[getValue(opcode)]);
-        else if(op == Opcode.Const_Float)
-            line ~= to!string(bytecode.fconsts[getValue(opcode)]);
-        else if(op == Opcode.Const_Bool)
-            line ~= (bytecode.iconsts[getValue(opcode)] ? "true" : "false");
-        else if(op == Opcode.Const_String)
-            line ~= "\"" ~ to!string(bytecode.sconsts[getValue(opcode)]) ~ "\"";
-        if(op >= Opcode.Jump && op <= Opcode.JumpNotEqual)
-            line ~= to!string(i + getSignedValue(opcode));
-        writeln(line);
+            line ~= to!string(grBytecode_getUnsignedValue(opcode));
+        else if(op == GrOpcode.Const_Int)
+            line ~= to!string(bytecode.iconsts[grBytecode_getUnsignedValue(opcode)]);
+        else if(op == GrOpcode.Const_Float)
+            line ~= to!string(bytecode.fconsts[grBytecode_getUnsignedValue(opcode)]);
+        else if(op == GrOpcode.Const_Bool)
+            line ~= (bytecode.iconsts[grBytecode_getUnsignedValue(opcode)] ? "true" : "false");
+        else if(op == GrOpcode.Const_String)
+            line ~= "\"" ~ to!string(bytecode.sconsts[grBytecode_getUnsignedValue(opcode)]) ~ "\"";
+        if(op >= GrOpcode.Jump && op <= GrOpcode.JumpNotEqual)
+            line ~= to!string(i + grBytecode_getSignedValue(opcode));
+        
         i++;
+        result ~= line ~ "\n";
     }
+    return result;
 }

@@ -22,11 +22,35 @@ it freely, subject to the following restrictions:
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-module grimoire;
+module runtime.coroutine;
 
-public {
-    import assembly.all;
-    import compiler.all;
-    import runtime.all;
-    import lib.all;
+import runtime.vm;
+import runtime.dynamic;
+import runtime.array;
+
+class GrCoroutine {
+    this(GrVM parentVm) { vm = parentVm; }
+
+    GrVM vm;
+
+    //Local variables
+    int[] ivalues;
+    float[] fvalues;
+    dstring[] svalues;
+    GrDynamicValue[][] nvalues;
+    GrDynamicValue[] avalues;
+    void*[] ovalues;
+
+    //Stack
+    uint[64] callStack;
+    int[] istack;
+    float[] fstack;
+    dstring[] sstack;
+    GrDynamicValue[][] nstack;
+    GrDynamicValue[] astack;
+    void*[] ostack;
+
+    uint pc,
+        valuesPos, //Local variables: Access with ivalues[valuesPos + variableIndex]
+        stackPos;	
 }
