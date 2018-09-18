@@ -1,25 +1,9 @@
 /**
-Grimoire
-Copyright (c) 2017 Enalye
+    Mangling functions for type signatures.
 
-This software is provided 'as-is', without any express or implied warranty.
-In no event will the authors be held liable for any damages arising
-from the use of this software.
-
-Permission is granted to anyone to use this software for any purpose,
-including commercial applications, and to alter it and redistribute
-it freely, subject to the following restrictions:
-
-	1. The origin of this software must not be misrepresented;
-	   you must not claim that you wrote the original software.
-	   If you use this software in a product, an acknowledgment
-	   in the product documentation would be appreciated but
-	   is not required.
-
-	2. Altered source versions must be plainly marked as such,
-	   and must not be misrepresented as being the original software.
-
-	3. This notice may not be removed or altered from any source distribution.
+    Copyright: (c) Enalye 2018
+    License: Zlib
+    Authors: Enalye
 */
 
 module compiler.mangle;
@@ -28,8 +12,20 @@ import std.conv: to;
 
 import compiler.type;
 
-dstring grType_mangleNamedFunction(dstring name, GrType[] signature) {
-	dstring mangledName = name;
+/**
+    Mangle a signature of types.
+
+    Example:
+    ---
+    func(int i, string s, func(bool, float)) float {}
+    ---
+    Will be mangled as `$i$s$f($b$f)$v`
+
+    The return type is not conserved in the mangled form as its not part of its signature.
+    But function. passed as parameters have theirs.
+*/
+dstring grType_mangleFunction(GrType[] signature) {
+	dstring mangledName;
 	foreach(type; signature) {
 		mangledName ~= "$";
 		final switch(type.baseType) with(GrBaseType) {
@@ -75,13 +71,35 @@ dstring grType_mangleNamedFunction(dstring name, GrType[] signature) {
 	return mangledName;
 }
 
-GrType functionToVarType(GrFunction func) {
+/**
+    Mangle a named function.
+
+    Example:
+    ---
+    func test(int i, string s, func(bool, float)) float {}
+    ---
+    Will be mangled as `test$i$s$f($b$f)$v`
+
+    The return type is not conserved in the mangled form as its not part of its signature.
+    But function. passed as parameters have theirs.
+*/
+dstring grType_mangleNamedFunction(dstring name, GrType[] signature) {
+	return name ~ grType_mangleFunction(signature);
+}
+
+/**
+    Get the type of the function.
+*/
+GrType grType_getFunctionAsType(GrFunction func) {
     GrType type = func.isTask ? GrBaseType.TaskType : GrBaseType.FunctionType;
     type.mangledType = grType_mangleNamedFunction("", func.signature);
     type.mangledReturnType = grType_mangleNamedFunction("", [func.returnType]);
     return type;
 }
 
+/**
+    Reverse the mangling operation for a function passed as a parameter.
+*/
 dstring grType_unmangleSubFunction(dstring mangledSignature, ref int i) {
     dstring subString;
     int blockCount = 1;
@@ -108,6 +126,9 @@ dstring grType_unmangleSubFunction(dstring mangledSignature, ref int i) {
     throw new Exception("Invalid mangling format");
 }
 
+/**
+    Reverse the mangling operation for a single type.
+*/
 GrType grType_unmangle(dstring mangledSignature) {
     GrType currentType = GrBaseType.VoidType;
 
@@ -185,6 +206,9 @@ GrType grType_unmangle(dstring mangledSignature) {
     return currentType;
 }
 
+/**
+    Reverse the mangling operation for a function signature (not named).
+*/
 GrType[] grType_unmangleSignature(dstring mangledSignature) {
     GrType[] unmangledSignature;
 
@@ -265,6 +289,9 @@ GrType[] grType_unmangleSignature(dstring mangledSignature) {
     return unmangledSignature;
 }
 
+/**
+    Convert a type into a pretty format for display.
+*/
 string grType_getDisplay(GrType variableType) {
     final switch(variableType.baseType) with(GrBaseType) {
     case VoidType:

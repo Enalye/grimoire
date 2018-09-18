@@ -1,3 +1,11 @@
+/**
+    Test application.
+
+    Copyright: (c) Enalye 2018
+    License: Zlib
+    Authors: Enalye
+*/
+
 import std.stdio: writeln;
 import std.datetime;
 

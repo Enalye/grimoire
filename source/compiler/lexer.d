@@ -1,25 +1,9 @@
 /**
-Grimoire
-Copyright (c) 2017 Enalye
+    Scan a file and produce a list of tokens.
 
-This software is provided 'as-is', without any express or implied warranty.
-In no event will the authors be held liable for any damages arising
-from the use of this software.
-
-Permission is granted to anyone to use this software for any purpose,
-including commercial applications, and to alter it and redistribute
-it freely, subject to the following restrictions:
-
-	1. The origin of this software must not be misrepresented;
-	   you must not claim that you wrote the original software.
-	   If you use this software in a product, an acknowledgment
-	   in the product documentation would be appreciated but
-	   is not required.
-
-	2. Altered source versions must be plainly marked as such,
-	   and must not be misrepresented as being the original software.
-
-	3. This notice may not be removed or altered from any source distribution.
+    Copyright: (c) Enalye 2018
+    License: Zlib
+    Authors: Enalye
 */
 
 module compiler.lexer;
@@ -32,6 +16,9 @@ import std.math;
 import std.file;
 import std.algorithm: canFind;
 
+/**
+    Kinds of valid token.
+*/
 enum GrLexemeType {
 	LeftBracket, RightBracket, LeftParenthesis, RightParenthesis, LeftCurlyBrace, RightCurlyBrace,
 	Period, Semicolon, Colon, Comma, Pointer, As, Is,
@@ -48,34 +35,62 @@ enum GrLexemeType {
 	If, Else, While, Do, For, Loop, Return, Yield, Break, Continue
 }
 
+/**
+    Describe the smallest element found in a source file.
+*/
 struct GrLexeme {
+    /// Default.
 	this(GrLexer _lexer) {
 		line = _lexer.line;
 		column = _lexer.current - _lexer.positionOfLine;
 		lexer = _lexer;
 	}
 
+    /// Parent lexer.
 	GrLexer lexer;
 
+    /// Position information in case of errors.
 	uint line, column, textLength = 1;
 
 	GrLexemeType type;
 
+    /// Whether the lexeme is a constant value.
 	bool isLiteral;
+
+    /// Whether the lexeme is an operator.
 	bool isOperator;
+
+    /// Is this a reserved grimoire word ?
 	bool isKeyword;
+
+    /// Only describe first class type such as `int`, `string` or `func`.
+    /// Structure or other custom type are not.
 	bool isType;
 
+    /// Integral value of the constant.
+    /// isLiteral will be true and type set to Integer.
 	int ivalue;
+
+    /// Floating point value of the constant.
+    /// isLiteral will be true and type set to Float.
 	float fvalue;
+
+    /// Boolean value of the constant.
+    /// isLiteral will be true and type set to Boolean.
 	bool bvalue;
+
+    /// Can either describe a literal value like `"myString"` or an identifier.
 	dstring svalue;
 
+    /// Returns the entire line from where the token is located.
 	dstring getLine() {
 		return lexer.lines[line];
 	}
 }
 
+/**
+    The lexer scans the entire file and all the imported files it references.
+*/
 class GrLexer {
 	dstring[] filesToImport, filesImported;
 	dstring[] lines;

@@ -1,25 +1,9 @@
 /**
-Grimoire
-Copyright (c) 2017 Enalye
+    Type definitions.
 
-This software is provided 'as-is', without any express or implied warranty.
-In no event will the authors be held liable for any damages arising
-from the use of this software.
-
-Permission is granted to anyone to use this software for any purpose,
-including commercial applications, and to alter it and redistribute
-it freely, subject to the following restrictions:
-
-	1. The origin of this software must not be misrepresented;
-	   you must not claim that you wrote the original software.
-	   If you use this software in a product, an acknowledgment
-	   in the product documentation would be appreciated but
-	   is not required.
-
-	2. Altered source versions must be plainly marked as such,
-	   and must not be misrepresented as being the original software.
-
-	3. This notice may not be removed or altered from any source distribution.
+    Copyright: (c) Enalye 2018
+    License: Zlib
+    Authors: Enalye
 */
 
 module compiler.type;
@@ -98,13 +82,13 @@ GrType grType_addStructure(dstring name, dstring[] fields, GrType[] signature) {
     return stType;
 }
 
-bool grType_isStruct(dstring name) {
+bool grType_isStructure(dstring name) {
     if(name in structures)
         return true;
     return false;
 }
 
-GrStructure grType_getStruct(dstring name) {
+GrStructure grType_getStructure(dstring name) {
     auto structure = (name in structures);
     if(structure is null)
         throw new Exception("Undefined struct \'" ~ to!string(name) ~ "\'");
@@ -115,7 +99,7 @@ void grType_resolveStructSignature() {
     foreach(structure; structures) {
         for(int i; i < structure.signature.length; i ++) {
             if(structure.signature[i].baseType == GrBaseType.VoidType) {
-                if(grType_isStruct(structure.signature[i].mangledType)) {
+                if(grType_isStructure(structure.signature[i].mangledType)) {
                     structure.signature[i].baseType = GrBaseType.StructType;
                 }
                 else

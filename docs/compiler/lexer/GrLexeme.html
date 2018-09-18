@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1"/>
+		<title>Struct GrLexeme</title>
+		<link rel="stylesheet" href="../../css/style.min.css"/>
+		<script type="text/javascript" src="../../js/script.min.js"></script>
+	</head>
+	<body onload="setupDdox();">
+		<header></header>
+		<nav id="main-nav">
+			<div>
+				<noscript>
+					<p style="color: red">The search functionality needs JavaScript enabled</p>
+				</noscript>
+				<div id="symbolSearchPane" style="display: none">
+					<form action="#" method="GET">
+						<input id="symbolSearch" type="text" name="q" placeholder="Search for symbols" autocomplete="off" onchange="performSymbolSearch(24);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();" autofocus/>
+					</form>
+					<ul id="symbolSearchResults" class="symbolList" style="display: none"></ul><script type="application/javascript" src="../../symbols.js"></script><script type="application/javascript">var symbolSearchRootDir = "../../";
+document.getElementById('symbolSearchPane').style.display = 'block';</script>
+				</div>
+				<ul class="tree-view">
+					<li class="tree-view collapsed">
+						<div class="package ">assembly
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="../../assembly/all.html">all</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../assembly/bytecode.html">bytecode</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../assembly/dump.html">dump</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view ">
+						<div class="package ">compiler
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="../../compiler/all.html">all</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../compiler/compiler.html">compiler</a>
+						</div>
+					</li>
+					<li>
+						<div class="module selected">
+							<a href="../../compiler/lexer.html">lexer</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../compiler/mangle.html">mangle</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../compiler/parser.html">parser</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../compiler/primitive.html">primitive</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../compiler/type.html">type</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">core
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="../../core/all.html">all</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../core/color.html">color</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../core/indexedarray.html">indexedarray</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../core/json.html">json</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../core/ringbuffer.html">ringbuffer</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../core/singleton.html">singleton</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../core/stream.html">stream</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../core/tween.html">tween</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../core/util.html">util</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../core/vec2.html">vec2</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../core/vec3.html">vec3</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../core/vec4.html">vec4</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">lib
+						</div>
+				<ul class="tree-view">
+					<li class="tree-view collapsed">
+						<div class="package ">array
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="../../lib/array/all.html">all</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">ffi
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="../../lib/ffi/all.html">all</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">io
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="../../lib/io/all.html">all</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../lib/io/print.html">print</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">math
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="../../lib/math/all.html">all</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../lib/math/vec2.html">vec2</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">string
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="../../lib/string/all.html">all</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">type
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="../../lib/type/all.html">all</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../lib/type/conv.html">conv</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../lib/all.html">all</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../lib/api.html">api</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">runtime
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="../../runtime/all.html">all</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../runtime/array.html">array</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../runtime/coroutine.html">coroutine</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../runtime/dynamic.html">dynamic</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../runtime/vm.html">vm</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../grimoire.html">grimoire</a>
+						</div>
+					</li>
+				</ul>
+			</div>
+			<p id="main-nav-footer">
+				Built with
+				<a href="https://github.com/MartinNowak/scod">scod</a>
+			</p>
+		</nav>
+		<div id="main-contents">
+			<div>
+				<h1>Struct GrLexeme</h1><p>Describe the smallest element found in a source file.
+</p>
+				<div class="prototype">
+					<code class="lang-d">
+						<div class="single-prototype">
+				<span class="kwd">struct</span> <span class="typ">GrLexeme</span>
+				<span class="pun">;</span>
+						</div>
+					</code>
+				</div>
+				
+				<section><h2>Constructors</h2>
+					<table>
+						<col class="caption"/>
+						<tr>
+							<th>Name</th><th>Description</th>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../compiler/lexer/GrLexeme.this.html" class="public">
+									<code>this</code>
+								</a>
+							</td>
+							<td>Default.
+</td>
+						</tr>
+					</table>
+				</section>
+				<section><h2>Fields</h2>
+					<table>
+						<col class="caption"/>
+						<tr>
+							<th>Name</th><th>Type</th><th>Description</th>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../compiler/lexer/GrLexeme.bvalue.html" class="public"><code>bvalue</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">bool</span></code></td><td>Boolean value of the constant.
+isLiteral will be true and type set to Boolean.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../compiler/lexer/GrLexeme.column.html" class="public"><code>column</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">uint</span></code></td><td>Position information in case of errors.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../compiler/lexer/GrLexeme.fvalue.html" class="public"><code>fvalue</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">float</span></code></td><td>Floating point value of the constant.
+isLiteral will be true and type set to Float.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../compiler/lexer/GrLexeme.isKeyword.html" class="public"><code>isKeyword</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">bool</span></code></td><td>Is this a reserved grimoire word ?
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../compiler/lexer/GrLexeme.isLiteral.html" class="public"><code>isLiteral</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">bool</span></code></td><td>Whether the lexeme is a constant value.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../compiler/lexer/GrLexeme.isOperator.html" class="public"><code>isOperator</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">bool</span></code></td><td>Whether the lexeme is an operator.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../compiler/lexer/GrLexeme.isType.html" class="public"><code>isType</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">bool</span></code></td><td>Only describe first class type such as <code class="lang-d"><span class="typ">int</span></code>, <code class="lang-d"><span class="typ">string</span></code> or <code class="lang-d"><span class="pln">func</span></code>.
+Structure or other custom type are not.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../compiler/lexer/GrLexeme.ivalue.html" class="public"><code>ivalue</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">int</span></code></td><td>Integral value of the constant.
+isLiteral will be true and type set to Integer.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../compiler/lexer/GrLexeme.lexer.html" class="public"><code>lexer</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><a href="../../compiler/lexer/GrLexer.html"><span class="typ">GrLexer</span></a></code></td><td>Parent lexer.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../compiler/lexer/GrLexeme.line.html" class="public"><code>line</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">uint</span></code></td><td>Position information in case of errors.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../compiler/lexer/GrLexeme.svalue.html" class="public"><code>svalue</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="pln">dstring</span></code></td><td>Can either describe a literal value like <code class="lang-d"><span class="str">"myString"</span></code> or an identifier.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../compiler/lexer/GrLexeme.textLength.html" class="public"><code>textLength</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">uint</span></code></td><td>Position information in case of errors.
+</td>
+						</tr>
+					</table>
+				</section>
+				<section><h2>Methods</h2>
+					<table>
+						<col class="caption"/>
+						<tr>
+							<th>Name</th><th>Description</th>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../compiler/lexer/GrLexeme.getLine.html" class="public">
+									<code>getLine</code>
+								</a>
+							</td>
+							<td>Returns the entire line from where the token is located.
+</td>
+						</tr>
+					</table>
+				</section>
+				
+			</div>
+			<footer>
+				<div id="license-info">
+					<p>Enalye
+</p>
+
+					<p>(c) Enalye 2018
+</p>
+
+					<p>Zlib
+</p>
+
+				</div>
+			</footer>
+		</div>
+	</body>
+</html>

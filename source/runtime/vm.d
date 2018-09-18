@@ -1,25 +1,9 @@
 /**
-Grimoire
-Copyright (c) 2017 Enalye
+    Grimoire virtual machine.
 
-This software is provided 'as-is', without any express or implied warranty.
-In no event will the authors be held liable for any damages arising
-from the use of this software.
-
-Permission is granted to anyone to use this software for any purpose,
-including commercial applications, and to alter it and redistribute
-it freely, subject to the following restrictions:
-
-	1. The origin of this software must not be misrepresented;
-	   you must not claim that you wrote the original software.
-	   If you use this software in a product, an acknowledgment
-	   in the product documentation would be appreciated but
-	   is not required.
-
-	2. Altered source versions must be plainly marked as such,
-	   and must not be misrepresented as being the original software.
-
-	3. This notice may not be removed or altered from any source distribution.
+    Copyright: (c) Enalye 2018
+    License: Zlib
+    Authors: Enalye
 */
 
 module runtime.vm;
@@ -37,70 +21,81 @@ import runtime.coroutine;
 import runtime.dynamic;
 import runtime.array;
 
+/**Grimoire virtual machine*/
 class GrVM {
-	uint[] opcodes;
+    private {
+        uint[] _opcodes;
 
-	int[] iconsts;
-	float[] fconsts;
-	dstring[] sconsts;
+        int[] _iconsts;
+        float[] _fconsts;
+        dstring[] _sconsts;
 
-	int[] iglobals;
-	float[] fglobals;
-	dstring[] sglobals;
+        int[] _iglobals;
+        float[] _fglobals;
+        dstring[] _sglobals;
 
-	int[] iglobalStack;
-	float[] fglobalStack;
-	dstring[] sglobalStack;
-	GrDynamicValue[][] nglobalStack;
-	GrDynamicValue[] aglobalStack;
-	void*[] oglobalStack;
-
-	IndexedArray!(GrCoroutine, 256u) coroutines = new IndexedArray!(GrCoroutine, 256u)();
+        int[] _iglobalStack;
+        float[] _fglobalStack;
+        dstring[] _sglobalStack;
+        GrDynamicValue[][] _nglobalStack;
+        GrDynamicValue[] _aglobalStack;
+        void*[] _oglobalStack;
+	    IndexedArray!(GrCoroutine, 256u) _coroutines = new IndexedArray!(GrCoroutine, 256u)();
+    }
 
     __gshared bool isRunning = true;
 
     @property {
-        bool hasCoroutines() const { return coroutines.length > 0uL; }
+        /// Check if there is a coroutine currently running.
+        bool hasCoroutines() const { return _coroutines.length > 0uL; }
     }
 
+    /// Default.
 	this() {}
 
+    /// Load the bytecode.
 	this(GrBytecode bytecode) {
 		load(bytecode);
 	}
 
+    /// Load the bytecode.
 	void load(GrBytecode bytecode) {
-		iconsts = bytecode.iconsts;
-		fconsts = bytecode.fconsts;
-		sconsts = bytecode.sconsts;
-		opcodes = bytecode.opcodes;
+		_iconsts = bytecode.iconsts;
+		_fconsts = bytecode.fconsts;
+		_sconsts = bytecode.sconsts;
+		_opcodes = bytecode.opcodes;
 	}
 
+    /**
+        Create the main coroutine.
+        You must call this function before running the vm.
+    */
     void spawn() {
-		coroutines.push(new GrCoroutine(this));
+		_coroutines.push(new GrCoroutine(this));
 	}
 
+    /// Run the vm until all the coroutine are finished or in yield.
 	void process() {
-		coroutinesLabel: for(uint index = 0u; index < coroutines.length; index ++) {
-			GrCoroutine coro = coroutines.data[index];
+		coroutinesLabel: for(uint index = 0u; index < _coroutines.length; index ++) {
+			GrCoroutine coro = _coroutines.data[index];
 			while(isRunning) {
-				uint opcode = opcodes[coro.pc];
+				uint opcode = _opcodes[coro.pc];
 				switch (grBytecode_getOpcode(opcode)) with(GrOpcode) {
 				case Task:
 					GrCoroutine newCoro = new GrCoroutine(this);
 					newCoro.pc = grBytecode_getUnsignedValue(opcode);
-					coroutines.push(newCoro);
+					_coroutines.push(newCoro);
 					coro.pc ++;
 					break;
 				case AnonymousTask:
 					GrCoroutine newCoro = new GrCoroutine(this);
 					newCoro.pc = coro.istack[$ - 1];
 					coro.istack.length --;
-					coroutines.push(newCoro);
+					_coroutines.push(newCoro);
 					coro.pc ++;
 					break;
 				case Kill:
-					coroutines.markInternalForRemoval(index);
+					_coroutines.markInternalForRemoval(index);
 					continue coroutinesLabel;
 				case Yield:
 					coro.pc ++;
@@ -224,11 +219,11 @@ class GrVM {
 					coro.pc ++;
 					break;
 				case Const_Int:
-					coro.istack ~= iconsts[grBytecode_getUnsignedValue(opcode)];
+					coro.istack ~= _iconsts[grBytecode_getUnsignedValue(opcode)];
 					coro.pc ++;
 					break;
 				case Const_Float:
-					coro.fstack ~= fconsts[grBytecode_getUnsignedValue(opcode)];
+					coro.fstack ~= _fconsts[grBytecode_getUnsignedValue(opcode)];
 					coro.pc ++;
 					break;
 				case Const_Bool:
@@ -236,79 +231,79 @@ class GrVM {
 					coro.pc ++;
 					break;
 				case Const_String:
-					coro.sstack ~= sconsts[grBytecode_getUnsignedValue(opcode)];
+					coro.sstack ~= _sconsts[grBytecode_getUnsignedValue(opcode)];
 					coro.pc ++;
 					break;
 				case GlobalPush_Int:
 					uint nbParams = grBytecode_getUnsignedValue(opcode);
 					for(uint i = 0u; i < nbParams; i++)
-						iglobalStack ~= coro.istack[($ - nbParams) + i];
+						_iglobalStack ~= coro.istack[($ - nbParams) + i];
 					coro.istack.length -= nbParams;
 					coro.pc ++;
 					break;
 				case GlobalPush_Float:
 					uint nbParams = grBytecode_getUnsignedValue(opcode);
 					for(uint i = 0u; i < nbParams; i++)
-						fglobalStack ~= coro.fstack[($ - nbParams) + i];
+						_fglobalStack ~= coro.fstack[($ - nbParams) + i];
 					coro.fstack.length -= nbParams;
 					coro.pc ++;
 					break;
 				case GlobalPush_String:
 					uint nbParams = grBytecode_getUnsignedValue(opcode);
 					for(uint i = 0u; i < nbParams; i++)
-						sglobalStack ~= coro.sstack[($ - nbParams) + i];
+						_sglobalStack ~= coro.sstack[($ - nbParams) + i];
 					coro.sstack.length -= nbParams;
 					coro.pc ++;
 					break;
                 case GlobalPush_Array:
 					uint nbParams = grBytecode_getUnsignedValue(opcode);
 					for(uint i = 0u; i < nbParams; i++)
-						nglobalStack ~= coro.nstack[($ - nbParams) + i];
+						_nglobalStack ~= coro.nstack[($ - nbParams) + i];
 					coro.nstack.length -= nbParams;
 					coro.pc ++;
 					break;
 				case GlobalPush_Any:
 					uint nbParams = grBytecode_getUnsignedValue(opcode);
 					for(uint i = 0u; i < nbParams; i++)
-						aglobalStack ~= coro.astack[($ - nbParams) + i];
+						_aglobalStack ~= coro.astack[($ - nbParams) + i];
 					coro.astack.length -= nbParams;
 					coro.pc ++;
 					break;
 				case GlobalPush_Object:
 					uint nbParams = grBytecode_getUnsignedValue(opcode);
 					for(uint i = 0u; i < nbParams; i++)
-						oglobalStack ~= coro.ostack[($ - nbParams) + i];
+						_oglobalStack ~= coro.ostack[($ - nbParams) + i];
 					coro.ostack.length -= nbParams;
 					coro.pc ++;
 					break;
 				case GlobalPop_Int:
-					coro.istack ~= iglobalStack[$ - 1];
-					iglobalStack.length --;
+					coro.istack ~= _iglobalStack[$ - 1];
+					_iglobalStack.length --;
 					coro.pc ++;
 					break;
 				case GlobalPop_Float:
-					coro.fstack ~= fglobalStack[$ - 1];
-					fglobalStack.length --;
+					coro.fstack ~= _fglobalStack[$ - 1];
+					_fglobalStack.length --;
 					coro.pc ++;
 					break;
 				case GlobalPop_String:
-					coro.sstack ~= sglobalStack[$ - 1];
-					sglobalStack.length --;
+					coro.sstack ~= _sglobalStack[$ - 1];
+					_sglobalStack.length --;
 					coro.pc ++;
 					break;
                 case GlobalPop_Array:
-					coro.nstack ~= nglobalStack[$ - 1];
-					nglobalStack.length --;
+					coro.nstack ~= _nglobalStack[$ - 1];
+					_nglobalStack.length --;
 					coro.pc ++;
 					break;
 				case GlobalPop_Any:
-					coro.astack ~= aglobalStack[$ - 1];
-					aglobalStack.length --;
+					coro.astack ~= _aglobalStack[$ - 1];
+					_aglobalStack.length --;
 					coro.pc ++;
 					break;
 				case GlobalPop_Object:
-					coro.ostack ~= oglobalStack[$ - 1];
-					oglobalStack.length --;
+					coro.ostack ~= _oglobalStack[$ - 1];
+					_oglobalStack.length --;
 					coro.pc ++;
 					break;
                 case ConvertBoolToAny:
@@ -671,6 +666,6 @@ class GrVM {
 				}
 			}
 		}
-		coroutines.sweepMarkedData();
+		_coroutines.sweepMarkedData();
     }
 }

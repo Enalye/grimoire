@@ -1,25 +1,9 @@
 /**
-Grimoire
-Copyright (c) 2017 Enalye
+    Bytecode definition.
 
-This software is provided 'as-is', without any express or implied warranty.
-In no event will the authors be held liable for any damages arising
-from the use of this software.
-
-Permission is granted to anyone to use this software for any purpose,
-including commercial applications, and to alter it and redistribute
-it freely, subject to the following restrictions:
-
-	1. The origin of this software must not be misrepresented;
-	   you must not claim that you wrote the original software.
-	   If you use this software in a product, an acknowledgment
-	   in the product documentation would be appreciated but
-	   is not required.
-
-	2. Altered source versions must be plainly marked as such,
-	   and must not be misrepresented as being the original software.
-
-	3. This notice may not be removed or altered from any source distribution.
+    Copyright: (c) Enalye 2018
+    License: Zlib
+    Authors: Enalye
 */
 
 module assembly.bytecode;
@@ -30,6 +14,7 @@ import std.outbuffer;
 
 import core.all;
 
+/// Low level instruction for the VM
 enum GrOpcode {
     Kill, Yield, Task, AnonymousTask,
     PopStack_Int, PopStack_Float, PopStack_String, PopStack_Array, PopStack_Any, PopStack_Object,
@@ -69,6 +54,7 @@ enum GrOpcode {
     ArrayBuild, ArrayLength, ArrayIndex, ArrayIndexRef
 }
 
+/// Compiled form of grimoire
 struct GrBytecode {
 	uint[] opcodes;
 	int[] iconsts;
@@ -92,6 +78,7 @@ struct GrBytecode {
 	}
 }
 
+/// Fetch a compiled grimoire file
 GrBytecode grBytecode_newFromFile(string fileName) {
 	GrBytecode bytecode;
 	File file = File(fileName, "rb");
@@ -116,6 +103,7 @@ GrBytecode grBytecode_newFromFile(string fileName) {
 	return bytecode;
 }
 
+/// Fetch a compiled grimoire file
 GrBytecode grBytecode_newFromFile(File file) {
 	GrBytecode bytecode;
 	uint[4] header;
@@ -138,16 +126,19 @@ GrBytecode grBytecode_newFromFile(File file) {
 	return bytecode;
 }
 
-pure uint grBytecode_getUnsignedValue(uint opcode) {
-    return (opcode >> 8u) & 0xffffff;
+/// Get the unsigned value part of an instruction
+pure uint grBytecode_getUnsignedValue(uint instruction) {
+    return (instruction >> 8u) & 0xffffff;
 }
 
-pure int grBytecode_getSignedValue(uint opcode) {
-    return (cast(int)((opcode >> 8u) & 0xffffff)) - 0x800000;
+/// Get the signed value part of an instruction
+pure int grBytecode_getSignedValue(uint instruction) {
+    return (cast(int)((instruction >> 8u) & 0xffffff)) - 0x800000;
 }
 
-pure uint grBytecode_getOpcode(uint opcode) {
-    return opcode & 0xff;
+/// Get the opcode part of an instruction
+pure uint grBytecode_getOpcode(uint instruction) {
+    return instruction & 0xff;
 }
 
 pure uint grBytecode_makeInstruction(uint instr, uint value1, uint value2) {

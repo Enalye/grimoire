@@ -1,25 +1,9 @@
 /**
-Grimoire
-Copyright (c) 2017 Enalye
+    Primitives are hard-coded grimoire's functions, they are used the same as any other function.
 
-This software is provided 'as-is', without any express or implied warranty.
-In no event will the authors be held liable for any damages arising
-from the use of this software.
-
-Permission is granted to anyone to use this software for any purpose,
-including commercial applications, and to alter it and redistribute
-it freely, subject to the following restrictions:
-
-	1. The origin of this software must not be misrepresented;
-	   you must not claim that you wrote the original software.
-	   If you use this software in a product, an acknowledgment
-	   in the product documentation would be appreciated but
-	   is not required.
-
-	2. Altered source versions must be plainly marked as such,
-	   and must not be misrepresented as being the original software.
-
-	3. This notice may not be removed or altered from any source distribution.
+    Copyright: (c) Enalye 2018
+    License: Zlib
+    Authors: Enalye
 */
 
 module compiler.primitive;
@@ -36,6 +20,9 @@ import compiler.mangle;
 
 GrPrimitive[] primitives;
 
+/**
+    Primitive.
+*/
 class GrPrimitive {
 	void function(GrCoroutine) callback;
 	GrType[] signature;
@@ -44,6 +31,9 @@ class GrPrimitive {
 	uint index;
 }
 
+/**
+    Define a new primitive.
+*/
 void grType_addPrimitive(void function(GrCoroutine) callback, dstring name, GrType retType, GrType[] signature) {
 	GrPrimitive primitive = new GrPrimitive;
 	primitive.callback = callback;
@@ -55,6 +45,10 @@ void grType_addPrimitive(void function(GrCoroutine) callback, dstring name, GrTy
 	primitives ~= primitive;
 }
 
+/**
+    An operator is a function that replace a binary or unary grimoire operator such as `+`, `==`, etc
+    The name of the function must be that of the operator like "+", "-", "or", etc.
+*/
 void grType_addOperator(void function(GrCoroutine) callback, dstring name, GrType retType, GrType[] signature) {
 	grType_addPrimitive(callback, "@op_" ~ name, retType, signature);
 }

@@ -1,31 +1,18 @@
 /**
-Grimoire
-Copyright (c) 2017 Enalye
+    Runtime dynamic value.
 
-This software is provided 'as-is', without any express or implied warranty.
-In no event will the authors be held liable for any damages arising
-from the use of this software.
-
-Permission is granted to anyone to use this software for any purpose,
-including commercial applications, and to alter it and redistribute
-it freely, subject to the following restrictions:
-
-	1. The origin of this software must not be misrepresented;
-	   you must not claim that you wrote the original software.
-	   If you use this software in a product, an acknowledgment
-	   in the product documentation would be appreciated but
-	   is not required.
-
-	2. Altered source versions must be plainly marked as such,
-	   and must not be misrepresented as being the original software.
-
-	3. This notice may not be removed or altered from any source distribution.
+    Copyright: (c) Enalye 2018
+    License: Zlib
+    Authors: Enalye
 */
 
 module runtime.dynamic;
 
 import std.conv: to;
 
+/**
+    Lazy evaluation variable that can hold many types.
+*/
 struct GrDynamicValue {
     private union {
         int ivalue;
@@ -36,42 +23,52 @@ struct GrDynamicValue {
         GrDynamicValue[]* refvalue;
     }
 
+    /// Dynamic type.
     enum Type {
         UndefinedType, BoolType, IntType, FloatType, StringType, ArrayType, RefArrayType, RefIndex
     }
 
+    /// Dynamic type.
     Type type;
 
+    /// Sets the value to the boolean value.
     void setBool(int value) {
         type = Type.BoolType;
         ivalue = value;
     }
 
+    /// Sets the value to integer.
     void setInteger(int value) {
         type = Type.IntType;
         ivalue = value;
     }
 
+    /// Sets the value to float.
     void setFloat(float value) {
         type = Type.FloatType;
         fvalue = value;
     }
 
+    /// Sets the value to string.
     void setString(dstring value) {
         type = Type.StringType;
         svalue = value;
     }
 
+    /// Sets the value to array.
     void setArray(GrDynamicValue[] value) {
         type = Type.ArrayType;
         nvalue = value;
     }
 
+    /// Reference to an array.
     void setRefArray(GrDynamicValue[]* value) {
         type = Type.RefArrayType;
         refvalue = value;
     }
 
+    /// The value is set to the value stored at the index of the current array.
+    /// The value must be a valid indexable value.
     void setArrayIndex(int index) {
         switch(type) with(Type) {
         case ArrayType:
@@ -93,12 +90,14 @@ struct GrDynamicValue {
         }
     }
 
+    /// The value is now a reference for another value.
     void setRef(GrDynamicValue value) {
         if(type != Type.RefIndex)
             throw new Exception("setRefArrayIndex: Any type error");
         *refindex = value;
     }
 
+    /// Converts and returns a boolean value.
     int getBool() const {
         switch(type) with(Type) {
         case BoolType:
@@ -114,6 +113,7 @@ struct GrDynamicValue {
         }
     }
 
+    /// Converts and returns an integer value.
     int getInteger() const {
         switch(type) with(Type) {
         case BoolType:
@@ -129,6 +129,7 @@ struct GrDynamicValue {
         }
     }
 
+    /// Converts and returns a float value.
     float getFloat() const {
         switch(type) with(Type) {
         case BoolType:
@@ -144,6 +145,7 @@ struct GrDynamicValue {
         }
     }
 
+    /// Converts and returns a string value.
     dstring getString() const {
         switch(type) with(Type) {
         case BoolType:
@@ -183,6 +185,7 @@ struct GrDynamicValue {
         }
     }
 
+    /// Converts and returns an array value.
     GrDynamicValue[] getArray() {
         switch(type) with(Type) {
         case BoolType:
@@ -204,6 +207,7 @@ struct GrDynamicValue {
         }
     }
     
+    /// Copy operator.
     GrDynamicValue opOpAssign(string op)(GrDynamicValue v) {
         static if(op == "+" || op == "-" || op == "*" || op == "/" || op == "%") {
             switch(type) with(Type) {
@@ -271,6 +275,7 @@ struct GrDynamicValue {
         return this;
     }
 
+    /// Increment and Decrement.
     GrDynamicValue opUnaryRight(string op)() {	
         switch(type) with(Type) {
         case IntType:
@@ -287,6 +292,7 @@ struct GrDynamicValue {
         return this;
     }
 
+    /// + and -.
     GrDynamicValue opUnary(string op)() {	
         switch(type) with(Type) {
         case IntType:

@@ -10,7 +10,7 @@
 	"targetType": "library",
 	"targetPath": "bin",
 	"workingDirectory": "bin",
-
+	"-ddoxTool": "scod",
 	"subPackages": [
 		"./test/"
 	]

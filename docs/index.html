@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1"/>
+		<title>API documentation</title>
+		<link rel="stylesheet" href="./css/style.min.css"/>
+		<script type="text/javascript" src="./js/script.min.js"></script>
+	</head>
+	<body onload="setupDdox();">
+		<header></header>
+		<nav id="main-nav">
+			<div>
+				<noscript>
+					<p style="color: red">The search functionality needs JavaScript enabled</p>
+				</noscript>
+				<div id="symbolSearchPane" style="display: none">
+					<form action="#" method="GET">
+						<input id="symbolSearch" type="text" name="q" placeholder="Search for symbols" autocomplete="off" onchange="performSymbolSearch(24);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();" autofocus/>
+					</form>
+					<ul id="symbolSearchResults" class="symbolList" style="display: none"></ul><script type="application/javascript" src="./symbols.js"></script><script type="application/javascript">var symbolSearchRootDir = "./";
+document.getElementById('symbolSearchPane').style.display = 'block';</script>
+				</div>
+				<ul class="tree-view">
+					<li class="tree-view ">
+						<div class="package ">assembly
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="./assembly/all.html">all</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./assembly/bytecode.html">bytecode</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./assembly/dump.html">dump</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view ">
+						<div class="package ">compiler
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="./compiler/all.html">all</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./compiler/compiler.html">compiler</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./compiler/lexer.html">lexer</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./compiler/mangle.html">mangle</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./compiler/parser.html">parser</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./compiler/primitive.html">primitive</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./compiler/type.html">type</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view ">
+						<div class="package ">core
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="./core/all.html">all</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./core/color.html">color</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./core/indexedarray.html">indexedarray</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./core/json.html">json</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./core/ringbuffer.html">ringbuffer</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./core/singleton.html">singleton</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./core/stream.html">stream</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./core/tween.html">tween</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./core/util.html">util</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./core/vec2.html">vec2</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./core/vec3.html">vec3</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./core/vec4.html">vec4</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view ">
+						<div class="package ">lib
+						</div>
+				<ul class="tree-view">
+					<li class="tree-view collapsed">
+						<div class="package ">array
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="./lib/array/all.html">all</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">ffi
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="./lib/ffi/all.html">all</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">io
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="./lib/io/all.html">all</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./lib/io/print.html">print</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">math
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="./lib/math/all.html">all</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./lib/math/vec2.html">vec2</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">string
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="./lib/string/all.html">all</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">type
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="./lib/type/all.html">all</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./lib/type/conv.html">conv</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./lib/all.html">all</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./lib/api.html">api</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view ">
+						<div class="package ">runtime
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="./runtime/all.html">all</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./runtime/array.html">array</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./runtime/coroutine.html">coroutine</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./runtime/dynamic.html">dynamic</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./runtime/vm.html">vm</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="./grimoire.html">grimoire</a>
+						</div>
+					</li>
+				</ul>
+			</div>
+			<p id="main-nav-footer">
+				Built with
+				<a href="https://github.com/MartinNowak/scod">scod</a>
+			</p>
+		</nav>
+		<div id="main-contents">
+			<div>
+				<h1>API documentation</h1>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Module</th><th>Description</th>
+					</tr>
+				<tr>
+					<td>
+						<a href="./assembly/all.html">assembly.all</a>
+					</td>
+					<td>
+						Include all the bytecode files.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./assembly/bytecode.html">assembly.bytecode</a>
+					</td>
+					<td>
+						Bytecode definition.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./assembly/dump.html">assembly.dump</a>
+					</td>
+					<td>
+						Bytecode disassembler.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./compiler/all.html">compiler.all</a>
+					</td>
+					<td>
+						Include all the compiler files.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./compiler/compiler.html">compiler.compiler</a>
+					</td>
+					<td>
+						Grimoire compiler.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./compiler/lexer.html">compiler.lexer</a>
+					</td>
+					<td>
+						Scan a file and produce a list of tokens.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./compiler/mangle.html">compiler.mangle</a>
+					</td>
+					<td>
+						Mangling functions for type signatures.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./compiler/parser.html">compiler.parser</a>
+					</td>
+					<td>
+						The parser analyses the lexemes generated by the lexer and produce machine code.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./compiler/primitive.html">compiler.primitive</a>
+					</td>
+					<td>
+						Primitives are hard-coded grimoire's functions, they are used the same as any other function.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./compiler/type.html">compiler.type</a>
+					</td>
+					<td>
+						Type definitions.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./core/all.html">core.all</a>
+					</td>
+					<td>
+						Grimoire
+Copyright (c) 2017 Enalye
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./core/color.html">core.color</a>
+					</td>
+					<td>
+						Grimoire
+Copyright (c) 2017 Enalye
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./core/indexedarray.html">core.indexedarray</a>
+					</td>
+					<td>
+						Grimoire
+Copyright (c) 2017 Enalye
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./core/json.html">core.json</a>
+					</td>
+					<td>
+						Grimoire
+Copyright (c) 2017 Enalye
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./core/ringbuffer.html">core.ringbuffer</a>
+					</td>
+					<td>
+						Grimoire
+Copyright (c) 2017 Enalye
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./core/singleton.html">core.singleton</a>
+					</td>
+					<td>
+						Grimoire
+Copyright (c) 2017 Enalye
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./core/stream.html">core.stream</a>
+					</td>
+					<td>
+						Grimoire
+Copyright (c) 2017 Enalye
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./core/tween.html">core.tween</a>
+					</td>
+					<td>
+						Grimoire
+Copyright (c) 2017 Enalye
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./core/util.html">core.util</a>
+					</td>
+					<td>
+						Grimoire
+Copyright (c) 2017 Enalye
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./core/vec2.html">core.vec2</a>
+					</td>
+					<td>
+						Grimoire
+Copyright (c) 2017 Enalye
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./core/vec3.html">core.vec3</a>
+					</td>
+					<td>
+						Grimoire
+Copyright (c) 2017 Enalye
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./core/vec4.html">core.vec4</a>
+					</td>
+					<td>
+						Grimoire
+Copyright (c) 2017 Enalye
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./lib/array/all.html">lib.array.all</a>
+					</td>
+					<td>
+						Array lib.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./lib/ffi/all.html">lib.ffi.all</a>
+					</td>
+					<td>
+						FFI lib.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./lib/io/all.html">lib.io.all</a>
+					</td>
+					<td>
+						I/O lib.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./lib/io/print.html">lib.io.print</a>
+					</td>
+					<td>
+						Log functions.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./lib/math/all.html">lib.math.all</a>
+					</td>
+					<td>
+						Math lib.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./lib/math/vec2.html">lib.math.vec2</a>
+					</td>
+					<td>
+						Vec2 lib.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./lib/string/all.html">lib.string.all</a>
+					</td>
+					<td>
+						String lib.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./lib/type/all.html">lib.type.all</a>
+					</td>
+					<td>
+						Type lib.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./lib/type/conv.html">lib.type.conv</a>
+					</td>
+					<td>
+						Conv lib.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./lib/all.html">lib.all</a>
+					</td>
+					<td>
+						Include all the standard library.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./lib/api.html">lib.api</a>
+					</td>
+					<td>
+						API for making custom definitions.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./runtime/all.html">runtime.all</a>
+					</td>
+					<td>
+						Include all the runtime files.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./runtime/array.html">runtime.array</a>
+					</td>
+					<td>
+						Array.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./runtime/coroutine.html">runtime.coroutine</a>
+					</td>
+					<td>
+						Coroutines.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./runtime/dynamic.html">runtime.dynamic</a>
+					</td>
+					<td>
+						Runtime dynamic value.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./runtime/vm.html">runtime.vm</a>
+					</td>
+					<td>
+						Grimoire virtual machine.
+
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="./grimoire.html">grimoire</a>
+					</td>
+					<td>
+						Include all the grimoire files.
+
+					</td>
+				</tr>
+				</table>
+			</div>
+			<footer>
+				<div id="license-info"></div>
+			</footer>
+		</div>
+	</body>
+</html>
