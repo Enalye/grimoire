@@ -53,6 +53,14 @@ void grType_addOperator(void function(GrCoroutine) callback, dstring name, GrTyp
 	grType_addPrimitive(callback, "@op_" ~ name, retType, signature);
 }
 
+/**
+    A cast operator allows to convert from one type to another.
+    It have to have only one parameter and return the casted value.
+*/
+void grType_addCast(void function(GrCoroutine) callback, GrType srcType, GrType dstType) {
+	grType_addPrimitive(callback, "@as", dstType, [srcType, dstType]);
+}
+
 bool isPrimitiveDeclared(dstring mangledName) {
 	foreach(primitive; primitives) {
 		if(primitive.mangledName == mangledName)

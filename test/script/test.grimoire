@@ -4,9 +4,9 @@
     return a;
 }
 */
+
 main {
-    var i = 3.2;
-    print(i as int);
+    print(3.2 as int);
     /*let a = vec2(2.1, 5.2);
     let b = vec2(0.7, 1.1);
     let c = a + b;

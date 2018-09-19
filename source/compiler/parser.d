@@ -228,7 +228,7 @@ class Parser {
 			if(previousFunc !is null)
 				logError("Multiple declaration", "The function \'" ~ to!string(name) ~ "\' is already declared.");
 		
-			functions[mangledName] = func;	
+			functions[mangledName] = func;
 		}
 
 		functionStack ~= currentFunction;
@@ -395,9 +395,40 @@ class Parser {
             return false;
     }
 
+    bool isUnaryOperator(GrLexemeType lexType) {
+        if(lexType >= GrLexemeType.Plus && lexType <= GrLexemeType.Minus)
+            return true;
+        else if(lexType >= GrLexemeType.Increment && lexType <= GrLexemeType.Decrement)
+            return true;
+        else
+            return false;
+    }
+
     GrType addCustomBinaryOperator(GrLexemeType lexType, GrType leftType, GrType rightType) {
         GrType resultType = GrBaseType.VoidType;
         dstring mangledName = grType_mangleNamedFunction("@op_" ~ grLexer_getTypeDisplay(lexType), [leftType, rightType]);
+        
+        //GrPrimitive check
+        if(isPrimitiveDeclared(mangledName)) {
+            GrPrimitive primitive = grType_getPrimitive(mangledName);
+            addInstruction(GrOpcode.PrimitiveCall, primitive.index);
+            resultType = primitive.returnType;
+        }
+
+        //GrFunction check
+        if(resultType.baseType == GrBaseType.VoidType) {
+    		auto func = (mangledName in functions);
+            if(func !is null) {
+                resultType = addFunctionCall(mangledName);
+            }
+        }
+
+        return resultType;     
+    }
+
+    GrType addCustomUnaryOperator(GrLexemeType lexType, GrType type) {
+        GrType resultType = GrBaseType.VoidType;
+        dstring mangledName = grType_mangleNamedFunction("@op_" ~ grLexer_getTypeDisplay(lexType), [type]);
         
         //GrPrimitive check
         if(isPrimitiveDeclared(mangledName)) {
@@ -449,15 +480,33 @@ class Parser {
         return resultType;
     }
 
+    GrType addUnaryOperator(GrLexemeType lexType, GrType type) {
+        GrType resultType = GrBaseType.VoidType;
+        
+        resultType = addInternalOperator(lexType, type);
+        if(resultType.baseType == GrBaseType.VoidType) {
+            resultType = addCustomUnaryOperator(lexType, type);
+        }
+    
+        if(resultType.baseType == GrBaseType.VoidType)
+            logError("Operator Undefined", "There is no "
+                ~ to!string(grLexer_getTypeDisplay(lexType))
+                ~ " operator defined for \'"
+                ~ grType_getDisplay(type)
+                ~ "\'");
+        return resultType;
+    }
+
 	GrType addOperator(GrLexemeType lexType, ref GrType[] typeStack) {
         if(isBinaryOperator(lexType)) {
             typeStack[$ - 2] = addBinaryOperator(lexType, typeStack[$ - 2], typeStack[$ - 1]);
             typeStack.length --;
             return typeStack[$ - 1];
         }
-        /*else if(isUnaryOperator(lexType)) {
-            //Todo: unary operator
-        }*/
+        else if(isUnaryOperator(lexType)) {
+            typeStack[$ - 1] = addUnaryOperator(lexType, typeStack[$ - 1]);
+            return typeStack[$ - 1];
+        }
 
         return GrType(GrBaseType.VoidType);		
 	}
@@ -1235,22 +1284,40 @@ class Parser {
 
 	void parseFunctionDeclaration() {
 		checkAdvance();
-		if(get().type != GrLexemeType.Identifier)
-			logError("Missing identifier", "Expected a name such as \'foo\'");
-		dstring name = get().svalue;
-        if(name == "operator") {
-            checkAdvance();
-            if(get().type >= GrLexemeType.Add && get().type <= GrLexemeType.Not) {
-                name = "@op_" ~ grLexer_getTypeDisplay(get().type);
-            }
-            else
-                logError("Invalid Operator", "The specified operator must be valid");
+        dstring name;
+        bool isConversion;
+        if(get().type == GrLexemeType.As) {
+            name = "@as";
+            isConversion = true;
         }
-        writeln("parse: ", name);
+        else {
+            if(get().type != GrLexemeType.Identifier)
+                logError("Missing identifier", "Expected a name such as \'foo\'");
+            name = get().svalue;
+
+            if(name == "operator") {
+                checkAdvance();
+                if(get().type >= GrLexemeType.Add && get().type <= GrLexemeType.Not) {
+                    name = "@op_" ~ grLexer_getTypeDisplay(get().type);
+                }
+                else
+                    logError("Invalid Operator", "The specified operator must be valid");
+            }
+        }
 		dstring[] inputs;
 		GrType[] signature = parseSignature(inputs);
 
-		parseType(false);
+        if(isConversion) {
+            if(signature.length != 1uL)
+                logError("Invalid format", "A conversion function has to take only 1 parameter and be non-void");
+            GrType retType = parseType();
+            if(retType.baseType == GrBaseType.VoidType)
+                logError("Invalid format", "A conversion function has to take only 1 parameter and be non-void");
+
+            signature ~= retType;
+        }
+        else
+		    parseType(false);
         checkAdvance();
 
 		beginFunction(name, signature, inputs, false);
@@ -1263,23 +1330,41 @@ class Parser {
 
 	void preParseFunctionDeclaration() {
 		checkAdvance();
-		if(get().type != GrLexemeType.Identifier)
-			logError("Missing identifier", "Expected a name such as \'foo\'");
-		dstring name = get().svalue;
-        if(name == "operator") {
-            checkAdvance();
-            if(get().type >= GrLexemeType.Add && get().type <= GrLexemeType.Not) {
-                name = "@op_" ~ grLexer_getTypeDisplay(get().type);
-            }
-            else
-                logError("Invalid Operator", "The specified operator must be valid");
+        dstring name;
+        bool isConversion;
+        if(get().type == GrLexemeType.As) {
+            name = "@as";
+            isConversion = true;
         }
-        writeln("preparse: ", name);
+        else {
+            if(get().type != GrLexemeType.Identifier)
+                logError("Missing identifier", "Expected a name such as \'foo\'");
+            name = get().svalue;
+            if(name == "operator") {
+                checkAdvance();
+                if(get().type >= GrLexemeType.Add && get().type <= GrLexemeType.Not) {
+                    name = "@op_" ~ grLexer_getTypeDisplay(get().type);
+                }
+                else
+                    logError("Invalid Operator", "The specified operator must be valid");
+            }
+        }
 		dstring[] inputs;
 		GrType[] signature = parseSignature(inputs);
 
 		//Return Type.
-        GrType returnType = parseType(false);
+        GrType returnType;
+        if(isConversion) {
+            if(signature.length != 1uL)
+                logError("Invalid format", "A conversion function has to take only 1 parameter and be non-void");
+            returnType = parseType();
+            if(returnType.baseType == GrBaseType.VoidType)
+                logError("Invalid format", "A conversion function has to take only 1 parameter and be non-void");
+
+            signature ~= returnType;
+        }
+        else
+            returnType = parseType(false);
         checkAdvance();
 
 		preBeginFunction(name, signature, inputs, false, returnType);
@@ -1986,10 +2071,39 @@ class Parser {
 			break;
 		}
 
+        //User-defined conversions.
+        if(addCustomConversion(src, dst) == dst) {
+            return dst;
+        }
+
         if(!noFail)
 		    logError("Incompatible types", "Cannot convert \'" ~ grType_getDisplay(src) ~ "\' to \'" ~ grType_getDisplay(dst) ~ "\'");
 		return GrType(GrBaseType.VoidType);	
 	}
+
+    GrType addCustomConversion(GrType leftType, GrType rightType) {
+        GrType resultType = GrBaseType.VoidType;
+
+        //As opposed to other functions, we need the return type (rightType) to be part of the signature.
+        dstring mangledName = grType_mangleNamedFunction("@as", [leftType, rightType]);
+        
+        //GrPrimitive check
+        if(isPrimitiveDeclared(mangledName)) {
+            GrPrimitive primitive = grType_getPrimitive(mangledName);
+            addInstruction(GrOpcode.PrimitiveCall, primitive.index);
+            resultType = primitive.returnType;
+        }
+
+        //GrFunction check
+        if(resultType.baseType == GrBaseType.VoidType) {
+    		auto func = (mangledName in functions);
+            if(func !is null) {
+                resultType = addFunctionCall(mangledName);
+            }
+        }
+
+        return resultType;     
+    }
 
     void parseArrayBuilder() {
         if(get().type != GrLexemeType.LeftBracket)
