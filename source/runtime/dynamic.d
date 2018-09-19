@@ -25,7 +25,7 @@ struct GrDynamicValue {
 
     /// Dynamic type.
     enum Type {
-        UndefinedType, BoolType, IntType, FloatType, StringType, ArrayType, RefArrayType, RefIndex
+        UndefinedType, BoolType, IntType, FloatType, StringType, ArrayType, RefArrayType, RefIndexType
     }
 
     /// Dynamic type.
@@ -73,33 +73,35 @@ struct GrDynamicValue {
         switch(type) with(Type) {
         case ArrayType:
             if(index >= nvalue.length)
-                throw new Exception("setArrayIndex: Array overflow");
+                throw new Exception("No error fallback implemented: array overflow");
             this = nvalue[index];
             return;
         case RefArrayType:
             if(index >= refvalue.length)
-                throw new Exception("setArrayIndex: Array overflow");
+                throw new Exception("No error fallback implemented: array overflow");
             refindex = &((*refvalue)[index]);
-            type = Type.RefIndex;
+            type = Type.RefIndexType;
             return;
-        case RefIndex:
+        case RefIndexType:
             refindex = &(refindex.nvalue[index]);
             return;
         default:
-            throw new Exception("setRefArrayIndex: Any type error");
+            throw new Exception("No error fallback implemented");
         }
     }
 
     /// The value is now a reference for another value.
     void setRef(GrDynamicValue value) {
-        if(type != Type.RefIndex)
-            throw new Exception("setRefArrayIndex: Any type error");
+        if(type != Type.RefIndexType)
+            throw new Exception("No error fallback implemented");
         *refindex = value;
     }
 
     /// Converts and returns a boolean value.
     int getBool() const {
-        switch(type) with(Type) {
+        final switch(type) with(Type) {
+        case UndefinedType:
+            throw new Exception("No error fallback implemented");
         case BoolType:
         case IntType:
             return ivalue;
@@ -107,15 +109,20 @@ struct GrDynamicValue {
             return to!int(fvalue);
         case StringType:
             return svalue == "true";
-        default:
-            //error
-            return 0;
+        case ArrayType:
+            throw new Exception("No error fallback implemented");            
+        case RefArrayType:
+            throw new Exception("No error fallback implemented");            
+        case RefIndexType:
+            return refindex.getBool();
         }
     }
 
     /// Converts and returns an integer value.
     int getInteger() const {
-        switch(type) with(Type) {
+        final switch(type) with(Type) {
+        case UndefinedType:
+            throw new Exception("No error fallback implemented");
         case BoolType:
         case IntType:
             return ivalue;
@@ -123,15 +130,20 @@ struct GrDynamicValue {
             return to!int(fvalue);
         case StringType:
             return to!int(svalue);
-        default:
-            //error
-            return 0;
+        case ArrayType:
+            throw new Exception("No error fallback implemented");            
+        case RefArrayType:
+            throw new Exception("No error fallback implemented");            
+        case RefIndexType:
+            return refindex.getBool();
         }
     }
 
     /// Converts and returns a float value.
     float getFloat() const {
-        switch(type) with(Type) {
+        final switch(type) with(Type) {
+        case UndefinedType:
+            throw new Exception("No error fallback implemented");
         case BoolType:
         case IntType:
             return to!float(ivalue);
@@ -139,15 +151,20 @@ struct GrDynamicValue {
             return fvalue;
         case StringType:
             return to!float(svalue);
-        default:
-            //error
-            return 0;
+        case ArrayType:
+            throw new Exception("No error fallback implemented");            
+        case RefArrayType:
+            throw new Exception("No error fallback implemented");            
+        case RefIndexType:
+            return refindex.getFloat();
         }
     }
 
     /// Converts and returns a string value.
     dstring getString() const {
-        switch(type) with(Type) {
+        final switch(type) with(Type) {
+        case UndefinedType:
+            throw new Exception("No error fallback implemented");
         case BoolType:
             return ivalue ? "true" : "false";
         case IntType:
@@ -178,32 +195,36 @@ struct GrDynamicValue {
             }
             result ~= "]";
             return result;
-        case RefIndex:
+        case RefIndexType:
             return refindex.getString();
-        default:
-            return "";
         }
     }
 
     /// Converts and returns an array value.
     GrDynamicValue[] getArray() {
-        switch(type) with(Type) {
+        final switch(type) with(Type) {
+        case UndefinedType:
+            throw new Exception("No error fallback implemented");
         case BoolType:
-            return [];
+            throw new Exception("No error fallback implemented");            
         case IntType:
-            return [];
+            throw new Exception("No error fallback implemented");            
         case FloatType:
-            return [];
+            throw new Exception("No error fallback implemented");            
         case StringType:
-            return [];
+            GrDynamicValue[] array;
+            foreach(character; svalue) {
+                GrDynamicValue nElement;
+                nElement.setString(to!dstring(character));
+                array ~= nElement;
+            }
+            return array;
         case ArrayType:
             return nvalue;
         case RefArrayType:
             return *refvalue;
-        case RefIndex:
+        case RefIndexType:
             return refindex.getArray();
-        default:
-            return [];
         }
     }
     

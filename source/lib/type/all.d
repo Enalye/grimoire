@@ -8,8 +8,8 @@
 
 module lib.type.all;
 
-import lib.type.conv;
+import lib.type.typecast;
 
 void grLib_std_type_load() {
-    grLib_std_type_conv_load();
+    grLib_std_type_typecast_load();
 }

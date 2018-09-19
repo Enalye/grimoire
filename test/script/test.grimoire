@@ -1,20 +1,24 @@
-/*func operator+(vec2 a, vec2 b) vec2 {
-    a.x += b.x;
-    a.y += b.y;
-    return a;
+func as(array ary) vec2 {
+    return vec2(
+        ary[0] as float,
+        ary[1] as float);
 }
-*/
 
 main {
-    print(3.2 as int);
-    /*let a = vec2(2.1, 5.2);
-    let b = vec2(0.7, 1.1);
-    let c = a + b;
-    print(c.x);
-    print(c.y);*/
+    let v = [-2.7, 5.0] as vec2;
+    //Prints -2.7 then 5
+    print(v.x);
+    print(v.y);
 }
 
 
+/*
+func vo(int i) vec2 {
+    vec2 v;
+    v.x = i;
+    v.y = i;
+    return v;
+}*/
 /*
 Todo:
     - déclaration d'une variable locale et d'une fonction du même nom

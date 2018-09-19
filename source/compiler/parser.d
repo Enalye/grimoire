@@ -2236,6 +2236,7 @@ class Parser {
 				currentType = parseSubExpression();
                 advance();
 				hasValue = true;
+                typeStack ~= currentType;
 				break;
             case LeftBracket:
                 //Index
@@ -2244,13 +2245,19 @@ class Parser {
                     currentType = GrType(GrBaseType.DynamicType);
                     lastType = GrType(GrBaseType.DynamicType);
                     parseArrayIndex(hadReference);
-                    hasLValue = true;
-                    lvalues ~= null;
+                    //Check if there is an assignement or not, discard if it's only a rvalue
+                    const auto nextLexeme = get();
+                    if(requireLValue(nextLexeme.type)) {
+                        hasLValue = true;
+                        lvalues ~= null;
+                    }
+                    typeStack[$ - 1] = currentType;
                 }
                 //Build new array
                 else {
                     currentType = GrType(GrBaseType.ArrayType);
                     parseArrayBuilder();
+                    typeStack ~= currentType;
                 }
                 hasValue = true;
                 break;
@@ -2259,7 +2266,7 @@ class Parser {
                 lastType = currentType;
                 hadValue = false;
                 hasValue = true;
-                //Type stack
+                typeStack[$ - 1] = currentType;                
                 break;
 			case Integer:
 				currentType = GrType(GrBaseType.IntType);
@@ -2412,6 +2419,7 @@ class Parser {
 
 			switch(operator) with(GrLexemeType) {
 			case Assign:
+                writeln("LVALUES: ", lvalues);
                 if(operatorsStack.length == 1 && !isReturningValue) {
 				    addSetInstruction(lvalues[$ - 1], currentType, false);
                     currentType = GrType(GrBaseType.VoidType);
@@ -2577,6 +2585,7 @@ class Parser {
 				currentType = parseSubExpression();
                 advance();
 				hasValue = true;
+                typeStack ~= currentType;
 				break;
             case LeftBracket:
                 //Index
@@ -2585,13 +2594,19 @@ class Parser {
                     currentType = GrType(GrBaseType.DynamicType);
                     lastType = GrType(GrBaseType.DynamicType);
                     parseArrayIndex(hadReference);
-                    hasLValue = true;
-                    lvalues ~= null;
+                    //Check if there is an assignement or not, discard if it's only a rvalue
+                    const auto nextLexeme = get();
+                    if(requireLValue(nextLexeme.type)) {
+                        hasLValue = true;
+                        lvalues ~= null;
+                    }
+                    typeStack[$ - 1] = currentType;
                 }
                 //Build new array
                 else {
                     currentType = GrType(GrBaseType.ArrayType);
                     parseArrayBuilder();
+                    typeStack ~= currentType;
                 }
                 hasValue = true;
                 break;
@@ -2600,6 +2615,7 @@ class Parser {
                 lastType = currentType;
                 hadValue = false;
                 hasValue = true;
+                typeStack[$ - 1] = currentType;
                 break;
 			case Integer:
 				currentType = GrType(GrBaseType.IntType);

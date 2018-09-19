@@ -11,6 +11,7 @@ module assembly.dump;
 import std.conv: to;
 import std.string: leftJustify;
 
+import compiler.all;
 import assembly.bytecode;
 
 private string[] instructions = [
@@ -69,16 +70,18 @@ string grBytecode_dump(GrBytecode bytecode) {
             (op >= GrOpcode.PopStack_Int && op <= GrOpcode.PopStack_Object) ||
             (op >= GrOpcode.LocalStore_Int && op <= GrOpcode.LocalLoad_Object) ||
             (op >= GrOpcode.GlobalPush_Int && op <= GrOpcode.GlobalPush_Object) ||
-            (op >= GrOpcode.LocalStack && op <= GrOpcode.PrimitiveCall) ||
+            (op >= GrOpcode.LocalStack && op <= GrOpcode.AnonymousCall) ||
             (op == GrOpcode.ArrayBuild)
             )
             line ~= to!string(grBytecode_getUnsignedValue(opcode));
+        else if(op == GrOpcode.PrimitiveCall)
+            line ~= grType_getPrimitiveDisplayById(grBytecode_getUnsignedValue(opcode));
         else if(op == GrOpcode.Const_Int)
             line ~= to!string(bytecode.iconsts[grBytecode_getUnsignedValue(opcode)]);
         else if(op == GrOpcode.Const_Float)
             line ~= to!string(bytecode.fconsts[grBytecode_getUnsignedValue(opcode)]);
         else if(op == GrOpcode.Const_Bool)
-            line ~= (bytecode.iconsts[grBytecode_getUnsignedValue(opcode)] ? "true" : "false");
+            line ~= (grBytecode_getUnsignedValue(opcode) ? "true" : "false");
         else if(op == GrOpcode.Const_String)
             line ~= "\"" ~ to!string(bytecode.sconsts[grBytecode_getUnsignedValue(opcode)]) ~ "\"";
         if(op >= GrOpcode.Jump && op <= GrOpcode.JumpNotEqual)

@@ -76,3 +76,25 @@ GrPrimitive grType_getPrimitive(dstring mangledName) {
 	}
 	throw new Exception("Undeclared primitive " ~ to!string(mangledName));
 }
+
+string grType_getPrimitiveDisplayById(uint id) {
+    if(id >= primitives.length)
+        throw new Exception("Invalid primitive id.");
+    GrPrimitive primitive = primitives[id];
+    
+    string result = to!string(primitive.name);
+    auto nbParameters = primitive.signature.length;
+    if(primitive.name == "@as")
+        nbParameters = 1;
+    result ~= "(";
+    for(int i; i < nbParameters; i ++) {
+        result ~= grType_getDisplay(primitive.signature[i]);
+        if((i + 2) <= nbParameters)
+            result ~= ", ";
+    }
+    result ~= ")";
+    if(primitive.returnType != GrBaseType.VoidType) {
+        result ~= " " ~ grType_getDisplay(primitive.returnType);
+    }
+    return result;
+}
