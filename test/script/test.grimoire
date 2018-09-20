@@ -1,38 +1,35 @@
-func as(array ary) vec2 {
-    return vec2(
-        ary[0] as float,
-        ary[1] as float);
-}
-
 main {
-    let v = [-2.7, 5.0] as vec2;
-    //Prints -2.7 then 5
-    print(v.x);
-    print(v.y);
+    /*try {
+        raise Error, "Hello World !";
+    }
+    rescue(err, msg) {
+        print("catch: " ~ err);
+    }
+    ensure {
+        print("finally");
+    }*/
+    print("main 1");
+    let i = task() {
+        print("task 1");
+        kill
+        print("task 2");
+    };
+    i();
+    print("main 2");
+
 }
 
 
-/*
-func vo(int i) vec2 {
-    vec2 v;
-    v.x = i;
-    v.y = i;
-    return v;
-}*/
 /*
 Todo:
     - déclaration d'une variable locale et d'une fonction du même nom
 
     Suggestions:
     Système de channel comme mosaiq
-    raise "Error" try catch
+    raise "Error" try catch finally
     Variables globales
-    Conversion entre Array et String
-    Initialiser une structure par une array
-    Opérateur de conversion
 
-    Surchage d'opérateur unaire
-    Surcharge d'opérateur de conversion
+    kill
 */
 /*
 main {

@@ -1429,6 +1429,9 @@ class Parser {
             case Return:
                 parseReturnStatement();
                 break;
+            case Kill:
+                parseKill();
+                break;
             case Yield:
                 parseYield();
                 break;
@@ -1486,6 +1489,11 @@ class Parser {
 		closeBlock();
 		checkAdvance();
 	}
+
+    void parseKill() {
+		addInstruction(GrOpcode.Kill, 0u);
+        advance();                    
+    }
 
     void parseYield() {
 		addInstruction(GrOpcode.Yield, 0u);
@@ -2340,7 +2348,6 @@ class Parser {
 
 				while(operatorsStack.length && getLeftOperatorPriority(operatorsStack[$ - 1]) > getRightOperatorPriority(lex.type)) {
 					GrLexemeType operator = operatorsStack[$ - 1];
-                    writeln("1: ", typeStack);
 					switch(operator) with(GrLexemeType) {
 					case Assign:
 						addSetInstruction(lvalues[$ - 1], currentType, true);
@@ -2414,12 +2421,10 @@ class Parser {
 		}
 
 		while(operatorsStack.length) {
-                    writeln("2: ", typeStack);
 			GrLexemeType operator = operatorsStack[$ - 1];
 
 			switch(operator) with(GrLexemeType) {
 			case Assign:
-                writeln("LVALUES: ", lvalues);
                 if(operatorsStack.length == 1 && !isReturningValue) {
 				    addSetInstruction(lvalues[$ - 1], currentType, false);
                     currentType = GrType(GrBaseType.VoidType);
