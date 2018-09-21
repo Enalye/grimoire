@@ -259,7 +259,7 @@ class Parser {
                     addInstruction(GrOpcode.GlobalPop_String, 0u);
                 break;
             case ArrayType:
-                func.nbStringParameters ++;
+                func.nbArrayParameters ++;
                 if(func.isTask)
                     addInstruction(GrOpcode.GlobalPop_Array, 0u);
                 break;
@@ -851,12 +851,14 @@ class Parser {
 		if(func !is null) {
 			call.functionToCall = *func;
             if(func.isTask) {
-                if(func.nbStringParameters > 0)
-                    addInstruction(GrOpcode.GlobalPush_String, func.nbStringParameters);
-                if(func.nbFloatParameters > 0)
-                    addInstruction(GrOpcode.GlobalPush_Float, func.nbFloatParameters);
                 if(func.nbIntegerParameters > 0)
                     addInstruction(GrOpcode.GlobalPush_Int, func.nbIntegerParameters);
+                if(func.nbFloatParameters > 0)
+                    addInstruction(GrOpcode.GlobalPush_Float, func.nbFloatParameters);
+                if(func.nbStringParameters > 0)
+                    addInstruction(GrOpcode.GlobalPush_String, func.nbStringParameters);
+                if(func.nbArrayParameters > 0)
+                    addInstruction(GrOpcode.GlobalPush_Array, func.nbArrayParameters);
                 if(func.nbAnyParameters > 0)
                     addInstruction(GrOpcode.GlobalPush_Any, func.nbAnyParameters);
                 if(func.nbObjectParameters > 0)
@@ -1166,6 +1168,8 @@ class Parser {
     }
 
     void addGlobalPush(GrType type, int nbPush = 1u) {
+        if(nbPush == 0)
+            return;
         final switch(type.baseType) with(GrBaseType) {
         case VoidType:
             logError("Invalid type", "Void is not a valid parameter type");
@@ -1200,6 +1204,65 @@ class Parser {
         }
     }
 
+    void addGlobalPush(GrType[] signature) {
+        struct TypeCounter {
+            uint nbIntParams, nbFloatParams, nbStringParams,
+                nbArrayParams, nbDynamicParams, nbObjectParams;
+        }
+        void countParameters(ref TypeCounter typeCounter, GrType type) {
+            final switch(type.baseType) with(GrBaseType) {
+            case VoidType:
+                logError("Invalid type", "Void is not a valid parameter type");
+                break;
+            case IntType:
+            case BoolType:
+            case FunctionType:
+            case TaskType:
+                typeCounter.nbIntParams ++;
+                break;
+            case FloatType:
+                typeCounter.nbFloatParams ++;
+                break;
+            case StringType:
+                typeCounter.nbStringParams ++;
+                break;
+            case ArrayType:
+                typeCounter.nbArrayParams ++;
+                break;
+            case DynamicType:
+                typeCounter.nbDynamicParams ++;
+                break;
+            case ObjectType:
+                typeCounter.nbObjectParams ++;
+                break;
+            case StructType:
+                auto structure = grType_getStructure(type.mangledType);
+                for(int i = 1; i <= structure.signature.length; i ++) {
+                    countParameters(typeCounter, structure.signature[structure.signature.length - i]);
+                }
+                break;
+            }
+        }
+
+        TypeCounter typeCounter;
+        foreach(type; signature) {
+            countParameters(typeCounter, type);
+        }
+
+        if(typeCounter.nbIntParams > 0)
+            addInstruction(GrOpcode.GlobalPush_Int, typeCounter.nbIntParams);
+        if(typeCounter.nbFloatParams > 0)
+            addInstruction(GrOpcode.GlobalPush_Float, typeCounter.nbFloatParams);
+        if(typeCounter.nbStringParams > 0)
+            addInstruction(GrOpcode.GlobalPush_String, typeCounter.nbStringParams);
+        if(typeCounter.nbArrayParams > 0)
+            addInstruction(GrOpcode.GlobalPush_Array, typeCounter.nbArrayParams);
+        if(typeCounter.nbDynamicParams > 0)
+            addInstruction(GrOpcode.GlobalPush_Any, typeCounter.nbDynamicParams);
+        if(typeCounter.nbObjectParams > 0)
+            addInstruction(GrOpcode.GlobalPush_Object, typeCounter.nbObjectParams);
+    }
+
 	GrType[] parseSignature(ref dstring[] inputVariables, bool asType = false) {
 		GrType[] signature;
 
@@ -1217,8 +1280,6 @@ class Parser {
             startLoop = false;
 
             signature ~= parseType();
-
-			
 
             //Is it a function type or a function declaration ?
             if(!asType) {
@@ -1442,6 +1503,11 @@ class Parser {
                 parseBreak();
                 break;
             case VoidType: .. case AutoType:
+                if(lex.type == GrLexemeType.TaskType
+                || lex.type == GrLexemeType.FunctionType) {
+                    if(get(1).type == GrLexemeType.LeftParenthesis)
+                        goto default;
+                }
                 parseLocalDeclaration();
                 break;
             case Identifier:
@@ -2216,7 +2282,7 @@ class Parser {
 
 		do {
 			if(hasValue && currentType != lastType && lastType != GrType(GrBaseType.VoidType)) {
-                lastType = currentType;//convertType(currentType, lastType);
+                lastType = currentType;
 				currentType = lastType;
 			}
             else
@@ -2240,11 +2306,24 @@ class Parser {
 				isEndOfExpression = true;
 				break;
 			case LeftParenthesis:
-                advance();
-				currentType = parseSubExpression();
-                advance();
-				hasValue = true;
-                typeStack ~= currentType;
+                if(hadValue) {//chocolaté
+                    currentType = parseAnonymousCall(typeStack[$ - 1]);
+                    if(currentType.baseType == GrBaseType.VoidType) {
+                        typeStack.length --;
+                    }
+                    else {
+                        hadValue = false;
+                        hasValue = true;
+                        typeStack[$ - 1] = currentType;
+                    }
+                }
+                else {
+                    advance();
+                    currentType = parseSubExpression();
+                    advance();
+                    hasValue = true;
+                    typeStack ~= currentType;
+                }
 				break;
             case LeftBracket:
                 //Index
@@ -2796,6 +2875,43 @@ class Parser {
         return currentType;
 	}
 
+    GrType parseAnonymousCall(GrType type) {
+        checkAdvance();
+        //Signature parsing with type conversion
+		GrType[] signature;
+        GrType[] anonSignature = grType_unmangleSignature(type.mangledType);
+        int i;
+        writeln("DBG: ", get());
+        if(get().type != GrLexemeType.RightParenthesis) {
+            for(;;) {
+                if(i >= anonSignature.length)
+                    logError("Invalid anonymous call", "The number of parameters does not match");
+                GrType subType = parseSubExpression();
+                signature ~= convertType(subType, anonSignature[i]);
+                if(get().type == GrLexemeType.RightParenthesis)
+                    break;
+                advance();
+                i ++;
+            }
+        }
+        checkAdvance();
+
+        //Push the values on the global stack for task spawning.
+        if(type.baseType == GrBaseType.TaskType)
+            addGlobalPush(signature);
+
+        //Anonymous call.
+        GrType retType = grType_unmangle(type.mangledReturnType);
+
+        if(type.baseType == GrBaseType.FunctionType)
+            addInstruction(GrOpcode.AnonymousCall, 0u);
+        else if(type.baseType == GrBaseType.TaskType)
+            addInstruction(GrOpcode.AnonymousTask, 0u);
+        else
+            logError("Invalid anonymous type", "debug");
+        return retType;
+    }
+
 	//Parse an identifier or function call and return the deduced return type and lvalue.
 	GrType parseIdentifier(ref GrVariable variable, GrType expectedType = GrBaseType.VoidType) {
 		GrType returnType = GrBaseType.VoidType;
@@ -2846,6 +2962,10 @@ class Parser {
                     }
                 }
                 checkAdvance();
+
+                //Push the values on the global stack for task spawning.
+                if(var.type.baseType == GrBaseType.TaskType)
+                    addGlobalPush(signature);
 
 				//Anonymous call.
 				bool hasAnonFunc = false;

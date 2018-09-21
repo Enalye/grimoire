@@ -9,14 +9,18 @@ main {
         print("finally");
     }*/
     print("main 1");
-    let i = task() {
-        print("task 1");
+    task(vec2 a) {
+        print(a.x);
+        print(a.y);
         kill
         print("task 2");
-    };
-    i();
+    }(vec2(0.5, -2.7));
     print("main 2");
+    /*
+        Fonction unique pour le push/pop global des task
+        Les array ne sont pas push/pop dans le parser -> à faire
 
+    */
 }
 
 

@@ -129,8 +129,8 @@ class GrFunction {
 	GrFunction anonParent;
 	uint position, anonReference, anonIndex, localVariableIndex;
 
-	uint nbStringParameters, nbIntegerParameters, nbFloatParameters,
-		nbAnyParameters, nbObjectParameters;
+	uint nbIntegerParameters, nbFloatParameters, nbStringParameters,
+		nbArrayParameters, nbAnyParameters, nbObjectParameters;
 }
 
 class GrFunctionCall {
