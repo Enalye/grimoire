@@ -298,16 +298,6 @@ class Parser {
         foreach_reverse(size_t i, inputVariable; inputVariables) {
             fetchParameter(inputVariables[i], signature[i]);
         }
-        
-
-		/+if(func.nbIntegerParameters > 0u)
-			addInstruction(GrOpcode.PopStack_Int, func.nbIntegerParameters);
-        if(func.nbFloatParameters > 0u)
-			addInstruction(GrOpcode.PopStack_Float, func.nbFloatParameters);
-		if(func.nbStringParameters > 0u)
-			addInstruction(GrOpcode.PopStack_String, func.nbStringParameters);
-		if(func.nbAnyParameters > 0u)
-			addInstruction(GrOpcode.PopStack_Any, func.nbAnyParameters);+/
 	}
 
 	void endFunction() {
@@ -1503,12 +1493,10 @@ class Parser {
                 parseBreak();
                 break;
             case VoidType: .. case AutoType:
-                if(lex.type == GrLexemeType.TaskType
-                || lex.type == GrLexemeType.FunctionType) {
-                    if(get(1).type == GrLexemeType.LeftParenthesis)
-                        goto default;
-                }
-                parseLocalDeclaration();
+                if(isDeclaration())
+                    parseLocalDeclaration();
+                else
+                    goto default;
                 break;
             case Identifier:
                 if(grType_isStructure(lex.svalue))
@@ -1527,6 +1515,17 @@ class Parser {
 		closeBlock();
 		checkAdvance();
 	}
+
+    bool isDeclaration() {
+        const auto tempPos = current;
+        parseType();
+        checkAdvance();
+        bool isDecl;
+        if(get().type == GrLexemeType.Identifier)
+            isDecl = true;
+        current = tempPos;        
+        return isDecl;
+    }
 
 	void skipBlock() {
 		if(get().type != GrLexemeType.LeftCurlyBrace)
@@ -2306,7 +2305,7 @@ class Parser {
 				isEndOfExpression = true;
 				break;
 			case LeftParenthesis:
-                if(hadValue) {//chocolaté
+                if(hadValue) {
                     currentType = parseAnonymousCall(typeStack[$ - 1]);
                     if(currentType.baseType == GrBaseType.VoidType) {
                         typeStack.length --;
@@ -2665,12 +2664,25 @@ class Parser {
 					logError("Unexpected symbol", "A \']\' cannot exist inside this expression");
 				break;
 			case LeftParenthesis:
-                advance();
-				currentType = parseSubExpression();
-                advance();
-				hasValue = true;
-                typeStack ~= currentType;
-				break;
+                if(hadValue) {
+                    currentType = parseAnonymousCall(typeStack[$ - 1]);
+                    if(currentType.baseType == GrBaseType.VoidType) {
+                        typeStack.length --;
+                    }
+                    else {
+                        hadValue = false;
+                        hasValue = true;
+                        typeStack[$ - 1] = currentType;
+                    }
+                }
+                else {
+                    advance();
+                    currentType = parseSubExpression();
+                    advance();
+                    hasValue = true;
+                    typeStack ~= currentType;
+                }
+                break;
             case LeftBracket:
                 //Index
                 if(hadValue) {
