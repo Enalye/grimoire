@@ -1,23 +1,68 @@
 main {
     /*try {
         raise Error, "Hello World !";
+        panic "No";
     }
     rescue(err, msg) {
-        print("catch: " ~ err);
-    }
-    ensure {
-        print("finally");
+        print("catch: ");
     }*/
-    print("main 1");
-    int foo = 3;
-    print(foo);
-    /*
-        Fonction unique pour le push/pop global des task
-        Les array ne sont pas push/pop dans le parser -> à faire
 
-    */
+    /*func() {
+        defer {
+            print("finally");
+        }
+        return;
+    }();*/
+    //func() {
+
+        //defer_init
+
+    int i = 0;
+    kill
+    return
+    /*print("Main start");
+    defer {
+        print("Outer defer start");
+        func() {
+            print("Anon func start");
+            defer{ 
+                print("Inner defer");
+            }
+            print("Anon func end");
+        }();
+        print("Outer defer end");
+    }
+    print("Main end");*/
+}
+/*
+func() {
+    print("1");
+    defer {
+        print("defer");
+    }
+    print("2");
+    return;
 }
 
+0   localstack  0
+1   reg_defer   8
+2   const.s     "1"
+3   call_prim   print(string)
+   raise
+4   const.s     "2"
+5   call_prim   print(string)
+6   call_defer
+7   ret
+8   const.s     "defer"
+9   call_prim   print(string)
+10  ret_defer
+
+Todo:
+    - defer
+    - try/catch
+    - raise
+    - panic
+*/
 
 /*
 Todo:

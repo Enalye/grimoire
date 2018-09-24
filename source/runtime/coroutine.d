@@ -30,6 +30,7 @@ class GrCoroutine {
 
     //Stack
     uint[64] callStack;
+    uint[][] deferStack;
     int[] istack;
     float[] fstack;
     dstring[] sstack;

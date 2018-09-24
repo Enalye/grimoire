@@ -15,6 +15,7 @@ import compiler.all;
 import assembly.bytecode;
 
 private string[] instructions = [
+    "nop",
     "kill", "yield", "task", "anon_task",
     "pop.i", "pop.f", "pop.s", "pop.n", "pop.a", "pop.o",
     "lstore.i", "lstore.f", "lstore.s", "lstore.n", "lstore.a", "lstore.r", "lstore.o",
@@ -50,7 +51,8 @@ private string[] instructions = [
     "localstack", "call", "anon_call", "prim_call", "ret",
     "jmp", "jmp_eq", "jmp_neq",
 
-    "newarray", "length.n", "index.n", "index.r"
+    "newarray", "length.n", "index.n", "index.r",
+    "defer_init", "defer_reg", "defer_call", "defer_ret"
 ];
 
 string grBytecode_dump(GrBytecode bytecode) {
@@ -84,7 +86,9 @@ string grBytecode_dump(GrBytecode bytecode) {
             line ~= (grBytecode_getUnsignedValue(opcode) ? "true" : "false");
         else if(op == GrOpcode.Const_String)
             line ~= "\"" ~ to!string(bytecode.sconsts[grBytecode_getUnsignedValue(opcode)]) ~ "\"";
-        if(op >= GrOpcode.Jump && op <= GrOpcode.JumpNotEqual)
+        else if(op >= GrOpcode.Jump && op <= GrOpcode.JumpNotEqual)
+            line ~= to!string(i + grBytecode_getSignedValue(opcode));
+        if(op == GrOpcode.RegisterDefer)
             line ~= to!string(i + grBytecode_getSignedValue(opcode));
         
         i++;

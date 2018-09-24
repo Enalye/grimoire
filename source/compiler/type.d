@@ -131,6 +131,11 @@ class GrFunction {
 
 	uint nbIntegerParameters, nbFloatParameters, nbStringParameters,
 		nbArrayParameters, nbAnyParameters, nbObjectParameters;
+
+    GrDeferBlock[][] deferredBlocks;
+    GrDeferBlock[] registeredDeferBlocks;
+    bool[] isDeferrableSectionLocked = [false];
+    uint[] deferInitPositions;
 }
 
 class GrFunctionCall {
@@ -139,4 +144,10 @@ class GrFunctionCall {
 	GrFunction caller, functionToCall;
 	GrType expectedType;
     bool isAddress;
+}
+
+class GrDeferBlock {
+    uint position;
+    uint parsePosition;
+    uint scopeLevel;
 }

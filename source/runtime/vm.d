@@ -81,6 +81,9 @@ class GrVM {
 			while(isRunning) {
 				uint opcode = _opcodes[coro.pc];
 				switch (grBytecode_getOpcode(opcode)) with(GrOpcode) {
+                case Nop:
+                    coro.pc ++;
+                    break;
 				case Task:
 					GrCoroutine newCoro = new GrCoroutine(this);
 					newCoro.pc = grBytecode_getUnsignedValue(opcode);
@@ -661,6 +664,30 @@ class GrVM {
                     coro.istack.length --;
 					coro.pc ++;
 					break;
+                case BeginDefer:
+                    coro.deferStack.length ++;
+                    coro.pc ++;
+                    break;
+                case RegisterDefer:
+                    coro.deferStack[$ - 1] ~= coro.pc + grBytecode_getSignedValue(opcode);
+					coro.pc ++;
+                    break;
+                case ReturnDefer:
+                    coro.stackPos --;
+					coro.pc = coro.callStack[coro.stackPos + 1u];
+                    break;
+                case CallDefer:
+                    if(coro.deferStack[$ - 1].length) {
+					    coro.callStack[coro.stackPos + 1u] = coro.pc;
+                        coro.pc = coro.deferStack[$ - 1][$ - 1];
+                        coro.deferStack[$ - 1].length --;
+                        coro.stackPos ++;
+                    }
+                    else {
+                        coro.deferStack.length --;
+                        coro.pc ++;
+                    }
+                    break;
 				default:
 					throw new Exception("Invalid instruction");
 				}
