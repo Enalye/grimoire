@@ -1,5 +1,5 @@
 main {
-    defer { print("A: " ~ a as string); }
+    /*defer { print("A: " ~ a as string); }
     let a = 5;
     func() {
         let b = 6;
@@ -9,14 +9,14 @@ main {
             let c = 7;
             kill
         }();
-    }();
+    }();*/
+    unless(false) {
+        print("A");
+    }
+    else unless(false) {
+        print("B");
+    }
 }
-
-    /*TODO:
-    Corriger le let
-
-    ajouter ifn() ou unless()
-    */
 
     /*func() {
         int i = 5;

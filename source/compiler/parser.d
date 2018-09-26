@@ -1482,6 +1482,7 @@ class Parser {
                 parseDeferStatement();
                 break;
             case If:
+            case Unless:
                 parseIfStatement();
                 break;
             case While:
@@ -1496,8 +1497,8 @@ class Parser {
             case Loop:
                 parseLoopStatement();
                 break;
-            case Panic:
-                parsePanicStatement();
+            case Raise:
+                parseRaiseStatement();
                 break;
             case Try:
                 parseExceptionHandler();
@@ -1805,6 +1806,7 @@ class Parser {
     }
 
 	void parseIfStatement() {
+        bool isNegative = get().type == GrLexemeType.Unless;
 		advance();
 		if(get().type != GrLexemeType.LeftParenthesis)
 			logError("Missing symbol", "A condition should always start with \'(\'");
@@ -1814,7 +1816,8 @@ class Parser {
 		advance();
 
 		uint jumpPosition = cast(uint)currentFunction.instructions.length;
-		addInstruction(GrOpcode.JumpEqual); //Jumps to if(0).
+        //Jumps to if(0) for "if", if(!= 0) for "unless".
+		addInstruction(isNegative ? GrOpcode.JumpNotEqual : GrOpcode.JumpEqual);
 
 		parseBlock(); //{ .. }
 
@@ -1823,15 +1826,19 @@ class Parser {
 		exitJumps ~= cast(uint)currentFunction.instructions.length;
 		addInstruction(GrOpcode.Jump);
 
-		//If(0) destination.
-		setInstruction(GrOpcode.JumpEqual, jumpPosition, cast(int)(currentFunction.instructions.length - jumpPosition), true);
+		//Jumps to if(0) for "if", if(!= 0) for "unless".
+		setInstruction(isNegative ? GrOpcode.JumpNotEqual : GrOpcode.JumpEqual,
+            jumpPosition,
+            cast(int)(currentFunction.instructions.length - jumpPosition),
+            true);
 
 		bool isElseIf;
 		do {
 			isElseIf = false;
 			if(get().type == GrLexemeType.Else) {
 				checkAdvance();
-				if(get().type == GrLexemeType.If) {
+				if(get().type == GrLexemeType.If || get().type == GrLexemeType.Unless) {
+                    isNegative = get().type == GrLexemeType.Unless;
 					isElseIf = true;
 					checkAdvance();
 					if(get().type != GrLexemeType.LeftParenthesis)
@@ -1839,9 +1846,11 @@ class Parser {
 					checkAdvance();
 
 					parseSubExpression();
+                    advance();
 
 					jumpPosition = cast(uint)currentFunction.instructions.length;
-					addInstruction(GrOpcode.JumpEqual); //Jumps to if(0).
+					//Jumps to if(0) for "if", if(!= 0) for "unless".
+		            addInstruction(isNegative ? GrOpcode.JumpNotEqual : GrOpcode.JumpEqual);
 
 					parseBlock(); //{ .. }
 
@@ -1849,8 +1858,11 @@ class Parser {
 					exitJumps ~= cast(uint)currentFunction.instructions.length;
 					addInstruction(GrOpcode.Jump);
 
-					//If(0) destination.
-					setInstruction(GrOpcode.JumpEqual, jumpPosition, cast(int)(currentFunction.instructions.length - jumpPosition), true);
+					//Jumps to if(0) for "if", if(!= 0) for "unless".
+					setInstruction(isNegative ? GrOpcode.JumpNotEqual : GrOpcode.JumpEqual,
+                        jumpPosition,
+                        cast(int)(currentFunction.instructions.length - jumpPosition),
+                        true);
 				}
 				else
 					parseBlock();
@@ -1949,8 +1961,8 @@ class Parser {
 		//From length to 0
 		GrType arrayType = parseSubExpression();
 		addSetInstruction(array, GrType(GrBaseType.VoidType), true);
-		addInstruction(GrOpcode.ArrayLength);
-		addInstruction(GrOpcode.LocalStore_upIterator);		
+		addInstruction(GrOpcode.Length_Array);
+		addInstruction(GrOpcode.SetupIterator);		
 		addSetInstruction(iterator);
 
 		//Set index to -1
@@ -1981,7 +1993,7 @@ class Parser {
 		addGetInstruction(index);
 		addInstruction(GrOpcode.IncrementInt);
 		addSetInstruction(index, GrType(GrBaseType.VoidType), true);
-		addInstruction(GrOpcode.ArrayIndex);
+		addInstruction(GrOpcode.Index_Array);
 		convertType(GrType(GrBaseType.DynamicType), variable.type);
 		addSetInstruction(variable);
 
@@ -2008,7 +2020,7 @@ class Parser {
 		//Init counter
 		GrType type = parseSubExpression();
 		convertType(type, GrType(GrBaseType.IntType));
-		addInstruction(GrOpcode.LocalStore_upIterator);
+		addInstruction(GrOpcode.SetupIterator);
 		addSetInstruction(iterator);
 
 		/* For is breakable and continuable. */
@@ -2040,11 +2052,11 @@ class Parser {
 		closeContinuableSection();
 	}
 
-    void parsePanicStatement() {
+    void parseRaiseStatement() {
         advance();
         GrType type = parseSubExpression(false);
         convertType(type, grString);
-        addInstruction(GrOpcode.Panic);
+        //addInstruction(GrOpcode.);
         checkDeferStatement();
     }
 
@@ -2313,7 +2325,7 @@ class Parser {
             checkAdvance();
         }
 
-        addInstruction(GrOpcode.ArrayBuild, arraySize);
+        addInstruction(GrOpcode.Build_Array, arraySize);
         advance();
     }
 
@@ -2331,7 +2343,7 @@ class Parser {
             convertType(index, grInt);
 
             if(get().type == GrLexemeType.RightBracket) {
-                addInstruction(asRefType ? GrOpcode.ArrayIndexRef : GrOpcode.ArrayIndex);
+                addInstruction(asRefType ? GrOpcode.IndexRef_Array : GrOpcode.Index_Array);
                 break;
             }
             if(get().type != GrLexemeType.Comma)
@@ -2340,7 +2352,7 @@ class Parser {
             if(get().type == GrLexemeType.RightBracket)
                 logError("Missing comma or ]", "bottom text");
 
-            addInstruction(asRefType ? GrOpcode.ArrayIndexRef : GrOpcode.ArrayIndex);
+            addInstruction(asRefType ? GrOpcode.IndexRef_Array : GrOpcode.Index_Array);
             asRefType = true;
         }
 

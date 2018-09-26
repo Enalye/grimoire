@@ -16,7 +16,7 @@ import core.all;
 
 /// Low level instruction for the VM
 enum GrOpcode {
-    Nop, Panic,
+    Nop,
     Kill, Yield, Task, AnonymousTask,
     PopStack_Int, PopStack_Float, PopStack_String, PopStack_Array, PopStack_Any, PopStack_Object,
     LocalStore_Int, LocalStore_Float, LocalStore_String, LocalStore_Array, LocalStore_Any, LocalStore_Ref, LocalStore_Object,
@@ -47,13 +47,13 @@ enum GrOpcode {
     IncrementInt, IncrementFloat, IncrementAny,
     DecrementInt, DecrementFloat, DecrementAny,
 
-    LocalStore_upIterator,
+    SetupIterator,
 
     LocalStack, Call, AnonymousCall, PrimitiveCall,
     Return, Unwind, Defer,
     Jump, JumpEqual, JumpNotEqual,
 
-    ArrayBuild, ArrayLength, ArrayIndex, ArrayIndexRef
+    Build_Array, Length_Array, Index_Array, IndexRef_Array
 }
 
 /// Compiled form of grimoire

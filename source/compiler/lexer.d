@@ -32,7 +32,7 @@ enum GrLexemeType {
 	Identifier, Integer, Float, Boolean, String,
 	Main, Struct,
 	VoidType, IntType, FloatType, BoolType, StringType, ArrayType, ObjectType, DynamicType, FunctionType, TaskType, AutoType,
-	If, Else, While, Do, For, Loop, Return, Kill, Yield, Break, Continue
+	If, Unless, Else, While, Do, For, Loop, Return, Kill, Yield, Break, Continue
 }
 
 /**
@@ -555,6 +555,9 @@ class GrLexer {
 			case "if":
 				lex.type = GrLexemeType.If;
 				break;
+            case "unless":
+                lex.type = GrLexemeType.Unless;
+                break;
 			case "else":
 				lex.type = GrLexemeType.Else;
 				break;

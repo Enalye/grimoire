@@ -84,10 +84,6 @@ class GrVM {
                 case Nop:
                     coro.pc ++;
                     break;
-                case Panic:
-                    
-
-                    break;
 				case Task:
 					GrCoroutine newCoro = new GrCoroutine(this);
 					newCoro.pc = grBytecode_getUnsignedValue(opcode);
@@ -610,7 +606,7 @@ class GrVM {
 					coro.astack[$ - 1] --;
 					coro.pc ++;
 					break;
-				case LocalStore_upIterator:
+				case SetupIterator:
 					if(coro.istack[$ - 1] < 0)
 						coro.istack[$ - 1] = 0;
 					coro.istack[$ - 1] ++;
@@ -716,7 +712,7 @@ class GrVM {
 						coro.pc ++;
 					coro.istack.length --;
 					break;
-                case ArrayBuild:
+                case Build_Array:
                     GrDynamicValue[] ary;
                     const auto arySize = grBytecode_getUnsignedValue(opcode);
                     for(int i = arySize; i > 0; i --) {
@@ -726,18 +722,18 @@ class GrVM {
                     coro.nstack ~= ary;
                     coro.pc ++;
                     break;
-				case ArrayLength:
+				case Length_Array:
 					coro.istack ~= cast(int)coro.nstack[$ - 1].length;
                     coro.nstack.length --;
 					coro.pc ++;
 					break;
-				case ArrayIndex:
+				case Index_Array:
 					coro.astack ~= coro.nstack[$ - 1][coro.istack[$ - 1]];
 					coro.nstack.length --;					
 					coro.istack.length --;					
 					coro.pc ++;
 					break;
-                case ArrayIndexRef:
+                case IndexRef_Array:
                     coro.astack[$ - 1].setArrayIndex(coro.istack[$ - 1]);
                     coro.istack.length --;
 					coro.pc ++;

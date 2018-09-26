@@ -15,7 +15,7 @@ import compiler.all;
 import assembly.bytecode;
 
 private string[] instructions = [
-    "nop", "panic",
+    "nop",
     "kill", "yield", "task", "anon_task",
     "pop.i", "pop.f", "pop.s", "pop.n", "pop.a", "pop.o",
     "lstore.i", "lstore.f", "lstore.s", "lstore.n", "lstore.a", "lstore.r", "lstore.o",
@@ -73,7 +73,7 @@ string grBytecode_dump(GrBytecode bytecode) {
             (op >= GrOpcode.LocalStore_Int && op <= GrOpcode.LocalLoad_Object) ||
             (op >= GrOpcode.GlobalPush_Int && op <= GrOpcode.GlobalPush_Object) ||
             (op >= GrOpcode.LocalStack && op <= GrOpcode.Call) ||
-            (op == GrOpcode.ArrayBuild)
+            (op == GrOpcode.Build_Array)
             )
             line ~= to!string(grBytecode_getUnsignedValue(opcode));
         else if(op == GrOpcode.PrimitiveCall)
