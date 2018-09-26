@@ -84,6 +84,10 @@ class GrVM {
                 case Nop:
                     coro.pc ++;
                     break;
+                case Panic:
+                    
+
+                    break;
 				case Task:
 					GrCoroutine newCoro = new GrCoroutine(this);
 					newCoro.pc = grBytecode_getUnsignedValue(opcode);
@@ -98,8 +102,33 @@ class GrVM {
 					coro.pc ++;
 					break;
 				case Kill:
-					_coroutines.markInternalForRemoval(index);
-					continue coroutinesLabel;
+                    //Check for deferred calls.
+                    if(coro.deferStack[$ - 1].length) {
+                        //Pop the last defer and run it.
+                        coro.pc = coro.deferStack[$ - 1][$ - 1];
+                        coro.deferStack[$ - 1].length --;
+
+                        //Flag as killed so the entire stack will be unwinded.
+                        coro.isKilled = true;
+                    }
+                    else if(coro.stackPos) {
+                        //Pop the defer scope.
+                        coro.deferStack.length --;
+
+                        //Then returns to the last context.
+                        coro.stackPos -= 2;
+                        coro.pc = coro.callStack[coro.stackPos + 1u];
+                        coro.valuesPos -= coro.callStack[coro.stackPos];
+
+                        //Flag as killed so the entire stack will be unwinded.
+                        coro.isKilled = true;
+                    }
+                    else {
+                        //No need to flag if the call stac is empty without any deferred statement.
+                        _coroutines.markInternalForRemoval(index);
+					    continue coroutinesLabel;
+                    }
+					break;
 				case Yield:
 					coro.pc ++;
 					continue coroutinesLabel;
@@ -588,10 +617,58 @@ class GrVM {
 					coro.pc ++;
 					break;
 				case Return:
-					coro.stackPos -= 2;
-					coro.pc = coro.callStack[coro.stackPos + 1u];
-					coro.valuesPos -= coro.callStack[coro.stackPos];
+                    //Check for deferred calls.
+                    if(coro.deferStack[$ - 1].length) {
+                        //Pop the last defer and run it.
+                        coro.pc = coro.deferStack[$ - 1][$ - 1];
+                        coro.deferStack[$ - 1].length --;
+                    }
+                    else {
+                        //Pop the defer scope.
+                        coro.deferStack.length --;
+
+                        //Then returns to the last context.
+                        coro.stackPos -= 2;
+                        coro.pc = coro.callStack[coro.stackPos + 1u];
+                        coro.valuesPos -= coro.callStack[coro.stackPos];
+                    }
 					break;
+                case Unwind:
+                    //Check for deferred calls.
+                    if(coro.deferStack[$ - 1].length) {
+                        //Pop the next defer and run it.
+                        coro.pc = coro.deferStack[$ - 1][$ - 1];
+                        coro.deferStack[$ - 1].length --;
+                    }
+                    else if(coro.isKilled) {
+                        if(coro.stackPos) {
+                            //Pop the defer scope.
+                            coro.deferStack.length --;
+
+                            //Then returns to the last context without modifying the pc.
+                            coro.stackPos -= 2;
+                            coro.valuesPos -= coro.callStack[coro.stackPos];
+                        }
+                        else {
+                            //Every deferred call has been executed, now die.
+                            _coroutines.markInternalForRemoval(index);
+					        continue coroutinesLabel;
+                        }
+                    }
+                    else {
+                        //Pop the defer scope.
+                        coro.deferStack.length --;
+
+                        //Then returns to the last context.
+                        coro.stackPos -= 2;
+                        coro.pc = coro.callStack[coro.stackPos + 1u];
+                        coro.valuesPos -= coro.callStack[coro.stackPos];
+                    }
+                    break;
+                case Defer:
+                    coro.deferStack[$ - 1] ~= coro.pc + grBytecode_getSignedValue(opcode);
+					coro.pc ++;
+                    break;
 				case LocalStack:
                     auto stackSize = grBytecode_getUnsignedValue(opcode);
 					coro.callStack[coro.stackPos] = stackSize;
@@ -602,6 +679,7 @@ class GrVM {
                     coro.nvalues.length = stackSize;
                     coro.avalues.length = stackSize;
                     coro.ovalues.length = stackSize;
+                    coro.deferStack.length ++;
 					coro.pc ++;
 					break;
 				case Call:
@@ -664,30 +742,6 @@ class GrVM {
                     coro.istack.length --;
 					coro.pc ++;
 					break;
-                case BeginDefer:
-                    coro.deferStack.length ++;
-                    coro.pc ++;
-                    break;
-                case RegisterDefer:
-                    coro.deferStack[$ - 1] ~= coro.pc + grBytecode_getSignedValue(opcode);
-					coro.pc ++;
-                    break;
-                case ReturnDefer:
-                    coro.stackPos --;
-					coro.pc = coro.callStack[coro.stackPos + 1u];
-                    break;
-                case CallDefer:
-                    if(coro.deferStack[$ - 1].length) {
-					    coro.callStack[coro.stackPos + 1u] = coro.pc;
-                        coro.pc = coro.deferStack[$ - 1][$ - 1];
-                        coro.deferStack[$ - 1].length --;
-                        coro.stackPos ++;
-                    }
-                    else {
-                        coro.deferStack.length --;
-                        coro.pc ++;
-                    }
-                    break;
 				default:
 					throw new Exception("Invalid instruction");
 				}

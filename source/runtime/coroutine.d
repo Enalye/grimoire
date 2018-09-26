@@ -40,5 +40,9 @@ class GrCoroutine {
 
     uint pc,
         valuesPos, //Local variables: Access with ivalues[valuesPos + variableIndex]
-        stackPos;	
+        stackPos,
+        deferPos;
+
+    /// Kill state, unwind the call stack and call all registered deferred statements.
+    bool isKilled;
 }

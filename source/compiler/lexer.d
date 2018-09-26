@@ -21,7 +21,7 @@ import std.algorithm: canFind;
 */
 enum GrLexemeType {
 	LeftBracket, RightBracket, LeftParenthesis, RightParenthesis, LeftCurlyBrace, RightCurlyBrace,
-	Period, Semicolon, Colon, Comma, Pointer, As, Is, Try, Catch, Raise, Defer,
+	Period, Semicolon, Colon, Comma, Pointer, As, Is, Panic, Try, Catch, Raise, Defer,
 	Assign,
 	AddAssign, SubstractAssign, MultiplyAssign, DivideAssign, ConcatenateAssign, RemainderAssign, PowerAssign,
 	Plus, Minus,
@@ -590,6 +590,9 @@ class GrLexer {
                 break;
             case "is":
                 lex.type = GrLexemeType.Is;
+                break;
+            case "panic":
+                lex.type = GrLexemeType.Panic;
                 break;
             case "try":
                 lex.type = GrLexemeType.Try;

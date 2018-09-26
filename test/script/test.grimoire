@@ -1,4 +1,37 @@
 main {
+    defer { print("A: " ~ a as string); }
+    int a = 5;
+    func() {
+        int b = 6;
+        defer { print("B: " ~ b as string); }
+        func() {
+            defer { print("C: " ~ c as string); }
+            int c = 7;
+            kill
+        }();
+    }();
+}
+
+    /*TODO:
+    Corriger le let
+
+    ajouter ifn() ou unless()
+    */
+
+    /*func() {
+        int i = 5;
+        
+    }();*/
+    //func() {
+     //   defer { print("B"); }
+    //    return
+    //}();
+    //panic "Hey";
+    
+
+    //panic "Error";
+
+
     /*try {
         raise Error, "Hello World !";
         panic "No";
@@ -6,34 +39,6 @@ main {
     rescue(err, msg) {
         print("catch: ");
     }*/
-
-    /*func() {
-        defer {
-            print("finally");
-        }
-        return;
-    }();*/
-    //func() {
-
-        //defer_init
-
-    int i = 0;
-    kill
-    return
-    /*print("Main start");
-    defer {
-        print("Outer defer start");
-        func() {
-            print("Anon func start");
-            defer{ 
-                print("Inner defer");
-            }
-            print("Anon func end");
-        }();
-        print("Outer defer end");
-    }
-    print("Main end");*/
-}
 /*
 func() {
     print("1");

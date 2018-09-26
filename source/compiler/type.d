@@ -127,15 +127,20 @@ class GrFunction {
 
 	GrFunctionCall[] functionCalls;
 	GrFunction anonParent;
-	uint position, anonReference, anonIndex, localVariableIndex;
+	uint position, anonReference, localVariableIndex;
 
 	uint nbIntegerParameters, nbFloatParameters, nbStringParameters,
 		nbArrayParameters, nbAnyParameters, nbObjectParameters;
 
-    GrDeferBlock[][] deferredBlocks;
+    GrDeferrableSection[] deferrableSections;
     GrDeferBlock[] registeredDeferBlocks;
     bool[] isDeferrableSectionLocked = [false];
-    uint[] deferInitPositions;
+}
+
+class GrDeferrableSection {
+    GrDeferBlock[] deferredBlocks;
+    uint deferInitPositions;
+    uint[] deferredCalls;
 }
 
 class GrFunctionCall {

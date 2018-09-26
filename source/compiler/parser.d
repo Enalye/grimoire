@@ -189,7 +189,7 @@ class Parser {
 	}
 
 	void beginFunction(dstring name, GrType[] signature, dstring[] inputVariables, bool isTask, GrType returnType = GrBaseType.VoidType) {
-		dstring mangledName = grType_mangleNamedFunction(name, signature);
+        dstring mangledName = grType_mangleNamedFunction(name, signature);
 
 		auto func = mangledName in functions;
 		if(func is null)
@@ -214,10 +214,6 @@ class Parser {
 
 			//Is replaced by the addr of the function later (see solveFunctionCalls).
 			addInstruction(GrOpcode.LocalStore_Int, 0u);
-
-			//Reserve constant for the function's address.
-			func.anonIndex = cast(uint)iconsts.length;
-			iconsts ~= 0u;
 		}
 		else {
 			func.index = cast(uint)functions.length;
@@ -233,6 +229,7 @@ class Parser {
 
 		functionStack ~= currentFunction;
 		currentFunction = func;
+
 		addInstruction(GrOpcode.LocalStack, 0u);
 
 		void fetchParameter(dstring name, GrType type) {
@@ -304,13 +301,16 @@ class Parser {
 		setInstruction(GrOpcode.LocalStack, 0u, currentFunction.localVariableIndex);
 		if(!functionStack.length)
 			logError("Missing symbol", "A \'}\' is missing, causing a mismatch");
+        
 		currentFunction = functionStack[$ - 1];
+        functionStack.length --;
 	}
 
 	void preEndFunction() {
 		if(!functionStack.length)
 			logError("Missing symbol", "A \'}\' is missing, causing a mismatch");
 		currentFunction = functionStack[$ - 1];
+        functionStack.length --;
 	}
 
 	GrFunction* getFunction(dstring name) {
@@ -898,10 +898,8 @@ class Parser {
 				logError("Undeclared function", "The function \'" ~ to!string(call.mangledName) ~ "\' is not declared");
 		}
 
-		foreach(func; anonymousFunctions) {
-			iconsts[func.anonIndex] = func.position;
-			setOpcode(opcodes, func.anonParent.position + func.anonReference, GrOpcode.Const_Int, func.anonIndex);
-		}
+		foreach(func; anonymousFunctions)
+			setOpcode(opcodes, func.anonParent.position + func.anonReference, GrOpcode.Const_Int, registerIntConstant(func.position));
 	}
 
 	void dump() {
@@ -1296,7 +1294,7 @@ class Parser {
 	void parseMainDeclaration() {
 		checkAdvance();
 		beginFunction("main", [], [], false);
-
+        
         openDeferrableSection();
 		parseBlock();
 		addKill();
@@ -1382,10 +1380,13 @@ class Parser {
         checkAdvance();
 
 		beginFunction(name, signature, inputs, false);
+        openDeferrableSection();
 		parseBlock();
         if(currentFunction.instructions.length
             && currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
 		    addReturn();
+        closeDeferrableSection();
+        registerDeferBlocks();
 		endFunction();
 	}
 
@@ -1495,6 +1496,12 @@ class Parser {
             case Loop:
                 parseLoopStatement();
                 break;
+            case Panic:
+                parsePanicStatement();
+                break;
+            case Try:
+                parseExceptionHandler();
+                break;
             case Return:
                 parseReturnStatement();
                 break;
@@ -1585,25 +1592,24 @@ class Parser {
 
     //Defer
     void openDeferrableSection() {
-        currentFunction.deferredBlocks.length ++;
+        auto deferrableSection = new GrDeferrableSection;
+        deferrableSection.deferInitPositions = cast(uint)currentFunction.instructions.length;
+        currentFunction.deferrableSections ~= deferrableSection;
+
         currentFunction.isDeferrableSectionLocked.length ++;
-        currentFunction.deferInitPositions ~= cast(uint)currentFunction.instructions.length;
-        addInstruction(GrOpcode.BeginDefer);
     }
 
+    int zaeaze = 0;
     void closeDeferrableSection() {
-        if(!currentFunction.deferredBlocks.length)
+        if(!currentFunction.deferrableSections.length)
             logError("Deferrable section error", "A deferrable section had a mismatch");
-        
-        if(!currentFunction.deferredBlocks[$ - 1].length) {
-            setInstruction(GrOpcode.Nop, currentFunction.deferInitPositions[$ - 1]);
-        }
-        foreach(deferBlock; currentFunction.deferredBlocks[$ - 1]) {
+
+        foreach(deferBlock; currentFunction.deferrableSections[$ - 1].deferredBlocks) {
             currentFunction.registeredDeferBlocks ~= deferBlock;
         }
-        currentFunction.deferredBlocks.length --;
+
+        currentFunction.deferrableSections.length --;
         currentFunction.isDeferrableSectionLocked.length --;
-        currentFunction.deferInitPositions.length --;
     }
 
     void parseDeferStatement() {
@@ -1616,19 +1622,17 @@ class Parser {
         deferBlock.position = cast(uint)currentFunction.instructions.length;
         deferBlock.parsePosition = current;
         deferBlock.scopeLevel = scopeLevel;
-        currentFunction.deferredBlocks[$ - 1] ~= deferBlock;
+        currentFunction.deferrableSections[$ - 1].deferredBlocks ~= deferBlock;
+
+        addInstruction(GrOpcode.Defer);
 
         //Parse the deferred block at the end of the outer block.
         skipBlock();
-
-        addInstruction(GrOpcode.RegisterDefer);
     }
     
-    void callDefer() {
+    void checkDeferStatement() {
         if(currentFunction.isDeferrableSectionLocked[$ - 1])
             logError("Invalid instruction", "You cannot use a flow-control statement in a defer");
-        if(currentFunction.deferredBlocks[$ - 1].length)
-            addInstruction(GrOpcode.CallDefer);
     }
 
     void registerDeferBlocks() {
@@ -1640,7 +1644,7 @@ class Parser {
             GrDeferBlock deferBlock = currentFunction.registeredDeferBlocks[0];
             currentFunction.registeredDeferBlocks = currentFunction.registeredDeferBlocks[1 .. $];
 
-            setInstruction(GrOpcode.RegisterDefer, deferBlock.position, cast(int)(currentFunction.instructions.length - deferBlock.position), true);
+            setInstruction(GrOpcode.Defer, deferBlock.position, cast(int)(currentFunction.instructions.length - deferBlock.position), true);
             current = deferBlock.parsePosition;
             scopeLevel = deferBlock.scopeLevel;
 
@@ -1648,7 +1652,7 @@ class Parser {
             parseBlock();
             currentFunction.isDeferrableSectionLocked[$ - 1] = false;
 
-            addInstruction(GrOpcode.ReturnDefer);
+            addInstruction(GrOpcode.Unwind);
         }
         currentFunction.registeredDeferBlocks.length = 0;
         current = tempParsePosition;
@@ -1664,18 +1668,18 @@ class Parser {
 		if(!breaksJumps.length)
 			logError("Breakable section error", "A breakable section had a mismatch");
 
-		uint[] continues = breaksJumps[$ - 1];
+		uint[] breaks = breaksJumps[$ - 1];
 		breaksJumps.length --;
 
-		foreach(position; continues)
-			setInstruction(GrOpcode.Jump, position, cast(int)(position - currentFunction.instructions.length), true);
+		foreach(position; breaks)
+			setInstruction(GrOpcode.Jump, position, cast(int)(currentFunction.instructions.length - position), true);
 	}
 
 	void parseBreak() {
 		if(!breaksJumps.length)
 			logError("Non breakable statement", "The break statement is not inside a breakable statement");
 
-        callDefer();
+        checkDeferStatement();
 		breaksJumps[$ - 1] ~= cast(uint)currentFunction.instructions.length;
 		addInstruction(GrOpcode.Jump);
 		advance();
@@ -1707,7 +1711,7 @@ class Parser {
 		if(!continuesJumps.length)
 			logError("Non continuable statement", "The continue statement is not inside a continuable statement");
 
-        callDefer();
+        checkDeferStatement();
 		continuesJumps[$ - 1] ~= cast(uint)currentFunction.instructions.length;
 		addInstruction(GrOpcode.Jump);
 		advance();
@@ -2025,12 +2029,7 @@ class Parser {
 		uint jumpPosition = cast(uint)currentFunction.instructions.length;
 		addInstruction(GrOpcode.JumpEqual);
 
-        openDeferrableSection();
-
 		parseBlock();
-        
-        callDefer();
-        closeDeferrableSection();
 
 		addInstruction(GrOpcode.Jump, cast(int)(blockPosition - currentFunction.instructions.length), true);
 		setInstruction(GrOpcode.JumpEqual, jumpPosition, cast(int)(currentFunction.instructions.length - jumpPosition), true);
@@ -2039,6 +2038,18 @@ class Parser {
 		closeBreakableSection();
 		closeContinuableSection();
 	}
+
+    void parsePanicStatement() {
+        advance();
+        GrType type = parseSubExpression(false);
+        convertType(type, grString);
+        addInstruction(GrOpcode.Panic);
+        checkDeferStatement();
+    }
+
+    void parseExceptionHandler() {
+        checkAdvance();
+    }
 
 	void parseReturnStatement() {
 		checkAdvance();
@@ -2057,12 +2068,12 @@ class Parser {
 	}
 
     void addReturn() {
-        callDefer();
+        checkDeferStatement();
         addInstruction(GrOpcode.Return);
     }
 
     void addKill() {
-        callDefer();
+        checkDeferStatement();
         addInstruction(GrOpcode.Kill);
     }
 
@@ -3206,7 +3217,10 @@ class Parser {
 			else
 				report ~= "\033[1;93m"; //Red color
 
-			foreach(x; 0 .. error.lex.textLength)
+            auto lexLength = error.lex.textLength;
+            if(error.lex.type == GrLexemeType.String)
+                lexLength += 2;
+			foreach(x; 0 .. lexLength)
 				report ~= "^";
 			report ~= "\033[0m\n"; //White color
 
