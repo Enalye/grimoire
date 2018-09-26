@@ -1543,12 +1543,13 @@ class Parser {
 
     bool isDeclaration() {
         const auto tempPos = current;
-        parseType();
+        if(get().type != GrLexemeType.AutoType)
+            parseType();
         checkAdvance();
         bool isDecl;
         if(get().type == GrLexemeType.Identifier)
             isDecl = true;
-        current = tempPos;        
+        current = tempPos;
         return isDecl;
     }
 

@@ -1,12 +1,12 @@
 main {
     defer { print("A: " ~ a as string); }
-    int a = 5;
+    let a = 5;
     func() {
-        int b = 6;
+        let b = 6;
         defer { print("B: " ~ b as string); }
         func() {
             defer { print("C: " ~ c as string); }
-            int c = 7;
+            let c = 7;
             kill
         }();
     }();
