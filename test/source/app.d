@@ -8,6 +8,7 @@
 
 import std.stdio: writeln;
 import std.datetime;
+import std.conv: to;
 
 import grimoire;
 
@@ -23,7 +24,10 @@ void main() {
         vm.spawn();
         
         startTime = MonoTime.currTime();
-        vm.process();
+        while(vm.hasCoroutines)
+            vm.process();
+        if(vm.isPanicking)
+            writeln("Unhandled Exception: " ~ to!string(vm.panicMessage));
         auto executionTime = MonoTime.currTime() - startTime;
 
         writeln("Compilation took: \t", compilationTime.total!"usecs", " us");

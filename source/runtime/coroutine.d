@@ -31,6 +31,7 @@ class GrCoroutine {
     //Stack
     uint[64] callStack;
     uint[][] deferStack;
+    uint[][] exceptionHandlers;
     int[] istack;
     float[] fstack;
     dstring[] sstack;
@@ -45,4 +46,9 @@ class GrCoroutine {
 
     /// Kill state, unwind the call stack and call all registered deferred statements.
     bool isKilled;
+
+    /// An exception has been raised an is not caught.
+    bool isPanicking;
+    /// Error object.
+    //dstring error;
 }

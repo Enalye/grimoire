@@ -1387,6 +1387,7 @@ class Parser {
 		    addReturn();
         closeDeferrableSection();
         registerDeferBlocks();
+
 		endFunction();
 	}
 
@@ -1590,6 +1591,55 @@ class Parser {
     void parseYield() {
 		addInstruction(GrOpcode.Yield, 0u);
         advance();                    
+    }
+
+    //Exception handling
+    void parseRaiseStatement() {
+        advance();
+        GrType type = parseSubExpression(false);
+        convertType(type, grString);
+        addInstruction(GrOpcode.Raise);
+        checkDeferStatement();
+    }
+
+    void parseExceptionHandler() {
+        advance();
+
+        const auto tryPosition = currentFunction.instructions.length;
+        addInstruction(GrOpcode.Try);
+
+        parseBlock();
+
+        if(get().type != GrLexemeType.Catch)
+            logError("Missing catch", "A try must be followed by a catch statement");
+        advance();
+
+        if(get().type != GrLexemeType.LeftParenthesis)
+            logError("Missing (", "");
+        advance();
+
+        if(get().type != GrLexemeType.Identifier)
+            logError("Missing identifier", "");
+        GrVariable errVariable = registerLocalVariable(get().svalue, grString);
+
+        advance();
+        if(get().type != GrLexemeType.RightParenthesis)
+            logError("Missing )", "");
+        advance();
+
+        const auto catchPosition = currentFunction.instructions.length;
+        addInstruction(GrOpcode.Catch);
+
+        addInstruction(GrOpcode.GlobalPop_String);
+        addSetInstruction(errVariable, grString);
+
+        parseBlock();
+
+        const auto endPosition = currentFunction.instructions.length;
+
+
+        setInstruction(GrOpcode.Try, cast(uint)tryPosition, cast(uint)(catchPosition - tryPosition), true);
+        setInstruction(GrOpcode.Catch, cast(uint)catchPosition, cast(uint)(endPosition - catchPosition), true);
     }
 
     //Defer
@@ -2008,20 +2058,29 @@ class Parser {
 	}
 
 	void parseLoopStatement() {
+        bool isInfinite;
+        GrVariable iterator;
+        
 		advance();
-		if(get().type != GrLexemeType.LeftParenthesis)
-			logError("Missing symbol", "A condition should always start with \'(\'");
+		if(get().type == GrLexemeType.LeftParenthesis) {
+            advance();
 
-		advance();
+            /* Init */
+            iterator = registerSpecialVariable("iterator"d ~ to!dstring(scopeLevel), GrType(GrBaseType.IntType));
+        
+            //Init counter
+            GrType type = parseSubExpression();
+    		advance();
 
-		/* Init */
-		GrVariable iterator = registerSpecialVariable("iterator"d ~ to!dstring(scopeLevel), GrType(GrBaseType.IntType));
-	
-		//Init counter
-		GrType type = parseSubExpression();
-		convertType(type, GrType(GrBaseType.IntType));
-		addInstruction(GrOpcode.SetupIterator);
-		addSetInstruction(iterator);
+            convertType(type, GrType(GrBaseType.IntType));
+            addInstruction(GrOpcode.SetupIterator);
+            addSetInstruction(iterator);
+        }
+        else if(get().type == GrLexemeType.LeftCurlyBrace) {
+            isInfinite = true;
+        }
+        else
+			logError("Syntax Error", "A loop should be either \'loop(condition) {}\' or \'loop {}\'");
 
 		/* For is breakable and continuable. */
 		openBreakableSection();
@@ -2031,38 +2090,29 @@ class Parser {
 		setContinuableSectionDestination();
 
 
-		advance();
 		uint blockPosition = cast(uint)currentFunction.instructions.length;
+        uint jumpPosition;
 
-		addGetInstruction(iterator, GrType(GrBaseType.IntType));
-		addInstruction(GrOpcode.DecrementInt);
-		addSetInstruction(iterator);
+        if(!isInfinite) {
+            addGetInstruction(iterator, GrType(GrBaseType.IntType));
+            addInstruction(GrOpcode.DecrementInt);
+            addSetInstruction(iterator);
 
-		addGetInstruction(iterator, GrType(GrBaseType.IntType));
-		uint jumpPosition = cast(uint)currentFunction.instructions.length;
-		addInstruction(GrOpcode.JumpEqual);
+            addGetInstruction(iterator, GrType(GrBaseType.IntType));
+            jumpPosition = cast(uint)currentFunction.instructions.length;
+            addInstruction(GrOpcode.JumpEqual);
+        }
 
 		parseBlock();
 
 		addInstruction(GrOpcode.Jump, cast(int)(blockPosition - currentFunction.instructions.length), true);
-		setInstruction(GrOpcode.JumpEqual, jumpPosition, cast(int)(currentFunction.instructions.length - jumpPosition), true);
+		if(!isInfinite)
+            setInstruction(GrOpcode.JumpEqual, jumpPosition, cast(int)(currentFunction.instructions.length - jumpPosition), true);
 
 		/* For is breakable and continuable. */
 		closeBreakableSection();
 		closeContinuableSection();
 	}
-
-    void parseRaiseStatement() {
-        advance();
-        GrType type = parseSubExpression(false);
-        convertType(type, grString);
-        //addInstruction(GrOpcode.);
-        checkDeferStatement();
-    }
-
-    void parseExceptionHandler() {
-        checkAdvance();
-    }
 
 	void parseReturnStatement() {
 		checkAdvance();

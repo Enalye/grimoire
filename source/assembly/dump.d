@@ -15,7 +15,7 @@ import compiler.all;
 import assembly.bytecode;
 
 private string[] instructions = [
-    "nop",
+    "nop", "raise", "try", "catch",
     "kill", "yield", "task", "anon_task",
     "pop.i", "pop.f", "pop.s", "pop.n", "pop.a", "pop.o",
     "lstore.i", "lstore.f", "lstore.s", "lstore.n", "lstore.a", "lstore.r", "lstore.o",
@@ -88,7 +88,7 @@ string grBytecode_dump(GrBytecode bytecode) {
             line ~= "\"" ~ to!string(bytecode.sconsts[grBytecode_getUnsignedValue(opcode)]) ~ "\"";
         else if(op >= GrOpcode.Jump && op <= GrOpcode.JumpNotEqual)
             line ~= to!string(i + grBytecode_getSignedValue(opcode));
-        else if(op == GrOpcode.Defer)
+        else if(op == GrOpcode.Defer || op == GrOpcode.Try || op == GrOpcode.Catch)
             line ~= to!string(i + grBytecode_getSignedValue(opcode));
 
         i++;

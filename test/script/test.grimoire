@@ -1,5 +1,36 @@
 main {
-    /*defer { print("A: " ~ a as string); }
+    otherTask();
+    yield
+    print("[main] start");
+    try {
+        defer { print("[main] defer try"); }
+        print("[main] try start");
+        func() {
+            defer { print("[func] defer"); }
+            print("[func] start");
+            raise "Raised Error in [func]";
+            print("[func] end");
+        }();
+        print("[main] try end");
+    }
+    catch(error) {
+        print("[main] Error caught: " ~ error);
+        defer { print("Hey, vsauce"); }
+        raise "Mickael here";
+    }
+    print("[main] end");
+}
+
+task otherTask() {
+    defer { print("[otherTask] defer close"); }
+    print("[otherTask] start");
+    loop {
+        yield
+    }
+    print("[otherTask] We should not be there");
+}
+
+/*defer { print("A: " ~ a as string); }
     let a = 5;
     func() {
         let b = 6;
@@ -10,13 +41,6 @@ main {
             kill
         }();
     }();*/
-    unless(false) {
-        print("A");
-    }
-    else unless(false) {
-        print("B");
-    }
-}
 
     /*func() {
         int i = 5;

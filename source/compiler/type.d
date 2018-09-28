@@ -137,18 +137,18 @@ class GrFunction {
     bool[] isDeferrableSectionLocked = [false];
 }
 
-class GrDeferrableSection {
-    GrDeferBlock[] deferredBlocks;
-    uint deferInitPositions;
-    uint[] deferredCalls;
-}
-
 class GrFunctionCall {
 	dstring mangledName;
 	uint position;
 	GrFunction caller, functionToCall;
 	GrType expectedType;
     bool isAddress;
+}
+
+class GrDeferrableSection {
+    GrDeferBlock[] deferredBlocks;
+    uint deferInitPositions;
+    uint[] deferredCalls;
 }
 
 class GrDeferBlock {

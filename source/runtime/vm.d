@@ -41,6 +41,10 @@ class GrVM {
         GrDynamicValue[] _aglobalStack;
         void*[] _oglobalStack;
 	    IndexedArray!(GrCoroutine, 256u) _coroutines = new IndexedArray!(GrCoroutine, 256u)();
+    
+        //Panic state.
+        bool _isPanicking;
+        dstring _panicMessage;
     }
 
     __gshared bool isRunning = true;
@@ -48,6 +52,12 @@ class GrVM {
     @property {
         /// Check if there is a coroutine currently running.
         bool hasCoroutines() const { return _coroutines.length > 0uL; }
+
+        /// Whether the whole VM has panicked, true if an unhandled error occurred.
+        bool isPanicking() const { return _isPanicking; }
+
+        /// The unhandled error message.
+        dstring panicMessage() const { return _panicMessage; }
     }
 
     /// Default.
@@ -74,6 +84,13 @@ class GrVM {
 		_coroutines.push(new GrCoroutine(this));
 	}
 
+    /**
+        Captures an unhandled error and kill the VM.
+    */
+    void panic() {
+        
+    }
+
     /// Run the vm until all the coroutine are finished or in yield.
 	void process() {
 		coroutinesLabel: for(uint index = 0u; index < _coroutines.length; index ++) {
@@ -83,6 +100,72 @@ class GrVM {
 				switch (grBytecode_getOpcode(opcode)) with(GrOpcode) {
                 case Nop:
                     coro.pc ++;
+                    break;
+                case Raise:
+                    if(!coro.isPanicking) {
+                        //Error message.
+                        _sglobalStack ~= coro.sstack[$ - 1];
+                        coro.sstack.length --;
+
+                        //We indicate that the coroutine is in a panic state until a catch is found.
+                        coro.isPanicking = true;
+                    }
+
+                    //Exception handler found in the current function, just jump.
+                    if(coro.exceptionHandlers[$ - 1].length) {
+                        coro.pc = coro.exceptionHandlers[$ - 1][$ - 1];
+                    }
+                    //No exception handler in the current function, unwinding the deferred code, then return.
+                    
+                    //Check for deferred calls as we will exit the current function.
+                    else if(coro.deferStack[$ - 1].length) {
+                        //Pop the last defer and run it.
+                        coro.pc = coro.deferStack[$ - 1][$ - 1];
+                        coro.deferStack[$ - 1].length --;
+                        //The search for an exception handler will be done by Unwind after all defer
+                        //has been called for this function.
+                    }
+                    else if(coro.stackPos) {
+                        //Pop the defer scope.
+                        coro.deferStack.length --;
+
+                        //Pop the exception handlers as well.
+                        coro.exceptionHandlers.length --;
+
+                        //Then returns to the last context, raise will be run again.
+                        coro.stackPos -= 2;
+                        coro.valuesPos -= coro.callStack[coro.stackPos];
+                    }
+                    else {
+                        //Kill the others.
+                        foreach(coroutine; _coroutines) {
+                            coroutine.pc = coro.pc;
+                            coroutine.isKilled = true;
+                        }
+
+                        //The VM is now panicking.
+                        _isPanicking = true;
+                        _panicMessage = _sglobalStack[$ - 1];
+                        _sglobalStack.length --;
+
+                        //Every deferred call has been executed, now die.
+                        _coroutines.markInternalForRemoval(index);
+                        continue coroutinesLabel;
+                    }
+                    break;
+                case Try:
+                    coro.exceptionHandlers[$ - 1] ~= coro.pc + grBytecode_getSignedValue(opcode);
+                    coro.pc ++;
+                    break;
+                case Catch:
+                    coro.exceptionHandlers[$ - 1].length --;
+                    if(coro.isPanicking) {
+                        coro.isPanicking = false;
+                        coro.pc ++;
+                    }
+                    else {
+                        coro.pc += grBytecode_getSignedValue(opcode);
+                    }
                     break;
 				case Task:
 					GrCoroutine newCoro = new GrCoroutine(this);
@@ -613,8 +696,14 @@ class GrVM {
 					coro.pc ++;
 					break;
 				case Return:
+                    //If another task was killed by an exception,
+                    //we might end up there if the task has just been spawned.
+                    if(!coro.deferStack.length && coro.isKilled) {
+                        _coroutines.markInternalForRemoval(index);
+					    continue coroutinesLabel;
+                    }
                     //Check for deferred calls.
-                    if(coro.deferStack[$ - 1].length) {
+                    else if(coro.deferStack[$ - 1].length) {
                         //Pop the last defer and run it.
                         coro.pc = coro.deferStack[$ - 1][$ - 1];
                         coro.deferStack[$ - 1].length --;
@@ -623,6 +712,9 @@ class GrVM {
                         //Pop the defer scope.
                         coro.deferStack.length --;
 
+                        //Pop the exception handlers as well.
+                        coro.exceptionHandlers.length --;
+
                         //Then returns to the last context.
                         coro.stackPos -= 2;
                         coro.pc = coro.callStack[coro.stackPos + 1u];
@@ -630,8 +722,14 @@ class GrVM {
                     }
 					break;
                 case Unwind:
+                    //If another task was killed by an exception,
+                    //we might end up there if the task has just been spawned.
+                    if(!coro.deferStack.length) {
+                        _coroutines.markInternalForRemoval(index);
+					    continue coroutinesLabel;
+                    }
                     //Check for deferred calls.
-                    if(coro.deferStack[$ - 1].length) {
+                    else if(coro.deferStack[$ - 1].length) {
                         //Pop the next defer and run it.
                         coro.pc = coro.deferStack[$ - 1][$ - 1];
                         coro.deferStack[$ - 1].length --;
@@ -640,6 +738,9 @@ class GrVM {
                         if(coro.stackPos) {
                             //Pop the defer scope.
                             coro.deferStack.length --;
+
+                            //Pop the exception handlers as well.
+                            coro.exceptionHandlers.length --;
 
                             //Then returns to the last context without modifying the pc.
                             coro.stackPos -= 2;
@@ -651,9 +752,48 @@ class GrVM {
 					        continue coroutinesLabel;
                         }
                     }
+                    else if(coro.isPanicking) {
+                        //An exception has been raised without any try/catch inside the function.
+                        //So all deferred code is run here before searching in the parent function.
+                        if(coro.stackPos) {
+                            //Pop the defer scope.
+                            coro.deferStack.length --;
+
+                            //Pop the exception handlers as well.
+                            coro.exceptionHandlers.length --;
+
+                            //Then returns to the last context without modifying the pc.
+                            coro.stackPos -= 2;
+                            coro.valuesPos -= coro.callStack[coro.stackPos];
+
+                            //Exception handler found in the current function, just jump.
+                            if(coro.exceptionHandlers[$ - 1].length) {
+                                coro.pc = coro.exceptionHandlers[$ - 1][$ - 1];
+                            }
+                        }
+                        else {
+                            //Kill the others.
+                            foreach(coroutine; _coroutines) {
+                                coroutine.pc = coro.pc;
+                                coroutine.isKilled = true;
+                            }
+
+                            //The VM is now panicking.
+                            _isPanicking = true;
+                            _panicMessage = _sglobalStack[$ - 1];
+                            _sglobalStack.length --;
+
+                            //Every deferred call has been executed, now die.
+                            _coroutines.markInternalForRemoval(index);
+					        continue coroutinesLabel;
+                        }
+                    }
                     else {
                         //Pop the defer scope.
                         coro.deferStack.length --;
+
+                        //Pop the exception handlers as well.
+                        coro.exceptionHandlers.length --;
 
                         //Then returns to the last context.
                         coro.stackPos -= 2;
@@ -676,6 +816,7 @@ class GrVM {
                     coro.avalues.length = stackSize;
                     coro.ovalues.length = stackSize;
                     coro.deferStack.length ++;
+                    coro.exceptionHandlers.length ++;
 					coro.pc ++;
 					break;
 				case Call:
