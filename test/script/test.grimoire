@@ -3,10 +3,10 @@ main {
     yield
     print("[main] start");
     try {
-        defer { print("[main] defer try"); }
+        defer print("[main] defer try");
         print("[main] try start");
         func() {
-            defer { print("[func] defer"); }
+            defer print("[func] defer");
             print("[func] start");
             raise "Raised Error in [func]";
             print("[func] end");
@@ -15,18 +15,16 @@ main {
     }
     catch(error) {
         print("[main] Error caught: " ~ error);
-        defer { print("Hey, vsauce"); }
-        raise "Mickael here";
+        defer print("[main] defer catch");
+        raise "Rethrown (" ~ error ~ ")";
     }
     print("[main] end");
 }
 
 task otherTask() {
-    defer { print("[otherTask] defer close"); }
+    defer print("[otherTask] defer close");
     print("[otherTask] start");
-    loop {
-        yield
-    }
+    loop yield
     print("[otherTask] We should not be there");
 }
 

@@ -1464,21 +1464,20 @@ class Parser {
 	}
 
 	void parseBlock() {
-		if(get().type != GrLexemeType.LeftCurlyBrace)
-			logError("Missing symbol", "A block should always start with \'{\'");
+        bool isMultiline;
+		if(get().type == GrLexemeType.LeftCurlyBrace) {
+            isMultiline = true;
+            if(!checkAdvance())
+			    logError("Unexpected end of file");
+        }
 		openBlock();
 
-		if(!checkAdvance())
-			logError("Unexpected end of file");
-
-		whileLoop: while(!isEnd()) {
-			GrLexeme lex = get();
-            switch(lex.type) with(GrLexemeType) {
+		void parseStatement() {
+            switch(get().type) with(GrLexemeType) {
             case Semicolon:
+            case RightCurlyBrace:
                 advance();
                 break;
-            case RightCurlyBrace:
-                break whileLoop;
             case Defer:
                 parseDeferStatement();
                 break;
@@ -1526,7 +1525,7 @@ class Parser {
                     goto default;
                 break;
             case Identifier:
-                if(grType_isStructure(lex.svalue))
+                if(grType_isStructure(get().svalue))
                     parseLocalDeclaration();
                 else
                     goto default;
@@ -1535,10 +1534,23 @@ class Parser {
                 parseExpression();
                 break;
             }
-		}
+        }
 
-		if(get().type != GrLexemeType.RightCurlyBrace)
-			logError("Missing symbol", "A block should always end with \'}\'");
+        if(isMultiline) {
+            while(!isEnd()) {
+                if(get().type == GrLexemeType.RightCurlyBrace)
+                    break;
+                parseStatement();
+            }
+        }
+        else {
+            parseStatement();
+        }
+
+        if(isMultiline) {
+            if(get().type != GrLexemeType.RightCurlyBrace)
+                logError("Missing symbol", "A block should always end with \'}\'");
+        }
 		closeBlock();
 		checkAdvance();
 	}
@@ -1556,18 +1568,16 @@ class Parser {
     }
 
 	void skipBlock() {
-		if(get().type != GrLexemeType.LeftCurlyBrace)
-			logError("Missing symbol", "A block should always start with \'{\'");
+		bool isMultiline;
+		if(get().type == GrLexemeType.LeftCurlyBrace) {
+            isMultiline = true;
+            if(!checkAdvance())
+			    logError("Unexpected end of file");
+        }
 		openBlock();
 
-		if(!checkAdvance())
-			logError("Unexpected end of file");
-
-		whileLoop: while(!isEnd()) {
-			GrLexeme lex = get();
-			switch(lex.type) with(GrLexemeType) {
-			case RightCurlyBrace:
-				break whileLoop;
+		void skipStatement() {
+            switch(get().type) with(GrLexemeType) {
 			case LeftCurlyBrace:
 				skipBlock();
 				break;
@@ -1575,10 +1585,27 @@ class Parser {
 				checkAdvance();
 				break;
 			}
-		}
+        }
 		
-		if(get().type != GrLexemeType.RightCurlyBrace)
-			logError("Missing symbol", "A block should always end with \'}\'");
+		if(isMultiline) {
+            while(!isEnd()) {
+                if(get().type == GrLexemeType.RightCurlyBrace)
+                    break;
+                skipStatement();
+            }
+        }
+        else {
+            while(!isEnd()) {
+                if(get().type == GrLexemeType.Semicolon)
+                    break;
+                skipStatement();
+            }
+        }
+
+        if(isMultiline) {
+            if(get().type != GrLexemeType.RightCurlyBrace)
+                logError("Missing symbol", "A block should always end with \'}\'");
+        }
 		closeBlock();
 		checkAdvance();
 	}
@@ -2076,11 +2103,8 @@ class Parser {
             addInstruction(GrOpcode.SetupIterator);
             addSetInstruction(iterator);
         }
-        else if(get().type == GrLexemeType.LeftCurlyBrace) {
-            isInfinite = true;
-        }
         else
-			logError("Syntax Error", "A loop should be either \'loop(condition) {}\' or \'loop {}\'");
+            isInfinite = true;
 
 		/* For is breakable and continuable. */
 		openBreakableSection();
