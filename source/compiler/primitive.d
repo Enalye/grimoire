@@ -29,12 +29,13 @@ class GrPrimitive {
 	GrType returnType;
 	dstring name, mangledName;
 	uint index;
+    bool isExplicit;
 }
 
 /**
     Define a new primitive.
 */
-void grType_addPrimitive(void function(GrCoroutine) callback, dstring name, GrType retType, GrType[] signature) {
+GrPrimitive grType_addPrimitive(void function(GrCoroutine) callback, dstring name, GrType retType, GrType[] signature) {
 	GrPrimitive primitive = new GrPrimitive;
 	primitive.callback = callback;
 	primitive.signature = signature;
@@ -43,22 +44,25 @@ void grType_addPrimitive(void function(GrCoroutine) callback, dstring name, GrTy
 	primitive.mangledName = grType_mangleNamedFunction(name, signature);
 	primitive.index = cast(uint)primitives.length;
 	primitives ~= primitive;
+    return primitive;
 }
 
 /**
     An operator is a function that replace a binary or unary grimoire operator such as `+`, `==`, etc
     The name of the function must be that of the operator like "+", "-", "or", etc.
 */
-void grType_addOperator(void function(GrCoroutine) callback, dstring name, GrType retType, GrType[] signature) {
-	grType_addPrimitive(callback, "@op_" ~ name, retType, signature);
+GrPrimitive grType_addOperator(void function(GrCoroutine) callback, dstring name, GrType retType, GrType[] signature) {
+	return grType_addPrimitive(callback, "@op_" ~ name, retType, signature);
 }
 
 /**
     A cast operator allows to convert from one type to another.
     It have to have only one parameter and return the casted value.
 */
-void grType_addCast(void function(GrCoroutine) callback, GrType srcType, GrType dstType) {
-	grType_addPrimitive(callback, "@as", dstType, [srcType, dstType]);
+GrPrimitive grType_addCast(void function(GrCoroutine) callback, GrType srcType, GrType dstType, bool isExplicit = false) {
+	auto primitive = grType_addPrimitive(callback, "@as", dstType, [srcType, dstType]);
+    primitive.isExplicit = isExplicit;
+    return primitive;
 }
 
 bool isPrimitiveDeclared(dstring mangledName) {

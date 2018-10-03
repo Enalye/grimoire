@@ -12,6 +12,14 @@ import runtime.vm;
 import runtime.dynamic;
 import runtime.array;
 
+struct GrValue {
+    union {
+        int ivalue;
+        float fvalue;
+        dstring svalue;
+    }
+}
+
 /**
     Coroutines are contexts that hold local data.
 */
@@ -35,6 +43,7 @@ class GrCoroutine {
     int[] istack;
     float[] fstack;
     dstring[] sstack;
+    //GrValue[] stack;
     GrDynamicValue[][] nstack;
     GrDynamicValue[] astack;
     void*[] ostack;

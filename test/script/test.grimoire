@@ -1,95 +1,7 @@
 main {
-    otherTask();
-    yield
-    print("[main] start");
-    try {
-        defer print("[main] defer try");
-        print("[main] try start");
-        func() {
-            defer print("[func] defer");
-            print("[func] start");
-            raise "Raised Error in [func]";
-            print("[func] end");
-        }();
-        print("[main] try end");
-    }
-    catch(error) {
-        print("[main] Error caught: " ~ error);
-        defer print("[main] defer catch");
-        raise "Rethrown (" ~ error ~ ")";
-    }
-    print("[main] end");
+    let i = 1 + 2.1 as int;
+    print(i);
 }
-
-task otherTask() {
-    defer print("[otherTask] defer close");
-    print("[otherTask] start");
-    loop yield
-    print("[otherTask] We should not be there");
-}
-
-/*defer { print("A: " ~ a as string); }
-    let a = 5;
-    func() {
-        let b = 6;
-        defer { print("B: " ~ b as string); }
-        func() {
-            defer { print("C: " ~ c as string); }
-            let c = 7;
-            kill
-        }();
-    }();*/
-
-    /*func() {
-        int i = 5;
-        
-    }();*/
-    //func() {
-     //   defer { print("B"); }
-    //    return
-    //}();
-    //panic "Hey";
-    
-
-    //panic "Error";
-
-
-    /*try {
-        raise Error, "Hello World !";
-        panic "No";
-    }
-    rescue(err, msg) {
-        print("catch: ");
-    }*/
-/*
-func() {
-    print("1");
-    defer {
-        print("defer");
-    }
-    print("2");
-    return;
-}
-
-0   localstack  0
-1   reg_defer   8
-2   const.s     "1"
-3   call_prim   print(string)
-   raise
-4   const.s     "2"
-5   call_prim   print(string)
-6   call_defer
-7   ret
-8   const.s     "defer"
-9   call_prim   print(string)
-10  ret_defer
-
-Todo:
-    - defer
-    - try/catch
-    - raise
-    - panic
-*/
 
 /*
 Todo:
@@ -97,10 +9,12 @@ Todo:
 
     Suggestions:
     Système de channel comme mosaiq
-    raise "Error" try catch finally
     Variables globales
+    Type Object (orienté prototype)
+    Type Pointeur (type uniquement accessible dans les primitives)
+    Multiples valeurs de retour: a, b = foo(); func() int, int {}
+    
 
-    kill
 */
 /*
 main {

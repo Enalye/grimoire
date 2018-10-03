@@ -88,6 +88,12 @@ bool grType_isStructure(dstring name) {
     return false;
 }
 
+GrType grType_getStructureType(dstring name) {
+    GrType stType = GrBaseType.StructType;
+    stType.mangledType = name;
+    return stType;
+}
+
 GrStructure grType_getStructure(dstring name) {
     auto structure = (name in structures);
     if(structure is null)

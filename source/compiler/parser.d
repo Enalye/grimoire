@@ -459,6 +459,7 @@ class Parser {
                 resultType = addCustomBinaryOperator(lexType, leftType, rightType);
             }
         }
+        
         if(resultType.baseType == GrBaseType.VoidType)
             logError("Operator Undefined", "There is no "
                 ~ to!string(grLexer_getTypeDisplay(lexType))
@@ -2211,11 +2212,11 @@ class Parser {
         case GreaterOrEqual: .. case Lesser:
             return 5;
         case Add: .. case Substract:
-            return 7;
+            return 16;
         case Multiply: .. case Remainder:
-            return 8;
+            return 17;
         case Power:
-            return 9;
+            return 18;
         case Not:
         case Plus:
         case Minus:
@@ -2349,7 +2350,7 @@ class Parser {
 		}
 
         //User-defined conversions.
-        if(addCustomConversion(src, dst) == dst) {
+        if(addCustomConversion(src, dst, isExplicit) == dst) {
             return dst;
         }
 
@@ -2358,7 +2359,7 @@ class Parser {
 		return GrType(GrBaseType.VoidType);	
 	}
 
-    GrType addCustomConversion(GrType leftType, GrType rightType) {
+    GrType addCustomConversion(GrType leftType, GrType rightType, bool isExplicit) {
         GrType resultType = GrBaseType.VoidType;
 
         //As opposed to other functions, we need the return type (rightType) to be part of the signature.
@@ -2367,6 +2368,10 @@ class Parser {
         //GrPrimitive check
         if(isPrimitiveDeclared(mangledName)) {
             GrPrimitive primitive = grType_getPrimitive(mangledName);
+            //Some implicit conversions are disabled.
+            //ex: float -> int because we might lose information.
+            if(primitive.isExplicit && !isExplicit)
+                return resultType;
             addInstruction(GrOpcode.PrimitiveCall, primitive.index);
             resultType = primitive.returnType;
         }

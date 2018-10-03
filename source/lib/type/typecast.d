@@ -13,11 +13,11 @@ import lib.api;
 
 void grLib_std_type_typecast_load() {
     //As int
-    grLib_addCast(&typecast_f2i, grFloat, grInt);
+    grLib_addCast(&typecast_f2i, grFloat, grInt, true);
     grLib_addCast(&typecast_b2i, grBool, grInt);
 
     //As float
-    grLib_addCast(&typecast_i2f, grInt, grFloat);
+    grLib_addCast(&typecast_i2f, grInt, grFloat, true);
 
     //As bool
 
