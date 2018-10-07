@@ -6,27 +6,19 @@
     Authors: Enalye
 */
 
-module runtime.coroutine;
+module runtime.context;
 
-import runtime.vm;
+import runtime.engine;
 import runtime.dynamic;
 import runtime.array;
-
-struct GrValue {
-    union {
-        int ivalue;
-        float fvalue;
-        dstring svalue;
-    }
-}
 
 /**
     Coroutines are contexts that hold local data.
 */
-class GrCoroutine {
-    this(GrVM parentVm) { vm = parentVm; }
+class GrContext {
+    this(GrEngine parentVm) { vm = parentVm; }
 
-    GrVM vm;
+    GrEngine vm;
 
     //Local variables
     int[] ivalues;
@@ -37,13 +29,12 @@ class GrCoroutine {
     void*[] ovalues;
 
     //Stack
-    uint[64] callStack;
+    uint[256] callStack;
     uint[][] deferStack;
     uint[][] exceptionHandlers;
     int[] istack;
     float[] fstack;
     dstring[] sstack;
-    //GrValue[] stack;
     GrDynamicValue[][] nstack;
     GrDynamicValue[] astack;
     void*[] ostack;

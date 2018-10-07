@@ -186,7 +186,7 @@ class GrLexer {
 		filesToImport ~= fileName;
 
 		while(filesToImport.length) {
-			text = to!dstring(readText(filesToImport[$-1]));
+			text = to!dstring(readText(to!string(filesToImport[$-1])));
 			file = filesToImport[$-1];
 			filesToImport.length --;
 

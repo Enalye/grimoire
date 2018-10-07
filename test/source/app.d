@@ -19,7 +19,7 @@ void main() {
         auto compilationTime = MonoTime.currTime() - startTime;
 
         writeln(grBytecode_dump(bytecode));
-        GrVM vm = new GrVM;
+        GrEngine vm = new GrEngine;
         vm.load(bytecode);
         vm.spawn();
         
@@ -30,8 +30,8 @@ void main() {
             writeln("Unhandled Exception: " ~ to!string(vm.panicMessage));
         auto executionTime = MonoTime.currTime() - startTime;
 
-        writeln("Compilation took: \t", compilationTime.total!"usecs", " us");
-        writeln("Execution took: \t", executionTime.total!"usecs", " us");
+        writeln("Compilation took: \t", compilationTime);
+        writeln("Execution took: \t", executionTime);
 	}
 	catch(Exception e) {
 		writeln(e.msg);

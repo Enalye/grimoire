@@ -1,7 +1,35 @@
-main {
-    let i = 1 + 2.1 as int;
-    print(i);
+/*main {
+    let a = vec2(-5.7, 2.1);
+    print("Hello World !" as array);
+}*/
+
+//Benchmark fib
+
+func fib(int n) int {
+    if(n < 2) return n;
+    return fib(n - 1) + fib(n - 2);
 }
+
+main {
+    print(fib(30)); //34
+}
+
+/*
+4348583 / 4173613 us
+4sec
+*//*
+main {
+    loop(1000000) {
+        let i = 1 + 2.1 as int;
+        float a = foo(i) * 2.0;
+        string b = func() string { let a = "lol"; return a; }();
+    }
+}
+
+func foo(int a) float {
+	float b = -5.7;
+	return b;
+}*/
 
 /*
 Todo:
@@ -13,59 +41,4 @@ Todo:
     Type Object (orienté prototype)
     Type Pointeur (type uniquement accessible dans les primitives)
     Multiples valeurs de retour: a, b = foo(); func() int, int {}
-    
-
-*/
-/*
-main {
-    func() func(int) foo;
-    
-    foo = &test;
-    func(int) p = foo();
-    p(5);
-}
-
-func test() func(int) {
-    let a = func(int t) {
-        print(t);
-    };
-    return a;
-}
-
-*/
-
-/*
-    Structures
-
-    struct Foo {
-        int a; //register 0 int
-        float b; //register 1 float
-        bool c; //register 2 bool
-    }
-
-    main {
-        Foo foo;
-        foo.a //parse identifier avec opérateur '.'
-        //On récupère le type Foo et récupère a dans Foo
-        //comme une variable locale dans une fonction
-    }
-
-*/
-/*
-struct vec2 {
-    float x;
-    float y;
-}
-
-vec2 v;//register 2 int
-v.x = 0;
-v.y = 0;
-*/
-
-
-
-/*To do:
-    (x) vec2 a = b;
-    () a = [2.0, 5.0];
-    () return a;
 */

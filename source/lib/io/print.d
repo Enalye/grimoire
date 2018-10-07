@@ -13,49 +13,44 @@ import std.conv: to;
 import lib.api;
 
 void grLib_std_io_print_load() {
-	grLib_addPrimitive(&prints, "print", grVoid, [grString]);
-	grLib_addPrimitive(&printb, "print", grVoid, [grBool]);
-	grLib_addPrimitive(&printi, "print", grVoid, [grInt]);
-	grLib_addPrimitive(&printf, "print", grVoid, [grFloat]);
-	grLib_addPrimitive(&printa, "print", grVoid, [grDynamic]);
-	grLib_addPrimitive(&printn, "print", grVoid, [grArray]);
+	grLib_addPrimitive(&prints, "print", ["value"], [grString]);
+	grLib_addPrimitive(&printb, "print", ["value"], [grBool]);
+	grLib_addPrimitive(&printi, "print", ["value"], [grInt]);
+	grLib_addPrimitive(&printf, "print", ["value"], [grFloat]);
+	grLib_addPrimitive(&printa, "print", ["value"], [grDynamic]);
+	grLib_addPrimitive(&printn, "print", ["value"], [grArray]);
 }
 
-private void prints(GrCoroutine coro) {
-	writeln(coro.sstack[$ - 1]);
-	coro.sstack.length --;
+private void prints(GrCall call) {
+	writeln(call.getString("value"));
 }
 
-private void printb(GrCoroutine coro) {
-	writeln(coro.istack[$ - 1] ? "true" : "false");
-	coro.istack.length --;
+private void printb(GrCall call) {
+	writeln(call.getBool("value") ? "true" : "false");
 }
 
-private void printi(GrCoroutine coro) {
-	writeln(coro.istack[$ - 1]);
-	coro.istack.length --;
+private void printi(GrCall call) {
+	writeln(call.getInt("value"));
 }
 
-private void printf(GrCoroutine coro) {
-	writeln(coro.fstack[$ - 1]);
-	coro.fstack.length --;
+private void printf(GrCall call) {
+	writeln(call.getFloat("value"));
 }
 
-private void printa(GrCoroutine coro) {
-	writeln(coro.astack[$ - 1].getString());
-	coro.astack.length --;
+private void printa(GrCall call) {
+	writeln(call.getDynamic("value").getString());
 }
 
-private void printn(GrCoroutine coro) {
+private void printn(GrCall call) {
+    const auto ary = call.getArray("value");
     string result = "[";
     int i;
-    foreach(value; coro.nstack[$ - 1]) {
+    foreach(value; ary) {
         result ~= to!string(value.getString());
-        if((i + 2) <= coro.nstack[$ - 1].length)
+        if((i + 2) <= ary.length)
             result ~= ", ";
         i ++;
     }
     result ~= "]";
-    writeln(result); 
-	coro.nstack.length --;
+    writeln(result);
 }

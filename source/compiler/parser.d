@@ -975,6 +975,9 @@ class Parser {
 
         //Resolve all unresolved struct field types
         grType_resolveStructSignature();
+
+        //Then we can resolve primitives' signature
+        grType_resolvePrimitiveSignature();
         
         //GrFunction definitions
         reset();
@@ -2149,6 +2152,7 @@ class Parser {
         }
         else {
             GrType returnedType = parseSubExpression(false);
+            addReturn();
             if(returnedType != currentFunction.returnType)
                 logError("Invalid return type", "The returned type \'" ~ to!string(returnedType) ~ "\' does not match the function definition \'" ~ to!string(currentFunction.returnType) ~ "\'");
 
