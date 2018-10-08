@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1"/>
-		<title>GrVM.this - multiple declarations</title>
+		<title>Function GrDynamicValue.setString</title>
 		<link rel="stylesheet" href="../../css/style.min.css"/>
 		<script type="text/javascript" src="../../js/script.min.js"></script>
 	</head>
@@ -230,7 +230,7 @@ document.getElementById('symbolSearchPane').style.display = 'block';</script>
 					</li>
 					<li>
 						<div class="module ">
-							<a href="../../lib/type/conv.html">conv</a>
+							<a href="../../lib/type/typecast.html">typecast</a>
 						</div>
 					</li>
 				</ul>
@@ -263,17 +263,17 @@ document.getElementById('symbolSearchPane').style.display = 'block';</script>
 					</li>
 					<li>
 						<div class="module ">
-							<a href="../../runtime/coroutine.html">coroutine</a>
-						</div>
-					</li>
-					<li>
-						<div class="module ">
-							<a href="../../runtime/dynamic.html">dynamic</a>
+							<a href="../../runtime/context.html">context</a>
 						</div>
 					</li>
 					<li>
 						<div class="module selected">
-							<a href="../../runtime/vm.html">vm</a>
+							<a href="../../runtime/dynamic.html">dynamic</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../runtime/engine.html">engine</a>
 						</div>
 					</li>
 				</ul>
@@ -292,39 +292,15 @@ document.getElementById('symbolSearchPane').style.display = 'block';</script>
 		</nav>
 		<div id="main-contents">
 			<div>
-				<h1>GrVM.this - multiple declarations</h1>
-				<nav class="page-nav">
-					<ul>
-						<li>
-							<a href="#0">
-								Function <code>GrVM.this</code>
-							</a>
-						</li>
-						<li>
-							<a href="#1">
-								Function <code>GrVM.this</code>
-							</a>
-						</li>
-					</ul>
-				</nav><h2 id="0">Function GrVM.this</h2><p>Default.
+				<h1>Function GrDynamicValue.setString</h1><p>Sets the value to string.
 </p>
 				<div class="prototype">
 					<code class="lang-d">
 						<div class="single-prototype">
-				<span class="pln">this</span><span class="pun">(</span><span class="pun">)</span><span class="pun">;</span>
-						</div>
-					</code>
-				</div>
-				
-				<h2 id="1">Function GrVM.this</h2><p>Load the bytecode.
-</p>
-				<div class="prototype">
-					<code class="lang-d">
-						<div class="single-prototype">
-				<span class="pln">this</span>
+				<span class="typ">void</span> <span class="pln">setString</span>
 				<span class="pun">(</span>
 				<br/>
-				&nbsp;&nbsp;<a href="../../assembly/bytecode/GrBytecode.html"><span class="typ">GrBytecode</span></a> <span class="pln">bytecode</span>
+				&nbsp;&nbsp;<span class="pln">dstring</span> <span class="pln">value</span>
 				<br/>
 				<span class="pun">)</span><span class="pun">;</span>
 						</div>

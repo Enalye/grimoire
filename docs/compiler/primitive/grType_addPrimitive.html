@@ -230,7 +230,7 @@ document.getElementById('symbolSearchPane').style.display = 'block';</script>
 					</li>
 					<li>
 						<div class="module ">
-							<a href="../../lib/type/conv.html">conv</a>
+							<a href="../../lib/type/typecast.html">typecast</a>
 						</div>
 					</li>
 				</ul>
@@ -263,7 +263,7 @@ document.getElementById('symbolSearchPane').style.display = 'block';</script>
 					</li>
 					<li>
 						<div class="module ">
-							<a href="../../runtime/coroutine.html">coroutine</a>
+							<a href="../../runtime/context.html">context</a>
 						</div>
 					</li>
 					<li>
@@ -273,7 +273,7 @@ document.getElementById('symbolSearchPane').style.display = 'block';</script>
 					</li>
 					<li>
 						<div class="module ">
-							<a href="../../runtime/vm.html">vm</a>
+							<a href="../../runtime/engine.html">engine</a>
 						</div>
 					</li>
 				</ul>
@@ -297,16 +297,18 @@ document.getElementById('symbolSearchPane').style.display = 'block';</script>
 				<div class="prototype">
 					<code class="lang-d">
 						<div class="single-prototype">
-				<span class="typ">void</span> <span class="pln">grType_addPrimitive</span>
+				<a href="../../compiler/primitive/GrPrimitive.html"><span class="typ">GrPrimitive</span></a> <span class="pln">grType_addPrimitive</span>
 				<span class="pun">(</span>
 				<br/>
-				&nbsp;&nbsp;<span class="typ">void</span> <span class="kwd">function</span><span class="pun">(</span><a href="../../runtime/coroutine/GrCoroutine.html"><span class="typ">GrCoroutine</span></a><span class="pun">)</span> <span class="pln">callback</span><span class="pun">,</span>
+				&nbsp;&nbsp;<span class="typ">void</span> <span class="kwd">function</span><span class="pun">(</span><span class="pln">compiler<wbr/></span><span class="pun">.</span><span class="pln">primitive<wbr/></span><span class="pun">.</span><span class="typ">GrCall</span><span class="pun">)</span> <span class="pln">callback</span><span class="pun">,</span>
 				<br/>
 				&nbsp;&nbsp;<span class="pln">dstring</span> <span class="pln">name</span><span class="pun">,</span>
 				<br/>
-				&nbsp;&nbsp;<span class="pln">compiler<wbr/></span><span class="pun">.</span><span class="pln">type<wbr/></span><span class="pun">.</span><span class="typ">GrType</span> <span class="pln">retType</span><span class="pun">,</span>
+				&nbsp;&nbsp;<span class="pln">dstring</span><span class="pun">[]</span> <span class="pln">parameters</span><span class="pun">,</span>
 				<br/>
-				&nbsp;&nbsp;<span class="pln">compiler<wbr/></span><span class="pun">.</span><span class="pln">type<wbr/></span><span class="pun">.</span><span class="typ">GrType</span><span class="pun">[]</span> <span class="pln">signature</span>
+				&nbsp;&nbsp;<span class="pln">compiler<wbr/></span><span class="pun">.</span><span class="pln">type<wbr/></span><span class="pun">.</span><span class="typ">GrType</span><span class="pun">[]</span> <span class="pln">signature</span><span class="pun">,</span>
+				<br/>
+				&nbsp;&nbsp;<span class="pln">compiler<wbr/></span><span class="pun">.</span><span class="pln">type<wbr/></span><span class="pun">.</span><span class="typ">GrType</span> <span class="pln">retType</span> <span class="pun">=</span> <span class="pln">grVoid</span>
 				<br/>
 				<span class="pun">)</span><span class="pun">;</span>
 						</div>

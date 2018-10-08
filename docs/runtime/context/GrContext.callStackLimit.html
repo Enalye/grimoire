@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1"/>
-		<title>Function GrVM.spawn</title>
+		<title>Variable GrContext.callStackLimit</title>
 		<link rel="stylesheet" href="../../css/style.min.css"/>
 		<script type="text/javascript" src="../../js/script.min.js"></script>
 	</head>
@@ -230,7 +230,7 @@ document.getElementById('symbolSearchPane').style.display = 'block';</script>
 					</li>
 					<li>
 						<div class="module ">
-							<a href="../../lib/type/conv.html">conv</a>
+							<a href="../../lib/type/typecast.html">typecast</a>
 						</div>
 					</li>
 				</ul>
@@ -262,8 +262,8 @@ document.getElementById('symbolSearchPane').style.display = 'block';</script>
 						</div>
 					</li>
 					<li>
-						<div class="module ">
-							<a href="../../runtime/coroutine.html">coroutine</a>
+						<div class="module selected">
+							<a href="../../runtime/context.html">context</a>
 						</div>
 					</li>
 					<li>
@@ -272,8 +272,8 @@ document.getElementById('symbolSearchPane').style.display = 'block';</script>
 						</div>
 					</li>
 					<li>
-						<div class="module selected">
-							<a href="../../runtime/vm.html">vm</a>
+						<div class="module ">
+							<a href="../../runtime/engine.html">engine</a>
 						</div>
 					</li>
 				</ul>
@@ -292,13 +292,25 @@ document.getElementById('symbolSearchPane').style.display = 'block';</script>
 		</nav>
 		<div id="main-contents">
 			<div>
-				<h1>Function GrVM.spawn</h1><p>Create the main coroutine.
-        You must call this function before running the vm.
+				<h1>Variable GrContext.callStackLimit</h1><p>Current callstack max depth.
 </p>
 				<div class="prototype">
 					<code class="lang-d">
 						<div class="single-prototype">
-				<span class="typ">void</span> <span class="pln">spawn</span><span class="pun">(</span><span class="pun">)</span><span class="pun">;</span>
+				<span class="kwd">class</span> <a href="../../runtime/context/GrContext.html"><span class="typ">GrContext</span></a>
+				<br/>
+				<span class="pun">
+					{
+					<br/>
+				</span>
+				&nbsp;&nbsp;<span class="com">// ...</span>
+				<br/>
+				&nbsp;&nbsp;<span class="typ">uint</span> <span class="pln">callStackLimit</span>
+				<span class="pun">;</span>
+				<br/>
+				&nbsp;&nbsp;<span class="com">// ...</span>
+				<br/>
+				<span class="pun">}</span>
 						</div>
 					</code>
 				</div>

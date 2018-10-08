@@ -39,7 +39,7 @@ class GrPrimitive {
 }
 
 class GrCall {
-    public {
+    private {
         GrEngine _vm;
         GrContext _context;
 
@@ -114,11 +114,11 @@ class GrCall {
         _context = context;
         _callback(this);
 
-        _context.istack.length -= _iparams;
-        _context.fstack.length -= _fparams;
-        _context.sstack.length -= _sparams;
-        _context.astack.length -= _dparams;
-        _context.nstack.length -= _nparams;
+        _context.istackPos -= _iparams;
+        _context.fstackPos -= _fparams;
+        _context.sstackPos -= _sparams;
+        _context.astackPos -= _dparams;
+        _context.nstackPos -= _nparams;
     }
 
     alias getString = getParameter!dstring;
@@ -139,22 +139,22 @@ class GrCall {
                 ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
         
         static if(is(T == int)) {
-            return _context.istack[($ - _iparams) + index];
+            return _context.istack[(_context.istackPos - _iparams) + index + 1];
         }
         else static if(is(T == bool)) {
-            return _context.istack[($ - _iparams) + index] > 0;
+            return _context.istack[(_context.istackPos - _iparams) + index + 1] > 0;
         }
         else static if(is(T == float)) {
-            return _context.fstack[($ - _fparams) + index];
+            return _context.fstack[(_context.fstackPos - _fparams) + index + 1];
         }
         else static if(is(T == dstring)) {
-            return _context.sstack[($ - _sparams) + index];
+            return _context.sstack[(_context.sstackPos - _sparams) + index + 1];
         }
         else static if(is(T == GrDynamicValue)) {
-            return _context.astack[($ - _dparams) + index];
+            return _context.astack[(_context.astackPos - _dparams) + index + 1];
         }
         else static if(is(T == GrDynamicValue[])) {
-            return _context.nstack[($ - _nparams) + index];
+            return _context.nstack[(_context.nstackPos - _nparams) + index + 1];
         }
     }
 
@@ -167,22 +167,28 @@ class GrCall {
 
     private void setResult(T)(T value) {
         static if(is(T == int)) {
-            _context.istack ~= value;
+            _context.istackPos ++;
+            _context.istack[_context.istackPos] = value;
         }
         else static if(is(T == bool)) {
-            _context.istack ~= value ? 1 : 0;
+            _context.istackPos ++;
+            _context.istack[_context.istackPos] = value ? 1 : 0;
         }
         else static if(is(T == float)) {
-            _context.fstack ~= value;
+            _context.fstackPos ++;
+            _context.fstack[_context.fstackPos] = value;
         }
         else static if(is(T == dstring)) {
-            _context.sstack ~= value;
+            _context.sstackPos ++;
+            _context.sstack[_context.sstackPos] = value;
         }
         else static if(is(T == GrDynamicValue)) {
-            _context.astack ~= value;
+            _context.astackPos ++;
+            _context.astack[_context.astackPos] = value;
         }
         else static if(is(T == GrDynamicValue[])) {
-            _context.nstack ~= value;
+            _context.nstackPos ++;
+            _context.nstack[_context.nstackPos] = value;
         }
     }
 

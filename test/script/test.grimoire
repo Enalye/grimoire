@@ -11,7 +11,18 @@ func fib(int n) int {
 }
 
 main {
-    print(fib(30)); //34
+    print(fib(34)); //34
+
+    /*int a = 2;
+    func() b = func() {
+        int p = 5;
+        print("Hello");
+        func() c = func() {
+            float z = 2.1;
+            print("Hello");
+        }();
+    }();
+    print(a);*/
 }
 
 /*
@@ -41,4 +52,6 @@ Todo:
     Type Object (orienté prototype)
     Type Pointeur (type uniquement accessible dans les primitives)
     Multiples valeurs de retour: a, b = foo(); func() int, int {}
+    Un système d'événement appelée extérieurement:
+        event HelloWorld() { print("Hello World !"); }
 */

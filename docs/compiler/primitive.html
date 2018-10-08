@@ -230,7 +230,7 @@ document.getElementById('symbolSearchPane').style.display = 'block';</script>
 					</li>
 					<li>
 						<div class="module ">
-							<a href="../lib/type/conv.html">conv</a>
+							<a href="../lib/type/typecast.html">typecast</a>
 						</div>
 					</li>
 				</ul>
@@ -263,7 +263,7 @@ document.getElementById('symbolSearchPane').style.display = 'block';</script>
 					</li>
 					<li>
 						<div class="module ">
-							<a href="../runtime/coroutine.html">coroutine</a>
+							<a href="../runtime/context.html">context</a>
 						</div>
 					</li>
 					<li>
@@ -273,7 +273,7 @@ document.getElementById('symbolSearchPane').style.display = 'block';</script>
 					</li>
 					<li>
 						<div class="module ">
-							<a href="../runtime/vm.html">vm</a>
+							<a href="../runtime/engine.html">engine</a>
 						</div>
 					</li>
 				</ul>
@@ -306,7 +306,17 @@ document.getElementById('symbolSearchPane').style.display = 'block';</script>
 						<tr>
 							<td>
 								<code>
-									<a id="grType_addOperator" class="public" href="../compiler/primitive/grType_addOperator.html">grType_addOperator</a><span class="decoration">(callback, name, retType, signature)</span>
+									<a id="grType_addCast" class="public" href="../compiler/primitive/grType_addCast.html">grType_addCast</a><span class="decoration">(callback, parameter, srcType, dstType, isExplicit)</span>
+								</code>
+							</td>
+							<td>A cast operator allows to convert from one type to another.
+    It have to have only one parameter and return the casted value.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<code>
+									<a id="grType_addOperator" class="public" href="../compiler/primitive/grType_addOperator.html">grType_addOperator</a><span class="decoration">(callback, name, parameters, signature, retType)</span>
 								</code>
 							</td>
 							<td>An operator is a function that replace a binary or unary grimoire operator such as <code class="lang-d"><span class="pun">+</span></code>, <code class="lang-d"><span class="pun">==</span></code>, etc
@@ -316,7 +326,7 @@ document.getElementById('symbolSearchPane').style.display = 'block';</script>
 						<tr>
 							<td>
 								<code>
-									<a id="grType_addPrimitive" class="public" href="../compiler/primitive/grType_addPrimitive.html">grType_addPrimitive</a><span class="decoration">(callback, name, retType, signature)</span>
+									<a id="grType_addPrimitive" class="public" href="../compiler/primitive/grType_addPrimitive.html">grType_addPrimitive</a><span class="decoration">(callback, name, parameters, signature, retType)</span>
 								</code>
 							</td>
 							<td>Define a new primitive.

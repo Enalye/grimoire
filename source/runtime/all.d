@@ -13,5 +13,4 @@ public {
 	import runtime.context;
 	import runtime.dynamic;
 	import runtime.array;
-	import runtime.call;
 }

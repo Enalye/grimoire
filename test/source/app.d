@@ -23,16 +23,19 @@ void main() {
         vm.load(bytecode);
         vm.spawn();
         
+        writeln("Standard VM:");
         startTime = MonoTime.currTime();
         while(vm.hasCoroutines)
             vm.process();
         if(vm.isPanicking)
             writeln("Unhandled Exception: " ~ to!string(vm.panicMessage));
         auto executionTime = MonoTime.currTime() - startTime;
-
+            
+        //Benchmark
         writeln("Compilation took: \t", compilationTime);
         writeln("Execution took: \t", executionTime);
-	}
+        writeln("Size of engine: ", GrEngine.classinfo.init.length, " Size of context: ", GrContext.classinfo.init.length);
+    }
 	catch(Exception e) {
 		writeln(e.msg);
 	}
