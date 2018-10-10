@@ -6,7 +6,7 @@
     Authors: Enalye
 */
 
-import std.stdio: writeln;
+import std.stdio: writeln, write;
 import std.datetime;
 import std.conv: to;
 
@@ -15,15 +15,16 @@ import grimoire;
 void main() {
 	try {
         auto startTime = MonoTime.currTime();
-        auto bytecode = grCompiler_compileFile("test.grimoire");
+        auto bytecode = grCompiler_compileFile("test.gr");
         auto compilationTime = MonoTime.currTime() - startTime;
-
+        
         writeln(grBytecode_dump(bytecode));
+
         GrEngine vm = new GrEngine;
         vm.load(bytecode);
         vm.spawn();
         
-        writeln("Standard VM:");
+        write("> ");
         startTime = MonoTime.currTime();
         while(vm.hasCoroutines)
             vm.process();
@@ -34,7 +35,7 @@ void main() {
         //Benchmark
         writeln("Compilation took: \t", compilationTime);
         writeln("Execution took: \t", executionTime);
-        writeln("Size of engine: ", GrEngine.classinfo.init.length, " Size of context: ", GrContext.classinfo.init.length);
+        //writeln("Size of engine: ", GrEngine.classinfo.init.length, " Size of context: ", GrContext.classinfo.init.length);
     }
 	catch(Exception e) {
 		writeln(e.msg);

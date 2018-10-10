@@ -1,0 +1,21 @@
+main {
+    let a;
+    a = Vec2(17.2, 19.3);
+    let b = a;
+    print(b.x);
+    print(b.y);
+}
+
+/*
+Todo:
+    - déclaration d'une variable locale et d'une fonction du même nom
+
+    Suggestions:
+    Système de channel comme mosaiq
+    Variables globales
+    Type Object (orienté prototype)
+    Type Pointeur (type uniquement accessible dans les primitives)
+    Multiples valeurs de retour: a, b = foo(); func() int, int {}
+    Un système d'événement appelée extérieurement:
+        event HelloWorld() { print("Hello World !"); }
+*/
