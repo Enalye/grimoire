@@ -25,9 +25,6 @@ private string[] instructions = [
     "gpush.i", "gpush.f", "gpush.s", "gpush.n", "gpush.a", "gpush.o",
     "gpop.i", "gpop.f", "gpop.s", "gpop.n", "gpop.a", "gpop.o",
 
-    "conv.ba", "conv.ia", "conv.fa", "conv.sa", "conv.na",
-    "conv.ab", "conv.ai", "conv.af", "conv.as", "conv.an",
-
     "eq.i", "eq.f", "eq.s", "eq.a",
     "neq.i", "neq.f", "neq.s", "neq.a",
     "geq.i", "geq.f", "geq.a",

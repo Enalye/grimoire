@@ -2234,132 +2234,39 @@ class Parser {
 	}
 
 	GrType convertType(GrType src, GrType dst, bool noFail = false, bool isExplicit = false) {
-		switch(src.baseType) with(GrBaseType) {
-        case FunctionType:
-            switch(dst.baseType) with(GrBaseType) {
-			case FunctionType:
+        if(src.baseType == dst.baseType) {
+            switch(src.baseType) with(GrBaseType) {
+            case FunctionType:
                 if(src.mangledType == dst.mangledType && src.mangledReturnType == dst.mangledReturnType)
-				    return dst;
+                    return dst;
                 break;
-			/+case DynamicType:
-				addInstruction(GrOpcode.ConvertFunctionToAny);
-				return DynamicType;+/
-			default:
-				break;
-			}
-			break;
-        case TaskType:
-            switch(dst.baseType) with(GrBaseType) {
-			case TaskType:
-				if(src.mangledType == dst.mangledType && src.mangledReturnType == dst.mangledReturnType)
-				    return dst;
+            case TaskType:
+                if(src.mangledType == dst.mangledType && src.mangledReturnType == dst.mangledReturnType)
+                    return dst;
                 break;
-			/+case DynamicType:
-				addInstruction(GrOpcode.ConvertTaskToAny);
-				return DynamicType;+/
-			default:
-				break;
-			}
-			break;
-        case BoolType:
-            switch(dst.baseType) with(GrBaseType) {
-			case BoolType:
-				return GrType(BoolType);
-			case DynamicType:
-				addInstruction(GrOpcode.ConvertBoolToAny);
-				return GrType(DynamicType);
-			default:
-				break;
-			}
-			break;
-		case IntType:
-			switch(dst.baseType) with(GrBaseType) {
-			case IntType:
-				return GrType(IntType);
-			case DynamicType:
-				addInstruction(GrOpcode.ConvertIntToAny);
-				return GrType(DynamicType);
-			default:
-				break;
-			}
-			break;
-		case FloatType:
-			switch(dst.baseType) with(GrBaseType) {
-			case FloatType:
-				return GrType(FloatType);
-			case DynamicType:
-				addInstruction(GrOpcode.ConvertFloatToAny);
-				return GrType(DynamicType);
-			default:
-				break;
-			}
-			break;
-		case StringType:
-			switch(dst.baseType) with(GrBaseType) {
-			case StringType:
-				return GrType(StringType);
-			case DynamicType:
-				addInstruction(GrOpcode.ConvertStringToAny);
-				return GrType(DynamicType);
-			default:
-				break;
-			}
-			break;
-		case DynamicType:
-			switch(dst.baseType) with(GrBaseType) {
-			case DynamicType:
-				return GrType(DynamicType);
             case BoolType:
-				addInstruction(GrOpcode.ConvertAnyToBool);
-				return GrType(BoolType);
-			case IntType:
-				addInstruction(GrOpcode.ConvertAnyToInt);
-				return GrType(IntType);
-			case FloatType:
-				addInstruction(GrOpcode.ConvertAnyToFloat);
-				return GrType(FloatType);
-			case StringType:
-				addInstruction(GrOpcode.ConvertAnyToString);
-				return GrType(StringType);
+            case IntType:
+            case FloatType:
+            case StringType:
+            case DynamicType:
             case ArrayType:
-				addInstruction(GrOpcode.ConvertAnyToArray);
-				return GrType(ArrayType);
-			default:
-				break;
-			}
-			break;
-		case ArrayType:
-            switch(dst.baseType) with(GrBaseType) {
-			case ArrayType:
-				return GrType(ArrayType);
-			case DynamicType:
-				addInstruction(GrOpcode.ConvertArrayToAny);
-				return GrType(DynamicType);
-			default:
-				break;
-			}
-            break;
-        case StructType:
-            switch(dst.baseType) with(GrBaseType) {
-            case StructType:
-                if(dst.mangledType != src.mangledType)
-                    break;
                 return dst;
+            case StructType:
+                if(dst.mangledType == src.mangledType)
+                    return dst;
+                break;
             default:
                 break;
             }
-            break;
-		default:
-			break;
-		}
-
-        //User-defined conversions.
-        if(addCustomConversion(src, dst, isExplicit) == dst) {
-            return dst;
         }
+		
+        //User-defined conversions.
+        if(addCustomConversion(src, dst, isExplicit) == dst)
+            return dst;
 
         if(!noFail)
-		    logError("Incompatible types", "Cannot convert \'" ~ grType_getDisplay(src) ~ "\' to \'" ~ grType_getDisplay(dst) ~ "\'");
+		    logError("Incompatible types", "Cannot convert \'"
+                ~ grType_getDisplay(src) ~ "\' to \'" ~ grType_getDisplay(dst) ~ "\'");
 		return GrType(GrBaseType.VoidType);	
 	}
 

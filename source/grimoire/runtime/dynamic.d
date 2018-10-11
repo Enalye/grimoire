@@ -38,7 +38,7 @@ struct GrDynamicValue {
     }
 
     /// Sets the value to integer.
-    void setInteger(int value) {
+    void setInt(int value) {
         type = Type.IntType;
         ivalue = value;
     }
@@ -119,7 +119,7 @@ struct GrDynamicValue {
     }
 
     /// Converts and returns an integer value.
-    int getInteger() const {
+    int getInt() const {
         final switch(type) with(Type) {
         case UndefinedType:
             throw new Exception("No error fallback implemented");

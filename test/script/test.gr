@@ -1,9 +1,6 @@
 main {
-    let a;
-    a = Vec2(17.2, 19.3);
-    let b = a;
-    print(b.x);
-    print(b.y);
+    var a = true as var;
+    print(a as int);
 }
 
 /*

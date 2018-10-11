@@ -40,7 +40,7 @@ class GrArrayValue {
 
     int push(int ivalue) {
         GrDynamicValue value;
-        value.setInteger(ivalue);
+        value.setInt(ivalue);
         auto id = cast(int)_storage.length;
         _storage ~= value;
         return id;

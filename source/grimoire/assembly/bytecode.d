@@ -26,9 +26,6 @@ enum GrOpcode {
     GlobalPush_Int, GlobalPush_Float, GlobalPush_String, GlobalPush_Array, GlobalPush_Any, GlobalPush_Object,
     GlobalPop_Int, GlobalPop_Float, GlobalPop_String, GlobalPop_Array, GlobalPop_Any, GlobalPop_Object,
 
-    ConvertBoolToAny, ConvertIntToAny, ConvertFloatToAny, ConvertStringToAny, ConvertArrayToAny,
-    ConvertAnyToBool, ConvertAnyToInt, ConvertAnyToFloat, ConvertAnyToString, ConvertAnyToArray,
-
     Equal_Int, Equal_Float, Equal_String, Equal_Any,
     NotEqual_Int, NotEqual_Float, NotEqual_String, NotEqual_Any,
     GreaterOrEqual_Int, GreaterOrEqual_Float, GreaterOrEqual_Any,
