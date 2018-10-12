@@ -8,6 +8,6 @@
 
 module grimoire.lib.string;
 
-void grLib_std_string_load() {
+public {
     
 }

@@ -52,6 +52,8 @@ class GrEngine {
         GrDynamicValue[] _aglobalStack;
         /// Global object stack.
         void*[] _oglobalStack;
+        /// Global user data stack.
+        void*[] _uglobalStack;
 
         /// Context array.
 	    IndexedArray!(GrContext, 256u) _contexts;
@@ -109,6 +111,54 @@ class GrEngine {
         _contexts.reset();
     }
 
+    void raise(GrContext context, dstring message) {
+        if(context.isPanicking)
+            return;
+        //Error message.
+        _sglobalStack ~= message;
+        
+        //We indicate that the coroutine is in a panic state until a catch is found.
+        context.isPanicking = true;
+        
+        //Exception handler found in the current function, just jump.
+        if(context.exceptionHandlers[context.exceptionHandlersPos].length) {
+            context.pc = context.exceptionHandlers[context.exceptionHandlersPos][$ - 1];
+        }
+        //No exception handler in the current function, unwinding the deferred code, then return.
+        
+        //Check for deferred calls as we will exit the current function.
+        else if(context.deferStack[context.deferPos].length) {
+            //Pop the last defer and run it.
+            context.pc = context.deferStack[context.deferPos][$ - 1];
+            context.deferStack[context.deferPos].length --;
+            //The search for an exception handler will be done by Unwind after all defer
+            //has been called for this function.
+        }
+        else if(context.stackPos) {
+            //Pop the defer scope.
+            context.deferPos --;
+
+            //Pop the exception handlers as well.
+            context.exceptionHandlersPos --;
+
+            //Then returns to the last context, raise will be run again.
+            context.stackPos -= 2;
+            context.localsPos -= context.callStack[context.stackPos];
+        }
+        else {
+            //Kill the others.
+            foreach(coroutine; _contexts) {
+                coroutine.pc = cast(uint)(_opcodes.length - 1);
+                coroutine.isKilled = true;
+            }
+
+            //The VM is now panicking.
+            _isPanicking = true;
+            _panicMessage = _sglobalStack[$ - 1];
+            _sglobalStack.length --;
+        }
+    }
+
     /// Run the vm until all the contexts are finished or in yield.
 	void process() {
 		contextsLabel: for(uint index = 0u; index < _contexts.length; index ++) {
@@ -157,7 +207,7 @@ class GrEngine {
                     else {
                         //Kill the others.
                         foreach(coroutine; _contexts) {
-                            coroutine.pc = context.pc;
+                            coroutine.pc = cast(uint)(_opcodes.length - 1);
                             coroutine.isKilled = true;
                         }
 
@@ -253,6 +303,10 @@ class GrEngine {
 					context.ostackPos -= grBytecode_getUnsignedValue(opcode);
 					context.pc ++;
 					break;
+                case PopStack_UserData:
+					context.ustackPos -= grBytecode_getUnsignedValue(opcode);
+					context.pc ++;
+					break;
 				case LocalStore_Int:
 					context.ilocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.istack[context.istackPos];
                     context.istackPos --;	
@@ -288,6 +342,11 @@ class GrEngine {
                     context.ostackPos --;	
 					context.pc ++;
 					break;
+                case LocalStore_UserData:
+					context.ulocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.ustack[context.ustackPos];
+                    context.ustackPos --;	
+					context.pc ++;
+					break;
                 case LocalStore2_Int:
 					context.ilocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.istack[context.istackPos];
 					context.pc ++;
@@ -315,6 +374,10 @@ class GrEngine {
                     break;
 				case LocalStore2_Object:
 					context.olocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.ostack[context.ostackPos];
+					context.pc ++;
+					break;
+                case LocalStore2_UserData:
+					context.ulocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.ustack[context.ustackPos];
 					context.pc ++;
 					break;
 				case LocalLoad_Int:
@@ -352,6 +415,11 @@ class GrEngine {
 				case LocalLoad_Object:
                     context.ostackPos ++;
 					context.ostack[context.ostackPos] = context.olocals[context.localsPos + grBytecode_getUnsignedValue(opcode)];
+					context.pc ++;
+					break;
+                case LocalLoad_UserData:
+                    context.ustackPos ++;
+					context.ustack[context.ustackPos] = context.ulocals[context.localsPos + grBytecode_getUnsignedValue(opcode)];
 					context.pc ++;
 					break;
 				case Const_Int:
@@ -416,6 +484,13 @@ class GrEngine {
 					context.ostackPos -= nbParams;
 					context.pc ++;
 					break;
+                case GlobalPush_UserData:
+					uint nbParams = grBytecode_getUnsignedValue(opcode);
+					for(uint i = 1u; i <= nbParams; i++)
+						_uglobalStack ~= context.ustack[(context.ustackPos - nbParams) + i];
+					context.ustackPos -= nbParams;
+					context.pc ++;
+					break;
 				case GlobalPop_Int:
                     context.istackPos ++;
 					context.istack[context.istackPos] = _iglobalStack[$ - 1];
@@ -450,6 +525,12 @@ class GrEngine {
                     context.ostackPos ++;
 					context.ostack[context.ostackPos] = _oglobalStack[$ - 1];
 					_oglobalStack.length --;
+					context.pc ++;
+					break;
+                case GlobalPop_UserData:
+                    context.ustackPos ++;
+					context.ustack[context.ustackPos] = _uglobalStack[$ - 1];
+					_uglobalStack.length --;
 					context.pc ++;
 					break;
 				case Equal_Int:
@@ -757,7 +838,7 @@ class GrEngine {
                         else {
                             //Kill the others.
                             foreach(coroutine; _contexts) {
-                                coroutine.pc = context.pc;
+                                coroutine.pc = cast(uint)(_opcodes.length - 1);
                                 coroutine.isKilled = true;
                             }
 
@@ -865,8 +946,8 @@ class GrEngine {
 					context.pc ++;
 					break;
 				default:
-					throw new Exception("Invalid instruction");
-				}
+					throw new Exception("Invalid instruction at (" ~ to!string(context.pc) ~ "): " ~ to!string(grBytecode_getOpcode(opcode)));
+                }
 			}
 		}
 		_contexts.sweepMarkedData();

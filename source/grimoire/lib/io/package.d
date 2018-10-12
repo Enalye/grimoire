@@ -8,8 +8,6 @@
 
 module grimoire.lib.io;
 
-import grimoire.lib.io.print;
-
-void grLib_std_io_load() {
-    grLib_std_io_print_load();
+public {
+    import grimoire.lib.io.print;
 }

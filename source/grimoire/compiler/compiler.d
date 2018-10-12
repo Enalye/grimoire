@@ -20,16 +20,13 @@ import grimoire.assembly;
 import grimoire.compiler.lexer;
 import grimoire.compiler.parser;
 import grimoire.compiler.primitive;
-import grimoire.lib;
 
 /// Compile a source file into bytecode
 GrBytecode grCompiler_compileFile(string fileName) {
-	grLib_std_load();
-
 	GrLexer lexer = new GrLexer;
 	lexer.scanFile(to!dstring(fileName));
 
-	Parser parser = new Parser;
+	GrParser parser = new GrParser;
 	parser.parseScript(lexer);
 
 	return generate(parser);
@@ -40,7 +37,7 @@ private {
 		return ((value << 8u) & 0xffffff00) | (instr & 0xff);
 	}
 
-	GrBytecode generate(Parser parser) {
+	GrBytecode generate(GrParser parser) {
 		uint nbOpcodes, lastOpcodeCount;
 
 		foreach(func; parser.functions)
@@ -48,6 +45,9 @@ private {
 
 		foreach(func; parser.anonymousFunctions)
 			nbOpcodes += cast(uint)func.instructions.length;
+
+        //We leave space for one kill instruction at the end.
+        nbOpcodes ++;
 
 		//Opcodes
 		uint[] opcodes = new uint[nbOpcodes];
@@ -80,6 +80,9 @@ private {
 			lastOpcodeCount += func.instructions.length;
 		}
 		parser.solveFunctionCalls(opcodes);
+
+        //The contexts will jump here if the VM is panicking.
+        opcodes[$ - 1] = makeOpcode(cast(uint)GrOpcode.Unwind, 0);
 
 		GrBytecode bytecode;
 		bytecode.iconsts = parser.iconsts;

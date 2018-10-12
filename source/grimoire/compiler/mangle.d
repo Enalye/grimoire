@@ -56,6 +56,9 @@ dstring grType_mangleFunction(GrType[] signature) {
         case StructType:
             mangledName ~= "d(" ~ type.mangledType ~ ")";
             break;
+        case UserType:
+            mangledName ~= "u(" ~ type.mangledType ~ ")";
+            break;
 		case FunctionType:
             if(type.mangledReturnType.length == 0)
                 type.mangledReturnType = "$v";
@@ -182,6 +185,23 @@ GrType grType_unmangle(dstring mangledSignature) {
             }
             currentType.mangledType = structName;
             break;
+        case 'u':
+            currentType.baseType = GrBaseType.UserType;
+            dstring userTypeName;
+            if((i + 2) >= mangledSignature.length)
+                throw new Exception("Invalid mangling format");
+            i ++;
+            if(mangledSignature[i] != '(')
+                throw new Exception("Invalid mangling format");
+            i ++;
+            while(mangledSignature[i] != ')') {
+                userTypeName ~= mangledSignature[i];
+                i ++;
+                if(i >= mangledSignature.length)
+                    throw new Exception("Invalid mangling format");
+            }
+            currentType.mangledType = userTypeName;
+            break;
         case 'f':
             i ++;
             currentType.baseType = GrBaseType.FunctionType;
@@ -263,6 +283,23 @@ GrType[] grType_unmangleSignature(dstring mangledSignature) {
             }
             currentType.mangledType = structName;
             break;
+        case 'u':
+            currentType.baseType = GrBaseType.UserType;
+            dstring userTypeName;
+            if((i + 2) >= mangledSignature.length)
+                throw new Exception("Invalid mangling format");
+            i ++;
+            if(mangledSignature[i] != '(')
+                throw new Exception("Invalid mangling format");
+            i ++;
+            while(mangledSignature[i] != ')') {
+                userTypeName ~= mangledSignature[i];
+                i ++;
+                if(i >= mangledSignature.length)
+                    throw new Exception("Invalid mangling format");
+            }
+            currentType.mangledType = userTypeName;
+            break;
         case 'f':
             i ++;
             currentType.baseType = GrBaseType.FunctionType;
@@ -339,6 +376,7 @@ string grType_getDisplay(GrType variableType) {
         result ~= ")";
         return result;
     case StructType:
+    case UserType:
         return to!string(variableType.mangledType);
     }
 }

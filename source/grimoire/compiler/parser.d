@@ -26,7 +26,7 @@ import grimoire.compiler.primitive;
 /**
     Analyses the syntax and produce the data for the VM
 */
-class Parser {
+class GrParser {
 	int[] iconsts;
 	float[] fconsts;
 	dstring[] sconsts;
@@ -276,6 +276,11 @@ class Parser {
                 for(int i = 1; i <= structure.signature.length; i ++) {
                     fetchParameter(name ~ "." ~ structure.fields[nbFields - i], structure.signature[nbFields - i]);
                 }
+                break;
+            case UserType:
+                func.nbUserDataParameters ++;
+                if(func.isTask)
+                    addInstruction(GrOpcode.GlobalPop_UserData, 0u);
                 break;
             }
 
@@ -762,6 +767,9 @@ class Parser {
                     addSetInstruction(getVariable(variable.name ~ "." ~ structure.fields[nbFields - i]), structure.signature[nbFields - i]);
                 }
                 break;
+            case UserType:
+				addInstruction(isGettingValue ? GrOpcode.LocalStore2_UserData : GrOpcode.LocalStore_UserData, variable.index);
+				break;
 			default:
 				logError("Invalid type", "Cannot assign to a \'" ~ to!string(variable.type) ~ "\' type");
 			}
@@ -803,6 +811,9 @@ class Parser {
                     addGetInstruction(getVariable(variable.name ~ "." ~ structure.fields[i]), structure.signature[i]);
                 }
                 break;
+            case UserType:			
+				addInstruction(GrOpcode.LocalLoad_UserData, variable.index);
+				break;
 			default:
 				logError("Invalid type", "Cannot fetch from a \'" ~ to!string(variable.type) ~ "\' type");
 			}
@@ -1071,6 +1082,11 @@ class Parser {
                 currentType.mangledType = lex.svalue;
                 return currentType;
             }
+            else if(lex.type == GrLexemeType.Identifier && grType_isUserType(lex.svalue)) {
+                currentType.baseType = GrBaseType.UserType;
+                currentType.mangledType = lex.svalue;
+                return currentType;
+            }
             else if(mustBeType) {
                 logError("Excepted type", "A valid type is expected");
             }
@@ -1156,6 +1172,9 @@ class Parser {
                 addGlobalPop(structure.signature[i]);
             }
             break;
+        case UserType:
+            addInstruction(GrOpcode.GlobalPop_UserData, 0u);
+            break;
         }
     }
 
@@ -1193,13 +1212,16 @@ class Parser {
                 addGlobalPush(structure.signature[structure.signature.length - i], nbPush);
             }
             break;
+        case UserType:
+            addInstruction(GrOpcode.GlobalPush_UserData, nbPush);
+            break;
         }
     }
 
     void addGlobalPush(GrType[] signature) {
         struct TypeCounter {
             uint nbIntParams, nbFloatParams, nbStringParams,
-                nbArrayParams, nbDynamicParams, nbObjectParams;
+                nbArrayParams, nbDynamicParams, nbObjectParams, nbUserDataParams;
         }
         void countParameters(ref TypeCounter typeCounter, GrType type) {
             final switch(type.baseType) with(GrBaseType) {
@@ -1233,6 +1255,9 @@ class Parser {
                     countParameters(typeCounter, structure.signature[structure.signature.length - i]);
                 }
                 break;
+            case UserType:
+                typeCounter.nbUserDataParams ++;
+                break;
             }
         }
 
@@ -1253,6 +1278,8 @@ class Parser {
             addInstruction(GrOpcode.GlobalPush_Any, typeCounter.nbDynamicParams);
         if(typeCounter.nbObjectParams > 0)
             addInstruction(GrOpcode.GlobalPush_Object, typeCounter.nbObjectParams);
+        if(typeCounter.nbUserDataParams > 0)
+            addInstruction(GrOpcode.GlobalPush_UserData, typeCounter.nbUserDataParams);
     }
 
 	GrType[] parseSignature(ref dstring[] inputVariables, bool asType = false) {
@@ -1529,7 +1556,7 @@ class Parser {
                     goto default;
                 break;
             case Identifier:
-                if(grType_isStructure(get().svalue))
+                if(grType_isStructure(get().svalue) || grType_isUserType(get().svalue))
                     parseLocalDeclaration();
                 else
                     goto default;
@@ -2252,6 +2279,7 @@ class Parser {
             case ArrayType:
                 return dst;
             case StructType:
+            case UserType:
                 if(dst.mangledType == src.mangledType)
                     return dst;
                 break;
@@ -2666,7 +2694,7 @@ class Parser {
 	}
 
     void decreaseStack(GrType type, ushort count) {
-        switch(type.baseType) with(GrBaseType) {
+        final switch(type.baseType) with(GrBaseType) {
         case IntType:
         case BoolType:
         case FunctionType:
@@ -2688,8 +2716,13 @@ class Parser {
         case ObjectType:
             addInstruction(GrOpcode.PopStack_Object, count);
             break;
-        default:
+        case UserType:
+            addInstruction(GrOpcode.PopStack_UserData, count);
             break;
+        case StructType:
+            throw new Exception("Cannot decrease the stack for a void type");
+        case VoidType:
+            throw new Exception("Cannot decrease the stack for a struct type");
         }
     }
 

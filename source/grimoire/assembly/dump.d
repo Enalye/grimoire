@@ -17,13 +17,13 @@ import grimoire.assembly.bytecode;
 private string[] instructions = [
     "nop", "raise", "try", "catch",
     "kill", "yield", "task", "anon_task",
-    "pop.i", "pop.f", "pop.s", "pop.n", "pop.a", "pop.o",
-    "lstore.i", "lstore.f", "lstore.s", "lstore.n", "lstore.a", "lstore.r", "lstore.o",
-    "lstore2.i", "lstore2.f", "lstore2.s", "lstore2.n", "lstore2.a", "lstore2.r", "lstore2.o",
-    "lload.i", "lload.f", "lload.s", "lload.n", "lload.a", "lload.r", "lload.o",
+    "pop.i", "pop.f", "pop.s", "pop.n", "pop.a", "pop.o", "pop.u",
+    "lstore.i", "lstore.f", "lstore.s", "lstore.n", "lstore.a", "lstore.r", "lstore.o", "lstore.u",
+    "lstore2.i", "lstore2.f", "lstore2.s", "lstore2.n", "lstore2.a", "lstore2.r", "lstore2.o", "lstore2.u",
+    "lload.i", "lload.f", "lload.s", "lload.n", "lload.a", "lload.r", "lload.o", "lload.u",
     "const.i", "const.f", "const.b", "const.s",
-    "gpush.i", "gpush.f", "gpush.s", "gpush.n", "gpush.a", "gpush.o",
-    "gpop.i", "gpop.f", "gpop.s", "gpop.n", "gpop.a", "gpop.o",
+    "gpush.i", "gpush.f", "gpush.s", "gpush.n", "gpush.a", "gpush.o", "gpush.u",
+    "gpop.i", "gpop.f", "gpop.s", "gpop.n", "gpop.a", "gpop.o", "gpop.u",
 
     "eq.i", "eq.f", "eq.s", "eq.a",
     "neq.i", "neq.f", "neq.s", "neq.a",
@@ -66,9 +66,9 @@ string grBytecode_dump(GrBytecode bytecode) {
 
         string line = leftJustify("[" ~ to!string(i) ~ "]", 10) ~ leftJustify(instructions[op], 15);
         if((op == GrOpcode.Task) ||
-            (op >= GrOpcode.PopStack_Int && op <= GrOpcode.PopStack_Object) ||
-            (op >= GrOpcode.LocalStore_Int && op <= GrOpcode.LocalLoad_Object) ||
-            (op >= GrOpcode.GlobalPush_Int && op <= GrOpcode.GlobalPush_Object) ||
+            (op >= GrOpcode.PopStack_Int && op <= GrOpcode.PopStack_UserData) ||
+            (op >= GrOpcode.LocalStore_Int && op <= GrOpcode.LocalLoad_UserData) ||
+            (op >= GrOpcode.GlobalPush_Int && op <= GrOpcode.GlobalPush_UserData) ||
             (op >= GrOpcode.LocalStack && op <= GrOpcode.Call) ||
             (op == GrOpcode.Build_Array)
             )

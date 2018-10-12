@@ -8,6 +8,6 @@
 
 module grimoire.lib.ffi;
 
-void grLib_std_ffi_load() {
+public {
     
 }

@@ -8,8 +8,10 @@
 
 module grimoire.lib.api;
 
-public import grimoire.compiler;
-public import grimoire.runtime;
+public {
+    import grimoire.compiler;
+    import grimoire.runtime;
+}
 
 alias grLib_addStructure = grType_addStructure;
 alias grLib_addPrimitive = grType_addPrimitive;

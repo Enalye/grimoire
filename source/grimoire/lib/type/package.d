@@ -8,8 +8,6 @@
 
 module grimoire.lib.type;
 
-import grimoire.lib.type.typecast;
-
-void grLib_std_type_load() {
-    grLib_std_type_typecast_load();
+public {
+    import grimoire.lib.type.typecast;
 }

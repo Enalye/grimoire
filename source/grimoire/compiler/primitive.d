@@ -17,8 +17,8 @@ import grimoire.compiler.parser;
 import grimoire.compiler.type;
 import grimoire.compiler.mangle;
 
-
-package GrPrimitive[] primitives;
+/// All primitives, used for both the compiler and the runtime.
+GrPrimitive[] primitives;
 
 alias GrCallback = void function(GrCall);
 
@@ -40,15 +40,13 @@ class GrPrimitive {
 
 class GrCall {
     private {
-        GrEngine _vm;
         GrContext _context;
-
         GrPrimitive _primitive;
         GrCallback _callback;
 
-        dstring[] _ilocals, _flocals, _slocals, _dlocals, _nlocals;
-        int _iparams, _fparams, _sparams, _dparams, _nparams;
-        int _iresults, _fresults, _sresults, _dresults, _nresults;
+        dstring[] _ilocals, _flocals, _slocals, _dlocals, _nlocals, _ulocals;
+        int _iparams, _fparams, _sparams, _dparams, _nparams, _uparams;
+        int _iresults, _fresults, _sresults, _dresults, _nresults, _uresults;
         bool _hasResult, _isInitialized;
     }
 
@@ -73,6 +71,7 @@ class GrCall {
         _sparams = 0;
         _dparams = 0;
         _nparams = 0;
+        _uparams = 0;
 
         auto signature =  _primitive.signature;
         if(_primitive.name == "@as")
@@ -116,6 +115,10 @@ class GrCall {
                 auto structure = grType_getStructure(type.mangledType);
                 setupLocals(name ~ ".", structure.fields, structure.signature);
                 break;
+            case UserType:
+                _uparams ++;
+                _ulocals ~= name;
+                break;
             default:
                 throw new Exception("Type Error or smthing like that");
             }
@@ -128,6 +131,7 @@ class GrCall {
         _sresults = 0;
         _dresults = 0;
         _nresults = 0;
+        _uresults = 0;
 
         _context = context;
         _callback(this);
@@ -137,6 +141,7 @@ class GrCall {
         _context.sstackPos -= (_sparams - _sresults);
         _context.astackPos -= (_dparams - _dresults);
         _context.nstackPos -= (_nparams - _nresults);
+        _context.ustackPos -= (_uparams - _uresults);
     }
 
     alias getString = getParameter!dstring;
@@ -145,6 +150,10 @@ class GrCall {
     alias getFloat = getParameter!float;
     alias getDynamic = getParameter!GrDynamicValue;
     alias getArray = getParameter!(GrDynamicValue[]);
+
+    T getUserData(T)(dstring parameter) {
+        return cast(T)getParameter!(void*)(parameter);
+    }
 
     private T getParameter(T)(dstring parameter) {
         static if(is(T == int)) {
@@ -213,6 +222,17 @@ class GrCall {
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.nstack[(_context.nstackPos - _nparams) + index + 1];
         }
+        else static if(is(T == void*)) {
+            int index;
+            for(; index < _ulocals.length; index ++) {
+                if(parameter == _ulocals[index])
+                    break;
+            }
+            if(index == _ulocals.length)
+                throw new Exception("Primitive \'" ~ grType_getPrimitiveDisplayById(_primitive.index, true)
+                    ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
+            return _context.ustack[(_context.ustackPos - _uparams) + index + 1];
+        }
     }
 
     alias setString = setResult!dstring;
@@ -221,6 +241,10 @@ class GrCall {
     alias setFloat = setResult!float;
     alias setDynamic = setResult!GrDynamicValue;
     alias setArray = setResult!(GrDynamicValue[]);
+    
+    void setUserData(T)(T value) {
+        setResult!(void*)(cast(void*)value);
+    }
 
     private void setResult(T)(T value) {
         static if(is(T == int)) {
@@ -247,45 +271,18 @@ class GrCall {
             _nresults ++;            
             _context.nstack[(_context.nstackPos - _nparams) + _nresults] = value;
         }
+        else static if(is(T == void*)) {
+            _uresults ++;
+            _context.ustack[(_context.ustackPos - _uparams) + _uresults] = value;
+        }
     }
 
-    /// Notify we don't change the stack state and return the parameters.
-    void buildStructure() {
-        /*_iparams = 0;
-        _fparams = 0;
-        _sparams = 0;
-        _dparams = 0;
-        _nparams = 0;*/
-    }
+    void raise(dstring message) {
+        _context.engine.raise(_context, message);
 
-    private T getParameterDbg(T)() {
-        int index;
-        /*for(; index < _locals.length; index ++) {
-            if(parameter == _locals[index])
-                break;
-        }
-        if(index == _locals.length)
-            throw new Exception("Primitive \'" ~ grType_getPrimitiveDisplayById(_primitive.index, true)
-                ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
-        */
-        static if(is(T == int)) {
-            return _context.istack[($ - _iparams) + index];
-        }
-        else static if(is(T == bool)) {
-            return _context.istack[($ - _iparams) + index] > 0;
-        }
-        else static if(is(T == float)) {
-            return _context.fstack[($ - _fparams) + index];
-        }
-        else static if(is(T == dstring)) {
-            return _context.sstack[($ - _sparams) + index];
-        }
-        else static if(is(T == GrDynamicValue)) {
-            return _context.astack[($ - _dparams) + index];
-        }
-        else static if(is(T == GrDynamicValue[])) {
-            return _context.nstack[($ - _nparams) + index];
-        }
+        //The context is still in a primitive call
+        //and will increment the pc, so we prevent that.
+        _context.pc --;
     }
 }
 

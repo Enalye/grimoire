@@ -8,6 +8,6 @@
 
 module grimoire.lib.array;
 
-void grLib_std_array_load() {
+public {
     
 }

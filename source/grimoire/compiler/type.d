@@ -17,7 +17,7 @@ import grimoire.compiler.mangle;
 enum GrBaseType {
     VoidType, IntType, FloatType, BoolType, StringType,
     ArrayType, ObjectType, DynamicType, FunctionType, TaskType,
-    StructType
+    StructType, UserType
 }
 
 struct GrType {
@@ -61,6 +61,36 @@ class GrVariable {
 	uint index;
 	bool isGlobal, isInitialized, isAuto;
     dstring name;
+}
+
+dstring[] usertypes;
+GrType grType_addUserType(dstring name) {
+    bool isDeclared;
+    foreach(usertype; usertypes) {
+        if(usertype == name)
+            isDeclared = true;
+    }
+
+    if(!isDeclared)
+        usertypes ~= name;
+
+    GrType type = GrBaseType.UserType;
+    type.mangledType = name;
+    return type;
+}
+
+bool grType_isUserType(dstring name) {
+    foreach(usertype; usertypes) {
+        if(usertype == name)
+            return true;
+    }
+    return false;
+}
+
+GrType grType_getUserType(dstring name) {
+    GrType type = GrBaseType.UserType;
+    type.mangledType = name;
+    return type;
 }
 
 class GrStructure {
@@ -136,7 +166,8 @@ class GrFunction {
 	uint position, anonReference, localVariableIndex;
 
 	uint nbIntegerParameters, nbFloatParameters, nbStringParameters,
-		nbArrayParameters, nbAnyParameters, nbObjectParameters;
+		nbArrayParameters, nbAnyParameters, nbObjectParameters,
+        nbUserDataParameters;
 
     GrDeferrableSection[] deferrableSections;
     GrDeferBlock[] registeredDeferBlocks;

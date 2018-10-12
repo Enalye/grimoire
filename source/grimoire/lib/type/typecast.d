@@ -11,7 +11,7 @@ module grimoire.lib.type.typecast;
 import std.conv;
 import grimoire.lib.api;
 
-void grLib_std_type_typecast_load() {
+static this() {
     //As int
     grLib_addCast(&typecast_f2i, "value", grFloat, grInt, true);
     grLib_addCast(&typecast_b2i, "value", grBool, grInt);

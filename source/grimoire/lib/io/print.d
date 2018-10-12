@@ -12,7 +12,7 @@ import std.stdio: write, writeln;
 import std.conv: to;
 import grimoire.lib.api;
 
-void grLib_std_io_print_load() {
+static this() {
 	grLib_addPrimitive(&prints, "print", ["value"], [grString]);
 	grLib_addPrimitive(&printb, "print", ["value"], [grBool]);
 	grLib_addPrimitive(&printi, "print", ["value"], [grInt]);

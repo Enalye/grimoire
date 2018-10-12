@@ -1,6 +1,5 @@
 main {
-    var a = true as var;
-    print(a as int);
+    print("Hello World !");
 }
 
 /*

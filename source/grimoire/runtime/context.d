@@ -15,7 +15,7 @@ import grimoire.runtime.array;
 /**
     Coroutines are contexts that hold local data.
 */
-class GrContext {
+final class GrContext {
     /// Default ctor.
     this(GrEngine e) {
         engine = e;
@@ -35,6 +35,7 @@ class GrContext {
     GrDynamicValue[]* nlocals;
     GrDynamicValue* alocals;
     void** olocals;
+    void** ulocals;
 
     /// Callstack
     uint* callStack;
@@ -48,6 +49,7 @@ class GrContext {
     GrDynamicValue[]* nstack;
     GrDynamicValue* astack;
     void** ostack;
+    void** ustack;
 
     /// Operation pointer.
     uint pc,
@@ -66,7 +68,8 @@ class GrContext {
         sstackPos = -1,
         nstackPos = -1,
         astackPos = -1,
-        ostackPos = -1;
+        ostackPos = -1,
+        ustackPos = -1;
 
     /// Kill state, unwind the call stack and call all registered deferred statements.
     bool isKilled;
@@ -97,6 +100,7 @@ class GrContext {
         nstack = (new GrDynamicValue[][stackLimit]).ptr;
         astack = (new GrDynamicValue[stackLimit]).ptr;
         ostack = (new void*[stackLimit]).ptr;
+        ustack = (new void*[stackLimit]).ptr;
     }
 
     /// Current max local variable available.
@@ -111,6 +115,7 @@ class GrContext {
         nlocals = (new GrDynamicValue[][localsLimit]).ptr;
         alocals = (new GrDynamicValue[localsLimit]).ptr;
         olocals = (new void*[localsLimit]).ptr;
+        ulocals = (new void*[localsLimit]).ptr;
     }
 
     /// Double the current call stacks' size.
