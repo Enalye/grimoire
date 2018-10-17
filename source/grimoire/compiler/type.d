@@ -59,8 +59,15 @@ const GrType grDynamic = GrType(GrBaseType.DynamicType);
 class GrVariable {
 	GrType type;
 	uint index;
-	bool isGlobal, isInitialized, isAuto;
+	bool isGlobal, isInitialized, isAuto, isConstant;
     dstring name;
+}
+
+/// Primitive global constants, call registerIntConstant at the start of the parser.
+GrType grType_addIntConstant(dstring name, int value) {
+    if(value + 1 > value)
+        throw new Exception("TODO: Implement later");
+    return grVoid;
 }
 
 dstring[] usertypes;

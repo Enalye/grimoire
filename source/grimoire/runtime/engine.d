@@ -34,11 +34,17 @@ class GrEngine {
         immutable(dstring)[] _sconsts;
 
         /// Global integral variables.
-        int[] _iglobals;
+        int* _iglobals;
         /// Global floating point variables.
-        float[] _fglobals;
+        float* _fglobals;
         /// Global string variables.
-        dstring[] _sglobals;
+        dstring* _sglobals;
+        GrDynamicValue[]* _nglobals;
+        GrDynamicValue* _aglobals;
+        void** _oglobals;
+        void** _uglobals;
+
+
 
         /// Global integral stack.
         int[] _iglobalStack;
@@ -80,6 +86,7 @@ class GrEngine {
 
     /// Default.
 	this() {
+        setupGlobals(512);
         _contexts = new IndexedArray!(GrContext, 256u)();
     }
 
@@ -95,6 +102,21 @@ class GrEngine {
 		_sconsts = bytecode.sconsts.idup;
 		_opcodes = bytecode.opcodes.idup;
 	}
+
+    /// Current max global variable available.
+    private uint _globalsLimit;
+
+    /// Initialize the global variable stacks.
+    void setupGlobals(uint size) {
+        _globalsLimit = size;
+        _iglobals = (new int[_globalsLimit]).ptr;
+        _fglobals = (new float[_globalsLimit]).ptr;
+        _sglobals = (new dstring[_globalsLimit]).ptr;
+        _nglobals = (new GrDynamicValue[][_globalsLimit]).ptr;
+        _aglobals = (new GrDynamicValue[_globalsLimit]).ptr;
+        _oglobals = (new void*[_globalsLimit]).ptr;
+        _uglobals = (new void*[_globalsLimit]).ptr;
+    }
 
     /**
         Create the main context.
@@ -420,6 +442,121 @@ class GrEngine {
                 case LocalLoad_UserData:
                     context.ustackPos ++;
 					context.ustack[context.ustackPos] = context.ulocals[context.localsPos + grBytecode_getUnsignedValue(opcode)];
+					context.pc ++;
+					break;
+                case GlobalStore_Int:
+					_iglobals[grBytecode_getUnsignedValue(opcode)] = context.istack[context.istackPos];
+                    context.istackPos --;	
+					context.pc ++;
+					break;
+				case GlobalStore_Float:
+					_fglobals[grBytecode_getUnsignedValue(opcode)] = context.fstack[context.fstackPos];
+                    context.fstackPos --;	
+					context.pc ++;
+					break;
+				case GlobalStore_String:
+					_sglobals[grBytecode_getUnsignedValue(opcode)] = context.sstack[context.sstackPos];		
+                    context.sstackPos --;	
+					context.pc ++;
+					break;
+                case GlobalStore_Array:
+					_nglobals[grBytecode_getUnsignedValue(opcode)] = context.nstack[context.nstackPos];		
+                    context.nstackPos --;	
+					context.pc ++;
+					break;
+				case GlobalStore_Any:
+					_aglobals[grBytecode_getUnsignedValue(opcode)] = context.astack[context.astackPos];
+                    context.astackPos --;	
+					context.pc ++;
+					break;
+                case GlobalStore_Ref:
+                    context.astack[context.astackPos - 1].setRef(context.astack[context.astackPos]);
+                    context.astackPos -= 2;
+                    context.pc ++;
+                    break;
+				case GlobalStore_Object:
+					_oglobals[grBytecode_getUnsignedValue(opcode)] = context.ostack[context.ostackPos];
+                    context.ostackPos --;	
+					context.pc ++;
+					break;
+                case GlobalStore_UserData:
+					_uglobals[grBytecode_getUnsignedValue(opcode)] = context.ustack[context.ustackPos];
+                    context.ustackPos --;	
+					context.pc ++;
+					break;
+                case GlobalStore2_Int:
+					_iglobals[grBytecode_getUnsignedValue(opcode)] = context.istack[context.istackPos];
+					context.pc ++;
+					break;
+				case GlobalStore2_Float:
+					_fglobals[grBytecode_getUnsignedValue(opcode)] = context.fstack[context.fstackPos];
+					context.pc ++;
+					break;
+				case GlobalStore2_String:
+					_sglobals[grBytecode_getUnsignedValue(opcode)] = context.sstack[context.sstackPos];		
+					context.pc ++;
+					break;
+                case GlobalStore2_Array:
+					_nglobals[grBytecode_getUnsignedValue(opcode)] = context.nstack[context.nstackPos];		
+					context.pc ++;
+					break;
+				case GlobalStore2_Any:
+					_aglobals[grBytecode_getUnsignedValue(opcode)] = context.astack[context.astackPos];
+					context.pc ++;
+					break;
+                case GlobalStore2_Ref:
+                    context.astackPos --;
+                    context.astack[context.astackPos].setRef(context.astack[context.astackPos + 1]);
+                    context.pc ++;
+                    break;
+				case GlobalStore2_Object:
+					_oglobals[grBytecode_getUnsignedValue(opcode)] = context.ostack[context.ostackPos];
+					context.pc ++;
+					break;
+                case GlobalStore2_UserData:
+					_uglobals[grBytecode_getUnsignedValue(opcode)] = context.ustack[context.ustackPos];
+					context.pc ++;
+					break;
+				case GlobalLoad_Int:
+                    context.istackPos ++;
+					context.istack[context.istackPos] = _iglobals[grBytecode_getUnsignedValue(opcode)];
+                    context.pc ++;
+					break;
+				case GlobalLoad_Float:
+                    context.fstackPos ++;
+					context.fstack[context.fstackPos] = _fglobals[grBytecode_getUnsignedValue(opcode)];
+					context.pc ++;
+					break;
+				case GlobalLoad_String:
+                    context.sstackPos ++;
+					context.sstack[context.sstackPos] = _sglobals[grBytecode_getUnsignedValue(opcode)];
+					context.pc ++;
+					break;
+                case GlobalLoad_Array:
+                    context.nstackPos ++;
+					context.nstack[context.nstackPos] = _nglobals[grBytecode_getUnsignedValue(opcode)];
+					context.pc ++;
+					break;
+				case GlobalLoad_Any:
+                    context.astackPos ++;
+					context.astack[context.astackPos] = _aglobals[grBytecode_getUnsignedValue(opcode)];
+					context.pc ++;
+					break;
+                case GlobalLoad_Ref:
+                    GrDynamicValue value;
+                    value.setRefArray(&_nglobals[grBytecode_getUnsignedValue(opcode)]);
+                    context.astackPos ++;
+                    context.astack[context.astackPos] = value;			
+					context.pc ++;
+					break;
+				case GlobalLoad_Object:
+                    context.ostackPos ++;
+					context.ostack[context.ostackPos] = _oglobals[grBytecode_getUnsignedValue(opcode)];
+					context.pc ++;
+					break;
+                case GlobalLoad_UserData:
+                    context.ustackPos ++;
+					context.ustack[context.ustackPos] = _uglobals[grBytecode_getUnsignedValue(opcode)];
 					context.pc ++;
 					break;
 				case Const_Int:

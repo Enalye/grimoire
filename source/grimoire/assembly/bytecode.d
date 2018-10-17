@@ -19,10 +19,17 @@ enum GrOpcode {
     Nop, Raise, Try, Catch,
     Kill, Yield, Task, AnonymousTask,
     PopStack_Int, PopStack_Float, PopStack_String, PopStack_Array, PopStack_Any, PopStack_Object, PopStack_UserData,
+    
     LocalStore_Int, LocalStore_Float, LocalStore_String, LocalStore_Array, LocalStore_Any, LocalStore_Ref, LocalStore_Object, LocalStore_UserData,
     LocalStore2_Int, LocalStore2_Float, LocalStore2_String, LocalStore2_Array, LocalStore2_Any, LocalStore2_Ref, LocalStore2_Object, LocalStore2_UserData,
     LocalLoad_Int, LocalLoad_Float, LocalLoad_String, LocalLoad_Array, LocalLoad_Any, LocalLoad_Ref, LocalLoad_Object, LocalLoad_UserData,
+    
+    GlobalStore_Int, GlobalStore_Float, GlobalStore_String, GlobalStore_Array, GlobalStore_Any, GlobalStore_Ref, GlobalStore_Object, GlobalStore_UserData,
+    GlobalStore2_Int, GlobalStore2_Float, GlobalStore2_String, GlobalStore2_Array, GlobalStore2_Any, GlobalStore2_Ref, GlobalStore2_Object, GlobalStore2_UserData,
+    GlobalLoad_Int, GlobalLoad_Float, GlobalLoad_String, GlobalLoad_Array, GlobalLoad_Any, GlobalLoad_Ref, GlobalLoad_Object, GlobalLoad_UserData,
+    
     Const_Int, Const_Float, Const_Bool, Const_String,
+    
     GlobalPush_Int, GlobalPush_Float, GlobalPush_String, GlobalPush_Array, GlobalPush_Any, GlobalPush_Object, GlobalPush_UserData,
     GlobalPop_Int, GlobalPop_Float, GlobalPop_String, GlobalPop_Array, GlobalPop_Any, GlobalPop_Object, GlobalPop_UserData,
 

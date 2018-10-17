@@ -105,8 +105,9 @@ class GrLexer {
 		return text[position];
 	}
 
-	bool advance() {
-		current ++;
+	bool advance(bool startFromCurrent = false) {
+        if(!startFromCurrent)
+		    current ++;
 
 		if(current >= text.length)
 			return false;
@@ -200,34 +201,8 @@ class GrLexer {
 
 	void scanScript() {
 		//Skip the first escape characters.
-		dchar symbol = get();
-		if(symbol <= 0x20 || symbol == '/') {
-			if(symbol == '\n') {
-				positionOfLine = 1;
-				line ++;
-			}
-			else if(get(1) == '*') {
-				current += 2;
-				for(;;) {
-					if((current + 2) >= text.length)
-						break;
-
-					if(text[current] == '\n') {
-						positionOfLine = current;
-						line ++;
-					}
-
-					if(text[current] == '*' && text[current + 1] == '/') {
-						current ++;
-						break;
-					}
-
-					current ++;
-				}
-			}
-			advance();
-		}
-
+		advance(true);
+    
 		do {
 			switch(get()) {
 				case '0': .. case '9':
@@ -256,7 +231,7 @@ class GrLexer {
 					break;
 			}
 		}
-		while(advance());
+        while(advance());
 	}
 
 	void debugShowScan() {

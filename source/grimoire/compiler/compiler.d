@@ -52,15 +52,27 @@ private {
 		//Opcodes
 		uint[] opcodes = new uint[nbOpcodes];
 
-		//Write the main function first (not callable).
+        //Start with the global initializations
+        auto globalScope = "@global"d in parser.functions;
+        if(globalScope) {
+            foreach(uint i, instruction; globalScope.instructions)
+                opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint)instruction.opcode, instruction.value);
+            lastOpcodeCount += cast(uint)globalScope.instructions.length;
+            parser.functions.remove("@global"d);
+        }
+
+		//Then write the main function (not callable).
 		auto mainFunc = "main"d in parser.functions;
 		if(mainFunc is null)
 			throw new Exception("No main declared.");
 
+        mainFunc.position = lastOpcodeCount;
 		foreach(uint i, instruction; mainFunc.instructions)
-			opcodes[i] = makeOpcode(cast(uint)instruction.opcode, instruction.value);
-		lastOpcodeCount = cast(uint)mainFunc.instructions.length;
-		parser.functions.remove("main");
+			opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint)instruction.opcode, instruction.value);
+        foreach(call; mainFunc.functionCalls)
+			call.position += lastOpcodeCount;
+		lastOpcodeCount += cast(uint)mainFunc.instructions.length;
+		parser.functions.remove("main"d);
 
 		//Every other functions.
 		foreach(func; parser.anonymousFunctions) {

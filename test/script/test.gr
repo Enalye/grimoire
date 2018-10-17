@@ -1,6 +1,21 @@
-main {
-    print("Hello World !");
+//
+
+
+func foo() int {
+    print("hey");
+    return 3;
 }
+
+
+var b;
+main {
+    a();
+    b = 5.2;
+    print(b);
+}
+
+
+let a = &(func() int)foo;// 
 
 /*
 Todo:
@@ -10,8 +25,8 @@ Todo:
     Système de channel comme mosaiq
     Variables globales
     Type Object (orienté prototype)
-    Type Pointeur (type uniquement accessible dans les primitives)
     Multiples valeurs de retour: a, b = foo(); func() int, int {}
     Un système d'événement appelée extérieurement:
         event HelloWorld() { print("Hello World !"); }
+    Constantes globales et enum
 */

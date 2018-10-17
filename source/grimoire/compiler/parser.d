@@ -34,6 +34,9 @@ class GrParser {
 	uint scopeLevel;
 
 	GrVariable[dstring] globalVariables;
+    uint globalVariableIndex;
+    uint[] globalFreeVariables;
+
 	GrFunction[dstring] functions;
 	GrFunction[] anonymousFunctions;
 
@@ -142,6 +145,53 @@ class GrParser {
 		return specialVariable;
 	}
 
+    /// Register a global variable
+    GrVariable registerGlobalVariable(dstring name, GrType type) {
+        if(type.baseType == GrBaseType.StructType) {
+            //Register each field
+            auto structure = grType_getStructure(type.mangledType);
+            for(int i; i < structure.signature.length; i ++) {
+                registerLocalVariable(name ~ "." ~ structure.fields[i], structure.signature[i]);
+            }
+            //Register the struct itself with the id of the first field
+            auto previousVariable = (name in globalVariables);
+            if(previousVariable !is null)
+                logError("Multiple declaration", "The global variable \'" ~ to!string(name) ~ "\' is already declared.");
+
+            GrVariable variable = new GrVariable;
+            variable.index = globalVariableIndex;
+            variable.isGlobal = true;
+            variable.isInitialized = false;
+            variable.type = type;
+            variable.name = name;
+            globalVariables[name] = variable;
+
+            return variable;
+        }
+
+        //Check if declared globally.
+		auto previousVariable = (name in globalVariables);
+		if(previousVariable !is null)
+			logError("Multiple declaration", "The global variable \'" ~ to!string(name) ~ "\' is already declared.");
+
+		GrVariable variable = new GrVariable;
+        if(globalFreeVariables.length) {
+            variable.index = globalFreeVariables[$ - 1];
+            globalFreeVariables.length --;
+        }
+        else {
+            variable.index = globalVariableIndex;
+            globalVariableIndex ++;
+        }
+		variable.isGlobal = true;
+        variable.isInitialized = false;
+		variable.type = type;
+        variable.name = name;
+		globalVariables[name] = variable;
+
+		return variable;
+    }
+
     /// Register a local variable
 	GrVariable registerLocalVariable(dstring name, GrType type) {
         if(type.baseType == GrBaseType.StructType) {
@@ -164,7 +214,9 @@ class GrParser {
 
             return variable;
         }
-		//To do: check if declared globally
+		//Check if declared globally
+        if(name in globalVariables)
+			logError("Multiple declaration", "The local variable \'" ~ to!string(name) ~ "\' is already declared in a global scope.");
 
 		//Check if declared locally.
 		auto previousVariable = (name in currentFunction.localVariables);
@@ -187,6 +239,32 @@ class GrParser {
 
 		return variable;
 	}
+
+    void beginGlobalScope() {
+        auto globalScope = "@global"d in functions;
+        if(globalScope) {
+            functionStack ~= currentFunction;
+            currentFunction = *globalScope;
+        }
+        else {
+            GrFunction func = new GrFunction;
+            func.name = "@global"d;
+            func.isTask = false;
+            func.signature = [];
+            func.returnType = grVoid;
+            functions["@global"d] = func;
+            functionStack ~= currentFunction;
+            currentFunction = func;
+        }
+    }
+
+    void endGlobalScope() {
+        if(!functionStack.length)
+			logError("Global Scope", "Global scope mismatch");
+        
+		currentFunction = functionStack[$ - 1];
+        functionStack.length --;
+    }
 
 	void beginFunction(dstring name, GrType[] signature, dstring[] inputVariables, bool isTask, GrType returnType = GrBaseType.VoidType) {
         dstring mangledName = grType_mangleNamedFunction(name, signature);
@@ -325,8 +403,13 @@ class GrParser {
 		return func;
 	}
 
+    /// Retrieve a declared variable
 	GrVariable getVariable(dstring name) {
-		auto var = (name in currentFunction.localVariables);
+        auto var = (name in globalVariables);
+		if(var !is null)
+            return *var;
+
+		var = (name in currentFunction.localVariables);
 		if(var is null)
 		    logError("Undeclared variable", "The variable \'" ~ to!string(name) ~ "\' is not declared");
         return *var;
@@ -713,15 +796,23 @@ class GrParser {
             return;
         }
         
-        if(!variable.isGlobal && variable.isAuto && !variable.isInitialized) {
+        if(variable.isAuto && !variable.isInitialized) {
             variable.isInitialized = true;
             variable.isAuto = false;
             variable.type = valueType;
             if(valueType.baseType == GrBaseType.StructType) {
-                currentFunction.localFreeVariables ~= variable.index;
                 auto structure = grType_getStructure(valueType.mangledType);
-                for(int i; i < structure.signature.length; i ++) {
-                    registerLocalVariable(variable.name ~ "." ~ structure.fields[i], structure.signature[i]);
+                if(variable.isGlobal) {
+                    globalFreeVariables ~= variable.index;
+                    for(int i; i < structure.signature.length; i ++) {
+                        registerGlobalVariable(variable.name ~ "." ~ structure.fields[i], structure.signature[i]);
+                    }
+                }
+                else {
+                    currentFunction.localFreeVariables ~= variable.index;
+                    for(int i; i < structure.signature.length; i ++) {
+                        registerLocalVariable(variable.name ~ "." ~ structure.fields[i], structure.signature[i]);
+                    }
                 }
             }
             else if(valueType.baseType == GrBaseType.VoidType)
@@ -731,13 +822,48 @@ class GrParser {
         if(valueType.baseType != GrBaseType.VoidType)
             convertType(valueType, variable.type);
 
+        if(!variable.isInitialized && isGettingValue)
+            logError("Uninitialized variable", "The variable is being used without being assigned");
+        variable.isInitialized = true;
+
 		if(variable.isGlobal) {
-			logError("Internal failure", "Global variable not implemented");
+			switch(variable.type.baseType) with(GrBaseType) {
+			case BoolType:
+			case IntType:
+			case FunctionType:
+			case TaskType:
+				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Int : GrOpcode.GlobalStore_Int, variable.index);
+				break;
+			case FloatType:
+				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Float : GrOpcode.GlobalStore_Float, variable.index);
+				break;
+			case StringType:
+				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_String : GrOpcode.GlobalStore_String, variable.index);
+				break;
+            case ArrayType:
+				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Array : GrOpcode.GlobalStore_Array, variable.index);
+				break;
+			case DynamicType:
+				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Any : GrOpcode.GlobalStore_Any, variable.index);
+				break;
+			case ObjectType:
+				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.index);
+				break;
+            case StructType:
+                auto structure = grType_getStructure(variable.type.mangledType);
+                const auto nbFields = structure.signature.length;
+                for(int i = 1; i <= nbFields; i ++) {
+                    addSetInstruction(getVariable(variable.name ~ "." ~ structure.fields[nbFields - i]), structure.signature[nbFields - i]);
+                }
+                break;
+            case UserType:
+				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_UserData : GrOpcode.GlobalStore_UserData, variable.index);
+				break;
+			default:
+				logError("Invalid type", "Cannot assign to a \'" ~ to!string(variable.type) ~ "\' type");
+			}
 		}
 		else {
-            if(!variable.isInitialized && isGettingValue)
-                logError("Uninitialized variable", "The variable is being used without being assigned");
-            variable.isInitialized = true;
 			switch(variable.type.baseType) with(GrBaseType) {
 			case BoolType:
 			case IntType:
@@ -777,12 +903,46 @@ class GrParser {
 	}
 
 	void addGetInstruction(GrVariable variable, GrType expectedType = GrBaseType.VoidType) {
+        if(!variable.isInitialized)
+            logError("Uninitialized variable", "The variable is being used without being assigned");
+
         if(variable.isGlobal) {
-			logError("Internal failure", "Global variable not implemented");
+			switch(variable.type.baseType) with(GrBaseType) {
+			case BoolType:
+			case IntType:
+			case FunctionType:
+			case TaskType:
+				addInstruction(GrOpcode.GlobalLoad_Int, variable.index);
+				break;
+			case FloatType:
+				addInstruction(GrOpcode.GlobalLoad_Float, variable.index);
+				break;
+			case StringType:
+				addInstruction(GrOpcode.GlobalLoad_String, variable.index);
+				break;
+			case ArrayType:
+				addInstruction(GrOpcode.GlobalLoad_Array, variable.index);
+				break;
+			case DynamicType:
+				addInstruction(GrOpcode.GlobalLoad_Any, variable.index);
+				break;
+			case ObjectType:			
+				addInstruction(GrOpcode.GlobalLoad_Object, variable.index);
+				break;
+            case StructType:
+                auto structure = grType_getStructure(variable.type.mangledType);
+                for(int i; i < structure.signature.length; i ++) {
+                    addGetInstruction(getVariable(variable.name ~ "." ~ structure.fields[i]), structure.signature[i]);
+                }
+                break;
+            case UserType:			
+				addInstruction(GrOpcode.GlobalLoad_UserData, variable.index);
+				break;
+			default:
+				logError("Invalid type", "Cannot fetch from a \'" ~ to!string(variable.type) ~ "\' type");
+			}
 		}
 		else {
-            if(!variable.isInitialized)
-                logError("Uninitialized variable", "The variable is being used without being assigned");
 			switch(variable.type.baseType) with(GrBaseType) {
 			case BoolType:
 			case IntType:
@@ -953,11 +1113,20 @@ class GrParser {
 				parseMainDeclaration();
 				break;
 			case TaskType:
+                if(get(1).type != GrLexemeType.Identifier)
+                    goto case VoidType;
 				parseTaskDeclaration();
 				break;
 			case FunctionType:
+                if(get(1).type != GrLexemeType.Identifier)
+                    goto case VoidType;
 				parseFunctionDeclaration();
 				break;
+            case VoidType: .. case DynamicType:
+            case AutoType:
+            case Identifier:
+                skipExpression();
+                break;
 			default:
 				logError("Invalid type", "The type should be either main, func or task");
 			}
@@ -980,7 +1149,8 @@ class GrParser {
 				skipDeclaration();
 				break;
 			default:
-				logError("Invalid type", "The type should be either main, func or task");
+				skipExpression();
+                break;
 			}
 		}
 
@@ -990,7 +1160,7 @@ class GrParser {
         //Then we can resolve primitives' signature
         grType_resolvePrimitiveSignature();
         
-        //GrFunction definitions
+        //Function definitions
         reset();
 		while(!isEnd()) {
 			GrLexeme lex = get();
@@ -1002,15 +1172,60 @@ class GrParser {
 				preParseMainDeclaration();
 				break;
 			case TaskType:
+                if(get(1).type != GrLexemeType.Identifier)
+                    goto case VoidType;
 				preParseTaskDeclaration();
 				break;
 			case FunctionType:
+                if(get(1).type != GrLexemeType.Identifier)
+                    goto case VoidType;
 				preParseFunctionDeclaration();
 				break;
+            case VoidType: .. case DynamicType:
+            case AutoType:
+            case Identifier:
+                skipExpression();
+                break;
 			default:
 				logError("Invalid type", "The type should be either main, func, task or struct");
 			}
 		}
+
+        //Global variable definitions
+        reset();
+        beginGlobalScope();
+		while(!isEnd()) {
+			GrLexeme lex = get();
+			switch(lex.type) with(GrLexemeType) {
+            case Struct:
+			case Main:
+				skipDeclaration();
+				break;
+			case TaskType:
+                if(get(1).type != GrLexemeType.Identifier)
+                    goto case VoidType;
+				skipDeclaration();
+				break;
+			case FunctionType:
+                if(get(1).type != GrLexemeType.Identifier)
+                    goto case VoidType;
+    			skipDeclaration();
+                break;
+            case VoidType: .. case DynamicType:
+            case AutoType:
+                parseGlobalDeclaration();
+                break;
+            case Identifier:
+                if(grType_isStructure(get().svalue) || grType_isUserType(get().svalue)) {
+                    parseGlobalDeclaration();
+                    break;
+                }
+                goto default;
+			default:
+				logError("Invalid type", "The type should be either main, func, task or struct");
+			}
+		}
+        endGlobalScope();
 	}
 
     void parseStructureDeclaration() {
@@ -1067,6 +1282,19 @@ class GrParser {
             }
             else {
                 skipBlock();
+                return;
+            }
+        }
+    }
+
+    void skipExpression() {
+        checkAdvance();
+        while(!isEnd()) {
+            if(get().type != GrLexemeType.Semicolon) {
+                checkAdvance();
+            }
+            else {
+                checkAdvance();
                 return;
             }
         }
@@ -1826,6 +2054,51 @@ class GrParser {
 		addInstruction(GrOpcode.Jump);
 		advance();
 	}
+
+    void parseGlobalDeclaration() {
+        //GrVariable type
+        GrType type = GrBaseType.VoidType;
+        bool isAuto;
+        if(get().type == GrLexemeType.AutoType)
+            isAuto = true;
+        else
+            type = parseType();
+        checkAdvance();
+
+        //Identifier
+		if(get().type != GrLexemeType.Identifier)
+			logError("Missing identifier", "Expected a name such as \'foo\'");
+
+		dstring identifier = get().svalue;
+
+        //Registering
+		GrVariable variable = registerGlobalVariable(identifier, type);
+        variable.isAuto = isAuto;
+
+        //A structure does not need to be initialized.
+        if(variable.type == GrBaseType.StructType)
+            variable.isInitialized = true;
+		
+		checkAdvance();
+		switch(get().type) with(GrLexemeType) {
+		case Assign:
+			checkAdvance();
+			GrType expressionType = parseSubExpression(false);
+			addSetInstruction(variable, expressionType);
+
+            if(get().type != GrLexemeType.Semicolon)
+                logError("Missing semicolon", "An expression must be finished with a ;");
+            advance();
+			break;
+		case Semicolon:
+            if(isAuto)
+			    logError("Uninitialized auto-inferred global variable", "A global let type must be assigned at declaration");
+            checkAdvance();
+			break;
+		default:
+			logError("Invalid symbol", "A declaration must either be terminated by a ; or assigned with =");
+		}
+    }
 
 	//Type Identifier [= EXPRESSION] ;
 	void parseLocalDeclaration() {
@@ -3109,6 +3382,8 @@ class GrParser {
 			advance();
 
 			auto var = (identifierName in currentFunction.localVariables);
+            if(var is null)
+                var = (identifierName in globalVariables);
 			if(var !is null) {
                 //Signature parsing with type conversion
                 GrType[] anonSignature = grType_unmangleSignature(var.type.mangledType);
