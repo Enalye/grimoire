@@ -24,53 +24,53 @@ struct GrDynamicValue {
     }
 
     /// Dynamic type.
-    enum Type {
+    enum GrDynamicValueType {
         UndefinedType, BoolType, IntType, FloatType, StringType, ArrayType, RefArrayType, RefIndexType
     }
 
     /// Dynamic type.
-    Type type;
+    GrDynamicValueType type;
 
     /// Sets the value to the boolean value.
     void setBool(int value) {
-        type = Type.BoolType;
+        type = GrDynamicValueType.BoolType;
         ivalue = value;
     }
 
     /// Sets the value to integer.
     void setInt(int value) {
-        type = Type.IntType;
+        type = GrDynamicValueType.IntType;
         ivalue = value;
     }
 
     /// Sets the value to float.
     void setFloat(float value) {
-        type = Type.FloatType;
+        type = GrDynamicValueType.FloatType;
         fvalue = value;
     }
 
     /// Sets the value to string.
     void setString(dstring value) {
-        type = Type.StringType;
+        type = GrDynamicValueType.StringType;
         svalue = value;
     }
 
     /// Sets the value to array.
     void setArray(GrDynamicValue[] value) {
-        type = Type.ArrayType;
+        type = GrDynamicValueType.ArrayType;
         nvalue = value;
     }
 
     /// Reference to an array.
     void setRefArray(GrDynamicValue[]* value) {
-        type = Type.RefArrayType;
+        type = GrDynamicValueType.RefArrayType;
         refvalue = value;
     }
 
     /// The value is set to the value stored at the index of the current array.
     /// The value must be a valid indexable value.
     void setArrayIndex(int index) {
-        switch(type) with(Type) {
+        switch(type) with(GrDynamicValueType) {
         case ArrayType:
             if(index >= nvalue.length)
                 throw new Exception("No error fallback implemented: array overflow");
@@ -80,7 +80,7 @@ struct GrDynamicValue {
             if(index >= refvalue.length)
                 throw new Exception("No error fallback implemented: array overflow");
             refindex = &((*refvalue)[index]);
-            type = Type.RefIndexType;
+            type = GrDynamicValueType.RefIndexType;
             return;
         case RefIndexType:
             refindex = &(refindex.nvalue[index]);
@@ -92,14 +92,14 @@ struct GrDynamicValue {
 
     /// The value is now a reference for another value.
     void setRef(GrDynamicValue value) {
-        if(type != Type.RefIndexType)
+        if(type != GrDynamicValueType.RefIndexType)
             throw new Exception("No error fallback implemented");
         *refindex = value;
     }
 
     /// Converts and returns a boolean value.
     int getBool() const {
-        final switch(type) with(Type) {
+        final switch(type) with(GrDynamicValueType) {
         case UndefinedType:
             throw new Exception("No error fallback implemented");
         case BoolType:
@@ -120,7 +120,7 @@ struct GrDynamicValue {
 
     /// Converts and returns an integer value.
     int getInt() const {
-        final switch(type) with(Type) {
+        final switch(type) with(GrDynamicValueType) {
         case UndefinedType:
             throw new Exception("No error fallback implemented");
         case BoolType:
@@ -141,7 +141,7 @@ struct GrDynamicValue {
 
     /// Converts and returns a float value.
     float getFloat() const {
-        final switch(type) with(Type) {
+        final switch(type) with(GrDynamicValueType) {
         case UndefinedType:
             throw new Exception("No error fallback implemented");
         case BoolType:
@@ -162,7 +162,7 @@ struct GrDynamicValue {
 
     /// Converts and returns a string value.
     dstring getString() const {
-        final switch(type) with(Type) {
+        final switch(type) with(GrDynamicValueType) {
         case UndefinedType:
             throw new Exception("No error fallback implemented");
         case BoolType:
@@ -202,7 +202,7 @@ struct GrDynamicValue {
 
     /// Converts and returns an array value.
     GrDynamicValue[] getArray() {
-        final switch(type) with(Type) {
+        final switch(type) with(GrDynamicValueType) {
         case UndefinedType:
             throw new Exception("No error fallback implemented");
         case BoolType:
@@ -231,9 +231,9 @@ struct GrDynamicValue {
     /// Copy operator.
     GrDynamicValue opOpAssign(string op)(GrDynamicValue v) {
         static if(op == "+" || op == "-" || op == "*" || op == "/" || op == "%") {
-            switch(type) with(Type) {
+            switch(type) with(GrDynamicValueType) {
             case BoolType:
-                switch(v.type) with(Type) {
+                switch(v.type) with(GrDynamicValueType) {
                 case BoolType:
                     mixin("ivalue = ivalue " ~ op ~ " v.ivalue;");
                     break;
@@ -242,12 +242,12 @@ struct GrDynamicValue {
                 }
                 break;
             case IntType:
-                switch(v.type) with(Type) {
+                switch(v.type) with(GrDynamicValueType) {
                 case IntType:
                     mixin("ivalue = ivalue " ~ op ~ " v.ivalue;");
                     break;
                 case FloatType:
-                    type = Type.FloatType;
+                    type = GrDynamicValueType.FloatType;
                     mixin("fvalue = to!float(ivalue) " ~ op ~ " v.fvalue;");
                     break;
                 default:
@@ -255,7 +255,7 @@ struct GrDynamicValue {
                 }
                 break;
             case FloatType:
-                switch(v.type) with(Type) {
+                switch(v.type) with(GrDynamicValueType) {
                 case IntType:
                     mixin("fvalue = fvalue " ~ op ~ " to!float(v.ivalue);");
                     break;
@@ -273,14 +273,14 @@ struct GrDynamicValue {
             }
         }
         else static if(op == "~") {
-            switch(type) with(Type) {
+            switch(type) with(GrDynamicValueType) {
             case BoolType:
             case IntType:
             case FloatType:
                 //error
                 break;
             case StringType:
-                switch(v.type) with(Type) {
+                switch(v.type) with(GrDynamicValueType) {
                 case StringType:
                     mixin("svalue = svalue " ~ op ~ " v.svalue;");
                     break;
@@ -298,7 +298,7 @@ struct GrDynamicValue {
 
     /// Increment and Decrement.
     GrDynamicValue opUnaryRight(string op)() {	
-        switch(type) with(Type) {
+        switch(type) with(GrDynamicValueType) {
         case IntType:
             mixin("ivalue" ~ op ~ ";");
             break;
@@ -315,7 +315,7 @@ struct GrDynamicValue {
 
     /// + and -.
     GrDynamicValue opUnary(string op)() {	
-        switch(type) with(Type) {
+        switch(type) with(GrDynamicValueType) {
         case IntType:
             mixin("ivalue = " ~ op ~ " ivalue;");
             break;

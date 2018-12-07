@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1"/>
+		<title>Class GrContext</title>
+		<link rel="stylesheet" href="../../../css/style.min.css"/>
+		<script type="text/javascript" src="../../../js/script.min.js"></script>
+	</head>
+	<body onload="setupDdox();">
+		<header></header>
+		<nav id="main-nav">
+			<div>
+				<noscript>
+					<p style="color: red">The search functionality needs JavaScript enabled</p>
+				</noscript>
+				<div id="symbolSearchPane" style="display: none">
+					<form action="#" method="GET">
+						<input id="symbolSearch" type="text" name="q" placeholder="Search for symbols" autocomplete="off" onchange="performSymbolSearch(24);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();" autofocus/>
+					</form>
+					<ul id="symbolSearchResults" class="symbolList" style="display: none"></ul><script type="application/javascript" src="../../../symbols.js"></script><script type="application/javascript">var symbolSearchRootDir = "../../../";
+document.getElementById('symbolSearchPane').style.display = 'block';</script>
+				</div>
+				<ul class="tree-view">
+					<li class="tree-view ">
+						<div class="package ">
+							<a href="../../../grimoire.html">grimoire</a>
+						</div>
+				<ul class="tree-view">
+					<li class="tree-view collapsed">
+						<div class="package ">
+							<a href="../../../grimoire/assembly.html">assembly</a>
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/assembly/bytecode.html">bytecode</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/assembly/dump.html">dump</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">
+							<a href="../../../grimoire/compiler.html">compiler</a>
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/compiler/compiler.html">compiler</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/compiler/lexer.html">lexer</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/compiler/mangle.html">mangle</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/compiler/parser.html">parser</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/compiler/primitive.html">primitive</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/compiler/type.html">type</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">
+							<a href="../../../grimoire/core.html">core</a>
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/core/color.html">color</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/core/indexedarray.html">indexedarray</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/core/json.html">json</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/core/ringbuffer.html">ringbuffer</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/core/singleton.html">singleton</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/core/stream.html">stream</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/core/tween.html">tween</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/core/util.html">util</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/core/vec2.html">vec2</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/core/vec3.html">vec3</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/core/vec4.html">vec4</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">
+							<a href="../../../grimoire/lib.html">lib</a>
+						</div>
+				<ul class="tree-view">
+					<li class="tree-view collapsed">
+						<div class="package ">
+							<a href="../../../grimoire/lib/io.html">io</a>
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/lib/io/print.html">print</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view collapsed">
+						<div class="package ">
+							<a href="../../../grimoire/lib/type.html">type</a>
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/lib/type/typecast.html">typecast</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/lib/api.html">api</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/lib/array.html">array</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/lib/core.html">core</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/lib/ffi.html">ffi</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/lib/math.html">math</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/lib/string.html">string</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+					<li class="tree-view ">
+						<div class="package ">
+							<a href="../../../grimoire/runtime.html">runtime</a>
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/runtime/array.html">array</a>
+						</div>
+					</li>
+					<li>
+						<div class="module selected">
+							<a href="../../../grimoire/runtime/context.html">context</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/runtime/dynamic.html">dynamic</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../../grimoire/runtime/engine.html">engine</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+				</ul>
+					</li>
+				</ul>
+			</div>
+			<p id="main-nav-footer">
+				Built with
+				<a href="https://github.com/MartinNowak/scod">scod</a>
+			</p>
+		</nav>
+		<div id="main-contents">
+			<div>
+				<h1>Class GrContext</h1><p>Coroutines are contexts that hold local data.
+</p>
+				<div class="prototype">
+					<code class="lang-d">
+						<div class="single-prototype">
+				<span class="kwd">class</span> <span class="typ">GrContext</span>
+				<span class="pun">;</span>
+						</div>
+					</code>
+				</div>
+				
+				<section><h2>Constructors</h2>
+					<table>
+						<col class="caption"/>
+						<tr>
+							<th>Name</th><th>Description</th>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.this.html" class="public">
+									<code>this</code>
+								</a>
+							</td>
+							<td>Default ctor.
+</td>
+						</tr>
+					</table>
+				</section>
+				<section><h2>Fields</h2>
+					<table>
+						<col class="caption"/>
+						<tr>
+							<th>Name</th><th>Type</th><th>Description</th>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.callStack.html" class="public"><code>callStack</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">uint</span><span class="pun">*</span></code></td><td>Callstack
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.callStackLimit.html" class="public"><code>callStackLimit</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">uint</span></code></td><td>Current callstack max depth.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.deferPos.html" class="public"><code>deferPos</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">uint</span></code></td><td>Operation pointer.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.engine.html" class="public"><code>engine</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><a href="../../../grimoire/runtime/engine/GrEngine.html"><span class="typ">GrEngine</span></a></code></td><td>Parent engine where the context is running.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.exceptionHandlersPos.html" class="public"><code>exceptionHandlersPos</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">uint</span></code></td><td>Operation pointer.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.ilocals.html" class="public"><code>ilocals</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">int</span><span class="pun">*</span></code></td><td>Local variables
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.isKilled.html" class="public"><code>isKilled</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">bool</span></code></td><td>Kill state, unwind the call stack and call all registered deferred statements.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.isPanicking.html" class="public"><code>isPanicking</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">bool</span></code></td><td>An exception has been raised an is not caught.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.istack.html" class="public"><code>istack</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">int</span><span class="pun">*</span></code></td><td>Expression stack.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.localsLimit.html" class="public"><code>localsLimit</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">uint</span></code></td><td>Current max local variable available.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.localsPos.html" class="public"><code>localsPos</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">uint</span></code></td><td>Operation pointer.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.pc.html" class="public"><code>pc</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">uint</span></code></td><td>Operation pointer.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.stackLimit.html" class="public"><code>stackLimit</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">uint</span></code></td><td>Current expression stack limit.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.stackPos.html" class="public"><code>stackPos</code></a>
+							</td>
+							<td class="typecol"><code class="prettyprint lang-d"><span class="typ">uint</span></code></td><td>Operation pointer.
+</td>
+						</tr>
+					</table>
+				</section>
+				<section><h2>Methods</h2>
+					<table>
+						<col class="caption"/>
+						<tr>
+							<th>Name</th><th>Description</th>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.doubleCallStackSize.html" class="public">
+									<code>doubleCallStackSize</code>
+								</a>
+							</td>
+							<td>Double the current call stacks' size.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.setupCallStack.html" class="public">
+									<code>setupCallStack</code>
+								</a>
+							</td>
+							<td>Initialize the call stacks.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.setupLocals.html" class="public">
+									<code>setupLocals</code>
+								</a>
+							</td>
+							<td>Initialize the local variable stacks.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../../grimoire/runtime/context/GrContext.setupStack.html" class="public">
+									<code>setupStack</code>
+								</a>
+							</td>
+							<td>Initialize the expression stacks.
+</td>
+						</tr>
+					</table>
+				</section>
+				
+			</div>
+			<footer>
+				<div id="license-info">
+					<p>Enalye
+</p>
+
+					<p>(c) Enalye 2018
+</p>
+
+					<p>Zlib
+</p>
+
+				</div>
+			</footer>
+		</div>
+	</body>
+</html>
