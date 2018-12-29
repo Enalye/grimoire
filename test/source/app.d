@@ -15,10 +15,10 @@ import grimoire;
 void main() {
 	try {
         auto startTime = MonoTime.currTime();
-        auto bytecode = grCompiler_compileFile("test.gr");
+        auto bytecode = grCompileFile("test.gr");
         auto compilationTime = MonoTime.currTime() - startTime;
         
-        writeln(grBytecode_dump(bytecode));
+        writeln(grDump(bytecode));
 
         GrEngine vm = new GrEngine;
         vm.load(bytecode);

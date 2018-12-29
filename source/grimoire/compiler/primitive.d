@@ -112,7 +112,7 @@ class GrCall {
                 _nlocals ~= name;
                 break;
             case StructType:
-                auto structure = grType_getStructure(type.mangledType);
+                auto structure = grGetStructure(type.mangledType);
                 setupLocals(name ~ ".", structure.fields, structure.signature);
                 break;
             case UserType:
@@ -163,7 +163,7 @@ class GrCall {
                     break;
             }
             if(index == _ilocals.length)
-                throw new Exception("Primitive \'" ~ grType_getPrimitiveDisplayById(_primitive.index, true)
+                throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.istack[(_context.istackPos - _iparams) + index + 1];
         }
@@ -174,7 +174,7 @@ class GrCall {
                     break;
             }
             if(index == _ilocals.length)
-                throw new Exception("Primitive \'" ~ grType_getPrimitiveDisplayById(_primitive.index, true)
+                throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.istack[(_context.istackPos - _iparams) + index + 1] > 0;
         }
@@ -185,7 +185,7 @@ class GrCall {
                     break;
             }
             if(index == _flocals.length)
-                throw new Exception("Primitive \'" ~ grType_getPrimitiveDisplayById(_primitive.index, true)
+                throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.fstack[(_context.fstackPos - _fparams) + index + 1];
         }
@@ -196,7 +196,7 @@ class GrCall {
                     break;
             }
             if(index == _slocals.length)
-                throw new Exception("Primitive \'" ~ grType_getPrimitiveDisplayById(_primitive.index, true)
+                throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.sstack[(_context.sstackPos - _sparams) + index + 1];
         }
@@ -207,7 +207,7 @@ class GrCall {
                     break;
             }
             if(index == _dlocals.length)
-                throw new Exception("Primitive \'" ~ grType_getPrimitiveDisplayById(_primitive.index, true)
+                throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.astack[(_context.astackPos - _dparams) + index + 1];
         }
@@ -218,7 +218,7 @@ class GrCall {
                     break;
             }
             if(index == _nlocals.length)
-                throw new Exception("Primitive \'" ~ grType_getPrimitiveDisplayById(_primitive.index, true)
+                throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.nstack[(_context.nstackPos - _nparams) + index + 1];
         }
@@ -229,7 +229,7 @@ class GrCall {
                     break;
             }
             if(index == _ulocals.length)
-                throw new Exception("Primitive \'" ~ grType_getPrimitiveDisplayById(_primitive.index, true)
+                throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.ustack[(_context.ustackPos - _uparams) + index + 1];
         }
@@ -289,14 +289,14 @@ class GrCall {
 /**
     Define a new primitive.
 */
-GrPrimitive grType_addPrimitive(GrCallback callback, dstring name, dstring[] parameters, GrType[] signature, GrType retType = grVoid) {
+GrPrimitive grAddPrimitive(GrCallback callback, dstring name, dstring[] parameters, GrType[] signature, GrType retType = grVoid) {
 	GrPrimitive primitive = new GrPrimitive;
 	primitive.callback = callback;
 	primitive.signature = signature;
 	primitive.parameters = parameters;
 	primitive.returnType = retType;
 	primitive.name = name;
-	primitive.mangledName = grType_mangleNamedFunction(name, signature);
+	primitive.mangledName = grMangleNamedFunction(name, signature);
 	primitive.index = cast(uint)primitives.length;
     primitive.callObject = new GrCall(primitive);
 	primitives ~= primitive;
@@ -307,21 +307,21 @@ GrPrimitive grType_addPrimitive(GrCallback callback, dstring name, dstring[] par
     An operator is a function that replace a binary or unary grimoire operator such as `+`, `==`, etc
     The name of the function must be that of the operator like "+", "-", "or", etc.
 */
-GrPrimitive grType_addOperator(GrCallback callback, dstring name, dstring[] parameters, GrType[] signature, GrType retType) {
-	return grType_addPrimitive(callback, "@op_" ~ name, parameters, signature, retType);
+GrPrimitive grAddOperator(GrCallback callback, dstring name, dstring[] parameters, GrType[] signature, GrType retType) {
+	return grAddPrimitive(callback, "@op_" ~ name, parameters, signature, retType);
 }
 
 /**
     A cast operator allows to convert from one type to another.
     It have to have only one parameter and return the casted value.
 */
-GrPrimitive grType_addCast(GrCallback callback, dstring parameter, GrType srcType, GrType dstType, bool isExplicit = false) {
-	auto primitive = grType_addPrimitive(callback, "@as", [parameter], [srcType, dstType], dstType);
+GrPrimitive grAddCast(GrCallback callback, dstring parameter, GrType srcType, GrType dstType, bool isExplicit = false) {
+	auto primitive = grAddPrimitive(callback, "@as", [parameter], [srcType, dstType], dstType);
     primitive.isExplicit = isExplicit;
     return primitive;
 }
 
-bool isPrimitiveDeclared(dstring mangledName) {
+bool grIsPrimitiveDeclared(dstring mangledName) {
 	foreach(primitive; primitives) {
 		if(primitive.mangledName == mangledName)
 			return true;
@@ -329,7 +329,7 @@ bool isPrimitiveDeclared(dstring mangledName) {
 	return false;
 }
 
-GrPrimitive grType_getPrimitive(dstring mangledName) {
+GrPrimitive grGetPrimitive(dstring mangledName) {
 	foreach(primitive; primitives) {
 		if(primitive.mangledName == mangledName)
 			return primitive;
@@ -337,7 +337,7 @@ GrPrimitive grType_getPrimitive(dstring mangledName) {
 	throw new Exception("Undeclared primitive " ~ to!string(mangledName));
 }
 
-string grType_getPrimitiveDisplayById(uint id, bool showParameters = false) {
+string grGetPrimitiveDisplayById(uint id, bool showParameters = false) {
     if(id >= primitives.length)
         throw new Exception("Invalid primitive id.");
     GrPrimitive primitive = primitives[id];
@@ -348,7 +348,7 @@ string grType_getPrimitiveDisplayById(uint id, bool showParameters = false) {
         nbParameters = 1;
     result ~= "(";
     for(int i; i < nbParameters; i ++) {
-        result ~= grType_getDisplay(primitive.signature[i]);
+        result ~= grGetPrettyType(primitive.signature[i]);
         if(showParameters)
             result ~= " " ~ to!string(primitive.parameters[i]);
         if((i + 2) <= nbParameters)
@@ -356,12 +356,12 @@ string grType_getPrimitiveDisplayById(uint id, bool showParameters = false) {
     }
     result ~= ")";
     if(primitive.returnType != GrBaseType.VoidType) {
-        result ~= " " ~ grType_getDisplay(primitive.returnType);
+        result ~= " " ~ grGetPrettyType(primitive.returnType);
     }
     return result;
 }
 
-void grType_resolvePrimitiveSignature() {
+void grResolvePrimitiveSignature() {
     foreach(primitive; primitives) {
         primitive.callObject.setup();
     }

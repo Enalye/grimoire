@@ -59,7 +59,7 @@ private string[] instructions = [
     "newarray", "length.n", "index.n", "index.r"
 ];
 
-string grBytecode_dump(GrBytecode bytecode) {
+string grDump(GrBytecode bytecode) {
     /*writeln("\n----- VM DUMP ------");
     writeln("iconsts: ", bytecode.iconsts);
     writeln("fconsts: ", bytecode.fconsts);
@@ -69,7 +69,7 @@ string grBytecode_dump(GrBytecode bytecode) {
     string result;
     uint i;
     foreach(uint opcode; bytecode.opcodes) {
-        GrOpcode op = cast(GrOpcode)grBytecode_getOpcode(opcode);
+        GrOpcode op = cast(GrOpcode)grGetInstructionOpcode(opcode);
 
         string line = leftJustify("[" ~ to!string(i) ~ "]", 10) ~ leftJustify(instructions[op], 15);
         if((op == GrOpcode.Task) ||
@@ -80,21 +80,21 @@ string grBytecode_dump(GrBytecode bytecode) {
             (op >= GrOpcode.LocalStack && op <= GrOpcode.Call) ||
             (op == GrOpcode.Build_Array)
             )
-            line ~= to!string(grBytecode_getUnsignedValue(opcode));
+            line ~= to!string(grGetInstructionUnsignedValue(opcode));
         else if(op == GrOpcode.PrimitiveCall)
-            line ~= grType_getPrimitiveDisplayById(grBytecode_getUnsignedValue(opcode));
+            line ~= grGetPrimitiveDisplayById(grGetInstructionUnsignedValue(opcode));
         else if(op == GrOpcode.Const_Int)
-            line ~= to!string(bytecode.iconsts[grBytecode_getUnsignedValue(opcode)]);
+            line ~= to!string(bytecode.iconsts[grGetInstructionUnsignedValue(opcode)]);
         else if(op == GrOpcode.Const_Float)
-            line ~= to!string(bytecode.fconsts[grBytecode_getUnsignedValue(opcode)]);
+            line ~= to!string(bytecode.fconsts[grGetInstructionUnsignedValue(opcode)]);
         else if(op == GrOpcode.Const_Bool)
-            line ~= (grBytecode_getUnsignedValue(opcode) ? "true" : "false");
+            line ~= (grGetInstructionUnsignedValue(opcode) ? "true" : "false");
         else if(op == GrOpcode.Const_String)
-            line ~= "\"" ~ to!string(bytecode.sconsts[grBytecode_getUnsignedValue(opcode)]) ~ "\"";
+            line ~= "\"" ~ to!string(bytecode.sconsts[grGetInstructionUnsignedValue(opcode)]) ~ "\"";
         else if(op >= GrOpcode.Jump && op <= GrOpcode.JumpNotEqual)
-            line ~= to!string(i + grBytecode_getSignedValue(opcode));
+            line ~= to!string(i + grGetInstructionSignedValue(opcode));
         else if(op == GrOpcode.Defer || op == GrOpcode.Try || op == GrOpcode.Catch)
-            line ~= to!string(i + grBytecode_getSignedValue(opcode));
+            line ~= to!string(i + grGetInstructionSignedValue(opcode));
 
         i++;
         result ~= line ~ "\n";

@@ -24,7 +24,7 @@ import grimoire.compiler.type;
     The return type is not conserved in the mangled form as its not part of its signature.
     But function. passed as parameters have theirs.
 */
-dstring grType_mangleFunction(GrType[] signature) {
+dstring grMangleFunction(GrType[] signature) {
 	dstring mangledName;
 	foreach(type; signature) {
 		mangledName ~= "$";
@@ -86,24 +86,24 @@ dstring grType_mangleFunction(GrType[] signature) {
     The return type is not conserved in the mangled form as its not part of its signature.
     But function. passed as parameters have theirs.
 */
-dstring grType_mangleNamedFunction(dstring name, GrType[] signature) {
-	return name ~ grType_mangleFunction(signature);
+dstring grMangleNamedFunction(dstring name, GrType[] signature) {
+	return name ~ grMangleFunction(signature);
 }
 
 /**
     Get the type of the function.
 */
-GrType grType_getFunctionAsType(GrFunction func) {
+GrType grGetFunctionAsType(GrFunction func) {
     GrType type = func.isTask ? GrBaseType.TaskType : GrBaseType.FunctionType;
-    type.mangledType = grType_mangleNamedFunction("", func.signature);
-    type.mangledReturnType = grType_mangleNamedFunction("", [func.returnType]);
+    type.mangledType = grMangleNamedFunction("", func.signature);
+    type.mangledReturnType = grMangleNamedFunction("", [func.returnType]);
     return type;
 }
 
 /**
     Reverse the mangling operation for a function passed as a parameter.
 */
-dstring grType_unmangleSubFunction(dstring mangledSignature, ref int i) {
+dstring grUnmangleSubFunction(dstring mangledSignature, ref int i) {
     dstring subString;
     int blockCount = 1;
     if(i >= mangledSignature.length && mangledSignature[i] != '(')
@@ -132,7 +132,7 @@ dstring grType_unmangleSubFunction(dstring mangledSignature, ref int i) {
 /**
     Reverse the mangling operation for a single type.
 */
-GrType grType_unmangle(dstring mangledSignature) {
+GrType grUnmangle(dstring mangledSignature) {
     GrType currentType = GrBaseType.VoidType;
 
     int i;
@@ -205,7 +205,7 @@ GrType grType_unmangle(dstring mangledSignature) {
         case 'f':
             i ++;
             currentType.baseType = GrBaseType.FunctionType;
-            currentType.mangledType = grType_unmangleSubFunction(mangledSignature, i);
+            currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             i ++;
             if((i + 1) >= mangledSignature.length || mangledSignature[i] != '$')
                 throw new Exception("Invalid mangling format");
@@ -215,7 +215,7 @@ GrType grType_unmangle(dstring mangledSignature) {
             break;
         case 't':
             currentType.baseType = GrBaseType.TaskType;
-            currentType.mangledType = grType_unmangleSubFunction(mangledSignature, i);
+            currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             i ++;
             break;
         default:
@@ -229,7 +229,7 @@ GrType grType_unmangle(dstring mangledSignature) {
 /**
     Reverse the mangling operation for a function signature (not named).
 */
-GrType[] grType_unmangleSignature(dstring mangledSignature) {
+GrType[] grUnmangleSignature(dstring mangledSignature) {
     GrType[] unmangledSignature;
 
     int i;
@@ -303,7 +303,7 @@ GrType[] grType_unmangleSignature(dstring mangledSignature) {
         case 'f':
             i ++;
             currentType.baseType = GrBaseType.FunctionType;
-            currentType.mangledType = grType_unmangleSubFunction(mangledSignature, i);
+            currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
 
             i ++;
             if((i + 1) >= mangledSignature.length || mangledSignature[i] != '$')
@@ -315,7 +315,7 @@ GrType[] grType_unmangleSignature(dstring mangledSignature) {
         case 't':
             i ++;
             currentType.baseType = GrBaseType.TaskType;
-            currentType.mangledType = grType_unmangleSubFunction(mangledSignature, i);
+            currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             break;
         default:
             break;
@@ -329,7 +329,7 @@ GrType[] grType_unmangleSignature(dstring mangledSignature) {
 /**
     Convert a type into a pretty format for display.
 */
-string grType_getDisplay(GrType variableType) {
+string grGetPrettyType(GrType variableType) {
     final switch(variableType.baseType) with(GrBaseType) {
     case VoidType:
         return "void";
@@ -350,25 +350,25 @@ string grType_getDisplay(GrType variableType) {
     case FunctionType:
         string result = "func(";
         int i;
-        auto parameters = grType_unmangleSignature(variableType.mangledType);
+        auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach(parameter; parameters) {
-            result ~= grType_getDisplay(parameter);
+            result ~= grGetPrettyType(parameter);
             if((i + 2) <= parameters.length)
                 result ~= ", ";
             i ++;
         }
-        auto retType = grType_unmangle(variableType.mangledReturnType);
+        auto retType = grUnmangle(variableType.mangledReturnType);
         result ~= ")";
         if(retType != GrBaseType.VoidType) {
-            result ~= " " ~ grType_getDisplay(retType);
+            result ~= " " ~ grGetPrettyType(retType);
         }
         return result;
     case TaskType:
         string result = "task(";
         int i;
-        auto parameters = grType_unmangleSignature(variableType.mangledType);
+        auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach(parameter; parameters) {
-            result ~= grType_getDisplay(parameter);
+            result ~= grGetPrettyType(parameter);
             if((i + 2) <= parameters.length)
                 result ~= ", ";
             i ++;

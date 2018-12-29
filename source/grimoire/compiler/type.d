@@ -64,14 +64,14 @@ class GrVariable {
 }
 
 /// Primitive global constants, call registerIntConstant at the start of the parser.
-GrType grType_addIntConstant(dstring name, int value) {
+GrType grAddIntConstant(dstring name, int value) {
     if(value + 1 > value)
         throw new Exception("TODO: Implement later");
     return grVoid;
 }
 
 dstring[] usertypes;
-GrType grType_addUserType(dstring name) {
+GrType grAddUserType(dstring name) {
     bool isDeclared;
     foreach(usertype; usertypes) {
         if(usertype == name)
@@ -86,7 +86,7 @@ GrType grType_addUserType(dstring name) {
     return type;
 }
 
-bool grType_isUserType(dstring name) {
+bool grIsUserType(dstring name) {
     foreach(usertype; usertypes) {
         if(usertype == name)
             return true;
@@ -94,7 +94,7 @@ bool grType_isUserType(dstring name) {
     return false;
 }
 
-GrType grType_getUserType(dstring name) {
+GrType grGetUserType(dstring name) {
     GrType type = GrBaseType.UserType;
     type.mangledType = name;
     return type;
@@ -106,7 +106,7 @@ class GrStructure {
 }
 GrStructure[dstring] structures;
 
-GrType grType_addStructure(dstring name, dstring[] fields, GrType[] signature) {
+GrType grAddStructure(dstring name, dstring[] fields, GrType[] signature) {
     if(fields.length != signature.length)
         throw new Exception("GrStructure signature mismatch");
     GrStructure st = new GrStructure;
@@ -119,30 +119,30 @@ GrType grType_addStructure(dstring name, dstring[] fields, GrType[] signature) {
     return stType;
 }
 
-bool grType_isStructure(dstring name) {
+bool grIsStructure(dstring name) {
     if(name in structures)
         return true;
     return false;
 }
 
-GrType grType_getStructureType(dstring name) {
+GrType grGetStructureType(dstring name) {
     GrType stType = GrBaseType.StructType;
     stType.mangledType = name;
     return stType;
 }
 
-GrStructure grType_getStructure(dstring name) {
+GrStructure grGetStructure(dstring name) {
     auto structure = (name in structures);
     if(structure is null)
         throw new Exception("Undefined struct \'" ~ to!string(name) ~ "\'");
     return *structure;
 }
 
-void grType_resolveStructSignature() {
+void grResolveStructSignature() {
     foreach(structure; structures) {
         for(int i; i < structure.signature.length; i ++) {
             if(structure.signature[i].baseType == GrBaseType.VoidType) {
-                if(grType_isStructure(structure.signature[i].mangledType)) {
+                if(grIsStructure(structure.signature[i].mangledType)) {
                     structure.signature[i].baseType = GrBaseType.StructType;
                 }
                 else

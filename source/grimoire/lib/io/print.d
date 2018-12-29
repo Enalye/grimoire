@@ -13,12 +13,12 @@ import std.conv: to;
 import grimoire.lib.api;
 
 static this() {
-	grLib_addPrimitive(&prints, "print", ["value"], [grString]);
-	grLib_addPrimitive(&printb, "print", ["value"], [grBool]);
-	grLib_addPrimitive(&printi, "print", ["value"], [grInt]);
-	grLib_addPrimitive(&printf, "print", ["value"], [grFloat]);
-	grLib_addPrimitive(&printa, "print", ["value"], [grDynamic]);
-	grLib_addPrimitive(&printn, "print", ["value"], [grArray]);
+	grAddPrimitive(&prints, "print", ["value"], [grString]);
+	grAddPrimitive(&printb, "print", ["value"], [grBool]);
+	grAddPrimitive(&printi, "print", ["value"], [grInt]);
+	grAddPrimitive(&printf, "print", ["value"], [grFloat]);
+	grAddPrimitive(&printa, "print", ["value"], [grDynamic]);
+	grAddPrimitive(&printn, "print", ["value"], [grArray]);
 }
 
 private void prints(GrCall call) {

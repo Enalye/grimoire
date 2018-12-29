@@ -85,7 +85,7 @@ struct GrBytecode {
 }
 
 /// Fetch a compiled grimoire file
-GrBytecode grBytecode_newFromFile(string fileName) {
+GrBytecode grCreateBytecodeFromFile(string fileName) {
 	GrBytecode bytecode;
 	File file = File(fileName, "rb");
 	uint[4] header;
@@ -110,7 +110,7 @@ GrBytecode grBytecode_newFromFile(string fileName) {
 }
 
 /// Fetch a compiled grimoire file
-GrBytecode grBytecode_newFromFile(File file) {
+GrBytecode grCreateBytecodeFromFile(File file) {
 	GrBytecode bytecode;
 	uint[4] header;
 	file.rawRead(header);
@@ -133,20 +133,20 @@ GrBytecode grBytecode_newFromFile(File file) {
 }
 
 /// Get the unsigned value part of an instruction
-pure uint grBytecode_getUnsignedValue(uint instruction) {
+pure uint grGetInstructionUnsignedValue(uint instruction) {
     return (instruction >> 8u) & 0xffffff;
 }
 
 /// Get the signed value part of an instruction
-pure int grBytecode_getSignedValue(uint instruction) {
+pure int grGetInstructionSignedValue(uint instruction) {
     return (cast(int)((instruction >> 8u) & 0xffffff)) - 0x800000;
 }
 
 /// Get the opcode part of an instruction
-pure uint grBytecode_getOpcode(uint instruction) {
+pure uint grGetInstructionOpcode(uint instruction) {
     return instruction & 0xff;
 }
 
-pure uint grBytecode_makeInstruction(uint instr, uint value1, uint value2) {
+pure uint grMakeInstruction(uint instr, uint value1, uint value2) {
     return ((value2 << 16u) & 0xffff0000) | ((value1 << 8u) & 0xff00) | (instr & 0xff);
 }

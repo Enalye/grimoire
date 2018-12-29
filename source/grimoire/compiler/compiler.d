@@ -22,7 +22,7 @@ import grimoire.compiler.parser;
 import grimoire.compiler.primitive;
 
 /// Compile a source file into bytecode
-GrBytecode grCompiler_compileFile(string fileName) {
+GrBytecode grCompileFile(string fileName) {
 	GrLexer lexer = new GrLexer;
 	lexer.scanFile(to!dstring(fileName));
 

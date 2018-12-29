@@ -187,7 +187,7 @@ class GrEngine {
 			GrContext context = _contexts.data[index];
 			while(isRunning) {
 				uint opcode = _opcodes[context.pc];
-				switch (grBytecode_getOpcode(opcode)) with(GrOpcode) {
+				switch (grGetInstructionOpcode(opcode)) with(GrOpcode) {
                 case Nop:
                     context.pc ++;
                     break;
@@ -244,7 +244,7 @@ class GrEngine {
                     }
                     break;
                 case Try:
-                    context.exceptionHandlers[context.exceptionHandlersPos] ~= context.pc + grBytecode_getSignedValue(opcode);
+                    context.exceptionHandlers[context.exceptionHandlersPos] ~= context.pc + grGetInstructionSignedValue(opcode);
                     context.pc ++;
                     break;
                 case Catch:
@@ -254,12 +254,12 @@ class GrEngine {
                         context.pc ++;
                     }
                     else {
-                        context.pc += grBytecode_getSignedValue(opcode);
+                        context.pc += grGetInstructionSignedValue(opcode);
                     }
                     break;
 				case Task:
 					GrContext newCoro = new GrContext(this);
-					newCoro.pc = grBytecode_getUnsignedValue(opcode);
+					newCoro.pc = grGetInstructionUnsignedValue(opcode);
 					_contexts.push(newCoro);
 					context.pc ++;
 					break;
@@ -302,55 +302,55 @@ class GrEngine {
 					context.pc ++;
 					continue contextsLabel;
 				case PopStack_Int:
-					context.istackPos -= grBytecode_getUnsignedValue(opcode);
+					context.istackPos -= grGetInstructionUnsignedValue(opcode);
 					context.pc ++;
 					break;
 				case PopStack_Float:
-					context.fstackPos -= grBytecode_getUnsignedValue(opcode);
+					context.fstackPos -= grGetInstructionUnsignedValue(opcode);
 					context.pc ++;
 					break;
 				case PopStack_String:
-					context.sstackPos -= grBytecode_getUnsignedValue(opcode);
+					context.sstackPos -= grGetInstructionUnsignedValue(opcode);
 					context.pc ++;
 					break;
                 case PopStack_Array:
-					context.nstackPos -= grBytecode_getUnsignedValue(opcode);
+					context.nstackPos -= grGetInstructionUnsignedValue(opcode);
 					context.pc ++;
 					break;
 				case PopStack_Any:
-					context.astackPos -= grBytecode_getUnsignedValue(opcode);
+					context.astackPos -= grGetInstructionUnsignedValue(opcode);
 					context.pc ++;
 					break;
 				case PopStack_Object:
-					context.ostackPos -= grBytecode_getUnsignedValue(opcode);
+					context.ostackPos -= grGetInstructionUnsignedValue(opcode);
 					context.pc ++;
 					break;
                 case PopStack_UserData:
-					context.ustackPos -= grBytecode_getUnsignedValue(opcode);
+					context.ustackPos -= grGetInstructionUnsignedValue(opcode);
 					context.pc ++;
 					break;
 				case LocalStore_Int:
-					context.ilocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.istack[context.istackPos];
+					context.ilocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.istack[context.istackPos];
                     context.istackPos --;	
 					context.pc ++;
 					break;
 				case LocalStore_Float:
-					context.flocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.fstack[context.fstackPos];
+					context.flocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.fstack[context.fstackPos];
                     context.fstackPos --;	
 					context.pc ++;
 					break;
 				case LocalStore_String:
-					context.slocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.sstack[context.sstackPos];		
+					context.slocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.sstack[context.sstackPos];		
                     context.sstackPos --;	
 					context.pc ++;
 					break;
                 case LocalStore_Array:
-					context.nlocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.nstack[context.nstackPos];		
+					context.nlocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.nstack[context.nstackPos];		
                     context.nstackPos --;	
 					context.pc ++;
 					break;
 				case LocalStore_Any:
-					context.alocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.astack[context.astackPos];
+					context.alocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.astack[context.astackPos];
                     context.astackPos --;	
 					context.pc ++;
 					break;
@@ -360,33 +360,33 @@ class GrEngine {
                     context.pc ++;
                     break;
 				case LocalStore_Object:
-					context.olocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.ostack[context.ostackPos];
+					context.olocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
                     context.ostackPos --;	
 					context.pc ++;
 					break;
                 case LocalStore_UserData:
-					context.ulocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.ustack[context.ustackPos];
+					context.ulocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.ustack[context.ustackPos];
                     context.ustackPos --;	
 					context.pc ++;
 					break;
                 case LocalStore2_Int:
-					context.ilocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.istack[context.istackPos];
+					context.ilocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.istack[context.istackPos];
 					context.pc ++;
 					break;
 				case LocalStore2_Float:
-					context.flocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.fstack[context.fstackPos];
+					context.flocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.fstack[context.fstackPos];
 					context.pc ++;
 					break;
 				case LocalStore2_String:
-					context.slocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.sstack[context.sstackPos];		
+					context.slocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.sstack[context.sstackPos];		
 					context.pc ++;
 					break;
                 case LocalStore2_Array:
-					context.nlocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.nstack[context.nstackPos];		
+					context.nlocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.nstack[context.nstackPos];		
 					context.pc ++;
 					break;
 				case LocalStore2_Any:
-					context.alocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.astack[context.astackPos];
+					context.alocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.astack[context.astackPos];
 					context.pc ++;
 					break;
                 case LocalStore2_Ref:
@@ -395,77 +395,77 @@ class GrEngine {
                     context.pc ++;
                     break;
 				case LocalStore2_Object:
-					context.olocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.ostack[context.ostackPos];
+					context.olocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
 					context.pc ++;
 					break;
                 case LocalStore2_UserData:
-					context.ulocals[context.localsPos + grBytecode_getUnsignedValue(opcode)] = context.ustack[context.ustackPos];
+					context.ulocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.ustack[context.ustackPos];
 					context.pc ++;
 					break;
 				case LocalLoad_Int:
                     context.istackPos ++;
-					context.istack[context.istackPos] = context.ilocals[context.localsPos + grBytecode_getUnsignedValue(opcode)];
+					context.istack[context.istackPos] = context.ilocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
                     context.pc ++;
 					break;
 				case LocalLoad_Float:
                     context.fstackPos ++;
-					context.fstack[context.fstackPos] = context.flocals[context.localsPos + grBytecode_getUnsignedValue(opcode)];
+					context.fstack[context.fstackPos] = context.flocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
 				case LocalLoad_String:
                     context.sstackPos ++;
-					context.sstack[context.sstackPos] = context.slocals[context.localsPos + grBytecode_getUnsignedValue(opcode)];
+					context.sstack[context.sstackPos] = context.slocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
                 case LocalLoad_Array:
                     context.nstackPos ++;
-					context.nstack[context.nstackPos] = context.nlocals[context.localsPos + grBytecode_getUnsignedValue(opcode)];
+					context.nstack[context.nstackPos] = context.nlocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
 				case LocalLoad_Any:
                     context.astackPos ++;
-					context.astack[context.astackPos] = context.alocals[context.localsPos + grBytecode_getUnsignedValue(opcode)];
+					context.astack[context.astackPos] = context.alocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
                 case LocalLoad_Ref:
                     GrDynamicValue value;
-                    value.setRefArray(&context.nlocals[context.localsPos + grBytecode_getUnsignedValue(opcode)]);
+                    value.setRefArray(&context.nlocals[context.localsPos + grGetInstructionUnsignedValue(opcode)]);
                     context.astackPos ++;
                     context.astack[context.astackPos] = value;			
 					context.pc ++;
 					break;
 				case LocalLoad_Object:
                     context.ostackPos ++;
-					context.ostack[context.ostackPos] = context.olocals[context.localsPos + grBytecode_getUnsignedValue(opcode)];
+					context.ostack[context.ostackPos] = context.olocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
                 case LocalLoad_UserData:
                     context.ustackPos ++;
-					context.ustack[context.ustackPos] = context.ulocals[context.localsPos + grBytecode_getUnsignedValue(opcode)];
+					context.ustack[context.ustackPos] = context.ulocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
                 case GlobalStore_Int:
-					_iglobals[grBytecode_getUnsignedValue(opcode)] = context.istack[context.istackPos];
+					_iglobals[grGetInstructionUnsignedValue(opcode)] = context.istack[context.istackPos];
                     context.istackPos --;	
 					context.pc ++;
 					break;
 				case GlobalStore_Float:
-					_fglobals[grBytecode_getUnsignedValue(opcode)] = context.fstack[context.fstackPos];
+					_fglobals[grGetInstructionUnsignedValue(opcode)] = context.fstack[context.fstackPos];
                     context.fstackPos --;	
 					context.pc ++;
 					break;
 				case GlobalStore_String:
-					_sglobals[grBytecode_getUnsignedValue(opcode)] = context.sstack[context.sstackPos];		
+					_sglobals[grGetInstructionUnsignedValue(opcode)] = context.sstack[context.sstackPos];		
                     context.sstackPos --;	
 					context.pc ++;
 					break;
                 case GlobalStore_Array:
-					_nglobals[grBytecode_getUnsignedValue(opcode)] = context.nstack[context.nstackPos];		
+					_nglobals[grGetInstructionUnsignedValue(opcode)] = context.nstack[context.nstackPos];		
                     context.nstackPos --;	
 					context.pc ++;
 					break;
 				case GlobalStore_Any:
-					_aglobals[grBytecode_getUnsignedValue(opcode)] = context.astack[context.astackPos];
+					_aglobals[grGetInstructionUnsignedValue(opcode)] = context.astack[context.astackPos];
                     context.astackPos --;	
 					context.pc ++;
 					break;
@@ -475,33 +475,33 @@ class GrEngine {
                     context.pc ++;
                     break;
 				case GlobalStore_Object:
-					_oglobals[grBytecode_getUnsignedValue(opcode)] = context.ostack[context.ostackPos];
+					_oglobals[grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
                     context.ostackPos --;	
 					context.pc ++;
 					break;
                 case GlobalStore_UserData:
-					_uglobals[grBytecode_getUnsignedValue(opcode)] = context.ustack[context.ustackPos];
+					_uglobals[grGetInstructionUnsignedValue(opcode)] = context.ustack[context.ustackPos];
                     context.ustackPos --;	
 					context.pc ++;
 					break;
                 case GlobalStore2_Int:
-					_iglobals[grBytecode_getUnsignedValue(opcode)] = context.istack[context.istackPos];
+					_iglobals[grGetInstructionUnsignedValue(opcode)] = context.istack[context.istackPos];
 					context.pc ++;
 					break;
 				case GlobalStore2_Float:
-					_fglobals[grBytecode_getUnsignedValue(opcode)] = context.fstack[context.fstackPos];
+					_fglobals[grGetInstructionUnsignedValue(opcode)] = context.fstack[context.fstackPos];
 					context.pc ++;
 					break;
 				case GlobalStore2_String:
-					_sglobals[grBytecode_getUnsignedValue(opcode)] = context.sstack[context.sstackPos];		
+					_sglobals[grGetInstructionUnsignedValue(opcode)] = context.sstack[context.sstackPos];		
 					context.pc ++;
 					break;
                 case GlobalStore2_Array:
-					_nglobals[grBytecode_getUnsignedValue(opcode)] = context.nstack[context.nstackPos];		
+					_nglobals[grGetInstructionUnsignedValue(opcode)] = context.nstack[context.nstackPos];		
 					context.pc ++;
 					break;
 				case GlobalStore2_Any:
-					_aglobals[grBytecode_getUnsignedValue(opcode)] = context.astack[context.astackPos];
+					_aglobals[grGetInstructionUnsignedValue(opcode)] = context.astack[context.astackPos];
 					context.pc ++;
 					break;
                 case GlobalStore2_Ref:
@@ -510,119 +510,119 @@ class GrEngine {
                     context.pc ++;
                     break;
 				case GlobalStore2_Object:
-					_oglobals[grBytecode_getUnsignedValue(opcode)] = context.ostack[context.ostackPos];
+					_oglobals[grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
 					context.pc ++;
 					break;
                 case GlobalStore2_UserData:
-					_uglobals[grBytecode_getUnsignedValue(opcode)] = context.ustack[context.ustackPos];
+					_uglobals[grGetInstructionUnsignedValue(opcode)] = context.ustack[context.ustackPos];
 					context.pc ++;
 					break;
 				case GlobalLoad_Int:
                     context.istackPos ++;
-					context.istack[context.istackPos] = _iglobals[grBytecode_getUnsignedValue(opcode)];
+					context.istack[context.istackPos] = _iglobals[grGetInstructionUnsignedValue(opcode)];
                     context.pc ++;
 					break;
 				case GlobalLoad_Float:
                     context.fstackPos ++;
-					context.fstack[context.fstackPos] = _fglobals[grBytecode_getUnsignedValue(opcode)];
+					context.fstack[context.fstackPos] = _fglobals[grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
 				case GlobalLoad_String:
                     context.sstackPos ++;
-					context.sstack[context.sstackPos] = _sglobals[grBytecode_getUnsignedValue(opcode)];
+					context.sstack[context.sstackPos] = _sglobals[grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
                 case GlobalLoad_Array:
                     context.nstackPos ++;
-					context.nstack[context.nstackPos] = _nglobals[grBytecode_getUnsignedValue(opcode)];
+					context.nstack[context.nstackPos] = _nglobals[grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
 				case GlobalLoad_Any:
                     context.astackPos ++;
-					context.astack[context.astackPos] = _aglobals[grBytecode_getUnsignedValue(opcode)];
+					context.astack[context.astackPos] = _aglobals[grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
                 case GlobalLoad_Ref:
                     GrDynamicValue value;
-                    value.setRefArray(&_nglobals[grBytecode_getUnsignedValue(opcode)]);
+                    value.setRefArray(&_nglobals[grGetInstructionUnsignedValue(opcode)]);
                     context.astackPos ++;
                     context.astack[context.astackPos] = value;			
 					context.pc ++;
 					break;
 				case GlobalLoad_Object:
                     context.ostackPos ++;
-					context.ostack[context.ostackPos] = _oglobals[grBytecode_getUnsignedValue(opcode)];
+					context.ostack[context.ostackPos] = _oglobals[grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
                 case GlobalLoad_UserData:
                     context.ustackPos ++;
-					context.ustack[context.ustackPos] = _uglobals[grBytecode_getUnsignedValue(opcode)];
+					context.ustack[context.ustackPos] = _uglobals[grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
 				case Const_Int:
                     context.istackPos ++;
-					context.istack[context.istackPos] = _iconsts[grBytecode_getUnsignedValue(opcode)];
+					context.istack[context.istackPos] = _iconsts[grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
 				case Const_Float:
                     context.fstackPos ++;
-					context.fstack[context.fstackPos] = _fconsts[grBytecode_getUnsignedValue(opcode)];
+					context.fstack[context.fstackPos] = _fconsts[grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
 				case Const_Bool:
                     context.istackPos ++;
-					context.istack[context.istackPos] = grBytecode_getUnsignedValue(opcode);
+					context.istack[context.istackPos] = grGetInstructionUnsignedValue(opcode);
 					context.pc ++;
 					break;
 				case Const_String:
                     context.sstackPos ++;
-					context.sstack[context.sstackPos] = _sconsts[grBytecode_getUnsignedValue(opcode)];
+					context.sstack[context.sstackPos] = _sconsts[grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
 				case GlobalPush_Int:
-					uint nbParams = grBytecode_getUnsignedValue(opcode);
+					uint nbParams = grGetInstructionUnsignedValue(opcode);
 					for(uint i = 1u; i <= nbParams; i++)
 						_iglobalStack ~= context.istack[(context.istackPos - nbParams) + i];
 					context.istackPos -= nbParams;
 					context.pc ++;
 					break;
 				case GlobalPush_Float:
-					uint nbParams = grBytecode_getUnsignedValue(opcode);
+					uint nbParams = grGetInstructionUnsignedValue(opcode);
 					for(uint i = 1u; i <= nbParams; i++)
 						_fglobalStack ~= context.fstack[(context.fstackPos - nbParams) + i];
 					context.fstackPos -= nbParams;
 					context.pc ++;
 					break;
 				case GlobalPush_String:
-					uint nbParams = grBytecode_getUnsignedValue(opcode);
+					uint nbParams = grGetInstructionUnsignedValue(opcode);
 					for(uint i = 1u; i <= nbParams; i++)
 						_sglobalStack ~= context.sstack[(context.sstackPos - nbParams) + i];
 					context.sstackPos -= nbParams;
 					context.pc ++;
 					break;
                 case GlobalPush_Array:
-					uint nbParams = grBytecode_getUnsignedValue(opcode);
+					uint nbParams = grGetInstructionUnsignedValue(opcode);
 					for(uint i = 1u; i <= nbParams; i++)
 						_nglobalStack ~= context.nstack[(context.nstackPos - nbParams) + i];
 					context.nstackPos -= nbParams;
 					context.pc ++;
 					break;
 				case GlobalPush_Any:
-					uint nbParams = grBytecode_getUnsignedValue(opcode);
+					uint nbParams = grGetInstructionUnsignedValue(opcode);
 					for(uint i = 1u; i <= nbParams; i++)
 						_aglobalStack ~= context.astack[(context.astackPos - nbParams) + i];
 					context.astackPos -= nbParams;
 					context.pc ++;
 					break;
 				case GlobalPush_Object:
-					uint nbParams = grBytecode_getUnsignedValue(opcode);
+					uint nbParams = grGetInstructionUnsignedValue(opcode);
 					for(uint i = 1u; i <= nbParams; i++)
 						_oglobalStack ~= context.ostack[(context.ostackPos - nbParams) + i];
 					context.ostackPos -= nbParams;
 					context.pc ++;
 					break;
                 case GlobalPush_UserData:
-					uint nbParams = grBytecode_getUnsignedValue(opcode);
+					uint nbParams = grGetInstructionUnsignedValue(opcode);
 					for(uint i = 1u; i <= nbParams; i++)
 						_uglobalStack ~= context.ustack[(context.ustackPos - nbParams) + i];
 					context.ustackPos -= nbParams;
@@ -1003,11 +1003,11 @@ class GrEngine {
                     }
                     break;
                 case Defer:
-                    context.deferStack[context.deferPos] ~= context.pc + grBytecode_getSignedValue(opcode);
+                    context.deferStack[context.deferPos] ~= context.pc + grGetInstructionSignedValue(opcode);
 					context.pc ++;
                     break;
 				case LocalStack:
-                    auto stackSize = grBytecode_getUnsignedValue(opcode);
+                    auto stackSize = grGetInstructionUnsignedValue(opcode);
 					context.callStack[context.stackPos] = stackSize;
                     context.deferPos ++;
                     context.exceptionHandlersPos ++;
@@ -1020,7 +1020,7 @@ class GrEngine {
 					context.localsPos += context.callStack[context.stackPos];
 					context.callStack[context.stackPos + 1u] = context.pc + 1u;
 					context.stackPos += 2;
-					context.pc = grBytecode_getUnsignedValue(opcode);
+					context.pc = grGetInstructionUnsignedValue(opcode);
 					break;
 				case AnonymousCall:
                     if((context.stackPos >> 1) >= context.callStackLimit) {
@@ -1033,29 +1033,29 @@ class GrEngine {
 					context.istackPos --;
 					break;
 				case PrimitiveCall:
-					primitives[grBytecode_getUnsignedValue(opcode)].callObject.call(context);
+					primitives[grGetInstructionUnsignedValue(opcode)].callObject.call(context);
 					context.pc ++;
 					break;
 				case Jump:
-					context.pc += grBytecode_getSignedValue(opcode);
+					context.pc += grGetInstructionSignedValue(opcode);
 					break;
 				case JumpEqual:
 					if(context.istack[context.istackPos])
 						context.pc ++;
 					else
-						context.pc += grBytecode_getSignedValue(opcode);
+						context.pc += grGetInstructionSignedValue(opcode);
 					context.istackPos --;
 					break;
 				case JumpNotEqual:
 					if(context.istack[context.istackPos])
-						context.pc += grBytecode_getSignedValue(opcode);
+						context.pc += grGetInstructionSignedValue(opcode);
 					else
 						context.pc ++;
 					context.istackPos --;
 					break;
                 case Build_Array:
                     GrDynamicValue[] ary;
-                    const auto arySize = grBytecode_getUnsignedValue(opcode);
+                    const auto arySize = grGetInstructionUnsignedValue(opcode);
                     for(int i = arySize - 1; i >= 0; i --) {
                         ary ~= context.astack[context.astackPos - i];
                     }
@@ -1083,7 +1083,7 @@ class GrEngine {
 					context.pc ++;
 					break;
 				default:
-					throw new Exception("Invalid instruction at (" ~ to!string(context.pc) ~ "): " ~ to!string(grBytecode_getOpcode(opcode)));
+					throw new Exception("Invalid instruction at (" ~ to!string(context.pc) ~ "): " ~ to!string(grGetInstructionOpcode(opcode)));
                 }
 			}
 		}

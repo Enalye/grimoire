@@ -13,33 +13,33 @@ import grimoire.lib.api;
 
 static this() {
     //As int
-    grLib_addCast(&typecast_f2i, "value", grFloat, grInt, true);
-    grLib_addCast(&typecast_b2i, "value", grBool, grInt);
-	grLib_addCast(&typecast_d2i, "value", grDynamic, grInt);
+    grAddCast(&typecast_f2i, "value", grFloat, grInt, true);
+    grAddCast(&typecast_b2i, "value", grBool, grInt);
+	grAddCast(&typecast_d2i, "value", grDynamic, grInt);
 
     //As float
-    grLib_addCast(&typecast_i2f, "value", grInt, grFloat, true);
-	grLib_addCast(&typecast_d2f, "value", grDynamic, grFloat);
+    grAddCast(&typecast_i2f, "value", grInt, grFloat, true);
+	grAddCast(&typecast_d2f, "value", grDynamic, grFloat);
 
     //As bool
-	grLib_addCast(&typecast_b2i, "value", grDynamic, grBool);
+	grAddCast(&typecast_b2i, "value", grDynamic, grBool);
 
     //As Array
-	grLib_addCast(&typecast_s2n, "value", grString, grArray);
-	grLib_addCast(&typecast_d2n, "value", grDynamic, grArray);
+	grAddCast(&typecast_s2n, "value", grString, grArray);
+	grAddCast(&typecast_d2n, "value", grDynamic, grArray);
 
 
     //As string
-	grLib_addCast(&typecast_i2s, "value", grInt, grString);
-	grLib_addCast(&typecast_f2s, "value", grFloat, grString);
-	grLib_addCast(&typecast_d2s, "value", grDynamic, grString);
+	grAddCast(&typecast_i2s, "value", grInt, grString);
+	grAddCast(&typecast_f2s, "value", grFloat, grString);
+	grAddCast(&typecast_d2s, "value", grDynamic, grString);
 
     //As dynamic value
-	grLib_addCast(&typecast_b2d, "value", grBool, grDynamic);
-	grLib_addCast(&typecast_i2d, "value", grInt, grDynamic);
-	grLib_addCast(&typecast_f2d, "value", grFloat, grDynamic);
-	grLib_addCast(&typecast_s2d, "value", grString, grDynamic);
-	grLib_addCast(&typecast_n2d, "value", grArray, grDynamic);
+	grAddCast(&typecast_b2d, "value", grBool, grDynamic);
+	grAddCast(&typecast_i2d, "value", grInt, grDynamic);
+	grAddCast(&typecast_f2d, "value", grFloat, grDynamic);
+	grAddCast(&typecast_s2d, "value", grString, grDynamic);
+	grAddCast(&typecast_n2d, "value", grArray, grDynamic);
 }
 
 //As int

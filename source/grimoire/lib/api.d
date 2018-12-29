@@ -12,8 +12,3 @@ public {
     import grimoire.compiler;
     import grimoire.runtime;
 }
-
-alias grLib_addStructure = grType_addStructure;
-alias grLib_addPrimitive = grType_addPrimitive;
-alias grLib_addOperator = grType_addOperator;
-alias grLib_addCast = grType_addCast;

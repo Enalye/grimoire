@@ -149,7 +149,7 @@ class GrParser {
     GrVariable registerGlobalVariable(dstring name, GrType type) {
         if(type.baseType == GrBaseType.StructType) {
             //Register each field
-            auto structure = grType_getStructure(type.mangledType);
+            auto structure = grGetStructure(type.mangledType);
             for(int i; i < structure.signature.length; i ++) {
                 registerLocalVariable(name ~ "." ~ structure.fields[i], structure.signature[i]);
             }
@@ -196,7 +196,7 @@ class GrParser {
 	GrVariable registerLocalVariable(dstring name, GrType type) {
         if(type.baseType == GrBaseType.StructType) {
             //Register each field
-            auto structure = grType_getStructure(type.mangledType);
+            auto structure = grGetStructure(type.mangledType);
             for(int i; i < structure.signature.length; i ++) {
                 registerLocalVariable(name ~ "." ~ structure.fields[i], structure.signature[i]);
             }
@@ -267,7 +267,7 @@ class GrParser {
     }
 
 	void beginFunction(dstring name, GrType[] signature, dstring[] inputVariables, bool isTask, GrType returnType = GrBaseType.VoidType) {
-        dstring mangledName = grType_mangleNamedFunction(name, signature);
+        dstring mangledName = grMangleNamedFunction(name, signature);
 
 		auto func = mangledName in functions;
 		if(func is null)
@@ -297,7 +297,7 @@ class GrParser {
 			func.index = cast(uint)functions.length;
 			func.name = name;
 
-			dstring mangledName = grType_mangleNamedFunction(name, signature);
+			dstring mangledName = grMangleNamedFunction(name, signature);
 			auto previousFunc = (mangledName in functions);
 			if(previousFunc !is null)
 				logError("Multiple declaration", "The function \'" ~ to!string(name) ~ "\' is already declared.");
@@ -349,7 +349,7 @@ class GrParser {
                     addInstruction(GrOpcode.GlobalPop_Object, 0u);
                 break;
             case StructType:
-                auto structure = grType_getStructure(type.mangledType);
+                auto structure = grGetStructure(type.mangledType);
                 const auto nbFields = structure.signature.length;
                 for(int i = 1; i <= structure.signature.length; i ++) {
                     fetchParameter(name ~ "." ~ structure.fields[nbFields - i], structure.signature[nbFields - i]);
@@ -484,11 +484,11 @@ class GrParser {
 
     GrType addCustomBinaryOperator(GrLexemeType lexType, GrType leftType, GrType rightType) {
         GrType resultType = GrBaseType.VoidType;
-        dstring mangledName = grType_mangleNamedFunction("@op_" ~ grLexer_getTypeDisplay(lexType), [leftType, rightType]);
+        dstring mangledName = grMangleNamedFunction("@op_" ~ grLexer_getTypeDisplay(lexType), [leftType, rightType]);
         
         //GrPrimitive check
-        if(isPrimitiveDeclared(mangledName)) {
-            GrPrimitive primitive = grType_getPrimitive(mangledName);
+        if(grIsPrimitiveDeclared(mangledName)) {
+            GrPrimitive primitive = grGetPrimitive(mangledName);
             addInstruction(GrOpcode.PrimitiveCall, primitive.index);
             resultType = primitive.returnType;
         }
@@ -506,11 +506,11 @@ class GrParser {
 
     GrType addCustomUnaryOperator(GrLexemeType lexType, GrType type) {
         GrType resultType = GrBaseType.VoidType;
-        dstring mangledName = grType_mangleNamedFunction("@op_" ~ grLexer_getTypeDisplay(lexType), [type]);
+        dstring mangledName = grMangleNamedFunction("@op_" ~ grLexer_getTypeDisplay(lexType), [type]);
         
         //GrPrimitive check
-        if(isPrimitiveDeclared(mangledName)) {
-            GrPrimitive primitive = grType_getPrimitive(mangledName);
+        if(grIsPrimitiveDeclared(mangledName)) {
+            GrPrimitive primitive = grGetPrimitive(mangledName);
             addInstruction(GrOpcode.PrimitiveCall, primitive.index);
             resultType = primitive.returnType;
         }
@@ -552,9 +552,9 @@ class GrParser {
             logError("Operator Undefined", "There is no "
                 ~ to!string(grLexer_getTypeDisplay(lexType))
                 ~ " operator defined for \'"
-                ~ grType_getDisplay(leftType)
+                ~ grGetPrettyType(leftType)
                 ~ "\' and \'"
-                ~ grType_getDisplay(rightType)
+                ~ grGetPrettyType(rightType)
                 ~ "\'");
         return resultType;
     }
@@ -571,7 +571,7 @@ class GrParser {
             logError("Operator Undefined", "There is no "
                 ~ to!string(grLexer_getTypeDisplay(lexType))
                 ~ " operator defined for \'"
-                ~ grType_getDisplay(type)
+                ~ grGetPrettyType(type)
                 ~ "\'");
         return resultType;
     }
@@ -801,7 +801,7 @@ class GrParser {
             variable.isAuto = false;
             variable.type = valueType;
             if(valueType.baseType == GrBaseType.StructType) {
-                auto structure = grType_getStructure(valueType.mangledType);
+                auto structure = grGetStructure(valueType.mangledType);
                 if(variable.isGlobal) {
                     globalFreeVariables ~= variable.index;
                     for(int i; i < structure.signature.length; i ++) {
@@ -850,7 +850,7 @@ class GrParser {
 				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.index);
 				break;
             case StructType:
-                auto structure = grType_getStructure(variable.type.mangledType);
+                auto structure = grGetStructure(variable.type.mangledType);
                 const auto nbFields = structure.signature.length;
                 for(int i = 1; i <= nbFields; i ++) {
                     addSetInstruction(getVariable(variable.name ~ "." ~ structure.fields[nbFields - i]), structure.signature[nbFields - i]);
@@ -887,7 +887,7 @@ class GrParser {
 				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Object : GrOpcode.LocalStore_Object, variable.index);
 				break;
             case StructType:
-                auto structure = grType_getStructure(variable.type.mangledType);
+                auto structure = grGetStructure(variable.type.mangledType);
                 const auto nbFields = structure.signature.length;
                 for(int i = 1; i <= nbFields; i ++) {
                     addSetInstruction(getVariable(variable.name ~ "." ~ structure.fields[nbFields - i]), structure.signature[nbFields - i]);
@@ -930,7 +930,7 @@ class GrParser {
 				addInstruction(GrOpcode.GlobalLoad_Object, variable.index);
 				break;
             case StructType:
-                auto structure = grType_getStructure(variable.type.mangledType);
+                auto structure = grGetStructure(variable.type.mangledType);
                 for(int i; i < structure.signature.length; i ++) {
                     addGetInstruction(getVariable(variable.name ~ "." ~ structure.fields[i]), structure.signature[i]);
                 }
@@ -966,7 +966,7 @@ class GrParser {
 				addInstruction(GrOpcode.LocalLoad_Object, variable.index);
 				break;
             case StructType:
-                auto structure = grType_getStructure(variable.type.mangledType);
+                auto structure = grGetStructure(variable.type.mangledType);
                 for(int i; i < structure.signature.length; i ++) {
                     addGetInstruction(getVariable(variable.name ~ "." ~ structure.fields[i]), structure.signature[i]);
                 }
@@ -995,7 +995,7 @@ class GrParser {
             call.position = cast(uint)currentFunction.instructions.length;
             addInstruction(GrOpcode.Const_Int, 0);
 
-            return grType_getFunctionAsType(*func);
+            return grGetFunctionAsType(*func);
         }
 
 		return GrType(GrBaseType.VoidType);
@@ -1155,10 +1155,10 @@ class GrParser {
 		}
 
         //Resolve all unresolved struct field types
-        grType_resolveStructSignature();
+        grResolveStructSignature();
 
         //Then we can resolve primitives' signature
-        grType_resolvePrimitiveSignature();
+        grResolvePrimitiveSignature();
         
         //Function definitions
         reset();
@@ -1216,7 +1216,7 @@ class GrParser {
                 parseGlobalDeclaration();
                 break;
             case Identifier:
-                if(grType_isStructure(get().svalue) || grType_isUserType(get().svalue)) {
+                if(grIsStructure(get().svalue) || grIsUserType(get().svalue)) {
                     parseGlobalDeclaration();
                     break;
                 }
@@ -1271,7 +1271,7 @@ class GrParser {
                 break;
             }
         }
-        grType_addStructure(structName, fields, signature);
+        grAddStructure(structName, fields, signature);
     }
 
     void skipDeclaration() {
@@ -1305,12 +1305,12 @@ class GrParser {
 
         GrLexeme lex = get();
         if(!lex.isType) {
-            if(lex.type == GrLexemeType.Identifier && grType_isStructure(lex.svalue)) {
+            if(lex.type == GrLexemeType.Identifier && grIsStructure(lex.svalue)) {
                 currentType.baseType = GrBaseType.StructType;
                 currentType.mangledType = lex.svalue;
                 return currentType;
             }
-            else if(lex.type == GrLexemeType.Identifier && grType_isUserType(lex.svalue)) {
+            else if(lex.type == GrLexemeType.Identifier && grIsUserType(lex.svalue)) {
                 currentType.baseType = GrBaseType.UserType;
                 currentType.mangledType = lex.svalue;
                 return currentType;
@@ -1352,14 +1352,14 @@ class GrParser {
         case FunctionType:
             currentType.baseType = GrBaseType.FunctionType;
             dstring[] temp; 
-            currentType.mangledType = grType_mangleNamedFunction("", parseSignature(temp, true));
-            currentType.mangledReturnType = grType_mangleNamedFunction("", [parseType(false)]);
+            currentType.mangledType = grMangleNamedFunction("", parseSignature(temp, true));
+            currentType.mangledReturnType = grMangleNamedFunction("", [parseType(false)]);
             break;
         case TaskType:
             currentType.baseType = GrBaseType.TaskType;
             dstring[] temp; 
-            currentType.mangledType = grType_mangleNamedFunction("", parseSignature(temp, true));
-            currentType.mangledReturnType = grType_mangleNamedFunction("", [parseType(false)]);
+            currentType.mangledType = grMangleNamedFunction("", parseSignature(temp, true));
+            currentType.mangledReturnType = grMangleNamedFunction("", [parseType(false)]);
             break;
         default:
             logError("Invalid type", "Cannot call a function with a parameter of type \'" ~ to!string(lex.type) ~ "\'");
@@ -1395,7 +1395,7 @@ class GrParser {
             addInstruction(GrOpcode.GlobalPop_Object, 0u);
             break;
         case StructType:
-            auto structure = grType_getStructure(type.mangledType);
+            auto structure = grGetStructure(type.mangledType);
             for(int i; i < structure.signature.length; i ++) {
                 addGlobalPop(structure.signature[i]);
             }
@@ -1435,7 +1435,7 @@ class GrParser {
             addInstruction(GrOpcode.GlobalPush_Object, nbPush);
             break;
         case StructType:
-            auto structure = grType_getStructure(type.mangledType);
+            auto structure = grGetStructure(type.mangledType);
             for(int i = 1; i <= structure.signature.length; i ++) {
                 addGlobalPush(structure.signature[structure.signature.length - i], nbPush);
             }
@@ -1478,7 +1478,7 @@ class GrParser {
                 typeCounter.nbObjectParams ++;
                 break;
             case StructType:
-                auto structure = grType_getStructure(type.mangledType);
+                auto structure = grGetStructure(type.mangledType);
                 for(int i = 1; i <= structure.signature.length; i ++) {
                     countParameters(typeCounter, structure.signature[structure.signature.length - i]);
                 }
@@ -1716,8 +1716,8 @@ class GrParser {
 		endFunction();
 
         GrType functionType = isTask ? GrBaseType.TaskType : GrBaseType.FunctionType;
-        functionType.mangledType = grType_mangleNamedFunction("", signature);
-        functionType.mangledReturnType = grType_mangleNamedFunction("", [returnType]);
+        functionType.mangledType = grMangleNamedFunction("", signature);
+        functionType.mangledReturnType = grMangleNamedFunction("", [returnType]);
 
         return functionType;
 	}
@@ -1784,7 +1784,7 @@ class GrParser {
                     goto default;
                 break;
             case Identifier:
-                if(grType_isStructure(get().svalue) || grType_isUserType(get().svalue))
+                if(grIsStructure(get().svalue) || grIsUserType(get().svalue))
                     parseLocalDeclaration();
                 else
                     goto default;
@@ -2167,13 +2167,13 @@ class GrParser {
             case FunctionType:
                 GrType type = GrBaseType.FunctionType;
                 dstring[] temp; 
-                type.mangledType = grType_mangleNamedFunction("", parseSignature(temp, true));
+                type.mangledType = grMangleNamedFunction("", parseSignature(temp, true));
                 returnType = type;
                 break;
             case TaskType:
                 GrType type = GrBaseType.TaskType;
                 dstring[] temp; 
-                type.mangledType = grType_mangleNamedFunction("", parseSignature(temp, true));
+                type.mangledType = grMangleNamedFunction("", parseSignature(temp, true));
                 returnType = type;
                 break;
             default:
@@ -2567,7 +2567,7 @@ class GrParser {
 
         if(!noFail)
 		    logError("Incompatible types", "Cannot convert \'"
-                ~ grType_getDisplay(src) ~ "\' to \'" ~ grType_getDisplay(dst) ~ "\'");
+                ~ grGetPrettyType(src) ~ "\' to \'" ~ grGetPrettyType(dst) ~ "\'");
 		return GrType(GrBaseType.VoidType);	
 	}
 
@@ -2575,11 +2575,11 @@ class GrParser {
         GrType resultType = GrBaseType.VoidType;
 
         //As opposed to other functions, we need the return type (rightType) to be part of the signature.
-        dstring mangledName = grType_mangleNamedFunction("@as", [leftType, rightType]);
+        dstring mangledName = grMangleNamedFunction("@as", [leftType, rightType]);
         
         //GrPrimitive check
-        if(isPrimitiveDeclared(mangledName)) {
-            GrPrimitive primitive = grType_getPrimitive(mangledName);
+        if(grIsPrimitiveDeclared(mangledName)) {
+            GrPrimitive primitive = grGetPrimitive(mangledName);
             //Some implicit conversions are disabled.
             //ex: float -> int because we might lose information.
             if(primitive.isExplicit && !isExplicit)
@@ -2661,7 +2661,7 @@ class GrParser {
             logError("Missing struct field", "Missing struct field");
         fieldName = get().svalue;
         advance();
-        auto structure = grType_getStructure(type.mangledType);
+        auto structure = grGetStructure(type.mangledType);
         const auto nbFields = structure.fields.length;
         for(int i = 1; i <= structure.fields.length; i ++) {
             if(fieldName == structure.fields[nbFields - i]) {
@@ -3317,7 +3317,7 @@ class GrParser {
         checkAdvance();
         //Signature parsing with type conversion
 		GrType[] signature;
-        GrType[] anonSignature = grType_unmangleSignature(type.mangledType);
+        GrType[] anonSignature = grUnmangleSignature(type.mangledType);
         int i;
         if(get().type != GrLexemeType.RightParenthesis) {
             for(;;) {
@@ -3338,7 +3338,7 @@ class GrParser {
             addGlobalPush(signature);
 
         //Anonymous call.
-        GrType retType = grType_unmangle(type.mangledReturnType);
+        GrType retType = grUnmangle(type.mangledReturnType);
 
         if(type.baseType == GrBaseType.FunctionType)
             addInstruction(GrOpcode.AnonymousCall, 0u);
@@ -3386,7 +3386,7 @@ class GrParser {
                 var = (identifierName in globalVariables);
 			if(var !is null) {
                 //Signature parsing with type conversion
-                GrType[] anonSignature = grType_unmangleSignature(var.type.mangledType);
+                GrType[] anonSignature = grUnmangleSignature(var.type.mangledType);
                 int i;
                 if(get().type != GrLexemeType.RightParenthesis) {
                     for(;;) {
@@ -3410,7 +3410,7 @@ class GrParser {
 				bool hasAnonFunc = false;
 				addGetInstruction(*var);
                 
-				returnType = grType_unmangle(var.type.mangledReturnType);
+				returnType = grUnmangle(var.type.mangledReturnType);
 
 				if(var.type.baseType == GrBaseType.FunctionType)
 					addInstruction(GrOpcode.AnonymousCall, 0u);
@@ -3440,11 +3440,11 @@ class GrParser {
                 checkAdvance();
 
                 //Mangling function name
-				dstring mangledName = grType_mangleNamedFunction(identifierName, signature);
+				dstring mangledName = grMangleNamedFunction(identifierName, signature);
 				
 				//GrPrimitive call.
-				if(isPrimitiveDeclared(mangledName)) {
-					GrPrimitive primitive = grType_getPrimitive(mangledName);
+				if(grIsPrimitiveDeclared(mangledName)) {
+					GrPrimitive primitive = grGetPrimitive(mangledName);
 					addInstruction(GrOpcode.PrimitiveCall, primitive.index);
 					returnType = primitive.returnType;
 				}
