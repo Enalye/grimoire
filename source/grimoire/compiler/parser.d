@@ -903,9 +903,6 @@ class GrParser {
 	}
 
 	void addGetInstruction(GrVariable variable, GrType expectedType = GrBaseType.VoidType) {
-        if(!variable.isInitialized)
-            logError("Uninitialized variable", "The variable is being used without being assigned");
-
         if(variable.isGlobal) {
 			switch(variable.type.baseType) with(GrBaseType) {
 			case BoolType:
@@ -943,6 +940,9 @@ class GrParser {
 			}
 		}
 		else {
+            if(!variable.isInitialized)
+                logError("Uninitialized variable", "The local variable is being used without being assigned");
+
 			switch(variable.type.baseType) with(GrBaseType) {
 			case BoolType:
 			case IntType:
