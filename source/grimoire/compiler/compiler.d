@@ -8,18 +8,9 @@
 
 module grimoire.compiler.compiler;
 
-import std.stdio;
-import std.string;
-import std.array;
-import std.conv;
-import std.math;
-import std.file;
-
-import grimoire.runtime;
-import grimoire.assembly;
-import grimoire.compiler.lexer;
-import grimoire.compiler.parser;
-import grimoire.compiler.primitive;
+import std.stdio, std.string, std.array, std.conv, std.math, std.file;
+import grimoire.runtime, grimoire.assembly;
+import grimoire.compiler.lexer, grimoire.compiler.parser, grimoire.compiler.primitive, grimoire.compiler.type;
 
 /// Compile a source file into bytecode
 GrBytecode grCompileFile(string fileName) {
@@ -44,6 +35,9 @@ private {
 			nbOpcodes += cast(uint)func.instructions.length;
 
 		foreach(func; parser.anonymousFunctions)
+			nbOpcodes += cast(uint)func.instructions.length;
+
+        foreach(func; parser.events)
 			nbOpcodes += cast(uint)func.instructions.length;
 
         //We leave space for one kill instruction at the end.
@@ -75,6 +69,16 @@ private {
 		parser.functions.remove("main"d);
 
 		//Every other functions.
+        uint[dstring] events;
+        foreach(dstring mangledName, GrFunction func; parser.events) {
+			foreach(uint i, instruction; func.instructions)
+				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint)instruction.opcode, instruction.value);
+			foreach(call; func.functionCalls)
+				call.position += lastOpcodeCount;
+			func.position = lastOpcodeCount;
+			lastOpcodeCount += func.instructions.length;
+            events[mangledName] = func.position;
+		}
 		foreach(func; parser.anonymousFunctions) {
 			foreach(uint i, instruction; func.instructions)
 				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint)instruction.opcode, instruction.value);
@@ -101,6 +105,7 @@ private {
 		bytecode.fconsts = parser.fconsts;
 		bytecode.sconsts = parser.sconsts;
 		bytecode.opcodes = opcodes;
+		bytecode.events = events;
 		return bytecode;
 	}
 }

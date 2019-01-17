@@ -14,4 +14,5 @@ public {
 	import grimoire.compiler.lexer;
 	import grimoire.compiler.parser;
 	import grimoire.compiler.primitive;
+	import grimoire.compiler.mangle;
 }

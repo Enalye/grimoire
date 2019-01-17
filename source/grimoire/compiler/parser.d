@@ -37,7 +37,7 @@ class GrParser {
     uint globalVariableIndex;
     uint[] globalFreeVariables;
 
-	GrFunction[dstring] functions;
+	GrFunction[dstring] functions, events;
 	GrFunction[] anonymousFunctions;
 
 	uint current;
@@ -266,10 +266,15 @@ class GrParser {
         functionStack.length --;
     }
 
-	void beginFunction(dstring name, GrType[] signature, dstring[] inputVariables, bool isTask, GrType returnType = GrBaseType.VoidType) {
-        dstring mangledName = grMangleNamedFunction(name, signature);
+	void beginFunction(dstring name, GrType[] signature, bool isEvent = false) {
+        const dstring mangledName = grMangleNamedFunction(name, signature);
 
-		auto func = mangledName in functions;
+		GrFunction* func;
+        if(isEvent)
+            func = mangledName in events;
+        else
+            func = mangledName in functions;
+
 		if(func is null)
 			logError("Undeclared function", "The function \'" ~ to!string(name) ~ "\' is not declared.");
 
@@ -277,7 +282,7 @@ class GrParser {
 		currentFunction = *func;
 	}
 
-	void preBeginFunction(dstring name, GrType[] signature, dstring[] inputVariables, bool isTask, GrType returnType = GrBaseType.VoidType, bool isAnonymous = false) {
+	void preBeginFunction(dstring name, GrType[] signature, dstring[] inputVariables, bool isTask, GrType returnType = GrBaseType.VoidType, bool isAnonymous = false, bool isEvent = false) {
 		GrFunction func = new GrFunction;
 		func.isTask = isTask;
 		func.signature = signature;
@@ -302,7 +307,10 @@ class GrParser {
 			if(previousFunc !is null)
 				logError("Multiple declaration", "The function \'" ~ to!string(name) ~ "\' is already declared.");
 		
-			functions[mangledName] = func;
+            if(isEvent)
+			    events[mangledName] = func;
+            else
+			    functions[mangledName] = func;
 		}
 
 		functionStack ~= currentFunction;
@@ -1112,6 +1120,9 @@ class GrParser {
 			case Main:
 				parseMainDeclaration();
 				break;
+            case Event:
+                parseEventDeclaration();
+                break;
 			case TaskType:
                 if(get(1).type != GrLexemeType.Identifier)
                     goto case VoidType;
@@ -1144,6 +1155,7 @@ class GrParser {
                 parseStructureDeclaration();
                 break;
 			case Main:
+            case Event:
 			case TaskType:
 			case FunctionType:
 				skipDeclaration();
@@ -1171,6 +1183,9 @@ class GrParser {
 			case Main:
 				preParseMainDeclaration();
 				break;
+            case Event:
+                preParseEventDeclaration();
+                break;
 			case TaskType:
                 if(get(1).type != GrLexemeType.Identifier)
                     goto case VoidType;
@@ -1197,6 +1212,7 @@ class GrParser {
 		while(!isEnd()) {
 			GrLexeme lex = get();
 			switch(lex.type) with(GrLexemeType) {
+            case Event:
             case Struct:
 			case Main:
 				skipDeclaration();
@@ -1552,7 +1568,7 @@ class GrParser {
 
 	void parseMainDeclaration() {
 		checkAdvance();
-		beginFunction("main", [], [], false);
+		beginFunction("main", []);
         
         openDeferrableSection();
 		parseBlock();
@@ -1570,6 +1586,36 @@ class GrParser {
 		preEndFunction();
 	}
 
+    void parseEventDeclaration() {
+        checkAdvance();
+		if(get().type != GrLexemeType.Identifier)
+			logError("Missing identifier", "Expected a name such as \'foo\'");
+		dstring name = get().svalue;
+		dstring[] inputs;
+		GrType[] signature = parseSignature(inputs);
+		beginFunction(name, signature, true);
+        
+        openDeferrableSection();
+		parseBlock();
+		addKill();
+        closeDeferrableSection();
+        registerDeferBlocks();
+
+		endFunction();
+    }
+
+    void preParseEventDeclaration() {
+        checkAdvance();
+		if(get().type != GrLexemeType.Identifier)
+			logError("Missing identifier", "Expected a name such as \'foo\'");
+		dstring name = get().svalue;
+		dstring[] inputs;
+		GrType[] signature = parseSignature(inputs);
+		preBeginFunction(name, signature, inputs, false, grVoid, false, true);
+		skipBlock();
+		preEndFunction();
+    }
+
 	void parseTaskDeclaration() {
 		checkAdvance();
 		if(get().type != GrLexemeType.Identifier)
@@ -1577,7 +1623,7 @@ class GrParser {
 		dstring name = get().svalue;
 		dstring[] inputs;
 		GrType[] signature = parseSignature(inputs);
-		beginFunction(name, signature, inputs, true);
+		beginFunction(name, signature);
 
         openDeferrableSection();
 		parseBlock();
@@ -1638,7 +1684,7 @@ class GrParser {
 		    parseType(false);
         checkAdvance();
 
-		beginFunction(name, signature, inputs, false);
+		beginFunction(name, signature);
         openDeferrableSection();
 		parseBlock();
         if(currentFunction.instructions.length

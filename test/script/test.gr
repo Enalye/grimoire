@@ -1,15 +1,12 @@
-
-func foo() int {
-    print("hey");
-    return 3;
-}
-
-var b;
 main {
-    a();
-    b = 5.2;
-    print(b);
+    foo(57);
 }
 
+func foo(int b) {
 
-let a = &(func() int)foo;
+}
+
+event hey(string a, int b) {
+    print(a);
+    print(b + 5);
+}
