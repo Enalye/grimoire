@@ -9,5 +9,5 @@
 module grimoire.lib.math;
 
 public {
-    
+    import grimoire.lib.math.vec2;
 }
