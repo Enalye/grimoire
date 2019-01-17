@@ -30,7 +30,7 @@ enum GrLexemeType {
 	And, Or, Xor, Not,
 	Increment, Decrement,
 	Identifier, Integer, Float, Boolean, String,
-	Main, Struct,
+	Main, Event, Struct,
 	VoidType, IntType, FloatType, BoolType, StringType, ArrayType, ObjectType, DynamicType, FunctionType, TaskType, AutoType,
 	If, Unless, Else, While, Do, For, Loop, Return, Kill, Yield, Break, Continue
 }
@@ -524,6 +524,9 @@ class GrLexer {
 			case "main":
 				lex.type = GrLexemeType.Main;
 				break;
+            case "event":
+				lex.type = GrLexemeType.Event;
+				break;
             case "def":
 				lex.type = GrLexemeType.Struct;
 				break;
@@ -709,7 +712,7 @@ dstring grLexer_getTypeDisplay(GrLexemeType operator) {
         "and", "or", "xor", "not",
         "++", "--",
         "identifier", "const_int", "const_float", "const_bool", "const_str",
-        "main", "def",
+        "main", "event", "def",
         "void", "int", "float", "bool", "string", "array", "object", "var", "func", "task", "let",
         "if", "else", "while", "do", "for", "loop", "return", "yield", "break", "continue"
     ];

@@ -32,6 +32,8 @@ class GrEngine {
         immutable(float)[] _fconsts;
         /// String constants.
         immutable(dstring)[] _sconsts;
+        /// Events
+        uint[dstring] _events;
 
         /// Global integral variables.
         int* _iglobals;
@@ -101,6 +103,7 @@ class GrEngine {
 		_fconsts = bytecode.fconsts.idup;
 		_sconsts = bytecode.sconsts.idup;
 		_opcodes = bytecode.opcodes.idup;
+        _events = bytecode.events;
 	}
 
     /// Current max global variable available.
@@ -125,6 +128,20 @@ class GrEngine {
     void spawn() {
 		_contexts.push(new GrContext(this));
 	}
+
+    bool hasEvent(dstring eventName) {
+        return (eventName in _events) !is null;
+    }
+
+    GrContext spawnEvent(dstring eventName) {
+        auto event = eventName in _events;
+        if(event is null)
+            throw new Exception("No event \'" ~ to!string(eventName) ~ "\' in script");
+        GrContext context = new GrContext(this);
+        context.pc = *event;
+        _contexts.push(context);
+        return context;
+    }
 
     /**
         Captures an unhandled error and kill the VM.

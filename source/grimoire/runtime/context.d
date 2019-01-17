@@ -134,4 +134,42 @@ final class GrContext {
         deferStack = newDeferStack;
         exceptionHandlers = newExceptionHandlers;
     }
+
+    alias setString = setValue!dstring;
+    alias setBool = setValue!bool;
+    alias setInt = setValue!int;
+    alias setFloat = setValue!float;
+    alias setDynamic = setValue!GrDynamicValue;
+    alias setArray = setValue!(GrDynamicValue[]);
+
+    private void setValue(T)(T value) {
+        static if(is(T == int)) {
+            istackPos ++;
+			istack[istackPos] = value;
+        }
+        else static if(is(T == bool)) {
+            istackPos ++;
+            istack[istackPos] = value;
+        }
+        else static if(is(T == float)) {
+            fstackPos ++;
+            fstack[fstackPos] = value;
+        }
+        else static if(is(T == dstring)) {
+            sstackPos ++;
+            sstack[sstackPos] = value;
+        }
+        else static if(is(T == GrDynamicValue)) {
+            astackPos ++;
+            astack[astackPos] = value;
+        }
+        else static if(is(T == GrDynamicValue[])) {
+            nstackPos ++;            
+            nstack[nstackPos] = value;
+        }
+        else static if(is(T == void*)) {
+            ustackPos ++;
+            ustack[ustackPos] = value;
+        }
+    }
 }

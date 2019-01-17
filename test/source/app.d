@@ -26,6 +26,13 @@ void main() {
         
         write("> ");
         startTime = MonoTime.currTime();
+        auto mangledName = grMangleNamedFunction("hey", [grString, grInt]);
+        if(vm.hasEvent(mangledName)) {
+            GrContext ev = vm.spawnEvent(mangledName);
+            ev.setString("Hello World !");
+            ev.setInt(54);
+        }
+
         while(vm.hasCoroutines)
             vm.process();
         if(vm.isPanicking)

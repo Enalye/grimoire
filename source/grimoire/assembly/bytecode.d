@@ -66,12 +66,14 @@ struct GrBytecode {
 	int[] iconsts;
 	float[] fconsts;
 	dstring[] sconsts;
+    uint[dstring] events;
 
 	void toOutBuffer(ref OutBuffer buffer) {
 		buffer.write(cast(uint)iconsts.length);
 		buffer.write(cast(uint)fconsts.length);
 		buffer.write(cast(uint)sconsts.length);
 		buffer.write(cast(uint)opcodes.length);
+		buffer.write(cast(uint)events.length);
 
 		foreach(uint i; iconsts)
 			buffer.write(i);
@@ -81,6 +83,10 @@ struct GrBytecode {
 			buffer.write(cast(ubyte[])i);
 		foreach(uint i; opcodes)
 			buffer.write(i);
+        foreach(dstring ev, uint pos; events) {
+			buffer.write(cast(ubyte[])ev);
+			buffer.write(pos);
+        }
 	}
 }
 
@@ -88,23 +94,7 @@ struct GrBytecode {
 GrBytecode grCreateBytecodeFromFile(string fileName) {
 	GrBytecode bytecode;
 	File file = File(fileName, "rb");
-	uint[4] header;
-	file.rawRead(header);
-	bytecode.iconsts.length = cast(size_t)header[0];
-	bytecode.fconsts.length = cast(size_t)header[1];
-	bytecode.sconsts.length = cast(size_t)header[2];
-	bytecode.opcodes.length = cast(size_t)header[3];
-
-	if(bytecode.iconsts.length)
-		file.rawRead(bytecode.iconsts);
-
-	if(bytecode.fconsts.length)
-		file.rawRead(bytecode.fconsts);
-
-	if(bytecode.sconsts.length)
-		file.rawRead(bytecode.sconsts);
-
-	file.rawRead(bytecode.opcodes);
+    bytecode = grCreateBytecodeFromFile(file);
 	file.close();
 	return bytecode;
 }
