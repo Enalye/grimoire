@@ -142,6 +142,10 @@ final class GrContext {
     alias setDynamic = setValue!GrDynamicValue;
     alias setArray = setValue!(GrDynamicValue[]);
 
+    void setUserData(T)(T value) {
+        setValue!(void*)(cast(void*)value);
+    }
+
     private void setValue(T)(T value) {
         static if(is(T == int)) {
             istackPos ++;
