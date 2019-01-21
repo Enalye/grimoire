@@ -1257,7 +1257,6 @@ class GrParser {
         dstring[] fields;
         GrType[] signature;
         while(!isEnd()) {
-            writeln(get());
             if(get().type == GrLexemeType.VoidType)
                 logError("Field type error", "Void is not a valid field type");
             else if(get().type == GrLexemeType.RightCurlyBrace) {
