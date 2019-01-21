@@ -12,3 +12,5 @@ __dummy.html
 *.obj
 *.exe
 *.sublime-workspace
+
+test/script/test\.gr
