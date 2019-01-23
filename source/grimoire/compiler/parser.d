@@ -488,6 +488,8 @@ class GrParser {
             return true;
         else if(lexType >= GrLexemeType.Increment && lexType <= GrLexemeType.Decrement)
             return true;
+        else if(lexType == GrLexemeType.Not)
+            return true;
         else
             return false;
     }
@@ -2917,7 +2919,7 @@ class GrParser {
 			case Increment: .. case Decrement:
 				isRightUnaryOperator = true;
 				goto case Multiply;
-			case Multiply: .. case Xor:
+			case Multiply: .. case Not:
 				if(!hadValue && lex.type != GrLexemeType.Plus && lex.type != GrLexemeType.Minus && lex.type != GrLexemeType.Not)
 					logError("Expected value", "A value is missing");
 
@@ -3281,7 +3283,7 @@ class GrParser {
 			case Increment: .. case Decrement:
 				isRightUnaryOperator = true;
 				goto case Multiply;
-			case Multiply: .. case Xor:
+			case Multiply: .. case Not:
 				if(!hadValue && lex.type != GrLexemeType.Plus && lex.type != GrLexemeType.Minus && lex.type != GrLexemeType.Not)
 					logError("Expected value", "A value is missing");
 
