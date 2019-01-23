@@ -64,7 +64,7 @@ class GrEngine {
         void*[] _uglobalStack;
 
         /// Context array.
-	    IndexedArray!(GrContext, 256u) _contexts;
+	    DynamicIndexedArray!GrContext _contexts;
     
         /// Global panic state.
         /// It means that the throwing context didn't handle the exception.
@@ -89,7 +89,7 @@ class GrEngine {
     /// Default.
 	this() {
         setupGlobals(512);
-        _contexts = new IndexedArray!(GrContext, 256u)();
+        _contexts = new DynamicIndexedArray!GrContext;
     }
 
     /// Load the bytecode.

@@ -34,28 +34,39 @@ module grimoire.core.indexedarray;
 import std.parallelism;
 import std.range;
 
-class IndexedArray(T, uint _capacity, bool _useParallelism = false) {
-	private uint _dataTop = 0u;
-	private uint _availableIndexesTop = 0u;
-	private uint _removeTop = 0u;
+class DynamicIndexedArray(T) {
+	private {
+        uint _capacity = 32u;
+        uint _dataTop = 0u;
+	    uint _availableIndexesTop = 0u;
+	    uint _removeTop = 0u;
 
-	private T[_capacity] _dataTable;
-	private uint[_capacity] _availableIndexes;
-	private uint[_capacity] _translationTable;
-	private uint[_capacity] _reverseTranslationTable;
-	private uint[_capacity] _removeTable;
+	    T[] _dataTable;
+	    uint[] _availableIndexes;
+	    uint[] _translationTable;
+	    uint[] _reverseTranslationTable;
+	    uint[] _removeTable;
+    }
 
 	@property {
 		uint length() const { return _dataTop; }
 		uint capacity() const { return _capacity; }
-		ref T[_capacity] data() { return _dataTable; }
+		T[] data() { return _dataTable; }
 	}
+
+    this() {
+	    _dataTable.length = _capacity;
+        _availableIndexes.length = _capacity;
+	    _translationTable.length = _capacity;
+	    _reverseTranslationTable.length = _capacity;
+	    _removeTable.length = _capacity;
+    }
 
 	uint push(T value) {
 		uint index;
 
 		if((_dataTop + 1u) == _capacity) {
-			throw new Exception("IndexedArray overload");
+			doubleCapacity();
 		}
 
 		if(_availableIndexesTop) {
@@ -124,21 +135,6 @@ class IndexedArray(T, uint _capacity, bool _useParallelism = false) {
 		_removeTop = 0u;
 	}
 
-static if(_useParallelism) {
-	int opApply(int delegate(ref T) dlg) {
-		int result;
-
-		foreach(i; parallel(iota(_dataTop))) {
-			result = dlg(_dataTable[i]);
-
-			if(result)
-				break;
-		}
-
-		return result;
-	}
-}
-else {
 	int opApply(int delegate(ref T) dlg) {
 		int result;
 
@@ -151,7 +147,6 @@ else {
 
 		return result;
 	}
-}
 
 	int opApply(int delegate(const ref T) dlg) const {
 		int result;
@@ -166,21 +161,6 @@ else {
 		return result;
 	}
 
-static if(_useParallelism) {
-	int opApply(int delegate(ref T, uint) dlg) {
-		int result;
-
-		foreach(i; parallel(iota(_dataTop))) {
-			result = dlg(_dataTable[i], i);
-
-			if(result)
-				break;
-		}
-
-		return result;
-	}
-}
-else {
 	int opApply(int delegate(ref T, uint) dlg) {
 		int result;
 
@@ -193,7 +173,6 @@ else {
 
 		return result;
 	}
-}
 
 	int opApply(int delegate(const ref T, uint) dlg) const {
 		int result;
@@ -211,4 +190,13 @@ else {
 	T opIndex(uint index) {
 		return _dataTable[_translationTable[index]];
 	}
+
+    private void doubleCapacity() {
+        _capacity <<= 1;
+        _dataTable.length = _capacity;
+        _availableIndexes.length = _capacity;
+	    _translationTable.length = _capacity;
+	    _reverseTranslationTable.length = _capacity;
+	    _removeTable.length = _capacity;
+    }
 }

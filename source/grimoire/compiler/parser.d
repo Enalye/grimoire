@@ -51,6 +51,8 @@ class GrParser {
 
 	GrLexeme[] lexemes;
 
+    bool isTypeChecking;
+
     /// Reset to the start of the sequence.
 	void reset() {
 		current = 0u;
@@ -1546,24 +1548,41 @@ class GrParser {
 			if(startLoop && lex.type == GrLexemeType.RightParenthesis)
 				break;
             startLoop = false;
-
+            
             signature ~= parseType();
 
-            //Is it a function type or a function declaration ?
-            if(!asType) {
+            //If we want to know whether it's a type or an anon, we can't throw exceptions.
+            if(isTypeChecking) {
                 checkAdvance();
                 lex = get();
-                if(get().type != GrLexemeType.Identifier)
-                    logError("Missing identifier", "Expected a name such as \'foo\'");
-                inputVariables ~= lex.svalue;
+                if(get().type == GrLexemeType.Identifier) {
+                    inputVariables ~= lex.svalue;
+                    checkAdvance();
+                    lex = get();
+                }
+                
+                if(lex.type == GrLexemeType.RightParenthesis)
+                    break;
+                else if(lex.type != GrLexemeType.Comma)
+                    logError("Missing symbol", "Either a \',\' or a \')\' is expected");
             }
+            else {
+                //Is it a function type or a function declaration ?
+                if(!asType) {
+                    checkAdvance();
+                    lex = get();
+                    if(get().type != GrLexemeType.Identifier)
+                        logError("Missing identifier", "Expected a name such as \'foo\'");
+                    inputVariables ~= lex.svalue;
+                }
 
-			checkAdvance();
-			lex = get();
-			if(lex.type == GrLexemeType.RightParenthesis)
-				break;
-			else if(lex.type != GrLexemeType.Comma)
-				logError("Missing symbol", "Either a \',\' or a \')\' is expected");
+                checkAdvance();
+                lex = get();
+                if(lex.type == GrLexemeType.RightParenthesis)
+                    break;
+                else if(lex.type != GrLexemeType.Comma)
+                    logError("Missing symbol", "Either a \',\' or a \')\' is expected");
+            }
 		}
 
 		checkAdvance();
@@ -1755,12 +1774,16 @@ class GrParser {
             returnType = parseType(false);
 			checkAdvance();
 		}
-
 		preBeginFunction("$anon"d, signature, inputs, isTask, returnType, true);
 
         openDeferrableSection();
 		parseBlock();
-		addReturn();
+
+        if(isTask)
+		    addKill();
+        else
+		    addReturn();
+            
         closeDeferrableSection();
         registerDeferBlocks();
 
@@ -1867,8 +1890,10 @@ class GrParser {
 
     bool isDeclaration() {
         const auto tempPos = current;
+        isTypeChecking = true;
         if(get().type != GrLexemeType.AutoType)
-            parseType();
+            parseType(false);
+        isTypeChecking = false;
         checkAdvance();
         bool isDecl;
         if(get().type == GrLexemeType.Identifier)
@@ -3365,6 +3390,12 @@ class GrParser {
 	}
 
     GrType parseAnonymousCall(GrType type) {
+        GrVariable functionId;
+        if(type.baseType == GrBaseType.FunctionType) {
+            functionId = registerSpecialVariable("anon", GrType(GrBaseType.IntType));
+            addSetInstruction(functionId, GrType(GrBaseType.IntType));
+        }
+
         checkAdvance();
         //Signature parsing with type conversion
 		GrType[] signature;
@@ -3390,6 +3421,10 @@ class GrParser {
 
         //Anonymous call.
         GrType retType = grUnmangle(type.mangledReturnType);
+
+        if(type.baseType == GrBaseType.FunctionType) {
+		    addGetInstruction(functionId, GrType(GrBaseType.IntType));
+        }
 
         if(type.baseType == GrBaseType.FunctionType)
             addInstruction(GrOpcode.AnonymousCall, 0u);
