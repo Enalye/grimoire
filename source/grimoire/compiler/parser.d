@@ -3071,7 +3071,13 @@ class GrParser {
             addInstruction(GrOpcode.PopStack_UserData, count);
             break;
         case StructType:
-            throw new Exception("Cannot decrease the stack for a void type");
+            //TODO: Optimize by merging the same opcodes.
+            auto structure = grGetStructure(type.mangledType);
+            const auto nbFields = structure.fields.length;
+            for(int i = 1; i <= structure.fields.length; i ++) {
+                decreaseStack(structure.signature[nbFields - i], 1);
+            }
+            break;
         case VoidType:
             throw new Exception("Cannot decrease the stack for a struct type");
         }
