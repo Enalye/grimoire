@@ -1647,6 +1647,9 @@ class GrParser {
 		if(get().type != GrLexemeType.Identifier)
 			logError("Missing identifier", "Expected a name such as \'foo\'");
 		dstring name = get().svalue;
+        const auto previousVariable = (name in globalVariables);
+        if(previousVariable !is null)
+            logError("Multiple declaration", "The identifier \'" ~ to!string(name) ~ "\' is already declared as a global variable");
 		dstring[] inputs;
 		GrType[] signature = parseSignature(inputs);
 		beginFunction(name, signature);
@@ -1694,6 +1697,9 @@ class GrParser {
                     logError("Invalid Operator", "The specified operator must be valid");
             }
         }
+        const auto previousVariable = (name in globalVariables);
+        if(previousVariable !is null)
+            logError("Multiple declaration", "The identifier \'" ~ to!string(name) ~ "\' is already declared as a global variable");
 		dstring[] inputs;
 		GrType[] signature = parseSignature(inputs);
 
@@ -3494,6 +3500,8 @@ class GrParser {
                         i ++;
                     }
                 }
+                else if(anonSignature.length)
+                     logError("Invalid anonymous call", "The number of parameters does not match");
                 checkAdvance();
 
                 //Push the values on the global stack for task spawning.
