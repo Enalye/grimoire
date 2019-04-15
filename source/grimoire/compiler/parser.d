@@ -1966,7 +1966,7 @@ class GrParser {
     //Exception handling
     void parseRaiseStatement() {
         advance();
-        GrType type = parseSubExpression(false);
+        GrType type = parseSubExpression(true, false, false, false);
         convertType(type, grString);
         addInstruction(GrOpcode.Raise);
         checkDeferStatement();
@@ -2147,28 +2147,51 @@ class GrParser {
             isAuto = true;
         else
             type = parseType();
-        checkAdvance();
 
-        //Identifier
-		if(get().type != GrLexemeType.Identifier)
-			logError("Missing identifier", "Expected a name such as \'foo\'");
+        GrVariable[] variables;
+        do {
+            checkAdvance();
+            //Identifier
+            if(get().type != GrLexemeType.Identifier)
+                logError("Missing identifier", "Expected a name such as \'foo\'");
 
-		dstring identifier = get().svalue;
+            dstring identifier = get().svalue;
 
-        //Registering
-		GrVariable variable = registerGlobalVariable(identifier, type);
-        variable.isAuto = isAuto;
+            //Registering
+            GrVariable variable = registerGlobalVariable(identifier, type);
+            variable.isAuto = isAuto;
+            variables ~= variable;
 
-        //A structure does not need to be initialized.
-        if(variable.type == GrBaseType.StructType)
-            variable.isInitialized = true;
-		
-		checkAdvance();
+            //A structure does not need to be initialized.
+            if(variable.type == GrBaseType.StructType)
+                variable.isInitialized = true;
+            
+            checkAdvance();
+        }
+        while(get().type == GrLexemeType.Comma);
+
 		switch(get().type) with(GrLexemeType) {
 		case Assign:
-			checkAdvance();
-			GrType expressionType = parseSubExpression(false);
-			addSetInstruction(variable, expressionType);
+            int i;
+            GrType expressionType;
+            do {
+                checkAdvance();
+                if(i >= variables.length)
+                    logError("Exceeding number of expressions", "Cannot assign more values than identifiers");
+                expressionType = parseSubExpression(true, false, true, false);
+                writeln(expressionType);
+
+                if(get().type == GrLexemeType.Semicolon && (i + 1) < variables.length)
+                    addSetInstruction(variables[i], expressionType, true);
+                else
+                    addSetInstruction(variables[i], expressionType);
+                i ++;                
+            }
+            while(get().type == GrLexemeType.Comma);
+
+            for(; i < variables.length; i ++) {
+                addSetInstruction(variables[i], expressionType, (i + 1) < variables.length);
+            }
 
             if(get().type != GrLexemeType.Semicolon)
                 logError("Missing semicolon", "An expression must be finished with a ;");
@@ -2213,7 +2236,7 @@ class GrParser {
 		switch(get().type) with(GrLexemeType) {
 		case Assign:
 			checkAdvance();
-			GrType expressionType = parseSubExpression(false);
+			GrType expressionType = parseSubExpression(true, false, true, false);
 			addSetInstruction(variable, expressionType);
 			break;
 		case Semicolon:
@@ -2535,7 +2558,7 @@ class GrParser {
             addReturn();
         }
         else {
-            GrType returnedType = parseSubExpression(false);
+            GrType returnedType = parseSubExpression(true, false, false, false);
             addReturn();
             if(returnedType != currentFunction.returnType)
                 logError("Invalid return type", "The returned type \'" ~ to!string(returnedType) ~ "\' does not match the function definition \'" ~ to!string(currentFunction.returnType) ~ "\'");
@@ -2690,7 +2713,7 @@ class GrParser {
 
         int arraySize;
         while(get().type != GrLexemeType.RightBracket) {
-            convertType(parseSubExpression(), grDynamic);
+            convertType(parseSubExpression(false, true, true, false), grDynamic);
             arraySize ++;
 
             if(get().type == GrLexemeType.RightBracket)
@@ -2712,7 +2735,7 @@ class GrParser {
         for(;;) {
             if(get().type == GrLexemeType.Comma)
                 logError("Missing value", "bottom text");
-            auto index = parseSubExpression();
+            auto index = parseSubExpression(false, true, true, false);
             if(index.baseType == GrBaseType.VoidType)
                 logError("Syntax Error", "right there");
             convertType(index, grInt);
@@ -3124,8 +3147,8 @@ class GrParser {
         checkAdvance();
         return currentType;
     }
-
-	GrType parseSubExpression(bool useParenthesis = true) {
+    
+	GrType parseSubExpression(bool useSemicolon = false, bool useBracket = false, bool useComma = false, bool useParenthesis = true) {
 		GrVariable[] lvalues;
 		GrLexemeType[] operatorsStack;
 		GrType[] typeStack;
@@ -3156,13 +3179,13 @@ class GrParser {
 			GrLexeme lex = get();
 			switch(lex.type) with(GrLexemeType) {
 			case Semicolon:
-				if(useParenthesis)
-					logError("Unexpected symbol", "A \';\' cannot exist inside this expression");
-				else
+				if(useSemicolon)
 					isEndOfExpression = true;
+                else
+					logError("Unexpected symbol", "A \';\' cannot exist inside this expression");
 				break;
 			case Comma:
-				if(useParenthesis)
+				if(useComma)
 					isEndOfExpression = true;
 				else
 					logError("Unexpected symbol", "A \',\' cannot exist inside this expression");
@@ -3174,7 +3197,7 @@ class GrParser {
 					logError("Unexpected symbol", "A \')\' cannot exist inside this expression");
 				break;
             case RightBracket:
-				if(useParenthesis)
+				if(useBracket)
 					isEndOfExpression = true;
 				else
 					logError("Unexpected symbol", "A \']\' cannot exist inside this expression");
@@ -3419,7 +3442,7 @@ class GrParser {
             for(;;) {
                 if(i >= anonSignature.length)
                     logError("Invalid anonymous call", "The number of parameters does not match");
-                GrType subType = parseSubExpression();
+                GrType subType = parseSubExpression(false, false, true, true);
                 signature ~= convertType(subType, anonSignature[i]);
                 if(get().type == GrLexemeType.RightParenthesis)
                     break;
@@ -3492,7 +3515,7 @@ class GrParser {
                     for(;;) {
                         if(i >= anonSignature.length)
                             logError("Invalid anonymous call", "The number of parameters does not match");
-                        GrType subType = parseSubExpression();
+                        GrType subType = parseSubExpression(false, false, true, true);
                         signature ~= convertType(subType, anonSignature[i]);
                         if(get().type == GrLexemeType.RightParenthesis)
                             break;
@@ -3533,7 +3556,7 @@ class GrParser {
                 //Signature parsing, no coercion is made
                 if(get().type != GrLexemeType.RightParenthesis) {
                     for(;;) {
-                        signature ~= parseSubExpression();
+                        signature ~= parseSubExpression(false, false, true, true);
                         if(get().type == GrLexemeType.RightParenthesis)
                             break;
                         advance();
