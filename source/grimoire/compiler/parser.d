@@ -2172,26 +2172,19 @@ class GrParser {
 
 		switch(get().type) with(GrLexemeType) {
 		case Assign:
-            int i;
+            int nbOfExpressions;
             GrType expressionType;
             do {
                 checkAdvance();
-                if(i >= variables.length)
+                if(nbOfExpressions >= variables.length)
                     logError("Exceeding number of expressions", "Cannot assign more values than identifiers");
                 expressionType = parseSubExpression(true, false, true, false);
-                writeln(expressionType);
-
-                if(get().type == GrLexemeType.Semicolon && (i + 1) < variables.length)
-                    addSetInstruction(variables[i], expressionType, true);
-                else
-                    addSetInstruction(variables[i], expressionType);
-                i ++;                
+                nbOfExpressions ++;
             }
             while(get().type == GrLexemeType.Comma);
 
-            for(; i < variables.length; i ++) {
-                addSetInstruction(variables[i], expressionType, (i + 1) < variables.length);
-            }
+            for(int i = to!int(variables.length); i > 0; i --)
+                addSetInstruction(variables[i - 1], expressionType, i > nbOfExpressions);
 
             if(get().type != GrLexemeType.Semicolon)
                 logError("Missing semicolon", "An expression must be finished with a ;");
