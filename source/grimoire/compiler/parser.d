@@ -2852,6 +2852,7 @@ class GrParser {
                     currentType = GrType(GrBaseType.DynamicType);
                     lastType = GrType(GrBaseType.DynamicType);
                     parseArrayIndex(hadReference);
+                    hasReference = true;
                     //Check if there is an assignement or not, discard if it's only a rvalue
                     const auto nextLexeme = get();
                     if(requireLValue(nextLexeme.type)) {
@@ -3222,6 +3223,7 @@ class GrParser {
                     currentType = GrType(GrBaseType.DynamicType);
                     lastType = GrType(GrBaseType.DynamicType);
                     parseArrayIndex(hadReference);
+                    hasReference = true;
                     //Check if there is an assignement or not, discard if it's only a rvalue
                     const auto nextLexeme = get();
                     if(requireLValue(nextLexeme.type)) {
