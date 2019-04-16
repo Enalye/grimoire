@@ -834,8 +834,8 @@ class GrParser {
         if(valueType.baseType != GrBaseType.VoidType)
             convertType(valueType, variable.type);
 
-        if(!variable.isInitialized && isGettingValue)
-            logError("Uninitialized variable", "The variable is being used without being assigned");
+        //if(!variable.isInitialized && isGettingValue)
+        //    logError("Uninitialized variable", "The variable is being used without being assigned");
         variable.isInitialized = true;
 
 		if(variable.isGlobal) {
@@ -2171,19 +2171,33 @@ class GrParser {
 
 		switch(get().type) with(GrLexemeType) {
 		case Assign:
-            int nbOfExpressions;
-            GrType expressionType;
+            GrType[] expressionTypes;
             do {
                 checkAdvance();
-                if(nbOfExpressions >= variables.length)
+                if(expressionTypes.length >= variables.length)
                     logError("Exceeding number of expressions", "Cannot assign more values than identifiers");
-                expressionType = parseSubExpression(true, false, true, false);
-                nbOfExpressions ++;
+                expressionTypes ~= parseSubExpression(true, false, true, false);
             }
             while(get().type == GrLexemeType.Comma);
 
-            for(int i = to!int(variables.length); i > 0; i --)
-                addSetInstruction(variables[i - 1], expressionType, i > nbOfExpressions);
+            int variableIndex = to!int(variables.length) - 1;
+            int expressionIndex = to!int(expressionTypes.length) - 1;
+            bool passThrough;
+            while(variableIndex > expressionIndex) {
+                addSetInstruction(variables[variableIndex], expressionTypes[expressionIndex], true);
+                variableIndex --;
+                passThrough = true;
+            }
+            if(passThrough) {
+                addSetInstruction(variables[variableIndex], variables[variableIndex + 1].type, false);
+                variableIndex --;
+                expressionIndex --;
+            }
+            while(variableIndex >= 0) {
+                addSetInstruction(variables[variableIndex], expressionTypes[expressionIndex], false);
+                variableIndex --;
+                expressionIndex --;
+            }
 
             if(get().type != GrLexemeType.Semicolon)
                 logError("Missing semicolon", "An expression must be finished with a ;");
@@ -2208,28 +2222,62 @@ class GrParser {
             isAuto = true;
         else
             type = parseType();
-        checkAdvance();
+        
+        GrVariable[] variables;
+        do {
+            checkAdvance();
+            //Identifier
+            if(get().type != GrLexemeType.Identifier)
+                logError("Missing identifier", "Expected a name such as \'foo\'");
 
-        //Identifier
-		if(get().type != GrLexemeType.Identifier)
-			logError("Missing identifier", "Expected a name such as \'foo\'");
+            dstring identifier = get().svalue;
 
-		dstring identifier = get().svalue;
+            //Registering
+            GrVariable variable = registerLocalVariable(identifier, type);
+            variable.isAuto = isAuto;
+            variables ~= variable;
 
-        //Registering
-		GrVariable variable = registerLocalVariable(identifier, type);
-        variable.isAuto = isAuto;
+            //A structure does not need to be initialized.
+            if(variable.type == GrBaseType.StructType)
+                variable.isInitialized = true;
+            
+            checkAdvance();
+        }
+        while(get().type == GrLexemeType.Comma);
 
-        //A structure does not need to be initialized.
-        if(variable.type == GrBaseType.StructType)
-            variable.isInitialized = true;
-		
-		checkAdvance();
 		switch(get().type) with(GrLexemeType) {
 		case Assign:
-			checkAdvance();
-			GrType expressionType = parseSubExpression(true, false, true, false);
-			addSetInstruction(variable, expressionType);
+            GrType[] expressionTypes;
+            do {
+                checkAdvance();
+                if(expressionTypes.length >= variables.length)
+                    logError("Exceeding number of expressions", "Cannot assign more values than identifiers");
+                expressionTypes ~= parseSubExpression(true, false, true, false);
+            }
+            while(get().type == GrLexemeType.Comma);
+
+            int variableIndex = to!int(variables.length) - 1;
+            int expressionIndex = to!int(expressionTypes.length) - 1;
+            bool passThrough;
+            while(variableIndex > expressionIndex) {
+                addSetInstruction(variables[variableIndex], expressionTypes[expressionIndex], true);
+                variableIndex --;
+                passThrough = true;
+            }
+            if(passThrough) {
+                addSetInstruction(variables[variableIndex], variables[variableIndex + 1].type, false);
+                variableIndex --;
+                expressionIndex --;
+            }
+            while(variableIndex >= 0) {
+                addSetInstruction(variables[variableIndex], expressionTypes[expressionIndex], false);
+                variableIndex --;
+                expressionIndex --;
+            }
+
+            if(get().type != GrLexemeType.Semicolon)
+                logError("Missing semicolon", "An expression must be finished with a ;");
+            advance();
 			break;
 		case Semicolon:
 			break;
