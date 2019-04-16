@@ -11,8 +11,14 @@ main {
   print("Hello World!");
 }
 ```
-Here the programs runs within a special function called **main**.
-Then we pass the "Hello World!" string to the **print** primitive.
+The code is composed of the keyword **main**, it's a special function that indicate the entry point of the script.
+Then we have a left curly brace `{` with a right curly brace `}` some lines after.
+Those curly braces delimit the scope of the statement (here, the **main**).
+Everything inside those curly braces (called a **block**) will be executed when the **main** is run.
+The whole `print("Hello World!");` form a single expression terminated by a semicolon.
+
+Then we pass the "Hello World!" string to the **print** primitive and here is what the output displays: `Hello World!`.
+
 
 # Variables
 
@@ -78,6 +84,26 @@ main {
 }
 ```
 
+## Declaration List
+
+You can also declare multiple variables at once separating each identifier with a comma. `int a, b;`
+
+Initialization will be done in the same order:
+`int a, b = 2, 3;` Here *a = 2* and *b = 3*.
+
+If there is not enough values to assign, the other variable will be assigned the last value: `int a, b, c = 2, 3;` Here *a = 2*, *b = 3*, *c = 3*.
+
+Every variable on the same initialization list must be of the same type.
+Ex: `int a, b = 2, "Hi"` will raise an error because *b* is expected to be **int** and you are passing a **string**.
+
+But you can use **let** to initialize automatically different types :
+`let a, b, c, d = 1, 2.3, "Hi!";`
+Here:
+* *a = 1* and is of type **int**,
+* *b = 2.3* and is of type **float**,
+* *c = "Hi!"* and is of type **string**,
+* *d = "Hi!"* and is of type **string**.
+
 # Function
 Like any other language, functions behave the same. They are declared like this:
 ```cpp
@@ -133,3 +159,31 @@ The task will run again after all other tasks have run once.
 You can also delete the task with the keyword **kill**. Also be aware that inside the scope of a task, the keyword **return** will behave the same as **kill**.
 
 Note: The main is a special case of a task.
+
+# Control Flow
+
+## If/Else/Unless
+
+## Loop
+
+## While/Do While
+
+## For
+
+# Anonymous functions/tasks
+
+# Structures
+
+# Objects
+
+# Channels
+
+# Events
+
+# Error Handling
+
+## Try/Catch
+
+## Deferring
+
+

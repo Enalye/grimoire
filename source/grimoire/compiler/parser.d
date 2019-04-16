@@ -2021,7 +2021,6 @@ class GrParser {
         currentFunction.isDeferrableSectionLocked.length ++;
     }
 
-    int zaeaze = 0;
     void closeDeferrableSection() {
         if(!currentFunction.deferrableSections.length)
             logError("Deferrable section error", "A deferrable section had a mismatch");
