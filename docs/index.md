@@ -33,8 +33,10 @@ They're only a handful of basic type recognised by grimoire.
 * Boolean declared with **bool** ex: true, false
 * String declared with **string** ex: "Hello"
 * Array declared with **array** ex: [1, 2.3, [true, "Hi!"]]
-* Function/Task (see anonymous function page)
 * Generic type declared with **var**
+* Function/Task (see anonymous function page)
+* Structure type
+* Custom type (User defined type in D)
 * Object (TODO)
 * Channel (TODO)
 
