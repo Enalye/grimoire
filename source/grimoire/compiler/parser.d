@@ -914,49 +914,55 @@ class GrParser {
 		}
 	}
 
-	void addGetInstruction(GrVariable variable, GrType expectedType = GrBaseType.VoidType) {
+	void addGetInstruction(GrVariable variable, GrType expectedType = GrBaseType.VoidType, bool allowOptimization = true) {
         if(variable.isGlobal) {
 			switch(variable.type.baseType) with(GrBaseType) {
 			case BoolType:
 			case IntType:
 			case FunctionType:
 			case TaskType:
-                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Int
+                if(allowOptimization
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Int
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Int;
                 else
 				    addInstruction(GrOpcode.GlobalLoad_Int, variable.index);
 				break;
 			case FloatType:
-                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Float
+                if(allowOptimization
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Float
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Float;
                 else
 			    	addInstruction(GrOpcode.GlobalLoad_Float, variable.index);
 				break;
 			case StringType:
-                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_String
+                if(allowOptimization
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_String
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_String;
                 else
 				    addInstruction(GrOpcode.GlobalLoad_String, variable.index);
 				break;
 			case ArrayType:
-                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Array
+                if(allowOptimization
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Array
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Array;
                 else
 				addInstruction(GrOpcode.GlobalLoad_Array, variable.index);
 				break;
 			case DynamicType:
-                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Any
+                if(allowOptimization
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Any
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Any;
                 else
 				    addInstruction(GrOpcode.GlobalLoad_Any, variable.index);
 				break;
 			case ObjectType:
-                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Object
+                if(allowOptimization
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Object
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Object;
                 else			
@@ -969,7 +975,8 @@ class GrParser {
                 }
                 break;
             case UserType:
-                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_UserData
+                if(allowOptimization
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_UserData
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_UserData;
                 else			
@@ -988,42 +995,50 @@ class GrParser {
 			case IntType:
 			case FunctionType:
 			case TaskType:
-                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Int
-                    && currentFunction.instructions[$ - 1].value == variable.index)
+                if(allowOptimization
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Int
+                    && currentFunction.instructions[$ - 1].value == variable.index) {
+                    writeln("NANI ?",  currentFunction.instructions[$ - 1].opcode);
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Int;
+                    }
                 else
 				    addInstruction(GrOpcode.LocalLoad_Int, variable.index);
 				break;
 			case FloatType:
-                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Float
+                if(allowOptimization
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Float
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Float;
                 else
 				    addInstruction(GrOpcode.LocalLoad_Float, variable.index);
 				break;
 			case StringType:
-                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_String
+                if(allowOptimization
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_String
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_String;
                 else
 				    addInstruction(GrOpcode.LocalLoad_String, variable.index);
 				break;
 			case ArrayType:
-                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Array
+                if(allowOptimization
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Array
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Array;
                 else
 			    	addInstruction(GrOpcode.LocalLoad_Array, variable.index);
 				break;
 			case DynamicType:
-                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Any
+                if(allowOptimization
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Any
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Any;
                 else
 				    addInstruction(GrOpcode.LocalLoad_Any, variable.index);
 				break;
 			case ObjectType:
-                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Object
+                if(allowOptimization
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Object
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Object;
                 else			
@@ -1036,7 +1051,8 @@ class GrParser {
                 }
                 break;
             case UserType:
-                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_UserData
+                if(allowOptimization
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_UserData
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_UserData;
                 else	
@@ -2546,7 +2562,7 @@ class GrParser {
         uint jumpPosition;
 
         if(!isInfinite) {
-            addGetInstruction(iterator, GrType(GrBaseType.IntType));
+            addGetInstruction(iterator, GrType(GrBaseType.IntType), false);
             addInstruction(GrOpcode.DecrementInt);
             addSetInstruction(iterator);
 
