@@ -2147,7 +2147,7 @@ class GrParser {
         else
             type = parseType();
 
-        GrVariable[] variables;
+        GrVariable[] lvalues;
         do {
             checkAdvance();
             //Identifier
@@ -2157,60 +2157,19 @@ class GrParser {
             dstring identifier = get().svalue;
 
             //Registering
-            GrVariable variable = registerGlobalVariable(identifier, type);
-            variable.isAuto = isAuto;
-            variables ~= variable;
+            GrVariable lvalue = registerGlobalVariable(identifier, type);
+            lvalue.isAuto = isAuto;
+            lvalues ~= lvalue;
 
             //A structure does not need to be initialized.
-            if(variable.type == GrBaseType.StructType)
-                variable.isInitialized = true;
+            if(lvalue.type == GrBaseType.StructType)
+                lvalue.isInitialized = true;
             
             checkAdvance();
         }
         while(get().type == GrLexemeType.Comma);
 
-		switch(get().type) with(GrLexemeType) {
-		case Assign:
-            GrType[] expressionTypes;
-            do {
-                checkAdvance();
-                if(expressionTypes.length >= variables.length)
-                    logError("Exceeding number of expressions", "Cannot assign more values than identifiers");
-                expressionTypes ~= parseSubExpression(true, false, true, false);
-            }
-            while(get().type == GrLexemeType.Comma);
-
-            int variableIndex = to!int(variables.length) - 1;
-            int expressionIndex = to!int(expressionTypes.length) - 1;
-            bool passThrough;
-            while(variableIndex > expressionIndex) {
-                addSetInstruction(variables[variableIndex], expressionTypes[expressionIndex], true);
-                variableIndex --;
-                passThrough = true;
-            }
-            if(passThrough) {
-                addSetInstruction(variables[variableIndex], variables[variableIndex + 1].type, false);
-                variableIndex --;
-                expressionIndex --;
-            }
-            while(variableIndex >= 0) {
-                addSetInstruction(variables[variableIndex], expressionTypes[expressionIndex], false);
-                variableIndex --;
-                expressionIndex --;
-            }
-
-            if(get().type != GrLexemeType.Semicolon)
-                logError("Missing semicolon", "An expression must be finished with a ;");
-            advance();
-			break;
-		case Semicolon:
-            if(isAuto)
-			    logError("Uninitialized auto-inferred global variable", "A global let type must be assigned at declaration");
-            checkAdvance();
-			break;
-		default:
-			logError("Invalid symbol", "A declaration must either be terminated by a ; or assigned with =");
-		}
+		parseExpressionList(lvalues);
     }
 
 	//Type Identifier [= EXPRESSION] ;
@@ -2223,7 +2182,7 @@ class GrParser {
         else
             type = parseType();
         
-        GrVariable[] variables;
+        GrVariable[] lvalues;
         do {
             checkAdvance();
             //Identifier
@@ -2233,57 +2192,19 @@ class GrParser {
             dstring identifier = get().svalue;
 
             //Registering
-            GrVariable variable = registerLocalVariable(identifier, type);
-            variable.isAuto = isAuto;
-            variables ~= variable;
+            GrVariable lvalue = registerLocalVariable(identifier, type);
+            lvalue.isAuto = isAuto;
+            lvalues ~= lvalue;
 
             //A structure does not need to be initialized.
-            if(variable.type == GrBaseType.StructType)
-                variable.isInitialized = true;
+            if(lvalue.type == GrBaseType.StructType)
+                lvalue.isInitialized = true;
             
             checkAdvance();
         }
         while(get().type == GrLexemeType.Comma);
 
-		switch(get().type) with(GrLexemeType) {
-		case Assign:
-            GrType[] expressionTypes;
-            do {
-                checkAdvance();
-                if(expressionTypes.length >= variables.length)
-                    logError("Exceeding number of expressions", "Cannot assign more values than identifiers");
-                expressionTypes ~= parseSubExpression(true, false, true, false);
-            }
-            while(get().type == GrLexemeType.Comma);
-
-            int variableIndex = to!int(variables.length) - 1;
-            int expressionIndex = to!int(expressionTypes.length) - 1;
-            bool passThrough;
-            while(variableIndex > expressionIndex) {
-                addSetInstruction(variables[variableIndex], expressionTypes[expressionIndex], true);
-                variableIndex --;
-                passThrough = true;
-            }
-            if(passThrough) {
-                addSetInstruction(variables[variableIndex], variables[variableIndex + 1].type, false);
-                variableIndex --;
-                expressionIndex --;
-            }
-            while(variableIndex >= 0) {
-                addSetInstruction(variables[variableIndex], expressionTypes[expressionIndex], false);
-                variableIndex --;
-                expressionIndex --;
-            }
-
-            if(get().type != GrLexemeType.Semicolon)
-                logError("Missing semicolon", "An expression must be finished with a ;");
-            advance();
-			break;
-		case Semicolon:
-			break;
-		default:
-			logError("Invalid symbol", "A declaration must either be terminated by a ; or assigned with =");
-		}
+		parseExpressionList(lvalues);
 	}
 
     GrType parseFunctionReturnType() {
@@ -2833,286 +2754,136 @@ class GrParser {
         return asType;
     }
 
-	void parseExpression(GrType currentType = GrBaseType.VoidType) {
-		GrVariable[] lvalues;
-		GrLexemeType[] operatorsStack;
-		GrType[] typeStack;
-        GrType lastType = currentType;
-		bool isReturningValue = false,
-			hasValue = false, hadValue = false,
-            hasLValue = false, hadLValue = false,
-            hasReference = false, hadReference = false,
-			isRightUnaryOperator = true, isEndOfExpression = false;
+    GrVariable parseLValue() {
+        if(get().type != GrLexemeType.Identifier)
+            logError("Missing lvalue", "Missing lvalue");
 
-		if(lastType != GrType(GrBaseType.VoidType))
-			isReturningValue = true;
+        dstring identifierName = get().svalue;
 
-		do {
-			if(hasValue && currentType != lastType && lastType != GrType(GrBaseType.VoidType)) {
-                lastType = currentType;
-				currentType = lastType;
-			}
-            else
-                lastType = currentType;
+        checkAdvance();
 
-			isRightUnaryOperator = false;
-			hadValue = hasValue;
-			hasValue = false;
-
-			hadLValue = hasLValue;
-			hasLValue = false;
-
-            hadReference = hasReference;
-            hasReference = false;
-
-			GrLexeme lex = get();
-			switch(lex.type) with(GrLexemeType) {
-			case Comma:
-			case Semicolon:
-			case RightParenthesis:
-				isEndOfExpression = true;
-				break;
-			case LeftParenthesis:
-                if(hadValue) {
-                    currentType = parseAnonymousCall(typeStack[$ - 1]);
-                    if(currentType.baseType == GrBaseType.VoidType) {
-                        typeStack.length --;
-                    }
-                    else {
-                        hadValue = false;
-                        hasValue = true;
-                        typeStack[$ - 1] = currentType;
-                    }
+        if(get().type == GrLexemeType.Period) {
+			auto structVar = getVariable(identifierName);
+            if(structVar is null || structVar.type.baseType != GrBaseType.StructType)
+                logError("Invalid symbol", "You can only access a field from a struct");
+            else {
+                do {
+                    checkAdvance();
+                    if(get().type != GrLexemeType.Identifier)
+                        logError("Missing identifier", "A struct field must have a name");
+                    identifierName ~= "." ~ get().svalue;
+                    checkAdvance();
                 }
-                else {
-                    advance();
-                    currentType = parseSubExpression();
-                    advance();
-                    hasValue = true;
-                    typeStack ~= currentType;
-                }
-				break;
-            case LeftBracket:
-                //Index
-                if(hadValue) {
-                    hadValue = false;
-                    currentType = GrType(GrBaseType.DynamicType);
-                    lastType = GrType(GrBaseType.DynamicType);
-                    parseArrayIndex(hadReference);
-                    hasReference = true;
-                    //Check if there is an assignement or not, discard if it's only a rvalue
-                    const auto nextLexeme = get();
-                    if(requireLValue(nextLexeme.type)) {
-                        hasLValue = true;
-                        lvalues ~= null;
-                    }
-                    typeStack[$ - 1] = currentType;
-                }
-                //Build new array
-                else {
-                    currentType = GrType(GrBaseType.ArrayType);
-                    parseArrayBuilder();
-                    typeStack ~= currentType;
-                }
-                hasValue = true;
-                break;
-            case Period:
-                currentType = parseStructureField(currentType);
-                lastType = currentType;
-                hadValue = false;
-                hasValue = true;
-                typeStack[$ - 1] = currentType;                
-                break;
-			case Integer:
-				currentType = GrType(GrBaseType.IntType);
-				addIntConstant(lex.ivalue);
-				hasValue = true;
-                typeStack ~= currentType;
-				checkAdvance();
-				break;
-			case Float:
-				currentType = GrType(GrBaseType.FloatType);
-				addFloatConstant(lex.fvalue);
-				hasValue = true;
-                typeStack ~= currentType;
-				checkAdvance();
-				break;
-			case Boolean:
-				currentType = GrType(GrBaseType.BoolType);
-				addBoolConstant(lex.bvalue);
-				hasValue = true;
-                typeStack ~= currentType;
-				checkAdvance();
-				break;
-			case String:
-				currentType = GrType(GrBaseType.StringType);
-				addStringConstant(lex.svalue);
-				hasValue = true;
-                typeStack ~= currentType;
-				checkAdvance();
-				break;
-            case Pointer:
-                currentType = parseFunctionPointer(currentType);
-                hasValue = true;
-                typeStack ~= currentType;
-                break;
-            case As:
-                if(!hadValue)
-                    logError("","");
-                currentType = parseConversionOperator(typeStack);
-                hasValue = true;
-                hadValue = false;
-                break;
-			case FunctionType:
-				currentType = parseAnonymousFunction(false);
-				hasValue = true;
-                typeStack ~= currentType;
-				break;
-			case TaskType:
-				currentType = parseAnonymousFunction(true);
-				hasValue = true;
-                typeStack ~= currentType;
-				break;
-			case Assign: .. case PowerAssign:
-				if(!hadLValue)
-					logError("Expression invalid", "Missing lvalue in expression");
-				hadLValue = false;
-				goto case Multiply;
-			case Add:
-				if(!hadValue)
-					lex.type = GrLexemeType.Plus;
-				goto case Multiply;
-			case Substract:
-				if(!hadValue)
-					lex.type = GrLexemeType.Minus;
-				goto case Multiply;
-			case Increment: .. case Decrement:
-				isRightUnaryOperator = true;
-				goto case Multiply;
-			case Multiply: .. case Not:
-				if(!hadValue && lex.type != GrLexemeType.Plus && lex.type != GrLexemeType.Minus && lex.type != GrLexemeType.Not)
-					logError("Expected value", "A value is missing");
+                while(get().type == GrLexemeType.Period);
+            }
+        }
 
-				while(operatorsStack.length && getLeftOperatorPriority(operatorsStack[$ - 1]) > getRightOperatorPriority(lex.type)) {
-					GrLexemeType operator = operatorsStack[$ - 1];
-					switch(operator) with(GrLexemeType) {
-					case Assign:
-						addSetInstruction(lvalues[$ - 1], currentType, true);
-						lvalues.length --;
-						break;
-					case AddAssign: .. case PowerAssign:
-						currentType = addOperator(operator - (GrLexemeType.AddAssign - GrLexemeType.Add), typeStack);
-						addSetInstruction(lvalues[$ - 1], currentType, true);
-						lvalues.length --;
-						break;
-					case Increment: .. case Decrement:
-						currentType = addOperator(operator, typeStack);
-						addSetInstruction(lvalues[$ - 1], currentType, true);
-						lvalues.length --;
-						break;
-					default:
-						currentType = addOperator(operator, typeStack);
-						break;
-					}
-					
-					operatorsStack.length --;
-				}
+        auto lvalue = (identifierName in currentFunction.localVariables);
+        if(lvalue is null)
+            lvalue = (identifierName in globalVariables);
 
-				operatorsStack ~= lex.type;
-				if(hadValue && isRightUnaryOperator) {
-					hasValue = true;
-					hadValue = false;
-				}
-				else
-					hasValue = false;
-				checkAdvance();
-				break;
-			case Identifier:
-				GrVariable lvalue;
-				currentType = parseIdentifier(lvalue, lastType);
-				
-                //Check if there is an assignement or not, discard if it's only a rvalue
-                const auto nextLexeme = get();
-				if(lvalue !is null && requireLValue(nextLexeme.type)) {
-					hasLValue = true;
-					lvalues ~= lvalue;
+        if(lvalue is null)
+            logError("Missing lvalue", "Missing lvalue");
+        
+        return *lvalue;
+    }
 
-                    if(lvalue.isAuto)
-                        hasValue = true;
-				}
+	void parseExpression() {
+        bool isAssignmentList;
+        if(get().type == GrLexemeType.Identifier) {
+            const auto tempPos = current;
+            checkAdvance();
+            while(get().type == GrLexemeType.Identifier
+                || get().type == GrLexemeType.Period) {
+                checkAdvance();
+            }
+            if(get().type == GrLexemeType.Comma)
+                isAssignmentList = true;
+            current = tempPos;
+        }
 
-                if(!hasLValue && nextLexeme.type == GrLexemeType.LeftBracket)
-                    hasReference = true;
+        if(isAssignmentList) {
+            //Get list of lvalues
+            GrVariable[] lvalues;
+            do {
+                if(lvalues.length)
+                    checkAdvance();
+                //Identifier
+                if(get().type != GrLexemeType.Identifier)
+                    logError("Missing identifier", "Expected a name such as \'foo\'");
 
-				if(currentType != GrType(GrBaseType.VoidType)) {
-					hasValue = true;
-                    typeStack ~= currentType;
-                }
-				break;
-			default:
-				logError("Unexpected symbol", "Invalid \'" ~ to!string(lex.type) ~ "\' symbol in the expression");
-			}
+                lvalues ~= parseLValue();
+            }
+            while(get().type == GrLexemeType.Comma);
 
-			if(hasValue && hadValue)
-				logError("Missing symbol", "The expression is not terminated by a \';\'");
-		}
-		while(!isEndOfExpression);
+            parseExpressionList(lvalues);
+        }
+        else {
+            GrType currentType = parseSubExpression(true, false, false, false);
 
-		if(operatorsStack.length) {
-			if(!hadValue) {
-				if(!isRightUnaryOperator)
-					logError("Expected value", "A value is missing");
-				else
-					logError("Expected value", "A value is missing");
-			}
-		}
-
-		while(operatorsStack.length) {
-			GrLexemeType operator = operatorsStack[$ - 1];
-
-			switch(operator) with(GrLexemeType) {
-			case Assign:
-                if(operatorsStack.length == 1 && !isReturningValue) {
-				    addSetInstruction(lvalues[$ - 1], currentType, false);
-                    currentType = GrType(GrBaseType.VoidType);
-                }
-                else {
-				    addSetInstruction(lvalues[$ - 1], currentType, true);
-                }
-				lvalues.length --;
-				break;
-			case AddAssign: .. case PowerAssign:
-				currentType = addOperator(operator - (GrLexemeType.AddAssign - GrLexemeType.Add), typeStack);
-				if(operatorsStack.length == 1 && !isReturningValue) {
-				    addSetInstruction(lvalues[$ - 1], currentType, false);
-                    currentType = GrType(GrBaseType.VoidType);
-                }
-                else {
-				    addSetInstruction(lvalues[$ - 1], currentType, true);
-                }			
-				lvalues.length --;
-				break;
-			case Increment: .. case Decrement:
-				currentType = addOperator(operator, typeStack);
-				if(operatorsStack.length == 1 && !isReturningValue) {
-				    addSetInstruction(lvalues[$ - 1], currentType, false);
-                    currentType = GrType(GrBaseType.VoidType);
-                }
-                else {
-				    addSetInstruction(lvalues[$ - 1], currentType, true);
-                }	
-				lvalues.length --;
-				break;
-			default:
-				currentType = addOperator(operator, typeStack);
-				break;
-			}
-			operatorsStack.length --;
-		}
-
-		if(currentType != GrType(GrBaseType.VoidType) && !isReturningValue)
-			decreaseStack(currentType, 1u);
+            if(currentType != GrType(GrBaseType.VoidType))
+                decreaseStack(currentType, 1u);
+        }
 	}
+
+    void parseExpressionList(GrVariable[] lvalues) {
+        switch(get().type) with(GrLexemeType) {
+        case Assign:
+            GrType[] expressionTypes;
+            do {
+                checkAdvance();
+                if(expressionTypes.length >= lvalues.length)
+                    logError("Exceeding number of expressions", "Cannot assign more values than identifiers");
+                expressionTypes ~= parseSubExpression(true, false, true, false);
+            }
+            while(get().type == GrLexemeType.Comma);
+
+            int variableIndex = to!int(lvalues.length) - 1;
+            int expressionIndex = to!int(expressionTypes.length) - 1;
+            bool passThrough;
+            GrVariable[] skippedLvalues;
+            while(variableIndex > expressionIndex) {
+                addSetInstruction(lvalues[variableIndex], expressionTypes[expressionIndex], true);
+                variableIndex --;
+                passThrough = true;
+            }
+            if(passThrough) {
+                if(expressionTypes[expressionIndex].baseType == GrBaseType.VoidType) {
+                    skippedLvalues ~= lvalues[variableIndex];
+                }
+                else {
+                    addSetInstruction(lvalues[variableIndex], lvalues[variableIndex + 1].type, false);
+                }
+                variableIndex --;
+                expressionIndex --;
+            }
+            while(variableIndex >= 0) {
+                if(expressionTypes[expressionIndex].baseType == GrBaseType.VoidType) {
+                    skippedLvalues ~= lvalues[variableIndex];
+                }
+                else {
+                    while(skippedLvalues.length) {
+                        addSetInstruction(skippedLvalues[$ - 1], expressionTypes[expressionIndex], true);
+                        skippedLvalues.length --;
+                    }
+                    addSetInstruction(lvalues[variableIndex], expressionTypes[expressionIndex], false);
+                }
+                variableIndex --;
+                expressionIndex --;
+            }
+            if(skippedLvalues.length)
+                logError("Assignment List", "First element cannot be empty");
+
+            if(get().type != GrLexemeType.Semicolon)
+                logError("Missing semicolon", "An expression must be finished with a ;");
+            advance();
+            break;
+        case Semicolon:
+            break;
+        default:
+            logError("Invalid symbol", "A declaration must either be terminated by a ; or assigned with =");
+        }
+    }
 
     void decreaseStack(GrType type, ushort count) {
         final switch(type.baseType) with(GrBaseType) {
