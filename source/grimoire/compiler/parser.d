@@ -921,22 +921,46 @@ class GrParser {
 			case IntType:
 			case FunctionType:
 			case TaskType:
-				addInstruction(GrOpcode.GlobalLoad_Int, variable.index);
+                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Int
+                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Int;
+                else
+				    addInstruction(GrOpcode.GlobalLoad_Int, variable.index);
 				break;
 			case FloatType:
-				addInstruction(GrOpcode.GlobalLoad_Float, variable.index);
+                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Float
+                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Float;
+                else
+			    	addInstruction(GrOpcode.GlobalLoad_Float, variable.index);
 				break;
 			case StringType:
-				addInstruction(GrOpcode.GlobalLoad_String, variable.index);
+                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_String
+                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_String;
+                else
+				    addInstruction(GrOpcode.GlobalLoad_String, variable.index);
 				break;
 			case ArrayType:
+                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Array
+                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Array;
+                else
 				addInstruction(GrOpcode.GlobalLoad_Array, variable.index);
 				break;
 			case DynamicType:
-				addInstruction(GrOpcode.GlobalLoad_Any, variable.index);
+                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Any
+                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Any;
+                else
+				    addInstruction(GrOpcode.GlobalLoad_Any, variable.index);
 				break;
-			case ObjectType:			
-				addInstruction(GrOpcode.GlobalLoad_Object, variable.index);
+			case ObjectType:
+                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Object
+                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Object;
+                else			
+			    	addInstruction(GrOpcode.GlobalLoad_Object, variable.index);
 				break;
             case StructType:
                 auto structure = grGetStructure(variable.type.mangledType);
@@ -944,8 +968,12 @@ class GrParser {
                     addGetInstruction(getVariable(variable.name ~ "." ~ structure.fields[i]), structure.signature[i]);
                 }
                 break;
-            case UserType:			
-				addInstruction(GrOpcode.GlobalLoad_UserData, variable.index);
+            case UserType:
+                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_UserData
+                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_UserData;
+                else			
+			    	addInstruction(GrOpcode.GlobalLoad_UserData, variable.index);
 				break;
 			default:
 				logError("Invalid type", "Cannot fetch from a \'" ~ to!string(variable.type) ~ "\' type");
@@ -960,22 +988,46 @@ class GrParser {
 			case IntType:
 			case FunctionType:
 			case TaskType:
-				addInstruction(GrOpcode.LocalLoad_Int, variable.index);
+                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Int
+                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Int;
+                else
+				    addInstruction(GrOpcode.LocalLoad_Int, variable.index);
 				break;
 			case FloatType:
-				addInstruction(GrOpcode.LocalLoad_Float, variable.index);
+                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Float
+                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Float;
+                else
+				    addInstruction(GrOpcode.LocalLoad_Float, variable.index);
 				break;
 			case StringType:
-				addInstruction(GrOpcode.LocalLoad_String, variable.index);
+                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_String
+                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_String;
+                else
+				    addInstruction(GrOpcode.LocalLoad_String, variable.index);
 				break;
 			case ArrayType:
-				addInstruction(GrOpcode.LocalLoad_Array, variable.index);
+                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Array
+                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Array;
+                else
+			    	addInstruction(GrOpcode.LocalLoad_Array, variable.index);
 				break;
 			case DynamicType:
-				addInstruction(GrOpcode.LocalLoad_Any, variable.index);
+                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Any
+                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Any;
+                else
+				    addInstruction(GrOpcode.LocalLoad_Any, variable.index);
 				break;
-			case ObjectType:			
-				addInstruction(GrOpcode.LocalLoad_Object, variable.index);
+			case ObjectType:
+                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Object
+                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Object;
+                else			
+				    addInstruction(GrOpcode.LocalLoad_Object, variable.index);
 				break;
             case StructType:
                 auto structure = grGetStructure(variable.type.mangledType);
@@ -983,8 +1035,12 @@ class GrParser {
                     addGetInstruction(getVariable(variable.name ~ "." ~ structure.fields[i]), structure.signature[i]);
                 }
                 break;
-            case UserType:			
-				addInstruction(GrOpcode.LocalLoad_UserData, variable.index);
+            case UserType:
+                if(currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_UserData
+                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_UserData;
+                else	
+				    addInstruction(GrOpcode.LocalLoad_UserData, variable.index);
 				break;
 			default:
 				logError("Invalid type", "Cannot fetch from a \'" ~ to!string(variable.type) ~ "\' type");
