@@ -7,6 +7,8 @@ The language itself is focused on concurrency, and feature both static and dynam
 
 Hope you have fun with this project !
 
+[Documentation here !](https://enalye.github.io/grimoire)
+
 
 ## Install
 
