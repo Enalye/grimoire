@@ -997,10 +997,8 @@ class GrParser {
 			case TaskType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Int
-                    && currentFunction.instructions[$ - 1].value == variable.index) {
-                    writeln("NANI ?",  currentFunction.instructions[$ - 1].opcode);
+                    && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Int;
-                    }
                 else
 				    addInstruction(GrOpcode.LocalLoad_Int, variable.index);
 				break;
@@ -1791,9 +1789,16 @@ class GrParser {
 		beginFunction(name, signature);
         openDeferrableSection();
 		parseBlock();
-        if(currentFunction.instructions.length
-            && currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
-		    addReturn();
+        if(currentFunction.returnType.baseType == GrBaseType.VoidType) {
+            if(currentFunction.instructions.length
+                && currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
+                addReturn();
+        }
+        else {
+            if(currentFunction.instructions.length
+                && currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
+                logError("Missing return", "The function is missing a return at the end of the scope");
+        }
         closeDeferrableSection();
         registerDeferBlocks();
 
