@@ -177,7 +177,7 @@ class GrFunction {
 	uint stackSize, index;
 
 	dstring name;
-	GrType[] signature, retSignature;
+	GrType[] inSignature, outSignature;
 	bool isTask, isAnonymous;
 
 	GrFunctionCall[] functionCalls;

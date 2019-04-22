@@ -252,8 +252,8 @@ class GrParser {
             GrFunction func = new GrFunction;
             func.name = "@global"d;
             func.isTask = false;
-            func.signature = [];
-            func.retSignature = [];
+            func.inSignature = [];
+            func.outSignature = [];
             functions["@global"d] = func;
             functionStack ~= currentFunction;
             currentFunction = func;
@@ -284,11 +284,11 @@ class GrParser {
 		currentFunction = *func;
 	}
 
-	void preBeginFunction(dstring name, GrType[] signature, dstring[] inputVariables, bool isTask, GrType[] retSignature = [], bool isAnonymous = false, bool isEvent = false) {
+	void preBeginFunction(dstring name, GrType[] signature, dstring[] inputVariables, bool isTask, GrType[] outSignature = [], bool isAnonymous = false, bool isEvent = false) {
 		GrFunction func = new GrFunction;
 		func.isTask = isTask;
-		func.signature = signature;
-		func.retSignature = retSignature;
+		func.inSignature = signature;
+		func.outSignature = outSignature;
 
 		if(isAnonymous) {
 			func.index = cast(uint)anonymousFunctions.length;
@@ -1124,7 +1124,7 @@ class GrParser {
             call.position = cast(uint)currentFunction.instructions.length;
             addInstruction(GrOpcode.Call, 0);
 
-			return func.retSignature;
+			return func.outSignature;
 		}
 		else
 			logError("Undeclared function", "The function \'" ~ to!string(call.mangledName) ~ "\' is not declared");
@@ -1822,12 +1822,11 @@ class GrParser {
         }
         else
 		    parseOutSignature();
-        checkAdvance();
 
 		beginFunction(name, signature);
         openDeferrableSection();
 		parseBlock();
-        if(!currentFunction.retSignature.length) {
+        if(!currentFunction.outSignature.length) {
             if(currentFunction.instructions.length
                 && currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
                 addReturn();
@@ -2629,22 +2628,22 @@ class GrParser {
         if(currentFunction.name == "main") {
             addKill();
         }
-        else if(!currentFunction.retSignature.length) {
+        else if(!currentFunction.outSignature.length) {
             addReturn();
         }
         else {
             auto types = parseExpressionList();
             
             addReturn();
-            if(types.length != currentFunction.retSignature.length)
+            if(types.length != currentFunction.outSignature.length)
                 logError("Invalid return type", "");
             for(int i; i < types.length; i ++) {
-                if(types[i] != currentFunction.retSignature[i])
+                if(types[i] != currentFunction.outSignature[i])
                     logError("Invalid return type",
                         "The returned type \'"
                         ~ to!string(types[i])
                         ~ "\' does not match the function definition \'"
-                        ~ to!string(currentFunction.retSignature[0])
+                        ~ to!string(currentFunction.outSignature[0])
                         ~ "\'");
             }
         }

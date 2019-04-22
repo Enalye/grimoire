@@ -97,8 +97,8 @@ dstring grMangleNamedFunction(dstring name, GrType[] signature) {
 */
 GrType grGetFunctionAsType(GrFunction func) {
     GrType type = func.isTask ? GrBaseType.TaskType : GrBaseType.FunctionType;
-    type.mangledType = grMangleNamedFunction("", func.signature);
-    type.mangledReturnType = grMangleNamedFunction("", func.retSignature);
+    type.mangledType = grMangleNamedFunction("", func.inSignature);
+    type.mangledReturnType = grMangleNamedFunction("", func.outSignature);
     return type;
 }
 
