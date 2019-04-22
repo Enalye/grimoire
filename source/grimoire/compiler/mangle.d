@@ -69,6 +69,8 @@ dstring grMangleFunction(GrType[] signature) {
                 type.mangledReturnType = "$v";
 			mangledName ~= "t(" ~ type.mangledType ~ ")" ~ type.mangledReturnType;
 			break;
+        case TupleType:
+            throw new Exception("Trying to mangle a tuple. Tuples should not exist here.");
 		}
 	}
 	return mangledName;
@@ -96,7 +98,7 @@ dstring grMangleNamedFunction(dstring name, GrType[] signature) {
 GrType grGetFunctionAsType(GrFunction func) {
     GrType type = func.isTask ? GrBaseType.TaskType : GrBaseType.FunctionType;
     type.mangledType = grMangleNamedFunction("", func.signature);
-    type.mangledReturnType = grMangleNamedFunction("", [func.returnType]);
+    type.mangledReturnType = grMangleNamedFunction("", func.retSignature);
     return type;
 }
 
@@ -378,5 +380,7 @@ string grGetPrettyType(GrType variableType) {
     case StructType:
     case UserType:
         return to!string(variableType.mangledType);
+    case TupleType:
+        throw new Exception("Trying to display a tuple. Tuples should not exist here.");
     }
 }

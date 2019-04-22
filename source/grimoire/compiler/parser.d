@@ -253,7 +253,7 @@ class GrParser {
             func.name = "@global"d;
             func.isTask = false;
             func.signature = [];
-            func.returnType = grVoid;
+            func.retSignature = [];
             functions["@global"d] = func;
             functionStack ~= currentFunction;
             currentFunction = func;
@@ -284,11 +284,11 @@ class GrParser {
 		currentFunction = *func;
 	}
 
-	void preBeginFunction(dstring name, GrType[] signature, dstring[] inputVariables, bool isTask, GrType returnType = GrBaseType.VoidType, bool isAnonymous = false, bool isEvent = false) {
+	void preBeginFunction(dstring name, GrType[] signature, dstring[] inputVariables, bool isTask, GrType[] retSignature = [], bool isAnonymous = false, bool isEvent = false) {
 		GrFunction func = new GrFunction;
 		func.isTask = isTask;
 		func.signature = signature;
-		func.returnType = returnType;
+		func.retSignature = retSignature;
 
 		if(isAnonymous) {
 			func.index = cast(uint)anonymousFunctions.length;
@@ -370,6 +370,8 @@ class GrParser {
                 if(func.isTask)
                     addInstruction(GrOpcode.GlobalPop_UserData, 0u);
                 break;
+            case TupleType:
+                throw new Exception("Tuples should not exist here.");
             }
 
             GrVariable newVar = new GrVariable;
@@ -507,9 +509,12 @@ class GrParser {
 
         //GrFunction check
         if(resultType.baseType == GrBaseType.VoidType) {
-    		auto func = (mangledName in functions);
+    		const auto func = (mangledName in functions);
             if(func !is null) {
-                resultType = addFunctionCall(mangledName);
+                auto outSignature = addFunctionCall(mangledName);
+                if(outSignature.length != 1uL)
+                    logError("Return signature error", "An operator can only have one return value");
+                resultType = outSignature[0];
             }
         }
 
@@ -529,9 +534,12 @@ class GrParser {
 
         //GrFunction check
         if(resultType.baseType == GrBaseType.VoidType) {
-    		auto func = (mangledName in functions);
+    		const auto func = (mangledName in functions);
             if(func !is null) {
-                resultType = addFunctionCall(mangledName);
+                auto outSignature = addFunctionCall(mangledName);
+                if(outSignature.length != 1uL)
+                    logError("Return signature error", "An operator can only have one return value");
+                resultType = outSignature[0];
             }
         }
 
@@ -539,6 +547,8 @@ class GrParser {
     }
 
     GrType addBinaryOperator(GrLexemeType lexType, GrType leftType, GrType rightType) {
+        if(leftType.baseType == GrBaseType.TupleType || rightType.baseType == GrBaseType.TupleType)
+            logError("Multiple values operation", "Cannot use an operator on an expression list");
         GrType resultType = GrBaseType.VoidType;
 
         if(leftType != rightType) {
@@ -572,6 +582,8 @@ class GrParser {
     }
 
     GrType addUnaryOperator(GrLexemeType lexType, GrType type) {
+        if(type.baseType == GrBaseType.TupleType)
+            logError("Multiple values operation", "Cannot use an operator on an expression list");
         GrType resultType = GrBaseType.VoidType;
         
         resultType = addInternalOperator(lexType, type);
@@ -1083,7 +1095,7 @@ class GrParser {
 		return GrType(GrBaseType.VoidType);
     }
 
-	GrType addFunctionCall(dstring mangledName) {
+	GrType[] addFunctionCall(dstring mangledName) {
 		GrFunctionCall call = new GrFunctionCall;
 		call.mangledName = mangledName;
 		call.caller = currentFunction;
@@ -1112,12 +1124,12 @@ class GrParser {
             call.position = cast(uint)currentFunction.instructions.length;
             addInstruction(GrOpcode.Call, 0);
 
-			return func.returnType;
+			return func.retSignature;
 		}
 		else
 			logError("Undeclared function", "The function \'" ~ to!string(call.mangledName) ~ "\' is not declared");
 
-		return GrType(GrBaseType.VoidType);
+		return [];
 	}
 
 	void setOpcode(ref uint[] opcodes, uint position, GrOpcode opcode, uint value = 0u, bool isSigned = false) {
@@ -1447,13 +1459,13 @@ class GrParser {
         case FunctionType:
             currentType.baseType = GrBaseType.FunctionType;
             dstring[] temp; 
-            currentType.mangledType = grMangleNamedFunction("", parseSignature(temp, true));
+            currentType.mangledType = grMangleNamedFunction("", parseInSignature(temp, true));
             currentType.mangledReturnType = grMangleNamedFunction("", [parseType(false)]);
             break;
         case TaskType:
             currentType.baseType = GrBaseType.TaskType;
             dstring[] temp; 
-            currentType.mangledType = grMangleNamedFunction("", parseSignature(temp, true));
+            currentType.mangledType = grMangleNamedFunction("", parseInSignature(temp, true));
             currentType.mangledReturnType = grMangleNamedFunction("", [parseType(false)]);
             break;
         default:
@@ -1498,6 +1510,8 @@ class GrParser {
         case UserType:
             addInstruction(GrOpcode.GlobalPop_UserData, 0u);
             break;
+        case TupleType:
+            throw new Exception("Tuples should not exist here.");
         }
     }
 
@@ -1538,6 +1552,8 @@ class GrParser {
         case UserType:
             addInstruction(GrOpcode.GlobalPush_UserData, nbPush);
             break;
+        case TupleType:
+            throw new Exception("Tuples should not exist here.");
         }
     }
 
@@ -1581,6 +1597,8 @@ class GrParser {
             case UserType:
                 typeCounter.nbUserDataParams ++;
                 break;
+            case TupleType:
+                throw new Exception("Tuples should not exist here.");
             }
         }
 
@@ -1605,8 +1623,8 @@ class GrParser {
             addInstruction(GrOpcode.GlobalPush_UserData, typeCounter.nbUserDataParams);
     }
 
-	GrType[] parseSignature(ref dstring[] inputVariables, bool asType = false) {
-		GrType[] signature;
+	GrType[] parseInSignature(ref dstring[] inputVariables, bool asType = false) {
+		GrType[] inSignature;
 
 		checkAdvance();
 		if(get().type != GrLexemeType.LeftParenthesis)
@@ -1621,7 +1639,7 @@ class GrParser {
 				break;
             startLoop = false;
             
-            signature ~= parseType();
+            inSignature ~= parseType();
 
             //If we want to know whether it's a type or an anon, we can't throw exceptions.
             if(isTypeChecking) {
@@ -1659,7 +1677,27 @@ class GrParser {
 
 		checkAdvance();
 
-		return signature;
+		return inSignature;
+	}
+
+    GrType[] parseOutSignature() {
+		GrType[] outSignature;
+        bool startLoop = true;
+		for(;;) {
+			GrLexeme lex = get();
+            
+            outSignature ~= parseType(false);
+
+            checkAdvance();
+            lex = get();
+            if(lex.type == GrLexemeType.LeftCurlyBrace)
+                break;
+            else if(lex.type != GrLexemeType.Comma)
+                logError("Missing symbol", "Either a \',\' or a \'{\' is expected");
+            checkAdvance();
+		}
+
+		return outSignature;
 	}
 
 	void parseMainDeclaration() {
@@ -1688,7 +1726,7 @@ class GrParser {
 			logError("Missing identifier", "Expected a name such as \'foo\'");
 		dstring name = get().svalue;
 		dstring[] inputs;
-		GrType[] signature = parseSignature(inputs);
+		GrType[] signature = parseInSignature(inputs);
 		beginFunction(name, signature, true);
         
         openDeferrableSection();
@@ -1706,8 +1744,8 @@ class GrParser {
 			logError("Missing identifier", "Expected a name such as \'foo\'");
 		dstring name = get().svalue;
 		dstring[] inputs;
-		GrType[] signature = parseSignature(inputs);
-		preBeginFunction(name, signature, inputs, false, grVoid, false, true);
+		GrType[] signature = parseInSignature(inputs);
+		preBeginFunction(name, signature, inputs, false, [], false, true);
 		skipBlock();
 		preEndFunction();
     }
@@ -1721,7 +1759,7 @@ class GrParser {
         if(previousVariable !is null)
             logError("Multiple declaration", "The identifier \'" ~ to!string(name) ~ "\' is already declared as a global variable");
 		dstring[] inputs;
-		GrType[] signature = parseSignature(inputs);
+		GrType[] signature = parseInSignature(inputs);
 		beginFunction(name, signature);
 
         openDeferrableSection();
@@ -1739,7 +1777,7 @@ class GrParser {
 			logError("Missing identifier", "Expected a name such as \'foo\'");
 		dstring name = get().svalue;
 		dstring[] inputs;
-		GrType[] signature = parseSignature(inputs);
+		GrType[] signature = parseInSignature(inputs);
 		preBeginFunction(name, signature, inputs, true);
 		skipBlock();
 		preEndFunction();
@@ -1771,25 +1809,25 @@ class GrParser {
         if(previousVariable !is null)
             logError("Multiple declaration", "The identifier \'" ~ to!string(name) ~ "\' is already declared as a global variable");
 		dstring[] inputs;
-		GrType[] signature = parseSignature(inputs);
+		GrType[] signature = parseInSignature(inputs);
 
         if(isConversion) {
             if(signature.length != 1uL)
                 logError("Invalid format", "A conversion function has to take only 1 parameter and be non-void");
-            GrType retType = parseType();
-            if(retType.baseType == GrBaseType.VoidType)
+            GrType[] outSignature = parseOutSignature();
+            if(outSignature.length != 1uL)
                 logError("Invalid format", "A conversion function has to take only 1 parameter and be non-void");
 
-            signature ~= retType;
+            signature ~= outSignature[0];
         }
         else
-		    parseType(false);
+		    parseOutSignature();
         checkAdvance();
 
 		beginFunction(name, signature);
         openDeferrableSection();
 		parseBlock();
-        if(currentFunction.returnType.baseType == GrBaseType.VoidType) {
+        if(!currentFunction.retSignature.length) {
             if(currentFunction.instructions.length
                 && currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
                 addReturn();
@@ -1827,39 +1865,37 @@ class GrParser {
             }
         }
 		dstring[] inputs;
-		GrType[] signature = parseSignature(inputs);
+		GrType[] inSignature = parseInSignature(inputs);
 
 		//Return Type.
-        GrType returnType;
+        GrType[] outSignature;
         if(isConversion) {
-            if(signature.length != 1uL)
-                logError("Invalid format", "A conversion function has to take only 1 parameter and be non-void");
-            returnType = parseType();
-            if(returnType.baseType == GrBaseType.VoidType)
-                logError("Invalid format", "A conversion function has to take only 1 parameter and be non-void");
+            if(inSignature.length != 1uL)
+                logError("Invalid format", "A conversion function has to take only 1 parameter");
+            outSignature = parseOutSignature();
+            if(!outSignature.length != 1uL)
+                logError("Invalid format", "A conversion function can only have 1 return type");
 
-            signature ~= returnType;
+            inSignature ~= outSignature[0];
         }
         else
-            returnType = parseType(false);
-        checkAdvance();
+            outSignature = parseOutSignature();
 
-		preBeginFunction(name, signature, inputs, false, returnType);
+		preBeginFunction(name, inSignature, inputs, false, outSignature);
 		skipBlock();
 		preEndFunction();
 	}
 
 	GrType parseAnonymousFunction(bool isTask) {
 		dstring[] inputs;
-		GrType returnType = GrBaseType.VoidType;
-		GrType[] signature = parseSignature(inputs);
+		GrType[] outSignature;
+		GrType[] inSignature = parseInSignature(inputs);
 
 		if(!isTask) {
 			//Return Type.
-            returnType = parseType(false);
-			checkAdvance();
+            outSignature = parseOutSignature();
 		}
-		preBeginFunction("$anon"d, signature, inputs, isTask, returnType, true);
+		preBeginFunction("$anon"d, inSignature, inputs, isTask, outSignature, true);
 
         openDeferrableSection();
 		parseBlock();
@@ -1875,8 +1911,9 @@ class GrParser {
 		endFunction();
 
         GrType functionType = isTask ? GrBaseType.TaskType : GrBaseType.FunctionType;
-        functionType.mangledType = grMangleNamedFunction("", signature);
-        functionType.mangledReturnType = grMangleNamedFunction("", [returnType]);
+        functionType.mangledType = grMangleNamedFunction("", inSignature);
+        functionType.mangledReturnType = grMangleNamedFunction("", outSignature);
+
 
         return functionType;
 	}
@@ -2246,7 +2283,7 @@ class GrParser {
         }
         while(get().type == GrLexemeType.Comma);
 
-		parseExpressionList(lvalues);
+		parseAssignList(lvalues);
     }
 
 	//Type Identifier [= EXPRESSION] ;
@@ -2281,7 +2318,7 @@ class GrParser {
         }
         while(get().type == GrLexemeType.Comma);
 
-		parseExpressionList(lvalues);
+		parseAssignList(lvalues);
 	}
 
     GrType parseFunctionReturnType() {
@@ -2312,13 +2349,13 @@ class GrParser {
             case FunctionType:
                 GrType type = GrBaseType.FunctionType;
                 dstring[] temp; 
-                type.mangledType = grMangleNamedFunction("", parseSignature(temp, true));
+                type.mangledType = grMangleNamedFunction("", parseInSignature(temp, true));
                 returnType = type;
                 break;
             case TaskType:
                 GrType type = GrBaseType.TaskType;
                 dstring[] temp; 
-                type.mangledType = grMangleNamedFunction("", parseSignature(temp, true));
+                type.mangledType = grMangleNamedFunction("", parseInSignature(temp, true));
                 returnType = type;
                 break;
             default:
@@ -2590,17 +2627,26 @@ class GrParser {
 	void parseReturnStatement() {
 		checkAdvance();
         if(currentFunction.name == "main") {
-            addKill();            
+            addKill();
         }
-        else if(currentFunction.returnType == GrType(GrBaseType.VoidType)) {
+        else if(!currentFunction.retSignature.length) {
             addReturn();
         }
         else {
-            GrType returnedType = parseSubExpression(true, false, false, false);
+            auto types = parseExpressionList();
+            
             addReturn();
-            if(returnedType != currentFunction.returnType)
-                logError("Invalid return type", "The returned type \'" ~ to!string(returnedType) ~ "\' does not match the function definition \'" ~ to!string(currentFunction.returnType) ~ "\'");
-
+            if(types.length != currentFunction.retSignature.length)
+                logError("Invalid return type", "");
+            for(int i; i < types.length; i ++) {
+                if(types[i] != currentFunction.retSignature[i])
+                    logError("Invalid return type",
+                        "The returned type \'"
+                        ~ to!string(types[i])
+                        ~ "\' does not match the function definition \'"
+                        ~ to!string(currentFunction.retSignature[0])
+                        ~ "\'");
+            }
         }
 	}
 
@@ -2735,9 +2781,12 @@ class GrParser {
 
         //GrFunction check
         if(resultType.baseType == GrBaseType.VoidType) {
-    		auto func = (mangledName in functions);
+    		const auto func = (mangledName in functions);
             if(func !is null) {
-                resultType = addFunctionCall(mangledName);
+                auto outSignature = addFunctionCall(mangledName);
+                if(outSignature.length != 1uL)
+                    logError("Return signature error", "An operator can only have one return value");
+                resultType = outSignature[0];
             }
         }
 
@@ -2893,7 +2942,7 @@ class GrParser {
             }
             while(get().type == GrLexemeType.Comma);
 
-            parseExpressionList(lvalues);
+            parseAssignList(lvalues);
         }
         else {
             GrType currentType = parseSubExpression(true, false, false, false);
@@ -2903,17 +2952,39 @@ class GrParser {
         }
 	}
 
-    void parseExpressionList(GrVariable[] lvalues) {
+    GrType[] parseExpressionList() {
+        GrType[] expressionTypes;
+        for(;;) {
+            GrType type = parseSubExpression(true, false, true, false);
+            if(type.baseType == GrBaseType.TupleType) {
+                auto types = grUnpackTuple(type);
+                if(!types.length)
+                    logError("Empty return value", "Cannot return a void value");
+                else {
+                    foreach(subType; types)
+                        expressionTypes ~= subType;
+                }
+            }
+            else
+                expressionTypes ~= type;
+            if(get().type != GrLexemeType.Comma)
+                break;
+            checkAdvance();
+        }
+        if(get().type != GrLexemeType.Semicolon)
+            logError("Missing semicolon", "An expression list must be finished with a ;");
+        checkAdvance();
+        return expressionTypes;
+    }
+
+    void parseAssignList(GrVariable[] lvalues) {
         switch(get().type) with(GrLexemeType) {
         case Assign:
-            GrType[] expressionTypes;
-            do {
-                checkAdvance();
-                if(expressionTypes.length >= lvalues.length)
-                    logError("Exceeding number of expressions", "Cannot assign more values than identifiers");
-                expressionTypes ~= parseSubExpression(true, false, true, false);
-            }
-            while(get().type == GrLexemeType.Comma);
+            checkAdvance();
+            GrType[] expressionTypes = parseExpressionList();
+            
+            if(expressionTypes.length > lvalues.length)
+                logError("Exceeding number of expressions", "Cannot assign more values than identifiers");
 
             int variableIndex = to!int(lvalues.length) - 1;
             int expressionIndex = to!int(expressionTypes.length) - 1;
@@ -2950,10 +3021,6 @@ class GrParser {
             }
             if(skippedLvalues.length)
                 logError("Assignment List", "First element cannot be empty");
-
-            if(get().type != GrLexemeType.Semicolon)
-                logError("Missing semicolon", "An expression must be finished with a ;");
-            advance();
             break;
         case Semicolon:
             break;
@@ -2998,6 +3065,8 @@ class GrParser {
             break;
         case VoidType:
             throw new Exception("Cannot decrease the stack for a struct type");
+        case TupleType:
+            throw new Exception("Tuples should not exist here.");
         }
     }
 
@@ -3094,6 +3163,15 @@ class GrParser {
 			case LeftParenthesis:
                 if(hadValue) {
                     currentType = parseAnonymousCall(typeStack[$ - 1]);
+                    //Unpack function value for 1 or less return values
+                    //Multiples values are left as a tuple for parseExpressionList()
+                    if(currentType.baseType == GrBaseType.TupleType) {
+                        auto types = grUnpackTuple(currentType);
+                        if(!types.length)
+                            currentType = grVoid;
+                        else if(types.length == 1uL)
+                            currentType = types[0];
+                    }
                     if(currentType.baseType == GrBaseType.VoidType) {
                         typeStack.length --;
                     }
@@ -3250,6 +3328,15 @@ class GrParser {
 			case Identifier:
 				GrVariable lvalue;
 				currentType = parseIdentifier(lvalue, lastType);
+                //Unpack function value for 1 or less return values
+                //Multiples values are left as a tuple for parseExpressionList()
+                if(currentType.baseType == GrBaseType.TupleType) {
+                    auto types = grUnpackTuple(currentType);
+                    if(!types.length)
+                        currentType = grVoid;
+                    else if(types.length == 1uL)
+                        currentType = types[0];
+                }
 
                 //Check if there is an assignement or not, discard if it's only a rvalue
                 const auto nextLexeme = get();
@@ -3274,7 +3361,7 @@ class GrParser {
 			}
 
 			if(hasValue && hadValue)
-				logError("Missing symbol", "The expression is not terminated by a \';\'");
+                logError("Missing symbol", "The expression is not terminated by a \';\'");
 		}
 		while(!isEndOfExpression);
 
@@ -3347,7 +3434,7 @@ class GrParser {
             addGlobalPush(signature);
 
         //Anonymous call.
-        GrType retType = grUnmangle(type.mangledReturnType);
+        GrType retTypes = grPackTuple(grUnmangleSignature(type.mangledReturnType));
 
         if(type.baseType == GrBaseType.FunctionType) {
 		    addGetInstruction(functionId, GrType(GrBaseType.IntType));
@@ -3359,11 +3446,11 @@ class GrParser {
             addInstruction(GrOpcode.AnonymousTask, 0u);
         else
             logError("Invalid anonymous type", "debug");
-        return retType;
+        return retTypes;
     }
 
 	//Parse an identifier or function call and return the deduced return type and lvalue.
-	GrType parseIdentifier(ref GrVariable variable, GrType expectedType = GrBaseType.VoidType) {
+	GrType parseIdentifier(ref GrVariable variable, GrType expectedType) {
 		GrType returnType = GrBaseType.VoidType;
 		GrLexeme identifier = get();		
 		bool isFunctionCall = false;
@@ -3425,7 +3512,7 @@ class GrParser {
 				bool hasAnonFunc = false;
 				addGetInstruction(*var);
                 
-				returnType = grUnmangle(var.type.mangledReturnType);
+				returnType = grPackTuple(grUnmangleSignature(var.type.mangledReturnType));
 
 				if(var.type.baseType == GrBaseType.FunctionType)
 					addInstruction(GrOpcode.AnonymousCall, 0u);
@@ -3464,7 +3551,7 @@ class GrParser {
 					returnType = primitive.returnType;
 				}
 				else //GrFunction/Task call.
-					returnType = addFunctionCall(mangledName);
+					returnType = grPackTuple(addFunctionCall(mangledName));
 			}
 		}
 		else {

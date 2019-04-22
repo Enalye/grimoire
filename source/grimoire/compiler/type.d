@@ -17,7 +17,7 @@ import grimoire.compiler.mangle;
 enum GrBaseType {
     VoidType, IntType, FloatType, BoolType, StringType,
     ArrayType, ObjectType, DynamicType, FunctionType, TaskType,
-    StructType, UserType
+    StructType, UserType, TupleType
 }
 
 struct GrType {
@@ -55,6 +55,19 @@ const GrType grArray = GrType(GrBaseType.ArrayType);
 const GrType grObject = GrType(GrBaseType.ObjectType);
 const GrType grDynamic = GrType(GrBaseType.DynamicType);
 
+
+GrType grPackTuple(GrType[] types) {
+    const dstring mangledName = grMangleFunction(types);
+    GrType type = GrBaseType.TupleType;
+    type.mangledType = mangledName;
+    return type;
+}
+
+GrType[] grUnpackTuple(GrType type) {
+    if(type.baseType != GrBaseType.TupleType)
+        throw new Exception("Cannot unpack a not tuple type.");
+    return grUnmangleSignature(type.mangledType);
+}
 
 class GrVariable {
 	GrType type;
@@ -164,8 +177,7 @@ class GrFunction {
 	uint stackSize, index;
 
 	dstring name;
-	GrType[] signature;
-	GrType returnType;
+	GrType[] signature, retSignature;
 	bool isTask, isAnonymous;
 
 	GrFunctionCall[] functionCalls;
