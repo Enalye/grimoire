@@ -1024,16 +1024,15 @@ class GrEngine {
 					context.pc ++;
                     break;
 				case LocalStack:
-                    auto stackSize = grGetInstructionUnsignedValue(opcode);
+                    const auto stackSize = grGetInstructionUnsignedValue(opcode);
 					context.callStack[context.stackPos] = stackSize;
                     context.deferPos ++;
                     context.exceptionHandlersPos ++;
 					context.pc ++;
 					break;
 				case Call:
-                    if((context.stackPos >> 1) >= context.callStackLimit) {
+                    if(((context.stackPos >> 1) + 1) >= context.callStackLimit)
                         context.doubleCallStackSize();
-                    }
 					context.localsPos += context.callStack[context.stackPos];
 					context.callStack[context.stackPos + 1u] = context.pc + 1u;
 					context.stackPos += 2;
