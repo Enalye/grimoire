@@ -504,7 +504,9 @@ class GrParser {
         if(grIsPrimitiveDeclared(mangledName)) {
             GrPrimitive primitive = grGetPrimitive(mangledName);
             addInstruction(GrOpcode.PrimitiveCall, primitive.index);
-            resultType = primitive.returnType;
+            if(primitive.outSignature.length != 1uL)
+                    logError("Return signature error", "An operator can only have one return value");
+            resultType = primitive.outSignature[0];
         }
 
         //GrFunction check
@@ -529,7 +531,9 @@ class GrParser {
         if(grIsPrimitiveDeclared(mangledName)) {
             GrPrimitive primitive = grGetPrimitive(mangledName);
             addInstruction(GrOpcode.PrimitiveCall, primitive.index);
-            resultType = primitive.returnType;
+            if(primitive.outSignature.length != 1uL)
+                    logError("Return signature error", "An operator can only have one return value");
+            resultType = primitive.outSignature[0];
         }
 
         //GrFunction check
@@ -2775,7 +2779,9 @@ class GrParser {
             if(primitive.isExplicit && !isExplicit)
                 return resultType;
             addInstruction(GrOpcode.PrimitiveCall, primitive.index);
-            resultType = primitive.returnType;
+            if(primitive.outSignature.length != 1uL)
+                    logError("Return signature error", "An operator can only have one return value");
+            resultType = primitive.outSignature[0];
         }
 
         //GrFunction check
@@ -3547,7 +3553,7 @@ class GrParser {
 				if(grIsPrimitiveDeclared(mangledName)) {
 					GrPrimitive primitive = grGetPrimitive(mangledName);
 					addInstruction(GrOpcode.PrimitiveCall, primitive.index);
-					returnType = primitive.returnType;
+					returnType = grPackTuple(primitive.outSignature);
 				}
 				else //GrFunction/Task call.
 					returnType = grPackTuple(addFunctionCall(mangledName));

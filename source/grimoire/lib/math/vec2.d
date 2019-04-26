@@ -13,7 +13,7 @@ import grimoire.lib.api;
 static this() {
     auto defVec2f = grAddStructure("vec2f", ["x", "y"], [grFloat, grFloat]);
     
-	grAddPrimitive(&vec2f_make, "vec2f", ["x", "y"], [grFloat, grFloat], defVec2f);
+	grAddPrimitive(&vec2f_make, "vec2f", ["x", "y"], [grFloat, grFloat], [defVec2f]);
 	
 }
 

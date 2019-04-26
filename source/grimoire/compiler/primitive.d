@@ -27,8 +27,8 @@ alias GrCallback = void function(GrCall);
 */
 class GrPrimitive {
 	GrCallback callback;
-	GrType[] signature;
-	GrType returnType;
+	GrType[] inSignature;
+	GrType[] outSignature;
     dstring[] parameters;
 	dstring name, mangledName;
 	uint index;
@@ -73,21 +73,21 @@ class GrCall {
         _nparams = 0;
         _uparams = 0;
 
-        auto signature =  _primitive.signature;
+        auto inSignature =  _primitive.inSignature;
         if(_primitive.name == "@as")
-            signature.length = 1;
+            inSignature.length = 1;
         
-        setupLocals("", _primitive.parameters, signature);
+        setupLocals("", _primitive.parameters, inSignature);
     }
 
-    private void setupLocals(dstring prefix, dstring[] parameters, GrType[] signature) {
-        if(signature.length != parameters.length) {
-            writeln("Err: ", signature, ", ", parameters);
+    private void setupLocals(dstring prefix, dstring[] parameters, GrType[] inSignature) {
+        if(inSignature.length != parameters.length) {
+            writeln("Err: ", inSignature, ", ", parameters);
             throw new Exception("Setup locals error");
         }
 
-        for(int i; i < signature.length; i ++) {
-            GrType type = signature[i];
+        for(int i; i < inSignature.length; i ++) {
+            GrType type = inSignature[i];
             dstring name = prefix ~ parameters[i];
             switch(type.baseType) with(GrBaseType) {
             case BoolType:
@@ -289,14 +289,14 @@ class GrCall {
 /**
     Define a new primitive.
 */
-GrPrimitive grAddPrimitive(GrCallback callback, dstring name, dstring[] parameters, GrType[] signature, GrType retType = grVoid) {
+GrPrimitive grAddPrimitive(GrCallback callback, dstring name, dstring[] parameters, GrType[] inSignature, GrType[] outSignature = []) {
 	GrPrimitive primitive = new GrPrimitive;
 	primitive.callback = callback;
-	primitive.signature = signature;
+	primitive.inSignature = inSignature;
 	primitive.parameters = parameters;
-	primitive.returnType = retType;
+	primitive.outSignature = outSignature;
 	primitive.name = name;
-	primitive.mangledName = grMangleNamedFunction(name, signature);
+	primitive.mangledName = grMangleNamedFunction(name, inSignature);
 	primitive.index = cast(uint)primitives.length;
     primitive.callObject = new GrCall(primitive);
 	primitives ~= primitive;
@@ -307,8 +307,8 @@ GrPrimitive grAddPrimitive(GrCallback callback, dstring name, dstring[] paramete
     An operator is a function that replace a binary or unary grimoire operator such as `+`, `==`, etc
     The name of the function must be that of the operator like "+", "-", "or", etc.
 */
-GrPrimitive grAddOperator(GrCallback callback, dstring name, dstring[] parameters, GrType[] signature, GrType retType) {
-	return grAddPrimitive(callback, "@op_" ~ name, parameters, signature, retType);
+GrPrimitive grAddOperator(GrCallback callback, dstring name, dstring[] parameters, GrType[] inSignature, GrType[] outSignature) {
+	return grAddPrimitive(callback, "@op_" ~ name, parameters, inSignature, outSignature);
 }
 
 /**
@@ -316,7 +316,7 @@ GrPrimitive grAddOperator(GrCallback callback, dstring name, dstring[] parameter
     It have to have only one parameter and return the casted value.
 */
 GrPrimitive grAddCast(GrCallback callback, dstring parameter, GrType srcType, GrType dstType, bool isExplicit = false) {
-	auto primitive = grAddPrimitive(callback, "@as", [parameter], [srcType, dstType], dstType);
+	auto primitive = grAddPrimitive(callback, "@as", [parameter], [srcType, dstType], [dstType]);
     primitive.isExplicit = isExplicit;
     return primitive;
 }
@@ -343,20 +343,21 @@ string grGetPrimitiveDisplayById(uint id, bool showParameters = false) {
     GrPrimitive primitive = primitives[id];
     
     string result = to!string(primitive.name);
-    auto nbParameters = primitive.signature.length;
+    auto nbParameters = primitive.inSignature.length;
     if(primitive.name == "@as")
         nbParameters = 1;
     result ~= "(";
     for(int i; i < nbParameters; i ++) {
-        result ~= grGetPrettyType(primitive.signature[i]);
+        result ~= grGetPrettyType(primitive.inSignature[i]);
         if(showParameters)
             result ~= " " ~ to!string(primitive.parameters[i]);
         if((i + 2) <= nbParameters)
             result ~= ", ";
     }
     result ~= ")";
-    if(primitive.returnType != GrBaseType.VoidType) {
-        result ~= " " ~ grGetPrettyType(primitive.returnType);
+    for(int i; i < primitive.outSignature.length; i ++) {
+        result ~= i ? ", " : " ";
+        result ~= grGetPrettyType(primitive.outSignature[i]);
     }
     return result;
 }
