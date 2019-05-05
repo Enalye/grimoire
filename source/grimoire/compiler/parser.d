@@ -2985,7 +2985,7 @@ class GrParser {
     void parseAssignList(GrVariable[] lvalues) {
         switch(get().type) with(GrLexemeType) {
         case Assign:
-            checkAdvance();
+            advance();
             GrType[] expressionTypes = parseExpressionList();
             
             if(expressionTypes.length > lvalues.length)
@@ -3028,6 +3028,7 @@ class GrParser {
                 logError("Assignment List", "First element cannot be empty");
             break;
         case Semicolon:
+            advance();
             break;
         default:
             logError("Invalid symbol", "A declaration must either be terminated by a ; or assigned with =");
