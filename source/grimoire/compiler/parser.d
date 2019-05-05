@@ -1690,7 +1690,9 @@ class GrParser {
 		for(;;) {
 			GrLexeme lex = get();
             
-            outSignature ~= parseType(false);
+            auto type = parseType(false);
+            if(type.baseType != GrBaseType.VoidType)
+                outSignature ~= type;
 
             checkAdvance();
             lex = get();
@@ -3499,11 +3501,25 @@ class GrParser {
                         if(i >= anonSignature.length)
                             logError("Invalid anonymous call", "The number of parameters does not match");
                         GrType subType = parseSubExpression(false, false, true, true);
-                        signature ~= convertType(subType, anonSignature[i]);
+                        if(subType.baseType == GrBaseType.TupleType) {
+                            auto types = grUnpackTuple(subType);
+                            if(types.length) {
+                                for(int y; y < types.length; y ++, i ++) {
+                                    if(i >= anonSignature.length)
+                                        logError("Invalid anonymous call", "The number of parameters does not match");
+                                    signature ~= convertType(types[y], anonSignature[i]);
+                                }
+                            }
+                            else
+                                logError("Cannot use a void function", "Cannot use a void function as a parameter");
+                        }
+                        else {
+                            signature ~= convertType(subType, anonSignature[i]);
+                            i ++;
+                        }
                         if(get().type == GrLexemeType.RightParenthesis)
                             break;
                         advance();
-                        i ++;
                     }
                 }
                 else if(anonSignature.length)
@@ -3539,7 +3555,17 @@ class GrParser {
                 //Signature parsing, no coercion is made
                 if(get().type != GrLexemeType.RightParenthesis) {
                     for(;;) {
-                        signature ~= parseSubExpression(false, false, true, true);
+                        auto type = parseSubExpression(false, false, true, true);
+                        if(type.baseType == GrBaseType.TupleType) {
+                            auto types = grUnpackTuple(type);
+                            if(types.length)
+                                signature ~= types;
+                            else
+                                logError("Cannot use a void function", "Cannot use a void function as a parameter");
+                        }
+                        else
+                            signature ~= type;
+
                         if(get().type == GrLexemeType.RightParenthesis)
                             break;
                         advance();
