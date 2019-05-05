@@ -307,8 +307,10 @@ GrPrimitive grAddPrimitive(GrCallback callback, dstring name, dstring[] paramete
     An operator is a function that replace a binary or unary grimoire operator such as `+`, `==`, etc
     The name of the function must be that of the operator like "+", "-", "or", etc.
 */
-GrPrimitive grAddOperator(GrCallback callback, dstring name, dstring[] parameters, GrType[] inSignature, GrType[] outSignature) {
-	return grAddPrimitive(callback, "@op_" ~ name, parameters, inSignature, outSignature);
+GrPrimitive grAddOperator(GrCallback callback, dstring name, dstring[] parameters, GrType[] inSignature, GrType outType) {
+    if(inSignature.length > 2uL)
+        throw new Exception("The operator \'" ~ to!string(name) ~ "\' cannot take more than 2 parameters: " ~ to!string(to!dstring(parameters)));
+	return grAddPrimitive(callback, "@op_" ~ name, parameters, inSignature, [outType]);
 }
 
 /**
