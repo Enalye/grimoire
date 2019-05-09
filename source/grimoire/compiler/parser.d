@@ -1358,25 +1358,28 @@ class GrParser {
 
             //Lazy check because we can't know about other structures
             auto fieldType = parseType(false);
-            checkAdvance();
-
-            //Unresolved type
-            if(fieldType.baseType == GrBaseType.VoidType) {
-                fieldType.mangledType = get().svalue;
+            do {
                 checkAdvance();
+
+                //Unresolved type
+                if(fieldType.baseType == GrBaseType.VoidType) {
+                    fieldType.mangledType = get().svalue;
+                    checkAdvance();
+                }
+                
+                if(get().type != GrLexemeType.Identifier)
+                    logError("Missing Identifier", "struct field must have a name");
+
+                auto fieldName = get().svalue;
+                checkAdvance();
+
+                signature ~= fieldType;
+                fields ~= fieldName;
             }
-            
-            if(get().type != GrLexemeType.Identifier)
-                logError("Missing Identifier", "struct field must have a name");
+            while(get().type == GrLexemeType.Comma);
 
-            auto fieldName = get().svalue;
-            checkAdvance();
-
-            signature ~= fieldType;
-            fields ~= fieldName;
-
-            if(get().type != GrLexemeType.Semicolon) 
-                logError("Missing ;", "right there");
+            if(get().type != GrLexemeType.Semicolon)
+                logError("Missing semicolon", "A struct field declaration must end with a semicolon");
             checkAdvance();
 
             if(get().type == GrLexemeType.RightCurlyBrace) {
@@ -2758,6 +2761,9 @@ class GrParser {
                 break;
             }
         }
+
+        if(src.baseType == GrBaseType.TupleType || dst.baseType == GrBaseType.TupleType)
+            logError("Convertion error", "Cannot convert multiple values from an expression list");
 		
         //User-defined conversions.
         if(addCustomConversion(src, dst, isExplicit) == dst)
