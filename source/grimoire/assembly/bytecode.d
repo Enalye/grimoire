@@ -18,7 +18,7 @@ import grimoire.core;
 enum GrOpcode {
     Nop, Raise, Try, Catch,
     Kill, Yield, Task, AnonymousTask,
-    PopStack_Int, PopStack_Float, PopStack_String, PopStack_Array, PopStack_Any, PopStack_Object, PopStack_UserData,
+    ShiftStack_Int, ShiftStack_Float, ShiftStack_String, ShiftStack_Array, ShiftStack_Any, ShiftStack_Object, ShiftStack_UserData,
     
     LocalStore_Int, LocalStore_Float, LocalStore_String, LocalStore_Array, LocalStore_Any, LocalStore_Ref, LocalStore_Object, LocalStore_UserData,
     LocalStore2_Int, LocalStore2_Float, LocalStore2_String, LocalStore2_Array, LocalStore2_Any, LocalStore2_Ref, LocalStore2_Object, LocalStore2_UserData,

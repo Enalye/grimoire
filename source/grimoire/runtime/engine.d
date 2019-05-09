@@ -318,32 +318,32 @@ class GrEngine {
 				case Yield:
 					context.pc ++;
 					continue contextsLabel;
-				case PopStack_Int:
-					context.istackPos -= grGetInstructionUnsignedValue(opcode);
+				case ShiftStack_Int:
+					context.istackPos += grGetInstructionSignedValue(opcode);
 					context.pc ++;
 					break;
-				case PopStack_Float:
-					context.fstackPos -= grGetInstructionUnsignedValue(opcode);
+				case ShiftStack_Float:
+					context.fstackPos += grGetInstructionSignedValue(opcode);
 					context.pc ++;
 					break;
-				case PopStack_String:
-					context.sstackPos -= grGetInstructionUnsignedValue(opcode);
+				case ShiftStack_String:
+					context.sstackPos += grGetInstructionSignedValue(opcode);
 					context.pc ++;
 					break;
-                case PopStack_Array:
-					context.nstackPos -= grGetInstructionUnsignedValue(opcode);
+                case ShiftStack_Array:
+					context.nstackPos += grGetInstructionSignedValue(opcode);
 					context.pc ++;
 					break;
-				case PopStack_Any:
-					context.astackPos -= grGetInstructionUnsignedValue(opcode);
+				case ShiftStack_Any:
+					context.astackPos += grGetInstructionSignedValue(opcode);
 					context.pc ++;
 					break;
-				case PopStack_Object:
-					context.ostackPos -= grGetInstructionUnsignedValue(opcode);
+				case ShiftStack_Object:
+					context.ostackPos += grGetInstructionSignedValue(opcode);
 					context.pc ++;
 					break;
-                case PopStack_UserData:
-					context.ustackPos -= grGetInstructionUnsignedValue(opcode);
+                case ShiftStack_UserData:
+					context.ustackPos += grGetInstructionSignedValue(opcode);
 					context.pc ++;
 					break;
 				case LocalStore_Int:

@@ -527,7 +527,7 @@ class GrLexer {
             case "event":
 				lex.type = GrLexemeType.Event;
 				break;
-            case "def":
+            case "struct":
 				lex.type = GrLexemeType.Struct;
 				break;
 			case "if":

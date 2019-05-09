@@ -881,7 +881,7 @@ class GrParser {
                 auto structure = grGetStructure(variable.type.mangledType);
                 const auto nbFields = structure.signature.length;
                 for(int i = 1; i <= nbFields; i ++) {
-                    addSetInstruction(getVariable(variable.name ~ "." ~ structure.fields[nbFields - i]), structure.signature[nbFields - i]);
+                    addSetInstruction(getVariable(variable.name ~ "." ~ structure.fields[nbFields - i]), structure.signature[nbFields - i], isGettingValue);
                 }
                 break;
             case UserType:
@@ -920,6 +920,8 @@ class GrParser {
                 for(int i = 1; i <= nbFields; i ++) {
                     addSetInstruction(getVariable(variable.name ~ "." ~ structure.fields[nbFields - i]), structure.signature[nbFields - i]);
                 }
+                if(isGettingValue)
+                    shiftStackPosition(variable.type, 1);
                 break;
             case UserType:
 				addInstruction(isGettingValue ? GrOpcode.LocalStore2_UserData : GrOpcode.LocalStore_UserData, variable.index);
@@ -2870,7 +2872,7 @@ class GrParser {
                 addGlobalPush(fieldType, 1u);
             }
             else
-                decreaseStack(structure.signature[nbFields - i], 1);
+                shiftStackPosition(structure.signature[nbFields - i], -1);
         }
         addGlobalPop(fieldType);
         return fieldType;
@@ -2952,10 +2954,7 @@ class GrParser {
             parseAssignList(lvalues);
         }
         else {
-            GrType currentType = parseSubExpression(true, false, false, false);
-
-            if(currentType != GrType(GrBaseType.VoidType))
-                decreaseStack(currentType, 1u);
+            parseSubExpression(true, false, false, false, true);
         }
 	}
 
@@ -3037,45 +3036,66 @@ class GrParser {
         }
     }
 
-    void decreaseStack(GrType type, ushort count) {
-        final switch(type.baseType) with(GrBaseType) {
-        case IntType:
-        case BoolType:
-        case FunctionType:
-        case TaskType:
-            addInstruction(GrOpcode.PopStack_Int, count);
-            break;
-        case FloatType:
-            addInstruction(GrOpcode.PopStack_Float, count);
-            break;
-        case StringType:
-            addInstruction(GrOpcode.PopStack_String, count);
-            break;
-        case ArrayType:
-            addInstruction(GrOpcode.PopStack_Array, count);
-            break;
-        case DynamicType:
-            addInstruction(GrOpcode.PopStack_Any, count);
-            break;
-        case ObjectType:
-            addInstruction(GrOpcode.PopStack_Object, count);
-            break;
-        case UserType:
-            addInstruction(GrOpcode.PopStack_UserData, count);
-            break;
-        case StructType:
-            //TODO: Optimize by merging the same opcodes.
-            auto structure = grGetStructure(type.mangledType);
-            const auto nbFields = structure.fields.length;
-            for(int i = 1; i <= structure.fields.length; i ++) {
-                decreaseStack(structure.signature[nbFields - i], 1);
-            }
-            break;
-        case VoidType:
-            throw new Exception("Cannot decrease the stack for a struct type");
-        case TupleType:
-            throw new Exception("Tuples should not exist here.");
+    void shiftStackPosition(GrType type, short count) {
+        struct TypeCounter {
+            int iCount, fCount, sCount, nCount, dCount, oCount, uCount;
         }
+        TypeCounter counter;
+        void countSubTypes(GrType type, ref TypeCounter counter) {
+            final switch(type.baseType) with(GrBaseType) {
+            case IntType:
+            case BoolType:
+            case FunctionType:
+            case TaskType:
+                counter.iCount ++;
+                break;
+            case FloatType:
+                counter.fCount ++;
+                break;
+            case StringType:
+                counter.sCount ++;
+                break;
+            case ArrayType:
+                counter.nCount ++;
+                break;
+            case DynamicType:
+                counter.dCount ++;
+                break;
+            case ObjectType:
+                counter.oCount ++;
+                break;
+            case UserType:
+                counter.uCount ++;
+                break;
+            case StructType:
+                auto structure = grGetStructure(type.mangledType);
+                const auto nbFields = structure.fields.length;
+                for(int i = 1; i <= structure.fields.length; i ++) {
+                    countSubTypes(structure.signature[nbFields - i], counter);
+                }
+                break;
+            case VoidType:
+                throw new Exception("Cannot change the stack for a struct type");
+            case TupleType:
+                throw new Exception("Tuples should not exist here.");
+            }
+        }
+        countSubTypes(type, counter);
+
+        if(counter.iCount)
+            addInstruction(GrOpcode.ShiftStack_Int, counter.iCount * count, true);
+        if(counter.fCount)
+            addInstruction(GrOpcode.ShiftStack_Float, counter.fCount * count, true);
+        if(counter.sCount)
+            addInstruction(GrOpcode.ShiftStack_String, counter.sCount * count, true);
+        if(counter.nCount)
+            addInstruction(GrOpcode.ShiftStack_Array, counter.nCount * count, true);
+        if(counter.dCount)
+            addInstruction(GrOpcode.ShiftStack_Any, counter.dCount * count, true);
+        if(counter.oCount)
+            addInstruction(GrOpcode.ShiftStack_Object, counter.oCount * count, true);
+        if(counter.uCount)
+            addInstruction(GrOpcode.ShiftStack_UserData, counter.uCount * count, true);
     }
 
     bool requireLValue(GrLexemeType operatorType) {
@@ -3114,7 +3134,7 @@ class GrParser {
         return currentType;
     }
     
-	GrType parseSubExpression(bool useSemicolon = false, bool useBracket = false, bool useComma = false, bool useParenthesis = true) {
+	GrType parseSubExpression(bool useSemicolon = false, bool useBracket = false, bool useComma = false, bool useParenthesis = true, bool mustCleanValue = false) {
 		GrVariable[] lvalues;
 		GrLexemeType[] operatorsStack;
 		GrType[] typeStack;
@@ -3387,18 +3407,27 @@ class GrParser {
 	
 			switch(operator) with(GrLexemeType) {
 			case Assign:
-				addSetInstruction(lvalues[$ - 1], currentType, true);
+				addSetInstruction(lvalues[$ - 1], currentType, operatorsStack.length > 1uL);
 				lvalues.length --;
+
+                if(operatorsStack.length <= 1uL)
+                    hadValue = false;
 				break;
 			case AddAssign: .. case PowerAssign:
 				currentType = addOperator(operator - (GrLexemeType.AddAssign - GrLexemeType.Add), typeStack);
-				addSetInstruction(lvalues[$ - 1], currentType, true);			
+				addSetInstruction(lvalues[$ - 1], currentType, operatorsStack.length > 1uL);			
 				lvalues.length --;
+
+                if(operatorsStack.length <= 1uL)
+                    hadValue = false;
 				break;
 			case Increment: .. case Decrement:
 				currentType = addOperator(operator, typeStack);
-				addSetInstruction(lvalues[$ - 1], currentType, true);
+				addSetInstruction(lvalues[$ - 1], currentType, operatorsStack.length > 1uL);
 				lvalues.length --;
+
+                if(operatorsStack.length <= 1uL)
+                    hadValue = false;
 				break;
 			default:
 				currentType = addOperator(operator, typeStack);
@@ -3407,6 +3436,9 @@ class GrParser {
 
 			operatorsStack.length --;
 		}
+        
+        if(mustCleanValue && hadValue && currentType.baseType != GrBaseType.VoidType)
+            shiftStackPosition(currentType, -1);
         
         return currentType;
 	}
