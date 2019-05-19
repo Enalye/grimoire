@@ -378,7 +378,7 @@ class GrEngine {
 					context.pc ++;
 					break;
                 case LocalStore_Ref:
-                    context.astack[context.astackPos - 1].setRef(context.astack[context.astackPos]);
+                    context.astack[context.astackPos - 1].setRef(context, context.astack[context.astackPos]);
                     context.astackPos -= 2;
                     context.pc ++;
                     break;
@@ -414,7 +414,7 @@ class GrEngine {
 					break;
                 case LocalStore2_Ref:
                     context.astackPos --;
-                    context.astack[context.astackPos].setRef(context.astack[context.astackPos + 1]);
+                    context.astack[context.astackPos].setRef(context, context.astack[context.astackPos + 1]);
                     context.pc ++;
                     break;
 				case LocalStore2_Object:
@@ -493,7 +493,7 @@ class GrEngine {
 					context.pc ++;
 					break;
                 case GlobalStore_Ref:
-                    context.astack[context.astackPos - 1].setRef(context.astack[context.astackPos]);
+                    context.astack[context.astackPos - 1].setRef(context, context.astack[context.astackPos]);
                     context.astackPos -= 2;
                     context.pc ++;
                     break;
@@ -529,7 +529,7 @@ class GrEngine {
 					break;
                 case GlobalStore2_Ref:
                     context.astackPos --;
-                    context.astack[context.astackPos].setRef(context.astack[context.astackPos + 1]);
+                    context.astack[context.astackPos].setRef(context, context.astack[context.astackPos + 1]);
                     context.pc ++;
                     break;
 				case GlobalStore2_Object:
@@ -1097,14 +1097,20 @@ class GrEngine {
 					context.pc ++;
 					break;
 				case Index_Array:
+					GrDynamicValue[] ary = context.nstack[context.nstackPos];
+                    const auto idx = context.istack[context.istackPos];
+                    if(idx >= ary.length) {
+                        raise(context, "Array overflow");
+                        break;
+                    }
                     context.astackPos ++;
-					context.astack[context.astackPos] = context.nstack[context.nstackPos][context.istack[context.istackPos]];
+                    context.astack[context.astackPos] = ary[idx];
 					context.nstackPos --;					
 					context.istackPos --;					
 					context.pc ++;
 					break;
                 case IndexRef_Array:
-                    context.astack[context.astackPos].setArrayIndex(context.istack[context.istackPos]);
+                    context.astack[context.astackPos].setArrayIndex(context, context.istack[context.istackPos]);
                     context.istackPos --;
 					context.pc ++;
 					break;

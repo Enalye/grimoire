@@ -88,16 +88,20 @@ struct GrDynamicValue {
 
     /// The value is set to the value stored at the index of the current array.
     /// The value must be a valid indexable value.
-    void setArrayIndex(int index) {
+    void setArrayIndex(GrContext context, int index) {
         switch(type) with(GrDynamicValueType) {
         case ArrayType:
-            if(index >= _nvalue.length)
-                throw new Exception("No error fallback implemented: array overflow");
+            if(index >= _nvalue.length) {
+                raise(context, "Array overflow");
+                return;
+            }
             this = _nvalue[index];
             return;
         case RefArrayType:
-            if(index >= _refvalue.length)
-                throw new Exception("No error fallback implemented: array overflow");
+            if(index >= _refvalue.length) {
+                raise(context, "Array overflow");
+                return;
+            }
             _refindex = &((*_refvalue)[index]);
             type = GrDynamicValueType.RefIndexType;
             return;
@@ -105,14 +109,23 @@ struct GrDynamicValue {
             _refindex = &(_refindex._nvalue[index]);
             return;
         default:
-            throw new Exception("No error fallback implemented");
+            raise(context, "Invalid reference");
+            break;
         }
     }
 
+    private void raise(GrContext context, dstring message) {
+        context.engine.raise(context, message);
+
+        //The context is still in an opcode
+        //and will increment the pc, so we prevent that.
+        context.pc --;
+    }
+
     /// The value is now a reference for another value.
-    void setRef(GrDynamicValue value) {
+    void setRef(GrContext context, GrDynamicValue value) {
         if(type != GrDynamicValueType.RefIndexType)
-            throw new Exception("No error fallback implemented");
+            context.engine.raise(context, "Invalid reference");
         *_refindex = value;
     }
 
