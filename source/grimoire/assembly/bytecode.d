@@ -28,7 +28,7 @@ enum GrOpcode {
     GlobalStore2_Int, GlobalStore2_Float, GlobalStore2_String, GlobalStore2_Array, GlobalStore2_Any, GlobalStore2_Ref, GlobalStore2_Object, GlobalStore2_UserData,
     GlobalLoad_Int, GlobalLoad_Float, GlobalLoad_String, GlobalLoad_Array, GlobalLoad_Any, GlobalLoad_Ref, GlobalLoad_Object, GlobalLoad_UserData,
     
-    Const_Int, Const_Float, Const_Bool, Const_String,
+    Const_Int, Const_Float, Const_Bool, Const_String, Const_Meta,
     
     GlobalPush_Int, GlobalPush_Float, GlobalPush_String, GlobalPush_Array, GlobalPush_Any, GlobalPush_Object, GlobalPush_UserData,
     GlobalPop_Int, GlobalPop_Float, GlobalPop_String, GlobalPop_Array, GlobalPop_Any, GlobalPop_Object, GlobalPop_UserData,

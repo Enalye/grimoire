@@ -38,15 +38,15 @@ private void printf(GrCall call) {
 }
 
 private void printa(GrCall call) {
-	writeln(call.getDynamic("value").getString());
+	writeln(call.getDynamic("value").getString(call));
 }
 
 private void printn(GrCall call) {
-    const auto ary = call.getArray("value");
+    auto ary = call.getArray("value");
     string result = "[";
     int i;
     foreach(value; ary) {
-        result ~= to!string(value.getString());
+        result ~= to!string(value.getString(call));
         if((i + 2) <= ary.length)
             result ~= ", ";
         i ++;

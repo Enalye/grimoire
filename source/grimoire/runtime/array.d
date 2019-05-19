@@ -9,6 +9,7 @@
 module grimoire.runtime.array;
 
 import grimoire.core;
+import grimoire.compiler.primitive;
 
 import grimoire.runtime.dynamic;
 
@@ -16,11 +17,11 @@ class GrArrayValue {
 	//alias ArrayStorage = IndexedArray!(GrDynamicValue, 1024u);
 	private GrDynamicValue[] _storage;
 
-	dstring getString() {
+	dstring getString(GrCall call) {
 		dstring result = "["d;
         int index;
 		foreach(GrDynamicValue value; _storage) {
-			result ~= value.getString();
+			result ~= value.getString(call);
 
 			if((index + 1) < _storage.length)
 				result ~= ", "d;

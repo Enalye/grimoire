@@ -71,6 +71,9 @@ class GrEngine {
         bool _isPanicking;
         /// Unhandled panic message.
         dstring _panicMessage;
+
+        /// Extra type compiler information.
+        dstring _meta;
     }
 
     __gshared bool isRunning = true;
@@ -84,6 +87,9 @@ class GrEngine {
 
         /// The unhandled error message.
         dstring panicMessage() const { return _panicMessage; }
+
+        /// Extra type compiler information.
+        dstring meta() const { return _meta; }
     }
 
     /// Default.
@@ -596,6 +602,10 @@ class GrEngine {
 					context.sstack[context.sstackPos] = _sconsts[grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
+                case Const_Meta:
+					_meta = _sconsts[grGetInstructionUnsignedValue(opcode)];
+					context.pc ++;
+                    break;
 				case GlobalPush_Int:
 					uint nbParams = grGetInstructionUnsignedValue(opcode);
 					for(uint i = 1u; i <= nbParams; i++)

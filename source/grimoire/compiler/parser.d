@@ -443,6 +443,10 @@ class GrParser {
 		addInstruction(GrOpcode.Const_String, registerStringConstant(value));
 	}
 
+    void addMetaConstant(dstring value) {
+		addInstruction(GrOpcode.Const_Meta, registerStringConstant(value));
+    }
+
 	void addInstruction(GrOpcode opcode, int value = 0, bool isSigned = false) {
 		if(currentFunction is null)
 			logError("Not in function", "The expression is located outside of a function or task, which is forbidden");
@@ -818,7 +822,7 @@ class GrParser {
         return GrType(GrBaseType.VoidType);
     }
 
-	void addSetInstruction(GrVariable variable, GrType valueType = GrBaseType.VoidType, bool isGettingValue = false) {
+	void addSetInstruction(GrVariable variable, GrType valueType = GrType(GrBaseType.VoidType), bool isGettingValue = false) {
         if(variable is null) {
 			addInstruction(isGettingValue ? GrOpcode.LocalStore2_Ref : GrOpcode.LocalStore_Ref);
             return;
@@ -932,7 +936,7 @@ class GrParser {
 		}
 	}
 
-	void addGetInstruction(GrVariable variable, GrType expectedType = GrBaseType.VoidType, bool allowOptimization = true) {
+	void addGetInstruction(GrVariable variable, GrType expectedType = GrType(GrBaseType.VoidType), bool allowOptimization = true) {
         if(variable.isGlobal) {
 			switch(variable.type.baseType) with(GrBaseType) {
 			case BoolType:
@@ -2780,6 +2784,44 @@ class GrParser {
 
         //As opposed to other functions, we need the return type (rightType) to be part of the signature.
         dstring mangledName = grMangleNamedFunction("@as", [leftType, rightType]);
+
+        //Special conversions
+        if(leftType != rightType) {
+            if(rightType.baseType == GrBaseType.DynamicType) {
+                switch(leftType.baseType) with(GrBaseType) {
+                case FunctionType:
+                case TaskType:
+                    //We can't know in advance what'll be the signature of the anonymous function we want to convert.
+                    //So we add the mangling as a runtime meta value.
+                    addMetaConstant(grMangleFunction([leftType]));
+                    //Then, we delete the mangling, and the cast primitive will do the same.
+                    GrType tempType = leftType;
+                    tempType.mangledType = grMangleNamedFunction("", []);
+                    tempType.mangledReturnType = "";
+                    mangledName = grMangleNamedFunction("@as", [tempType, rightType]);
+                    break;
+                default:
+                    break;
+                }
+            }
+            else if(leftType.baseType == GrBaseType.DynamicType) {
+                switch(rightType.baseType) with(GrBaseType) {
+                case FunctionType:
+                case TaskType:
+                    //We can't know in advance what'll be the signature of the anonymous function we want to convert.
+                    //So we add the mangling as a runtime meta value.
+                    addMetaConstant(grMangleFunction([rightType]));
+                    //Then, we delete the mangling, and the cast primitive will do the same.
+                    GrType tempType = rightType;
+                    tempType.mangledType = grMangleNamedFunction("", []);
+                    tempType.mangledReturnType = "";
+                    mangledName = grMangleNamedFunction("@as", [leftType, tempType]);
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
         
         //GrPrimitive check
         if(grIsPrimitiveDeclared(mangledName)) {
@@ -2790,8 +2832,8 @@ class GrParser {
                 return resultType;
             addInstruction(GrOpcode.PrimitiveCall, primitive.index);
             if(primitive.outSignature.length != 1uL)
-                    logError("Return signature error", "An operator can only have one return value");
-            resultType = primitive.outSignature[0];
+                logError("Return signature error", "An operator can only have one return value");
+            resultType = rightType;
         }
 
         //GrFunction check
@@ -2801,7 +2843,7 @@ class GrParser {
                 auto outSignature = addFunctionCall(mangledName);
                 if(outSignature.length != 1uL)
                     logError("Return signature error", "An operator can only have one return value");
-                resultType = outSignature[0];
+                resultType = rightType;
             }
         }
 

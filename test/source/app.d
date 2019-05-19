@@ -15,6 +15,7 @@ import grimoire;
 void main() {
 	try {
         auto startTime = MonoTime.currTime();
+        grAddUserType("Test");
         auto bytecode = grCompileFile("test.gr");
         auto compilationTime = MonoTime.currTime() - startTime;
         
@@ -26,9 +27,10 @@ void main() {
         
         write("> ");
         startTime = MonoTime.currTime();
-        auto mangledName = grMangleNamedFunction("hey", []);
+        auto mangledName = grMangleNamedFunction("hey", [grString]);
         if(vm.hasEvent(mangledName)) {
             GrContext ev = vm.spawnEvent(mangledName);
+            ev.setString("you !");
         }
 
         while(vm.hasCoroutines)

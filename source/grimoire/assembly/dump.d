@@ -27,7 +27,7 @@ private string[] instructions = [
     "gstore2.i", "gstore2.f", "gstore2.s", "gstore2.n", "gstore2.a", "gstore2.r", "gstore2.o", "gstore2.u",
     "gload.i", "gload.f", "gload.s", "gload.n", "gload.a", "gload.r", "gload.o", "gload.u",
     
-    "const.i", "const.f", "const.b", "const.s",
+    "const.i", "const.f", "const.b", "const.s", "meta",
     
     "gpush.i", "gpush.f", "gpush.s", "gpush.n", "gpush.a", "gpush.o", "gpush.u",
     "gpop.i", "gpop.f", "gpop.s", "gpop.n", "gpop.a", "gpop.o", "gpop.u",
@@ -90,7 +90,7 @@ string grDump(GrBytecode bytecode) {
             line ~= to!string(bytecode.fconsts[grGetInstructionUnsignedValue(opcode)]);
         else if(op == GrOpcode.Const_Bool)
             line ~= (grGetInstructionUnsignedValue(opcode) ? "true" : "false");
-        else if(op == GrOpcode.Const_String)
+        else if(op == GrOpcode.Const_String || op == GrOpcode.Const_Meta)
             line ~= "\"" ~ to!string(bytecode.sconsts[grGetInstructionUnsignedValue(opcode)]) ~ "\"";
         else if(op >= GrOpcode.Jump && op <= GrOpcode.JumpNotEqual)
             line ~= to!string(i + grGetInstructionSignedValue(opcode));

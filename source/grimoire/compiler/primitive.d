@@ -53,7 +53,11 @@ class GrCall {
     @property {
         bool hasResult(bool newHasResult) { return _hasResult = newHasResult; }
 
+        /// Current task running the primitive.
         GrContext context() { return _context; }
+
+        /// Extra type compiler information.
+        dstring meta() const { return _context.engine.meta; }
     }
 
     package this(GrPrimitive primitive) {
@@ -92,6 +96,8 @@ class GrCall {
             switch(type.baseType) with(GrBaseType) {
             case BoolType:
             case IntType:
+            case FunctionType:
+            case TaskType:
                 _iparams ++;
                 _ilocals ~= name;
                 break;
@@ -132,6 +138,7 @@ class GrCall {
         _dresults = 0;
         _nresults = 0;
         _uresults = 0;
+        _hasError = false;
 
         _context = context;
         _callback(this);
@@ -142,6 +149,9 @@ class GrCall {
         _context.astackPos -= (_dparams - _dresults);
         _context.nstackPos -= (_nparams - _nresults);
         _context.ustackPos -= (_uparams - _uresults);
+
+        if(_hasError)
+            dispatchError();
     }
 
     alias getString = getParameter!dstring;
@@ -277,8 +287,21 @@ class GrCall {
         }
     }
 
+    private {
+        dstring _message;
+        bool _hasError;
+    }
+
+    /// Does not actually send the error to the context.
+    /// Because the stacks would be in an undefined state.
+    /// So we wait until the primitive is finished before calling dispatchError().
     void raise(dstring message) {
-        _context.engine.raise(_context, message);
+        _message = message;
+        _hasError = true;
+    }
+
+    private void dispatchError() {
+        _context.engine.raise(_context, _message);
 
         //The context is still in a primitive call
         //and will increment the pc, so we prevent that.
