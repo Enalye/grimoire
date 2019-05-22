@@ -52,7 +52,7 @@ private string[] instructions = [
 
     "setup_it",
 
-    "localstack", "call", "anon_call", "prim_call",
+    "localstack", "call", "anon_call", "dyn_call", "prim_call",
     "ret", "unwind", "defer",
     "jmp", "jmp_eq", "jmp_neq",
 
@@ -90,7 +90,7 @@ string grDump(GrBytecode bytecode) {
             line ~= to!string(bytecode.fconsts[grGetInstructionUnsignedValue(opcode)]);
         else if(op == GrOpcode.Const_Bool)
             line ~= (grGetInstructionUnsignedValue(opcode) ? "true" : "false");
-        else if(op == GrOpcode.Const_String || op == GrOpcode.Const_Meta)
+        else if(op == GrOpcode.Const_String || op == GrOpcode.Const_Meta || op == GrOpcode.DynamicCall)
             line ~= "\"" ~ to!string(bytecode.sconsts[grGetInstructionUnsignedValue(opcode)]) ~ "\"";
         else if(op >= GrOpcode.Jump && op <= GrOpcode.JumpNotEqual)
             line ~= to!string(i + grGetInstructionSignedValue(opcode));

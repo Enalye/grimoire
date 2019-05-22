@@ -276,69 +276,125 @@ struct GrDynamicValue {
         }
     }
 
+    void call(GrContext context) {
+        switch(type) with(GrDynamicValueType) {
+        case FunctionType:
+            context.engine.meta = "$f(" ~ context.engine.meta ~ ")()";
+            if(context.engine.meta != _subType) {
+                raiseCallError(context, GrDynamicValueType.FunctionType);
+                return;
+            }
+            if((context.stackPos >> 1) >= context.callStackLimit)
+                context.doubleCallStackSize();
+            context.localsPos += context.callStack[context.stackPos];
+            context.callStack[context.stackPos + 1u] = context.pc + 1u;
+            context.stackPos += 2;
+            context.astackPos --;
+            context.pc = _ivalue;
+            return;
+        case TaskType:
+            context.engine.meta = "$t(" ~ context.engine.meta ~ ")";
+            if(context.engine.meta != _subType) {
+                raiseCallError(context, GrDynamicValueType.TaskType);
+                return;
+            }
+            GrContext newCoro = new GrContext(context.engine);
+            newCoro.pc = _ivalue;
+            context.engine.pushContext(newCoro);
+            context.astackPos --;
+            context.pc ++;
+            return;
+        default:
+            context.engine.meta = "$f(" ~ context.engine.meta ~ ")()";
+            raiseCallError(context, GrDynamicValueType.FunctionType);
+            return;
+        }
+    }
+    
+    private void raiseCallError(GrContext context, GrDynamicValueType dstType) {
+        context.engine.raise(context, "Call error: \'"
+            ~ getPrettyType(this)
+            ~ "\' -> \'"
+            ~ getPrettyType(dstType, context.engine.meta)
+            ~ "\'");
+    }
+
     private void raiseConversionError(GrCall call, GrDynamicValueType dstType) {
-        dstring src, dst;
-        final switch(type) with(GrDynamicValueType) {
+        call.raise("Conversion error: \'"
+            ~ getPrettyType(this)
+            ~ "\' -> \'"
+            ~ getPrettyType(dstType, call.meta)
+            ~ "\'");
+    }
+
+    private dstring getPrettyType(GrDynamicValue value) {
+        dstring prettyType;
+        final switch(value.type) with(GrDynamicValueType) {
         case FunctionType:
         case TaskType:
-            src = to!dstring(grGetPrettyType(grUnmangle(_subType)));
+            prettyType = to!dstring(grGetPrettyType(grUnmangle(value._subType)));
             break;
         case UndefinedType:
-            src = "undefined";
+            prettyType = "undefined";
             break;
         case BoolType:
-            src = "bool";
+            prettyType = "bool";
             break;
         case IntType:
-            src = "int";
+            prettyType = "int";
             break;
         case FloatType:
-            src = "float";
+            prettyType = "float";
             break;
         case StringType:
-            src = "string";
+            prettyType = "string";
             break;
         case ArrayType:
-            src = "array";
+            prettyType = "array";
             break;
         case RefArrayType:
-            src = "refarray";
+            prettyType = "refarray";
             break;
         case RefIndexType:
-            src = "refindex";
+            prettyType = "refindex";
             break;
         }
+        return prettyType;
+    }
+
+    private dstring getPrettyType(GrDynamicValueType dstType, dstring subType) {
+        dstring prettyType;        
         final switch(dstType) with(GrDynamicValueType) {
         case FunctionType:
         case TaskType:
-            dst = to!dstring(grGetPrettyType(grUnmangle(call.meta)));
+            prettyType = to!dstring(grGetPrettyType(grUnmangle(subType)));
             break;
         case UndefinedType:
-            dst = "undefined";
+            prettyType = "undefined";
             break;
         case BoolType:
-            dst = "bool";
+            prettyType = "bool";
             break;
         case IntType:
-            dst = "int";
+            prettyType = "int";
             break;
         case FloatType:
-            dst = "float";
+            prettyType = "float";
             break;
         case StringType:
-            dst = "string";
+            prettyType = "string";
             break;
         case ArrayType:
-            dst = "array";
+            prettyType = "array";
             break;
         case RefArrayType:
-            dst = "refarray";
+            prettyType = "refarray";
             break;
         case RefIndexType:
-            dst = "refindex";
+            prettyType = "refindex";
             break;
         }
-        call.raise("Conversion Error: \'" ~ src ~ "\' -> \'" ~ dst ~ "\'");
+        return prettyType;
     }
     
     /// Copy operator.

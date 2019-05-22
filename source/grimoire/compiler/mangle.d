@@ -9,7 +9,6 @@
 module grimoire.compiler.mangle;
 
 import std.conv: to;
-
 import grimoire.compiler.type;
 
 /**
@@ -62,18 +61,22 @@ dstring grMangleFunction(GrType[] signature) {
 		case FunctionType:
             if(type.mangledReturnType.length == 0)
                 type.mangledReturnType = "$v";
-			mangledName ~= "f(" ~ type.mangledType ~ ")" ~ type.mangledReturnType;
+			mangledName ~= "f(" ~ type.mangledType ~ ")(" ~ type.mangledReturnType ~ ")";
 			break;
 		case TaskType:
             if(type.mangledReturnType.length == 0)
                 type.mangledReturnType = "$v";
-			mangledName ~= "t(" ~ type.mangledType ~ ")" ~ type.mangledReturnType;
+			mangledName ~= "t(" ~ type.mangledType ~ ")";
 			break;
         case TupleType:
             throw new Exception("Trying to mangle a tuple. Tuples should not exist here.");
 		}
 	}
 	return mangledName;
+}
+
+dstring grMangleDynamic(GrType type) {
+    return grMangleFunction([type]);
 }
 
 /**
@@ -209,13 +212,11 @@ GrType grUnmangle(dstring mangledSignature) {
             currentType.baseType = GrBaseType.FunctionType;
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             i ++;
-            if((i + 1) >= mangledSignature.length || mangledSignature[i] != '$')
-                throw new Exception("Invalid mangling format");
+            currentType.mangledReturnType = grUnmangleSubFunction(mangledSignature, i);
             i ++;
-            currentType.mangledReturnType = "$";
-            currentType.mangledReturnType ~= mangledSignature[i];
             break;
         case 't':
+            i ++;
             currentType.baseType = GrBaseType.TaskType;
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             i ++;
@@ -306,18 +307,15 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
             i ++;
             currentType.baseType = GrBaseType.FunctionType;
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
-
             i ++;
-            if((i + 1) >= mangledSignature.length || mangledSignature[i] != '$')
-                throw new Exception("Invalid mangling format");
+            currentType.mangledReturnType = grUnmangleSubFunction(mangledSignature, i);
             i ++;
-            currentType.mangledReturnType = "$";
-            currentType.mangledReturnType ~= mangledSignature[i];
             break;
         case 't':
             i ++;
             currentType.baseType = GrBaseType.TaskType;
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
+            i ++;
             break;
         default:
             break;
@@ -352,17 +350,22 @@ string grGetPrettyType(GrType variableType) {
     case FunctionType:
         string result = "func(";
         int i;
-        auto parameters = grUnmangleSignature(variableType.mangledType);
-        foreach(parameter; parameters) {
-            result ~= grGetPrettyType(parameter);
-            if((i + 2) <= parameters.length)
+        auto inSignature = grUnmangleSignature(variableType.mangledType);
+        foreach(type; inSignature) {
+            result ~= grGetPrettyType(type);
+            if((i + 2) <= inSignature.length)
                 result ~= ", ";
             i ++;
         }
-        auto retType = grUnmangle(variableType.mangledReturnType);
         result ~= ")";
-        if(retType != GrBaseType.VoidType) {
-            result ~= " " ~ grGetPrettyType(retType);
+        auto outSignature = grUnmangleSignature(variableType.mangledReturnType);
+        if(outSignature.length)
+            result ~= " ";
+        foreach(type; outSignature) {
+            result ~= grGetPrettyType(type);
+            if((i + 2) <= outSignature.length)
+                result ~= ", ";
+            i ++;
         }
         return result;
     case TaskType:

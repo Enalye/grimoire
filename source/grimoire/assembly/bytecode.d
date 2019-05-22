@@ -53,7 +53,7 @@ enum GrOpcode {
 
     SetupIterator,
 
-    LocalStack, Call, AnonymousCall, PrimitiveCall,
+    LocalStack, Call, AnonymousCall, DynamicCall, PrimitiveCall,
     Return, Unwind, Defer,
     Jump, JumpEqual, JumpNotEqual,
 

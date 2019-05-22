@@ -90,6 +90,7 @@ class GrEngine {
 
         /// Extra type compiler information.
         dstring meta() const { return _meta; }
+        dstring meta(dstring newMeta) { return _meta = newMeta; }
     }
 
     /// Default.
@@ -147,6 +148,10 @@ class GrEngine {
         context.pc = *event;
         _contexts.push(context);
         return context;
+    }
+
+    package(grimoire) void pushContext(GrContext context) {
+        _contexts.push(context);
     }
 
     /**
@@ -1049,15 +1054,18 @@ class GrEngine {
 					context.pc = grGetInstructionUnsignedValue(opcode);
 					break;
 				case AnonymousCall:
-                    if((context.stackPos >> 1) >= context.callStackLimit) {
+                    if((context.stackPos >> 1) >= context.callStackLimit)
                         context.doubleCallStackSize();
-                    }
 					context.localsPos += context.callStack[context.stackPos];
 					context.callStack[context.stackPos + 1u] = context.pc + 1u;
 					context.stackPos += 2;
 					context.pc = context.istack[context.istackPos];
 					context.istackPos --;
 					break;
+                case DynamicCall:
+                    _meta = _sconsts[grGetInstructionUnsignedValue(opcode)];
+                    context.astack[context.astackPos].call(context);
+                    break;
 				case PrimitiveCall:
 					primitives[grGetInstructionUnsignedValue(opcode)].callObject.call(context);
 					context.pc ++;

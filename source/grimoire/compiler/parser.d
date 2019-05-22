@@ -2793,7 +2793,7 @@ class GrParser {
                 case TaskType:
                     //We can't know in advance what'll be the signature of the anonymous function we want to convert.
                     //So we add the mangling as a runtime meta value.
-                    addMetaConstant(grMangleFunction([leftType]));
+                    addMetaConstant(grMangleDynamic(leftType));
                     //Then, we delete the mangling, and the cast primitive will do the same.
                     GrType tempType = leftType;
                     tempType.mangledType = grMangleNamedFunction("", []);
@@ -2810,7 +2810,7 @@ class GrParser {
                 case TaskType:
                     //We can't know in advance what'll be the signature of the anonymous function we want to convert.
                     //So we add the mangling as a runtime meta value.
-                    addMetaConstant(grMangleFunction([rightType]));
+                    addMetaConstant(grMangleDynamic(rightType));
                     //Then, we delete the mangling, and the cast primitive will do the same.
                     GrType tempType = rightType;
                     tempType.mangledType = grMangleNamedFunction("", []);
@@ -3505,10 +3505,13 @@ class GrParser {
         int i;
         if(get().type != GrLexemeType.RightParenthesis) {
             for(;;) {
-                if(i >= anonSignature.length)
+                if(type.baseType != GrBaseType.DynamicType && i >= anonSignature.length)
                     logError("Invalid anonymous call", "The number of parameters does not match");
                 GrType subType = parseSubExpression(false, false, true, true);
-                signature ~= convertType(subType, anonSignature[i]);
+                if(type.baseType == GrBaseType.DynamicType)
+                    signature ~= subType;
+                else
+                    signature ~= convertType(subType, anonSignature[i]);
                 if(get().type == GrLexemeType.RightParenthesis)
                     break;
                 advance();
@@ -3532,6 +3535,10 @@ class GrParser {
             addInstruction(GrOpcode.AnonymousCall, 0u);
         else if(type.baseType == GrBaseType.TaskType)
             addInstruction(GrOpcode.AnonymousTask, 0u);
+        else if(type.baseType == GrBaseType.DynamicType) {
+            dstring meta = grMangleFunction(signature);
+            addInstruction(GrOpcode.DynamicCall, registerStringConstant(meta));
+        }
         else
             logError("Invalid anonymous type", "debug");
         return retTypes;
@@ -3578,23 +3585,33 @@ class GrParser {
                 int i;
                 if(get().type != GrLexemeType.RightParenthesis) {
                     for(;;) {
-                        if(i >= anonSignature.length)
+                        if(var.type.baseType != GrBaseType.DynamicType && i >= anonSignature.length)
                             logError("Invalid anonymous call", "The number of parameters does not match");
                         GrType subType = parseSubExpression(false, false, true, true);
                         if(subType.baseType == GrBaseType.TupleType) {
                             auto types = grUnpackTuple(subType);
                             if(types.length) {
-                                for(int y; y < types.length; y ++, i ++) {
-                                    if(i >= anonSignature.length)
-                                        logError("Invalid anonymous call", "The number of parameters does not match");
-                                    signature ~= convertType(types[y], anonSignature[i]);
+                                if(var.type.baseType == GrBaseType.DynamicType) {
+                                    for(int y; y < types.length; y ++, i ++) {
+                                        if(i >= anonSignature.length)
+                                            logError("Invalid anonymous call", "The number of parameters does not match");
+                                        signature ~= convertType(types[y], anonSignature[i]);
+                                    }
+                                }
+                                else {
+                                    for(int y; y < types.length; y ++, i ++) {
+                                        signature ~= types[y];
+                                    }
                                 }
                             }
                             else
                                 logError("Cannot use a void function", "Cannot use a void function as a parameter");
                         }
                         else {
-                            signature ~= convertType(subType, anonSignature[i]);
+                            if(var.type.baseType == GrBaseType.DynamicType)
+                                signature ~= subType;
+                            else
+                                signature ~= convertType(subType, anonSignature[i]);
                             i ++;
                         }
                         if(get().type == GrLexemeType.RightParenthesis)
@@ -3602,7 +3619,7 @@ class GrParser {
                         advance();
                     }
                 }
-                else if(anonSignature.length)
+                else if(var.type.baseType != GrBaseType.DynamicType && anonSignature.length)
                      logError("Invalid anonymous call", "The number of parameters does not match");
                 checkAdvance();
 
@@ -3620,6 +3637,10 @@ class GrParser {
 					addInstruction(GrOpcode.AnonymousCall, 0u);
 				else if(var.type.baseType == GrBaseType.TaskType)
 					addInstruction(GrOpcode.AnonymousTask, 0u);
+                else if(var.type.baseType == GrBaseType.DynamicType) {
+                    dstring meta = grMangleFunction(signature);
+                    addInstruction(GrOpcode.DynamicCall, registerStringConstant(meta));
+                }
 				else
 					logError("Invalid anonymous type", "debug");
 
