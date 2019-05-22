@@ -1721,7 +1721,8 @@ class GrParser {
         
         openDeferrableSection();
 		parseBlock();
-		addKill();
+		if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
+            addKill();
         closeDeferrableSection();
         registerDeferBlocks();
 
@@ -1746,7 +1747,8 @@ class GrParser {
         
         openDeferrableSection();
 		parseBlock();
-		addKill();
+		if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
+            addKill();
         closeDeferrableSection();
         registerDeferBlocks();
 
@@ -1779,7 +1781,8 @@ class GrParser {
 
         openDeferrableSection();
 		parseBlock();
-		addKill();
+		if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
+            addKill();
         closeDeferrableSection();
         registerDeferBlocks();
 
@@ -1914,10 +1917,22 @@ class GrParser {
         openDeferrableSection();
 		parseBlock();
 
-        if(isTask)
-		    addKill();
-        else
-		    addReturn();
+        if(isTask) {
+            if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
+		        addKill();
+        }
+        else {
+            if(!outSignature.length) {
+                if(currentFunction.instructions.length
+                    && currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
+                    addReturn();
+            }
+            else {
+                if(currentFunction.instructions.length
+                    && currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
+                    logError("Missing return", "The function is missing a return at the end of the scope");
+            }
+        }
             
         closeDeferrableSection();
         registerDeferBlocks();
@@ -2082,7 +2097,8 @@ class GrParser {
 	}
 
     void parseKill() {
-		addKill();
+        if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
+		    addKill();
         advance();                    
     }
 
@@ -2640,11 +2656,13 @@ class GrParser {
 
 	void parseReturnStatement() {
 		checkAdvance();
-        if(currentFunction.name == "main") {
-            addKill();
+        if(currentFunction.name == "main" || currentFunction.isTask) {
+            if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
+                addKill();
         }
         else if(!currentFunction.outSignature.length) {
-            addReturn();
+            if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
+                addReturn();
         }
         else {
             auto types = parseExpressionList();
