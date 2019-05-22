@@ -1210,6 +1210,9 @@ class GrParser {
 		while(!isEnd()) {
 			GrLexeme lex = get();
 			switch(lex.type) with(GrLexemeType) {
+            case Semicolon:
+                checkAdvance();
+                break;
             case Struct:
                 skipDeclaration();
                 break;
@@ -1247,6 +1250,9 @@ class GrParser {
         while(!isEnd()) {
 			GrLexeme lex = get();
 			switch(lex.type) with(GrLexemeType) {
+            case Semicolon:
+                checkAdvance();
+                break;
             case Struct:
                 parseStructureDeclaration();
                 break;
@@ -1273,6 +1279,9 @@ class GrParser {
 		while(!isEnd()) {
 			GrLexeme lex = get();
 			switch(lex.type) with(GrLexemeType) {
+            case Semicolon:
+                checkAdvance();
+                break;
             case Struct:
                 skipDeclaration();
                 break;
@@ -1308,6 +1317,9 @@ class GrParser {
 		while(!isEnd()) {
 			GrLexeme lex = get();
 			switch(lex.type) with(GrLexemeType) {
+            case Semicolon:
+                checkAdvance();
+                break;
             case Event:
             case Struct:
 			case Main:
@@ -1410,12 +1422,16 @@ class GrParser {
     void skipExpression() {
         checkAdvance();
         while(!isEnd()) {
-            if(get().type != GrLexemeType.Semicolon) {
-                checkAdvance();
-            }
-            else {
+            switch(get().type) with(GrLexemeType) {
+            case Semicolon:
                 checkAdvance();
                 return;
+            case LeftCurlyBrace:
+                skipBlock();
+                break;
+            default:
+                checkAdvance();
+                break;
             }
         }
     }
