@@ -17,7 +17,7 @@ import grimoire.compiler.mangle;
 enum GrBaseType {
     VoidType, IntType, FloatType, BoolType, StringType,
     ArrayType, ObjectType, DynamicType, FunctionType, TaskType,
-    StructType, UserType, TupleType
+    TupleType, UserType, InternalTupleType
 }
 
 struct GrType {
@@ -58,13 +58,13 @@ const GrType grDynamic = GrType(GrBaseType.DynamicType);
 
 GrType grPackTuple(GrType[] types) {
     const dstring mangledName = grMangleFunction(types);
-    GrType type = GrBaseType.TupleType;
+    GrType type = GrBaseType.InternalTupleType;
     type.mangledType = mangledName;
     return type;
 }
 
 GrType[] grUnpackTuple(GrType type) {
-    if(type.baseType != GrBaseType.TupleType)
+    if(type.baseType != GrBaseType.InternalTupleType)
         throw new Exception("Cannot unpack a not tuple type.");
     return grUnmangleSignature(type.mangledType);
 }
@@ -113,53 +113,53 @@ GrType grGetUserType(dstring name) {
     return type;
 }
 
-class GrStructure {
+class GrTuple {
     GrType[] signature;
     dstring[] fields;
 }
-GrStructure[dstring] structures;
+GrTuple[dstring] tuples;
 
-GrType grAddStructure(dstring name, dstring[] fields, GrType[] signature) {
+GrType grAddTuple(dstring name, dstring[] fields, GrType[] signature) {
     if(fields.length != signature.length)
-        throw new Exception("GrStructure signature mismatch");
-    GrStructure st = new GrStructure;
+        throw new Exception("GrTuple signature mismatch");
+    GrTuple st = new GrTuple;
     st.signature = signature;
     st.fields = fields;
-    structures[name] = st;
+    tuples[name] = st;
 
-    GrType stType = GrBaseType.StructType;
+    GrType stType = GrBaseType.TupleType;
     stType.mangledType = name;
     return stType;
 }
 
-bool grIsStructure(dstring name) {
-    if(name in structures)
+bool grIsTuple(dstring name) {
+    if(name in tuples)
         return true;
     return false;
 }
 
-GrType grGetStructureType(dstring name) {
-    GrType stType = GrBaseType.StructType;
+GrType grGetTupleType(dstring name) {
+    GrType stType = GrBaseType.TupleType;
     stType.mangledType = name;
     return stType;
 }
 
-GrStructure grGetStructure(dstring name) {
-    auto structure = (name in structures);
-    if(structure is null)
-        throw new Exception("Undefined struct \'" ~ to!string(name) ~ "\'");
-    return *structure;
+GrTuple grGetTuple(dstring name) {
+    auto tuple = (name in tuples);
+    if(tuple is null)
+        throw new Exception("Undefined tuple \'" ~ to!string(name) ~ "\'");
+    return *tuple;
 }
 
-void grResolveStructSignature() {
-    foreach(structure; structures) {
-        for(int i; i < structure.signature.length; i ++) {
-            if(structure.signature[i].baseType == GrBaseType.VoidType) {
-                if(grIsStructure(structure.signature[i].mangledType)) {
-                    structure.signature[i].baseType = GrBaseType.StructType;
+void grResolveTupleSignature() {
+    foreach(tuple; tuples) {
+        for(int i; i < tuple.signature.length; i ++) {
+            if(tuple.signature[i].baseType == GrBaseType.VoidType) {
+                if(grIsTuple(tuple.signature[i].mangledType)) {
+                    tuple.signature[i].baseType = GrBaseType.TupleType;
                 }
                 else
-                    throw new Exception("Cannot resolve def field");
+                    throw new Exception("Cannot resolve tuple field");
             }
         }
     }

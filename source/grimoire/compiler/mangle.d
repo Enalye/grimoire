@@ -52,7 +52,7 @@ dstring grMangleFunction(GrType[] signature) {
 		case DynamicType:
 			mangledName ~= "a";
 			break;
-        case StructType:
+        case TupleType:
             mangledName ~= "d(" ~ type.mangledType ~ ")";
             break;
         case UserType:
@@ -68,7 +68,7 @@ dstring grMangleFunction(GrType[] signature) {
                 type.mangledReturnType = "$v";
 			mangledName ~= "t(" ~ type.mangledType ~ ")";
 			break;
-        case TupleType:
+        case InternalTupleType:
             throw new Exception("Trying to mangle a tuple. Tuples should not exist here.");
 		}
 	}
@@ -174,7 +174,7 @@ GrType grUnmangle(dstring mangledSignature) {
             currentType.baseType = GrBaseType.DynamicType;
             break;
         case 'd':
-            currentType.baseType = GrBaseType.StructType;
+            currentType.baseType = GrBaseType.TupleType;
             dstring structName;
             if((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid mangling format");
@@ -270,7 +270,7 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
             currentType.baseType = GrBaseType.DynamicType;
             break;
         case 'd':
-            currentType.baseType = GrBaseType.StructType;
+            currentType.baseType = GrBaseType.TupleType;
             dstring structName;
             if((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid mangling format");
@@ -380,10 +380,10 @@ string grGetPrettyType(GrType variableType) {
         }
         result ~= ")";
         return result;
-    case StructType:
+    case TupleType:
     case UserType:
         return to!string(variableType.mangledType);
-    case TupleType:
+    case InternalTupleType:
         throw new Exception("Trying to display a tuple. Tuples should not exist here.");
     }
 }

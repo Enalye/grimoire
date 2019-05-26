@@ -117,8 +117,8 @@ class GrCall {
                 _nparams ++;
                 _nlocals ~= name;
                 break;
-            case StructType:
-                auto structure = grGetStructure(type.mangledType);
+            case TupleType:
+                auto structure = grGetTuple(type.mangledType);
                 setupLocals(name ~ ".", structure.fields, structure.signature);
                 break;
             case UserType:

@@ -149,11 +149,11 @@ class GrParser {
 
     /// Register a global variable
     GrVariable registerGlobalVariable(dstring name, GrType type) {
-        if(type.baseType == GrBaseType.StructType) {
+        if(type.baseType == GrBaseType.TupleType) {
             //Register each field
-            auto structure = grGetStructure(type.mangledType);
-            for(int i; i < structure.signature.length; i ++) {
-                registerLocalVariable(name ~ "." ~ structure.fields[i], structure.signature[i]);
+            auto tuple = grGetTuple(type.mangledType);
+            for(int i; i < tuple.signature.length; i ++) {
+                registerLocalVariable(name ~ "." ~ tuple.fields[i], tuple.signature[i]);
             }
             //Register the struct itself with the id of the first field
             auto previousVariable = (name in globalVariables);
@@ -196,11 +196,11 @@ class GrParser {
 
     /// Register a local variable
 	GrVariable registerLocalVariable(dstring name, GrType type) {
-        if(type.baseType == GrBaseType.StructType) {
+        if(type.baseType == GrBaseType.TupleType) {
             //Register each field
-            auto structure = grGetStructure(type.mangledType);
-            for(int i; i < structure.signature.length; i ++) {
-                registerLocalVariable(name ~ "." ~ structure.fields[i], structure.signature[i]);
+            auto tuple = grGetTuple(type.mangledType);
+            for(int i; i < tuple.signature.length; i ++) {
+                registerLocalVariable(name ~ "." ~ tuple.fields[i], tuple.signature[i]);
             }
             //Register the struct itself with the id of the first field
             auto previousVariable = (name in currentFunction.localVariables);
@@ -358,11 +358,11 @@ class GrParser {
                 if(func.isTask)
                     addInstruction(GrOpcode.GlobalPop_Object, 0u);
                 break;
-            case StructType:
-                auto structure = grGetStructure(type.mangledType);
-                const auto nbFields = structure.signature.length;
-                for(int i = 1; i <= structure.signature.length; i ++) {
-                    fetchParameter(name ~ "." ~ structure.fields[nbFields - i], structure.signature[nbFields - i]);
+            case TupleType:
+                auto tuple = grGetTuple(type.mangledType);
+                const auto nbFields = tuple.signature.length;
+                for(int i = 1; i <= tuple.signature.length; i ++) {
+                    fetchParameter(name ~ "." ~ tuple.fields[nbFields - i], tuple.signature[nbFields - i]);
                 }
                 break;
             case UserType:
@@ -370,7 +370,7 @@ class GrParser {
                 if(func.isTask)
                     addInstruction(GrOpcode.GlobalPop_UserData, 0u);
                 break;
-            case TupleType:
+            case InternalTupleType:
                 throw new Exception("Tuples should not exist here.");
             }
 
@@ -378,12 +378,12 @@ class GrParser {
             newVar.type = type;
             newVar.isInitialized = true;
             newVar.index = func.localVariableIndex;
-            if(type.baseType != GrBaseType.StructType)
+            if(type.baseType != GrBaseType.TupleType)
                 func.localVariableIndex ++;
             newVar.isGlobal = false;
             newVar.name = name;
             func.localVariables[name] = newVar;
-            if(type.baseType != GrBaseType.StructType)
+            if(type.baseType != GrBaseType.TupleType)
                 addSetInstruction(newVar);
         }
 
@@ -502,7 +502,7 @@ class GrParser {
 
     GrType addCustomBinaryOperator(GrLexemeType lexType, GrType leftType, GrType rightType) {
         GrType resultType = GrBaseType.VoidType;
-        dstring mangledName = grMangleNamedFunction("@op_" ~ grLexer_getTypeDisplay(lexType), [leftType, rightType]);
+        dstring mangledName = grMangleNamedFunction("@op_" ~ grGetPrettyLexemeType(lexType), [leftType, rightType]);
         
         //GrPrimitive check
         if(grIsPrimitiveDeclared(mangledName)) {
@@ -529,7 +529,7 @@ class GrParser {
 
     GrType addCustomUnaryOperator(GrLexemeType lexType, GrType type) {
         GrType resultType = GrBaseType.VoidType;
-        dstring mangledName = grMangleNamedFunction("@op_" ~ grLexer_getTypeDisplay(lexType), [type]);
+        dstring mangledName = grMangleNamedFunction("@op_" ~ grGetPrettyLexemeType(lexType), [type]);
         
         //GrPrimitive check
         if(grIsPrimitiveDeclared(mangledName)) {
@@ -555,7 +555,7 @@ class GrParser {
     }
 
     GrType addBinaryOperator(GrLexemeType lexType, GrType leftType, GrType rightType) {
-        if(leftType.baseType == GrBaseType.TupleType || rightType.baseType == GrBaseType.TupleType)
+        if(leftType.baseType == GrBaseType.InternalTupleType || rightType.baseType == GrBaseType.InternalTupleType)
             logError("Multiple values operation", "Cannot use an operator on an expression list");
         GrType resultType = GrBaseType.VoidType;
 
@@ -580,7 +580,7 @@ class GrParser {
         
         if(resultType.baseType == GrBaseType.VoidType)
             logError("Operator Undefined", "There is no "
-                ~ to!string(grLexer_getTypeDisplay(lexType))
+                ~ to!string(grGetPrettyLexemeType(lexType))
                 ~ " operator defined for \'"
                 ~ grGetPrettyType(leftType)
                 ~ "\' and \'"
@@ -590,7 +590,7 @@ class GrParser {
     }
 
     GrType addUnaryOperator(GrLexemeType lexType, GrType type) {
-        if(type.baseType == GrBaseType.TupleType)
+        if(type.baseType == GrBaseType.InternalTupleType)
             logError("Multiple values operation", "Cannot use an operator on an expression list");
         GrType resultType = GrBaseType.VoidType;
         
@@ -601,7 +601,7 @@ class GrParser {
     
         if(resultType.baseType == GrBaseType.VoidType)
             logError("Operator Undefined", "There is no "
-                ~ to!string(grLexer_getTypeDisplay(lexType))
+                ~ to!string(grGetPrettyLexemeType(lexType))
                 ~ " operator defined for \'"
                 ~ grGetPrettyType(type)
                 ~ "\'");
@@ -832,18 +832,18 @@ class GrParser {
             variable.isInitialized = true;
             variable.isAuto = false;
             variable.type = valueType;
-            if(valueType.baseType == GrBaseType.StructType) {
-                auto structure = grGetStructure(valueType.mangledType);
+            if(valueType.baseType == GrBaseType.TupleType) {
+                auto tuple = grGetTuple(valueType.mangledType);
                 if(variable.isGlobal) {
                     globalFreeVariables ~= variable.index;
-                    for(int i; i < structure.signature.length; i ++) {
-                        registerGlobalVariable(variable.name ~ "." ~ structure.fields[i], structure.signature[i]);
+                    for(int i; i < tuple.signature.length; i ++) {
+                        registerGlobalVariable(variable.name ~ "." ~ tuple.fields[i], tuple.signature[i]);
                     }
                 }
                 else {
                     currentFunction.localFreeVariables ~= variable.index;
-                    for(int i; i < structure.signature.length; i ++) {
-                        registerLocalVariable(variable.name ~ "." ~ structure.fields[i], structure.signature[i]);
+                    for(int i; i < tuple.signature.length; i ++) {
+                        registerLocalVariable(variable.name ~ "." ~ tuple.fields[i], tuple.signature[i]);
                     }
                 }
             }
@@ -881,11 +881,11 @@ class GrParser {
 			case ObjectType:
 				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.index);
 				break;
-            case StructType:
-                auto structure = grGetStructure(variable.type.mangledType);
-                const auto nbFields = structure.signature.length;
+            case TupleType:
+                auto tuple = grGetTuple(variable.type.mangledType);
+                const auto nbFields = tuple.signature.length;
                 for(int i = 1; i <= nbFields; i ++) {
-                    addSetInstruction(getVariable(variable.name ~ "." ~ structure.fields[nbFields - i]), structure.signature[nbFields - i], isGettingValue);
+                    addSetInstruction(getVariable(variable.name ~ "." ~ tuple.fields[nbFields - i]), tuple.signature[nbFields - i], isGettingValue);
                 }
                 break;
             case UserType:
@@ -918,11 +918,11 @@ class GrParser {
 			case ObjectType:
 				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Object : GrOpcode.LocalStore_Object, variable.index);
 				break;
-            case StructType:
-                auto structure = grGetStructure(variable.type.mangledType);
-                const auto nbFields = structure.signature.length;
+            case TupleType:
+                auto tuple = grGetTuple(variable.type.mangledType);
+                const auto nbFields = tuple.signature.length;
                 for(int i = 1; i <= nbFields; i ++) {
-                    addSetInstruction(getVariable(variable.name ~ "." ~ structure.fields[nbFields - i]), structure.signature[nbFields - i]);
+                    addSetInstruction(getVariable(variable.name ~ "." ~ tuple.fields[nbFields - i]), tuple.signature[nbFields - i]);
                 }
                 if(isGettingValue)
                     shiftStackPosition(variable.type, 1);
@@ -990,10 +990,10 @@ class GrParser {
                 else			
 			    	addInstruction(GrOpcode.GlobalLoad_Object, variable.index);
 				break;
-            case StructType:
-                auto structure = grGetStructure(variable.type.mangledType);
-                for(int i; i < structure.signature.length; i ++) {
-                    addGetInstruction(getVariable(variable.name ~ "." ~ structure.fields[i]), structure.signature[i]);
+            case TupleType:
+                auto tuple = grGetTuple(variable.type.mangledType);
+                for(int i; i < tuple.signature.length; i ++) {
+                    addGetInstruction(getVariable(variable.name ~ "." ~ tuple.fields[i]), tuple.signature[i]);
                 }
                 break;
             case UserType:
@@ -1064,10 +1064,10 @@ class GrParser {
                 else			
 				    addInstruction(GrOpcode.LocalLoad_Object, variable.index);
 				break;
-            case StructType:
-                auto structure = grGetStructure(variable.type.mangledType);
-                for(int i; i < structure.signature.length; i ++) {
-                    addGetInstruction(getVariable(variable.name ~ "." ~ structure.fields[i]), structure.signature[i]);
+            case TupleType:
+                auto tuple = grGetTuple(variable.type.mangledType);
+                for(int i; i < tuple.signature.length; i ++) {
+                    addGetInstruction(getVariable(variable.name ~ "." ~ tuple.fields[i]), tuple.signature[i]);
                 }
                 break;
             case UserType:
@@ -1213,7 +1213,7 @@ class GrParser {
             case Semicolon:
                 checkAdvance();
                 break;
-            case Struct:
+            case Tuple:
                 skipDeclaration();
                 break;
 			case Main:
@@ -1246,15 +1246,15 @@ class GrParser {
 	void preParseScript(GrLexer lexer) {
 		lexemes = lexer.lexemes;
 
-        //Structure definitions
+        //Tuple definitions
         while(!isEnd()) {
 			GrLexeme lex = get();
 			switch(lex.type) with(GrLexemeType) {
             case Semicolon:
                 checkAdvance();
                 break;
-            case Struct:
-                parseStructureDeclaration();
+            case Tuple:
+                parseTupleDeclaration();
                 break;
 			case Main:
             case Event:
@@ -1269,7 +1269,7 @@ class GrParser {
 		}
 
         //Resolve all unresolved struct field types
-        grResolveStructSignature();
+        grResolveTupleSignature();
 
         //Then we can resolve primitives' signature
         grResolvePrimitiveSignature();
@@ -1282,7 +1282,7 @@ class GrParser {
             case Semicolon:
                 checkAdvance();
                 break;
-            case Struct:
+            case Tuple:
                 skipDeclaration();
                 break;
 			case Main:
@@ -1321,7 +1321,7 @@ class GrParser {
                 checkAdvance();
                 break;
             case Event:
-            case Struct:
+            case Tuple:
 			case Main:
 				skipDeclaration();
 				break;
@@ -1340,7 +1340,7 @@ class GrParser {
                 parseGlobalDeclaration();
                 break;
             case Identifier:
-                if(grIsStructure(get().svalue) || grIsUserType(get().svalue)) {
+                if(grIsTuple(get().svalue) || grIsUserType(get().svalue)) {
                     parseGlobalDeclaration();
                     break;
                 }
@@ -1352,7 +1352,7 @@ class GrParser {
         endGlobalScope();
 	}
 
-    void parseStructureDeclaration() {
+    void parseTupleDeclaration() {
 		checkAdvance();
         if(get().type != GrLexemeType.Identifier)
             logError("Missing Identifier", "struct must have a name");
@@ -1372,7 +1372,7 @@ class GrParser {
                 break;
             }
 
-            //Lazy check because we can't know about other structures
+            //Lazy check because we can't know about other tuples
             auto fieldType = parseType(false);
             do {
                 checkAdvance();
@@ -1403,7 +1403,7 @@ class GrParser {
                 break;
             }
         }
-        grAddStructure(structName, fields, signature);
+        grAddTuple(structName, fields, signature);
     }
 
     void skipDeclaration() {
@@ -1441,8 +1441,8 @@ class GrParser {
 
         GrLexeme lex = get();
         if(!lex.isType) {
-            if(lex.type == GrLexemeType.Identifier && grIsStructure(lex.svalue)) {
-                currentType.baseType = GrBaseType.StructType;
+            if(lex.type == GrLexemeType.Identifier && grIsTuple(lex.svalue)) {
+                currentType.baseType = GrBaseType.TupleType;
                 currentType.mangledType = lex.svalue;
                 return currentType;
             }
@@ -1530,16 +1530,16 @@ class GrParser {
         case ObjectType:
             addInstruction(GrOpcode.GlobalPop_Object, 0u);
             break;
-        case StructType:
-            auto structure = grGetStructure(type.mangledType);
-            for(int i; i < structure.signature.length; i ++) {
-                addGlobalPop(structure.signature[i]);
+        case TupleType:
+            auto tuple = grGetTuple(type.mangledType);
+            for(int i; i < tuple.signature.length; i ++) {
+                addGlobalPop(tuple.signature[i]);
             }
             break;
         case UserType:
             addInstruction(GrOpcode.GlobalPop_UserData, 0u);
             break;
-        case TupleType:
+        case InternalTupleType:
             throw new Exception("Tuples should not exist here.");
         }
     }
@@ -1572,16 +1572,16 @@ class GrParser {
         case ObjectType:
             addInstruction(GrOpcode.GlobalPush_Object, nbPush);
             break;
-        case StructType:
-            auto structure = grGetStructure(type.mangledType);
-            for(int i = 1; i <= structure.signature.length; i ++) {
-                addGlobalPush(structure.signature[structure.signature.length - i], nbPush);
+        case TupleType:
+            auto tuple = grGetTuple(type.mangledType);
+            for(int i = 1; i <= tuple.signature.length; i ++) {
+                addGlobalPush(tuple.signature[tuple.signature.length - i], nbPush);
             }
             break;
         case UserType:
             addInstruction(GrOpcode.GlobalPush_UserData, nbPush);
             break;
-        case TupleType:
+        case InternalTupleType:
             throw new Exception("Tuples should not exist here.");
         }
     }
@@ -1617,16 +1617,16 @@ class GrParser {
             case ObjectType:
                 typeCounter.nbObjectParams ++;
                 break;
-            case StructType:
-                auto structure = grGetStructure(type.mangledType);
-                for(int i = 1; i <= structure.signature.length; i ++) {
-                    countParameters(typeCounter, structure.signature[structure.signature.length - i]);
+            case TupleType:
+                auto tuple = grGetTuple(type.mangledType);
+                for(int i = 1; i <= tuple.signature.length; i ++) {
+                    countParameters(typeCounter, tuple.signature[tuple.signature.length - i]);
                 }
                 break;
             case UserType:
                 typeCounter.nbUserDataParams ++;
                 break;
-            case TupleType:
+            case InternalTupleType:
                 throw new Exception("Tuples should not exist here.");
             }
         }
@@ -1833,7 +1833,7 @@ class GrParser {
             if(name == "operator") {
                 checkAdvance();
                 if(get().type >= GrLexemeType.Add && get().type <= GrLexemeType.Not) {
-                    name = "@op_" ~ grLexer_getTypeDisplay(get().type);
+                    name = "@op_" ~ grGetPrettyLexemeType(get().type);
                 }
                 else
                     logError("Invalid Operator", "The specified operator must be valid");
@@ -1891,7 +1891,7 @@ class GrParser {
             if(name == "operator") {
                 checkAdvance();
                 if(get().type >= GrLexemeType.Add && get().type <= GrLexemeType.Not) {
-                    name = "@op_" ~ grLexer_getTypeDisplay(get().type);
+                    name = "@op_" ~ grGetPrettyLexemeType(get().type);
                 }
                 else
                     logError("Invalid Operator", "The specified operator must be valid");
@@ -2025,7 +2025,7 @@ class GrParser {
                     goto default;
                 break;
             case Identifier:
-                if(grIsStructure(get().svalue) || grIsUserType(get().svalue))
+                if(grIsTuple(get().svalue) || grIsUserType(get().svalue))
                     parseLocalDeclaration();
                 else
                     goto default;
@@ -2321,8 +2321,8 @@ class GrParser {
             lvalue.isAuto = isAuto;
             lvalues ~= lvalue;
 
-            //A structure does not need to be initialized.
-            if(lvalue.type == GrBaseType.StructType)
+            //A tuple does not need to be initialized.
+            if(lvalue.type == GrBaseType.TupleType)
                 lvalue.isInitialized = true;
             
             checkAdvance();
@@ -2356,8 +2356,8 @@ class GrParser {
             lvalue.isAuto = isAuto;
             lvalues ~= lvalue;
 
-            //A structure does not need to be initialized.
-            if(lvalue.type == GrBaseType.StructType)
+            //A tuple does not need to be initialized.
+            if(lvalue.type == GrBaseType.TupleType)
                 lvalue.isInitialized = true;
             
             checkAdvance();
@@ -2790,7 +2790,7 @@ class GrParser {
             case DynamicType:
             case ArrayType:
                 return dst;
-            case StructType:
+            case TupleType:
             case UserType:
                 if(dst.mangledType == src.mangledType)
                     return dst;
@@ -2800,7 +2800,7 @@ class GrParser {
             }
         }
 
-        if(src.baseType == GrBaseType.TupleType || dst.baseType == GrBaseType.TupleType)
+        if(src.baseType == GrBaseType.InternalTupleType || dst.baseType == GrBaseType.InternalTupleType)
             logError("Convertion error", "Cannot convert multiple values from an expression list");
 		
         //User-defined conversions.
@@ -2935,26 +2935,26 @@ class GrParser {
         advance();
     }
 
-    GrType parseStructureField(GrType type) {
+    GrType parseTupleField(GrType type) {
         dstring fieldName;
         GrType fieldType = GrBaseType.VoidType;
 
         advance();
-        if(type.baseType != GrBaseType.StructType)
+        if(type.baseType != GrBaseType.TupleType)
             logError("Invalid type", "Cannot access struct field");
         if(get().type != GrLexemeType.Identifier)
             logError("Missing struct field", "Missing struct field");
         fieldName = get().svalue;
         advance();
-        auto structure = grGetStructure(type.mangledType);
-        const auto nbFields = structure.fields.length;
-        for(int i = 1; i <= structure.fields.length; i ++) {
-            if(fieldName == structure.fields[nbFields - i]) {
-                fieldType = structure.signature[nbFields - i];
+        auto tuple = grGetTuple(type.mangledType);
+        const auto nbFields = tuple.fields.length;
+        for(int i = 1; i <= tuple.fields.length; i ++) {
+            if(fieldName == tuple.fields[nbFields - i]) {
+                fieldType = tuple.signature[nbFields - i];
                 addGlobalPush(fieldType, 1u);
             }
             else
-                shiftStackPosition(structure.signature[nbFields - i], -1);
+                shiftStackPosition(tuple.signature[nbFields - i], -1);
         }
         addGlobalPop(fieldType);
         return fieldType;
@@ -2979,9 +2979,9 @@ class GrParser {
 
         checkAdvance();
 
-        if(get().type == GrLexemeType.Period) {
+        if(get().type == GrLexemeType.Colon) {
 			auto structVar = getVariable(identifierName);
-            if(structVar is null || structVar.type.baseType != GrBaseType.StructType)
+            if(structVar is null || structVar.type.baseType != GrBaseType.TupleType)
                 logError("Invalid symbol", "You can only access a field from a struct");
             else {
                 do {
@@ -2991,7 +2991,7 @@ class GrParser {
                     identifierName ~= "." ~ get().svalue;
                     checkAdvance();
                 }
-                while(get().type == GrLexemeType.Period);
+                while(get().type == GrLexemeType.Colon);
             }
         }
 
@@ -3011,7 +3011,7 @@ class GrParser {
             const auto tempPos = current;
             checkAdvance();
             while(get().type == GrLexemeType.Identifier
-                || get().type == GrLexemeType.Period) {
+                || get().type == GrLexemeType.Colon) {
                 checkAdvance();
             }
             if(get().type == GrLexemeType.Comma)
@@ -3044,7 +3044,7 @@ class GrParser {
         GrType[] expressionTypes;
         for(;;) {
             GrType type = parseSubExpression(true, false, true, false);
-            if(type.baseType == GrBaseType.TupleType) {
+            if(type.baseType == GrBaseType.InternalTupleType) {
                 auto types = grUnpackTuple(type);
                 if(!types.length)
                     logError("Empty return value", "Cannot return a void value");
@@ -3149,16 +3149,16 @@ class GrParser {
             case UserType:
                 counter.uCount ++;
                 break;
-            case StructType:
-                auto structure = grGetStructure(type.mangledType);
-                const auto nbFields = structure.fields.length;
-                for(int i = 1; i <= structure.fields.length; i ++) {
-                    countSubTypes(structure.signature[nbFields - i], counter);
+            case TupleType:
+                auto tuple = grGetTuple(type.mangledType);
+                const auto nbFields = tuple.fields.length;
+                for(int i = 1; i <= tuple.fields.length; i ++) {
+                    countSubTypes(tuple.signature[nbFields - i], counter);
                 }
                 break;
             case VoidType:
                 throw new Exception("Cannot change the stack for a struct type");
-            case TupleType:
+            case InternalTupleType:
                 throw new Exception("Tuples should not exist here.");
             }
         }
@@ -3275,7 +3275,7 @@ class GrParser {
                     currentType = parseAnonymousCall(typeStack[$ - 1]);
                     //Unpack function value for 1 or less return values
                     //Multiples values are left as a tuple for parseExpressionList()
-                    if(currentType.baseType == GrBaseType.TupleType) {
+                    if(currentType.baseType == GrBaseType.InternalTupleType) {
                         auto types = grUnpackTuple(currentType);
                         if(!types.length)
                             currentType = grVoid;
@@ -3323,8 +3323,8 @@ class GrParser {
                 }
                 hasValue = true;
                 break;
-            case Period:
-                currentType = parseStructureField(currentType);
+            case Colon:
+                currentType = parseTupleField(currentType);
                 lastType = currentType;
                 hadValue = false;
                 hasValue = true;
@@ -3440,7 +3440,7 @@ class GrParser {
 				currentType = parseIdentifier(lvalue, lastType);
                 //Unpack function value for 1 or less return values
                 //Multiples values are left as a tuple for parseExpressionList()
-                if(currentType.baseType == GrBaseType.TupleType) {
+                if(currentType.baseType == GrBaseType.InternalTupleType) {
                     auto types = grUnpackTuple(currentType);
                     if(!types.length)
                         currentType = grVoid;
@@ -3587,9 +3587,9 @@ class GrParser {
 
 		advance();
 
-        if(get().type == GrLexemeType.Period) {
+        if(get().type == GrLexemeType.Colon) {
 			auto structVar = getVariable(identifier.svalue);
-            if(structVar is null || structVar.type.baseType != GrBaseType.StructType)
+            if(structVar is null || structVar.type.baseType != GrBaseType.TupleType)
                 logError("Invalid symbol", "You can only access a field from a struct");
             else {
                 do {
@@ -3599,7 +3599,7 @@ class GrParser {
                     identifierName ~= "." ~ get().svalue;
                     checkAdvance();
                 }
-                while(get().type == GrLexemeType.Period);
+                while(get().type == GrLexemeType.Colon);
             }
         }
 
@@ -3622,7 +3622,7 @@ class GrParser {
                         if(var.type.baseType != GrBaseType.DynamicType && i >= anonSignature.length)
                             logError("Invalid anonymous call", "The number of parameters does not match");
                         GrType subType = parseSubExpression(false, false, true, true);
-                        if(subType.baseType == GrBaseType.TupleType) {
+                        if(subType.baseType == GrBaseType.InternalTupleType) {
                             auto types = grUnpackTuple(subType);
                             if(types.length) {
                                 if(var.type.baseType == GrBaseType.DynamicType) {
@@ -3691,7 +3691,7 @@ class GrParser {
                 if(get().type != GrLexemeType.RightParenthesis) {
                     for(;;) {
                         auto type = parseSubExpression(false, false, true, true);
-                        if(type.baseType == GrBaseType.TupleType) {
+                        if(type.baseType == GrBaseType.InternalTupleType) {
                             auto types = grUnpackTuple(type);
                             if(types.length)
                                 signature ~= types;

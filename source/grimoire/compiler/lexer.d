@@ -30,7 +30,7 @@ enum GrLexemeType {
 	And, Or, Xor, Not,
 	Increment, Decrement,
 	Identifier, Integer, Float, Boolean, String,
-	Main, Event, Struct,
+	Main, Event, Struct, Tuple,
 	VoidType, IntType, FloatType, BoolType, StringType, ArrayType, ObjectType, DynamicType, FunctionType, TaskType, AutoType,
 	If, Unless, Else, While, Do, For, Loop, Return, Kill, Yield, Break, Continue
 }
@@ -530,6 +530,9 @@ class GrLexer {
             case "struct":
 				lex.type = GrLexemeType.Struct;
 				break;
+            case "tuple":
+				lex.type = GrLexemeType.Tuple;
+				break;
 			case "if":
 				lex.type = GrLexemeType.If;
 				break;
@@ -700,7 +703,7 @@ class GrLexer {
 	}
 }
 
-dstring grLexer_getTypeDisplay(GrLexemeType operator) {
+dstring grGetPrettyLexemeType(GrLexemeType operator) {
     dstring[] lexemeTypeStrTable = [
         "[", "]", "(", ")", "{", "}",
         ".", ";", ":", ",", "&", "as", "is", "try", "catch", "raise", "defer",
@@ -712,7 +715,7 @@ dstring grLexer_getTypeDisplay(GrLexemeType operator) {
         "and", "or", "xor", "not",
         "++", "--",
         "identifier", "const_int", "const_float", "const_bool", "const_str",
-        "main", "event", "def",
+        "main", "event", "struct", "tuple",
         "void", "int", "float", "bool", "string", "array", "object", "var", "func", "task", "let",
         "if", "else", "while", "do", "for", "loop", "return", "yield", "break", "continue"
     ];
