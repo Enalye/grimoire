@@ -30,8 +30,8 @@ enum GrLexemeType {
 	And, Or, Xor, Not,
 	Increment, Decrement,
 	Identifier, Integer, Float, Boolean, String,
-	Main, Event, Struct, Tuple,
-	VoidType, IntType, FloatType, BoolType, StringType, ArrayType, ObjectType, DynamicType, FunctionType, TaskType, AutoType,
+	Main, Event, Def, Tuple, New,
+	VoidType, IntType, FloatType, BoolType, StringType, ArrayType, DynamicType, FunctionType, TaskType, AutoType,
 	If, Unless, Else, While, Do, For, Loop, Return, Kill, Yield, Break, Continue
 }
 
@@ -353,6 +353,9 @@ class GrLexer {
 			case ',':
 				lex.type = GrLexemeType.Comma;
 				break;
+            case '@':
+                lex.type = GrLexemeType.New;
+                break;
             case '&':
                 lex.type = GrLexemeType.Pointer;
                 break;
@@ -527,8 +530,8 @@ class GrLexer {
             case "event":
 				lex.type = GrLexemeType.Event;
 				break;
-            case "struct":
-				lex.type = GrLexemeType.Struct;
+            case "def":
+				lex.type = GrLexemeType.Def;
 				break;
             case "tuple":
 				lex.type = GrLexemeType.Tuple;
@@ -619,10 +622,6 @@ class GrLexer {
 				lex.type = GrLexemeType.ArrayType;
 				lex.isType = true;
 				break;
-			case "object":
-				lex.type = GrLexemeType.ObjectType;
-				lex.isType = true;
-				break;
 			case "var":
 				lex.type = GrLexemeType.DynamicType;
 				lex.isType = true;
@@ -706,7 +705,7 @@ class GrLexer {
 dstring grGetPrettyLexemeType(GrLexemeType operator) {
     dstring[] lexemeTypeStrTable = [
         "[", "]", "(", ")", "{", "}",
-        ".", ";", ":", ",", "&", "as", "is", "try", "catch", "raise", "defer",
+        ".", ";", ":", ",", "@", "&", "as", "is", "try", "catch", "raise", "defer",
         "=",
         "+=", "-=", "*=", "/=", "~=", "%=", "**=",
         "+", "-",
@@ -715,8 +714,8 @@ dstring grGetPrettyLexemeType(GrLexemeType operator) {
         "and", "or", "xor", "not",
         "++", "--",
         "identifier", "const_int", "const_float", "const_bool", "const_str",
-        "main", "event", "struct", "tuple",
-        "void", "int", "float", "bool", "string", "array", "object", "var", "func", "task", "let",
+        "main", "event", "def", "tuple",
+        "void", "int", "float", "bool", "string", "array", "var", "func", "task", "let",
         "if", "else", "while", "do", "for", "loop", "return", "yield", "break", "continue"
     ];
     return lexemeTypeStrTable[operator];

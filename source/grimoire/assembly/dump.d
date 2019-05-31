@@ -16,21 +16,25 @@ import grimoire.assembly.bytecode;
 
 private string[] instructions = [
     "nop", "raise", "try", "catch",
-    "kill", "yield", "task", "anon_task",
-    "shift.i", "shift.f", "shift.s", "shift.n", "shift.a", "shift.o", "shift.u",
+    "kill", "yield", "task", "anon_task", "new",
+    "shift.i", "shift.f", "shift.s", "shift.n", "shift.a", "shift.u",
     
-    "lstore.i", "lstore.f", "lstore.s", "lstore.n", "lstore.a", "lstore.r", "lstore.o", "lstore.u",
-    "lstore2.i", "lstore2.f", "lstore2.s", "lstore2.n", "lstore2.a", "lstore2.r", "lstore2.o", "lstore2.u",
-    "lload.i", "lload.f", "lload.s", "lload.n", "lload.a", "lload.r", "lload.o", "lload.u",
+    "lstore.i", "lstore.f", "lstore.s", "lstore.n", "lstore.a", "lstore.r", "lstore.u",
+    "lstore2.i", "lstore2.f", "lstore2.s", "lstore2.n", "lstore2.a", "lstore2.r", "lstore2.u",
+    "lload.i", "lload.f", "lload.s", "lload.n", "lload.a", "lload.r", "lload.u",
 
-    "gstore.i", "gstore.f", "gstore.s", "gstore.n", "gstore.a", "gstore.r", "gstore.o", "gstore.u",
-    "gstore2.i", "gstore2.f", "gstore2.s", "gstore2.n", "gstore2.a", "gstore2.r", "gstore2.o", "gstore2.u",
-    "gload.i", "gload.f", "gload.s", "gload.n", "gload.a", "gload.r", "gload.o", "gload.u",
+    "gstore.i", "gstore.f", "gstore.s", "gstore.n", "gstore.a", "gstore.r", "gstore.u",
+    "gstore2.i", "gstore2.f", "gstore2.s", "gstore2.n", "gstore2.a", "gstore2.r", "gstore2.u",
+    "gload.i", "gload.f", "gload.s", "gload.n", "gload.a", "gload.r", "gload.u",
     
+    "field",
+    "fstore.i", "fstore.f", "fstore.s", "fstore.n", "fstore.a", "fstore.r", "fstore.u",
+    "fload.i", "fload.f", "fload.s", "fload.n", "fload.a", "fload.r", "fload.u",
+
     "const.i", "const.f", "const.b", "const.s", "meta",
     
-    "gpush.i", "gpush.f", "gpush.s", "gpush.n", "gpush.a", "gpush.o", "gpush.u",
-    "gpop.i", "gpop.f", "gpop.s", "gpop.n", "gpop.a", "gpop.o", "gpop.u",
+    "gpush.i", "gpush.f", "gpush.s", "gpush.n", "gpush.a", "gpush.u",
+    "gpop.i", "gpop.f", "gpop.s", "gpop.n", "gpop.a", "gpop.u",
 
     "eq.i", "eq.f", "eq.s", "eq.a",
     "neq.i", "neq.f", "neq.s", "neq.a",
@@ -77,9 +81,11 @@ string grDump(GrBytecode bytecode) {
             (op >= GrOpcode.GlobalStore_Int && op <= GrOpcode.GlobalLoad_UserData) ||
             (op >= GrOpcode.GlobalPush_Int && op <= GrOpcode.GlobalPush_UserData) ||
             (op >= GrOpcode.LocalStack && op <= GrOpcode.Call) ||
-            (op == GrOpcode.Build_Array)
+            (op == GrOpcode.Build_Array || op == GrOpcode.New || op == GrOpcode.GetField)
             )
             line ~= to!string(grGetInstructionUnsignedValue(opcode));
+        else if(op >= GrOpcode.FieldStore_Int && op <= GrOpcode.FieldLoad_UserData)
+            line ~= to!string(grGetInstructionSignedValue(opcode));
         else if(op >= GrOpcode.ShiftStack_Int && op <= GrOpcode.ShiftStack_UserData)
             line ~= to!string(grGetInstructionSignedValue(opcode));
         else if(op == GrOpcode.PrimitiveCall)

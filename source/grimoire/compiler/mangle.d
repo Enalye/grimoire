@@ -46,26 +46,25 @@ dstring grMangleFunction(GrType[] signature) {
 		case ArrayType:
 			mangledName ~= "n";
 			break;
-		case ObjectType:
-			mangledName ~= "o";
-			break;
 		case DynamicType:
-			mangledName ~= "a";
+			mangledName ~= "d";
 			break;
         case TupleType:
-            mangledName ~= "d(" ~ type.mangledType ~ ")";
+            mangledName ~= "l(" ~ type.mangledType ~ ")";
             break;
+        case StructType:
+			mangledName ~= "p(" ~ type.mangledType ~ ")";
+			break;
+        /*case ChanType:
+			mangledName ~= "c";
+			break;*/
         case UserType:
             mangledName ~= "u(" ~ type.mangledType ~ ")";
             break;
 		case FunctionType:
-            if(type.mangledReturnType.length == 0)
-                type.mangledReturnType = "$v";
 			mangledName ~= "f(" ~ type.mangledType ~ ")(" ~ type.mangledReturnType ~ ")";
 			break;
 		case TaskType:
-            if(type.mangledReturnType.length == 0)
-                type.mangledReturnType = "$v";
 			mangledName ~= "t(" ~ type.mangledType ~ ")";
 			break;
         case InternalTupleType:
@@ -167,14 +166,28 @@ GrType grUnmangle(dstring mangledSignature) {
         case 'n':
             currentType.baseType = GrBaseType.ArrayType;
             break;
-        case 'o':
-            currentType.baseType = GrBaseType.ObjectType;
-            break;
-        case 'a':
+        case 'd':
             currentType.baseType = GrBaseType.DynamicType;
             break;
-        case 'd':
+        case 'l':
             currentType.baseType = GrBaseType.TupleType;
+            dstring tupleName;
+            if((i + 2) >= mangledSignature.length)
+                throw new Exception("Invalid mangling format");
+            i ++;
+            if(mangledSignature[i] != '(')
+                throw new Exception("Invalid mangling format");
+            i ++;
+            while(mangledSignature[i] != ')') {
+                tupleName ~= mangledSignature[i];
+                i ++;
+                if(i >= mangledSignature.length)
+                    throw new Exception("Invalid mangling format");
+            }
+            currentType.mangledType = tupleName;
+            break;
+        case 'p':
+            currentType.baseType = GrBaseType.StructType;
             dstring structName;
             if((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid mangling format");
@@ -263,14 +276,28 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
         case 'n':
             currentType.baseType = GrBaseType.ArrayType;
             break;
-        case 'o':
-            currentType.baseType = GrBaseType.ObjectType;
-            break;
-        case 'a':
+        case 'd':
             currentType.baseType = GrBaseType.DynamicType;
             break;
-        case 'd':
+        case 'l':
             currentType.baseType = GrBaseType.TupleType;
+            dstring tupleName;
+            if((i + 2) >= mangledSignature.length)
+                throw new Exception("Invalid mangling format");
+            i ++;
+            if(mangledSignature[i] != '(')
+                throw new Exception("Invalid mangling format");
+            i ++;
+            while(mangledSignature[i] != ')') {
+                tupleName ~= mangledSignature[i];
+                i ++;
+                if(i >= mangledSignature.length)
+                    throw new Exception("Invalid mangling format");
+            }
+            currentType.mangledType = tupleName;
+            break;
+        case 'p':
+            currentType.baseType = GrBaseType.StructType;
             dstring structName;
             if((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid mangling format");
@@ -343,8 +370,6 @@ string grGetPrettyType(GrType variableType) {
         return "string";
     case ArrayType:
         return "array";
-    case ObjectType:
-        return "object";
     case DynamicType:
         return "var";
     case FunctionType:
@@ -381,6 +406,7 @@ string grGetPrettyType(GrType variableType) {
         result ~= ")";
         return result;
     case TupleType:
+    case StructType:
     case UserType:
         return to!string(variableType.mangledType);
     case InternalTupleType:

@@ -11,6 +11,7 @@ module grimoire.runtime.context;
 import grimoire.runtime.engine;
 import grimoire.runtime.dynamic;
 import grimoire.runtime.array;
+import grimoire.runtime.object;
 
 /**
     Coroutines are contexts that hold local data.
@@ -33,7 +34,7 @@ final class GrContext {
     dstring[] slocals;
     GrDynamicValue[][] nlocals;
     GrDynamicValue[] alocals;
-    void*[] olocals;
+    GrObjectValue[] olocals;
     void*[] ulocals;
 
     /// Callstack
@@ -47,7 +48,7 @@ final class GrContext {
     dstring[] sstack;
     GrDynamicValue[][] nstack;
     GrDynamicValue[] astack;
-    void*[] ostack;
+    GrObjectValue[] ostack;
     void*[] ustack;
 
     /// Operation pointer.
@@ -98,7 +99,7 @@ final class GrContext {
         sstack = new dstring[stackLimit];
         nstack = new GrDynamicValue[][stackLimit];
         astack = new GrDynamicValue[stackLimit];
-        ostack = new void*[stackLimit];
+        ostack = new GrObjectValue[stackLimit];
         ustack = new void*[stackLimit];
     }
 
@@ -113,7 +114,7 @@ final class GrContext {
         slocals = new dstring[localsLimit];
         nlocals = new GrDynamicValue[][localsLimit];
         alocals = new GrDynamicValue[localsLimit];
-        olocals = new void*[localsLimit];
+        olocals = new GrObjectValue[localsLimit];
         ulocals = new void*[localsLimit];
     }
 

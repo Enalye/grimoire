@@ -16,13 +16,14 @@ import grimoire.compiler.mangle;
 
 enum GrBaseType {
     VoidType, IntType, FloatType, BoolType, StringType,
-    ArrayType, ObjectType, DynamicType, FunctionType, TaskType,
-    TupleType, UserType, InternalTupleType
+    ArrayType, DynamicType, FunctionType, TaskType,
+    StructType, TupleType, UserType, InternalTupleType
 }
 
 struct GrType {
     GrBaseType baseType;
     dstring mangledType, mangledReturnType;
+    bool isField;
 
     this(GrBaseType newBaseType) {
         baseType = newBaseType;
@@ -52,7 +53,6 @@ const GrType grFloat = GrType(GrBaseType.FloatType);
 const GrType grBool = GrType(GrBaseType.BoolType);
 const GrType grString = GrType(GrBaseType.StringType);
 const GrType grArray = GrType(GrBaseType.ArrayType);
-const GrType grObject = GrType(GrBaseType.ObjectType);
 const GrType grDynamic = GrType(GrBaseType.DynamicType);
 
 
@@ -72,7 +72,7 @@ GrType[] grUnpackTuple(GrType type) {
 class GrVariable {
 	GrType type;
 	uint index;
-	bool isGlobal, isInitialized, isAuto, isConstant;
+	bool isGlobal, isField, isInitialized, isAuto, isConstant;
     dstring name;
 }
 
@@ -160,6 +160,58 @@ void grResolveTupleSignature() {
                 }
                 else
                     throw new Exception("Cannot resolve tuple field");
+            }
+        }
+    }
+}
+
+class GrStruct {
+    GrType[] signature;
+    dstring[] fields;
+}
+GrStruct[dstring] structures;
+
+GrType grAddStruct(dstring name, dstring[] fields, GrType[] signature) {
+    if(fields.length != signature.length)
+        throw new Exception("GrStruct signature mismatch");
+    GrStruct st = new GrStruct;
+    st.signature = signature;
+    st.fields = fields;
+    structures[name] = st;
+
+    GrType stType = GrBaseType.StructType;
+    stType.mangledType = name;
+    return stType;
+}
+
+bool grIsStruct(dstring name) {
+    if(name in structures)
+        return true;
+    return false;
+}
+
+GrType grGetStructType(dstring name) {
+    GrType stType = GrBaseType.StructType;
+    stType.mangledType = name;
+    return stType;
+}
+
+GrStruct grGetStruct(dstring name) {
+    auto structure = (name in structures);
+    if(structure is null)
+        throw new Exception("Undefined structure \'" ~ to!string(name) ~ "\'");
+    return *structure;
+}
+
+void grResolveStructSignature() {
+    foreach(structure; structures) {
+        for(int i; i < structure.signature.length; i ++) {
+            if(structure.signature[i].baseType == GrBaseType.VoidType) {
+                if(grIsStruct(structure.signature[i].mangledType)) {
+                    structure.signature[i].baseType = GrBaseType.StructType;
+                }
+                else
+                    throw new Exception("Cannot resolve structure field");
             }
         }
     }

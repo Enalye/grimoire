@@ -20,6 +20,7 @@ import grimoire.assembly;
 import grimoire.runtime.context;
 import grimoire.runtime.dynamic;
 import grimoire.runtime.array;
+import grimoire.runtime.object;
 
 /** Grimoire virtual machine */
 class GrEngine {
@@ -43,7 +44,7 @@ class GrEngine {
         dstring* _sglobals;
         GrDynamicValue[]* _nglobals;
         GrDynamicValue* _aglobals;
-        void** _oglobals;
+        GrObjectValue* _oglobals;
         void** _uglobals;
 
 
@@ -59,7 +60,7 @@ class GrEngine {
         /// Global dynamic value stack.
         GrDynamicValue[] _aglobalStack;
         /// Global object stack.
-        void*[] _oglobalStack;
+        GrObjectValue[] _oglobalStack;
         /// Global user data stack.
         void*[] _uglobalStack;
 
@@ -124,7 +125,7 @@ class GrEngine {
         _sglobals = (new dstring[_globalsLimit]).ptr;
         _nglobals = (new GrDynamicValue[][_globalsLimit]).ptr;
         _aglobals = (new GrDynamicValue[_globalsLimit]).ptr;
-        _oglobals = (new void*[_globalsLimit]).ptr;
+        _oglobals = (new GrObjectValue[_globalsLimit]).ptr;
         _uglobals = (new void*[_globalsLimit]).ptr;
     }
 
@@ -329,6 +330,11 @@ class GrEngine {
 				case Yield:
 					context.pc ++;
 					continue contextsLabel;
+                case New:
+                    context.ustackPos ++;
+					context.ustack[context.ustackPos] = cast(void*)new GrObjectValue(grGetInstructionUnsignedValue(opcode));
+					context.pc ++;
+                    break;
 				case ShiftStack_Int:
 					context.istackPos += grGetInstructionSignedValue(opcode);
 					context.pc ++;
@@ -347,10 +353,6 @@ class GrEngine {
 					break;
 				case ShiftStack_Any:
 					context.astackPos += grGetInstructionSignedValue(opcode);
-					context.pc ++;
-					break;
-				case ShiftStack_Object:
-					context.ostackPos += grGetInstructionSignedValue(opcode);
 					context.pc ++;
 					break;
                 case ShiftStack_UserData:
@@ -387,11 +389,6 @@ class GrEngine {
                     context.astackPos -= 2;
                     context.pc ++;
                     break;
-				case LocalStore_Object:
-					context.olocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
-                    context.ostackPos --;	
-					context.pc ++;
-					break;
                 case LocalStore_UserData:
 					context.ulocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.ustack[context.ustackPos];
                     context.ustackPos --;	
@@ -422,10 +419,6 @@ class GrEngine {
                     context.astack[context.astackPos].setRef(context, context.astack[context.astackPos + 1]);
                     context.pc ++;
                     break;
-				case LocalStore2_Object:
-					context.olocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
-					context.pc ++;
-					break;
                 case LocalStore2_UserData:
 					context.ulocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.ustack[context.ustackPos];
 					context.pc ++;
@@ -460,11 +453,6 @@ class GrEngine {
                     value.setRefArray(&context.nlocals[context.localsPos + grGetInstructionUnsignedValue(opcode)]);
                     context.astackPos ++;
                     context.astack[context.astackPos] = value;			
-					context.pc ++;
-					break;
-				case LocalLoad_Object:
-                    context.ostackPos ++;
-					context.ostack[context.ostackPos] = context.olocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
                 case LocalLoad_UserData:
@@ -502,11 +490,6 @@ class GrEngine {
                     context.astackPos -= 2;
                     context.pc ++;
                     break;
-				case GlobalStore_Object:
-					_oglobals[grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
-                    context.ostackPos --;	
-					context.pc ++;
-					break;
                 case GlobalStore_UserData:
 					_uglobals[grGetInstructionUnsignedValue(opcode)] = context.ustack[context.ustackPos];
                     context.ustackPos --;	
@@ -537,10 +520,6 @@ class GrEngine {
                     context.astack[context.astackPos].setRef(context, context.astack[context.astackPos + 1]);
                     context.pc ++;
                     break;
-				case GlobalStore2_Object:
-					_oglobals[grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
-					context.pc ++;
-					break;
                 case GlobalStore2_UserData:
 					_uglobals[grGetInstructionUnsignedValue(opcode)] = context.ustack[context.ustackPos];
 					context.pc ++;
@@ -577,16 +556,27 @@ class GrEngine {
                     context.astack[context.astackPos] = value;			
 					context.pc ++;
 					break;
-				case GlobalLoad_Object:
-                    context.ostackPos ++;
-					context.ostack[context.ostackPos] = _oglobals[grGetInstructionUnsignedValue(opcode)];
-					context.pc ++;
-					break;
                 case GlobalLoad_UserData:
                     context.ustackPos ++;
 					context.ustack[context.ustackPos] = _uglobals[grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
+                case GetField:
+					context.ustack[context.ustackPos] = cast(void*)((cast(GrObjectValue)context.ustack[context.ustackPos]).fields[grGetInstructionUnsignedValue(opcode)]);
+					context.pc ++;
+                    break;
+                case FieldStore_Int:
+                    (cast(GrFieldValue)context.ustack[context.ustackPos]).ivalue = context.istack[context.istackPos];
+                    context.istackPos += grGetInstructionSignedValue(opcode);
+                    context.ustackPos --;
+					context.pc ++;
+                    break;
+                case FieldLoad_Int:
+                    context.istackPos ++;
+					context.istack[context.istackPos] = (cast(GrFieldValue)context.ustack[context.ustackPos]).ivalue;
+                    context.ustackPos += grGetInstructionSignedValue(opcode);
+					context.pc ++;
+                    break;
 				case Const_Int:
                     context.istackPos ++;
 					context.istack[context.istackPos] = _iconsts[grGetInstructionUnsignedValue(opcode)];
@@ -646,13 +636,6 @@ class GrEngine {
 					context.astackPos -= nbParams;
 					context.pc ++;
 					break;
-				case GlobalPush_Object:
-					uint nbParams = grGetInstructionUnsignedValue(opcode);
-					for(uint i = 1u; i <= nbParams; i++)
-						_oglobalStack ~= context.ostack[(context.ostackPos - nbParams) + i];
-					context.ostackPos -= nbParams;
-					context.pc ++;
-					break;
                 case GlobalPush_UserData:
 					uint nbParams = grGetInstructionUnsignedValue(opcode);
 					for(uint i = 1u; i <= nbParams; i++)
@@ -688,12 +671,6 @@ class GrEngine {
                     context.astackPos ++;
 					context.astack[context.astackPos] = _aglobalStack[$ - 1];
 					_aglobalStack.length --;
-					context.pc ++;
-					break;
-				case GlobalPop_Object:
-                    context.ostackPos ++;
-					context.ostack[context.ostackPos] = _oglobalStack[$ - 1];
-					_oglobalStack.length --;
 					context.pc ++;
 					break;
                 case GlobalPop_UserData:
