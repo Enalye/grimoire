@@ -949,6 +949,20 @@ class GrParser {
 	}
 
 	void addGetInstruction(GrVariable variable, GrType expectedType = GrType(GrBaseType.VoidType), bool allowOptimization = true) {
+        /*
+            BUG: This shouldn't be optimized as it will crash the VM.
+            "main {
+                bool a = true;
+                loop {
+                    if(a) {}
+                    yield
+                }
+            }"
+            To avoid that, we disallow optimization until this is fixed.
+        */
+        allowOptimization = false;
+        //--------
+        
         if(variable.isField) {
             logError("Internal error", "Attempt to get field value");
         }
