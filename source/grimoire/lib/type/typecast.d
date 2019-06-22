@@ -138,12 +138,6 @@ private void typecast_n2d(GrCall call) {
 	call.setDynamic(dyn);
 }
 
-private void typecast_n2d(GrCall call) {
-    GrDynamicValue dyn;
-    dyn.setArray(call.getArray("value"));
-	call.setDynamic(dyn);
-}
-
 private void typecast_f2d(GrCall call) {
     GrDynamicValue dyn;
     dyn.setFunction(call.getInt("value"), call.meta);
