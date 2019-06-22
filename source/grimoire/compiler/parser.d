@@ -962,7 +962,7 @@ class GrParser {
         */
         allowOptimization = false;
         //--------
-        
+
         if(variable.isField) {
             logError("Internal error", "Attempt to get field value");
         }
@@ -3912,7 +3912,7 @@ class GrParser {
             //If it's an assignement, we want the GET instruction to be after the assignement, not there.
             const auto nextLexeme = get();
             if(nextLexeme.type == GrLexemeType.LeftBracket) {
-                addInstruction(GrOpcode.LocalLoad_Ref);
+                addInstruction(GrOpcode.LocalLoad_Ref, variable.index);
                 returnType = GrType(GrBaseType.DynamicType);
             }
             else if(nextLexeme.type != GrLexemeType.Assign)
