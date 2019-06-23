@@ -1156,8 +1156,8 @@ class GrParser {
                     addInstruction(GrOpcode.GlobalPush_Array, func.nbArrayParameters);
                 if(func.nbAnyParameters > 0)
                     addInstruction(GrOpcode.GlobalPush_Any, func.nbAnyParameters);
-                if(func.nbObjectParameters > 0)
-                    addInstruction(GrOpcode.GlobalPush_UserData, func.nbObjectParameters);
+                if(func.nbUserDataParameters > 0)
+                    addInstruction(GrOpcode.GlobalPush_UserData, func.nbUserDataParameters);
             }
 
             call.position = cast(uint)currentFunction.instructions.length;
