@@ -35,6 +35,7 @@ import std.parallelism;
 import std.range;
 
 class DynamicIndexedArray(T) {
+	alias InternalIndex = size_t;
 	private {
         uint _capacity = 32u;
         uint _dataTop = 0u;
@@ -115,7 +116,7 @@ class DynamicIndexedArray(T) {
 		_removeTop = 0u;
 	}
 
-	void markInternalForRemoval(uint index) {
+	void markInternalForRemoval(InternalIndex index) {
 		synchronized {
 			_removeTable[_removeTop] = _reverseTranslationTable[index];
 			_removeTop ++;
@@ -161,7 +162,7 @@ class DynamicIndexedArray(T) {
 		return result;
 	}
 
-	int opApply(int delegate(ref T, uint) dlg) {
+	int opApply(int delegate(ref T, InternalIndex) dlg) {
 		int result;
 
 		foreach(i; 0u .. _dataTop) {
@@ -174,7 +175,7 @@ class DynamicIndexedArray(T) {
 		return result;
 	}
 
-	int opApply(int delegate(const ref T, uint) dlg) const {
+	int opApply(int delegate(const ref T, InternalIndex) dlg) const {
 		int result;
 
 		foreach(i; 0u .. _dataTop) {

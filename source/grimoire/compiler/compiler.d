@@ -49,7 +49,7 @@ private {
         //Start with the global initializations
         auto globalScope = "@global"d in parser.functions;
         if(globalScope) {
-            foreach(uint i, instruction; globalScope.instructions)
+            foreach(size_t i, instruction; globalScope.instructions)
                 opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint)instruction.opcode, instruction.value);
             lastOpcodeCount += cast(uint)globalScope.instructions.length;
             parser.functions.remove("@global"d);
@@ -61,7 +61,7 @@ private {
 			throw new Exception("No main declared.");
 
         mainFunc.position = lastOpcodeCount;
-		foreach(uint i, instruction; mainFunc.instructions)
+		foreach(size_t i, instruction; mainFunc.instructions)
 			opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint)instruction.opcode, instruction.value);
         foreach(call; mainFunc.functionCalls)
 			call.position += lastOpcodeCount;
@@ -71,7 +71,7 @@ private {
 		//Every other functions.
         uint[dstring] events;
         foreach(dstring mangledName, GrFunction func; parser.events) {
-			foreach(uint i, instruction; func.instructions)
+			foreach(size_t i, instruction; func.instructions)
 				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint)instruction.opcode, instruction.value);
 			foreach(call; func.functionCalls)
 				call.position += lastOpcodeCount;
@@ -80,7 +80,7 @@ private {
             events[mangledName] = func.position;
 		}
 		foreach(func; parser.anonymousFunctions) {
-			foreach(uint i, instruction; func.instructions)
+			foreach(size_t i, instruction; func.instructions)
 				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint)instruction.opcode, instruction.value);
 			foreach(call; func.functionCalls)
 				call.position += lastOpcodeCount;
@@ -88,7 +88,7 @@ private {
 			lastOpcodeCount += func.instructions.length;
 		}
 		foreach(func; parser.functions) {
-			foreach(uint i, instruction; func.instructions)
+			foreach(size_t i, instruction; func.instructions)
 				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint)instruction.opcode, instruction.value);
 			foreach(call; func.functionCalls)
 				call.position += lastOpcodeCount;

@@ -105,9 +105,9 @@ class GrParser {
 
     /// Register an integral value and returns its id.
 	uint registerIntConstant(int value) {
-		foreach(uint index, int iconst; iconsts) {
+		foreach(size_t index, int iconst; iconsts) {
 			if(iconst == value)
-				return index;
+				return cast(uint)index;
 		}
 		iconsts ~= value;
 		return cast(uint)iconsts.length - 1;
@@ -115,9 +115,9 @@ class GrParser {
 
     /// Register an floating point value and returns its id.
 	uint registerFloatConstant(float value) {
-		foreach(uint index, float fconst; fconsts) {
+		foreach(size_t index, float fconst; fconsts) {
 			if(fconst == value)
-				return index;
+				return cast(uint)index;
 		}
 		fconsts ~= value;
 		return cast(uint)fconsts.length - 1;
@@ -125,9 +125,9 @@ class GrParser {
 
     /// Register an string value and returns its id.
 	uint registerStringConstant(dstring value) {
-		foreach(uint index, dstring sconst; sconsts) {
+		foreach(size_t index, dstring sconst; sconsts) {
 			if(sconst == value)
-				return index;
+				return cast(uint)index;
 		}
 		sconsts ~= value;
 		return cast(uint)sconsts.length - 1;
@@ -1209,13 +1209,13 @@ class GrParser {
 
 	void dump() {
 		writeln("Code Generated:\n");
-		foreach(uint i, int ivalue; iconsts)
+		foreach(size_t i, int ivalue; iconsts)
 			writeln(".iconst " ~ to!string(ivalue) ~ "\t;" ~ to!string(i));
 
-		foreach(uint i, float fvalue; fconsts)
+		foreach(size_t i, float fvalue; fconsts)
 			writeln(".fconst " ~ to!string(fvalue) ~ "\t;" ~ to!string(i));
 
-		foreach(uint i, dstring svalue; sconsts)
+		foreach(size_t i, dstring svalue; sconsts)
 			writeln(".sconst " ~ to!string(svalue) ~ "\t;" ~ to!string(i));
 
 		foreach(dstring funcName, GrFunction func; functions) {
@@ -1224,7 +1224,7 @@ class GrParser {
 			else
 				writeln("\n.function " ~ funcName);
 
-			foreach(uint i, GrInstruction instruction; func.instructions) {
+			foreach(size_t i, GrInstruction instruction; func.instructions) {
 				writeln("[" ~ to!string(i) ~ "] " ~ to!string(instruction.opcode) ~ " " ~ to!string(instruction.value));
 			}
 		}
