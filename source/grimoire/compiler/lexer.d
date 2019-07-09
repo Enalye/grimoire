@@ -21,7 +21,7 @@ import std.algorithm: canFind;
 */
 enum GrLexemeType {
 	LeftBracket, RightBracket, LeftParenthesis, RightParenthesis, LeftCurlyBrace, RightCurlyBrace,
-	Period, Semicolon, Colon, Comma, Pointer, As, Is, Try, Catch, Raise, Defer,
+	Period, Semicolon, Colon, Comma, At, Pointer, As, Is, Try, Catch, Raise, Defer,
 	Assign,
 	AddAssign, SubstractAssign, MultiplyAssign, DivideAssign, ConcatenateAssign, RemainderAssign, PowerAssign,
 	Plus, Minus,
@@ -32,7 +32,7 @@ enum GrLexemeType {
 	Identifier, Integer, Float, Boolean, String,
 	Main, Event, Def, Tuple, New,
 	VoidType, IntType, FloatType, BoolType, StringType, ArrayType, DynamicType, FunctionType, TaskType, AutoType,
-	If, Unless, Else, While, Do, For, Loop, Return, Kill, Yield, Break, Continue
+	If, Unless, Else, Switch, Case, While, Do, For, Loop, Return, Kill, Yield, Break, Continue
 }
 
 /**
@@ -545,6 +545,12 @@ class GrLexer {
 			case "else":
 				lex.type = GrLexemeType.Else;
 				break;
+			case "switch":
+				lex.type = GrLexemeType.Switch;
+				break;
+			case "case":
+				lex.type = GrLexemeType.Case;
+				break;
 			case "while":
 				lex.type = GrLexemeType.While;
 				break;
@@ -714,9 +720,9 @@ dstring grGetPrettyLexemeType(GrLexemeType operator) {
         "and", "or", "xor", "not",
         "++", "--",
         "identifier", "const_int", "const_float", "const_bool", "const_str",
-        "main", "event", "def", "tuple",
+        "main", "event", "def", "tuple", "new",
         "void", "int", "float", "bool", "string", "array", "var", "func", "task", "let",
-        "if", "else", "while", "do", "for", "loop", "return", "yield", "break", "continue"
+        "if", "unless", "else", "switch", "case", "while", "do", "for", "loop", "return", "kill", "yield", "break", "continue"
     ];
     return lexemeTypeStrTable[operator];
 }

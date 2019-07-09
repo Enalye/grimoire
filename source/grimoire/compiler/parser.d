@@ -2084,6 +2084,9 @@ class GrParser {
             case Unless:
                 parseIfStatement();
                 break;
+            case Switch:
+                parseSwitchStatement();
+                break;
             case While:
                 parseWhileStatement();
                 break;
@@ -2584,6 +2587,79 @@ class GrParser {
 		foreach(uint position; exitJumps)
 			setInstruction(GrOpcode.Jump, position, cast(int)(currentFunction.instructions.length - position), true);
 	}
+
+    void parseSwitchStatement() {
+        advance();
+        if(get().type != GrLexemeType.LeftParenthesis)
+			logError("Missing symbol", "A switch statement should always start with \'(\'");
+
+        advance();
+		GrType switchType = parseSubExpression();
+        GrVariable switchVar = registerSpecialVariable("switch"d ~ to!dstring(scopeLevel), switchType);
+        addSetInstruction(switchVar);
+        advance();
+
+        /* A switch is breakable. */
+		openBreakableSection();
+        uint[] exitJumps;
+        uint jumpPosition, defaultCasePosition;
+        bool hasCase, hasDefaultCase;
+
+        while(get().type == GrLexemeType.Case) {
+            if(get(1).type == GrLexemeType.LeftParenthesis) {
+                hasCase = true;
+                advance();
+                if(get().type != GrLexemeType.LeftParenthesis)
+			        logError("Missing symbol", "A case statement should always start with \'(\'");
+                advance();
+                addGetInstruction(switchVar);
+                GrType caseType = parseSubExpression();
+                addBinaryOperator(GrLexemeType.Equal, switchType, caseType);
+                advance();
+
+                jumpPosition = cast(uint)currentFunction.instructions.length;
+                //Jumps to if(0).
+                addInstruction(GrOpcode.JumpEqual);
+
+                parseBlock();
+
+                exitJumps ~= cast(uint)currentFunction.instructions.length;
+                addInstruction(GrOpcode.Jump);
+
+                //Jumps to if(0).
+                setInstruction(GrOpcode.JumpEqual,
+                    jumpPosition,
+                    cast(int)(currentFunction.instructions.length - jumpPosition),
+                    true);
+            }
+            else if(get(1).type == GrLexemeType.LeftCurlyBrace) {
+                if(hasDefaultCase)
+                    logError("Multiple default cases", "There must be only one default case per switch statement");
+                hasDefaultCase = true;
+
+                advance();
+                defaultCasePosition = current;
+
+                skipBlock();
+            }
+            else {
+                logError("Invalid case syntax", "It should be either case(VALUE) {} or case {}");
+            }
+        }
+
+        if(hasDefaultCase) {
+            uint tmp = current;
+            current = defaultCasePosition;
+            parseBlock();
+            current = tmp;
+        }
+
+        /* A switch is breakable. */
+		closeBreakableSection();
+
+        foreach(uint position; exitJumps)
+			setInstruction(GrOpcode.Jump, position, cast(int)(currentFunction.instructions.length - position), true);
+    }
 
 	void parseWhileStatement() {
 		advance();
