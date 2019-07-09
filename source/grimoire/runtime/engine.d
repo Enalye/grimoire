@@ -65,7 +65,7 @@ class GrEngine {
         void*[] _uglobalStack;
 
         /// Context array.
-	    DynamicIndexedArray!GrContext _contexts;
+	    DynamicIndexedArray!GrContext _contexts, _contextsToSpawn;
     
         /// Global panic state.
         /// It means that the throwing context didn't handle the exception.
@@ -81,7 +81,7 @@ class GrEngine {
 
     @property {
         /// Check if there is a coroutine currently running.
-        bool hasCoroutines() const { return _contexts.length > 0uL; }
+        bool hasCoroutines() const { return (_contexts.length + _contextsToSpawn.length) > 0uL; }
 
         /// Whether the whole VM has panicked, true if an unhandled error occurred.
         bool isPanicking() const { return _isPanicking; }
@@ -98,6 +98,7 @@ class GrEngine {
 	this() {
         setupGlobals(512);
         _contexts = new DynamicIndexedArray!GrContext;
+		_contextsToSpawn = new DynamicIndexedArray!GrContext;
     }
 
     /// Load the bytecode.
@@ -147,12 +148,12 @@ class GrEngine {
             throw new Exception("No event \'" ~ to!string(eventName) ~ "\' in script");
         GrContext context = new GrContext(this);
         context.pc = *event;
-        _contexts.push(context);
+        _contextsToSpawn.push(context);
         return context;
     }
 
     package(grimoire) void pushContext(GrContext context) {
-        _contexts.push(context);
+        _contextsToSpawn.push(context);
     }
 
     /**
@@ -212,6 +213,11 @@ class GrEngine {
 
     /// Run the vm until all the contexts are finished or in yield.
 	void process() {
+		if(_contextsToSpawn.length) {
+			for(int index = _contextsToSpawn.length - 1; index >= 0; index --)
+				_contexts.push(_contextsToSpawn[index]);
+			_contextsToSpawn.reset();
+		}
 		contextsLabel: for(uint index = 0u; index < _contexts.length; index ++) {
 			GrContext context = _contexts.data[index];
 			while(isRunning) {
@@ -289,14 +295,14 @@ class GrEngine {
 				case Task:
 					GrContext newCoro = new GrContext(this);
 					newCoro.pc = grGetInstructionUnsignedValue(opcode);
-					_contexts.push(newCoro);
+					_contextsToSpawn.push(newCoro);
 					context.pc ++;
 					break;
 				case AnonymousTask:
 					GrContext newCoro = new GrContext(this);
 					newCoro.pc = context.istack[context.istackPos];
 					context.istackPos --;
-					_contexts.push(newCoro);
+					_contextsToSpawn.push(newCoro);
 					context.pc ++;
 					break;
 				case Kill:
