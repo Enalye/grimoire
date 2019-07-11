@@ -12,6 +12,7 @@
 	"workingDirectory": "bin",
 	"-ddoxTool": "scod",
 	"subPackages": [
-		"./test/"
+		"./test/",
+        "./unittests",
 	]
 }

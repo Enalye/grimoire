@@ -15,5 +15,6 @@ public {
     import grimoire.lib.io;
     import grimoire.lib.math;
     import grimoire.lib.string;
+    import grimoire.lib.test;
     import grimoire.lib.type;
 }
