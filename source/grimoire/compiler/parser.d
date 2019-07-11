@@ -787,28 +787,28 @@ class GrParser {
 				return GrType(GrBaseType.DynamicType);
 			case Equal:
 				addInstruction(GrOpcode.Equal_Any);
-				return GrType(GrBaseType.DynamicType);
+				return GrType(GrBaseType.BoolType);
 			case NotEqual:
 				addInstruction(GrOpcode.NotEqual_Any);
-				return GrType(GrBaseType.DynamicType);
+				return GrType(GrBaseType.BoolType);
 			case Greater:
 				addInstruction(GrOpcode.GreaterAny);
-				return GrType(GrBaseType.DynamicType);
+				return GrType(GrBaseType.BoolType);
 			case GreaterOrEqual:
 				addInstruction(GrOpcode.GreaterOrEqual_Any);
-				return GrType(GrBaseType.DynamicType);
+				return GrType(GrBaseType.BoolType);
 			case Lesser:
 				addInstruction(GrOpcode.LesserAny);
-				return GrType(GrBaseType.DynamicType);
+				return GrType(GrBaseType.BoolType);
 			case LesserOrEqual:
 				addInstruction(GrOpcode.LesserOrEqual_Any);
-				return GrType(GrBaseType.DynamicType);
+				return GrType(GrBaseType.BoolType);
 			case And:
 				addInstruction(GrOpcode.AndAny);
-				return GrType(GrBaseType.DynamicType);
+				return GrType(GrBaseType.BoolType);
 			case Or:
 				addInstruction(GrOpcode.OrAny);
-				return GrType(GrBaseType.DynamicType);
+				return GrType(GrBaseType.BoolType);
 			case Not:
 				addInstruction(GrOpcode.NotAny);
 				return GrType(GrBaseType.DynamicType);

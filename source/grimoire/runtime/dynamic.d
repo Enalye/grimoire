@@ -497,5 +497,78 @@ struct GrDynamicValue {
             break;
         }
         return this;
+    }
+
+    void operationNot(GrContext context) {
+        switch(type) with(GrDynamicValueType) {
+        case BoolType:
+            _ivalue = !_ivalue;
+            return;
+        default:
+            raise(context, "Operation Error");
+        }
+    }
+
+    bool operationAnd(GrContext context, ref GrDynamicValue dyn) {
+        switch(type) with(GrDynamicValueType) {
+        case BoolType:
+            return _ivalue && dyn._ivalue;
+        default:
+            return false;
+        }
+    }
+
+    bool operationOr(GrContext context, ref GrDynamicValue dyn) {
+        switch(type) with(GrDynamicValueType) {
+        case BoolType:
+            return _ivalue || dyn._ivalue;
+        default:
+            return false;
+        }
+    }
+
+    bool operationComparison(string op)(GrContext context, ref GrDynamicValue dyn) {
+        if(type != dyn.type) {
+            //Float/Int comparison are allowed
+            if(type == GrDynamicValueType.IntType && dyn.type == GrDynamicValueType.FloatType)
+                mixin("return (cast(float)_ivalue) " ~ op ~ " dyn._rvalue;");
+            else if(type == GrDynamicValueType.FloatType && dyn.type == GrDynamicValueType.IntType)
+                mixin("return _rvalue " ~ op ~ " cast(float)dyn._ivalue;");
+            return false;
+        }
+        
+        switch(type) with(GrDynamicValueType) {
+        case IntType:
+            mixin("return _ivalue " ~ op ~ " dyn._ivalue;");
+        case FloatType:
+            mixin("return _rvalue " ~ op ~ " dyn._rvalue;");
+        default:
+            return false;
+        }
+    }
+
+    bool opEquals(ref GrDynamicValue dyn) {
+        if(type != dyn.type)
+            return false;
+
+        switch(type) with(GrDynamicValueType) {
+        case UndefinedType:
+            return true;
+        case FunctionType:
+        case TaskType:
+            return _subType == dyn._subType;
+        case BoolType:
+        case IntType:
+            return _ivalue == dyn._ivalue;
+        case FloatType:
+            return _rvalue == dyn._rvalue;
+        case StringType:
+            return _svalue == dyn._svalue;
+        case ArrayType:
+        case RefArrayType:
+            return _nvalue == dyn._nvalue;
+        default:
+            return false;
+        }
     }	
 }

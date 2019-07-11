@@ -702,7 +702,12 @@ class GrEngine {
 					context.sstackPos -= 2;
 					context.pc ++;
 					break;
-				//Equal_Any
+				case Equal_Any:
+                    context.istackPos ++;
+					context.istack[context.istackPos] = context.astack[context.astackPos - 1] == context.astack[context.astackPos];
+					context.astackPos -= 2;
+					context.pc ++;
+					break;
 				case NotEqual_Int:
 					context.istackPos --;
 					context.istack[context.istackPos] = context.istack[context.istackPos] != context.istack[context.istackPos + 1];
@@ -720,7 +725,12 @@ class GrEngine {
 					context.sstackPos -= 2;
 					context.pc ++;
 					break;
-				//NotEqual_Any
+				case NotEqual_Any:
+                    context.istackPos ++;
+					context.istack[context.istackPos] = context.astack[context.astackPos - 1] != context.astack[context.astackPos];
+					context.astackPos -= 2;
+					context.pc ++;
+					break;
 				case GreaterOrEqual_Int:
 					context.istackPos --;
 					context.istack[context.istackPos] = context.istack[context.istackPos] >= context.istack[context.istackPos + 1];
@@ -732,7 +742,12 @@ class GrEngine {
 					context.fstackPos -= 2;
 					context.pc ++;
 					break;
-					//Any
+				case GreaterOrEqual_Any:
+                    context.istackPos ++;
+					context.istack[context.istackPos] = context.astack[context.astackPos - 1].operationComparison!">="(context, context.astack[context.astackPos]);
+					context.astackPos -= 2;
+					context.pc ++;
+					break;
 				case LesserOrEqual_Int:
 					context.istackPos --;
 					context.istack[context.istackPos] = context.istack[context.istackPos] <= context.istack[context.istackPos + 1];
@@ -744,7 +759,12 @@ class GrEngine {
 					context.fstackPos -= 2;
 					context.pc ++;
 					break;
-					//any
+				case LesserOrEqual_Any:
+                    context.istackPos ++;
+					context.istack[context.istackPos] = context.astack[context.astackPos - 1].operationComparison!"<="(context, context.astack[context.astackPos]);
+					context.astackPos -= 2;
+					context.pc ++;
+					break;
 				case GreaterInt:
 					context.istackPos --;
 					context.istack[context.istackPos] = context.istack[context.istackPos] > context.istack[context.istackPos + 1];
@@ -756,7 +776,12 @@ class GrEngine {
 					context.fstackPos -= 2;
 					context.pc ++;
 					break;
-					//any
+				case GreaterAny:
+                    context.istackPos ++;
+					context.istack[context.istackPos] = context.astack[context.astackPos - 1].operationComparison!">"(context, context.astack[context.astackPos]);
+					context.astackPos -= 2;
+					context.pc ++;
+					break;
 				case LesserInt:
 					context.istackPos --;
 					context.istack[context.istackPos] = context.istack[context.istackPos] < context.istack[context.istackPos + 1];
@@ -768,10 +793,21 @@ class GrEngine {
 					context.fstackPos -= 2;
 					context.pc ++;
 					break;
-					//any
+				case LesserAny:
+                    context.istackPos ++;
+					context.istack[context.istackPos] = context.astack[context.astackPos - 1].operationComparison!"<"(context, context.astack[context.astackPos]);
+					context.astackPos -= 2;
+					context.pc ++;
+					break;
 				case AndInt:
 					context.istackPos --;
 					context.istack[context.istackPos] = context.istack[context.istackPos] && context.istack[context.istackPos + 1];
+					context.pc ++;
+					break;
+				case AndAny:
+                    context.istackPos ++;
+					context.istack[context.istackPos] = context.astack[context.astackPos - 1].operationAnd(context, context.astack[context.astackPos]);
+					context.astackPos -= 2;
 					context.pc ++;
 					break;
 				case OrInt:
@@ -779,11 +815,20 @@ class GrEngine {
 					context.istack[context.istackPos] = context.istack[context.istackPos] || context.istack[context.istackPos + 1];
 					context.pc ++;
 					break;
+				case OrAny:
+                    context.istackPos ++;
+					context.istack[context.istackPos] = context.astack[context.astackPos - 1].operationOr(context, context.astack[context.astackPos]);
+					context.astackPos -= 2;
+					context.pc ++;
+					break;
 				case NotInt:
 					context.istack[context.istackPos] = !context.istack[context.istackPos];
 					context.pc ++;
 					break;
-					//any
+				case NotAny:
+					context.astack[context.astackPos].operationNot(context);
+					context.pc ++;
+					break;
 				case AddInt:
 					context.istackPos --;
 					context.istack[context.istackPos] += context.istack[context.istackPos + 1];
