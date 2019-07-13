@@ -29,7 +29,7 @@ dstring grMangleFunction(GrType[] signature) {
 		mangledName ~= "$";
 		final switch(type.baseType) with(GrBaseType) {
 		case VoidType:
-			mangledName ~= "v";
+			mangledName ~= "*";
 			break;
 		case IntType:
 			mangledName ~= "i";
@@ -46,8 +46,8 @@ dstring grMangleFunction(GrType[] signature) {
 		case ArrayType:
 			mangledName ~= "n";
 			break;
-		case DynamicType:
-			mangledName ~= "d";
+		case VariantType:
+			mangledName ~= "v";
 			break;
         case TupleType:
             mangledName ~= "l(" ~ type.mangledType ~ ")";
@@ -74,7 +74,7 @@ dstring grMangleFunction(GrType[] signature) {
 	return mangledName;
 }
 
-dstring grMangleDynamic(GrType type) {
+dstring grMangleVariant(GrType type) {
     return grMangleFunction([type]);
 }
 
@@ -148,7 +148,7 @@ GrType grUnmangle(dstring mangledSignature) {
 
         //Value
         switch(mangledSignature[i]) {
-        case 'v':
+        case '*':
             currentType.baseType = GrBaseType.VoidType;
             break;
         case 'i':
@@ -166,8 +166,8 @@ GrType grUnmangle(dstring mangledSignature) {
         case 'n':
             currentType.baseType = GrBaseType.ArrayType;
             break;
-        case 'd':
-            currentType.baseType = GrBaseType.DynamicType;
+        case 'v':
+            currentType.baseType = GrBaseType.VariantType;
             break;
         case 'l':
             currentType.baseType = GrBaseType.TupleType;
@@ -258,7 +258,7 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
         //Value
         GrType currentType = GrBaseType.VoidType;
         switch(mangledSignature[i]) {
-        case 'v':
+        case '*':
             currentType.baseType = GrBaseType.VoidType;
             break;
         case 'i':
@@ -276,8 +276,8 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
         case 'n':
             currentType.baseType = GrBaseType.ArrayType;
             break;
-        case 'd':
-            currentType.baseType = GrBaseType.DynamicType;
+        case 'v':
+            currentType.baseType = GrBaseType.VariantType;
             break;
         case 'l':
             currentType.baseType = GrBaseType.TupleType;
@@ -370,7 +370,7 @@ string grGetPrettyType(GrType variableType) {
         return "string";
     case ArrayType:
         return "array";
-    case DynamicType:
+    case VariantType:
         return "var";
     case FunctionType:
         string result = "func(";

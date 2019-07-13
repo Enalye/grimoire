@@ -1,6 +1,6 @@
 module grimoire.runtime.object;
 
-import grimoire.runtime.dynamic;
+import grimoire.runtime.variant;
 
 final class GrFieldValue {
     union {

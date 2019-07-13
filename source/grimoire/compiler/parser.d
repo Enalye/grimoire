@@ -348,10 +348,10 @@ class GrParser {
                 if(func.isTask)
                     addInstruction(GrOpcode.GlobalPop_Array, 0u);
                 break;
-            case DynamicType:
+            case VariantType:
                 func.nbAnyParameters ++;
                 if(func.isTask)
-                    addInstruction(GrOpcode.GlobalPop_Any, 0u);
+                    addInstruction(GrOpcode.GlobalPop_Variant, 0u);
                 break;
             case StructType:
                 func.nbObjectParameters ++;
@@ -627,13 +627,13 @@ class GrParser {
         case BoolType:
             switch(lexType) with(GrLexemeType) {
             case And:
-				addInstruction(GrOpcode.AndInt);
+				addInstruction(GrOpcode.And_Int);
                 return GrType(GrBaseType.BoolType);
 			case Or:
-				addInstruction(GrOpcode.OrInt);
+				addInstruction(GrOpcode.Or_Int);
                 return GrType(GrBaseType.BoolType);
 			case Not:
-				addInstruction(GrOpcode.NotInt);
+				addInstruction(GrOpcode.Not_Int);
                 return GrType(GrBaseType.BoolType);				
             default:
                 break;
@@ -642,30 +642,30 @@ class GrParser {
 		case IntType:
 			switch(lexType) with(GrLexemeType) {
 			case Add:
-				addInstruction(GrOpcode.AddInt);
+				addInstruction(GrOpcode.Add_Int);
 				return GrType(GrBaseType.IntType);
 			case Substract:
-				addInstruction(GrOpcode.SubstractInt);
+				addInstruction(GrOpcode.Substract_Int);
 				return GrType(GrBaseType.IntType);
 			case Multiply:
-				addInstruction(GrOpcode.MultiplyInt);
+				addInstruction(GrOpcode.Multiply_Int);
 				return GrType(GrBaseType.IntType);
 			case Divide:
-				addInstruction(GrOpcode.DivideInt);
+				addInstruction(GrOpcode.Divide_Int);
 				return GrType(GrBaseType.IntType);
             case Remainder:
-				addInstruction(GrOpcode.RemainderInt);
+				addInstruction(GrOpcode.Remainder_Int);
 				return GrType(GrBaseType.IntType);
 			case Minus:
-				addInstruction(GrOpcode.NegativeInt);
+				addInstruction(GrOpcode.Negative_Int);
 				return GrType(GrBaseType.IntType);
 			case Plus:
 				return GrType(GrBaseType.IntType);
 			case Increment:
-				addInstruction(GrOpcode.IncrementInt);
+				addInstruction(GrOpcode.Increment_Int);
 				return GrType(GrBaseType.IntType);
 			case Decrement:
-				addInstruction(GrOpcode.DecrementInt);
+				addInstruction(GrOpcode.Decrement_Int);
 				return GrType(GrBaseType.IntType);
 			case Equal:
 				addInstruction(GrOpcode.Equal_Int);
@@ -674,13 +674,13 @@ class GrParser {
 				addInstruction(GrOpcode.NotEqual_Int);
 				return GrType(GrBaseType.BoolType);
 			case Greater:
-				addInstruction(GrOpcode.GreaterInt);
+				addInstruction(GrOpcode.Greater_Int);
 				return GrType(GrBaseType.BoolType);
 			case GreaterOrEqual:
 				addInstruction(GrOpcode.GreaterOrEqual_Int);
 				return GrType(GrBaseType.BoolType);
 			case Lesser:
-				addInstruction(GrOpcode.LesserInt);
+				addInstruction(GrOpcode.Lesser_Int);
 				return GrType(GrBaseType.BoolType);
 			case LesserOrEqual:
 				addInstruction(GrOpcode.LesserOrEqual_Int);
@@ -692,30 +692,30 @@ class GrParser {
 		case FloatType:
 			switch(lexType) with(GrLexemeType) {
 			case Add:
-				addInstruction(GrOpcode.AddFloat);
+				addInstruction(GrOpcode.Add_Float);
 				return GrType(GrBaseType.FloatType);
 			case Substract:
-				addInstruction(GrOpcode.SubstractFloat);
+				addInstruction(GrOpcode.Substract_Float);
 				return GrType(GrBaseType.FloatType);
 			case Multiply:
-				addInstruction(GrOpcode.MultiplyFloat);
+				addInstruction(GrOpcode.Multiply_Float);
 				return GrType(GrBaseType.FloatType);
 			case Divide:
-				addInstruction(GrOpcode.DivideFloat);
+				addInstruction(GrOpcode.Divide_Float);
 				return GrType(GrBaseType.FloatType);
             case Remainder:
-				addInstruction(GrOpcode.RemainderFloat);
+				addInstruction(GrOpcode.Remainder_Float);
 				return GrType(GrBaseType.FloatType);
 			case Minus:
-				addInstruction(GrOpcode.NegativeFloat);
+				addInstruction(GrOpcode.Negative_Float);
 				return GrType(GrBaseType.FloatType);
 			case Plus:
 				return GrType(GrBaseType.FloatType);
 			case Increment:
-				addInstruction(GrOpcode.IncrementFloat);
+				addInstruction(GrOpcode.Increment_Float);
 				return GrType(GrBaseType.FloatType);
 			case Decrement:
-				addInstruction(GrOpcode.DecrementFloat);
+				addInstruction(GrOpcode.Decrement_Float);
 				return GrType(GrBaseType.FloatType);
 			case Equal:
 				addInstruction(GrOpcode.Equal_Float);
@@ -724,13 +724,13 @@ class GrParser {
 				addInstruction(GrOpcode.NotEqual_Float);
 				return GrType(GrBaseType.BoolType);
 			case Greater:
-				addInstruction(GrOpcode.GreaterFloat);
+				addInstruction(GrOpcode.Greater_Float);
 				return GrType(GrBaseType.BoolType);
 			case GreaterOrEqual:
 				addInstruction(GrOpcode.GreaterOrEqual_Float);
 				return GrType(GrBaseType.BoolType);
 			case Lesser:
-				addInstruction(GrOpcode.LesserFloat);
+				addInstruction(GrOpcode.Lesser_Float);
 				return GrType(GrBaseType.BoolType);
 			case LesserOrEqual:
 				addInstruction(GrOpcode.LesserOrEqual_Float);
@@ -742,7 +742,7 @@ class GrParser {
 		case StringType:
 			switch(lexType) with(GrLexemeType) {
 			case Concatenate:
-				addInstruction(GrOpcode.ConcatenateString);
+				addInstruction(GrOpcode.Concatenate_String);
 				return GrType(GrBaseType.StringType);
 			case Equal:
 				addInstruction(GrOpcode.Equal_String);
@@ -754,64 +754,64 @@ class GrParser {
 				break;
 			}
 			break;
-		case DynamicType:
+		case VariantType:
 			switch(lexType) with(GrLexemeType) {
 			case Add:
-				addInstruction(GrOpcode.AddAny);
-				return GrType(GrBaseType.DynamicType);
+				addInstruction(GrOpcode.Add_Variant);
+				return GrType(GrBaseType.VariantType);
 			case Substract:
-				addInstruction(GrOpcode.SubstractAny);
-				return GrType(GrBaseType.DynamicType);
+				addInstruction(GrOpcode.Substract_Variant);
+				return GrType(GrBaseType.VariantType);
 			case Multiply:
-				addInstruction(GrOpcode.MultiplyAny);
-				return GrType(GrBaseType.DynamicType);
+				addInstruction(GrOpcode.Multiply_Variant);
+				return GrType(GrBaseType.VariantType);
 			case Divide:
-				addInstruction(GrOpcode.DivideAny);
-				return GrType(GrBaseType.DynamicType);
+				addInstruction(GrOpcode.Divide_Variant);
+				return GrType(GrBaseType.VariantType);
             case Remainder:
-				addInstruction(GrOpcode.RemainderAny);
-				return GrType(GrBaseType.DynamicType);
+				addInstruction(GrOpcode.Remainder_Variant);
+				return GrType(GrBaseType.VariantType);
 			case Minus:
-				addInstruction(GrOpcode.NegativeAny);
-				return GrType(GrBaseType.DynamicType);
+				addInstruction(GrOpcode.Negative_Variant);
+				return GrType(GrBaseType.VariantType);
 			case Plus:
-				return GrType(GrBaseType.DynamicType);
+				return GrType(GrBaseType.VariantType);
 			case Increment:
-				addInstruction(GrOpcode.IncrementAny);
-				return GrType(GrBaseType.DynamicType);
+				addInstruction(GrOpcode.Increment_Variant);
+				return GrType(GrBaseType.VariantType);
 			case Decrement:
-				addInstruction(GrOpcode.DecrementAny);
-				return GrType(GrBaseType.DynamicType);
+				addInstruction(GrOpcode.Decrement_Variant);
+				return GrType(GrBaseType.VariantType);
 			case Concatenate:
-				addInstruction(GrOpcode.ConcatenateAny);
-				return GrType(GrBaseType.DynamicType);
+				addInstruction(GrOpcode.Concatenate_Variant);
+				return GrType(GrBaseType.VariantType);
 			case Equal:
-				addInstruction(GrOpcode.Equal_Any);
+				addInstruction(GrOpcode.Equal_Variant);
 				return GrType(GrBaseType.BoolType);
 			case NotEqual:
-				addInstruction(GrOpcode.NotEqual_Any);
+				addInstruction(GrOpcode.NotEqual_Variant);
 				return GrType(GrBaseType.BoolType);
 			case Greater:
-				addInstruction(GrOpcode.GreaterAny);
+				addInstruction(GrOpcode.Greater_Variant);
 				return GrType(GrBaseType.BoolType);
 			case GreaterOrEqual:
-				addInstruction(GrOpcode.GreaterOrEqual_Any);
+				addInstruction(GrOpcode.GreaterOrEqual_Variant);
 				return GrType(GrBaseType.BoolType);
 			case Lesser:
-				addInstruction(GrOpcode.LesserAny);
+				addInstruction(GrOpcode.Lesser_Variant);
 				return GrType(GrBaseType.BoolType);
 			case LesserOrEqual:
-				addInstruction(GrOpcode.LesserOrEqual_Any);
+				addInstruction(GrOpcode.LesserOrEqual_Variant);
 				return GrType(GrBaseType.BoolType);
 			case And:
-				addInstruction(GrOpcode.AndAny);
+				addInstruction(GrOpcode.And_Variant);
 				return GrType(GrBaseType.BoolType);
 			case Or:
-				addInstruction(GrOpcode.OrAny);
+				addInstruction(GrOpcode.Or_Variant);
 				return GrType(GrBaseType.BoolType);
 			case Not:
-				addInstruction(GrOpcode.NotAny);
-				return GrType(GrBaseType.DynamicType);
+				addInstruction(GrOpcode.Not_Variant);
+				return GrType(GrBaseType.VariantType);
 			default:
 				break;
 			}
@@ -887,8 +887,8 @@ class GrParser {
             case ArrayType:
 				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Array : GrOpcode.GlobalStore_Array, variable.index);
 				break;
-			case DynamicType:
-				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Any : GrOpcode.GlobalStore_Any, variable.index);
+			case VariantType:
+				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Variant : GrOpcode.GlobalStore_Variant, variable.index);
 				break;
 			case StructType:
 				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_UserData : GrOpcode.GlobalStore_UserData, variable.index);
@@ -924,8 +924,8 @@ class GrParser {
             case ArrayType:
 				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Array : GrOpcode.LocalStore_Array, variable.index);
 				break;
-			case DynamicType:
-				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Any : GrOpcode.LocalStore_Any, variable.index);
+			case VariantType:
+				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Variant : GrOpcode.LocalStore_Variant, variable.index);
 				break;
 			case StructType:
 				addInstruction(isGettingValue ? GrOpcode.LocalStore2_UserData : GrOpcode.LocalStore_UserData, variable.index);
@@ -1003,13 +1003,13 @@ class GrParser {
                 else
 				addInstruction(GrOpcode.GlobalLoad_Array, variable.index);
 				break;
-			case DynamicType:
+			case VariantType:
                 if(allowOptimization
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Any
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Variant
                     && currentFunction.instructions[$ - 1].value == variable.index)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Any;
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Variant;
                 else
-				    addInstruction(GrOpcode.GlobalLoad_Any, variable.index);
+				    addInstruction(GrOpcode.GlobalLoad_Variant, variable.index);
 				break;
 			case StructType:
                 if(allowOptimization
@@ -1077,13 +1077,13 @@ class GrParser {
                 else
 			    	addInstruction(GrOpcode.LocalLoad_Array, variable.index);
 				break;
-			case DynamicType:
+			case VariantType:
                 if(allowOptimization
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Any
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Variant
                     && currentFunction.instructions[$ - 1].value == variable.index)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Any;
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Variant;
                 else
-				    addInstruction(GrOpcode.LocalLoad_Any, variable.index);
+				    addInstruction(GrOpcode.LocalLoad_Variant, variable.index);
 				break;
 			case StructType:
                 if(allowOptimization
@@ -1155,7 +1155,7 @@ class GrParser {
                 if(func.nbArrayParameters > 0)
                     addInstruction(GrOpcode.GlobalPush_Array, func.nbArrayParameters);
                 if(func.nbAnyParameters > 0)
-                    addInstruction(GrOpcode.GlobalPush_Any, func.nbAnyParameters);
+                    addInstruction(GrOpcode.GlobalPush_Variant, func.nbAnyParameters);
                 if(func.nbUserDataParameters > 0)
                     addInstruction(GrOpcode.GlobalPush_UserData, func.nbUserDataParameters);
             }
@@ -1262,7 +1262,7 @@ class GrParser {
                     goto case VoidType;
 				parseFunctionDeclaration();
 				break;
-            case VoidType: .. case DynamicType:
+            case VoidType: .. case VariantType:
             case AutoType:
             case Identifier:
                 skipExpression();
@@ -1336,7 +1336,7 @@ class GrParser {
                     goto case VoidType;
 				preParseFunctionDeclaration();
 				break;
-            case VoidType: .. case DynamicType:
+            case VoidType: .. case VariantType:
             case AutoType:
             case Identifier:
                 skipExpression();
@@ -1371,7 +1371,7 @@ class GrParser {
                     goto case VoidType;
     			skipDeclaration();
                 break;
-            case VoidType: .. case DynamicType:
+            case VoidType: .. case VariantType:
             case AutoType:
                 parseGlobalDeclaration();
                 break;
@@ -1585,8 +1585,8 @@ class GrParser {
             currentType.baseType = GrBaseType.ArrayType;
             checkAdvance();
             break;
-        case DynamicType:
-            currentType.baseType = GrBaseType.DynamicType;
+        case VariantType:
+            currentType.baseType = GrBaseType.VariantType;
             checkAdvance();
             break;
         case FunctionType:
@@ -1628,8 +1628,8 @@ class GrParser {
         case ArrayType:
             addInstruction(GrOpcode.GlobalPop_Array, 0u);
             break;
-        case DynamicType:
-            addInstruction(GrOpcode.GlobalPop_Any, 0u);
+        case VariantType:
+            addInstruction(GrOpcode.GlobalPop_Variant, 0u);
             break;
         case StructType:
             addInstruction(GrOpcode.GlobalPop_UserData, 0u);
@@ -1670,8 +1670,8 @@ class GrParser {
         case ArrayType:
             addInstruction(GrOpcode.GlobalPush_Array, nbPush);
             break;
-        case DynamicType:
-            addInstruction(GrOpcode.GlobalPush_Any, nbPush);
+        case VariantType:
+            addInstruction(GrOpcode.GlobalPush_Variant, nbPush);
             break;
         case StructType:
             addInstruction(GrOpcode.GlobalPush_UserData, nbPush);
@@ -1693,7 +1693,7 @@ class GrParser {
     void addGlobalPush(GrType[] signature) {
         struct TypeCounter {
             uint nbIntParams, nbFloatParams, nbStringParams,
-                nbArrayParams, nbDynamicParams, nbObjectParams, nbUserDataParams;
+                nbArrayParams, nbVariantParams, nbObjectParams, nbUserDataParams;
         }
         void countParameters(ref TypeCounter typeCounter, GrType type) {
             final switch(type.baseType) with(GrBaseType) {
@@ -1715,8 +1715,8 @@ class GrParser {
             case ArrayType:
                 typeCounter.nbArrayParams ++;
                 break;
-            case DynamicType:
-                typeCounter.nbDynamicParams ++;
+            case VariantType:
+                typeCounter.nbVariantParams ++;
                 break;
             case StructType:
                 typeCounter.nbObjectParams ++;
@@ -1748,8 +1748,8 @@ class GrParser {
             addInstruction(GrOpcode.GlobalPush_String, typeCounter.nbStringParams);
         if(typeCounter.nbArrayParams > 0)
             addInstruction(GrOpcode.GlobalPush_Array, typeCounter.nbArrayParams);
-        if(typeCounter.nbDynamicParams > 0)
-            addInstruction(GrOpcode.GlobalPush_Any, typeCounter.nbDynamicParams);
+        if(typeCounter.nbVariantParams > 0)
+            addInstruction(GrOpcode.GlobalPush_Variant, typeCounter.nbVariantParams);
         if(typeCounter.nbObjectParams > 0)
             addInstruction(GrOpcode.GlobalPush_UserData, typeCounter.nbObjectParams);
         if(typeCounter.nbUserDataParams > 0)
@@ -2495,8 +2495,8 @@ class GrParser {
             case ArrayType:
                 returnType = GrType(GrBaseType.ArrayType);
                 break;
-            case DynamicType:
-                returnType = GrType(GrBaseType.DynamicType);
+            case VariantType:
+                returnType = GrType(GrBaseType.VariantType);
                 break;
             case FunctionType:
                 GrType type = GrBaseType.FunctionType;
@@ -2768,7 +2768,7 @@ class GrParser {
 		uint blockPosition = cast(uint)currentFunction.instructions.length;
 
 		addGetInstruction(iterator, GrType(GrBaseType.IntType));
-		addInstruction(GrOpcode.DecrementInt);
+		addInstruction(GrOpcode.Decrement_Int);
 		addSetInstruction(iterator);
 
 		addGetInstruction(iterator, GrType(GrBaseType.IntType));
@@ -2778,10 +2778,10 @@ class GrParser {
 		//Set Index
 		addGetInstruction(array);
 		addGetInstruction(index);
-		addInstruction(GrOpcode.IncrementInt);
+		addInstruction(GrOpcode.Increment_Int);
 		addSetInstruction(index, GrType(GrBaseType.VoidType), true);
 		addInstruction(GrOpcode.Index_Array);
-		convertType(GrType(GrBaseType.DynamicType), variable.type);
+		convertType(GrType(GrBaseType.VariantType), variable.type);
 		addSetInstruction(variable);
 
 		parseBlock();
@@ -2829,7 +2829,7 @@ class GrParser {
 
         if(!isInfinite) {
             addGetInstruction(iterator, GrType(GrBaseType.IntType), false);
-            addInstruction(GrOpcode.DecrementInt);
+            addInstruction(GrOpcode.Decrement_Int);
             addSetInstruction(iterator);
 
             addGetInstruction(iterator, GrType(GrBaseType.IntType));
@@ -2965,7 +2965,7 @@ class GrParser {
             case IntType:
             case FloatType:
             case StringType:
-            case DynamicType:
+            case VariantType:
             case ArrayType:
                 return dst;
             case TupleType:
@@ -3000,13 +3000,13 @@ class GrParser {
 
         //Special conversions
         if(leftType != rightType) {
-            if(rightType.baseType == GrBaseType.DynamicType) {
+            if(rightType.baseType == GrBaseType.VariantType) {
                 switch(leftType.baseType) with(GrBaseType) {
                 case FunctionType:
                 case TaskType:
                     //We can't know in advance what'll be the signature of the anonymous function we want to convert.
                     //So we add the mangling as a runtime meta value.
-                    addMetaConstant(grMangleDynamic(leftType));
+                    addMetaConstant(grMangleVariant(leftType));
                     //Then, we delete the mangling, and the cast primitive will do the same.
                     GrType tempType = leftType;
                     tempType.mangledType = grMangleNamedFunction("", []);
@@ -3017,13 +3017,13 @@ class GrParser {
                     break;
                 }
             }
-            else if(leftType.baseType == GrBaseType.DynamicType) {
+            else if(leftType.baseType == GrBaseType.VariantType) {
                 switch(rightType.baseType) with(GrBaseType) {
                 case FunctionType:
                 case TaskType:
                     //We can't know in advance what'll be the signature of the anonymous function we want to convert.
                     //So we add the mangling as a runtime meta value.
-                    addMetaConstant(grMangleDynamic(rightType));
+                    addMetaConstant(grMangleVariant(rightType));
                     //Then, we delete the mangling, and the cast primitive will do the same.
                     GrType tempType = rightType;
                     tempType.mangledType = grMangleNamedFunction("", []);
@@ -3070,7 +3070,7 @@ class GrParser {
 
         int arraySize;
         while(get().type != GrLexemeType.RightBracket) {
-            convertType(parseSubExpression(false, true, true, false), grDynamic);
+            convertType(parseSubExpression(false, true, true, false), grVariant);
             arraySize ++;
 
             if(get().type == GrLexemeType.RightBracket)
@@ -3318,7 +3318,7 @@ class GrParser {
             case ArrayType:
                 counter.nCount ++;
                 break;
-            case DynamicType:
+            case VariantType:
                 counter.dCount ++;
                 break;
             case StructType:
@@ -3351,7 +3351,7 @@ class GrParser {
         if(counter.nCount)
             addInstruction(GrOpcode.ShiftStack_Array, counter.nCount * count, true);
         if(counter.dCount)
-            addInstruction(GrOpcode.ShiftStack_Any, counter.dCount * count, true);
+            addInstruction(GrOpcode.ShiftStack_Variant, counter.dCount * count, true);
         if(counter.oCount)
             addInstruction(GrOpcode.ShiftStack_UserData, counter.oCount * count, true);
         if(counter.uCount)
@@ -3481,8 +3481,8 @@ class GrParser {
                 //Index
                 if(hadValue) {
                     hadValue = false;
-                    currentType = GrType(GrBaseType.DynamicType);
-                    lastType = GrType(GrBaseType.DynamicType);
+                    currentType = GrType(GrBaseType.VariantType);
+                    lastType = GrType(GrBaseType.VariantType);
                     parseArrayIndex(hadReference);
                     hasReference = true;
                     //Check if there is an assignement or not, discard if it's only a rvalue
@@ -3794,10 +3794,10 @@ class GrParser {
         int i;
         if(get().type != GrLexemeType.RightParenthesis) {
             for(;;) {
-                if(type.baseType != GrBaseType.DynamicType && i >= anonSignature.length)
+                if(type.baseType != GrBaseType.VariantType && i >= anonSignature.length)
                     logError("Invalid anonymous call", "The number of parameters does not match");
                 GrType subType = parseSubExpression(false, false, true, true);
-                if(type.baseType == GrBaseType.DynamicType)
+                if(type.baseType == GrBaseType.VariantType)
                     signature ~= subType;
                 else
                     signature ~= convertType(subType, anonSignature[i]);
@@ -3824,9 +3824,9 @@ class GrParser {
             addInstruction(GrOpcode.AnonymousCall, 0u);
         else if(type.baseType == GrBaseType.TaskType)
             addInstruction(GrOpcode.AnonymousTask, 0u);
-        else if(type.baseType == GrBaseType.DynamicType) {
+        else if(type.baseType == GrBaseType.VariantType) {
             dstring meta = grMangleFunction(signature);
-            addInstruction(GrOpcode.DynamicCall, registerStringConstant(meta));
+            addInstruction(GrOpcode.VariantCall, registerStringConstant(meta));
         }
         else
             logError("Invalid anonymous type", "debug");
@@ -3876,13 +3876,13 @@ class GrParser {
                 int i;
                 if(get().type != GrLexemeType.RightParenthesis) {
                     for(;;) {
-                        if(var.type.baseType != GrBaseType.DynamicType && i >= anonSignature.length)
+                        if(var.type.baseType != GrBaseType.VariantType && i >= anonSignature.length)
                             logError("Invalid anonymous call", "The number of parameters does not match");
                         GrType subType = parseSubExpression(false, false, true, true);
                         if(subType.baseType == GrBaseType.InternalTupleType) {
                             auto types = grUnpackTuple(subType);
                             if(types.length) {
-                                if(var.type.baseType == GrBaseType.DynamicType) {
+                                if(var.type.baseType == GrBaseType.VariantType) {
                                     for(int y; y < types.length; y ++, i ++) {
                                         if(i >= anonSignature.length)
                                             logError("Invalid anonymous call", "The number of parameters does not match");
@@ -3899,21 +3899,21 @@ class GrParser {
                                 logError("Cannot use a void function", "Cannot use a void function as a parameter");
                         }
                         else {
-                            if(var.type.baseType == GrBaseType.DynamicType)
+                            if(var.type.baseType == GrBaseType.VariantType)
                                 signature ~= subType;
                             else
                                 signature ~= convertType(subType, anonSignature[i]);
                             i ++;
                         }
                         if(get().type == GrLexemeType.RightParenthesis) {
-                            if(var.type.baseType != GrBaseType.DynamicType && signature.length != anonSignature.length)
+                            if(var.type.baseType != GrBaseType.VariantType && signature.length != anonSignature.length)
                                 logError("Invalid anonymous call", "The number of parameters does not match");
                             break;
                         }
                         advance();
                     }
                 }
-                else if(var.type.baseType != GrBaseType.DynamicType && anonSignature.length)
+                else if(var.type.baseType != GrBaseType.VariantType && anonSignature.length)
                      logError("Invalid anonymous call", "The number of parameters does not match");
                 checkAdvance();
 
@@ -3931,9 +3931,9 @@ class GrParser {
 					addInstruction(GrOpcode.AnonymousCall, 0u);
 				else if(var.type.baseType == GrBaseType.TaskType)
 					addInstruction(GrOpcode.AnonymousTask, 0u);
-                else if(var.type.baseType == GrBaseType.DynamicType) {
+                else if(var.type.baseType == GrBaseType.VariantType) {
                     dstring meta = grMangleFunction(signature);
-                    addInstruction(GrOpcode.DynamicCall, registerStringConstant(meta));
+                    addInstruction(GrOpcode.VariantCall, registerStringConstant(meta));
                 }
 				else
 					logError("Invalid anonymous type", "debug");
@@ -3989,7 +3989,7 @@ class GrParser {
             const auto nextLexeme = get();
             if(nextLexeme.type == GrLexemeType.LeftBracket) {
                 addInstruction(GrOpcode.LocalLoad_Ref, variable.index);
-                returnType = GrType(GrBaseType.DynamicType);
+                returnType = GrType(GrBaseType.VariantType);
             }
             else if(nextLexeme.type != GrLexemeType.Assign)
                 addGetInstruction(variable, expectedType);

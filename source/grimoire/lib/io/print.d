@@ -17,7 +17,7 @@ static this() {
 	grAddPrimitive(&printb, "print", ["value"], [grBool]);
 	grAddPrimitive(&printi, "print", ["value"], [grInt]);
 	grAddPrimitive(&printf, "print", ["value"], [grFloat]);
-	grAddPrimitive(&printa, "print", ["value"], [grDynamic]);
+	grAddPrimitive(&printa, "print", ["value"], [grVariant]);
 	grAddPrimitive(&printn, "print", ["value"], [grArray]);
 }
 
@@ -38,7 +38,7 @@ private void printf(GrCall call) {
 }
 
 private void printa(GrCall call) {
-	writeln(call.getDynamic("value").getString(call));
+	writeln(call.getVariant("value").getString(call));
 }
 
 private void printn(GrCall call) {

@@ -17,46 +17,46 @@ import grimoire.assembly.bytecode;
 private string[] instructions = [
     "nop", "raise", "try", "catch",
     "kill", "yield", "task", "anon_task", "new",
-    "shift.i", "shift.f", "shift.s", "shift.n", "shift.a", "shift.u",
+    "shift.i", "shift.f", "shift.s", "shift.n", "shift.v", "shift.o",
     
-    "lstore.i", "lstore.f", "lstore.s", "lstore.n", "lstore.a", "lstore.r", "lstore.u",
-    "lstore2.i", "lstore2.f", "lstore2.s", "lstore2.n", "lstore2.a", "lstore2.r", "lstore2.u",
-    "lload.i", "lload.f", "lload.s", "lload.n", "lload.a", "lload.r", "lload.u",
+    "lstore.i", "lstore.f", "lstore.s", "lstore.n", "lstore.v", "lstore.r", "lstore.o",
+    "lstore2.i", "lstore2.f", "lstore2.s", "lstore2.n", "lstore2.v", "lstore2.r", "lstore2.o",
+    "lload.i", "lload.f", "lload.s", "lload.n", "lload.v", "lload.r", "lload.o",
 
-    "gstore.i", "gstore.f", "gstore.s", "gstore.n", "gstore.a", "gstore.r", "gstore.u",
-    "gstore2.i", "gstore2.f", "gstore2.s", "gstore2.n", "gstore2.a", "gstore2.r", "gstore2.u",
-    "gload.i", "gload.f", "gload.s", "gload.n", "gload.a", "gload.r", "gload.u",
+    "gstore.i", "gstore.f", "gstore.s", "gstore.n", "gstore.v", "gstore.r", "gstore.o",
+    "gstore2.i", "gstore2.f", "gstore2.s", "gstore2.n", "gstore2.v", "gstore2.r", "gstore2.o",
+    "gload.i", "gload.f", "gload.s", "gload.n", "gload.v", "gload.r", "gload.o",
     
     "field",
-    "fstore.i", "fstore.f", "fstore.s", "fstore.n", "fstore.a", "fstore.r", "fstore.u",
-    "fload.i", "fload.f", "fload.s", "fload.n", "fload.a", "fload.r", "fload.u",
+    "fstore.i", "fstore.f", "fstore.s", "fstore.n", "fstore.v", "fstore.r", "fstore.o",
+    "fload.i", "fload.f", "fload.s", "fload.n", "fload.v", "fload.r", "fload.o",
 
     "const.i", "const.f", "const.b", "const.s", "meta",
     
-    "gpush.i", "gpush.f", "gpush.s", "gpush.n", "gpush.a", "gpush.u",
-    "gpop.i", "gpop.f", "gpop.s", "gpop.n", "gpop.a", "gpop.u",
+    "gpush.i", "gpush.f", "gpush.s", "gpush.n", "gpush.v", "gpush.o",
+    "gpop.i", "gpop.f", "gpop.s", "gpop.n", "gpop.v", "gpop.o",
 
-    "eq.i", "eq.f", "eq.s", "eq.a",
-    "neq.i", "neq.f", "neq.s", "neq.a",
-    "geq.i", "geq.f", "geq.a",
-    "leq.i", "leq.f", "leq.a",
-    "gt.i", "gt.f", "gt.a",
-    "lt.i", "lt.f", "lt.a",
+    "eq.i", "eq.f", "eq.s", "eq.v",
+    "neq.i", "neq.f", "neq.s", "neq.v",
+    "geq.i", "geq.f", "geq.v",
+    "leq.i", "leq.f", "leq.v",
+    "gt.i", "gt.f", "gt.v",
+    "lt.i", "lt.f", "lt.v",
 
-    "and.i", "and.a", "or.i", "or.a", "not.i", "not.a",
-    "cat.s", "cat.a",
-    "add.i", "add.f", "add.a",
-    "sub.i", "sub.f", "sub.a",
-    "mul.i", "mul.f", "mul.a",
-    "div.i", "div.f", "div.a",
-    "rem.i", "rem.f", "rem.a",
-    "neg.i", "neg.f", "neg.a",
-    "inc.i", "inc.f", "inc.a",
-    "dec.i", "dec.f", "dec.a",
+    "and.i", "and.v", "or.i", "or.v", "not.i", "not.v",
+    "cat.s", "cat.v",
+    "add.i", "add.f", "add.v",
+    "sub.i", "sub.f", "sub.v",
+    "mul.i", "mul.f", "mul.v",
+    "div.i", "div.f", "div.v",
+    "rem.i", "rem.f", "rem.v",
+    "neg.i", "neg.f", "neg.v",
+    "inc.i", "inc.f", "inc.v",
+    "dec.i", "dec.f", "dec.v",
 
     "setup_it",
 
-    "localstack", "call", "anon_call", "dyn_call", "prim_call",
+    "localstack", "call", "acall", "vcall", "pcall",
     "ret", "unwind", "defer",
     "jmp", "jmp_eq", "jmp_neq",
 
@@ -96,7 +96,7 @@ string grDump(GrBytecode bytecode) {
             line ~= to!string(bytecode.fconsts[grGetInstructionUnsignedValue(opcode)]);
         else if(op == GrOpcode.Const_Bool)
             line ~= (grGetInstructionUnsignedValue(opcode) ? "true" : "false");
-        else if(op == GrOpcode.Const_String || op == GrOpcode.Const_Meta || op == GrOpcode.DynamicCall)
+        else if(op == GrOpcode.Const_String || op == GrOpcode.Const_Meta || op == GrOpcode.VariantCall)
             line ~= "\"" ~ to!string(bytecode.sconsts[grGetInstructionUnsignedValue(opcode)]) ~ "\"";
         else if(op >= GrOpcode.Jump && op <= GrOpcode.JumpNotEqual)
             line ~= to!string(i + grGetInstructionSignedValue(opcode));

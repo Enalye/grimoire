@@ -9,7 +9,7 @@
 module grimoire.runtime.context;
 
 import grimoire.runtime.engine;
-import grimoire.runtime.dynamic;
+import grimoire.runtime.variant;
 import grimoire.runtime.array;
 import grimoire.runtime.object;
 
@@ -32,10 +32,9 @@ final class GrContext {
     int[] ilocals;
     float[] flocals;
     dstring[] slocals;
-    GrDynamicValue[][] nlocals;
-    GrDynamicValue[] alocals;
-    GrObjectValue[] olocals;
-    void*[] ulocals;
+    GrVariantValue[][] nlocals;
+    GrVariantValue[] vlocals;
+    void*[] olocals;
 
     /// Callstack
     uint[] callStack;
@@ -46,10 +45,9 @@ final class GrContext {
     int[] istack;
     float[] fstack;
     dstring[] sstack;
-    GrDynamicValue[][] nstack;
-    GrDynamicValue[] astack;
-    GrObjectValue[] ostack;
-    void*[] ustack;
+    GrVariantValue[][] nstack;
+    GrVariantValue[] vstack;
+    void*[] ostack;
 
     /// Operation pointer.
     uint pc,
@@ -67,9 +65,8 @@ final class GrContext {
         fstackPos = -1,
         sstackPos = -1,
         nstackPos = -1,
-        astackPos = -1,
-        ostackPos = -1,
-        ustackPos = -1;
+        vstackPos = -1,
+        ostackPos = -1;
 
     /// Kill state, unwind the call stack and call all registered deferred statements.
     bool isKilled;
@@ -97,10 +94,9 @@ final class GrContext {
         istack = new int[stackLimit];
         fstack = new float[stackLimit];
         sstack = new dstring[stackLimit];
-        nstack = new GrDynamicValue[][stackLimit];
-        astack = new GrDynamicValue[stackLimit];
-        ostack = new GrObjectValue[stackLimit];
-        ustack = new void*[stackLimit];
+        nstack = new GrVariantValue[][stackLimit];
+        vstack = new GrVariantValue[stackLimit];
+        ostack = new void*[stackLimit];
     }
 
     /// Current max local variable available.
@@ -112,10 +108,9 @@ final class GrContext {
         ilocals = new int[localsLimit];
         flocals = new float[localsLimit];
         slocals = new dstring[localsLimit];
-        nlocals = new GrDynamicValue[][localsLimit];
-        alocals = new GrDynamicValue[localsLimit];
-        olocals = new GrObjectValue[localsLimit];
-        ulocals = new void*[localsLimit];
+        nlocals = new GrVariantValue[][localsLimit];
+        vlocals = new GrVariantValue[localsLimit];
+        olocals = new void*[localsLimit];
     }
 
     /// Double the current call stacks' size.
@@ -130,8 +125,8 @@ final class GrContext {
     alias setBool = setValue!bool;
     alias setInt = setValue!int;
     alias setFloat = setValue!float;
-    alias setDynamic = setValue!GrDynamicValue;
-    alias setArray = setValue!(GrDynamicValue[]);
+    alias setVariant = setValue!GrVariantValue;
+    alias setArray = setValue!(GrVariantValue[]);
 
     void setUserData(T)(T value) {
         setValue!(void*)(cast(void*)value);
@@ -154,17 +149,17 @@ final class GrContext {
             sstackPos ++;
             sstack[sstackPos] = value;
         }
-        else static if(is(T == GrDynamicValue)) {
-            astackPos ++;
-            astack[astackPos] = value;
+        else static if(is(T == GrVariantValue)) {
+            vstackPos ++;
+            vstack[vstackPos] = value;
         }
-        else static if(is(T == GrDynamicValue[])) {
+        else static if(is(T == GrVariantValue[])) {
             nstackPos ++;            
             nstack[nstackPos] = value;
         }
         else static if(is(T == void*)) {
-            ustackPos ++;
-            ustack[ustackPos] = value;
+            ostackPos ++;
+            ostack[ostackPos] = value;
         }
     }
 }

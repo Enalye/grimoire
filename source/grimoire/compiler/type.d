@@ -16,7 +16,7 @@ import grimoire.compiler.mangle;
 
 enum GrBaseType {
     VoidType, IntType, FloatType, BoolType, StringType,
-    ArrayType, DynamicType, FunctionType, TaskType,
+    ArrayType, VariantType, FunctionType, TaskType,
     StructType, TupleType, UserType, InternalTupleType
 }
 
@@ -53,7 +53,7 @@ const GrType grFloat = GrType(GrBaseType.FloatType);
 const GrType grBool = GrType(GrBaseType.BoolType);
 const GrType grString = GrType(GrBaseType.StringType);
 const GrType grArray = GrType(GrBaseType.ArrayType);
-const GrType grDynamic = GrType(GrBaseType.DynamicType);
+const GrType grVariant = GrType(GrBaseType.VariantType);
 
 
 GrType grPackTuple(GrType[] types) {

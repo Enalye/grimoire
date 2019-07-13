@@ -45,7 +45,7 @@ class GrCall {
         GrCallback _callback;
 
         dstring[] _ilocals, _flocals, _slocals, _dlocals, _nlocals, _ulocals;
-        int _iparams, _fparams, _sparams, _dparams, _nparams, _uparams;
+        int _iparams, _fparams, _sparams, _vparams, _nparams, _uparams;
         int _iresults, _fresults, _sresults, _dresults, _nresults, _uresults;
         bool _hasResult, _isInitialized;
     }
@@ -73,7 +73,7 @@ class GrCall {
         _iparams = 0;
         _fparams = 0;
         _sparams = 0;
-        _dparams = 0;
+        _vparams = 0;
         _nparams = 0;
         _uparams = 0;
 
@@ -109,8 +109,8 @@ class GrCall {
                 _sparams ++;
                 _slocals ~= name;
                 break;
-            case DynamicType:
-                _dparams ++;
+            case VariantType:
+                _vparams ++;
                 _dlocals ~= name;
                 break;
             case ArrayType:
@@ -146,9 +146,9 @@ class GrCall {
         _context.istackPos -= (_iparams - _iresults);
         _context.fstackPos -= (_fparams - _fresults);
         _context.sstackPos -= (_sparams - _sresults);
-        _context.astackPos -= (_dparams - _dresults);
+        _context.vstackPos -= (_vparams - _dresults);
         _context.nstackPos -= (_nparams - _nresults);
-        _context.ustackPos -= (_uparams - _uresults);
+        _context.ostackPos -= (_uparams - _uresults);
 
         if(_hasError)
             dispatchError();
@@ -158,8 +158,8 @@ class GrCall {
     alias getBool = getParameter!bool;
     alias getInt = getParameter!int;
     alias getFloat = getParameter!float;
-    alias getDynamic = getParameter!GrDynamicValue;
-    alias getArray = getParameter!(GrDynamicValue[]);
+    alias getVariant = getParameter!GrVariantValue;
+    alias getArray = getParameter!(GrVariantValue[]);
 
     T getUserData(T)(dstring parameter) {
         return cast(T)getParameter!(void*)(parameter);
@@ -210,7 +210,7 @@ class GrCall {
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.sstack[(_context.sstackPos - _sparams) + index + 1];
         }
-        else static if(is(T == GrDynamicValue)) {
+        else static if(is(T == GrVariantValue)) {
             int index;
             for(; index < _dlocals.length; index ++) {
                 if(parameter == _dlocals[index])
@@ -219,9 +219,9 @@ class GrCall {
             if(index == _dlocals.length)
                 throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
-            return _context.astack[(_context.astackPos - _dparams) + index + 1];
+            return _context.vstack[(_context.vstackPos - _vparams) + index + 1];
         }
-        else static if(is(T == GrDynamicValue[])) {
+        else static if(is(T == GrVariantValue[])) {
             int index;
             for(; index < _nlocals.length; index ++) {
                 if(parameter == _nlocals[index])
@@ -241,7 +241,7 @@ class GrCall {
             if(index == _ulocals.length)
                 throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
-            return _context.ustack[(_context.ustackPos - _uparams) + index + 1];
+            return _context.ostack[(_context.ostackPos - _uparams) + index + 1];
         }
     }
 
@@ -249,8 +249,8 @@ class GrCall {
     alias setBool = setResult!bool;
     alias setInt = setResult!int;
     alias setFloat = setResult!float;
-    alias setDynamic = setResult!GrDynamicValue;
-    alias setArray = setResult!(GrDynamicValue[]);
+    alias setVariant = setResult!GrVariantValue;
+    alias setArray = setResult!(GrVariantValue[]);
     
     void setUserData(T)(T value) {
         setResult!(void*)(cast(void*)value);
@@ -273,17 +273,17 @@ class GrCall {
             _sresults ++;
             _context.sstack[(_context.sstackPos - _sparams) + _sresults] = value;
         }
-        else static if(is(T == GrDynamicValue)) {
+        else static if(is(T == GrVariantValue)) {
             _dresults ++;
-            _context.astack[(_context.astackPos - _dparams) + _dresults] = value;
+            _context.vstack[(_context.vstackPos - _vparams) + _dresults] = value;
         }
-        else static if(is(T == GrDynamicValue[])) {
+        else static if(is(T == GrVariantValue[])) {
             _nresults ++;            
             _context.nstack[(_context.nstackPos - _nparams) + _nresults] = value;
         }
         else static if(is(T == void*)) {
             _uresults ++;
-            _context.ustack[(_context.ustackPos - _uparams) + _uresults] = value;
+            _context.ostack[(_context.ostackPos - _uparams) + _uresults] = value;
         }
     }
 

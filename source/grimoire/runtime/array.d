@@ -11,16 +11,16 @@ module grimoire.runtime.array;
 import grimoire.core;
 import grimoire.compiler.primitive;
 
-import grimoire.runtime.dynamic;
+import grimoire.runtime.variant;
 
 class GrArrayValue {
-	//alias ArrayStorage = IndexedArray!(GrDynamicValue, 1024u);
-	private GrDynamicValue[] _storage;
+	//alias ArrayStorage = IndexedArray!(GrVariantValue, 1024u);
+	private GrVariantValue[] _storage;
 
 	dstring getString(GrCall call) {
 		dstring result = "["d;
         int index;
-		foreach(GrDynamicValue value; _storage) {
+		foreach(GrVariantValue value; _storage) {
 			result ~= value.getString(call);
 
 			if((index + 1) < _storage.length)
@@ -35,12 +35,12 @@ class GrArrayValue {
         return cast(int)_storage.length;
     }
 
-    GrDynamicValue getAt(int index) {
+    GrVariantValue getAt(int index) {
         return _storage[index];
     }
 
     int push(int ivalue) {
-        GrDynamicValue value;
+        GrVariantValue value;
         value.setInt(ivalue);
         auto id = cast(int)_storage.length;
         _storage ~= value;
@@ -48,7 +48,7 @@ class GrArrayValue {
     }
 
     int push(float fvalue) {
-        GrDynamicValue value;
+        GrVariantValue value;
         value.setFloat(fvalue);
         auto id = cast(int)_storage.length;
         _storage ~= value;
@@ -56,14 +56,14 @@ class GrArrayValue {
     }
 
     int push(dstring svalue) {
-        GrDynamicValue value;
+        GrVariantValue value;
         value.setString(svalue);
         auto id = cast(int)_storage.length;
         _storage ~= value;
         return id;
     }
 
-    int push(GrDynamicValue value) {
+    int push(GrVariantValue value) {
         auto id = cast(int)_storage.length;
         _storage ~= value;
         return id;

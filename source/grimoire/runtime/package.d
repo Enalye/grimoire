@@ -11,6 +11,6 @@ module grimoire.runtime;
 public {
 	import grimoire.runtime.engine;
 	import grimoire.runtime.context;
-	import grimoire.runtime.dynamic;
+	import grimoire.runtime.variant;
 	import grimoire.runtime.array;
 }

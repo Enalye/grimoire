@@ -15,41 +15,41 @@ static this() {
     //As int
     grAddCast(&typecast_r2i, "value", grFloat, grInt, true);
     grAddCast(&typecast_b2i, "value", grBool, grInt);
-	grAddCast(&typecast_d2i, "value", grDynamic, grInt);
+	grAddCast(&typecast_d2i, "value", grVariant, grInt);
 
     //As float
     grAddCast(&typecast_i2r, "value", grInt, grFloat, true);
-	grAddCast(&typecast_d2r, "value", grDynamic, grFloat);
+	grAddCast(&typecast_d2r, "value", grVariant, grFloat);
 
     //As bool
-	grAddCast(&typecast_b2i, "value", grDynamic, grBool);
+	grAddCast(&typecast_b2i, "value", grVariant, grBool);
 
     //As Array
 	grAddCast(&typecast_s2n, "value", grString, grArray);
-	grAddCast(&typecast_d2n, "value", grDynamic, grArray);
+	grAddCast(&typecast_d2n, "value", grVariant, grArray);
 
 
     //As string
 	grAddCast(&typecast_i2s, "value", grInt, grString);
 	grAddCast(&typecast_r2s, "value", grFloat, grString);
-	grAddCast(&typecast_d2s, "value", grDynamic, grString);
+	grAddCast(&typecast_d2s, "value", grVariant, grString);
 
     //As dynamic value
-	grAddCast(&typecast_b2d, "value", grBool, grDynamic);
-	grAddCast(&typecast_i2d, "value", grInt, grDynamic);
-	grAddCast(&typecast_r2d, "value", grFloat, grDynamic);
-	grAddCast(&typecast_s2d, "value", grString, grDynamic);
-	grAddCast(&typecast_n2d, "value", grArray, grDynamic);
+	grAddCast(&typecast_b2d, "value", grBool, grVariant);
+	grAddCast(&typecast_i2d, "value", grInt, grVariant);
+	grAddCast(&typecast_r2d, "value", grFloat, grVariant);
+	grAddCast(&typecast_s2d, "value", grString, grVariant);
+	grAddCast(&typecast_n2d, "value", grArray, grVariant);
 
     GrType anonFunc = GrBaseType.FunctionType;
     anonFunc.mangledType = grMangleNamedFunction("", []);
-	grAddCast(&typecast_f2d, "value", anonFunc, grDynamic);
-	grAddCast(&typecast_d2f, "value", grDynamic, anonFunc);
+	grAddCast(&typecast_f2d, "value", anonFunc, grVariant);
+	grAddCast(&typecast_d2f, "value", grVariant, anonFunc);
 
     GrType anonTask = GrBaseType.TaskType;
     anonTask.mangledType = grMangleNamedFunction("", []);
-	grAddCast(&typecast_t2d, "value", anonTask, grDynamic);
-	grAddCast(&typecast_d2t, "value", grDynamic, anonTask);
+	grAddCast(&typecast_t2d, "value", anonTask, grVariant);
+	grAddCast(&typecast_d2t, "value", grVariant, anonTask);
 }
 
 //As int
@@ -62,7 +62,7 @@ private void typecast_b2i(GrCall call) {
 }
 
 private void typecast_d2i(GrCall call) {
-    call.setInt(call.getDynamic("value").getInt(call));
+    call.setInt(call.getVariant("value").getInt(call));
 }
 
 //As float
@@ -71,19 +71,19 @@ private void typecast_i2r(GrCall call) {
 }
 
 private void typecast_d2r(GrCall call) {
-    call.setFloat(call.getDynamic("value").getFloat(call));
+    call.setFloat(call.getVariant("value").getFloat(call));
 }
 
 //As bool
 private void typecast_d2b(GrCall call) {
-    call.setBool(call.getDynamic("value").getBool(call) > 0);
+    call.setBool(call.getVariant("value").getBool(call) > 0);
 }
 
 //As array
 private void typecast_s2n(GrCall call) {
-    GrDynamicValue[] array;
+    GrVariantValue[] array;
     foreach(c; call.getString("value")) {
-        GrDynamicValue dynamic;
+        GrVariantValue dynamic;
         dynamic.setString(to!dstring(c));
         array ~= dynamic;
     }
@@ -91,7 +91,7 @@ private void typecast_s2n(GrCall call) {
 }
 
 private void typecast_d2n(GrCall call) {
-    call.setArray(call.getDynamic("value").getArray(call));
+    call.setArray(call.getVariant("value").getArray(call));
 }
 
 //As string
@@ -104,58 +104,58 @@ private void typecast_r2s(GrCall call) {
 }
 
 private void typecast_d2s(GrCall call) {
-    call.setString(call.getDynamic("value").getString(call));
+    call.setString(call.getVariant("value").getString(call));
 }
 
 //As dynamic value
 private void typecast_b2d(GrCall call) {
-    GrDynamicValue dyn;
+    GrVariantValue dyn;
     dyn.setBool(call.getBool("value"));
-	call.setDynamic(dyn);
+	call.setVariant(dyn);
 }
 
 private void typecast_i2d(GrCall call) {
-    GrDynamicValue dyn;
+    GrVariantValue dyn;
     dyn.setInt(call.getInt("value"));
-	call.setDynamic(dyn);
+	call.setVariant(dyn);
 }
 
 private void typecast_r2d(GrCall call) {
-    GrDynamicValue dyn;
+    GrVariantValue dyn;
     dyn.setFloat(call.getFloat("value"));
-	call.setDynamic(dyn);
+	call.setVariant(dyn);
 }
 
 private void typecast_s2d(GrCall call) {
-    GrDynamicValue dyn;
+    GrVariantValue dyn;
     dyn.setString(call.getString("value"));
-	call.setDynamic(dyn);
+	call.setVariant(dyn);
 }
 
 private void typecast_n2d(GrCall call) {
-    GrDynamicValue dyn;
+    GrVariantValue dyn;
     dyn.setArray(call.getArray("value"));
-	call.setDynamic(dyn);
+	call.setVariant(dyn);
 }
 
 private void typecast_f2d(GrCall call) {
-    GrDynamicValue dyn;
+    GrVariantValue dyn;
     dyn.setFunction(call.getInt("value"), call.meta);
-	call.setDynamic(dyn);
+	call.setVariant(dyn);
 }
 
 private void typecast_d2f(GrCall call) {
-    GrDynamicValue dyn = call.getDynamic("value");
+    GrVariantValue dyn = call.getVariant("value");
 	call.setInt(dyn.getFunction(call));
 }
 
 private void typecast_t2d(GrCall call) {
-    GrDynamicValue dyn;
+    GrVariantValue dyn;
     dyn.setString(call.meta);
-	call.setDynamic(dyn);
+	call.setVariant(dyn);
 }
 
 private void typecast_d2t(GrCall call) {
-    GrDynamicValue dyn = call.getDynamic("value");
+    GrVariantValue dyn = call.getVariant("value");
 	call.setInt(dyn.getTask(call));
 }
