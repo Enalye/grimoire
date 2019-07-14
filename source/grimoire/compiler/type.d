@@ -237,8 +237,7 @@ class GrFunction {
 	uint position, anonReference, localVariableIndex;
 
 	uint nbIntegerParameters, nbFloatParameters, nbStringParameters,
-		nbArrayParameters, nbAnyParameters, nbObjectParameters,
-        nbUserDataParameters;
+        nbVariantParameters, nbUserDataParameters;
 
     GrDeferrableSection[] deferrableSections;
     GrDeferBlock[] registeredDeferBlocks;

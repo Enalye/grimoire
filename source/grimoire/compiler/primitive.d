@@ -44,9 +44,9 @@ class GrCall {
         GrPrimitive _primitive;
         GrCallback _callback;
 
-        dstring[] _ilocals, _flocals, _slocals, _dlocals, _nlocals, _ulocals;
-        int _iparams, _fparams, _sparams, _vparams, _nparams, _uparams;
-        int _iresults, _fresults, _sresults, _dresults, _nresults, _uresults;
+        dstring[] _ilocals, _flocals, _slocals, _vlocals, _olocals;
+        int _iparams, _fparams, _sparams, _vparams, _oparams;
+        int _iresults, _fresults, _sresults, _vresults, _oresults;
         bool _hasResult, _isInitialized;
     }
 
@@ -74,8 +74,7 @@ class GrCall {
         _fparams = 0;
         _sparams = 0;
         _vparams = 0;
-        _nparams = 0;
-        _uparams = 0;
+        _oparams = 0;
 
         auto inSignature =  _primitive.inSignature;
         if(_primitive.name == "@as")
@@ -111,19 +110,16 @@ class GrCall {
                 break;
             case VariantType:
                 _vparams ++;
-                _dlocals ~= name;
-                break;
-            case ArrayType:
-                _nparams ++;
-                _nlocals ~= name;
+                _vlocals ~= name;
                 break;
             case TupleType:
                 auto structure = grGetTuple(type.mangledType);
                 setupLocals(name ~ ".", structure.fields, structure.signature);
                 break;
+            case ArrayType:
             case UserType:
-                _uparams ++;
-                _ulocals ~= name;
+                _oparams ++;
+                _olocals ~= name;
                 break;
             default:
                 throw new Exception("Type Error or smthing like that");
@@ -135,9 +131,8 @@ class GrCall {
         _iresults = 0;
         _fresults = 0;
         _sresults = 0;
-        _dresults = 0;
-        _nresults = 0;
-        _uresults = 0;
+        _vresults = 0;
+        _oresults = 0;
         _hasError = false;
 
         _context = context;
@@ -146,9 +141,8 @@ class GrCall {
         _context.istackPos -= (_iparams - _iresults);
         _context.fstackPos -= (_fparams - _fresults);
         _context.sstackPos -= (_sparams - _sresults);
-        _context.vstackPos -= (_vparams - _dresults);
-        _context.nstackPos -= (_nparams - _nresults);
-        _context.ostackPos -= (_uparams - _uresults);
+        _context.vstackPos -= (_vparams - _vresults);
+        _context.ostackPos -= (_oparams - _oresults);
 
         if(_hasError)
             dispatchError();
@@ -159,7 +153,7 @@ class GrCall {
     alias getInt = getParameter!int;
     alias getFloat = getParameter!float;
     alias getVariant = getParameter!GrVariantValue;
-    alias getArray = getParameter!(GrVariantValue[]);
+    alias getArray = getParameter!GrArrayValue;
 
     T getUserData(T)(dstring parameter) {
         return cast(T)getParameter!(void*)(parameter);
@@ -212,36 +206,36 @@ class GrCall {
         }
         else static if(is(T == GrVariantValue)) {
             int index;
-            for(; index < _dlocals.length; index ++) {
-                if(parameter == _dlocals[index])
+            for(; index < _vlocals.length; index ++) {
+                if(parameter == _vlocals[index])
                     break;
             }
-            if(index == _dlocals.length)
+            if(index == _vlocals.length)
                 throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.vstack[(_context.vstackPos - _vparams) + index + 1];
         }
-        else static if(is(T == GrVariantValue[])) {
+        else static if(is(T == GrArrayValue)) {
             int index;
-            for(; index < _nlocals.length; index ++) {
-                if(parameter == _nlocals[index])
+            for(; index < _olocals.length; index ++) {
+                if(parameter == _olocals[index])
                     break;
             }
-            if(index == _nlocals.length)
+            if(index == _olocals.length)
                 throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
-            return _context.nstack[(_context.nstackPos - _nparams) + index + 1];
+            return cast(GrArrayValue)(_context.ostack[(_context.ostackPos - _oparams) + index + 1]);
         }
         else static if(is(T == void*)) {
             int index;
-            for(; index < _ulocals.length; index ++) {
-                if(parameter == _ulocals[index])
+            for(; index < _olocals.length; index ++) {
+                if(parameter == _olocals[index])
                     break;
             }
-            if(index == _ulocals.length)
+            if(index == _olocals.length)
                 throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
-            return _context.ostack[(_context.ostackPos - _uparams) + index + 1];
+            return _context.ostack[(_context.ostackPos - _oparams) + index + 1];
         }
     }
 
@@ -250,7 +244,7 @@ class GrCall {
     alias setInt = setResult!int;
     alias setFloat = setResult!float;
     alias setVariant = setResult!GrVariantValue;
-    alias setArray = setResult!(GrVariantValue[]);
+    alias setArray = setResult!(GrArrayValue);
     
     void setUserData(T)(T value) {
         setResult!(void*)(cast(void*)value);
@@ -274,16 +268,16 @@ class GrCall {
             _context.sstack[(_context.sstackPos - _sparams) + _sresults] = value;
         }
         else static if(is(T == GrVariantValue)) {
-            _dresults ++;
-            _context.vstack[(_context.vstackPos - _vparams) + _dresults] = value;
+            _vresults ++;
+            _context.vstack[(_context.vstackPos - _vparams) + _vresults] = value;
         }
-        else static if(is(T == GrVariantValue[])) {
-            _nresults ++;            
-            _context.nstack[(_context.nstackPos - _nparams) + _nresults] = value;
+        else static if(is(T == GrArrayValue)) {
+            _oresults ++;
+            _context.ostack[(_context.ostackPos - _oparams) + _oresults] = cast(void*)value;
         }
         else static if(is(T == void*)) {
-            _uresults ++;
-            _context.ostack[(_context.ostackPos - _uparams) + _uresults] = value;
+            _oresults ++;
+            _context.ostack[(_context.ostackPos - _oparams) + _oresults] = value;
         }
     }
 

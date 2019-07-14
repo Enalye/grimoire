@@ -18,24 +18,24 @@ import grimoire.core;
 enum GrOpcode {
     Nop, Raise, Try, Catch,
     Kill, Yield, Task, AnonymousTask, New,
-    ShiftStack_Int, ShiftStack_Float, ShiftStack_String, ShiftStack_Array, ShiftStack_Variant, ShiftStack_UserData,
+    ShiftStack_Int, ShiftStack_Float, ShiftStack_String, ShiftStack_Variant, ShiftStack_UserData,
     
-    LocalStore_Int, LocalStore_Float, LocalStore_String, LocalStore_Array, LocalStore_Variant, LocalStore_Ref, LocalStore_UserData,
-    LocalStore2_Int, LocalStore2_Float, LocalStore2_String, LocalStore2_Array, LocalStore2_Variant, LocalStore2_Ref, LocalStore2_UserData,
-    LocalLoad_Int, LocalLoad_Float, LocalLoad_String, LocalLoad_Array, LocalLoad_Variant, LocalLoad_Ref, LocalLoad_UserData,
+    LocalStore_Int, LocalStore_Float, LocalStore_String, LocalStore_Variant, LocalStore_Ref, LocalStore_UserData,
+    LocalStore2_Int, LocalStore2_Float, LocalStore2_String, LocalStore2_Variant, LocalStore2_Ref, LocalStore2_UserData,
+    LocalLoad_Int, LocalLoad_Float, LocalLoad_String, LocalLoad_Variant, LocalLoad_Ref, LocalLoad_UserData,
     
-    GlobalStore_Int, GlobalStore_Float, GlobalStore_String, GlobalStore_Array, GlobalStore_Variant, GlobalStore_Ref, GlobalStore_UserData,
-    GlobalStore2_Int, GlobalStore2_Float, GlobalStore2_String, GlobalStore2_Array, GlobalStore2_Variant, GlobalStore2_Ref, GlobalStore2_UserData,
-    GlobalLoad_Int, GlobalLoad_Float, GlobalLoad_String, GlobalLoad_Array, GlobalLoad_Variant, GlobalLoad_Ref, GlobalLoad_UserData,
+    GlobalStore_Int, GlobalStore_Float, GlobalStore_String, GlobalStore_Variant, GlobalStore_Ref, GlobalStore_UserData,
+    GlobalStore2_Int, GlobalStore2_Float, GlobalStore2_String, GlobalStore2_Variant, GlobalStore2_Ref, GlobalStore2_UserData,
+    GlobalLoad_Int, GlobalLoad_Float, GlobalLoad_String, GlobalLoad_Variant, GlobalLoad_Ref, GlobalLoad_UserData,
     
     GetField,
-    FieldStore_Int, FieldStore_Float, FieldStore_String, FieldStore_Array, FieldStore_Variant, FieldStore_Ref, FieldStore_UserData,
-    FieldLoad_Int, FieldLoad_Float, FieldLoad_String, FieldLoad_Array, FieldLoad_Variant, FieldLoad_Ref, FieldLoad_UserData,
+    FieldStore_Int, FieldStore_Float, FieldStore_String, FieldStore_Variant, FieldStore_Ref, FieldStore_UserData,
+    FieldLoad_Int, FieldLoad_Float, FieldLoad_String, FieldLoad_Variant, FieldLoad_Ref, FieldLoad_UserData,
 
     Const_Int, Const_Float, Const_Bool, Const_String, Const_Meta,
     
-    GlobalPush_Int, GlobalPush_Float, GlobalPush_String, GlobalPush_Array, GlobalPush_Variant, GlobalPush_UserData,
-    GlobalPop_Int, GlobalPop_Float, GlobalPop_String, GlobalPop_Array, GlobalPop_Variant, GlobalPop_UserData,
+    GlobalPush_Int, GlobalPush_Float, GlobalPush_String, GlobalPush_Variant, GlobalPush_UserData,
+    GlobalPop_Int, GlobalPop_Float, GlobalPop_String, GlobalPop_Variant, GlobalPop_UserData,
 
     Equal_Int, Equal_Float, Equal_String, Equal_Variant,
     NotEqual_Int, NotEqual_Float, NotEqual_String, NotEqual_Variant,
@@ -61,7 +61,8 @@ enum GrOpcode {
     Return, Unwind, Defer,
     Jump, JumpEqual, JumpNotEqual,
 
-    Build_Array, Length_Array, Index_Array, IndexRef_Array
+    Build_Array, Length_Array, Index_Array, Index_Variant,
+    Copy_Array, Copy_Variant
 }
 
 /// Compiled form of grimoire

@@ -32,7 +32,6 @@ final class GrContext {
     int[] ilocals;
     float[] flocals;
     dstring[] slocals;
-    GrVariantValue[][] nlocals;
     GrVariantValue[] vlocals;
     void*[] olocals;
 
@@ -45,7 +44,6 @@ final class GrContext {
     int[] istack;
     float[] fstack;
     dstring[] sstack;
-    GrVariantValue[][] nstack;
     GrVariantValue[] vstack;
     void*[] ostack;
 
@@ -64,7 +62,6 @@ final class GrContext {
     int istackPos = -1,
         fstackPos = -1,
         sstackPos = -1,
-        nstackPos = -1,
         vstackPos = -1,
         ostackPos = -1;
 
@@ -94,7 +91,6 @@ final class GrContext {
         istack = new int[stackLimit];
         fstack = new float[stackLimit];
         sstack = new dstring[stackLimit];
-        nstack = new GrVariantValue[][stackLimit];
         vstack = new GrVariantValue[stackLimit];
         ostack = new void*[stackLimit];
     }
@@ -108,7 +104,6 @@ final class GrContext {
         ilocals = new int[localsLimit];
         flocals = new float[localsLimit];
         slocals = new dstring[localsLimit];
-        nlocals = new GrVariantValue[][localsLimit];
         vlocals = new GrVariantValue[localsLimit];
         olocals = new void*[localsLimit];
     }
@@ -152,10 +147,6 @@ final class GrContext {
         else static if(is(T == GrVariantValue)) {
             vstackPos ++;
             vstack[vstackPos] = value;
-        }
-        else static if(is(T == GrVariantValue[])) {
-            nstackPos ++;            
-            nstack[nstackPos] = value;
         }
         else static if(is(T == void*)) {
             ostackPos ++;

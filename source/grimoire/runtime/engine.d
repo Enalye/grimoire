@@ -347,10 +347,6 @@ class GrEngine {
 					context.sstackPos += grGetInstructionSignedValue(opcode);
 					context.pc ++;
 					break;
-                case ShiftStack_Array:
-					context.nstackPos += grGetInstructionSignedValue(opcode);
-					context.pc ++;
-					break;
 				case ShiftStack_Variant:
 					context.vstackPos += grGetInstructionSignedValue(opcode);
 					context.pc ++;
@@ -374,18 +370,13 @@ class GrEngine {
                     context.sstackPos --;	
 					context.pc ++;
 					break;
-                case LocalStore_Array:
-					context.nlocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.nstack[context.nstackPos];		
-                    context.nstackPos --;	
-					context.pc ++;
-					break;
 				case LocalStore_Variant:
 					context.vlocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.vstack[context.vstackPos];
                     context.vstackPos --;	
 					context.pc ++;
 					break;
                 case LocalStore_Ref:
-                    context.vstack[context.vstackPos - 1].setRef(context, context.vstack[context.vstackPos]);
+                    context.vstack[context.vstackPos - 1].storeRef(context, context.vstack[context.vstackPos]);
                     context.vstackPos -= 2;
                     context.pc ++;
                     break;
@@ -406,17 +397,13 @@ class GrEngine {
 					context.slocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.sstack[context.sstackPos];		
 					context.pc ++;
 					break;
-                case LocalStore2_Array:
-					context.nlocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.nstack[context.nstackPos];		
-					context.pc ++;
-					break;
 				case LocalStore2_Variant:
 					context.vlocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.vstack[context.vstackPos];
 					context.pc ++;
 					break;
                 case LocalStore2_Ref:
                     context.vstackPos --;
-                    context.vstack[context.vstackPos].setRef(context, context.vstack[context.vstackPos + 1]);
+                    context.vstack[context.vstackPos].storeRef(context, context.vstack[context.vstackPos + 1]);
                     context.pc ++;
                     break;
                 case LocalStore2_UserData:
@@ -438,21 +425,9 @@ class GrEngine {
 					context.sstack[context.sstackPos] = context.slocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
-                case LocalLoad_Array:
-                    context.nstackPos ++;
-					context.nstack[context.nstackPos] = context.nlocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
-					context.pc ++;
-					break;
 				case LocalLoad_Variant:
                     context.vstackPos ++;
 					context.vstack[context.vstackPos] = context.vlocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
-					context.pc ++;
-					break;
-                case LocalLoad_Ref:
-                    GrVariantValue value;
-                    value.setRefArray(&context.nlocals[context.localsPos + grGetInstructionUnsignedValue(opcode)]);
-                    context.vstackPos ++;
-                    context.vstack[context.vstackPos] = value;			
 					context.pc ++;
 					break;
                 case LocalLoad_UserData:
@@ -475,21 +450,11 @@ class GrEngine {
                     context.sstackPos --;	
 					context.pc ++;
 					break;
-                case GlobalStore_Array:
-					_nglobals[grGetInstructionUnsignedValue(opcode)] = context.nstack[context.nstackPos];		
-                    context.nstackPos --;	
-					context.pc ++;
-					break;
 				case GlobalStore_Variant:
 					_vglobals[grGetInstructionUnsignedValue(opcode)] = context.vstack[context.vstackPos];
                     context.vstackPos --;	
 					context.pc ++;
 					break;
-                case GlobalStore_Ref:
-                    context.vstack[context.vstackPos - 1].setRef(context, context.vstack[context.vstackPos]);
-                    context.vstackPos -= 2;
-                    context.pc ++;
-                    break;
                 case GlobalStore_UserData:
 					_oglobals[grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
                     context.ostackPos --;	
@@ -507,19 +472,10 @@ class GrEngine {
 					_sglobals[grGetInstructionUnsignedValue(opcode)] = context.sstack[context.sstackPos];		
 					context.pc ++;
 					break;
-                case GlobalStore2_Array:
-					_nglobals[grGetInstructionUnsignedValue(opcode)] = context.nstack[context.nstackPos];		
-					context.pc ++;
-					break;
 				case GlobalStore2_Variant:
 					_vglobals[grGetInstructionUnsignedValue(opcode)] = context.vstack[context.vstackPos];
 					context.pc ++;
 					break;
-                case GlobalStore2_Ref:
-                    context.vstackPos --;
-                    context.vstack[context.vstackPos].setRef(context, context.vstack[context.vstackPos + 1]);
-                    context.pc ++;
-                    break;
                 case GlobalStore2_UserData:
 					_oglobals[grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
 					context.pc ++;
@@ -539,21 +495,9 @@ class GrEngine {
 					context.sstack[context.sstackPos] = _sglobals[grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
-                case GlobalLoad_Array:
-                    context.nstackPos ++;
-					context.nstack[context.nstackPos] = _nglobals[grGetInstructionUnsignedValue(opcode)];
-					context.pc ++;
-					break;
 				case GlobalLoad_Variant:
                     context.vstackPos ++;
 					context.vstack[context.vstackPos] = _vglobals[grGetInstructionUnsignedValue(opcode)];
-					context.pc ++;
-					break;
-                case GlobalLoad_Ref:
-                    GrVariantValue value;
-                    value.setRefArray(&_nglobals[grGetInstructionUnsignedValue(opcode)]);
-                    context.vstackPos ++;
-                    context.vstack[context.vstackPos] = value;			
 					context.pc ++;
 					break;
                 case GlobalLoad_UserData:
@@ -622,13 +566,6 @@ class GrEngine {
 					context.sstackPos -= nbParams;
 					context.pc ++;
 					break;
-                case GlobalPush_Array:
-					uint nbParams = grGetInstructionUnsignedValue(opcode);
-					for(uint i = 1u; i <= nbParams; i++)
-						_nglobalStack ~= context.nstack[(context.nstackPos - nbParams) + i];
-					context.nstackPos -= nbParams;
-					context.pc ++;
-					break;
 				case GlobalPush_Variant:
 					uint nbParams = grGetInstructionUnsignedValue(opcode);
 					for(uint i = 1u; i <= nbParams; i++)
@@ -659,12 +596,6 @@ class GrEngine {
                     context.sstackPos ++;
 					context.sstack[context.sstackPos] = _sglobalStack[$ - 1];
 					_sglobalStack.length --;
-					context.pc ++;
-					break;
-                case GlobalPop_Array:
-                    context.nstackPos ++;
-					context.nstack[context.nstackPos] = _nglobalStack[$ - 1];
-					_nglobalStack.length --;
 					context.pc ++;
 					break;
 				case GlobalPop_Variant:
@@ -1110,38 +1041,48 @@ class GrEngine {
 					context.istackPos --;
 					break;
                 case Build_Array:
-                    GrVariantValue[] ary;
+                    GrArrayValue ary = new GrArrayValue;
                     const auto arySize = grGetInstructionUnsignedValue(opcode);
                     for(int i = arySize - 1; i >= 0; i --) {
-                        ary ~= context.vstack[context.vstackPos - i];
+                        ary.data ~= context.vstack[context.vstackPos - i];
                     }
                     context.vstackPos -= arySize;
-                    context.nstackPos ++;
-                    context.nstack[context.nstackPos] = ary;
+                    context.ostackPos ++;
+                    context.ostack[context.ostackPos] = cast(void*)ary;
                     context.pc ++;
                     break;
 				case Length_Array:
                     context.istackPos ++;
-					context.istack[context.istackPos] = cast(int)context.nstack[context.nstackPos].length;
-                    context.nstackPos --;
+					context.istack[context.istackPos] = cast(int)((cast(GrArrayValue)context.ostack[context.ostackPos]).data.length);
+                    context.ostackPos --;
 					context.pc ++;
 					break;
 				case Index_Array:
-					GrVariantValue[] ary = context.nstack[context.nstackPos];
+					GrArrayValue ary = cast(GrArrayValue)context.ostack[context.ostackPos];
                     const auto idx = context.istack[context.istackPos];
-                    if(idx >= ary.length) {
+                    if(idx >= ary.data.length) {
                         raise(context, "Array overflow");
                         break;
                     }
                     context.vstackPos ++;
-                    context.vstack[context.vstackPos] = ary[idx];
-					context.nstackPos --;					
+                    context.vstack[context.vstackPos].setRef(context, &ary.data[idx]);
+					context.ostackPos --;					
 					context.istackPos --;					
 					context.pc ++;
 					break;
-                case IndexRef_Array:
+                case Index_Variant:
                     context.vstack[context.vstackPos].setArrayIndex(context, context.istack[context.istackPos]);
                     context.istackPos --;
+					context.pc ++;
+					break;
+				case Copy_Array:
+                    context.ostack[context.ostackPos] = cast(void*)(
+						new GrArrayValue(cast(GrArrayValue)context.ostack[context.ostackPos])
+						);
+					context.pc ++;
+					break;
+				case Copy_Variant:
+					context.vstack[context.vstackPos] = context.vstack[context.vstackPos].copy();
 					context.pc ++;
 					break;
 				default:

@@ -343,20 +343,10 @@ class GrParser {
                 if(func.isTask)
                     addInstruction(GrOpcode.GlobalPop_String, 0u);
                 break;
-            case ArrayType:
-                func.nbArrayParameters ++;
-                if(func.isTask)
-                    addInstruction(GrOpcode.GlobalPop_Array, 0u);
-                break;
             case VariantType:
-                func.nbAnyParameters ++;
+                func.nbVariantParameters ++;
                 if(func.isTask)
                     addInstruction(GrOpcode.GlobalPop_Variant, 0u);
-                break;
-            case StructType:
-                func.nbObjectParameters ++;
-                if(func.isTask)
-                    addInstruction(GrOpcode.GlobalPop_UserData, 0u);
                 break;
             case TupleType:
                 auto tuple = grGetTuple(type.mangledType);
@@ -365,6 +355,8 @@ class GrParser {
                     fetchParameter(name ~ ":" ~ tuple.fields[nbFields - i], tuple.signature[nbFields - i]);
                 }
                 break;
+            case StructType:
+            case ArrayType:
             case UserType:
                 func.nbUserDataParameters ++;
                 if(func.isTask)
@@ -824,6 +816,7 @@ class GrParser {
 
 	void addSetInstruction(GrVariable variable, GrType valueType = GrType(GrBaseType.VoidType), bool isGettingValue = false) {
         if(variable is null) {
+            convertType(valueType, grVariant);
 			addInstruction(isGettingValue ? GrOpcode.LocalStore2_Ref : GrOpcode.LocalStore_Ref);
             return;
         }
@@ -884,9 +877,6 @@ class GrParser {
 			case StringType:
 				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_String : GrOpcode.GlobalStore_String, variable.index);
 				break;
-            case ArrayType:
-				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Array : GrOpcode.GlobalStore_Array, variable.index);
-				break;
 			case VariantType:
 				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Variant : GrOpcode.GlobalStore_Variant, variable.index);
 				break;
@@ -900,6 +890,7 @@ class GrParser {
                     addSetInstruction(getVariable(variable.name ~ ":" ~ tuple.fields[nbFields - i]), tuple.signature[nbFields - i], isGettingValue);
                 }
                 break;
+            case ArrayType:
             case UserType:
 				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_UserData : GrOpcode.GlobalStore_UserData, variable.index);
 				break;
@@ -921,9 +912,6 @@ class GrParser {
 			case StringType:
 				addInstruction(isGettingValue ? GrOpcode.LocalStore2_String : GrOpcode.LocalStore_String, variable.index);
 				break;
-            case ArrayType:
-				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Array : GrOpcode.LocalStore_Array, variable.index);
-				break;
 			case VariantType:
 				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Variant : GrOpcode.LocalStore_Variant, variable.index);
 				break;
@@ -939,6 +927,7 @@ class GrParser {
                 if(isGettingValue)
                     shiftStackPosition(variable.type, 1);
                 break;
+            case ArrayType:
             case UserType:
 				addInstruction(isGettingValue ? GrOpcode.LocalStore2_UserData : GrOpcode.LocalStore_UserData, variable.index);
 				break;
@@ -995,14 +984,6 @@ class GrParser {
                 else
 				    addInstruction(GrOpcode.GlobalLoad_String, variable.index);
 				break;
-			case ArrayType:
-                if(allowOptimization
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Array
-                    && currentFunction.instructions[$ - 1].value == variable.index)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Array;
-                else
-				addInstruction(GrOpcode.GlobalLoad_Array, variable.index);
-				break;
 			case VariantType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Variant
@@ -1025,6 +1006,7 @@ class GrParser {
                     addGetInstruction(getVariable(variable.name ~ ":" ~ tuple.fields[i]), tuple.signature[i]);
                 }
                 break;
+            case ArrayType:
             case UserType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_UserData
@@ -1069,14 +1051,6 @@ class GrParser {
                 else
 				    addInstruction(GrOpcode.LocalLoad_String, variable.index);
 				break;
-			case ArrayType:
-                if(allowOptimization
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Array
-                    && currentFunction.instructions[$ - 1].value == variable.index)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Array;
-                else
-			    	addInstruction(GrOpcode.LocalLoad_Array, variable.index);
-				break;
 			case VariantType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Variant
@@ -1099,6 +1073,7 @@ class GrParser {
                     addGetInstruction(getVariable(variable.name ~ ":" ~ tuple.fields[i]), tuple.signature[i]);
                 }
                 break;
+            case ArrayType:
             case UserType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_UserData
@@ -1152,10 +1127,8 @@ class GrParser {
                     addInstruction(GrOpcode.GlobalPush_Float, func.nbFloatParameters);
                 if(func.nbStringParameters > 0)
                     addInstruction(GrOpcode.GlobalPush_String, func.nbStringParameters);
-                if(func.nbArrayParameters > 0)
-                    addInstruction(GrOpcode.GlobalPush_Array, func.nbArrayParameters);
-                if(func.nbAnyParameters > 0)
-                    addInstruction(GrOpcode.GlobalPush_Variant, func.nbAnyParameters);
+                if(func.nbVariantParameters > 0)
+                    addInstruction(GrOpcode.GlobalPush_Variant, func.nbVariantParameters);
                 if(func.nbUserDataParameters > 0)
                     addInstruction(GrOpcode.GlobalPush_UserData, func.nbUserDataParameters);
             }
@@ -1625,14 +1598,8 @@ class GrParser {
         case StringType:
             addInstruction(GrOpcode.GlobalPop_String, 0u);
             break;
-        case ArrayType:
-            addInstruction(GrOpcode.GlobalPop_Array, 0u);
-            break;
         case VariantType:
             addInstruction(GrOpcode.GlobalPop_Variant, 0u);
-            break;
-        case StructType:
-            addInstruction(GrOpcode.GlobalPop_UserData, 0u);
             break;
         case TupleType:
             auto tuple = grGetTuple(type.mangledType);
@@ -1640,6 +1607,8 @@ class GrParser {
                 addGlobalPop(tuple.signature[i]);
             }
             break;
+        case StructType:
+        case ArrayType:
         case UserType:
             addInstruction(GrOpcode.GlobalPop_UserData, 0u);
             break;
@@ -1667,14 +1636,8 @@ class GrParser {
         case StringType:
             addInstruction(GrOpcode.GlobalPush_String, nbPush);
             break;
-        case ArrayType:
-            addInstruction(GrOpcode.GlobalPush_Array, nbPush);
-            break;
         case VariantType:
             addInstruction(GrOpcode.GlobalPush_Variant, nbPush);
-            break;
-        case StructType:
-            addInstruction(GrOpcode.GlobalPush_UserData, nbPush);
             break;
         case TupleType:
             auto tuple = grGetTuple(type.mangledType);
@@ -1682,6 +1645,8 @@ class GrParser {
                 addGlobalPush(tuple.signature[tuple.signature.length - i], nbPush);
             }
             break;
+        case StructType:
+        case ArrayType:
         case UserType:
             addInstruction(GrOpcode.GlobalPush_UserData, nbPush);
             break;
@@ -1693,7 +1658,7 @@ class GrParser {
     void addGlobalPush(GrType[] signature) {
         struct TypeCounter {
             uint nbIntParams, nbFloatParams, nbStringParams,
-                nbArrayParams, nbVariantParams, nbObjectParams, nbUserDataParams;
+                nbVariantParams, nbUserDataParams;
         }
         void countParameters(ref TypeCounter typeCounter, GrType type) {
             final switch(type.baseType) with(GrBaseType) {
@@ -1712,14 +1677,8 @@ class GrParser {
             case StringType:
                 typeCounter.nbStringParams ++;
                 break;
-            case ArrayType:
-                typeCounter.nbArrayParams ++;
-                break;
             case VariantType:
                 typeCounter.nbVariantParams ++;
-                break;
-            case StructType:
-                typeCounter.nbObjectParams ++;
                 break;
             case TupleType:
                 auto tuple = grGetTuple(type.mangledType);
@@ -1727,6 +1686,8 @@ class GrParser {
                     countParameters(typeCounter, tuple.signature[tuple.signature.length - i]);
                 }
                 break;
+            case StructType:
+            case ArrayType:
             case UserType:
                 typeCounter.nbUserDataParams ++;
                 break;
@@ -1746,12 +1707,8 @@ class GrParser {
             addInstruction(GrOpcode.GlobalPush_Float, typeCounter.nbFloatParams);
         if(typeCounter.nbStringParams > 0)
             addInstruction(GrOpcode.GlobalPush_String, typeCounter.nbStringParams);
-        if(typeCounter.nbArrayParams > 0)
-            addInstruction(GrOpcode.GlobalPush_Array, typeCounter.nbArrayParams);
         if(typeCounter.nbVariantParams > 0)
             addInstruction(GrOpcode.GlobalPush_Variant, typeCounter.nbVariantParams);
-        if(typeCounter.nbObjectParams > 0)
-            addInstruction(GrOpcode.GlobalPush_UserData, typeCounter.nbObjectParams);
         if(typeCounter.nbUserDataParams > 0)
             addInstruction(GrOpcode.GlobalPush_UserData, typeCounter.nbUserDataParams);
     }
@@ -3084,7 +3041,7 @@ class GrParser {
         advance();
     }
 
-    void parseArrayIndex(bool asRefType) {
+    void parseArrayIndex(GrType arrayType) {
         if(get().type != GrLexemeType.LeftBracket)
             logError("Missing [", "Missing [");
         advance();
@@ -3098,7 +3055,16 @@ class GrParser {
             convertType(index, grInt);
 
             if(get().type == GrLexemeType.RightBracket) {
-                addInstruction(asRefType ? GrOpcode.IndexRef_Array : GrOpcode.Index_Array);
+                switch(arrayType.baseType) with(GrBaseType) {
+                case ArrayType:
+                    addInstruction(GrOpcode.Index_Array);
+                    break;
+                case VariantType:
+                    addInstruction(GrOpcode.Index_Variant);
+                    break;
+                default:
+                    logError("Invalid array type", "Can only index array or variant value");
+                }
                 break;
             }
             if(get().type != GrLexemeType.Comma)
@@ -3107,8 +3073,17 @@ class GrParser {
             if(get().type == GrLexemeType.RightBracket)
                 logError("Missing comma or ]", "bottom text");
 
-            addInstruction(asRefType ? GrOpcode.IndexRef_Array : GrOpcode.Index_Array);
-            asRefType = true;
+            switch(arrayType.baseType) with(GrBaseType) {
+            case ArrayType:
+                addInstruction(GrOpcode.Index_Array);
+                break;
+            case VariantType:
+                addInstruction(GrOpcode.Index_Variant);
+                break;
+            default:
+                logError("Invalid array type", "Can only index array or variant value");
+            }
+            arrayType = grVariant;
         }
 
         advance();
@@ -3315,15 +3290,11 @@ class GrParser {
             case StringType:
                 counter.sCount ++;
                 break;
-            case ArrayType:
-                counter.nCount ++;
-                break;
             case VariantType:
                 counter.dCount ++;
                 break;
             case StructType:
-                counter.oCount ++;
-                break;
+            case ArrayType:
             case UserType:
                 counter.uCount ++;
                 break;
@@ -3348,12 +3319,8 @@ class GrParser {
             addInstruction(GrOpcode.ShiftStack_Float, counter.fCount * count, true);
         if(counter.sCount)
             addInstruction(GrOpcode.ShiftStack_String, counter.sCount * count, true);
-        if(counter.nCount)
-            addInstruction(GrOpcode.ShiftStack_Array, counter.nCount * count, true);
         if(counter.dCount)
             addInstruction(GrOpcode.ShiftStack_Variant, counter.dCount * count, true);
-        if(counter.oCount)
-            addInstruction(GrOpcode.ShiftStack_UserData, counter.oCount * count, true);
         if(counter.uCount)
             addInstruction(GrOpcode.ShiftStack_UserData, counter.uCount * count, true);
     }
@@ -3481,9 +3448,9 @@ class GrParser {
                 //Index
                 if(hadValue) {
                     hadValue = false;
+                    parseArrayIndex(lastType);
                     currentType = GrType(GrBaseType.VariantType);
                     lastType = GrType(GrBaseType.VariantType);
-                    parseArrayIndex(hadReference);
                     hasReference = true;
                     //Check if there is an assignement or not, discard if it's only a rvalue
                     const auto nextLexeme = get();
@@ -3545,6 +3512,21 @@ class GrParser {
                 typeStack ~= currentType;
                 GrStruct structure = grGetStruct(get().svalue);
                 addInstruction(GrOpcode.New, cast(int)structure.signature.length);
+                checkAdvance();
+                break;
+            case Copy:
+                switch(currentType.baseType) with(GrBaseType) {
+                case ArrayType:
+                    addInstruction(GrOpcode.Copy_Array);
+                    break;
+                case VariantType:
+                    addInstruction(GrOpcode.Copy_Variant);
+                    break;
+                default:
+                    logError("Invalid copy", "Cannot apply copy operator to that");
+                }
+                hasValue = true;
+                hadValue = false;
                 checkAdvance();
                 break;
             case Period:
@@ -3987,11 +3969,11 @@ class GrParser {
 			returnType = variable.type;
             //If it's an assignement, we want the GET instruction to be after the assignement, not there.
             const auto nextLexeme = get();
-            if(nextLexeme.type == GrLexemeType.LeftBracket) {
-                addInstruction(GrOpcode.LocalLoad_Ref, variable.index);
+            /*if(nextLexeme.type == GrLexemeType.LeftBracket) {
+                addInstruction(GrOpcode.LocalLoad_UserData, variable.index);
                 returnType = GrType(GrBaseType.VariantType);
             }
-            else if(nextLexeme.type != GrLexemeType.Assign)
+            else */if(nextLexeme.type != GrLexemeType.Assign)
                 addGetInstruction(variable, expectedType);
 		}
 		return returnType;

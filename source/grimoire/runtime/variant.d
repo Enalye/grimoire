@@ -10,7 +10,7 @@ module grimoire.runtime.variant;
 
 import std.conv: to;
 import grimoire.compiler;
-import grimoire.runtime.context, grimoire.runtime.engine;
+import grimoire.runtime.context, grimoire.runtime.engine, grimoire.runtime.array;
 
 /**
     Lazy evaluation variable that can hold many types.
@@ -20,9 +20,7 @@ struct GrVariantValue {
         int _ivalue;
         float _rvalue;
         dstring _svalue;
-        GrVariantValue[] _nvalue;
-        GrVariantValue* _refindex;
-        GrVariantValue[]* _refvalue;
+        void* _ovalue;
     }
     private dstring _subType;
 
@@ -30,7 +28,7 @@ struct GrVariantValue {
     enum GrVariantValueType {
         UndefinedType,
         FunctionType, TaskType,
-        BoolType, IntType, FloatType, StringType, ArrayType, RefArrayType, RefIndexType
+        BoolType, IntType, FloatType, StringType, ArrayType, RefArrayType, ReferenceType
     }
 
     /// Variant type.
@@ -75,15 +73,9 @@ struct GrVariantValue {
     }
 
     /// Sets the value to array.
-    void setArray(GrVariantValue[] value) {
+    void setArray(GrArrayValue value) {
         type = GrVariantValueType.ArrayType;
-        _nvalue = value;
-    }
-
-    /// Reference to an array.
-    void setRefArray(GrVariantValue[]* value) {
-        type = GrVariantValueType.RefArrayType;
-        _refvalue = value;
+        _ovalue = cast(void*)value;
     }
 
     /// The value is set to the value stored at the index of the current array.
@@ -91,22 +83,27 @@ struct GrVariantValue {
     void setArrayIndex(GrContext context, int index) {
         switch(type) with(GrVariantValueType) {
         case ArrayType:
-            if(index >= _nvalue.length) {
+            GrArrayValue ary = cast(GrArrayValue)_ovalue;
+            if(index >= ary.data.length) {
                 raise(context, "Array overflow");
                 return;
             }
-            this = _nvalue[index];
+            type = GrVariantValueType.ReferenceType;
+            _ovalue = &ary.data[index];
             return;
-        case RefArrayType:
-            if(index >= _refvalue.length) {
+        case ReferenceType:
+            auto variant = cast(GrVariantValue*)_ovalue;
+            if(variant.type != GrVariantValueType.ArrayType) {
+                raise(context, "Invalid reference 2");
+                return;
+            }
+            GrArrayValue ary = cast(GrArrayValue)((cast(GrVariantValue*)_ovalue)._ovalue);
+            if(index >= ary.data.length) {
                 raise(context, "Array overflow");
                 return;
             }
-            _refindex = &((*_refvalue)[index]);
-            type = GrVariantValueType.RefIndexType;
-            return;
-        case RefIndexType:
-            _refindex = &(_refindex._nvalue[index]);
+            type = GrVariantValueType.ReferenceType;
+            _ovalue = &ary.data[index];
             return;
         default:
             raise(context, "Invalid reference");
@@ -121,12 +118,29 @@ struct GrVariantValue {
         //and will increment the pc, so we prevent that.
         context.pc --;
     }
-
+    
     /// The value is now a reference for another value.
-    void setRef(GrContext context, GrVariantValue value) {
-        if(type != GrVariantValueType.RefIndexType)
+    void setRef(GrContext context, GrVariantValue* value) {
+        type = GrVariantValueType.ReferenceType;
+        _ovalue = cast(void*)value;
+    }
+
+    void storeRef(GrContext context, ref GrVariantValue value) {
+        if(type != GrVariantValueType.ReferenceType)
             context.engine.raise(context, "Invalid reference");
-        *_refindex = value;
+        *(cast(GrVariantValue*)_ovalue) = value;
+    }
+
+    GrVariantValue copy() {
+        if(type == GrVariantValueType.ReferenceType)
+            return (cast(GrVariantValue*)_ovalue).copy();
+        else if(type == GrVariantValueType.ArrayType) {
+            GrVariantValue variant;
+            variant.setArray(new GrArrayValue(cast(GrArrayValue)_ovalue));
+            return variant;
+        }
+        else
+            return this;
     }
 
     /// Converts and returns a boolean value.
@@ -139,8 +153,8 @@ struct GrVariantValue {
             return to!int(_rvalue);
         case StringType:
             return _svalue == "true";           
-        case RefIndexType:
-            return _refindex.getBool(call);
+        case ReferenceType:
+            return (cast(GrVariantValue*)_ovalue).getBool(call);
         default:
             raiseConversionError(call, GrVariantValueType.BoolType);
             return false;
@@ -157,8 +171,8 @@ struct GrVariantValue {
             return to!int(_rvalue);
         case StringType:
             return to!int(_svalue);          
-        case RefIndexType:
-            return _refindex.getBool(call);
+        case ReferenceType:
+            return (cast(GrVariantValue*)_ovalue).getBool(call);
         default:
             raiseConversionError(call, GrVariantValueType.IntType);
             return 0;
@@ -175,8 +189,8 @@ struct GrVariantValue {
             return _rvalue;
         case StringType:
             return to!float(_svalue);         
-        case RefIndexType:
-            return _refindex.getFloat(call);
+        case ReferenceType:
+            return (cast(GrVariantValue*)_ovalue).getFloat(call);
         default:
             raiseConversionError(call, GrVariantValueType.FloatType);
             return 0f;
@@ -200,29 +214,9 @@ struct GrVariantValue {
         case StringType:
             return _svalue;
         case ArrayType:
-            dstring result = "[";
-            int i;
-            foreach(value; _nvalue) {
-                result ~= value.getString(call);
-                if((i + 2) <= _nvalue.length)
-                    result ~= ", ";
-                i ++;
-            }
-            result ~= "]";
-            return result;
-        case RefArrayType:
-            dstring result = "[";
-            int i;
-            foreach(value; *_refvalue) {
-                result ~= value.getString(call);
-                if((i + 2) <= _nvalue.length)
-                    result ~= ", ";
-                i ++;
-            }
-            result ~= "]";
-            return result;
-        case RefIndexType:
-            return _refindex.getString(call);
+            return (cast(GrArrayValue)_ovalue).getString(call);
+        case ReferenceType:
+            return (cast(GrVariantValue*)_ovalue).getString(call);
         default:
             raiseConversionError(call, GrVariantValueType.StringType);
             return "";
@@ -230,25 +224,23 @@ struct GrVariantValue {
     }
 
     /// Converts and returns an array value.
-    GrVariantValue[] getArray(GrCall call) {
+    GrArrayValue getArray(GrCall call) {
         switch(type) with(GrVariantValueType) {
         case StringType:
-            GrVariantValue[] array;
+            GrArrayValue array;
             foreach(character; _svalue) {
                 GrVariantValue nElement;
                 nElement.setString(to!dstring(character));
-                array ~= nElement;
+                array.data ~= nElement;
             }
             return array;
         case ArrayType:
-            return _nvalue;
-        case RefArrayType:
-            return *_refvalue;
-        case RefIndexType:
-            return _refindex.getArray(call);
+            return cast(GrArrayValue)_ovalue;
+        case ReferenceType:
+            return (cast(GrVariantValue*)_ovalue).getArray(call);
         default:
             raiseConversionError(call, GrVariantValueType.ArrayType);
-            return [];
+            return new GrArrayValue;
         }
     }
 
@@ -355,7 +347,7 @@ struct GrVariantValue {
         case RefArrayType:
             prettyType = "refarray";
             break;
-        case RefIndexType:
+        case ReferenceType:
             prettyType = "refindex";
             break;
         }
@@ -390,7 +382,7 @@ struct GrVariantValue {
         case RefArrayType:
             prettyType = "refarray";
             break;
-        case RefIndexType:
+        case ReferenceType:
             prettyType = "refindex";
             break;
         }
@@ -565,8 +557,7 @@ struct GrVariantValue {
         case StringType:
             return _svalue == dyn._svalue;
         case ArrayType:
-        case RefArrayType:
-            return _nvalue == dyn._nvalue;
+            return _ovalue == dyn._ovalue;
         default:
             return false;
         }

@@ -13,17 +13,24 @@ import grimoire.compiler.primitive;
 
 import grimoire.runtime.variant;
 
-class GrArrayValue {
-	//alias ArrayStorage = IndexedArray!(GrVariantValue, 1024u);
-	private GrVariantValue[] _storage;
+final class GrArrayValue {
+	GrVariantValue[] data;
+
+    this() {}
+
+    this(GrArrayValue ary) {
+        foreach(ref variant; ary.data) {
+            data ~= variant.copy();
+        }
+    }
 
 	dstring getString(GrCall call) {
 		dstring result = "["d;
         int index;
-		foreach(GrVariantValue value; _storage) {
+		foreach(GrVariantValue value; data) {
 			result ~= value.getString(call);
 
-			if((index + 1) < _storage.length)
+			if((index + 1) < data.length)
 				result ~= ", "d;
             index ++;
 		}
@@ -32,40 +39,40 @@ class GrArrayValue {
 	}
 
     int getLength() {
-        return cast(int)_storage.length;
+        return cast(int)data.length;
     }
 
     GrVariantValue getAt(int index) {
-        return _storage[index];
+        return data[index];
     }
 
     int push(int ivalue) {
         GrVariantValue value;
         value.setInt(ivalue);
-        auto id = cast(int)_storage.length;
-        _storage ~= value;
+        auto id = cast(int)data.length;
+        data ~= value;
         return id;
     }
 
     int push(float fvalue) {
         GrVariantValue value;
         value.setFloat(fvalue);
-        auto id = cast(int)_storage.length;
-        _storage ~= value;
+        auto id = cast(int)data.length;
+        data ~= value;
         return id;
     }
 
     int push(dstring svalue) {
         GrVariantValue value;
         value.setString(svalue);
-        auto id = cast(int)_storage.length;
-        _storage ~= value;
+        auto id = cast(int)data.length;
+        data ~= value;
         return id;
     }
 
     int push(GrVariantValue value) {
-        auto id = cast(int)_storage.length;
-        _storage ~= value;
+        auto id = cast(int)data.length;
+        data ~= value;
         return id;
     }
 }

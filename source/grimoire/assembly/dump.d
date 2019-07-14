@@ -17,24 +17,24 @@ import grimoire.assembly.bytecode;
 private string[] instructions = [
     "nop", "raise", "try", "catch",
     "kill", "yield", "task", "anon_task", "new",
-    "shift.i", "shift.f", "shift.s", "shift.n", "shift.v", "shift.o",
+    "shift.i", "shift.f", "shift.s", "shift.v", "shift.o",
     
-    "lstore.i", "lstore.f", "lstore.s", "lstore.n", "lstore.v", "lstore.r", "lstore.o",
-    "lstore2.i", "lstore2.f", "lstore2.s", "lstore2.n", "lstore2.v", "lstore2.r", "lstore2.o",
-    "lload.i", "lload.f", "lload.s", "lload.n", "lload.v", "lload.r", "lload.o",
+    "lstore.i", "lstore.f", "lstore.s", "lstore.v", "lstore.r", "lstore.o",
+    "lstore2.i", "lstore2.f", "lstore2.s", "lstore2.v", "lstore2.r", "lstore2.o",
+    "lload.i", "lload.f", "lload.s", "lload.v", "lload.r", "lload.o",
 
-    "gstore.i", "gstore.f", "gstore.s", "gstore.n", "gstore.v", "gstore.r", "gstore.o",
-    "gstore2.i", "gstore2.f", "gstore2.s", "gstore2.n", "gstore2.v", "gstore2.r", "gstore2.o",
-    "gload.i", "gload.f", "gload.s", "gload.n", "gload.v", "gload.r", "gload.o",
+    "gstore.i", "gstore.f", "gstore.s", "gstore.v", "gstore.r", "gstore.o",
+    "gstore2.i", "gstore2.f", "gstore2.s", "gstore2.v", "gstore2.r", "gstore2.o",
+    "gload.i", "gload.f", "gload.s", "gload.v", "gload.r", "gload.o",
     
     "field",
-    "fstore.i", "fstore.f", "fstore.s", "fstore.n", "fstore.v", "fstore.r", "fstore.o",
-    "fload.i", "fload.f", "fload.s", "fload.n", "fload.v", "fload.r", "fload.o",
+    "fstore.i", "fstore.f", "fstore.s", "fstore.v", "fstore.r", "fstore.o",
+    "fload.i", "fload.f", "fload.s", "fload.v", "fload.r", "fload.o",
 
     "const.i", "const.f", "const.b", "const.s", "meta",
     
-    "gpush.i", "gpush.f", "gpush.s", "gpush.n", "gpush.v", "gpush.o",
-    "gpop.i", "gpop.f", "gpop.s", "gpop.n", "gpop.v", "gpop.o",
+    "gpush.i", "gpush.f", "gpush.s", "gpush.v", "gpush.o",
+    "gpop.i", "gpop.f", "gpop.s", "gpop.v", "gpop.o",
 
     "eq.i", "eq.f", "eq.s", "eq.v",
     "neq.i", "neq.f", "neq.s", "neq.v",
@@ -60,7 +60,8 @@ private string[] instructions = [
     "ret", "unwind", "defer",
     "jmp", "jmp_eq", "jmp_neq",
 
-    "newarray", "length.n", "index.n", "index.r"
+    "newarray", "length.n", "index.n", "index.v",
+    "copy.n", "copy.v"
 ];
 
 string grDump(GrBytecode bytecode) {

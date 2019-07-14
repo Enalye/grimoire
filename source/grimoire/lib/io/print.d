@@ -43,7 +43,7 @@ private void printa(GrCall call) {
 
 private void printn(GrCall call) {
     auto ary = call.getArray("value");
-    string result = "[";
+    /*string result = "[";
     int i;
     foreach(value; ary) {
         result ~= to!string(value.getString(call));
@@ -51,6 +51,6 @@ private void printn(GrCall call) {
             result ~= ", ";
         i ++;
     }
-    result ~= "]";
-    writeln(result);
+    result ~= "]";*/
+    writeln(ary.getString(call));
 }

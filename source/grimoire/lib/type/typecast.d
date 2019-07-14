@@ -81,11 +81,11 @@ private void typecast_d2b(GrCall call) {
 
 //As array
 private void typecast_s2n(GrCall call) {
-    GrVariantValue[] array;
+    GrArrayValue array;
     foreach(c; call.getString("value")) {
-        GrVariantValue dynamic;
-        dynamic.setString(to!dstring(c));
-        array ~= dynamic;
+        GrVariantValue variant;
+        variant.setString(to!dstring(c));
+        array.data ~= variant;
     }
 	call.setArray(array);
 }
