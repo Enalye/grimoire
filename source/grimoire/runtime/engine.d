@@ -463,6 +463,7 @@ class GrEngine {
 						context.pc ++;
 					}
 					else {
+						chan.setReceiverReady();
 						context.isLocked = true;
 						continue contextsLabel;
 					}
@@ -481,6 +482,7 @@ class GrEngine {
 						context.pc ++;
 					}
 					else {
+						chan.setReceiverReady();
 						context.isLocked = true;
 						continue contextsLabel;
 					}
@@ -500,6 +502,7 @@ class GrEngine {
 					}
 
 					else {
+						chan.setReceiverReady();
 						context.isLocked = true;
 						continue contextsLabel;
 					}
@@ -518,6 +521,7 @@ class GrEngine {
 						context.pc ++;
 					}
 					else {
+						chan.setReceiverReady();
 						context.isLocked = true;
 						continue contextsLabel;
 					}
@@ -534,6 +538,7 @@ class GrEngine {
 						context.pc ++;
 					}
 					else {
+						chan.setReceiverReady();
 						context.isLocked = true;
 						continue contextsLabel;
 					}
