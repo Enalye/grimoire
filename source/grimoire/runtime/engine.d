@@ -336,27 +336,27 @@ class GrEngine {
                     break;
 				case Channel_Int:
 					context.ostackPos ++;
-					context.ostack[context.ostackPos] = cast(void*)new GrIntChannel;
+					context.ostack[context.ostackPos] = cast(void*)new GrIntChannel(grGetInstructionUnsignedValue(opcode));
 					context.pc ++;
 					break;
 				case Channel_Float:
 					context.ostackPos ++;
-					context.ostack[context.ostackPos] = cast(void*)new GrFloatChannel;
+					context.ostack[context.ostackPos] = cast(void*)new GrFloatChannel(grGetInstructionUnsignedValue(opcode));
 					context.pc ++;
 					break;
 				case Channel_String:
 					context.ostackPos ++;
-					context.ostack[context.ostackPos] = cast(void*)new GrStringChannel;
+					context.ostack[context.ostackPos] = cast(void*)new GrStringChannel(grGetInstructionUnsignedValue(opcode));
 					context.pc ++;
 					break;
 				case Channel_Variant:
 					context.ostackPos ++;
-					context.ostack[context.ostackPos] = cast(void*)new GrVariantChannel;
+					context.ostack[context.ostackPos] = cast(void*)new GrVariantChannel(grGetInstructionUnsignedValue(opcode));
 					context.pc ++;
 					break;
 				case Channel_UserData:
 					context.ostackPos ++;
-					context.ostack[context.ostackPos] = cast(void*)new GrObjectChannel;
+					context.ostack[context.ostackPos] = cast(void*)new GrObjectChannel(grGetInstructionUnsignedValue(opcode));
 					context.pc ++;
 					break;
 				case Send_Int:
@@ -366,16 +366,15 @@ class GrEngine {
 						context.ostackPos --;
 						raise(context, "Channel not owned");
 					}
-					else if(chan.hasSlot) {
-						context.isLocked = true;
-						continue contextsLabel;
-					}
-					else {
+					else if(chan.canSend) {
 						context.isLocked = false;
-						chan.hasSlot = true;
-						chan.value = context.istack[context.istackPos];
+						chan.send(context.istack[context.istackPos]);
 						context.ostackPos --;
 						context.pc ++;
+					}
+					else {
+						context.isLocked = true;
+						continue contextsLabel;
 					}
 					break;
 				case Send_Float:
@@ -385,16 +384,15 @@ class GrEngine {
 						context.ostackPos --;
 						raise(context, "Channel not owned");
 					}
-					else if(chan.hasSlot) {
-						context.isLocked = true;
-						continue contextsLabel;
-					}
-					else {
+					else if(chan.canSend) {
 						context.isLocked = false;
-						chan.hasSlot = true;
-						chan.value = context.fstack[context.fstackPos];
+						chan.send(context.fstack[context.fstackPos]);
 						context.ostackPos --;
 						context.pc ++;
+					}
+					else {
+						context.isLocked = true;
+						continue contextsLabel;
 					}
 					break;
 				case Send_String:
@@ -404,16 +402,15 @@ class GrEngine {
 						context.ostackPos --;
 						raise(context, "Channel not owned");
 					}
-					else if(chan.hasSlot) {
-						context.isLocked = true;
-						continue contextsLabel;
-					}
-					else {
+					else if(chan.canSend) {
 						context.isLocked = false;
-						chan.hasSlot = true;
-						chan.value = context.sstack[context.sstackPos];
+						chan.send(context.sstack[context.sstackPos]);
 						context.ostackPos --;
 						context.pc ++;
+					}
+					else {
+						context.isLocked = true;
+						continue contextsLabel;
 					}
 					break;
 				case Send_Variant:
@@ -423,16 +420,15 @@ class GrEngine {
 						context.ostackPos --;
 						raise(context, "Channel not owned");
 					}
-					else if(chan.hasSlot) {
-						context.isLocked = true;
-						continue contextsLabel;
-					}
-					else {
+					else if(chan.canSend) {
 						context.isLocked = false;
-						chan.hasSlot = true;
-						chan.value = context.vstack[context.vstackPos];
+						chan.send(context.vstack[context.vstackPos]);
 						context.ostackPos --;
 						context.pc ++;
+					}
+					else {
+						context.isLocked = true;
+						continue contextsLabel;
 					}
 					break;
 				case Send_UserData:
@@ -441,17 +437,16 @@ class GrEngine {
 						context.ostackPos -= 2;
 						raise(context, "Channel not owned");
 					}
-					else if(chan.hasSlot) {
-						context.isLocked = true;
-						continue contextsLabel;
-					}
-					else {
+					else if(chan.canSend) {
 						context.isLocked = false;
-						chan.hasSlot = true;
-						chan.value = context.ostack[context.ostackPos];
+						chan.send(context.ostack[context.ostackPos]);
 						context.ostack[context.ostackPos - 1] = context.ostack[context.ostackPos];
 						context.ostackPos --;
 						context.pc ++;
+					}
+					else {
+						context.isLocked = true;
+						continue contextsLabel;
 					}
 					break;
 				case Receive_Int:
@@ -460,17 +455,16 @@ class GrEngine {
 						context.ostackPos --;
 						raise(context, "Channel not owned");
 					}
-					else if(!chan.hasSlot) {
-						context.isLocked = true;
-						continue contextsLabel;
-					}
-					else {
+					else if(chan.canReceive) {
 						context.isLocked = false;
-						chan.hasSlot = false;
 						context.istackPos ++;
-						context.istack[context.istackPos] = chan.value;
+						context.istack[context.istackPos] = chan.receive();
 						context.ostackPos --;
 						context.pc ++;
+					}
+					else {
+						context.isLocked = true;
+						continue contextsLabel;
 					}
 					break;
 				case Receive_Float:
@@ -479,17 +473,16 @@ class GrEngine {
 						context.ostackPos --;
 						raise(context, "Channel not owned");
 					}
-					else if(!chan.hasSlot) {
-						context.isLocked = true;
-						continue contextsLabel;
-					}
-					else {
+					else if(chan.canReceive) {
 						context.isLocked = false;
-						chan.hasSlot = false;
 						context.fstackPos ++;
-						context.fstack[context.fstackPos] = chan.value;
+						context.fstack[context.fstackPos] = chan.receive();
 						context.ostackPos --;
 						context.pc ++;
+					}
+					else {
+						context.isLocked = true;
+						continue contextsLabel;
 					}
 					break;
 				case Receive_String:
@@ -498,17 +491,17 @@ class GrEngine {
 						context.ostackPos --;
 						raise(context, "Channel not owned");
 					}
-					else if(!chan.hasSlot) {
-						context.isLocked = true;
-						continue contextsLabel;
-					}
-					else {
+					else if(chan.canReceive) {
 						context.isLocked = false;
-						chan.hasSlot = false;
 						context.sstackPos ++;
-						context.sstack[context.sstackPos] = chan.value;
+						context.sstack[context.sstackPos] = chan.receive();
 						context.ostackPos --;
 						context.pc ++;
+					}
+
+					else {
+						context.isLocked = true;
+						continue contextsLabel;
 					}
 					break;
 				case Receive_Variant:
@@ -517,17 +510,16 @@ class GrEngine {
 						context.ostackPos --;
 						raise(context, "Channel not owned");
 					}
-					else if(!chan.hasSlot) {
-						context.isLocked = true;
-						continue contextsLabel;
-					}
-					else {
+					else if(chan.canReceive) {
 						context.isLocked = false;
-						chan.hasSlot = false;
 						context.vstackPos ++;
-						context.vstack[context.vstackPos] = chan.value;
+						context.vstack[context.vstackPos] = chan.receive();
 						context.ostackPos --;
 						context.pc ++;
+					}
+					else {
+						context.isLocked = true;
+						continue contextsLabel;
 					}
 					break;
 				case Receive_UserData:
@@ -536,15 +528,14 @@ class GrEngine {
 						context.ostackPos --;
 						raise(context, "Channel not owned");
 					}
-					else if(!chan.hasSlot) {
-						context.isLocked = true;
-						continue contextsLabel;
+					else if(chan.canReceive) {
+						context.isLocked = false;
+						context.ostack[context.ostackPos] = chan.receive();
+						context.pc ++;
 					}
 					else {
-						context.isLocked = false;
-						chan.hasSlot = false;
-						context.ostack[context.ostackPos] = chan.value;
-						context.pc ++;
+						context.isLocked = true;
+						continue contextsLabel;
 					}
 					break;
 				case ShiftStack_Int:

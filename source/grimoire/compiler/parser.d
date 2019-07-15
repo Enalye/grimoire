@@ -2631,35 +2631,54 @@ class GrParser {
 			setInstruction(GrOpcode.Jump, position, cast(int)(currentFunction.instructions.length - position), true);
 	}
 
-    GrType parseChan() {
+    GrType parseChannelBuilder() {
         GrType chanType = GrBaseType.ChanType;
-        dstring[] temp;
-        GrType[] signature = parseInSignature(temp, true);
-        if(signature.length != 1)
-            logError("Channel signature error", "A channel can only carry one type");
-        chanType.mangledType = grMangleFunction(signature);
+        int channelSize = 1;
+        
+        checkAdvance();
+		if(get().type != GrLexemeType.LeftParenthesis)
+			logError("Missing symbol", "A signature should always start with \'(\'");
+		checkAdvance();
+        GrType subType = parseType();
 
-        final switch(signature[0].baseType) with(GrBaseType) {
+        GrLexeme lex = get();
+        if(lex.type == GrLexemeType.Comma) {
+            checkAdvance();
+            lex = get();
+            if(lex.type != GrLexemeType.Integer)
+                logError("Channel size expected", "The channel size must be a positive int value");
+            channelSize = lex.ivalue;
+            if(channelSize < 1)
+                logError("Channel size error", "The channel size cannot be null");
+            checkAdvance();
+        }
+        lex = get();
+        if(lex.type != GrLexemeType.RightParenthesis)
+            logError("Missing symbol", "Either a \',\' or a \')\' is expected");
+        checkAdvance();
+        chanType.mangledType = grMangleFunction([subType]);
+
+        final switch(subType.baseType) with(GrBaseType) {
         case IntType:
         case BoolType:
         case FunctionType:
         case TaskType:
-            addInstruction(GrOpcode.Channel_Int);
+            addInstruction(GrOpcode.Channel_Int, channelSize);
             break;
         case FloatType:
-            addInstruction(GrOpcode.Channel_Float);
+            addInstruction(GrOpcode.Channel_Float, channelSize);
             break;
         case StringType:
-            addInstruction(GrOpcode.Channel_String);
+            addInstruction(GrOpcode.Channel_String, channelSize);
             break;
         case VariantType:
-            addInstruction(GrOpcode.Channel_Variant);
+            addInstruction(GrOpcode.Channel_Variant, channelSize);
             break;
         case StructType:
         case ArrayType:
         case UserType:
         case ChanType:
-            addInstruction(GrOpcode.Channel_UserData);
+            addInstruction(GrOpcode.Channel_UserData, channelSize);
             break;
         case TupleType:
         case VoidType:
@@ -3645,7 +3664,7 @@ class GrParser {
                 checkAdvance();
                 break;
             case ChanType:
-				currentType = parseChan();
+				currentType = parseChannelBuilder();
                 hasValue = true;
                 typeStack ~= currentType;
                 break;
