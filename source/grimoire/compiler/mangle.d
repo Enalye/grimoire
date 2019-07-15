@@ -55,9 +55,6 @@ dstring grMangleFunction(GrType[] signature) {
         case StructType:
 			mangledName ~= "p(" ~ type.mangledType ~ ")";
 			break;
-        /*case ChanType:
-			mangledName ~= "c";
-			break;*/
         case UserType:
             mangledName ~= "u(" ~ type.mangledType ~ ")";
             break;
@@ -66,6 +63,9 @@ dstring grMangleFunction(GrType[] signature) {
 			break;
 		case TaskType:
 			mangledName ~= "t(" ~ type.mangledType ~ ")";
+			break;
+        case ChanType:
+			mangledName ~= "c(" ~ type.mangledType ~ ")";
 			break;
         case InternalTupleType:
             throw new Exception("Trying to mangle a tuple. Tuples should not exist here.");
@@ -234,6 +234,12 @@ GrType grUnmangle(dstring mangledSignature) {
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             i ++;
             break;
+        case 'c':
+            i ++;
+            currentType.baseType = GrBaseType.ChanType;
+            currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
+            i ++;
+            break;
         default:
             break;
         }
@@ -344,6 +350,12 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             i ++;
             break;
+        case 'c':
+            i ++;
+            currentType.baseType = GrBaseType.ChanType;
+            currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
+            i ++;
+            break;
         default:
             break;
         }
@@ -392,6 +404,18 @@ string grGetPrettyType(GrType variableType) {
                 result ~= ", ";
             i ++;
         }
+        return result;
+    case ChanType:
+        string result = "chan(";
+        int i;
+        auto parameters = grUnmangleSignature(variableType.mangledType);
+        foreach(parameter; parameters) {
+            result ~= grGetPrettyType(parameter);
+            if((i + 2) <= parameters.length)
+                result ~= ", ";
+            i ++;
+        }
+        result ~= ")";
         return result;
     case TaskType:
         string result = "task(";

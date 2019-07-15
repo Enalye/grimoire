@@ -28,7 +28,7 @@ struct GrVariantValue {
     enum GrVariantValueType {
         UndefinedType,
         FunctionType, TaskType,
-        BoolType, IntType, FloatType, StringType, ArrayType, RefArrayType, ReferenceType
+        BoolType, IntType, FloatType, StringType, ArrayType, ReferenceType
     }
 
     /// Variant type.
@@ -111,6 +111,7 @@ struct GrVariantValue {
         }
     }
 
+    //Inside a variant, only use this method for error handling
     private void raise(GrContext context, dstring message) {
         context.engine.raise(context, message);
 
@@ -125,12 +126,14 @@ struct GrVariantValue {
         _ovalue = cast(void*)value;
     }
 
+    /// Modify the value referenced
     void storeRef(GrContext context, ref GrVariantValue value) {
         if(type != GrVariantValueType.ReferenceType)
             context.engine.raise(context, "Invalid reference");
         *(cast(GrVariantValue*)_ovalue) = value;
     }
 
+    /// Deep copy, used with the copy^ operator
     GrVariantValue copy() {
         if(type == GrVariantValueType.ReferenceType)
             return (cast(GrVariantValue*)_ovalue).copy();
@@ -344,9 +347,6 @@ struct GrVariantValue {
         case ArrayType:
             prettyType = "array";
             break;
-        case RefArrayType:
-            prettyType = "refarray";
-            break;
         case ReferenceType:
             prettyType = "refindex";
             break;
@@ -378,9 +378,6 @@ struct GrVariantValue {
             break;
         case ArrayType:
             prettyType = "array";
-            break;
-        case RefArrayType:
-            prettyType = "refarray";
             break;
         case ReferenceType:
             prettyType = "refindex";

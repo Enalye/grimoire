@@ -97,6 +97,7 @@ class GrCall {
             case IntType:
             case FunctionType:
             case TaskType:
+            case ChanType:
                 _iparams ++;
                 _ilocals ~= name;
                 break;

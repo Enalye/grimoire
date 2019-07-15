@@ -358,6 +358,7 @@ class GrParser {
             case StructType:
             case ArrayType:
             case UserType:
+            case ChanType:
                 func.nbUserDataParameters ++;
                 if(func.isTask)
                     addInstruction(GrOpcode.GlobalPop_UserData, 0u);
@@ -477,6 +478,8 @@ class GrParser {
     bool isBinaryOperator(GrLexemeType lexType) {
         if(lexType >= GrLexemeType.Add && lexType <= GrLexemeType.Xor)
             return true;
+        else if(lexType == GrLexemeType.Send)
+            return true;
         else
             return false;
     }
@@ -487,6 +490,8 @@ class GrParser {
         else if(lexType >= GrLexemeType.Increment && lexType <= GrLexemeType.Decrement)
             return true;
         else if(lexType == GrLexemeType.Not)
+            return true;
+        else if(lexType == GrLexemeType.Receive)
             return true;
         else
             return false;
@@ -551,7 +556,12 @@ class GrParser {
             logError("Multiple values operation", "Cannot use an operator on an expression list");
         GrType resultType = GrBaseType.VoidType;
 
-        if(leftType != rightType) {
+        if(leftType.baseType == GrBaseType.ChanType) {
+            GrType chanType = grUnmangle(leftType.mangledType);
+            convertType(rightType, chanType);
+            resultType = addInternalOperator(lexType, leftType);
+        }
+        else if(leftType != rightType) {
             //Check custom operator
             resultType = addCustomBinaryOperator(lexType, leftType, rightType);
 
@@ -676,7 +686,7 @@ class GrParser {
 				return GrType(GrBaseType.BoolType);
 			case LesserOrEqual:
 				addInstruction(GrOpcode.LesserOrEqual_Int);
-                return GrType(GrBaseType.BoolType);				
+                return GrType(GrBaseType.BoolType);
 			default:
 				break;
 			}
@@ -808,6 +818,68 @@ class GrParser {
 				break;
 			}
 			break;
+        case ChanType:
+            switch(lexType) with(GrLexemeType) {
+            case Send:
+                GrType chanType = grUnmangle(varType.mangledType);
+                switch(chanType.baseType) with(GrBaseType) {
+                case IntType:
+                case BoolType:
+                case FunctionType:
+                case TaskType:
+                    addInstruction(GrOpcode.Send_Int);
+                    return chanType;
+                case FloatType:
+                    addInstruction(GrOpcode.Send_Float);
+                    return chanType;
+                case StringType:
+                    addInstruction(GrOpcode.Send_String);
+                    return chanType;
+                case VariantType:
+                    addInstruction(GrOpcode.Send_Variant);
+                    return chanType;
+                case StructType:
+                case ArrayType:
+                case UserType:
+                case ChanType:
+                    addInstruction(GrOpcode.Send_UserData);
+                    return chanType;
+                default:
+                    break;
+                }
+                break;
+            case Receive:
+				GrType chanType = grUnmangle(varType.mangledType);
+                switch(chanType.baseType) with(GrBaseType) {
+                case IntType:
+                case BoolType:
+                case FunctionType:
+                case TaskType:
+                    addInstruction(GrOpcode.Receive_Int);
+                    return chanType;
+                case FloatType:
+                    addInstruction(GrOpcode.Receive_Float);
+                    return chanType;
+                case StringType:
+                    addInstruction(GrOpcode.Receive_String);
+                    return chanType;
+                case VariantType:
+                    addInstruction(GrOpcode.Receive_Variant);
+                    return chanType;
+                case StructType:
+                case ArrayType:
+                case UserType:
+                case ChanType:
+                    addInstruction(GrOpcode.Receive_UserData);
+                    return chanType;
+                default:
+                    break;
+                }
+                break;
+            default:
+                break;
+            }
+            break;
 		default:
             break;
 		}
@@ -869,6 +941,7 @@ class GrParser {
 			case IntType:
 			case FunctionType:
 			case TaskType:
+			case ChanType:
 				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Int : GrOpcode.GlobalStore_Int, variable.index);
 				break;
 			case FloatType:
@@ -929,6 +1002,7 @@ class GrParser {
                 break;
             case ArrayType:
             case UserType:
+			case ChanType:
 				addInstruction(isGettingValue ? GrOpcode.LocalStore2_UserData : GrOpcode.LocalStore_UserData, variable.index);
 				break;
 			default:
@@ -1008,6 +1082,7 @@ class GrParser {
                 break;
             case ArrayType:
             case UserType:
+			case ChanType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_UserData
                     && currentFunction.instructions[$ - 1].value == variable.index)
@@ -1075,6 +1150,7 @@ class GrParser {
                 break;
             case ArrayType:
             case UserType:
+			case ChanType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_UserData
                     && currentFunction.instructions[$ - 1].value == variable.index)
@@ -1564,16 +1640,23 @@ class GrParser {
             break;
         case FunctionType:
             currentType.baseType = GrBaseType.FunctionType;
-            dstring[] temp; 
-            currentType.mangledType = grMangleNamedFunction("", parseInSignature(temp, true));
-            currentType.mangledReturnType = grMangleNamedFunction("", parseOutSignature());
+            dstring[] temp;
+            currentType.mangledType = grMangleFunction(parseInSignature(temp, true));
+            currentType.mangledReturnType = grMangleFunction(parseOutSignature());
             break;
         case TaskType:
             currentType.baseType = GrBaseType.TaskType;
-            dstring[] temp; 
-            currentType.mangledType = grMangleNamedFunction("", parseInSignature(temp, true));
-            currentType.mangledReturnType = grMangleNamedFunction("", parseOutSignature());
+            dstring[] temp;
+            currentType.mangledType = grMangleFunction(parseInSignature(temp, true));
             break;
+        case ChanType:
+            currentType.baseType = GrBaseType.ChanType;
+            dstring[] temp;
+            GrType[] signature = parseInSignature(temp, true);
+            if(signature.length != 1)
+                logError("Channel signature error", "A channel can only carry one type");
+            currentType.mangledType = grMangleFunction(signature);
+            break;    
         default:
             logError("Invalid type", "Cannot call a function with a parameter of type \'" ~ to!string(lex.type) ~ "\'");
         }
@@ -1610,6 +1693,7 @@ class GrParser {
         case StructType:
         case ArrayType:
         case UserType:
+        case ChanType:
             addInstruction(GrOpcode.GlobalPop_UserData, 0u);
             break;
         case InternalTupleType:
@@ -1648,6 +1732,7 @@ class GrParser {
         case StructType:
         case ArrayType:
         case UserType:
+        case ChanType:
             addInstruction(GrOpcode.GlobalPush_UserData, nbPush);
             break;
         case InternalTupleType:
@@ -1689,6 +1774,7 @@ class GrParser {
             case StructType:
             case ArrayType:
             case UserType:
+            case ChanType:
                 typeCounter.nbUserDataParams ++;
                 break;
             case InternalTupleType:
@@ -2545,6 +2631,44 @@ class GrParser {
 			setInstruction(GrOpcode.Jump, position, cast(int)(currentFunction.instructions.length - position), true);
 	}
 
+    GrType parseChan() {
+        GrType chanType = GrBaseType.ChanType;
+        dstring[] temp;
+        GrType[] signature = parseInSignature(temp, true);
+        if(signature.length != 1)
+            logError("Channel signature error", "A channel can only carry one type");
+        chanType.mangledType = grMangleFunction(signature);
+
+        final switch(signature[0].baseType) with(GrBaseType) {
+        case IntType:
+        case BoolType:
+        case FunctionType:
+        case TaskType:
+            addInstruction(GrOpcode.Channel_Int);
+            break;
+        case FloatType:
+            addInstruction(GrOpcode.Channel_Float);
+            break;
+        case StringType:
+            addInstruction(GrOpcode.Channel_String);
+            break;
+        case VariantType:
+            addInstruction(GrOpcode.Channel_Variant);
+            break;
+        case StructType:
+        case ArrayType:
+        case UserType:
+        case ChanType:
+            addInstruction(GrOpcode.Channel_UserData);
+            break;
+        case TupleType:
+        case VoidType:
+        case InternalTupleType:
+            logError("Invalid channel type", "invalid channel type");
+        }
+        return chanType;
+    }
+
     void parseSwitchStatement() {
         advance();
         if(get().type != GrLexemeType.LeftParenthesis)
@@ -2868,6 +2992,8 @@ class GrParser {
         case Minus:
         case Increment:
         case Decrement:
+        case Send:
+        case Receive:
             return 19;
         default:
             logError("Unknown priority", "The operator is not listed in the operator priority table");
@@ -2900,6 +3026,8 @@ class GrParser {
         case Minus:
         case Increment:
         case Decrement:
+        case Send:
+        case Receive:
             return 19;
         default:
             logError("Unknown priority", "The operator is not listed in the operator priority table");
@@ -2909,7 +3037,7 @@ class GrParser {
 
 	GrType convertType(GrType src, GrType dst, bool noFail = false, bool isExplicit = false) {
         if(src.baseType == dst.baseType) {
-            switch(src.baseType) with(GrBaseType) {
+            final switch(src.baseType) with(GrBaseType) {
             case FunctionType:
                 if(src.mangledType == dst.mangledType && src.mangledReturnType == dst.mangledReturnType)
                     return dst;
@@ -2918,6 +3046,7 @@ class GrParser {
                 if(src.mangledType == dst.mangledType && src.mangledReturnType == dst.mangledReturnType)
                     return dst;
                 break;
+            case VoidType:
             case BoolType:
             case IntType:
             case FloatType:
@@ -2928,10 +3057,10 @@ class GrParser {
             case TupleType:
             case StructType:
             case UserType:
+            case ChanType:
+            case InternalTupleType:
                 if(dst.mangledType == src.mangledType)
                     return dst;
-                break;
-            default:
                 break;
             }
         }
@@ -3296,6 +3425,7 @@ class GrParser {
             case StructType:
             case ArrayType:
             case UserType:
+            case ChanType:
                 counter.uCount ++;
                 break;
             case TupleType:
@@ -3514,6 +3644,11 @@ class GrParser {
                 addInstruction(GrOpcode.New, cast(int)structure.signature.length);
                 checkAdvance();
                 break;
+            case ChanType:
+				currentType = parseChan();
+                hasValue = true;
+                typeStack ~= currentType;
+                break;
             case Copy:
                 switch(currentType.baseType) with(GrBaseType) {
                 case ArrayType:
@@ -3630,11 +3765,19 @@ class GrParser {
 				if(!hadValue)
 					lex.type = GrLexemeType.Minus;
 				goto case Multiply;
+            case Send:
+				if(!hadValue)
+					lex.type = GrLexemeType.Receive;
+				goto case Multiply;
 			case Increment: .. case Decrement:
 				isRightUnaryOperator = true;
 				goto case Multiply;
 			case Multiply: .. case Not:
-				if(!hadValue && lex.type != GrLexemeType.Plus && lex.type != GrLexemeType.Minus && lex.type != GrLexemeType.Not)
+				if(!hadValue
+                    && lex.type != GrLexemeType.Plus
+                    && lex.type != GrLexemeType.Minus
+                    && lex.type != GrLexemeType.Not
+                    && lex.type != GrLexemeType.Receive)
 					logError("Expected value", "A value is missing");
 
 				while(operatorsStack.length && getLeftOperatorPriority(operatorsStack[$ - 1]) > getRightOperatorPriority(lex.type)) {

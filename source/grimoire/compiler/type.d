@@ -17,7 +17,8 @@ import grimoire.compiler.mangle;
 enum GrBaseType {
     VoidType, IntType, FloatType, BoolType, StringType,
     ArrayType, VariantType, FunctionType, TaskType,
-    StructType, TupleType, UserType, InternalTupleType
+    StructType, TupleType, UserType, ChanType,
+    InternalTupleType
 }
 
 struct GrType {

@@ -21,6 +21,7 @@ import grimoire.runtime.context;
 import grimoire.runtime.variant;
 import grimoire.runtime.array;
 import grimoire.runtime.object;
+import grimoire.runtime.channel;
 
 /** Grimoire virtual machine */
 class GrEngine {
@@ -52,8 +53,6 @@ class GrEngine {
         float[] _fglobalStack;
         /// Global string stack.
         dstring[] _sglobalStack;
-        /// Global array stack.
-        GrVariantValue[][] _nglobalStack;
         /// Global dynamic value stack.
         GrVariantValue[] _vglobalStack;
         /// Global object stack.
@@ -335,6 +334,219 @@ class GrEngine {
 					context.ostack[context.ostackPos] = cast(void*)new GrObjectValue(grGetInstructionUnsignedValue(opcode));
 					context.pc ++;
                     break;
+				case Channel_Int:
+					context.ostackPos ++;
+					context.ostack[context.ostackPos] = cast(void*)new GrIntChannel;
+					context.pc ++;
+					break;
+				case Channel_Float:
+					context.ostackPos ++;
+					context.ostack[context.ostackPos] = cast(void*)new GrFloatChannel;
+					context.pc ++;
+					break;
+				case Channel_String:
+					context.ostackPos ++;
+					context.ostack[context.ostackPos] = cast(void*)new GrStringChannel;
+					context.pc ++;
+					break;
+				case Channel_Variant:
+					context.ostackPos ++;
+					context.ostack[context.ostackPos] = cast(void*)new GrVariantChannel;
+					context.pc ++;
+					break;
+				case Channel_UserData:
+					context.ostackPos ++;
+					context.ostack[context.ostackPos] = cast(void*)new GrObjectChannel;
+					context.pc ++;
+					break;
+				case Send_Int:
+					GrIntChannel chan = cast(GrIntChannel)context.ostack[context.ostackPos];
+					if(!chan.isOwned) {
+						context.istackPos --;
+						context.ostackPos --;
+						raise(context, "Channel not owned");
+					}
+					else if(chan.hasSlot) {
+						context.isLocked = true;
+						continue contextsLabel;
+					}
+					else {
+						context.isLocked = false;
+						chan.hasSlot = true;
+						chan.value = context.istack[context.istackPos];
+						context.ostackPos --;
+						context.pc ++;
+					}
+					break;
+				case Send_Float:
+					GrFloatChannel chan = cast(GrFloatChannel)context.ostack[context.ostackPos];
+					if(!chan.isOwned) {
+						context.fstackPos --;
+						context.ostackPos --;
+						raise(context, "Channel not owned");
+					}
+					else if(chan.hasSlot) {
+						context.isLocked = true;
+						continue contextsLabel;
+					}
+					else {
+						context.isLocked = false;
+						chan.hasSlot = true;
+						chan.value = context.fstack[context.fstackPos];
+						context.ostackPos --;
+						context.pc ++;
+					}
+					break;
+				case Send_String:
+					GrStringChannel chan = cast(GrStringChannel)context.ostack[context.ostackPos];
+					if(!chan.isOwned) {
+						context.sstackPos --;
+						context.ostackPos --;
+						raise(context, "Channel not owned");
+					}
+					else if(chan.hasSlot) {
+						context.isLocked = true;
+						continue contextsLabel;
+					}
+					else {
+						context.isLocked = false;
+						chan.hasSlot = true;
+						chan.value = context.sstack[context.sstackPos];
+						context.ostackPos --;
+						context.pc ++;
+					}
+					break;
+				case Send_Variant:
+					GrVariantChannel chan = cast(GrVariantChannel)context.ostack[context.ostackPos];
+					if(!chan.isOwned) {
+						context.vstackPos --;
+						context.ostackPos --;
+						raise(context, "Channel not owned");
+					}
+					else if(chan.hasSlot) {
+						context.isLocked = true;
+						continue contextsLabel;
+					}
+					else {
+						context.isLocked = false;
+						chan.hasSlot = true;
+						chan.value = context.vstack[context.vstackPos];
+						context.ostackPos --;
+						context.pc ++;
+					}
+					break;
+				case Send_UserData:
+					GrObjectChannel chan = cast(GrObjectChannel)context.ostack[context.ostackPos - 1];
+					if(!chan.isOwned) {
+						context.ostackPos -= 2;
+						raise(context, "Channel not owned");
+					}
+					else if(chan.hasSlot) {
+						context.isLocked = true;
+						continue contextsLabel;
+					}
+					else {
+						context.isLocked = false;
+						chan.hasSlot = true;
+						chan.value = context.ostack[context.ostackPos];
+						context.ostack[context.ostackPos - 1] = context.ostack[context.ostackPos];
+						context.ostackPos --;
+						context.pc ++;
+					}
+					break;
+				case Receive_Int:
+					GrIntChannel chan = cast(GrIntChannel)context.ostack[context.ostackPos];
+					if(!chan.isOwned) {
+						context.ostackPos --;
+						raise(context, "Channel not owned");
+					}
+					else if(!chan.hasSlot) {
+						context.isLocked = true;
+						continue contextsLabel;
+					}
+					else {
+						context.isLocked = false;
+						chan.hasSlot = false;
+						context.istackPos ++;
+						context.istack[context.istackPos] = chan.value;
+						context.ostackPos --;
+						context.pc ++;
+					}
+					break;
+				case Receive_Float:
+					GrFloatChannel chan = cast(GrFloatChannel)context.ostack[context.ostackPos];
+					if(!chan.isOwned) {
+						context.ostackPos --;
+						raise(context, "Channel not owned");
+					}
+					else if(!chan.hasSlot) {
+						context.isLocked = true;
+						continue contextsLabel;
+					}
+					else {
+						context.isLocked = false;
+						chan.hasSlot = false;
+						context.fstackPos ++;
+						context.fstack[context.fstackPos] = chan.value;
+						context.ostackPos --;
+						context.pc ++;
+					}
+					break;
+				case Receive_String:
+					GrStringChannel chan = cast(GrStringChannel)context.ostack[context.ostackPos];
+					if(!chan.isOwned) {
+						context.ostackPos --;
+						raise(context, "Channel not owned");
+					}
+					else if(!chan.hasSlot) {
+						context.isLocked = true;
+						continue contextsLabel;
+					}
+					else {
+						context.isLocked = false;
+						chan.hasSlot = false;
+						context.sstackPos ++;
+						context.sstack[context.sstackPos] = chan.value;
+						context.ostackPos --;
+						context.pc ++;
+					}
+					break;
+				case Receive_Variant:
+					GrVariantChannel chan = cast(GrVariantChannel)context.ostack[context.ostackPos];
+					if(!chan.isOwned) {
+						context.ostackPos --;
+						raise(context, "Channel not owned");
+					}
+					else if(!chan.hasSlot) {
+						context.isLocked = true;
+						continue contextsLabel;
+					}
+					else {
+						context.isLocked = false;
+						chan.hasSlot = false;
+						context.vstackPos ++;
+						context.vstack[context.vstackPos] = chan.value;
+						context.ostackPos --;
+						context.pc ++;
+					}
+					break;
+				case Receive_UserData:
+					GrObjectChannel chan = cast(GrObjectChannel)context.ostack[context.ostackPos];
+					if(!chan.isOwned) {
+						context.ostackPos --;
+						raise(context, "Channel not owned");
+					}
+					else if(!chan.hasSlot) {
+						context.isLocked = true;
+						continue contextsLabel;
+					}
+					else {
+						context.isLocked = false;
+						chan.hasSlot = false;
+						context.ostack[context.ostackPos] = chan.value;
+						context.pc ++;
+					}
+					break;
 				case ShiftStack_Int:
 					context.istackPos += grGetInstructionSignedValue(opcode);
 					context.pc ++;

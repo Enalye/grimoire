@@ -30,9 +30,9 @@ enum GrLexemeType {
 	And, Or, Xor, Not,
 	Increment, Decrement,
 	Identifier, Integer, Float, Boolean, String,
-	Main, Event, Def, Tuple, New, Copy,
-	VoidType, IntType, FloatType, BoolType, StringType, ArrayType, VariantType, FunctionType, TaskType, AutoType,
-	If, Unless, Else, Switch, Case, While, Do, For, Loop, Return, Kill, Yield, Break, Continue
+	Main, Event, Def, Tuple, New, Copy, Send, Receive,
+	VoidType, IntType, FloatType, BoolType, StringType, ArrayType, VariantType, FunctionType, TaskType, ChanType, AutoType,
+	If, Unless, Else, Switch, Select, Case, While, Do, For, Loop, Return, Kill, Yield, Break, Continue,
 }
 
 /**
@@ -475,6 +475,11 @@ class GrLexer {
 					lex.textLength = 2;
 					current ++;
 				}
+				else if(get(1) == '-') {
+					lex.type = GrLexemeType.Send;
+					lex.textLength = 2;
+					current ++;
+				}
 				break;
 			case '>':
 				lex.type = GrLexemeType.Greater;
@@ -550,6 +555,9 @@ class GrLexer {
 				break;
 			case "switch":
 				lex.type = GrLexemeType.Switch;
+				break;
+			case "select":
+				lex.type = GrLexemeType.Select;
 				break;
 			case "case":
 				lex.type = GrLexemeType.Case;
@@ -629,6 +637,10 @@ class GrLexer {
 				break;
 			case "array":
 				lex.type = GrLexemeType.ArrayType;
+				lex.isType = true;
+				break;
+			case "chan":
+				lex.type = GrLexemeType.ChanType;
 				lex.isType = true;
 				break;
 			case "var":
@@ -723,9 +735,9 @@ dstring grGetPrettyLexemeType(GrLexemeType operator) {
         "and", "or", "xor", "not",
         "++", "--",
         "identifier", "const_int", "const_float", "const_bool", "const_str",
-        "main", "event", "def", "tuple", "new", "copy",
-        "void", "int", "float", "bool", "string", "array", "var", "func", "task", "let",
-        "if", "unless", "else", "switch", "case", "while", "do", "for", "loop", "return", "kill", "yield", "break", "continue"
+        "main", "event", "def", "tuple", "new", "copy", "send", "receive",
+        "void", "int", "float", "bool", "string", "array", "var", "func", "task", "chan", "let",
+        "if", "unless", "else", "switch", "select", "case", "while", "do", "for", "loop", "return", "kill", "yield", "break", "continue"
     ];
     return lexemeTypeStrTable[operator];
 }

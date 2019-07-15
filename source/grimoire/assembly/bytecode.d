@@ -18,6 +18,13 @@ import grimoire.core;
 enum GrOpcode {
     Nop, Raise, Try, Catch,
     Kill, Yield, Task, AnonymousTask, New,
+
+    Channel_Int, Channel_Float, Channel_String, Channel_Variant, Channel_UserData,
+    Send_Int, Send_Float, Send_String, Send_Variant, Send_UserData,
+    Receive_Int, Receive_Float, Receive_String, Receive_Variant, Receive_UserData,
+    TrySend_Int, TrySend_Float, TrySend_String, TrySend_Variant, TrySend_UserData,
+    TryReceive_Int, TryReceive_Float, TryReceive_String, TryReceive_Variant, TryReceive_UserData,
+    
     ShiftStack_Int, ShiftStack_Float, ShiftStack_String, ShiftStack_Variant, ShiftStack_UserData,
     
     LocalStore_Int, LocalStore_Float, LocalStore_String, LocalStore_Variant, LocalStore_Ref, LocalStore_UserData,

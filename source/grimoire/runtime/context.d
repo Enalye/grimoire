@@ -71,6 +71,17 @@ final class GrContext {
     /// An exception has been raised an is not caught.
     bool isPanicking;
 
+    /// Set when the context is in a select/case statement.
+    /// Then, the context is not stopped by a blocking channel.
+    //bool isEvaluatingChannel;
+
+    /// Set when the context is forced to yield by a blocking channel.
+    /// Release only when the channel is ready.
+    bool isLocked;
+
+    /// When evaluating, a blocking jump to this position will occur instead of blocking.
+    //uint selectPositionJump;
+
     /// Current callstack max depth.
     uint callStackLimit;
 

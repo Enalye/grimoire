@@ -17,6 +17,13 @@ import grimoire.assembly.bytecode;
 private string[] instructions = [
     "nop", "raise", "try", "catch",
     "kill", "yield", "task", "anon_task", "new",
+
+    "chan.i", "chan.f", "chan.s", "chan.v", "chan.o",
+    "snd.i", "snd.f", "snd.s", "snd.v", "snd.o",
+    "rcv.i", "rcv.f", "rcv.s", "rcv.v", "rcv.o",
+    "tsnd.i", "tsnd.f", "tsnd.s", "tsnd.v", "tsnd.o",
+    "trcv.i", "trcv.f", "trcv.s", "trcv.v", "trcv.o",
+
     "shift.i", "shift.f", "shift.s", "shift.v", "shift.o",
     
     "lstore.i", "lstore.f", "lstore.s", "lstore.v", "lstore.r", "lstore.o",
