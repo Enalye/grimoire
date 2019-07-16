@@ -73,14 +73,21 @@ final class GrContext {
 
     /// Set when the context is in a select/case statement.
     /// Then, the context is not stopped by a blocking channel.
-    //bool isEvaluatingChannel;
+    bool isEvaluatingChannel;
 
     /// Set when the context is forced to yield by a blocking channel.
     /// Release only when the channel is ready.
     bool isLocked;
 
     /// When evaluating, a blocking jump to this position will occur instead of blocking.
-    //uint selectPositionJump;
+    uint selectPositionJump;
+
+    /// Backup to restore stack state after select evaluation.
+    int istackPosSelect,
+        fstackPosSelect,
+        sstackPosSelect,
+        vstackPosSelect,
+        ostackPosSelect;
 
     /// Current callstack max depth.
     uint callStackLimit;
@@ -163,5 +170,13 @@ final class GrContext {
             ostackPos ++;
             ostack[ostackPos] = value;
         }
+    }
+
+    void flushSelect() {
+        istackPos = istackPosSelect;
+        fstackPos = fstackPosSelect;
+        sstackPos = sstackPosSelect;
+        vstackPos = vstackPosSelect;
+        ostackPos = ostackPosSelect;
     }
 }

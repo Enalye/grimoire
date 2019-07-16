@@ -14,6 +14,12 @@ import grimoire.runtime;
 import grimoire.assembly;
 import grimoire.compiler.mangle;
 
+/**
+    Type category.
+
+    Complex types use mangledType and mangledReturnType
+    to represent them.
+*/
 enum GrBaseType {
     VoidType, IntType, FloatType, BoolType, StringType,
     ArrayType, VariantType, FunctionType, TaskType,
@@ -21,6 +27,10 @@ enum GrBaseType {
     InternalTupleType
 }
 
+/**
+    Compiler type definition for Grimoire's type system.
+    It doesn't mean anything for the VM.
+*/
 struct GrType {
     GrBaseType baseType;
     dstring mangledType, mangledReturnType;
@@ -70,6 +80,9 @@ GrType[] grUnpackTuple(GrType type) {
     return grUnmangleSignature(type.mangledType);
 }
 
+/**
+    A local or global variable.
+*/
 class GrVariable {
 	GrType type;
 	uint index;
@@ -238,7 +251,7 @@ class GrFunction {
 	uint position, anonReference, localVariableIndex;
 
 	uint nbIntegerParameters, nbFloatParameters, nbStringParameters,
-        nbVariantParameters, nbUserDataParameters;
+        nbVariantParameters, nbObjectParameters;
 
     GrDeferrableSection[] deferrableSections;
     GrDeferBlock[] registeredDeferBlocks;

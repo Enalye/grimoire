@@ -359,9 +359,9 @@ class GrParser {
             case ArrayType:
             case UserType:
             case ChanType:
-                func.nbUserDataParameters ++;
+                func.nbObjectParameters ++;
                 if(func.isTask)
-                    addInstruction(GrOpcode.GlobalPop_UserData, 0u);
+                    addInstruction(GrOpcode.GlobalPop_Object, 0u);
                 break;
             case InternalTupleType:
                 throw new Exception("Tuples should not exist here.");
@@ -587,7 +587,7 @@ class GrParser {
                 ~ grGetPrettyType(leftType)
                 ~ "\' and \'"
                 ~ grGetPrettyType(rightType)
-                ~ "\'");
+                ~ "\'", -1);
         return resultType;
     }
 
@@ -842,7 +842,7 @@ class GrParser {
                 case ArrayType:
                 case UserType:
                 case ChanType:
-                    addInstruction(GrOpcode.Send_UserData);
+                    addInstruction(GrOpcode.Send_Object);
                     return chanType;
                 default:
                     break;
@@ -870,7 +870,7 @@ class GrParser {
                 case ArrayType:
                 case UserType:
                 case ChanType:
-                    addInstruction(GrOpcode.Receive_UserData);
+                    addInstruction(GrOpcode.Receive_Object);
                     return chanType;
                 default:
                     break;
@@ -954,7 +954,7 @@ class GrParser {
 				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Variant : GrOpcode.GlobalStore_Variant, variable.index);
 				break;
 			case StructType:
-				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_UserData : GrOpcode.GlobalStore_UserData, variable.index);
+				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.index);
 				break;
             case TupleType:
                 auto tuple = grGetTuple(variable.type.mangledType);
@@ -965,7 +965,7 @@ class GrParser {
                 break;
             case ArrayType:
             case UserType:
-				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_UserData : GrOpcode.GlobalStore_UserData, variable.index);
+				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.index);
 				break;
 			default:
 				logError("Invalid type", "Cannot assign to a \'" ~ to!string(variable.type) ~ "\' type");
@@ -989,7 +989,7 @@ class GrParser {
 				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Variant : GrOpcode.LocalStore_Variant, variable.index);
 				break;
 			case StructType:
-				addInstruction(isGettingValue ? GrOpcode.LocalStore2_UserData : GrOpcode.LocalStore_UserData, variable.index);
+				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Object : GrOpcode.LocalStore_Object, variable.index);
 				break;
             case TupleType:
                 auto tuple = grGetTuple(variable.type.mangledType);
@@ -1003,7 +1003,7 @@ class GrParser {
             case ArrayType:
             case UserType:
 			case ChanType:
-				addInstruction(isGettingValue ? GrOpcode.LocalStore2_UserData : GrOpcode.LocalStore_UserData, variable.index);
+				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Object : GrOpcode.LocalStore_Object, variable.index);
 				break;
 			default:
 				logError("Invalid type", "Cannot assign to a \'" ~ to!string(variable.type) ~ "\' type");
@@ -1068,11 +1068,11 @@ class GrParser {
 				break;
 			case StructType:
                 if(allowOptimization
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_UserData
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Object
                     && currentFunction.instructions[$ - 1].value == variable.index)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_UserData;
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Object;
                 else			
-			    	addInstruction(GrOpcode.GlobalLoad_UserData, variable.index);
+			    	addInstruction(GrOpcode.GlobalLoad_Object, variable.index);
 				break;
             case TupleType:
                 auto tuple = grGetTuple(variable.type.mangledType);
@@ -1084,11 +1084,11 @@ class GrParser {
             case UserType:
 			case ChanType:
                 if(allowOptimization
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_UserData
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Object
                     && currentFunction.instructions[$ - 1].value == variable.index)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_UserData;
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Object;
                 else			
-			    	addInstruction(GrOpcode.GlobalLoad_UserData, variable.index);
+			    	addInstruction(GrOpcode.GlobalLoad_Object, variable.index);
 				break;
 			default:
 				logError("Invalid type", "Cannot fetch from a \'" ~ to!string(variable.type) ~ "\' type");
@@ -1136,11 +1136,11 @@ class GrParser {
 				break;
 			case StructType:
                 if(allowOptimization
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_UserData
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Object
                     && currentFunction.instructions[$ - 1].value == variable.index)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_UserData;
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Object;
                 else			
-				    addInstruction(GrOpcode.LocalLoad_UserData, variable.index);
+				    addInstruction(GrOpcode.LocalLoad_Object, variable.index);
 				break;
             case TupleType:
                 auto tuple = grGetTuple(variable.type.mangledType);
@@ -1152,11 +1152,11 @@ class GrParser {
             case UserType:
 			case ChanType:
                 if(allowOptimization
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_UserData
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Object
                     && currentFunction.instructions[$ - 1].value == variable.index)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_UserData;
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Object;
                 else	
-				    addInstruction(GrOpcode.LocalLoad_UserData, variable.index);
+				    addInstruction(GrOpcode.LocalLoad_Object, variable.index);
 				break;
 			default:
 				logError("Invalid type", "Cannot fetch from a \'" ~ to!string(variable.type) ~ "\' type");
@@ -1205,8 +1205,8 @@ class GrParser {
                     addInstruction(GrOpcode.GlobalPush_String, func.nbStringParameters);
                 if(func.nbVariantParameters > 0)
                     addInstruction(GrOpcode.GlobalPush_Variant, func.nbVariantParameters);
-                if(func.nbUserDataParameters > 0)
-                    addInstruction(GrOpcode.GlobalPush_UserData, func.nbUserDataParameters);
+                if(func.nbObjectParameters > 0)
+                    addInstruction(GrOpcode.GlobalPush_Object, func.nbObjectParameters);
             }
 
             call.position = cast(uint)currentFunction.instructions.length;
@@ -1694,7 +1694,7 @@ class GrParser {
         case ArrayType:
         case UserType:
         case ChanType:
-            addInstruction(GrOpcode.GlobalPop_UserData, 0u);
+            addInstruction(GrOpcode.GlobalPop_Object, 0u);
             break;
         case InternalTupleType:
             throw new Exception("Tuples should not exist here.");
@@ -1733,7 +1733,7 @@ class GrParser {
         case ArrayType:
         case UserType:
         case ChanType:
-            addInstruction(GrOpcode.GlobalPush_UserData, nbPush);
+            addInstruction(GrOpcode.GlobalPush_Object, nbPush);
             break;
         case InternalTupleType:
             throw new Exception("Tuples should not exist here.");
@@ -1743,7 +1743,7 @@ class GrParser {
     void addGlobalPush(GrType[] signature) {
         struct TypeCounter {
             uint nbIntParams, nbFloatParams, nbStringParams,
-                nbVariantParams, nbUserDataParams;
+                nbVariantParams, nbObjectParams;
         }
         void countParameters(ref TypeCounter typeCounter, GrType type) {
             final switch(type.baseType) with(GrBaseType) {
@@ -1775,7 +1775,7 @@ class GrParser {
             case ArrayType:
             case UserType:
             case ChanType:
-                typeCounter.nbUserDataParams ++;
+                typeCounter.nbObjectParams ++;
                 break;
             case InternalTupleType:
                 throw new Exception("Tuples should not exist here.");
@@ -1795,8 +1795,8 @@ class GrParser {
             addInstruction(GrOpcode.GlobalPush_String, typeCounter.nbStringParams);
         if(typeCounter.nbVariantParams > 0)
             addInstruction(GrOpcode.GlobalPush_Variant, typeCounter.nbVariantParams);
-        if(typeCounter.nbUserDataParams > 0)
-            addInstruction(GrOpcode.GlobalPush_UserData, typeCounter.nbUserDataParams);
+        if(typeCounter.nbObjectParams > 0)
+            addInstruction(GrOpcode.GlobalPush_Object, typeCounter.nbObjectParams);
     }
 
 	GrType[] parseInSignature(ref dstring[] inputVariables, bool asType = false) {
@@ -2129,6 +2129,9 @@ class GrParser {
                 break;
             case Switch:
                 parseSwitchStatement();
+                break;
+            case Select:
+                parseSelectStatement();
                 break;
             case While:
                 parseWhileStatement();
@@ -2678,7 +2681,7 @@ class GrParser {
         case ArrayType:
         case UserType:
         case ChanType:
-            addInstruction(GrOpcode.Channel_UserData, channelSize);
+            addInstruction(GrOpcode.Channel_Object, channelSize);
             break;
         case TupleType:
         case VoidType:
@@ -2752,6 +2755,78 @@ class GrParser {
             current = defaultCasePosition;
             parseBlock();
             current = tmp;
+        }
+
+        /* A switch is breakable. */
+		closeBreakableSection();
+
+        foreach(uint position; exitJumps)
+			setInstruction(GrOpcode.Jump, position, cast(int)(currentFunction.instructions.length - position), true);
+    }
+
+    void parseSelectStatement() {
+        advance();
+
+        /* A select is breakable. */
+		openBreakableSection();
+        uint[] exitJumps;
+        uint jumpPosition, defaultCasePosition;
+        bool hasCase, hasDefaultCase;
+        uint startJump = cast(uint)currentFunction.instructions.length;
+
+        addInstruction(GrOpcode.SelectChannel);
+        while(get().type == GrLexemeType.Case) {
+            if(get(1).type == GrLexemeType.LeftParenthesis) {
+                hasCase = true;
+                advance();
+                if(get().type != GrLexemeType.LeftParenthesis)
+			        logError("Missing symbol", "A case statement should always start with \'(\'");
+                advance();
+                jumpPosition = cast(uint)currentFunction.instructions.length;
+                addInstruction(GrOpcode.TryChannel);
+                parseSubExpression();
+                advance();
+
+                addInstruction(GrOpcode.CheckChannel);
+
+                parseBlock();
+
+                exitJumps ~= cast(uint)currentFunction.instructions.length;
+                addInstruction(GrOpcode.Jump);
+
+                setInstruction(GrOpcode.TryChannel,
+                    jumpPosition,
+                    cast(int)(currentFunction.instructions.length - jumpPosition),
+                    true);
+            }
+            else if(get(1).type == GrLexemeType.LeftCurlyBrace) {
+                if(hasDefaultCase)
+                    logError("Multiple default cases", "There must be only one default case per switch statement");
+                hasDefaultCase = true;
+
+                advance();
+                defaultCasePosition = current;
+
+                skipBlock();
+            }
+            else {
+                logError("Invalid case syntax", "It should be either case(VALUE) {} or case {}");
+            }
+        }
+
+        if(hasDefaultCase) {
+            /* With a default case specified, it is processed if no previous case has been processed in the select statement.
+		     * The select statement is not blocking here because at least one case is executed. */
+            uint tmp = current;
+            current = defaultCasePosition;
+            parseBlock();
+            current = tmp;
+        }
+        else {
+            /* Without default case, the select statement is a blocking operation until one case is processed.
+	         * So, we add a yield then jump back to the beggining of the statement to evaluate the select statement again. */
+             addInstruction(GrOpcode.Yield);
+             addInstruction(GrOpcode.Jump, cast(int)(startJump - currentFunction.instructions.length), true);
         }
 
         /* A switch is breakable. */
@@ -3093,7 +3168,7 @@ class GrParser {
         
         if(!noFail)
 		    logError("Incompatible types", "Cannot convert \'"
-                ~ grGetPrettyType(src) ~ "\' to \'" ~ grGetPrettyType(dst) ~ "\'");
+                ~ grGetPrettyType(src) ~ "\' to \'" ~ grGetPrettyType(dst) ~ "\'", -1);
 		return GrType(GrBaseType.VoidType);	
 	}
 
@@ -3471,7 +3546,7 @@ class GrParser {
         if(counter.dCount)
             addInstruction(GrOpcode.ShiftStack_Variant, counter.dCount * count, true);
         if(counter.uCount)
-            addInstruction(GrOpcode.ShiftStack_UserData, counter.uCount * count, true);
+            addInstruction(GrOpcode.ShiftStack_Object, counter.uCount * count, true);
     }
 
     bool requireLValue(GrLexemeType operatorType) {
@@ -4132,7 +4207,7 @@ class GrParser {
             //If it's an assignement, we want the GET instruction to be after the assignement, not there.
             const auto nextLexeme = get();
             /*if(nextLexeme.type == GrLexemeType.LeftBracket) {
-                addInstruction(GrOpcode.LocalLoad_UserData, variable.index);
+                addInstruction(GrOpcode.LocalLoad_Object, variable.index);
                 returnType = GrType(GrBaseType.VariantType);
             }
             else */if(nextLexeme.type != GrLexemeType.Assign)
@@ -4159,16 +4234,16 @@ class GrParser {
 		errors ~= error;
 	}
 
-	void logError(string msg, string info = "") {
+	void logError(string msg, string info = "", int offset = 0) {
 		Error error;
 		error.msg = to!dstring(msg);
 		error.info = to!dstring(info);
 		error.mustHalt = true;
-		if(isEnd()) {
+		if(isEnd() && offset >= 0) {
 			error.lex = get(-1);
 		}
 		else
-			error.lex = get();
+			error.lex = get(offset);
 
 		errors ~= error;
 		raiseError();

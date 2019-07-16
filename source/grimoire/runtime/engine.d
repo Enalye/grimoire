@@ -354,7 +354,7 @@ class GrEngine {
 					context.ostack[context.ostackPos] = cast(void*)new GrVariantChannel(grGetInstructionUnsignedValue(opcode));
 					context.pc ++;
 					break;
-				case Channel_UserData:
+				case Channel_Object:
 					context.ostackPos ++;
 					context.ostack[context.ostackPos] = cast(void*)new GrObjectChannel(grGetInstructionUnsignedValue(opcode));
 					context.pc ++;
@@ -362,9 +362,17 @@ class GrEngine {
 				case Send_Int:
 					GrIntChannel chan = cast(GrIntChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
-						context.istackPos --;
-						context.ostackPos --;
-						raise(context, "Channel not owned");
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isLocked = true;
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else {
+							context.istackPos --;
+							context.ostackPos --;
+							raise(context, "Channel not owned");
+						}
 					}
 					else if(chan.canSend) {
 						context.isLocked = false;
@@ -374,15 +382,29 @@ class GrEngine {
 					}
 					else {
 						context.isLocked = true;
-						continue contextsLabel;
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else
+							continue contextsLabel;
 					}
 					break;
 				case Send_Float:
 					GrFloatChannel chan = cast(GrFloatChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
-						context.fstackPos --;
-						context.ostackPos --;
-						raise(context, "Channel not owned");
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isLocked = true;
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else {
+							context.fstackPos --;
+							context.ostackPos --;
+							raise(context, "Channel not owned");
+						}
 					}
 					else if(chan.canSend) {
 						context.isLocked = false;
@@ -392,15 +414,29 @@ class GrEngine {
 					}
 					else {
 						context.isLocked = true;
-						continue contextsLabel;
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else
+							continue contextsLabel;
 					}
 					break;
 				case Send_String:
 					GrStringChannel chan = cast(GrStringChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
-						context.sstackPos --;
-						context.ostackPos --;
-						raise(context, "Channel not owned");
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isLocked = true;
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else {
+							context.sstackPos --;
+							context.ostackPos --;
+							raise(context, "Channel not owned");
+						}
 					}
 					else if(chan.canSend) {
 						context.isLocked = false;
@@ -410,15 +446,29 @@ class GrEngine {
 					}
 					else {
 						context.isLocked = true;
-						continue contextsLabel;
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else
+							continue contextsLabel;
 					}
 					break;
 				case Send_Variant:
 					GrVariantChannel chan = cast(GrVariantChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
-						context.vstackPos --;
-						context.ostackPos --;
-						raise(context, "Channel not owned");
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isLocked = true;
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else {
+							context.vstackPos --;
+							context.ostackPos --;
+							raise(context, "Channel not owned");
+						}
 					}
 					else if(chan.canSend) {
 						context.isLocked = false;
@@ -428,14 +478,28 @@ class GrEngine {
 					}
 					else {
 						context.isLocked = true;
-						continue contextsLabel;
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else
+							continue contextsLabel;
 					}
 					break;
-				case Send_UserData:
+				case Send_Object:
 					GrObjectChannel chan = cast(GrObjectChannel)context.ostack[context.ostackPos - 1];
 					if(!chan.isOwned) {
-						context.ostackPos -= 2;
-						raise(context, "Channel not owned");
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isLocked = true;
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else {
+							context.ostackPos -= 2;
+							raise(context, "Channel not owned");
+						}
 					}
 					else if(chan.canSend) {
 						context.isLocked = false;
@@ -446,14 +510,28 @@ class GrEngine {
 					}
 					else {
 						context.isLocked = true;
-						continue contextsLabel;
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else
+							continue contextsLabel;
 					}
 					break;
 				case Receive_Int:
 					GrIntChannel chan = cast(GrIntChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
-						context.ostackPos --;
-						raise(context, "Channel not owned");
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isLocked = true;
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else {
+							context.ostackPos --;
+							raise(context, "Channel not owned");
+						}
 					}
 					else if(chan.canReceive) {
 						context.isLocked = false;
@@ -463,16 +541,29 @@ class GrEngine {
 						context.pc ++;
 					}
 					else {
-						chan.setReceiverReady();
 						context.isLocked = true;
-						continue contextsLabel;
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else
+							continue contextsLabel;
 					}
 					break;
 				case Receive_Float:
 					GrFloatChannel chan = cast(GrFloatChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
-						context.ostackPos --;
-						raise(context, "Channel not owned");
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isLocked = true;
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else {
+							context.ostackPos --;
+							raise(context, "Channel not owned");
+						}
 					}
 					else if(chan.canReceive) {
 						context.isLocked = false;
@@ -482,16 +573,29 @@ class GrEngine {
 						context.pc ++;
 					}
 					else {
-						chan.setReceiverReady();
 						context.isLocked = true;
-						continue contextsLabel;
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else
+							continue contextsLabel;
 					}
 					break;
 				case Receive_String:
 					GrStringChannel chan = cast(GrStringChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
-						context.ostackPos --;
-						raise(context, "Channel not owned");
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isLocked = true;
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else {
+							context.ostackPos --;
+							raise(context, "Channel not owned");
+						}
 					}
 					else if(chan.canReceive) {
 						context.isLocked = false;
@@ -500,18 +604,30 @@ class GrEngine {
 						context.ostackPos --;
 						context.pc ++;
 					}
-
 					else {
-						chan.setReceiverReady();
 						context.isLocked = true;
-						continue contextsLabel;
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else
+							continue contextsLabel;
 					}
 					break;
 				case Receive_Variant:
 					GrVariantChannel chan = cast(GrVariantChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
-						context.ostackPos --;
-						raise(context, "Channel not owned");
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isLocked = true;
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else {
+							context.ostackPos --;
+							raise(context, "Channel not owned");
+						}
 					}
 					else if(chan.canReceive) {
 						context.isLocked = false;
@@ -521,16 +637,29 @@ class GrEngine {
 						context.pc ++;
 					}
 					else {
-						chan.setReceiverReady();
 						context.isLocked = true;
-						continue contextsLabel;
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else
+							continue contextsLabel;
 					}
 					break;
-				case Receive_UserData:
+				case Receive_Object:
 					GrObjectChannel chan = cast(GrObjectChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
-						context.ostackPos --;
-						raise(context, "Channel not owned");
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isLocked = true;
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else {
+							context.ostackPos --;
+							raise(context, "Channel not owned");
+						}
 					}
 					else if(chan.canReceive) {
 						context.isLocked = false;
@@ -538,10 +667,37 @@ class GrEngine {
 						context.pc ++;
 					}
 					else {
-						chan.setReceiverReady();
 						context.isLocked = true;
-						continue contextsLabel;
+						if(context.isEvaluatingChannel) {
+							context.flushSelect();
+							context.isEvaluatingChannel = false;
+							context.pc = context.selectPositionJump;
+						}
+						else
+							continue contextsLabel;
 					}
+					break;
+				case SelectChannel:
+					context.istackPosSelect = context.istackPos;
+					context.fstackPosSelect = context.fstackPos;
+					context.sstackPosSelect = context.sstackPos;
+					context.vstackPosSelect = context.vstackPos;
+					context.ostackPosSelect = context.ostackPos;
+					context.pc ++;
+					break;
+				case TryChannel:
+					if(context.isEvaluatingChannel)
+						raise(context, "Already inside a select");
+					context.isEvaluatingChannel = true;
+					context.selectPositionJump = context.pc + grGetInstructionSignedValue(opcode);
+					context.pc ++;
+					break;
+				case CheckChannel:
+					if(!context.isEvaluatingChannel)
+						raise(context, "Not inside a select");
+					context.isEvaluatingChannel = false;
+					context.flushSelect();
+					context.pc ++;
 					break;
 				case ShiftStack_Int:
 					context.istackPos += grGetInstructionSignedValue(opcode);
@@ -559,7 +715,7 @@ class GrEngine {
 					context.vstackPos += grGetInstructionSignedValue(opcode);
 					context.pc ++;
 					break;
-                case ShiftStack_UserData:
+                case ShiftStack_Object:
 					context.ostackPos += grGetInstructionSignedValue(opcode);
 					context.pc ++;
 					break;
@@ -588,7 +744,7 @@ class GrEngine {
                     context.vstackPos -= 2;
                     context.pc ++;
                     break;
-                case LocalStore_UserData:
+                case LocalStore_Object:
 					context.olocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
                     context.ostackPos --;	
 					context.pc ++;
@@ -614,7 +770,7 @@ class GrEngine {
                     context.vstack[context.vstackPos].storeRef(context, context.vstack[context.vstackPos + 1]);
                     context.pc ++;
                     break;
-                case LocalStore2_UserData:
+                case LocalStore2_Object:
 					context.olocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
 					context.pc ++;
 					break;
@@ -638,7 +794,7 @@ class GrEngine {
 					context.vstack[context.vstackPos] = context.vlocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
-                case LocalLoad_UserData:
+                case LocalLoad_Object:
                     context.ostackPos ++;
 					context.ostack[context.ostackPos] = context.olocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
@@ -663,7 +819,7 @@ class GrEngine {
                     context.vstackPos --;	
 					context.pc ++;
 					break;
-                case GlobalStore_UserData:
+                case GlobalStore_Object:
 					_oglobals[grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
                     context.ostackPos --;	
 					context.pc ++;
@@ -684,7 +840,7 @@ class GrEngine {
 					_vglobals[grGetInstructionUnsignedValue(opcode)] = context.vstack[context.vstackPos];
 					context.pc ++;
 					break;
-                case GlobalStore2_UserData:
+                case GlobalStore2_Object:
 					_oglobals[grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
 					context.pc ++;
 					break;
@@ -708,7 +864,7 @@ class GrEngine {
 					context.vstack[context.vstackPos] = _vglobals[grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
-                case GlobalLoad_UserData:
+                case GlobalLoad_Object:
                     context.ostackPos ++;
 					context.ostack[context.ostackPos] = _oglobals[grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
@@ -781,7 +937,7 @@ class GrEngine {
 					context.vstackPos -= nbParams;
 					context.pc ++;
 					break;
-                case GlobalPush_UserData:
+                case GlobalPush_Object:
 					uint nbParams = grGetInstructionUnsignedValue(opcode);
 					for(uint i = 1u; i <= nbParams; i++)
 						_oglobalStack ~= context.ostack[(context.ostackPos - nbParams) + i];
@@ -812,7 +968,7 @@ class GrEngine {
 					_vglobalStack.length --;
 					context.pc ++;
 					break;
-                case GlobalPop_UserData:
+                case GlobalPop_Object:
                     context.ostackPos ++;
 					context.ostack[context.ostackPos] = _oglobalStack[$ - 1];
 					_oglobalStack.length --;

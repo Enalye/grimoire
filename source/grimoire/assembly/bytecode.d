@@ -19,30 +19,29 @@ enum GrOpcode {
     Nop, Raise, Try, Catch,
     Kill, Yield, Task, AnonymousTask, New,
 
-    Channel_Int, Channel_Float, Channel_String, Channel_Variant, Channel_UserData,
-    Send_Int, Send_Float, Send_String, Send_Variant, Send_UserData,
-    Receive_Int, Receive_Float, Receive_String, Receive_Variant, Receive_UserData,
-    TrySend_Int, TrySend_Float, TrySend_String, TrySend_Variant, TrySend_UserData,
-    TryReceive_Int, TryReceive_Float, TryReceive_String, TryReceive_Variant, TryReceive_UserData,
+    Channel_Int, Channel_Float, Channel_String, Channel_Variant, Channel_Object,
+    Send_Int, Send_Float, Send_String, Send_Variant, Send_Object,
+    Receive_Int, Receive_Float, Receive_String, Receive_Variant, Receive_Object,
+    SelectChannel, TryChannel, CheckChannel,
+   
+    ShiftStack_Int, ShiftStack_Float, ShiftStack_String, ShiftStack_Variant, ShiftStack_Object,
     
-    ShiftStack_Int, ShiftStack_Float, ShiftStack_String, ShiftStack_Variant, ShiftStack_UserData,
+    LocalStore_Int, LocalStore_Float, LocalStore_String, LocalStore_Variant, LocalStore_Ref, LocalStore_Object,
+    LocalStore2_Int, LocalStore2_Float, LocalStore2_String, LocalStore2_Variant, LocalStore2_Ref, LocalStore2_Object,
+    LocalLoad_Int, LocalLoad_Float, LocalLoad_String, LocalLoad_Variant, LocalLoad_Ref, LocalLoad_Object,
     
-    LocalStore_Int, LocalStore_Float, LocalStore_String, LocalStore_Variant, LocalStore_Ref, LocalStore_UserData,
-    LocalStore2_Int, LocalStore2_Float, LocalStore2_String, LocalStore2_Variant, LocalStore2_Ref, LocalStore2_UserData,
-    LocalLoad_Int, LocalLoad_Float, LocalLoad_String, LocalLoad_Variant, LocalLoad_Ref, LocalLoad_UserData,
-    
-    GlobalStore_Int, GlobalStore_Float, GlobalStore_String, GlobalStore_Variant, GlobalStore_Ref, GlobalStore_UserData,
-    GlobalStore2_Int, GlobalStore2_Float, GlobalStore2_String, GlobalStore2_Variant, GlobalStore2_Ref, GlobalStore2_UserData,
-    GlobalLoad_Int, GlobalLoad_Float, GlobalLoad_String, GlobalLoad_Variant, GlobalLoad_Ref, GlobalLoad_UserData,
+    GlobalStore_Int, GlobalStore_Float, GlobalStore_String, GlobalStore_Variant, GlobalStore_Ref, GlobalStore_Object,
+    GlobalStore2_Int, GlobalStore2_Float, GlobalStore2_String, GlobalStore2_Variant, GlobalStore2_Ref, GlobalStore2_Object,
+    GlobalLoad_Int, GlobalLoad_Float, GlobalLoad_String, GlobalLoad_Variant, GlobalLoad_Ref, GlobalLoad_Object,
     
     GetField,
-    FieldStore_Int, FieldStore_Float, FieldStore_String, FieldStore_Variant, FieldStore_Ref, FieldStore_UserData,
-    FieldLoad_Int, FieldLoad_Float, FieldLoad_String, FieldLoad_Variant, FieldLoad_Ref, FieldLoad_UserData,
+    FieldStore_Int, FieldStore_Float, FieldStore_String, FieldStore_Variant, FieldStore_Ref, FieldStore_Object,
+    FieldLoad_Int, FieldLoad_Float, FieldLoad_String, FieldLoad_Variant, FieldLoad_Ref, FieldLoad_Object,
 
     Const_Int, Const_Float, Const_Bool, Const_String, Const_Meta,
     
-    GlobalPush_Int, GlobalPush_Float, GlobalPush_String, GlobalPush_Variant, GlobalPush_UserData,
-    GlobalPop_Int, GlobalPop_Float, GlobalPop_String, GlobalPop_Variant, GlobalPop_UserData,
+    GlobalPush_Int, GlobalPush_Float, GlobalPush_String, GlobalPush_Variant, GlobalPush_Object,
+    GlobalPop_Int, GlobalPop_Float, GlobalPop_String, GlobalPop_Variant, GlobalPop_Object,
 
     Equal_Int, Equal_Float, Equal_String, Equal_Variant,
     NotEqual_Int, NotEqual_Float, NotEqual_String, NotEqual_Variant,
