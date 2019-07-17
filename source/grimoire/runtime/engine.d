@@ -541,6 +541,7 @@ class GrEngine {
 						context.pc ++;
 					}
 					else {
+						chan.setReceiverReady();
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
 							context.flushSelect();
@@ -573,6 +574,7 @@ class GrEngine {
 						context.pc ++;
 					}
 					else {
+						chan.setReceiverReady();
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
 							context.flushSelect();
@@ -605,6 +607,7 @@ class GrEngine {
 						context.pc ++;
 					}
 					else {
+						chan.setReceiverReady();
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
 							context.flushSelect();
@@ -637,6 +640,7 @@ class GrEngine {
 						context.pc ++;
 					}
 					else {
+						chan.setReceiverReady();
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
 							context.flushSelect();
@@ -667,6 +671,7 @@ class GrEngine {
 						context.pc ++;
 					}
 					else {
+						chan.setReceiverReady();
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
 							context.flushSelect();

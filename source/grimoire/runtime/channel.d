@@ -31,7 +31,7 @@ final class GrChannel(T) {
         */
         bool canSend() const {
             if(_capacity == 1u)
-                return /*_isReceiverReady &&*/ _size < 1u;
+                return _isReceiverReady && _size < 1u;
             else
                 return _size < _capacity;
         }
@@ -43,18 +43,19 @@ final class GrChannel(T) {
         bool canReceive() const { return _size > 0u; }
     }
 
+    /// Fixed size buffer.
     this(uint buffSize) {
         _capacity = buffSize;
     }
 
     /// Always check canSend() before.
     void send(ref T value) {
-        if(_size == _capacity /*|| (_capacity == 1u && !_isReceiverReady)*/)
+        if(_size == _capacity || (_capacity == 1u && !_isReceiverReady))
             throw new Exception("Attempt to write on a full channel");
         _buffer ~= value;
-        _size ++;     
+        _size ++;
     }
-
+    
     /// Always check canReceive() before.
     T receive() {
         if(_size == 0)
