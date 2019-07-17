@@ -166,29 +166,23 @@ class GrEngine {
         context.isPanicking = true;
         
         //Exception handler found in the current function, just jump.
-        if(context.exceptionHandlers[context.exceptionHandlersPos].length) {
-            context.pc = context.exceptionHandlers[context.exceptionHandlersPos][$ - 1];
+        if(context.callStack[context.stackPos].exceptionHandlers.length) {
+            context.pc = context.callStack[context.stackPos].exceptionHandlers[$ - 1];
         }
         //No exception handler in the current function, unwinding the deferred code, then return.
         
         //Check for deferred calls as we will exit the current function.
-        else if(context.deferStack[context.deferPos].length) {
+        else if(context.callStack[context.stackPos].deferStack.length) {
             //Pop the last defer and run it.
-            context.pc = context.deferStack[context.deferPos][$ - 1];
-            context.deferStack[context.deferPos].length --;
+            context.pc = context.callStack[context.stackPos].deferStack[$ - 1];
+            context.callStack[context.stackPos].deferStack.length --;
             //The search for an exception handler will be done by Unwind after all defer
             //has been called for this function.
         }
         else if(context.stackPos) {
-            //Pop the defer scope.
-            context.deferPos --;
-
-            //Pop the exception handlers as well.
-            context.exceptionHandlersPos --;
-
             //Then returns to the last context, raise will be run again.
-            context.stackPos -= 2;
-            context.localsPos -= context.callStack[context.stackPos];
+            context.stackPos --;
+            context.localsPos -= context.callStack[context.stackPos].localStackSize;
         }
         else {
             //Kill the others.
@@ -230,29 +224,23 @@ class GrEngine {
                     }
 
                     //Exception handler found in the current function, just jump.
-                    if(context.exceptionHandlers[context.exceptionHandlersPos].length) {
-                        context.pc = context.exceptionHandlers[context.exceptionHandlersPos][$ - 1];
+                    if(context.callStack[context.stackPos].exceptionHandlers.length) {
+                        context.pc = context.callStack[context.stackPos].exceptionHandlers[$ - 1];
                     }
                     //No exception handler in the current function, unwinding the deferred code, then return.
                     
                     //Check for deferred calls as we will exit the current function.
-                    else if(context.deferStack[context.deferPos].length) {
+                    else if(context.callStack[context.stackPos].deferStack.length) {
                         //Pop the last defer and run it.
-                        context.pc = context.deferStack[context.deferPos][$ - 1];
-                        context.deferStack[context.deferPos].length --;
+                        context.pc = context.callStack[context.stackPos].deferStack[$ - 1];
+                        context.callStack[context.stackPos].deferStack.length --;
                         //The search for an exception handler will be done by Unwind after all defer
                         //has been called for this function.
                     }
                     else if(context.stackPos) {
-                        //Pop the defer scope.
-                        context.deferPos --;
-
-                        //Pop the exception handlers as well.
-                        context.exceptionHandlersPos --;
-
                         //Then returns to the last context, raise will be run again.
-                        context.stackPos -= 2;
-                        context.localsPos -= context.callStack[context.stackPos];
+                        context.stackPos --;
+                        context.localsPos -= context.callStack[context.stackPos].localStackSize;
                     }
                     else {
                         //Kill the others.
@@ -272,11 +260,11 @@ class GrEngine {
                     }
                     break;
                 case Try:
-                    context.exceptionHandlers[context.exceptionHandlersPos] ~= context.pc + grGetInstructionSignedValue(opcode);
+                    context.callStack[context.stackPos].exceptionHandlers ~= context.pc + grGetInstructionSignedValue(opcode);
                     context.pc ++;
                     break;
                 case Catch:
-                    context.exceptionHandlers[context.exceptionHandlersPos].length --;
+                    context.callStack[context.stackPos].exceptionHandlers.length --;
                     if(context.isPanicking) {
                         context.isPanicking = false;
                         context.pc ++;
@@ -300,22 +288,19 @@ class GrEngine {
 					break;
 				case Kill:
                     //Check for deferred calls.
-                    if(context.deferStack[context.deferPos].length) {
+                    if(context.callStack[context.stackPos].deferStack.length) {
                         //Pop the last defer and run it.
-                        context.pc = context.deferStack[context.deferPos][$ - 1];
-                        context.deferStack[context.deferPos].length --;
+                        context.pc = context.callStack[context.stackPos].deferStack[$ - 1];
+                        context.callStack[context.stackPos].deferStack.length --;
 
                         //Flag as killed so the entire stack will be unwinded.
                         context.isKilled = true;
                     }
                     else if(context.stackPos) {
-                        //Pop the defer scope.
-                        context.deferPos --;
-
                         //Then returns to the last context.
-                        context.stackPos -= 2;
-                        context.pc = context.callStack[context.stackPos + 1u];
-                        context.localsPos -= context.callStack[context.stackPos];
+                        context.stackPos --;
+                        context.pc = context.callStack[context.stackPos].retPosition;
+                        context.localsPos -= context.callStack[context.stackPos].localStackSize;
 
                         //Flag as killed so the entire stack will be unwinded.
                         context.isKilled = true;
@@ -363,7 +348,7 @@ class GrEngine {
 					GrIntChannel chan = cast(GrIntChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -383,7 +368,7 @@ class GrEngine {
 					else {
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -395,7 +380,7 @@ class GrEngine {
 					GrFloatChannel chan = cast(GrFloatChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -415,7 +400,7 @@ class GrEngine {
 					else {
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -427,7 +412,7 @@ class GrEngine {
 					GrStringChannel chan = cast(GrStringChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -447,7 +432,7 @@ class GrEngine {
 					else {
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -459,7 +444,7 @@ class GrEngine {
 					GrVariantChannel chan = cast(GrVariantChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -479,7 +464,7 @@ class GrEngine {
 					else {
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -491,7 +476,7 @@ class GrEngine {
 					GrObjectChannel chan = cast(GrObjectChannel)context.ostack[context.ostackPos - 1];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -511,7 +496,7 @@ class GrEngine {
 					else {
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -523,7 +508,7 @@ class GrEngine {
 					GrIntChannel chan = cast(GrIntChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -544,7 +529,7 @@ class GrEngine {
 						chan.setReceiverReady();
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -556,7 +541,7 @@ class GrEngine {
 					GrFloatChannel chan = cast(GrFloatChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -577,7 +562,7 @@ class GrEngine {
 						chan.setReceiverReady();
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -589,7 +574,7 @@ class GrEngine {
 					GrStringChannel chan = cast(GrStringChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -610,7 +595,7 @@ class GrEngine {
 						chan.setReceiverReady();
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -622,7 +607,7 @@ class GrEngine {
 					GrVariantChannel chan = cast(GrVariantChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -643,7 +628,7 @@ class GrEngine {
 						chan.setReceiverReady();
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -655,7 +640,7 @@ class GrEngine {
 					GrObjectChannel chan = cast(GrObjectChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -674,7 +659,7 @@ class GrEngine {
 						chan.setReceiverReady();
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.flushSelect();
+							context.popState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -683,11 +668,7 @@ class GrEngine {
 					}
 					break;
 				case SelectChannel:
-					context.istackPosSelect = context.istackPos;
-					context.fstackPosSelect = context.fstackPos;
-					context.sstackPosSelect = context.sstackPos;
-					context.vstackPosSelect = context.vstackPos;
-					context.ostackPosSelect = context.ostackPos;
+					context.pushState();
 					context.pc ++;
 					break;
 				case TryChannel:
@@ -701,7 +682,7 @@ class GrEngine {
 					if(!context.isEvaluatingChannel)
 						raise(context, "Not inside a select");
 					context.isEvaluatingChannel = false;
-					context.flushSelect();
+					context.popState();
 					context.pc ++;
 					break;
 				case ShiftStack_Int:
@@ -1253,53 +1234,41 @@ class GrEngine {
 				case Return:
                     //If another task was killed by an exception,
                     //we might end up there if the task has just been spawned.
-                    if(!context.deferPos && context.isKilled) {
+                    if(!context.stackPos && context.isKilled) {
                         _contexts.markInternalForRemoval(index);
 					    continue contextsLabel;
                     }
                     //Check for deferred calls.
-                    else if(context.deferStack[context.deferPos].length) {
+                    else if(context.callStack[context.stackPos].deferStack.length) {
                         //Pop the last defer and run it.
-                        context.pc = context.deferStack[context.deferPos][$ - 1];
-                        context.deferStack[context.deferPos].length --;
+                        context.pc = context.callStack[context.stackPos].deferStack[$ - 1];
+                        context.callStack[context.stackPos].deferStack.length --;
                     }
                     else {
-                        //Pop the defer scope.
-                        context.deferPos --;
-
-                        //Pop the exception handlers as well.
-                        context.exceptionHandlersPos --;
-
                         //Then returns to the last context.
-                        context.stackPos -= 2;
-                        context.pc = context.callStack[context.stackPos + 1u];
-                        context.localsPos -= context.callStack[context.stackPos];
+                        context.stackPos --;
+                        context.pc = context.callStack[context.stackPos].retPosition;
+                        context.localsPos -= context.callStack[context.stackPos].localStackSize;
                     }
 					break;
                 case Unwind:
                     //If another task was killed by an exception,
                     //we might end up there if the task has just been spawned.
-                    if(!context.deferPos) {
+                    if(!context.stackPos) {
                         _contexts.markInternalForRemoval(index);
 					    continue contextsLabel;
                     }
                     //Check for deferred calls.
-                    else if(context.deferStack[context.deferPos].length) {
+                    else if(context.callStack[context.stackPos].deferStack.length) {
                         //Pop the next defer and run it.
-                        context.pc = context.deferStack[context.deferPos][$ - 1];
-                        context.deferStack[context.deferPos].length --;
+                        context.pc = context.callStack[context.stackPos].deferStack[$ - 1];
+                        context.callStack[context.stackPos].deferStack.length --;
                     }
                     else if(context.isKilled) {
                         if(context.stackPos) {
-                            //Pop the defer scope.
-                            context.deferPos --;
-
-                            //Pop the exception handlers as well.
-                            context.exceptionHandlersPos --;
-
                             //Then returns to the last context without modifying the pc.
-                            context.stackPos -= 2;
-                            context.localsPos -= context.callStack[context.stackPos];
+                            context.stackPos --;
+                            context.localsPos -= context.callStack[context.stackPos].localStackSize;
                         }
                         else {
                             //Every deferred call has been executed, now die.
@@ -1311,19 +1280,13 @@ class GrEngine {
                         //An exception has been raised without any try/catch inside the function.
                         //So all deferred code is run here before searching in the parent function.
                         if(context.stackPos) {
-                            //Pop the defer scope.
-                            context.deferPos --;
-
-                            //Pop the exception handlers as well.
-                            context.exceptionHandlersPos --;
-
                             //Then returns to the last context without modifying the pc.
-                            context.stackPos -= 2;
-                            context.localsPos -= context.callStack[context.stackPos];
+                            context.stackPos --;
+                            context.localsPos -= context.callStack[context.stackPos].localStackSize;
 
                             //Exception handler found in the current function, just jump.
-                            if(context.exceptionHandlers[context.exceptionHandlersPos].length) {
-                                context.pc = context.exceptionHandlers[context.exceptionHandlersPos][$ - 1];
+                            if(context.callStack[context.stackPos].exceptionHandlers.length) {
+                                context.pc = context.callStack[context.stackPos].exceptionHandlers[$ - 1];
                             }
                         }
                         else {
@@ -1344,43 +1307,35 @@ class GrEngine {
                         }
                     }
                     else {
-                        //Pop the defer scope.
-                        context.deferPos --;
-
-                        //Pop the exception handlers as well.
-                        context.exceptionHandlersPos --;
-
                         //Then returns to the last context.
-                        context.stackPos -= 2;
-                        context.pc = context.callStack[context.stackPos + 1u];
-                        context.localsPos -= context.callStack[context.stackPos];
+                        context.stackPos --;
+                        context.pc = context.callStack[context.stackPos].retPosition;
+                        context.localsPos -= context.callStack[context.stackPos].localStackSize;
                     }
                     break;
                 case Defer:
-                    context.deferStack[context.deferPos] ~= context.pc + grGetInstructionSignedValue(opcode);
+                    context.callStack[context.stackPos].deferStack ~= context.pc + grGetInstructionSignedValue(opcode);
 					context.pc ++;
                     break;
 				case LocalStack:
                     const auto stackSize = grGetInstructionUnsignedValue(opcode);
-					context.callStack[context.stackPos] = stackSize;
-                    context.deferPos ++;
-                    context.exceptionHandlersPos ++;
+					context.callStack[context.stackPos].localStackSize = stackSize;
 					context.pc ++;
 					break;
 				case Call:
                     if(((context.stackPos >> 1) + 1) >= context.callStackLimit)
                         context.doubleCallStackSize();
-					context.localsPos += context.callStack[context.stackPos];
-					context.callStack[context.stackPos + 1u] = context.pc + 1u;
-					context.stackPos += 2;
+					context.localsPos += context.callStack[context.stackPos].localStackSize;
+					context.callStack[context.stackPos].retPosition = context.pc + 1u;
+					context.stackPos ++;
 					context.pc = grGetInstructionUnsignedValue(opcode);
 					break;
 				case AnonymousCall:
                     if((context.stackPos >> 1) >= context.callStackLimit)
                         context.doubleCallStackSize();
-					context.localsPos += context.callStack[context.stackPos];
-					context.callStack[context.stackPos + 1u] = context.pc + 1u;
-					context.stackPos += 2;
+					context.localsPos += context.callStack[context.stackPos].localStackSize;
+					context.callStack[context.stackPos].retPosition = context.pc + 1u;
+					context.stackPos ++;
 					context.pc = context.istack[context.istackPos];
 					context.istackPos --;
 					break;

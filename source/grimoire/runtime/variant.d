@@ -281,9 +281,9 @@ struct GrVariantValue {
             }
             if((context.stackPos >> 1) >= context.callStackLimit)
                 context.doubleCallStackSize();
-            context.localsPos += context.callStack[context.stackPos];
-            context.callStack[context.stackPos + 1u] = context.pc + 1u;
-            context.stackPos += 2;
+            context.localsPos += context.callStack[context.stackPos].localStackSize;
+            context.callStack[context.stackPos].retPosition = context.pc + 1u;
+            context.stackPos ++;
             context.vstackPos --;
             context.pc = _ivalue;
             return;

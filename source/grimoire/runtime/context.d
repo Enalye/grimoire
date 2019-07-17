@@ -14,6 +14,31 @@ import grimoire.runtime.array;
 import grimoire.runtime.object;
 
 /**
+    Represents a single function context in the callStack.
+*/
+struct GrStackFrame {
+    /// Size of the locals in the calling function.
+    uint localStackSize;
+    /// PC to jumps back to.
+    uint retPosition;
+    /// All current function deferred blocks.
+    uint[] deferStack;
+    /// All current function exception handling blocks.
+    uint[] exceptionHandlers;
+}
+
+struct GrContextState {
+    int istackPos,
+        fstackPos,
+        sstackPos,
+        vstackPos,
+        ostackPos;
+    GrStackFrame stackFrame;
+    uint stackPos;
+    uint localsPos;    
+}
+
+/**
     Coroutines are contexts that hold local data.
 */
 final class GrContext {
@@ -36,7 +61,7 @@ final class GrContext {
     void*[] olocals;
 
     /// Callstack
-    uint[] callStack;
+    GrStackFrame[] callStack;
     uint[][] deferStack;
     uint[][] exceptionHandlers;
 
@@ -53,11 +78,7 @@ final class GrContext {
         localsPos,
     /// Stack frame pointer for the current function.
     /// Each function takes 2 integer: the return pc, and the local variable size.
-        stackPos,
-    /// Current deferrable block.
-        deferPos,
-    /// Current block wich can contain exception handlers.
-        exceptionHandlersPos;
+        stackPos;
     
     int istackPos = -1,
         fstackPos = -1,
@@ -83,11 +104,7 @@ final class GrContext {
     uint selectPositionJump;
 
     /// Backup to restore stack state after select evaluation.
-    int istackPosSelect,
-        fstackPosSelect,
-        sstackPosSelect,
-        vstackPosSelect,
-        ostackPosSelect;
+    GrContextState[] states;
 
     /// Current callstack max depth.
     uint callStackLimit;
@@ -95,9 +112,7 @@ final class GrContext {
     /// Initialize the call stacks.
     void setupCallStack(uint size) {
         callStackLimit = size;
-        callStack = new uint[callStackLimit << 1];
-        deferStack = new uint[][callStackLimit];
-        exceptionHandlers = new uint[][callStackLimit];
+        callStack = new GrStackFrame[callStackLimit];   
     }
 
     /// Current expression stack limit.
@@ -172,11 +187,30 @@ final class GrContext {
         }
     }
 
-    void flushSelect() {
-        istackPos = istackPosSelect;
-        fstackPos = fstackPosSelect;
-        sstackPos = sstackPosSelect;
-        vstackPos = vstackPosSelect;
-        ostackPos = ostackPosSelect;
+    void pushState() {
+        GrContextState state;
+        state.istackPos = istackPos;
+        state.fstackPos = fstackPos;
+        state.sstackPos = sstackPos;
+        state.vstackPos = vstackPos;
+        state.ostackPos = ostackPos;
+        state.stackPos = stackPos;
+        state.stackFrame = callStack[stackPos];
+        state.localsPos = localsPos;
+        states ~= state;
+    }
+
+    void popState() {
+        GrContextState state = states[$ - 1];
+        states.length --;
+        istackPos = state.istackPos;
+        fstackPos = state.fstackPos;
+        sstackPos = state.sstackPos;
+        vstackPos = state.vstackPos;
+        ostackPos = state.ostackPos;
+        stackPos = state.stackPos;
+        localsPos = state.localsPos;
+        callStack[stackPos] = state.stackFrame;
+
     }
 }
