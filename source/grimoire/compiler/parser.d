@@ -420,6 +420,17 @@ class GrParser {
         return *var;
 	}
 
+    bool hasVariable(dstring name) {
+        auto var = (name in globalVariables);
+		if(var !is null)
+            return true;
+
+		var = (name in currentFunction.localVariables);
+		if(var !is null)
+            return true;
+        return false;
+    }
+
 	void addIntConstant(int value) {
 		addInstruction(GrOpcode.Const_Int, registerIntConstant(value));
 	}
@@ -2909,18 +2920,67 @@ class GrParser {
 		closeContinuableSection();
 	}
 
+    GrVariable parseDeclarableArgument(GrType defaultType = grVoid) {
+        GrVariable lvalue;
+        GrType type = GrBaseType.VoidType;
+        bool isAuto, isTyped = true;
+        switch(get().type) with(GrLexemeType) {
+        case AutoType:
+            isAuto = true;
+            checkAdvance();
+            break;
+        case VoidType: .. case ChanType:
+            type = parseType();
+            break;
+        case Identifier:
+            if(grIsTuple(get().svalue) || grIsStruct(get().svalue) || grIsUserType(get().svalue))
+                type = parseType();
+            else
+                isTyped = false;
+            break;
+        default:
+            logError("Type or identifier expected", "You must type a variable declaration or an existing one");
+            break;
+        }
+        GrLexeme identifier = get();
+		if(identifier.type != GrLexemeType.Identifier)
+			logError("Missing identifier", "Identifier expected");
+
+        if(isTyped) {
+            lvalue = registerLocalVariable(identifier.svalue, type);
+            lvalue.isAuto = isAuto;
+        }
+        else if(hasVariable(identifier.svalue)) {
+            lvalue = getVariable(identifier.svalue);
+        }
+        else {
+            /// Automatic, same behaviour with let.
+            lvalue = registerLocalVariable(identifier.svalue, type);
+            lvalue.isAuto = true;
+        }
+
+        if(lvalue.isAuto && defaultType.baseType != GrBaseType.VoidType) {
+            lvalue.isAuto = false;
+            lvalue.type = defaultType;
+        }
+
+        //A composite type does not need to be initialized.
+        if(lvalue.type == GrBaseType.TupleType || lvalue.type == GrBaseType.StructType)
+            lvalue.isInitialized = true;
+
+		checkAdvance();
+        return lvalue;
+    }
+
 	void parseForStatement() {
 		advance();
 		if(get().type != GrLexemeType.LeftParenthesis)
 			logError("Missing symbol", "A condition should always start with \'(\'");
 
 		advance();
-		GrLexeme identifier = get();
-		if(identifier.type != GrLexemeType.Identifier)
-			logError("Missing identifier", "For syntax: for(identifier, array) {}");
-		GrVariable variable = getVariable(identifier.svalue);
+        
+		GrVariable variable = parseDeclarableArgument(grVariant);
 		 
-		advance();
 		if(get().type != GrLexemeType.Comma)
 			logError("Missing symbol", "Did you forget the \',\' ?");
 		advance();
@@ -2964,9 +3024,9 @@ class GrParser {
 		addGetInstruction(array);
 		addGetInstruction(index);
 		addInstruction(GrOpcode.Increment_Int);
-		addSetInstruction(index, GrType(GrBaseType.VoidType), true);
+		addSetInstruction(index, grVoid, true);
 		addInstruction(GrOpcode.Index_Array);
-		convertType(GrType(GrBaseType.VariantType), variable.type);
+		convertType(grVariant, variable.type);
 		addSetInstruction(variable);
 
 		parseBlock();
