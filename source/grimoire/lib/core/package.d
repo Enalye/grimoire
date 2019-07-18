@@ -9,5 +9,5 @@
 module grimoire.lib.core;
 
 public {
-    
+    import grimoire.lib.core.time;
 }

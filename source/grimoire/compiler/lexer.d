@@ -32,7 +32,8 @@ enum GrLexemeType {
 	Identifier, Integer, Float, Boolean, String,
 	Main, Event, Def, Tuple, New, Copy, Send, Receive,
 	VoidType, IntType, FloatType, BoolType, StringType, ArrayType, VariantType, FunctionType, TaskType, ChanType, AutoType,
-	If, Unless, Else, Switch, Select, Case, While, Do, For, Loop, Return, Kill, Yield, Break, Continue,
+	If, Unless, Else, Switch, Select, Case, While, Do, For, Loop, Return,
+	Kill, KillAll, Yield, Break, Continue,
 }
 
 /**
@@ -580,6 +581,9 @@ class GrLexer {
             case "kill":
 				lex.type = GrLexemeType.Kill;
 				break;
+			case "killall":
+				lex.type = GrLexemeType.KillAll;
+				break;
 			case "yield":
 				lex.type = GrLexemeType.Yield;
 				break;
@@ -737,7 +741,8 @@ dstring grGetPrettyLexemeType(GrLexemeType operator) {
         "identifier", "const_int", "const_float", "const_bool", "const_str",
         "main", "event", "def", "tuple", "new", "copy", "send", "receive",
         "void", "int", "float", "bool", "string", "array", "var", "func", "task", "chan", "let",
-        "if", "unless", "else", "switch", "select", "case", "while", "do", "for", "loop", "return", "kill", "yield", "break", "continue"
+        "if", "unless", "else", "switch", "select", "case", "while", "do", "for", "loop", "return",
+		"kill", "killall", "yield", "break", "continue"
     ];
     return lexemeTypeStrTable[operator];
 }

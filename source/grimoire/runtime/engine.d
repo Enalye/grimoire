@@ -190,6 +190,7 @@ class GrEngine {
                 coroutine.pc = cast(uint)(_opcodes.length - 1);
                 coroutine.isKilled = true;
             }
+			_contextsToSpawn.reset();
 
             //The VM is now panicking.
             _isPanicking = true;
@@ -248,6 +249,7 @@ class GrEngine {
                             coroutine.pc = cast(uint)(_opcodes.length - 1);
                             coroutine.isKilled = true;
                         }
+						_contextsToSpawn.reset();
 
                         //The VM is now panicking.
                         _isPanicking = true;
@@ -311,6 +313,14 @@ class GrEngine {
 					    continue contextsLabel;
                     }
 					break;
+				case KillAll:
+					//Kill the others.
+					foreach(coroutine; _contexts) {
+						coroutine.pc = cast(uint)(_opcodes.length - 1);
+						coroutine.isKilled = true;
+					}
+					_contextsToSpawn.reset();
+					continue contextsLabel;
 				case Yield:
 					context.pc ++;
 					continue contextsLabel;
@@ -348,7 +358,7 @@ class GrEngine {
 					GrIntChannel chan = cast(GrIntChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -368,7 +378,7 @@ class GrEngine {
 					else {
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -380,7 +390,7 @@ class GrEngine {
 					GrFloatChannel chan = cast(GrFloatChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -400,7 +410,7 @@ class GrEngine {
 					else {
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -412,7 +422,7 @@ class GrEngine {
 					GrStringChannel chan = cast(GrStringChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -432,7 +442,7 @@ class GrEngine {
 					else {
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -444,7 +454,7 @@ class GrEngine {
 					GrVariantChannel chan = cast(GrVariantChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -464,7 +474,7 @@ class GrEngine {
 					else {
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -476,7 +486,7 @@ class GrEngine {
 					GrObjectChannel chan = cast(GrObjectChannel)context.ostack[context.ostackPos - 1];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -496,7 +506,7 @@ class GrEngine {
 					else {
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -508,7 +518,7 @@ class GrEngine {
 					GrIntChannel chan = cast(GrIntChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -529,7 +539,7 @@ class GrEngine {
 						chan.setReceiverReady();
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -541,7 +551,7 @@ class GrEngine {
 					GrFloatChannel chan = cast(GrFloatChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -562,7 +572,7 @@ class GrEngine {
 						chan.setReceiverReady();
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -574,7 +584,7 @@ class GrEngine {
 					GrStringChannel chan = cast(GrStringChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -595,7 +605,7 @@ class GrEngine {
 						chan.setReceiverReady();
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -607,7 +617,7 @@ class GrEngine {
 					GrVariantChannel chan = cast(GrVariantChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -628,7 +638,7 @@ class GrEngine {
 						chan.setReceiverReady();
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -640,7 +650,7 @@ class GrEngine {
 					GrObjectChannel chan = cast(GrObjectChannel)context.ostack[context.ostackPos];
 					if(!chan.isOwned) {
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isLocked = true;
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
@@ -659,7 +669,7 @@ class GrEngine {
 						chan.setReceiverReady();
 						context.isLocked = true;
 						if(context.isEvaluatingChannel) {
-							context.popState();
+							context.restoreState();
 							context.isEvaluatingChannel = false;
 							context.pc = context.selectPositionJump;
 						}
@@ -667,8 +677,12 @@ class GrEngine {
 							continue contextsLabel;
 					}
 					break;
-				case SelectChannel:
+				case StartSelectChannel:
 					context.pushState();
+					context.pc ++;
+					break;
+				case EndSelectChannel:
+					context.popState();
 					context.pc ++;
 					break;
 				case TryChannel:
@@ -682,7 +696,7 @@ class GrEngine {
 					if(!context.isEvaluatingChannel)
 						raise(context, "Not inside a select");
 					context.isEvaluatingChannel = false;
-					context.popState();
+					context.restoreState();
 					context.pc ++;
 					break;
 				case ShiftStack_Int:
@@ -1295,6 +1309,7 @@ class GrEngine {
                                 coroutine.pc = cast(uint)(_opcodes.length - 1);
                                 coroutine.isKilled = true;
                             }
+							_contextsToSpawn.reset();
 
                             //The VM is now panicking.
                             _isPanicking = true;

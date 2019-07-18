@@ -342,19 +342,16 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             i ++;
             currentType.mangledReturnType = grUnmangleSubFunction(mangledSignature, i);
-            i ++;
             break;
         case 't':
             i ++;
             currentType.baseType = GrBaseType.TaskType;
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
-            i ++;
             break;
         case 'c':
             i ++;
             currentType.baseType = GrBaseType.ChanType;
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
-            i ++;
             break;
         default:
             break;

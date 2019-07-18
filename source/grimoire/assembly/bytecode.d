@@ -17,12 +17,12 @@ import grimoire.core;
 /// Low level instruction for the VM
 enum GrOpcode {
     Nop, Raise, Try, Catch,
-    Kill, Yield, Task, AnonymousTask, New,
+    Kill, KillAll, Yield, Task, AnonymousTask, New,
 
     Channel_Int, Channel_Float, Channel_String, Channel_Variant, Channel_Object,
     Send_Int, Send_Float, Send_String, Send_Variant, Send_Object,
     Receive_Int, Receive_Float, Receive_String, Receive_Variant, Receive_Object,
-    SelectChannel, TryChannel, CheckChannel,
+    StartSelectChannel, EndSelectChannel, TryChannel, CheckChannel,
    
     ShiftStack_Int, ShiftStack_Float, ShiftStack_String, ShiftStack_Variant, ShiftStack_Object,
     

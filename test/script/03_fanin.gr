@@ -1,0 +1,39 @@
+func sleep(int duration) {
+    let startTime = clock();
+    loop {
+        if(clock() - startTime > duration)
+            return;
+        yield;
+    }
+}
+
+func boring(string msg) chan(string) {
+    let c = chan(string);
+    task(chan(string) c, string msg) {
+        int i = 0;
+        loop {
+            c <- (msg ~ " " ~ i);
+            i ++;
+            sleep(random(1000));
+        }
+    }(c, msg);
+    return c;
+}
+
+func fanIn(chan(string) in1, chan(string) in2) chan(string) {
+    let out = chan(string);
+    let f = task(chan(string) out, chan(string) in) {
+        loop { out <- <-in; }
+    };
+    f(out, in1);
+    f(out, in2);
+    return out;
+}
+
+main {
+    let c = fanIn(boring("Joe"), boring("Ann"));
+    loop(10) {
+        print(<- c);
+    }
+    print("You're boring; I'm leaving.");
+} 

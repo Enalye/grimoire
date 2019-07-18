@@ -10,4 +10,6 @@ module grimoire.lib.math;
 
 public {
     import grimoire.lib.math.vec2;
+    import grimoire.lib.math.misc;
+    import grimoire.lib.math.random;
 }

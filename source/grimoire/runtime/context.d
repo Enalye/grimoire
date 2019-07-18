@@ -200,9 +200,10 @@ final class GrContext {
         states ~= state;
     }
 
-    void popState() {
+    void restoreState() {
+        if(!states.length)
+            throw new Exception("Fatal error: pop context state");
         GrContextState state = states[$ - 1];
-        states.length --;
         istackPos = state.istackPos;
         fstackPos = state.fstackPos;
         sstackPos = state.sstackPos;
@@ -211,6 +212,9 @@ final class GrContext {
         stackPos = state.stackPos;
         localsPos = state.localsPos;
         callStack[stackPos] = state.stackFrame;
+    }
 
+    void popState() {
+        states.length --;
     }
 }

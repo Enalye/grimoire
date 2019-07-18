@@ -1879,8 +1879,8 @@ class GrParser {
         
         openDeferrableSection();
 		parseBlock();
-		if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
-            addKill();
+		if(currentFunction.instructions[$ - 1].opcode != GrOpcode.KillAll)
+            addKillAll();
         closeDeferrableSection();
         registerDeferBlocks();
 
@@ -2157,6 +2157,9 @@ class GrParser {
             case Kill:
                 parseKill();
                 break;
+            case KillAll:
+                parseKillAll();
+                break;
             case Yield:
                 parseYield();
                 break;
@@ -2264,6 +2267,12 @@ class GrParser {
     void parseKill() {
         if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
 		    addKill();
+        advance();                    
+    }
+
+    void parseKillAll() {
+        if(currentFunction.instructions[$ - 1].opcode != GrOpcode.KillAll)
+		    addKillAll();
         advance();                    
     }
 
@@ -2774,7 +2783,7 @@ class GrParser {
         bool hasCase, hasDefaultCase;
         uint startJump = cast(uint)currentFunction.instructions.length;
 
-        addInstruction(GrOpcode.SelectChannel);
+        addInstruction(GrOpcode.StartSelectChannel);
         while(get().type == GrLexemeType.Case) {
             if(get(1).type == GrLexemeType.LeftParenthesis) {
                 hasCase = true;
@@ -2834,6 +2843,7 @@ class GrParser {
 
         foreach(uint position; exitJumps)
 			setInstruction(GrOpcode.Jump, position, cast(int)(currentFunction.instructions.length - position), true);
+        addInstruction(GrOpcode.EndSelectChannel);
     }
 
 	void parseWhileStatement() {
@@ -3027,7 +3037,7 @@ class GrParser {
 		checkAdvance();
         if(currentFunction.name == "main" || currentFunction.isTask) {
             if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
-                addKill();
+                addKillAll();
         }
         else if(!currentFunction.outSignature.length) {
             if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
@@ -3059,6 +3069,11 @@ class GrParser {
     void addKill() {
         checkDeferStatement();
         addInstruction(GrOpcode.Kill);
+    }
+
+    void addKillAll() {
+        checkDeferStatement();
+        addInstruction(GrOpcode.KillAll);
     }
 
     uint getLeftOperatorPriority(GrLexemeType type) {
