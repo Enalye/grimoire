@@ -897,10 +897,43 @@ class GrParser {
         return GrType(GrBaseType.VoidType);
     }
 
-	void addSetInstruction(GrVariable variable, GrType valueType = GrType(GrBaseType.VoidType), bool isGettingValue = false) {
+	void addSetInstruction(GrVariable variable, GrType valueType = grVoid, bool isGettingValue = false) {
         if(variable is null) {
-            convertType(valueType, grVariant);
-			addInstruction(isGettingValue ? GrOpcode.LocalStore2_Ref : GrOpcode.LocalStore_Ref);
+            //convertType(valueType, grVariant);
+            switch(valueType.baseType) with(GrBaseType) {
+			case BoolType:
+			case IntType:
+			case FunctionType:
+			case TaskType:
+			case ChanType:
+				addInstruction(isGettingValue ? GrOpcode.RefStore2_Int : GrOpcode.RefStore_Int);
+				break;
+			case FloatType:
+				addInstruction(isGettingValue ? GrOpcode.RefStore2_Float : GrOpcode.RefStore_Float);
+				break;
+			case StringType:
+				addInstruction(isGettingValue ? GrOpcode.RefStore2_String : GrOpcode.RefStore_String);
+				break;
+			case VariantType:
+				addInstruction(isGettingValue ? GrOpcode.RefStore2_Variant : GrOpcode.RefStore_Variant);
+				break;
+			case StructType:
+				addInstruction(isGettingValue ? GrOpcode.RefStore2_Object : GrOpcode.RefStore_Object);
+				break;
+            case TupleType:
+                auto tuple = grGetTuple(variable.type.mangledType);
+                const auto nbFields = tuple.signature.length;
+                for(int i = 1; i <= nbFields; i ++) {
+                    addSetInstruction(getVariable(variable.name ~ ":" ~ tuple.fields[nbFields - i]), tuple.signature[nbFields - i], isGettingValue);
+                }
+                break;
+            case ArrayType:
+            case UserType:
+				addInstruction(isGettingValue ? GrOpcode.RefStore2_Object : GrOpcode.RefStore_Object);
+				break;
+			default:
+				logError("Invalid type", "Cannot assign to a \'" ~ to!string(variable.type) ~ "\' type");
+			}
             return;
         }
         
@@ -2992,8 +3025,9 @@ class GrParser {
 		
 		//From length to 0
 		GrType arrayType = parseSubExpression();
-		addSetInstruction(array, GrType(GrBaseType.VoidType), true);
-		addInstruction(GrOpcode.Length_Array);
+        convertType(arrayType, array.type);
+		addSetInstruction(array, grVoid, true);
+		addInstruction(GrOpcode.Length);
 		addInstruction(GrOpcode.SetupIterator);		
 		addSetInstruction(iterator);
 
@@ -3335,7 +3369,7 @@ class GrParser {
             checkAdvance();
         }
 
-        addInstruction(GrOpcode.Build_Array, arraySize);
+        addInstruction(GrOpcode.Array, arraySize);
         advance();
     }
 
@@ -3811,6 +3845,13 @@ class GrParser {
                 typeStack ~= currentType;
                 GrStruct structure = grGetStruct(get().svalue);
                 addInstruction(GrOpcode.New, cast(int)structure.signature.length);
+                checkAdvance();
+                break;
+            case ArrayType:
+                addInstruction(GrOpcode.Array, 0);
+                currentType = grArray;
+                hasValue = true;
+                typeStack ~= currentType;
                 checkAdvance();
                 break;
             case ChanType:

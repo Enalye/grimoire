@@ -14,7 +14,7 @@ private void _range(GrCall call) {
     if(max < min)
         step = -1;
 
-    GrArrayValue array = new GrArrayValue;
+    GrArray array = new GrArray;
     while(min != max) {
         array.push(min);
         min += step;

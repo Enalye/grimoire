@@ -13,12 +13,12 @@ import grimoire.compiler.primitive;
 
 import grimoire.runtime.variant;
 
-final class GrArrayValue {
+final class GrArray {
 	GrVariantValue[] data;
 
     this() {}
 
-    this(GrArrayValue ary) {
+    this(GrArray ary) {
         foreach(ref variant; ary.data) {
             data ~= variant.copy();
         }

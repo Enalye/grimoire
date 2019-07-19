@@ -154,7 +154,7 @@ class GrCall {
     alias getInt = getParameter!int;
     alias getFloat = getParameter!float;
     alias getVariant = getParameter!GrVariantValue;
-    alias getArray = getParameter!GrArrayValue;
+    alias getArray = getUserData!GrArray;
 
     T getUserData(T)(dstring parameter) {
         return cast(T)getParameter!(void*)(parameter);
@@ -216,17 +216,6 @@ class GrCall {
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.vstack[(_context.vstackPos - _vparams) + index + 1];
         }
-        else static if(is(T == GrArrayValue)) {
-            int index;
-            for(; index < _olocals.length; index ++) {
-                if(parameter == _olocals[index])
-                    break;
-            }
-            if(index == _olocals.length)
-                throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
-                    ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
-            return cast(GrArrayValue)(_context.ostack[(_context.ostackPos - _oparams) + index + 1]);
-        }
         else static if(is(T == void*)) {
             int index;
             for(; index < _olocals.length; index ++) {
@@ -245,7 +234,7 @@ class GrCall {
     alias setInt = setResult!int;
     alias setFloat = setResult!float;
     alias setVariant = setResult!GrVariantValue;
-    alias setArray = setResult!(GrArrayValue);
+    alias setArray = setUserData!GrArray;
     
     void setUserData(T)(T value) {
         setResult!(void*)(cast(void*)value);
@@ -271,10 +260,6 @@ class GrCall {
         else static if(is(T == GrVariantValue)) {
             _vresults ++;
             _context.vstack[(_context.vstackPos - _vparams) + _vresults] = value;
-        }
-        else static if(is(T == GrArrayValue)) {
-            _oresults ++;
-            _context.ostack[(_context.ostackPos - _oparams) + _oresults] = cast(void*)value;
         }
         else static if(is(T == void*)) {
             _oresults ++;

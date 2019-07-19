@@ -81,7 +81,7 @@ private void typecast_v2b(GrCall call) {
 
 //As array
 private void typecast_s2n(GrCall call) {
-    GrArrayValue array;
+    GrArray array = new GrArray;
     foreach(c; call.getString("value")) {
         GrVariantValue variant;
         variant.setString(to!dstring(c));

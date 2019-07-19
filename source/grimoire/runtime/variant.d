@@ -28,7 +28,8 @@ struct GrVariantValue {
     enum GrVariantValueType {
         UndefinedType,
         FunctionType, TaskType,
-        BoolType, IntType, FloatType, StringType, ArrayType, ReferenceType
+        BoolType, IntType, FloatType, StringType, ArrayType,
+        ReferenceType
     }
 
     /// Variant type.
@@ -73,7 +74,7 @@ struct GrVariantValue {
     }
 
     /// Sets the value to array.
-    void setArray(GrArrayValue value) {
+    void setArray(GrArray value) {
         type = GrVariantValueType.ArrayType;
         _ovalue = cast(void*)value;
     }
@@ -83,7 +84,7 @@ struct GrVariantValue {
     void setArrayIndex(GrContext context, int index) {
         switch(type) with(GrVariantValueType) {
         case ArrayType:
-            GrArrayValue ary = cast(GrArrayValue)_ovalue;
+            GrArray ary = cast(GrArray)_ovalue;
             if(index >= ary.data.length) {
                 raise(context, "Array overflow");
                 return;
@@ -97,7 +98,7 @@ struct GrVariantValue {
                 raise(context, "Invalid reference 2");
                 return;
             }
-            GrArrayValue ary = cast(GrArrayValue)((cast(GrVariantValue*)_ovalue)._ovalue);
+            GrArray ary = cast(GrArray)((cast(GrVariantValue*)_ovalue)._ovalue);
             if(index >= ary.data.length) {
                 raise(context, "Array overflow");
                 return;
@@ -119,18 +120,40 @@ struct GrVariantValue {
         //and will increment the pc, so we prevent that.
         context.pc --;
     }
-    
+
     /// The value is now a reference for another value.
     void setRef(GrContext context, GrVariantValue* value) {
         type = GrVariantValueType.ReferenceType;
         _ovalue = cast(void*)value;
     }
 
+    alias storeIntRef = storeRef!int;
+    alias storeFloatRef = storeRef!float;
+    alias storeStringRef = storeRef!dstring;
+    alias storeVariantRef = storeRef!GrVariantValue;
+    alias storeObjectRef = storeRef!(void*);
+
     /// Modify the value referenced
-    void storeRef(GrContext context, ref GrVariantValue value) {
-        if(type != GrVariantValueType.ReferenceType)
-            context.engine.raise(context, "Invalid reference");
-        *(cast(GrVariantValue*)_ovalue) = value;
+    private void storeRef(T)(GrContext context, ref T value) {
+        if(type != GrVariantValueType.ReferenceType) {
+            raise(context, "Invalid reference");
+            return;
+        }
+        static if(is(T == int)) {
+            (cast(GrVariantValue*)_ovalue).setInt(value);
+        }
+        else static if(is(T == float)) {
+            (cast(GrVariantValue*)_ovalue).setFloat(value);
+        }
+        else static if(is(T == dstring)) {
+            (cast(GrVariantValue*)_ovalue).setString(value);
+        }
+        else static if(is(T == GrVariantValue)) {
+            *(cast(GrVariantValue*)_ovalue) = value;
+        }
+        else static if(is(T == void*)) {
+            //(cast(GrVariantValue*)_ovalue).setObject(value);
+        }
     }
 
     /// Deep copy, used with the copy^ operator
@@ -139,7 +162,7 @@ struct GrVariantValue {
             return (cast(GrVariantValue*)_ovalue).copy();
         else if(type == GrVariantValueType.ArrayType) {
             GrVariantValue variant;
-            variant.setArray(new GrArrayValue(cast(GrArrayValue)_ovalue));
+            variant.setArray(new GrArray(cast(GrArray)_ovalue));
             return variant;
         }
         else
@@ -217,7 +240,7 @@ struct GrVariantValue {
         case StringType:
             return _svalue;
         case ArrayType:
-            return (cast(GrArrayValue)_ovalue).getString(call);
+            return (cast(GrArray)_ovalue).getString(call);
         case ReferenceType:
             return (cast(GrVariantValue*)_ovalue).getString(call);
         default:
@@ -227,10 +250,10 @@ struct GrVariantValue {
     }
 
     /// Converts and returns an array value.
-    GrArrayValue getArray(GrCall call) {
+    GrArray getArray(GrCall call) {
         switch(type) with(GrVariantValueType) {
         case StringType:
-            GrArrayValue array;
+            GrArray array;
             foreach(character; _svalue) {
                 GrVariantValue nElement;
                 nElement.setString(to!dstring(character));
@@ -238,12 +261,12 @@ struct GrVariantValue {
             }
             return array;
         case ArrayType:
-            return cast(GrArrayValue)_ovalue;
+            return cast(GrArray)_ovalue;
         case ReferenceType:
             return (cast(GrVariantValue*)_ovalue).getArray(call);
         default:
             raiseConversionError(call, GrVariantValueType.ArrayType);
-            return new GrArrayValue;
+            return new GrArray;
         }
     }
 
@@ -348,7 +371,7 @@ struct GrVariantValue {
             prettyType = "array";
             break;
         case ReferenceType:
-            prettyType = "refindex";
+            prettyType = "ref";
             break;
         }
         return prettyType;
@@ -380,7 +403,7 @@ struct GrVariantValue {
             prettyType = "array";
             break;
         case ReferenceType:
-            prettyType = "refindex";
+            prettyType = "ref";
             break;
         }
         return prettyType;
