@@ -53,7 +53,7 @@ private string[] instructions = [
     "lt.i", "lt.f", "lt.v",
 
     "and.i", "and.v", "or.i", "or.v", "not.i", "not.v",
-    "cat.s", "cat.v",
+    "cat.s", "cat.v", "cat.n",
     "add.i", "add.f", "add.v",
     "sub.i", "sub.f", "sub.v",
     "mul.i", "mul.f", "mul.v",
@@ -70,9 +70,12 @@ private string[] instructions = [
     "jmp", "jmp_eq", "jmp_neq",
 
     "array", "len", "index.n", "index.v",
-    "copy.n", "copy.v"
+    "copy.n", "copy.v",
+    "append.i", "append.f", "append.s", "append.v", "append.o",
+    "prepend.i", "prepend.f", "prepend.s", "prepend.v", "prepend.o"
 ];
 
+/// Dump the bytecode's instruction list in a pretty format.
 string grDump(GrBytecode bytecode) {
     /*writeln("\n----- VM DUMP ------");
     writeln("iconsts: ", bytecode.iconsts);
