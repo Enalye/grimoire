@@ -1,4 +1,4 @@
-##### [Next: Creating a function](function.md)
+##### [Next: Creating a function](func.md)
 ##### [Prev: What's a variable ?](variable.md)
 ##### [Main Page](index.md)
 
@@ -157,6 +157,6 @@ The variable type must be convertible from the array's values, or it will raise 
 
 # Navigation
 
-##### [Next: Creating a function](function.md)
+##### [Next: Creating a function](func.md)
 ##### [Prev: What's a variable ?](variable.md)
 ##### [Main Page](index.md)

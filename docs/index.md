@@ -12,7 +12,7 @@ You can easily define custom functions and types from D.
 ##### [Control flow](control.md)
 
 ### Functions:
-##### [Creating a function](function.md)
+##### [Creating a function](func.md)
 ##### [Task, Grimoire's coroutine](task.md)
 ##### [Anonymous function/task](anon.md)
 ##### [Event function, or how to call a function from D](event.md)
