@@ -119,7 +119,7 @@ main {
 	do { //This is garanteed to run at least once, even if the condition is not met.
 		printl(i); //Will print "11"
 	}
-	while(i < 10);
+	while(i < 10)
 }
 ```
 
