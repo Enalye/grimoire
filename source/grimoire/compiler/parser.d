@@ -1930,10 +1930,8 @@ class GrParser {
                 outSignature ~= type;
 
             lex = get();
-            if(lex.type == GrLexemeType.LeftCurlyBrace || lex.type == GrLexemeType.Identifier)
+            if(lex.type != GrLexemeType.Comma)
                 break;
-            else if(lex.type != GrLexemeType.Comma)
-                logError("Missing symbol", "Either a \',\' or a \'{\' is expected");
             checkAdvance();
 		}
 		return outSignature;
