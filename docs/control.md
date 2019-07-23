@@ -1,6 +1,6 @@
-## [Next: Creating a function](function.md)
-## [Prev: What's a variable ?](variable.md)
-## [Main Page](index.md)
+##### [Next: Creating a function](function.md)
+##### [Prev: What's a variable ?](variable.md)
+##### [Main Page](index.md)
 
 # Control flow
 
@@ -157,6 +157,6 @@ The variable type must be convertible from the array's values, or it will raise 
 
 # Navigation
 
-## [Next: Creating a function](function.md)
-## [Prev: What's a variable ?](variable.md)
-## [Main Page](index.md)
+##### [Next: Creating a function](function.md)
+##### [Prev: What's a variable ?](variable.md)
+##### [Main Page](index.md)

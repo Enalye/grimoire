@@ -1,6 +1,6 @@
-## [Next: Event function, or how to call a function from D](event.md)
-## [Prev: Task, Grimoire's coroutine](task.md)
-## [Main Page](index.md)
+##### [Next: Event function, or how to call a function from D](event.md)
+##### [Prev: Task, Grimoire's coroutine](task.md)
+##### [Main Page](index.md)
 
 # Anonymous functions/tasks
 
@@ -54,6 +54,6 @@ main {
 
 # Navigation
 
-## [Next: Event function, or how to call a function from D](event.md)
-## [Prev: Task, Grimoire's coroutine](task.md)
-## [Main Page](index.md)
+##### [Next: Event function, or how to call a function from D](event.md)
+##### [Prev: Task, Grimoire's coroutine](task.md)
+##### [Main Page](index.md)

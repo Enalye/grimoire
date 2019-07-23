@@ -1,6 +1,6 @@
-## [Next: What's a variable ?](variable.md)
-## [Prev: Basic syntax](syntax.md)
-## [Main Page](index.md)
+##### [Next: What's a variable ?](variable.md)
+##### [Prev: Basic syntax](syntax.md)
+##### [Main Page](index.md)
 
 # First Program
 
@@ -21,6 +21,6 @@ Then we pass the "Hello World!" string to the **print** primitive and here is wh
 
 # Navigation
 
-## [Next: What's a variable ?](variable.md)
-## [Prev: Basic syntax](syntax.md)
-## [Main Page](index.md)
+##### [Next: What's a variable ?](variable.md)
+##### [Prev: Basic syntax](syntax.md)
+##### [Main Page](index.md)

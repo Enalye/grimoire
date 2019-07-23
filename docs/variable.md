@@ -1,6 +1,6 @@
-## [Next: Control flow](control.md)
-## [Prev: First program](first_program.md)
-## [Main Page](index.md)
+##### [Next: Control flow](control.md)
+##### [Prev: First program](first_program.md)
+##### [Main Page](index.md)
 
 # Variables
 
@@ -105,6 +105,6 @@ You can explicitly cast a value to any type with the keyword `as`, it must be fo
 
 # Navigation
 
-## [Next: Control flow](control.md)
-## [Prev: First program](first_program.md)
-## [Main Page](index.md)
+##### [Next: Control flow](control.md)
+##### [Prev: First program](first_program.md)
+##### [Main Page](index.md)

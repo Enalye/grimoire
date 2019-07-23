@@ -1,5 +1,5 @@
-## [Prev: Deferring](defer.md)
-## [Main Page](index.md)
+##### [Prev: Deferring](defer.md)
+##### [Main Page](index.md)
 
 # Custom Primitives
 
@@ -55,5 +55,5 @@ setXXX methods returns a value on the stack, beware of the order in which you ca
 
 # Navigation
 
-## [Prev: Deferring](defer.md)
-## [Main Page](index.md)
+##### [Prev: Deferring](defer.md)
+##### [Main Page](index.md)

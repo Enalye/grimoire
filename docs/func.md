@@ -1,6 +1,6 @@
-## [Next: Task, Grimoire's coroutine](task.md)
-## [Prev: Control flow](control.md)
-## [Main Page](index.md)
+##### [Next: Task, Grimoire's coroutine](task.md)
+##### [Prev: Control flow](control.md)
+##### [Main Page](index.md)
 
 # Function
 
@@ -31,6 +31,6 @@ func foo(int n) {
 
 # Navigation
 
-## [Next: Task, Grimoire's coroutine](task.md)
-## [Prev: Control flow](control.md)
-## [Main Page](index.md)
+##### [Next: Task, Grimoire's coroutine](task.md)
+##### [Prev: Control flow](control.md)
+##### [Main Page](index.md)

@@ -1,6 +1,6 @@
-## [Next: Anonymous function/task](anon.md)
-## [Prev: Creating a function](function.md)
-## [Main Page](index.md)
+##### [Next: Anonymous function/task](anon.md)
+##### [Prev: Creating a function](function.md)
+##### [Main Page](index.md)
 
 # Task
 
@@ -38,6 +38,6 @@ Note: The main is a special case of a task.
 
 # Navigation
 
-## [Next: Anonymous function/task](anon.md)
-## [Prev: Creating a function](function.md)
-## [Main Page](index.md)
+##### [Next: Anonymous function/task](anon.md)
+##### [Prev: Creating a function](function.md)
+##### [Main Page](index.md)

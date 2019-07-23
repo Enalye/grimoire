@@ -1,5 +1,5 @@
-## [Next: First program](first_program.md)
-## [Main Page](index.md)
+##### [Next: First program](first_program.md)
+##### [Main Page](index.md)
 
 # Syntax
 
@@ -12,5 +12,5 @@
 
 # Navigation
 
-## [Next: First program](first_program.md)
-## [Main Page](index.md)
+##### [Next: First program](first_program.md)
+##### [Main Page](index.md)
