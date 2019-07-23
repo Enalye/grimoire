@@ -571,6 +571,19 @@ class GrParser {
             GrType chanType = grUnmangle(leftType.mangledType);
             convertType(rightType, chanType);
             resultType = addInternalOperator(lexType, leftType);
+            if(resultType.baseType == GrBaseType.VoidType) {
+                resultType = addCustomBinaryOperator(lexType, leftType, rightType);
+            }
+        }
+        else if(lexType == GrLexemeType.Concatenate && leftType.baseType == GrBaseType.ArrayType && leftType != rightType) {
+            convertType(rightType, grVariant);
+            addInstruction(GrOpcode.Append);
+            resultType = leftType;
+        }
+        else if(lexType == GrLexemeType.Concatenate && rightType.baseType == GrBaseType.ArrayType && leftType != rightType) {
+            convertType(leftType, grVariant);
+            addInstruction(GrOpcode.Prepend);
+            resultType = rightType;
         }
         else if(leftType != rightType) {
             //Check custom operator
@@ -829,6 +842,15 @@ class GrParser {
 				break;
 			}
 			break;
+        case ArrayType:
+            switch(lexType) with(GrLexemeType) {
+            case Concatenate:
+				addInstruction(GrOpcode.Concatenate_Array);
+				return GrType(GrBaseType.ArrayType);
+            default:
+                break;
+            }
+            break;
         case ChanType:
             switch(lexType) with(GrLexemeType) {
             case Send:

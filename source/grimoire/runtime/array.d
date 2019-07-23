@@ -70,9 +70,17 @@ final class GrArray {
         return id;
     }
 
-    int push(GrVariantValue value) {
+    int push(ref GrVariantValue value) {
         auto id = cast(int)data.length;
         data ~= value;
         return id;
+    }
+
+    void append(ref GrVariantValue value) {
+        data ~= value;
+    }
+
+    void prepend(ref GrVariantValue value) {
+        data = value ~ data;
     }
 }

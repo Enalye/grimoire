@@ -1184,7 +1184,12 @@ class GrEngine {
 					break;
 				case Concatenate_Variant:
 					context.vstackPos --;
-					context.vstack[context.vstackPos] ~= context.vstack[context.vstackPos + 1];
+					context.vstack[context.vstackPos].concatenate(context, context.vstack[context.vstackPos + 1]);
+					context.pc ++;
+					break;
+                case Concatenate_Array:
+					context.ostackPos --;
+					(cast(GrArray)context.ostack[context.ostackPos]).data ~= (cast(GrArray)context.ostack[context.ostackPos + 1]).data;
 					context.pc ++;
 					break;
 				case Substract_Int:
@@ -1468,6 +1473,16 @@ class GrEngine {
 					context.vstack[context.vstackPos] = context.vstack[context.vstackPos].copy();
 					context.pc ++;
 					break;
+                case Append:
+                    (cast(GrArray)context.ostack[context.ostackPos]).append(context.vstack[context.vstackPos]);
+                    context.vstackPos --;
+                    context.pc ++;
+                    break;
+                case Prepend:
+                    (cast(GrArray)context.ostack[context.ostackPos]).prepend(context.vstack[context.vstackPos]);
+                    context.vstackPos --;
+                    context.pc ++;
+                    break;
 				default:
 					throw new Exception("Invalid instruction at (" ~ to!string(context.pc) ~ "): " ~ to!string(grGetInstructionOpcode(opcode)));
                 }

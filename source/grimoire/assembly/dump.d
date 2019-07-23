@@ -69,10 +69,10 @@ private string[] instructions = [
     "ret", "unwind", "defer",
     "jmp", "jmp_eq", "jmp_neq",
 
-    "array", "len", "index.n", "index.v",
+    "array", "len",
+    "index.n", "index.v",
     "copy.n", "copy.v",
-    "append.i", "append.f", "append.s", "append.v", "append.o",
-    "prepend.i", "prepend.f", "prepend.s", "prepend.v", "prepend.o"
+    "append", "prepend",
 ];
 
 /// Dump the bytecode's instruction list in a pretty format.

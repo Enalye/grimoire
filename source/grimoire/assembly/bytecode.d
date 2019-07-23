@@ -70,10 +70,10 @@ enum GrOpcode {
     Return, Unwind, Defer,
     Jump, JumpEqual, JumpNotEqual,
 
-    Array, Length, Index_Array, Index_Variant,
+    Array, Length,
+    Index_Array, Index_Variant,
     Copy_Array, Copy_Variant,
-    Append_Int, Append_Float, Append_String, Append_Variant, Append_Object,
-    Prepend_Int, Prepend_Float, Prepend_String, Prepend_Variant, Prepend_Object,
+    Append, Prepend
 
 }
 

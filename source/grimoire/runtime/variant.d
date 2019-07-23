@@ -453,28 +453,78 @@ struct GrVariantValue {
                 break;
             }
         }
-        else static if(op == "~") {
-            switch(type) with(GrVariantValueType) {
-            case BoolType:
-            case IntType:
-            case FloatType:
-                //error
+        return this;
+    }
+
+    void concatenate(GrContext context, ref GrVariantValue value) {
+        switch(type) with(GrVariantValueType) {
+        case BoolType:
+        case FunctionType:
+        case TaskType:
+        case IntType:
+            switch(value.type) with(GrVariantValueType) {
+            case ArrayType:
+                (cast(GrArray)value._ovalue).prepend(this);
+                setArray(cast(GrArray)value._ovalue);
                 break;
             case StringType:
-                switch(v.type) with(GrVariantValueType) {
-                case StringType:
-                    mixin("_svalue = _svalue " ~ op ~ " v._svalue;");
-                    break;
-                default:
-                    break;
-                }
+                _svalue = to!dstring(_ivalue) ~ value._svalue;
+                type = GrVariantValueType.StringType;
                 break;
             default:
-                //error
+                raise(context, "Concatenation error");
                 break;
             }
+            break;
+        case FloatType:
+            switch(value.type) with(GrVariantValueType) {
+            case ArrayType:
+                (cast(GrArray)value._ovalue).prepend(this);
+                setArray(cast(GrArray)value._ovalue);
+                break;
+            case StringType:
+                _svalue = to!dstring(_rvalue) ~ value._svalue;
+                type = GrVariantValueType.StringType;
+                break;
+            default:
+                raise(context, "Concatenation error");
+                break;
+            }
+            break;       
+        case StringType:
+            switch(value.type) with(GrVariantValueType) {
+            case ArrayType:
+                (cast(GrArray)value._ovalue).prepend(this);
+                setArray(cast(GrArray)value._ovalue);
+                break;
+            case StringType:
+                _svalue = _svalue ~ value._svalue;
+                break;
+            default:
+                break;
+            }
+            break;
+        case ArrayType:
+            switch(value.type) with(GrVariantValueType) {
+            case ArrayType:
+                (cast(GrArray)_ovalue).data ~= (cast(GrArray)value._ovalue).data;
+                break;
+            case BoolType:
+            case FunctionType:
+            case TaskType:
+            case IntType:
+            case FloatType:
+            case StringType:
+                (cast(GrArray)_ovalue).append(value);
+                break;
+            default:
+                break;
+            }
+            break;
+        default:
+            raise(context, "Concatenation error");
+            break;
         }
-        return this;
     }
 
     /// Increment and Decrement.
