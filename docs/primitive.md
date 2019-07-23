@@ -1,5 +1,7 @@
-##### [Prev: Deferring](defer.md)
-##### [Main Page](index.md)
+* [Prev: Deferring](defer.md)
+* [Main Page](index.md)
+
+* * *
 
 # Custom Primitives
 
@@ -53,7 +55,7 @@ getXXX methods fetch the parameters, they have the same name/type as declared, e
 setXXX methods returns a value on the stack, beware of the order in which you call setXXX functions.
 
 
-# Navigation
+* * *
 
-##### [Prev: Deferring](defer.md)
-##### [Main Page](index.md)
+* [Prev: Deferring](defer.md)
+* [Main Page](index.md)

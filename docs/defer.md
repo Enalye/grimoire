@@ -1,6 +1,8 @@
-##### [Next: Custom Primitives](primitive.md)
-##### [Prev: Error Handling](error.md)
-##### [Main Page](index.md)
+* [Next: Custom Primitives](primitive.md)
+* [Prev: Error Handling](error.md)
+* [Main Page](index.md)
+
+* * *
 
 # Deferred statements
 
@@ -17,8 +19,8 @@ main {
 Here, the prompt will show "Before defer", then "Inside defer !", even if we raise an error before the end of the scope.
 It's useful for handling resources that need to be freed.
 
-# Navigation
+* * *
 
-##### [Next: Custom Primitives](primitive.md)
-##### [Prev: Error Handling](error.md)
-##### [Main Page](index.md)
+* [Next: Custom Primitives](primitive.md)
+* [Prev: Error Handling](error.md)
+* [Main Page](index.md)

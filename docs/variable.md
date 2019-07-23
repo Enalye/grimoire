@@ -1,6 +1,8 @@
-##### [Next: Control flow](control.md)
-##### [Prev: First program](first_program.md)
-##### [Main Page](index.md)
+* [Next: Control flow](control.md)
+* [Prev: First program](first_program.md)
+* [Main Page](index.md)
+
+* * *
 
 # Variables
 
@@ -103,8 +105,8 @@ Here:
 You can explicitly cast a value to any type with the keyword `as`, it must be followed by the desired type like this: `float a = 5 as float;`.
 
 
-# Navigation
+* * *
 
-##### [Next: Control flow](control.md)
-##### [Prev: First program](first_program.md)
-##### [Main Page](index.md)
+* [Next: Control flow](control.md)
+* [Prev: First program](first_program.md)
+* [Main Page](index.md)

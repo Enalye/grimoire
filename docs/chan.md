@@ -1,6 +1,8 @@
-##### [Next: Error Handling](error.md)
-##### [Prev: Structure](struct.md)
-##### [Main Page](index.md)
+* [Next: Error Handling](error.md)
+* [Prev: Structure](struct.md)
+* [Main Page](index.md)
+
+* * *
 
 # Channels
 
@@ -47,8 +49,8 @@ case(c <- "Hey") { printl("sent value 'Hey'"); }
 ```
 The default case is optional, but without one, the select statement is a blocking operation, else the default case will execute if nothing is ready.
 
-# Navigation
+* * *
 
-##### [Next: Error Handling](error.md)
-##### [Prev: Structure](struct.md)
-##### [Main Page](index.md)
+* [Next: Error Handling](error.md)
+* [Prev: Structure](struct.md)
+* [Main Page](index.md)

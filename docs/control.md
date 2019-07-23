@@ -1,6 +1,8 @@
-##### [Next: Creating a function](func.md)
-##### [Prev: What's a variable ?](variable.md)
-##### [Main Page](index.md)
+* [Next: Creating a function](func.md)
+* [Prev: What's a variable ?](variable.md)
+* [Main Page](index.md)
+
+* * *
 
 # Control flow
 
@@ -155,8 +157,8 @@ If no type is specified, or declared as let, the variable will be automatically 
 The variable type must be convertible from the array's values, or it will raise a runtime error.
 
 
-# Navigation
+* * *
 
-##### [Next: Creating a function](func.md)
-##### [Prev: What's a variable ?](variable.md)
-##### [Main Page](index.md)
+* [Next: Creating a function](func.md)
+* [Prev: What's a variable ?](variable.md)
+* [Main Page](index.md)

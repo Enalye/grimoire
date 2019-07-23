@@ -1,6 +1,8 @@
-##### [Next: Tuple](tuple.md)
-##### [Prev: Event function, or how to call a function from D](event.md)
-##### [Main Page](index.md)
+* [Next: Tuple](tuple.md)
+* [Prev: Event function, or how to call a function from D](event.md)
+* [Main Page](index.md)
+
+* * *
 
 # Array
 
@@ -52,8 +54,8 @@ let a = 1 ~ [2, 3, 4] ~ [5, 6] ~ 7; //a is now [1, 2, 3, 4, 5, 6, 7]
 ```
 
 
-# Navigation
+* * *
 
-##### [Next: Tuple](tuple.md)
-##### [Prev: Event function, or how to call a function from D](event.md)
-##### [Main Page](index.md)
+* [Next: Tuple](tuple.md)
+* [Prev: Event function, or how to call a function from D](event.md)
+* [Main Page](index.md)

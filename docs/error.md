@@ -1,6 +1,8 @@
-##### [Next: Deferring](defer.md)
-##### [Prev: Channels](chan.md)
-##### [Main Page](index.md)
+* [Next: Deferring](defer.md)
+* [Prev: Channels](chan.md)
+* [Main Page](index.md)
+
+* * *
 
 # Error Handling
 
@@ -26,8 +28,8 @@ main {
 And everything is fine.
 
 
-# Navigation
+* * *
 
-##### [Next: Deferring](defer.md)
-##### [Prev: Channels](chan.md)
-##### [Main Page](index.md)
+* [Next: Deferring](defer.md)
+* [Prev: Channels](chan.md)
+* [Main Page](index.md)
