@@ -4,7 +4,14 @@
 
 * * *
 
-To do later.
+# Structure -- TO DO LATER
+
+Structures are types 
+```cs
+struct MyStruct {
+
+}
+```
 
 * * *
 
