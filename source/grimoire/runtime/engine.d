@@ -199,6 +199,14 @@ class GrEngine {
         }
     }
 
+    private void killAll() {
+        foreach(coroutine; _contexts) {
+            coroutine.pc = cast(uint)(_opcodes.length - 1);
+            coroutine.isKilled = true;
+        }
+        _contextsToSpawn.reset();
+    }
+
     /// Run the vm until all the contexts are finished or in yield.
 	void process() {
 		if(_contextsToSpawn.length) {
@@ -245,11 +253,7 @@ class GrEngine {
                     }
                     else {
                         //Kill the others.
-                        foreach(coroutine; _contexts) {
-                            coroutine.pc = cast(uint)(_opcodes.length - 1);
-                            coroutine.isKilled = true;
-                        }
-						_contextsToSpawn.reset();
+                        killAll();
 
                         //The VM is now panicking.
                         _isPanicking = true;
@@ -308,18 +312,13 @@ class GrEngine {
                         context.isKilled = true;
                     }
                     else {
-                        //No need to flag if the call stac is empty without any deferred statement.
+                        //No need to flag if the call stack is empty without any deferred statement.
                         _contexts.markInternalForRemoval(index);
 					    continue contextsLabel;
                     }
 					break;
 				case KillAll:
-					//Kill the others.
-					foreach(coroutine; _contexts) {
-						coroutine.pc = cast(uint)(_opcodes.length - 1);
-						coroutine.isKilled = true;
-					}
-					_contextsToSpawn.reset();
+					killAll();
 					continue contextsLabel;
 				case Yield:
 					context.pc ++;
@@ -1297,7 +1296,7 @@ class GrEngine {
 				case Return:
                     //If another task was killed by an exception,
                     //we might end up there if the task has just been spawned.
-                    if(!context.stackPos && context.isKilled) {
+                    if(context.stackPos < 0 && context.isKilled) {
                         _contexts.markInternalForRemoval(index);
 					    continue contextsLabel;
                     }
@@ -1317,7 +1316,7 @@ class GrEngine {
                 case Unwind:
                     //If another task was killed by an exception,
                     //we might end up there if the task has just been spawned.
-                    if(!context.stackPos) {
+                    if(context.stackPos < 0) {
                         _contexts.markInternalForRemoval(index);
 					    continue contextsLabel;
                     }
