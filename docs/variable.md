@@ -1,3 +1,7 @@
+## [Next: Control flow](control.md)
+## [Prev: First program](first_program.md)
+## [Main Page](index.md)
+
 # Variables
 
 Variable can store a value that can be used later.
@@ -93,3 +97,14 @@ Here:
 * *b = 2.3* and is of type **float**,
 * *c = "Hi!"* and is of type **string**,
 * *d = "Hi!"* and is of type **string**.
+
+### Type casting
+
+You can explicitly cast a value to any type with the keyword `as`, it must be followed by the desired type like this: `float a = 5 as float;`.
+
+
+# Navigation
+
+## [Next: Control flow](control.md)
+## [Prev: First program](first_program.md)
+## [Main Page](index.md)
