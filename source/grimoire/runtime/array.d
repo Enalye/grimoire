@@ -14,7 +14,7 @@ import grimoire.compiler.primitive;
 import grimoire.runtime.variant;
 
 final class GrArray {
-	GrVariantValue[] data;
+	GrVariant[] data;
 
     this() {}
 
@@ -27,7 +27,7 @@ final class GrArray {
 	dstring getString(GrCall call) {
 		dstring result = "["d;
         int index;
-		foreach(GrVariantValue value; data) {
+		foreach(GrVariant value; data) {
 			result ~= value.getString(call);
 
 			if((index + 1) < data.length)
@@ -42,12 +42,12 @@ final class GrArray {
         return cast(int)data.length;
     }
 
-    GrVariantValue getAt(int index) {
+    GrVariant getAt(int index) {
         return data[index];
     }
 
     int push(int ivalue) {
-        GrVariantValue value;
+        GrVariant value;
         value.setInt(ivalue);
         auto id = cast(int)data.length;
         data ~= value;
@@ -55,7 +55,7 @@ final class GrArray {
     }
 
     int push(float fvalue) {
-        GrVariantValue value;
+        GrVariant value;
         value.setFloat(fvalue);
         auto id = cast(int)data.length;
         data ~= value;
@@ -63,24 +63,24 @@ final class GrArray {
     }
 
     int push(dstring svalue) {
-        GrVariantValue value;
+        GrVariant value;
         value.setString(svalue);
         auto id = cast(int)data.length;
         data ~= value;
         return id;
     }
 
-    int push(ref GrVariantValue value) {
+    int push(ref GrVariant value) {
         auto id = cast(int)data.length;
         data ~= value;
         return id;
     }
 
-    void append(ref GrVariantValue value) {
+    void append(ref GrVariant value) {
         data ~= value;
     }
 
-    void prepend(ref GrVariantValue value) {
+    void prepend(ref GrVariant value) {
         data = value ~ data;
     }
 }

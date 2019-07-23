@@ -43,8 +43,8 @@ class GrEngine {
         float* _fglobals;
         /// Global string variables.
         dstring* _sglobals;
-        GrVariantValue[]* _nglobals;
-        GrVariantValue* _vglobals;
+        GrVariant[]* _nglobals;
+        GrVariant* _vglobals;
         void** _oglobals;
 
         /// Global integral stack.
@@ -54,7 +54,7 @@ class GrEngine {
         /// Global string stack.
         dstring[] _sglobalStack;
         /// Global dynamic value stack.
-        GrVariantValue[] _vglobalStack;
+        GrVariant[] _vglobalStack;
         /// Global object stack.
         void*[] _oglobalStack;
 
@@ -118,8 +118,8 @@ class GrEngine {
         _iglobals = (new int[_globalsLimit]).ptr;
         _fglobals = (new float[_globalsLimit]).ptr;
         _sglobals = (new dstring[_globalsLimit]).ptr;
-        _nglobals = (new GrVariantValue[][_globalsLimit]).ptr;
-        _vglobals = (new GrVariantValue[_globalsLimit]).ptr;
+        _nglobals = (new GrVariant[][_globalsLimit]).ptr;
+        _vglobals = (new GrVariant[_globalsLimit]).ptr;
         _oglobals = (new void*[_globalsLimit]).ptr;
     }
 

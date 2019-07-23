@@ -83,7 +83,7 @@ private void typecast_v2b(GrCall call) {
 private void typecast_s2n(GrCall call) {
     GrArray array = new GrArray;
     foreach(c; call.getString("value")) {
-        GrVariantValue variant;
+        GrVariant variant;
         variant.setString(to!dstring(c));
         array.data ~= variant;
     }
@@ -109,53 +109,53 @@ private void typecast_v2s(GrCall call) {
 
 //As dynamic value
 private void typecast_b2v(GrCall call) {
-    GrVariantValue dyn;
+    GrVariant dyn;
     dyn.setBool(call.getBool("value"));
 	call.setVariant(dyn);
 }
 
 private void typecast_i2v(GrCall call) {
-    GrVariantValue dyn;
+    GrVariant dyn;
     dyn.setInt(call.getInt("value"));
 	call.setVariant(dyn);
 }
 
 private void typecast_r2v(GrCall call) {
-    GrVariantValue dyn;
+    GrVariant dyn;
     dyn.setFloat(call.getFloat("value"));
 	call.setVariant(dyn);
 }
 
 private void typecast_s2v(GrCall call) {
-    GrVariantValue dyn;
+    GrVariant dyn;
     dyn.setString(call.getString("value"));
 	call.setVariant(dyn);
 }
 
 private void typecast_n2v(GrCall call) {
-    GrVariantValue dyn;
+    GrVariant dyn;
     dyn.setArray(call.getArray("value"));
 	call.setVariant(dyn);
 }
 
 private void typecast_f2v(GrCall call) {
-    GrVariantValue dyn;
+    GrVariant dyn;
     dyn.setFunction(call.getInt("value"), call.meta);
 	call.setVariant(dyn);
 }
 
 private void typecast_v2f(GrCall call) {
-    GrVariantValue dyn = call.getVariant("value");
+    GrVariant dyn = call.getVariant("value");
 	call.setInt(dyn.getFunction(call));
 }
 
 private void typecast_t2v(GrCall call) {
-    GrVariantValue dyn;
+    GrVariant dyn;
     dyn.setString(call.meta);
 	call.setVariant(dyn);
 }
 
 private void typecast_v2t(GrCall call) {
-    GrVariantValue dyn = call.getVariant("value");
+    GrVariant dyn = call.getVariant("value");
 	call.setInt(dyn.getTask(call));
 }

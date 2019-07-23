@@ -5,7 +5,7 @@ import grimoire.runtime.variant;
 alias GrIntChannel = GrChannel!int;
 alias GrFloatChannel = GrChannel!float;
 alias GrStringChannel = GrChannel!dstring;
-alias GrVariantChannel = GrChannel!GrVariantValue;
+alias GrVariantChannel = GrChannel!GrVariant;
 alias GrObjectChannel = GrChannel!(void*);
 
 /**

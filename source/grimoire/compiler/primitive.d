@@ -153,7 +153,7 @@ class GrCall {
     alias getBool = getParameter!bool;
     alias getInt = getParameter!int;
     alias getFloat = getParameter!float;
-    alias getVariant = getParameter!GrVariantValue;
+    alias getVariant = getParameter!GrVariant;
     alias getArray = getUserData!GrArray;
 
     T getUserData(T)(dstring parameter) {
@@ -205,7 +205,7 @@ class GrCall {
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.sstack[(_context.sstackPos - _sparams) + index + 1];
         }
-        else static if(is(T == GrVariantValue)) {
+        else static if(is(T == GrVariant)) {
             int index;
             for(; index < _vlocals.length; index ++) {
                 if(parameter == _vlocals[index])
@@ -233,7 +233,7 @@ class GrCall {
     alias setBool = setResult!bool;
     alias setInt = setResult!int;
     alias setFloat = setResult!float;
-    alias setVariant = setResult!GrVariantValue;
+    alias setVariant = setResult!GrVariant;
     alias setArray = setUserData!GrArray;
     
     void setUserData(T)(T value) {
@@ -257,7 +257,7 @@ class GrCall {
             _sresults ++;
             _context.sstack[(_context.sstackPos - _sparams) + _sresults] = value;
         }
-        else static if(is(T == GrVariantValue)) {
+        else static if(is(T == GrVariant)) {
             _vresults ++;
             _context.vstack[(_context.vstackPos - _vparams) + _vresults] = value;
         }

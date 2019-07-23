@@ -57,7 +57,7 @@ final class GrContext {
     int[] ilocals;
     float[] flocals;
     dstring[] slocals;
-    GrVariantValue[] vlocals;
+    GrVariant[] vlocals;
     void*[] olocals;
 
     /// Callstack
@@ -69,7 +69,7 @@ final class GrContext {
     int[] istack;
     float[] fstack;
     dstring[] sstack;
-    GrVariantValue[] vstack;
+    GrVariant[] vstack;
     void*[] ostack;
 
     /// Operation pointer.
@@ -124,7 +124,7 @@ final class GrContext {
         istack = new int[stackLimit];
         fstack = new float[stackLimit];
         sstack = new dstring[stackLimit];
-        vstack = new GrVariantValue[stackLimit];
+        vstack = new GrVariant[stackLimit];
         ostack = new void*[stackLimit];
     }
 
@@ -137,7 +137,7 @@ final class GrContext {
         ilocals = new int[localsLimit];
         flocals = new float[localsLimit];
         slocals = new dstring[localsLimit];
-        vlocals = new GrVariantValue[localsLimit];
+        vlocals = new GrVariant[localsLimit];
         olocals = new void*[localsLimit];
     }
 
@@ -153,8 +153,8 @@ final class GrContext {
     alias setBool = setValue!bool;
     alias setInt = setValue!int;
     alias setFloat = setValue!float;
-    alias setVariant = setValue!GrVariantValue;
-    alias setArray = setValue!(GrVariantValue[]);
+    alias setVariant = setValue!GrVariant;
+    alias setArray = setValue!(GrVariant[]);
 
     void setUserData(T)(T value) {
         setValue!(void*)(cast(void*)value);
@@ -177,7 +177,7 @@ final class GrContext {
             sstackPos ++;
             sstack[sstackPos] = value;
         }
-        else static if(is(T == GrVariantValue)) {
+        else static if(is(T == GrVariant)) {
             vstackPos ++;
             vstack[vstackPos] = value;
         }

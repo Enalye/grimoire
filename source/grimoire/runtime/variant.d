@@ -15,7 +15,7 @@ import grimoire.runtime.context, grimoire.runtime.engine, grimoire.runtime.array
 /**
     Lazy evaluation variable that can hold many types.
 */
-struct GrVariantValue {
+struct GrVariant {
     private union {
         int _ivalue;
         float _rvalue;
@@ -25,7 +25,7 @@ struct GrVariantValue {
     private dstring _subType;
 
     /// Variant type.
-    enum GrVariantValueType {
+    enum GrVariantType {
         UndefinedType,
         FunctionType, TaskType,
         BoolType, IntType, FloatType, StringType, ArrayType,
@@ -33,77 +33,77 @@ struct GrVariantValue {
     }
 
     /// Variant type.
-    GrVariantValueType type;
+    GrVariantType type;
 
     /// Sets a function.
     void setFunction(int addr, dstring subType) {
-        type = GrVariantValueType.FunctionType;
+        type = GrVariantType.FunctionType;
         _ivalue = addr;
         _subType = subType;
     }
 
     /// Sets a task.
     void setTask(int addr, dstring subType) {
-        type = GrVariantValueType.TaskType;
+        type = GrVariantType.TaskType;
         _ivalue = addr;
         _subType = subType;
     }
 
     /// Sets the value to the boolean value.
     void setBool(int value) {
-        type = GrVariantValueType.BoolType;
+        type = GrVariantType.BoolType;
         _ivalue = value;
     }
 
     /// Sets the value to integer.
     void setInt(int value) {
-        type = GrVariantValueType.IntType;
+        type = GrVariantType.IntType;
         _ivalue = value;
     }
 
     /// Sets the value to float.
     void setFloat(float value) {
-        type = GrVariantValueType.FloatType;
+        type = GrVariantType.FloatType;
         _rvalue = value;
     }
 
     /// Sets the value to string.
     void setString(dstring value) {
-        type = GrVariantValueType.StringType;
+        type = GrVariantType.StringType;
         _svalue = value;
     }
 
     /// Sets the value to array.
     void setArray(GrArray value) {
-        type = GrVariantValueType.ArrayType;
+        type = GrVariantType.ArrayType;
         _ovalue = cast(void*)value;
     }
 
     /// The value is set to the value stored at the index of the current array.
     /// The value must be a valid indexable value.
     void setArrayIndex(GrContext context, int index) {
-        switch(type) with(GrVariantValueType) {
+        switch(type) with(GrVariantType) {
         case ArrayType:
             GrArray ary = cast(GrArray)_ovalue;
             if(index >= ary.data.length) {
                 raise(context, "Array overflow");
                 return;
             }
-            type = GrVariantValueType.ReferenceType;
+            type = GrVariantType.ReferenceType;
             _ovalue = &ary.data[index];
             return;
         case ReferenceType:
-            auto variant = cast(GrVariantValue*)_ovalue;
-            if(variant.type != GrVariantValueType.ArrayType) {
+            auto variant = cast(GrVariant*)_ovalue;
+            if(variant.type != GrVariantType.ArrayType) {
                 raise(context, "Invalid reference 2");
                 return;
             }
-            GrArray ary = cast(GrArray)((cast(GrVariantValue*)_ovalue)._ovalue);
+            GrArray ary = cast(GrArray)((cast(GrVariant*)_ovalue)._ovalue);
             if(index >= ary.data.length) {
                 raise(context, "Array overflow");
                 return;
             }
-            type = GrVariantValueType.ReferenceType;
+            type = GrVariantType.ReferenceType;
             _ovalue = &ary.data[index];
             return;
         default:
@@ -122,46 +122,46 @@ struct GrVariantValue {
     }
 
     /// The value is now a reference for another value.
-    void setRef(GrContext context, GrVariantValue* value) {
-        type = GrVariantValueType.ReferenceType;
+    void setRef(GrContext context, GrVariant* value) {
+        type = GrVariantType.ReferenceType;
         _ovalue = cast(void*)value;
     }
 
     alias storeIntRef = storeRef!int;
     alias storeFloatRef = storeRef!float;
     alias storeStringRef = storeRef!dstring;
-    alias storeVariantRef = storeRef!GrVariantValue;
+    alias storeVariantRef = storeRef!GrVariant;
     alias storeObjectRef = storeRef!(void*);
 
     /// Modify the value referenced
     private void storeRef(T)(GrContext context, ref T value) {
-        if(type != GrVariantValueType.ReferenceType) {
+        if(type != GrVariantType.ReferenceType) {
             raise(context, "Invalid reference");
             return;
         }
         static if(is(T == int)) {
-            (cast(GrVariantValue*)_ovalue).setInt(value);
+            (cast(GrVariant*)_ovalue).setInt(value);
         }
         else static if(is(T == float)) {
-            (cast(GrVariantValue*)_ovalue).setFloat(value);
+            (cast(GrVariant*)_ovalue).setFloat(value);
         }
         else static if(is(T == dstring)) {
-            (cast(GrVariantValue*)_ovalue).setString(value);
+            (cast(GrVariant*)_ovalue).setString(value);
         }
-        else static if(is(T == GrVariantValue)) {
-            *(cast(GrVariantValue*)_ovalue) = value;
+        else static if(is(T == GrVariant)) {
+            *(cast(GrVariant*)_ovalue) = value;
         }
         else static if(is(T == void*)) {
-            //(cast(GrVariantValue*)_ovalue).setObject(value);
+            //(cast(GrVariant*)_ovalue).setObject(value);
         }
     }
 
     /// Deep copy, used with the copy^ operator
-    GrVariantValue copy() {
-        if(type == GrVariantValueType.ReferenceType)
-            return (cast(GrVariantValue*)_ovalue).copy();
-        else if(type == GrVariantValueType.ArrayType) {
-            GrVariantValue variant;
+    GrVariant copy() {
+        if(type == GrVariantType.ReferenceType)
+            return (cast(GrVariant*)_ovalue).copy();
+        else if(type == GrVariantType.ArrayType) {
+            GrVariant variant;
             variant.setArray(new GrArray(cast(GrArray)_ovalue));
             return variant;
         }
@@ -171,7 +171,7 @@ struct GrVariantValue {
 
     /// Converts and returns a boolean value.
     int getBool(GrCall call) {
-        switch(type) with(GrVariantValueType) {
+        switch(type) with(GrVariantType) {
         case BoolType:
         case IntType:
             return _ivalue;
@@ -180,16 +180,16 @@ struct GrVariantValue {
         case StringType:
             return _svalue == "true";           
         case ReferenceType:
-            return (cast(GrVariantValue*)_ovalue).getBool(call);
+            return (cast(GrVariant*)_ovalue).getBool(call);
         default:
-            raiseConversionError(call, GrVariantValueType.BoolType);
+            raiseConversionError(call, GrVariantType.BoolType);
             return false;
         }
     }
 
     /// Converts and returns an integer value.
     int getInt(GrCall call) {
-        switch(type) with(GrVariantValueType) {
+        switch(type) with(GrVariantType) {
         case BoolType:
         case IntType:
             return _ivalue;
@@ -198,16 +198,16 @@ struct GrVariantValue {
         case StringType:
             return to!int(_svalue);          
         case ReferenceType:
-            return (cast(GrVariantValue*)_ovalue).getBool(call);
+            return (cast(GrVariant*)_ovalue).getBool(call);
         default:
-            raiseConversionError(call, GrVariantValueType.IntType);
+            raiseConversionError(call, GrVariantType.IntType);
             return 0;
         }
     }
 
     /// Converts and returns a float value.
     float getFloat(GrCall call) {
-        switch(type) with(GrVariantValueType) {
+        switch(type) with(GrVariantType) {
         case BoolType:
         case IntType:
             return to!float(_ivalue);
@@ -216,16 +216,16 @@ struct GrVariantValue {
         case StringType:
             return to!float(_svalue);         
         case ReferenceType:
-            return (cast(GrVariantValue*)_ovalue).getFloat(call);
+            return (cast(GrVariant*)_ovalue).getFloat(call);
         default:
-            raiseConversionError(call, GrVariantValueType.FloatType);
+            raiseConversionError(call, GrVariantType.FloatType);
             return 0f;
         }
     }
 
     /// Converts and returns a string value.
     dstring getString(GrCall call) {
-        switch(type) with(GrVariantValueType) {
+        switch(type) with(GrVariantType) {
         case UndefinedType:
             return "undefined";
         case FunctionType:
@@ -242,20 +242,20 @@ struct GrVariantValue {
         case ArrayType:
             return (cast(GrArray)_ovalue).getString(call);
         case ReferenceType:
-            return (cast(GrVariantValue*)_ovalue).getString(call);
+            return (cast(GrVariant*)_ovalue).getString(call);
         default:
-            raiseConversionError(call, GrVariantValueType.StringType);
+            raiseConversionError(call, GrVariantType.StringType);
             return "";
         }
     }
 
     /// Converts and returns an array value.
     GrArray getArray(GrCall call) {
-        switch(type) with(GrVariantValueType) {
+        switch(type) with(GrVariantType) {
         case StringType:
             GrArray array;
             foreach(character; _svalue) {
-                GrVariantValue nElement;
+                GrVariant nElement;
                 nElement.setString(to!dstring(character));
                 array.data ~= nElement;
             }
@@ -263,43 +263,43 @@ struct GrVariantValue {
         case ArrayType:
             return cast(GrArray)_ovalue;
         case ReferenceType:
-            return (cast(GrVariantValue*)_ovalue).getArray(call);
+            return (cast(GrVariant*)_ovalue).getArray(call);
         default:
-            raiseConversionError(call, GrVariantValueType.ArrayType);
+            raiseConversionError(call, GrVariantType.ArrayType);
             return new GrArray;
         }
     }
 
     int getFunction(GrCall call) {
-        switch(type) with(GrVariantValueType) {
+        switch(type) with(GrVariantType) {
         case FunctionType:
             if(_subType != call.meta)
-                raiseConversionError(call, GrVariantValueType.FunctionType);
+                raiseConversionError(call, GrVariantType.FunctionType);
             return _ivalue;
         default:
-            raiseConversionError(call, GrVariantValueType.FunctionType);
+            raiseConversionError(call, GrVariantType.FunctionType);
             return 0;
         }
     }
 
     int getTask(GrCall call) {
-        switch(type) with(GrVariantValueType) {
+        switch(type) with(GrVariantType) {
         case TaskType:
             if(_subType != call.meta)
-                raiseConversionError(call, GrVariantValueType.TaskType);
+                raiseConversionError(call, GrVariantType.TaskType);
             return _ivalue;
         default:
-            raiseConversionError(call, GrVariantValueType.TaskType);
+            raiseConversionError(call, GrVariantType.TaskType);
             return 0;
         }
     }
 
     void call(GrContext context) {
-        switch(type) with(GrVariantValueType) {
+        switch(type) with(GrVariantType) {
         case FunctionType:
             context.engine.meta = "$f(" ~ context.engine.meta ~ ")()";
             if(context.engine.meta != _subType) {
-                raiseCallError(context, GrVariantValueType.FunctionType);
+                raiseCallError(context, GrVariantType.FunctionType);
                 return;
             }
             if((context.stackPos >> 1) >= context.callStackLimit)
@@ -313,7 +313,7 @@ struct GrVariantValue {
         case TaskType:
             context.engine.meta = "$t(" ~ context.engine.meta ~ ")";
             if(context.engine.meta != _subType) {
-                raiseCallError(context, GrVariantValueType.TaskType);
+                raiseCallError(context, GrVariantType.TaskType);
                 return;
             }
             GrContext newCoro = new GrContext(context.engine);
@@ -324,12 +324,12 @@ struct GrVariantValue {
             return;
         default:
             context.engine.meta = "$f(" ~ context.engine.meta ~ ")()";
-            raiseCallError(context, GrVariantValueType.FunctionType);
+            raiseCallError(context, GrVariantType.FunctionType);
             return;
         }
     }
     
-    private void raiseCallError(GrContext context, GrVariantValueType dstType) {
+    private void raiseCallError(GrContext context, GrVariantType dstType) {
         context.engine.raise(context, "Call error: \'"
             ~ getPrettyType(this)
             ~ "\' -> \'"
@@ -337,7 +337,7 @@ struct GrVariantValue {
             ~ "\'");
     }
 
-    private void raiseConversionError(GrCall call, GrVariantValueType dstType) {
+    private void raiseConversionError(GrCall call, GrVariantType dstType) {
         call.raise("Conversion error: \'"
             ~ getPrettyType(this)
             ~ "\' -> \'"
@@ -345,9 +345,9 @@ struct GrVariantValue {
             ~ "\'");
     }
 
-    private dstring getPrettyType(GrVariantValue value) {
+    private dstring getPrettyType(GrVariant value) {
         dstring prettyType;
-        final switch(value.type) with(GrVariantValueType) {
+        final switch(value.type) with(GrVariantType) {
         case FunctionType:
         case TaskType:
             prettyType = to!dstring(grGetPrettyType(grUnmangle(value._subType)));
@@ -377,9 +377,9 @@ struct GrVariantValue {
         return prettyType;
     }
 
-    private dstring getPrettyType(GrVariantValueType dstType, dstring subType) {
+    private dstring getPrettyType(GrVariantType dstType, dstring subType) {
         dstring prettyType;        
-        final switch(dstType) with(GrVariantValueType) {
+        final switch(dstType) with(GrVariantType) {
         case FunctionType:
         case TaskType:
             prettyType = to!dstring(grGetPrettyType(grUnmangle(subType)));
@@ -410,11 +410,11 @@ struct GrVariantValue {
     }
     
     /// Copy operator.
-    GrVariantValue opOpAssign(string op)(GrVariantValue v) {
+    GrVariant opOpAssign(string op)(GrVariant v) {
         static if(op == "+" || op == "-" || op == "*" || op == "/" || op == "%") {
-            switch(type) with(GrVariantValueType) {
+            switch(type) with(GrVariantType) {
             case BoolType:
-                switch(v.type) with(GrVariantValueType) {
+                switch(v.type) with(GrVariantType) {
                 case BoolType:
                     mixin("_ivalue = _ivalue " ~ op ~ " v._ivalue;");
                     break;
@@ -423,12 +423,12 @@ struct GrVariantValue {
                 }
                 break;
             case IntType:
-                switch(v.type) with(GrVariantValueType) {
+                switch(v.type) with(GrVariantType) {
                 case IntType:
                     mixin("_ivalue = _ivalue " ~ op ~ " v._ivalue;");
                     break;
                 case FloatType:
-                    type = GrVariantValueType.FloatType;
+                    type = GrVariantType.FloatType;
                     mixin("_rvalue = to!float(_ivalue) " ~ op ~ " v._rvalue;");
                     break;
                 default:
@@ -436,7 +436,7 @@ struct GrVariantValue {
                 }
                 break;
             case FloatType:
-                switch(v.type) with(GrVariantValueType) {
+                switch(v.type) with(GrVariantType) {
                 case IntType:
                     mixin("_rvalue = _rvalue " ~ op ~ " to!float(v._ivalue);");
                     break;
@@ -456,20 +456,20 @@ struct GrVariantValue {
         return this;
     }
 
-    void concatenate(GrContext context, ref GrVariantValue value) {
-        switch(type) with(GrVariantValueType) {
+    void concatenate(GrContext context, ref GrVariant value) {
+        switch(type) with(GrVariantType) {
         case BoolType:
         case FunctionType:
         case TaskType:
         case IntType:
-            switch(value.type) with(GrVariantValueType) {
+            switch(value.type) with(GrVariantType) {
             case ArrayType:
                 (cast(GrArray)value._ovalue).prepend(this);
                 setArray(cast(GrArray)value._ovalue);
                 break;
             case StringType:
                 _svalue = to!dstring(_ivalue) ~ value._svalue;
-                type = GrVariantValueType.StringType;
+                type = GrVariantType.StringType;
                 break;
             default:
                 raise(context, "Concatenation error");
@@ -477,14 +477,14 @@ struct GrVariantValue {
             }
             break;
         case FloatType:
-            switch(value.type) with(GrVariantValueType) {
+            switch(value.type) with(GrVariantType) {
             case ArrayType:
                 (cast(GrArray)value._ovalue).prepend(this);
                 setArray(cast(GrArray)value._ovalue);
                 break;
             case StringType:
                 _svalue = to!dstring(_rvalue) ~ value._svalue;
-                type = GrVariantValueType.StringType;
+                type = GrVariantType.StringType;
                 break;
             default:
                 raise(context, "Concatenation error");
@@ -492,7 +492,7 @@ struct GrVariantValue {
             }
             break;       
         case StringType:
-            switch(value.type) with(GrVariantValueType) {
+            switch(value.type) with(GrVariantType) {
             case ArrayType:
                 (cast(GrArray)value._ovalue).prepend(this);
                 setArray(cast(GrArray)value._ovalue);
@@ -505,7 +505,7 @@ struct GrVariantValue {
             }
             break;
         case ArrayType:
-            switch(value.type) with(GrVariantValueType) {
+            switch(value.type) with(GrVariantType) {
             case ArrayType:
                 (cast(GrArray)_ovalue).data ~= (cast(GrArray)value._ovalue).data;
                 break;
@@ -528,8 +528,8 @@ struct GrVariantValue {
     }
 
     /// Increment and Decrement.
-    GrVariantValue opUnaryRight(string op)() {	
-        switch(type) with(GrVariantValueType) {
+    GrVariant opUnaryRight(string op)() {	
+        switch(type) with(GrVariantType) {
         case IntType:
             mixin("_ivalue" ~ op ~ ";");
             break;
@@ -545,8 +545,8 @@ struct GrVariantValue {
     }
 
     /// + and -.
-    GrVariantValue opUnary(string op)() {	
-        switch(type) with(GrVariantValueType) {
+    GrVariant opUnary(string op)() {	
+        switch(type) with(GrVariantType) {
         case IntType:
             mixin("_ivalue = " ~ op ~ " _ivalue;");
             break;
@@ -562,7 +562,7 @@ struct GrVariantValue {
     }
 
     void operationNot(GrContext context) {
-        switch(type) with(GrVariantValueType) {
+        switch(type) with(GrVariantType) {
         case BoolType:
             _ivalue = !_ivalue;
             return;
@@ -571,8 +571,8 @@ struct GrVariantValue {
         }
     }
 
-    bool operationAnd(GrContext context, ref GrVariantValue dyn) {
-        switch(type) with(GrVariantValueType) {
+    bool operationAnd(GrContext context, ref GrVariant dyn) {
+        switch(type) with(GrVariantType) {
         case BoolType:
             return _ivalue && dyn._ivalue;
         default:
@@ -580,8 +580,8 @@ struct GrVariantValue {
         }
     }
 
-    bool operationOr(GrContext context, ref GrVariantValue dyn) {
-        switch(type) with(GrVariantValueType) {
+    bool operationOr(GrContext context, ref GrVariant dyn) {
+        switch(type) with(GrVariantType) {
         case BoolType:
             return _ivalue || dyn._ivalue;
         default:
@@ -589,17 +589,17 @@ struct GrVariantValue {
         }
     }
 
-    bool operationComparison(string op)(GrContext context, ref GrVariantValue dyn) {
+    bool operationComparison(string op)(GrContext context, ref GrVariant dyn) {
         if(type != dyn.type) {
             //Float/Int comparison are allowed
-            if(type == GrVariantValueType.IntType && dyn.type == GrVariantValueType.FloatType)
+            if(type == GrVariantType.IntType && dyn.type == GrVariantType.FloatType)
                 mixin("return (cast(float)_ivalue) " ~ op ~ " dyn._rvalue;");
-            else if(type == GrVariantValueType.FloatType && dyn.type == GrVariantValueType.IntType)
+            else if(type == GrVariantType.FloatType && dyn.type == GrVariantType.IntType)
                 mixin("return _rvalue " ~ op ~ " cast(float)dyn._ivalue;");
             return false;
         }
         
-        switch(type) with(GrVariantValueType) {
+        switch(type) with(GrVariantType) {
         case IntType:
             mixin("return _ivalue " ~ op ~ " dyn._ivalue;");
         case FloatType:
@@ -609,11 +609,11 @@ struct GrVariantValue {
         }
     }
 
-    bool opEquals(ref GrVariantValue dyn) {
+    bool opEquals(ref GrVariant dyn) {
         if(type != dyn.type)
             return false;
 
-        switch(type) with(GrVariantValueType) {
+        switch(type) with(GrVariantType) {
         case UndefinedType:
             return true;
         case FunctionType:
