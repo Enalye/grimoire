@@ -1358,7 +1358,7 @@ class GrParser {
                 checkAdvance();
                 break;
             case Tuple:
-            case Def:
+            case Struct:
                 skipDeclaration();
                 break;
 			case Main:
@@ -1401,7 +1401,7 @@ class GrParser {
             case Tuple:
                 parseTupleDeclaration();
                 break;
-            case Def:
+            case Struct:
                 parseStructDeclaration();
                 break;
 			case Main:
@@ -1432,7 +1432,7 @@ class GrParser {
                 checkAdvance();
                 break;
             case Tuple:
-            case Def:
+            case Struct:
                 skipDeclaration();
                 break;
 			case Main:
@@ -1472,7 +1472,7 @@ class GrParser {
                 break;
             case Event:
             case Tuple:
-            case Def:
+            case Struct:
 			case Main:
 				skipDeclaration();
 				break;
