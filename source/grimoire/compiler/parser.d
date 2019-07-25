@@ -1373,7 +1373,8 @@ class GrParser {
 				parseTaskDeclaration();
 				break;
 			case FunctionType:
-                if(get(1).type != GrLexemeType.Identifier)
+                if(get(1).type != GrLexemeType.Identifier &&
+                    get(1).type != GrLexemeType.As)
                     goto case VoidType;
 				parseFunctionDeclaration();
 				break;
@@ -1447,7 +1448,8 @@ class GrParser {
 				preParseTaskDeclaration();
 				break;
 			case FunctionType:
-                if(get(1).type != GrLexemeType.Identifier)
+                if(get(1).type != GrLexemeType.Identifier &&
+                    get(1).type != GrLexemeType.As)
                     goto case VoidType;
 				preParseFunctionDeclaration();
 				break;
@@ -1482,7 +1484,8 @@ class GrParser {
 				skipDeclaration();
 				break;
 			case FunctionType:
-                if(get(1).type != GrLexemeType.Identifier)
+                if(get(1).type != GrLexemeType.Identifier &&
+                    get(1).type != GrLexemeType.As)
                     goto case VoidType;
     			skipDeclaration();
                 break;
@@ -3309,10 +3312,34 @@ class GrParser {
 
         //Special conversions
         if(leftType != rightType) {
-            if(rightType.baseType == GrBaseType.VariantType) {
+            if(leftType.baseType == GrBaseType.TupleType) {
+                switch(rightType.baseType) with(GrBaseType) {
+                case ArrayType:
+                    auto tuple = grGetTuple(leftType.mangledType);
+                    const auto nbFields = tuple.signature.length;
+                    for(int i = 1; i <= nbFields; i ++) {
+                        convertType(tuple.signature[nbFields - i], grVariant, isExplicit);
+                    }
+                    addInstruction(GrOpcode.Array, cast(int)nbFields);
+                    return rightType;
+                case VariantType:
+                    auto tuple = grGetTuple(leftType.mangledType);
+                    const auto nbFields = tuple.signature.length;
+                    for(int i = 1; i <= nbFields; i ++) {
+                        convertType(tuple.signature[nbFields - i], grVariant, isExplicit);
+                    }
+                    addInstruction(GrOpcode.Array, cast(int)nbFields);
+                    convertType(grArray, rightType);
+                    return rightType;
+                default:
+                    break;
+                }
+            }
+            else if(rightType.baseType == GrBaseType.VariantType) {
                 switch(leftType.baseType) with(GrBaseType) {
                 case FunctionType:
                 case TaskType:
+                case StructType:
                     //We can't know in advance what'll be the signature of the anonymous function we want to convert.
                     //So we add the mangling as a runtime meta value.
                     addMetaConstant(grMangleVariant(leftType));
@@ -3330,6 +3357,7 @@ class GrParser {
                 switch(rightType.baseType) with(GrBaseType) {
                 case FunctionType:
                 case TaskType:
+                case StructType:               
                     //We can't know in advance what'll be the signature of the anonymous function we want to convert.
                     //So we add the mangling as a runtime meta value.
                     addMetaConstant(grMangleVariant(rightType));
