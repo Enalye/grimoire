@@ -1,10 +1,12 @@
-module grimoire.lib.math.random;
+module grimoire.stdlib.random;
 
 import std.random;
 import std.conv: to;
-import grimoire.lib.api;
+import grimoire.compiler, grimoire.runtime;
 
-static this() {
+
+package(grimoire.stdlib)
+void grLoadStdLibRandom() {
 	grAddPrimitive(&_random, "random", ["max"], [grInt], [grInt]);
 }
 

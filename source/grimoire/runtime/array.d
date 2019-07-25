@@ -11,7 +11,7 @@ module grimoire.runtime.array;
 import grimoire.core;
 import grimoire.compiler.primitive;
 
-import grimoire.runtime.variant;
+import grimoire.runtime.variant, grimoire.runtime.call;
 
 final class GrArray {
 	GrVariant[] data;

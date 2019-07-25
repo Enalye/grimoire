@@ -69,6 +69,9 @@ class GrEngine {
 
         /// Extra type compiler information.
         dstring _meta;
+
+        /// Primitives database.
+        GrPrimitivesDatabase _primitivesDatabase;
     }
 
     __gshared bool isRunning = true;
@@ -89,24 +92,28 @@ class GrEngine {
     }
 
     /// Default.
-	this() {
-        setupGlobals(512);
-        _contexts = new DynamicIndexedArray!GrContext;
-		_contextsToSpawn = new DynamicIndexedArray!GrContext;
-    }
+	this() {}
 
     /// Load the bytecode.
 	this(GrBytecode bytecode) {
 		load(bytecode);
 	}
 
+    private void initialize() {
+        setupGlobals(512);
+        _contexts = new DynamicIndexedArray!GrContext;
+		_contextsToSpawn = new DynamicIndexedArray!GrContext;
+    }
+
     /// Load the bytecode.
-	void load(GrBytecode bytecode) {
+	final void load(GrBytecode bytecode) {
+        initialize();
 		_iconsts = bytecode.iconsts.idup;
 		_fconsts = bytecode.fconsts.idup;
 		_sconsts = bytecode.sconsts.idup;
 		_opcodes = bytecode.opcodes.idup;
         _events = bytecode.events;
+        _primitivesDatabase = grGetPrimitivesDatabase();
 	}
 
     /// Current max global variable available.
@@ -1407,7 +1414,7 @@ class GrEngine {
                     context.vstack[context.vstackPos].call(context);
                     break;
 				case PrimitiveCall:
-					primitives[grGetInstructionUnsignedValue(opcode)].callObject.call(context);
+					_primitivesDatabase.primitives[grGetInstructionUnsignedValue(opcode)].callObject.call(context);
 					context.pc ++;
 					break;
 				case Jump:

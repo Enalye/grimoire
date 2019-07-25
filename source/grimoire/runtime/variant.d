@@ -10,7 +10,7 @@ module grimoire.runtime.variant;
 
 import std.conv: to;
 import grimoire.compiler;
-import grimoire.runtime.context, grimoire.runtime.engine, grimoire.runtime.array;
+import grimoire.runtime.context, grimoire.runtime.engine, grimoire.runtime.array, grimoire.runtime.call;
 
 /**
     Lazy evaluation variable that can hold many types.

@@ -14,6 +14,34 @@ import grimoire.runtime;
 import grimoire.assembly;
 import grimoire.compiler.mangle;
 
+class GrTypesDatabase {
+    private {
+        dstring[] _userTypes;
+        GrStruct[dstring] _structures;
+        GrTuple[dstring] _tuples;
+    }
+}
+
+private {
+    GrTypesDatabase _typesDatabase;
+}
+
+/// Call this before compilation
+void grInitTypesDatabase() {
+    _typesDatabase = new GrTypesDatabase;
+}
+
+/// Don't call this until the end of compilation
+void grCloseTypesDatabase() {
+    _typesDatabase = null;
+}
+
+GrTypesDatabase GrGetTypesDatabase() {
+    if(!_typesDatabase)
+        throw new Exception("Types database not initialized");
+    return _typesDatabase;
+}
+
 /**
     Type category.
 
@@ -97,16 +125,17 @@ GrType grAddIntConstant(dstring name, int value) {
     return grVoid;
 }
 
-dstring[] usertypes;
 GrType grAddUserType(dstring name) {
+    if(!_typesDatabase)
+        throw new Exception("Types database not initialized");
     bool isDeclared;
-    foreach(usertype; usertypes) {
+    foreach(usertype; _typesDatabase._userTypes) {
         if(usertype == name)
             isDeclared = true;
     }
 
     if(!isDeclared)
-        usertypes ~= name;
+        _typesDatabase._userTypes ~= name;
 
     GrType type = GrBaseType.UserType;
     type.mangledType = name;
@@ -114,7 +143,9 @@ GrType grAddUserType(dstring name) {
 }
 
 bool grIsUserType(dstring name) {
-    foreach(usertype; usertypes) {
+    if(!_typesDatabase)
+        throw new Exception("Types database not initialized");
+    foreach(usertype; _typesDatabase._userTypes) {
         if(usertype == name)
             return true;
     }
@@ -131,15 +162,16 @@ class GrTuple {
     GrType[] signature;
     dstring[] fields;
 }
-GrTuple[dstring] tuples;
 
 GrType grAddTuple(dstring name, dstring[] fields, GrType[] signature) {
+    if(!_typesDatabase)
+        throw new Exception("Types database not initialized");
     if(fields.length != signature.length)
         throw new Exception("GrTuple signature mismatch");
     GrTuple st = new GrTuple;
     st.signature = signature;
     st.fields = fields;
-    tuples[name] = st;
+    _typesDatabase._tuples[name] = st;
 
     GrType stType = GrBaseType.TupleType;
     stType.mangledType = name;
@@ -147,7 +179,9 @@ GrType grAddTuple(dstring name, dstring[] fields, GrType[] signature) {
 }
 
 bool grIsTuple(dstring name) {
-    if(name in tuples)
+    if(!_typesDatabase)
+        throw new Exception("Types database not initialized");
+    if(name in _typesDatabase._tuples)
         return true;
     return false;
 }
@@ -159,14 +193,18 @@ GrType grGetTupleType(dstring name) {
 }
 
 GrTuple grGetTuple(dstring name) {
-    auto tuple = (name in tuples);
+    if(!_typesDatabase)
+        throw new Exception("Types database not initialized");
+    auto tuple = (name in _typesDatabase._tuples);
     if(tuple is null)
         throw new Exception("Undefined tuple \'" ~ to!string(name) ~ "\'");
     return *tuple;
 }
 
 void grResolveTupleSignature() {
-    foreach(tuple; tuples) {
+    if(!_typesDatabase)
+        throw new Exception("Types database not initialized");
+    foreach(tuple; _typesDatabase._tuples) {
         for(int i; i < tuple.signature.length; i ++) {
             if(tuple.signature[i].baseType == GrBaseType.VoidType) {
                 if(grIsTuple(tuple.signature[i].mangledType)) {
@@ -183,15 +221,16 @@ class GrStruct {
     GrType[] signature;
     dstring[] fields;
 }
-GrStruct[dstring] structures;
 
 GrType grAddStruct(dstring name, dstring[] fields, GrType[] signature) {
+    if(!_typesDatabase)
+        throw new Exception("Types database not initialized");
     if(fields.length != signature.length)
         throw new Exception("GrStruct signature mismatch");
     GrStruct st = new GrStruct;
     st.signature = signature;
     st.fields = fields;
-    structures[name] = st;
+    _typesDatabase._structures[name] = st;
 
     GrType stType = GrBaseType.StructType;
     stType.mangledType = name;
@@ -199,7 +238,9 @@ GrType grAddStruct(dstring name, dstring[] fields, GrType[] signature) {
 }
 
 bool grIsStruct(dstring name) {
-    if(name in structures)
+    if(!_typesDatabase)
+        throw new Exception("Types database not initialized");
+    if(name in _typesDatabase._structures)
         return true;
     return false;
 }
@@ -211,14 +252,18 @@ GrType grGetStructType(dstring name) {
 }
 
 GrStruct grGetStruct(dstring name) {
-    auto structure = (name in structures);
+    if(!_typesDatabase)
+        throw new Exception("Types database not initialized");
+    auto structure = (name in _typesDatabase._structures);
     if(structure is null)
         throw new Exception("Undefined structure \'" ~ to!string(name) ~ "\'");
     return *structure;
 }
 
 void grResolveStructSignature() {
-    foreach(structure; structures) {
+    if(!_typesDatabase)
+        throw new Exception("Types database not initialized");
+    foreach(structure; _typesDatabase._structures) {
         for(int i; i < structure.signature.length; i ++) {
             if(structure.signature[i].baseType == GrBaseType.VoidType) {
                 if(grIsStruct(structure.signature[i].mangledType)) {

@@ -6,12 +6,14 @@
     Authors: Enalye
 */
 
-module grimoire.lib.type.typecast;
+module grimoire.stdlib.typecast;
 
 import std.conv;
-import grimoire.lib.api;
+import grimoire.compiler, grimoire.runtime;
 
-static this() {
+
+package(grimoire.stdlib)
+void grLoadStdLibTypecast() {
     //As int
     grAddCast(&typecast_r2i, "value", grFloat, grInt, true);
     grAddCast(&typecast_b2i, "value", grBool, grInt);

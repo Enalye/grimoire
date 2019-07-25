@@ -6,13 +6,14 @@
     Authors: Enalye
 */
 
-module grimoire.lib.io.print;
+module grimoire.stdlib.print;
 
 import std.stdio: write, writeln;
 import std.conv: to;
-import grimoire.lib.api;
+import grimoire.compiler, grimoire.runtime;
 
-static this() {
+package(grimoire.stdlib)
+void grLoadStdLibPrint() {
     //print
 	grAddPrimitive(&prints, "print", ["value"], [grString]);
 	grAddPrimitive(&printb, "print", ["value"], [grBool]);

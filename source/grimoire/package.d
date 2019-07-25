@@ -12,5 +12,5 @@ public {
     import grimoire.assembly;
     import grimoire.compiler;
     import grimoire.runtime;
-    import grimoire.lib;
+    import grimoire.stdlib;
 }

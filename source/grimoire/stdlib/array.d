@@ -1,8 +1,9 @@
-module grimoire.lib.math.misc;
+module grimoire.stdlib.array;
 
-import grimoire.lib.api;
+import grimoire.compiler, grimoire.runtime;
 
-static this() {
+package(grimoire.stdlib)
+void grLoadStdLibArray() {
 	grAddPrimitive(&_range, "range", ["min", "max"], [grInt, grInt], [grArray]);
 }
 

@@ -1,8 +1,9 @@
-module grimoire.lib.test.assertion;
+module grimoire.stdlib.test;
 
-import grimoire;
+import grimoire.compiler, grimoire.runtime;
 
-static this() {
+package(grimoire.stdlib)
+void grLoadStdLibTest() {
 	grAddPrimitive(&_assert, "assert", ["value"], [grBool]);
 	grAddPrimitive(&_assert_msg, "assert", ["value", "msg"], [grBool, grString]);
 }

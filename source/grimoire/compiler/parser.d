@@ -1163,7 +1163,7 @@ class GrParser {
 		else {
             if(!variable.isInitialized)
                 logError("Uninitialized variable", "The local variable is being used without being assigned");
-
+            
 			switch(variable.type.baseType) with(GrBaseType) {
 			case BoolType:
 			case IntType:
@@ -1420,7 +1420,7 @@ class GrParser {
         grResolveTupleSignature();
         grResolveStructSignature();
 
-        //Then we can resolve primitives' signature
+        //Then we can resolve _primitives' signature
         grResolvePrimitiveSignature();
         
         //Function definitions

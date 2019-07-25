@@ -7,6 +7,10 @@ import grimoire;
 import scripthandler;
 
 void testAll() {
+    grInitPrimitivesDatabase();
+    grInitTypesDatabase();
+    grLoadStdLibrary();
+
     auto directories = dirEntries("", SpanMode.shallow);
     const auto startTime = MonoTime.currTime();
     uint modules;
@@ -19,6 +23,9 @@ void testAll() {
     }
     auto totalTime = MonoTime.currTime() - startTime;
     writeln("\033[1;34mTested ", modules, " in ", totalTime, "\033[0m");
+
+    grClosePrimitivesDatabase();
+    grCloseTypesDatabase();
 }
 
 private void testFolder(string dirPath) {
