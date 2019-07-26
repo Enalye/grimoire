@@ -29,6 +29,7 @@ struct GrVariant {
         UndefinedType,
         FunctionType, TaskType,
         BoolType, IntType, FloatType, StringType, ArrayType,
+        StructType, UserType, ChannelType,
         ReferenceType
     }
 
@@ -77,6 +78,24 @@ struct GrVariant {
     void setArray(GrArray value) {
         type = GrVariantType.ArrayType;
         _ovalue = cast(void*)value;
+    }
+
+    void setStruct(void* value, dstring subType) {
+        type = GrVariantType.StructType;
+        _ovalue = value;
+        _subType = subType;
+    }
+
+    void setUserData(void* value, dstring subType) {
+        type = GrVariantType.UserType;
+        _ovalue = value;
+        _subType = subType;
+    }
+
+    void setChannel(void* value, dstring subType) {
+        type = GrVariantType.ChannelType;
+        _ovalue = value;
+        _subType = subType;
     }
 
     /// The value is set to the value stored at the index of the current array.
@@ -294,6 +313,42 @@ struct GrVariant {
         }
     }
 
+    void* getStruct(GrCall call) {
+        switch(type) with(GrVariantType) {
+        case StructType:
+            if(_subType != call.meta)
+                raiseConversionError(call, GrVariantType.StructType);
+            return _ovalue;
+        default:
+            raiseConversionError(call, GrVariantType.StructType);
+            return null;
+        }
+    }
+
+    void* getUserData(GrCall call) {
+        switch(type) with(GrVariantType) {
+        case UserType:
+            if(_subType != call.meta)
+                raiseConversionError(call, GrVariantType.UserType);
+            return _ovalue;
+        default:
+            raiseConversionError(call, GrVariantType.UserType);
+            return null;
+        }
+    }
+
+    void* getChannel(GrCall call) {
+        switch(type) with(GrVariantType) {
+        case ChannelType:
+            if(_subType != call.meta)
+                raiseConversionError(call, GrVariantType.ChannelType);
+            return _ovalue;
+        default:
+            raiseConversionError(call, GrVariantType.ChannelType);
+            return null;
+        }
+    }
+
     void call(GrContext context) {
         switch(type) with(GrVariantType) {
         case FunctionType:
@@ -346,40 +401,15 @@ struct GrVariant {
     }
 
     private dstring getPrettyType(GrVariant value) {
-        dstring prettyType;
-        final switch(value.type) with(GrVariantType) {
-        case FunctionType:
-        case TaskType:
-            prettyType = to!dstring(grGetPrettyType(grUnmangle(value._subType)));
-            break;
-        case UndefinedType:
-            prettyType = "undefined";
-            break;
-        case BoolType:
-            prettyType = "bool";
-            break;
-        case IntType:
-            prettyType = "int";
-            break;
-        case FloatType:
-            prettyType = "float";
-            break;
-        case StringType:
-            prettyType = "string";
-            break;
-        case ArrayType:
-            prettyType = "array";
-            break;
-        case ReferenceType:
-            prettyType = "ref";
-            break;
-        }
-        return prettyType;
+        return getPrettyType(value.type, value._subType);
     }
 
     private dstring getPrettyType(GrVariantType dstType, dstring subType) {
         dstring prettyType;        
         final switch(dstType) with(GrVariantType) {
+        case StructType:
+        case UserType:
+        case ChannelType:
         case FunctionType:
         case TaskType:
             prettyType = to!dstring(grGetPrettyType(grUnmangle(subType)));
@@ -510,6 +540,9 @@ struct GrVariant {
                 (cast(GrArray)_ovalue).data ~= (cast(GrArray)value._ovalue).data;
                 break;
             case BoolType:
+            case StructType:
+            case UserType:
+            case ChannelType:
             case FunctionType:
             case TaskType:
             case IntType:
@@ -616,6 +649,9 @@ struct GrVariant {
         switch(type) with(GrVariantType) {
         case UndefinedType:
             return true;
+        case StructType:
+        case UserType:
+        case ChannelType:
         case FunctionType:
         case TaskType:
             return _subType == dyn._subType;

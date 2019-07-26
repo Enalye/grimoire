@@ -73,8 +73,9 @@ enum GrOpcode {
     Array, Length,
     Index_Array, Index_Variant,
     Copy_Array, Copy_Variant,
-    Append, Prepend
+    Append, Prepend,
 
+    DynCast_Variant
 }
 
 /// Compiled form of grimoire

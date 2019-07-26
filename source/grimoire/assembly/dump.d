@@ -73,6 +73,8 @@ private string[] instructions = [
     "index.n", "index.v",
     "copy.n", "copy.v",
     "append", "prepend",
+
+    "dyncast.v"
 ];
 
 /// Dump the bytecode's instruction list in a pretty format.

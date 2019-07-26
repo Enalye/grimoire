@@ -3315,13 +3315,6 @@ class GrParser {
             if(leftType.baseType == GrBaseType.TupleType) {
                 switch(rightType.baseType) with(GrBaseType) {
                 case ArrayType:
-                    auto tuple = grGetTuple(leftType.mangledType);
-                    const auto nbFields = tuple.signature.length;
-                    for(int i = 1; i <= nbFields; i ++) {
-                        convertType(tuple.signature[nbFields - i], grVariant, isExplicit);
-                    }
-                    addInstruction(GrOpcode.Array, cast(int)nbFields);
-                    return rightType;
                 case VariantType:
                     auto tuple = grGetTuple(leftType.mangledType);
                     const auto nbFields = tuple.signature.length;
@@ -3330,6 +3323,20 @@ class GrParser {
                     }
                     addInstruction(GrOpcode.Array, cast(int)nbFields);
                     convertType(grArray, rightType);
+                    return rightType;
+                default:
+                    break;
+                }
+            }
+            else if(rightType.baseType == GrBaseType.TupleType) {
+                switch(leftType.baseType) with(GrBaseType) {
+                case ArrayType:
+                    leftType = convertType(leftType, grVariant);
+                    goto case VariantType;
+                case VariantType:
+                    auto tuple = grGetTuple(rightType.mangledType);
+                    addMetaConstant(grMangleFunction(tuple.signature));
+                    addInstruction(GrOpcode.DynCast_Variant);
                     return rightType;
                 default:
                     break;

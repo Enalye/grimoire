@@ -84,15 +84,16 @@ class GrCall {
                 break;
             case TupleType:
                 auto structure = grGetTuple(type.mangledType);
-                setupLocals(name ~ ".", structure.fields, structure.signature);
+                setupLocals(name ~ ":", structure.fields, structure.signature);
                 break;
             case ArrayType:
+            case StructType:
             case UserType:
                 _oparams ++;
                 _olocals ~= name;
                 break;
             default:
-                throw new Exception("Type Error or smthing like that");
+                throw new Exception("Call object: invalid type during setup");
             }
         }
     }
