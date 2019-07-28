@@ -107,7 +107,7 @@ dstring grUnmangleSubFunction(dstring mangledSignature, ref int i) {
     dstring subString;
     int blockCount = 1;
     if(i >= mangledSignature.length && mangledSignature[i] != '(')
-        throw new Exception("Invalid mangling format");
+        throw new Exception("Invalid subType mangling format, missing (");
     i ++;
 
     for(; i < mangledSignature.length; i ++) {
@@ -126,7 +126,7 @@ dstring grUnmangleSubFunction(dstring mangledSignature, ref int i) {
         }
         subString ~= mangledSignature[i];
     }
-    throw new Exception("Invalid mangling format");
+    throw new Exception("Invalid subType mangling format, missing )");
 }
 
 /**
@@ -139,7 +139,7 @@ GrType grUnmangle(dstring mangledSignature) {
     if(i < mangledSignature.length) {
         //Type separator
         if(mangledSignature[i] != '$')
-            throw new Exception("Invalid mangling format");
+            throw new Exception("Invalid unmangle mangling format, missing $");
         i ++;
 
         //Value
@@ -169,16 +169,16 @@ GrType grUnmangle(dstring mangledSignature) {
             currentType.baseType = GrBaseType.TupleType;
             dstring tupleName;
             if((i + 2) >= mangledSignature.length)
-                throw new Exception("Invalid mangling format");
+                throw new Exception("Invalid unmangle mangling format in tuple");
             i ++;
             if(mangledSignature[i] != '(')
-                throw new Exception("Invalid mangling format");
+                throw new Exception("Invalid unmangle mangling format in tuple");
             i ++;
             while(mangledSignature[i] != ')') {
                 tupleName ~= mangledSignature[i];
                 i ++;
                 if(i >= mangledSignature.length)
-                    throw new Exception("Invalid mangling format");
+                    throw new Exception("Invalid unmangle mangling format in tuple");
             }
             currentType.mangledType = tupleName;
             break;
@@ -186,16 +186,16 @@ GrType grUnmangle(dstring mangledSignature) {
             currentType.baseType = GrBaseType.StructType;
             dstring structName;
             if((i + 2) >= mangledSignature.length)
-                throw new Exception("Invalid mangling format");
+                throw new Exception("Invalid unmangle mangling format in struct");
             i ++;
             if(mangledSignature[i] != '(')
-                throw new Exception("Invalid mangling format");
+                throw new Exception("Invalid unmangle mangling format in struct");
             i ++;
             while(mangledSignature[i] != ')') {
                 structName ~= mangledSignature[i];
                 i ++;
                 if(i >= mangledSignature.length)
-                    throw new Exception("Invalid mangling format");
+                    throw new Exception("Invalid unmangle mangling format in struct");
             }
             currentType.mangledType = structName;
             break;
@@ -203,16 +203,16 @@ GrType grUnmangle(dstring mangledSignature) {
             currentType.baseType = GrBaseType.UserType;
             dstring userTypeName;
             if((i + 2) >= mangledSignature.length)
-                throw new Exception("Invalid mangling format");
+                throw new Exception("Invalid unmangle mangling format in usertype");
             i ++;
             if(mangledSignature[i] != '(')
-                throw new Exception("Invalid mangling format");
+                throw new Exception("Invalid unmangle mangling format in usertype");
             i ++;
             while(mangledSignature[i] != ')') {
                 userTypeName ~= mangledSignature[i];
                 i ++;
                 if(i >= mangledSignature.length)
-                    throw new Exception("Invalid mangling format");
+                    throw new Exception("Invalid unmangle mangling format in usertype");
             }
             currentType.mangledType = userTypeName;
             break;
@@ -254,7 +254,7 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
     while(i < mangledSignature.length) {
         //Type separator
         if(mangledSignature[i] != '$')
-            throw new Exception("Invalid mangling format");
+            throw new Exception("Invalid unmanglesignature mangling format, missing $");
         i ++;
 
         //Value
@@ -276,7 +276,9 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
             currentType.baseType = GrBaseType.StringType;
             break;
         case 'n':
+            i ++;
             currentType.baseType = GrBaseType.ArrayType;
+            currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             break;
         case 'l':
             currentType.baseType = GrBaseType.TupleType;

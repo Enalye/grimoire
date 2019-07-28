@@ -2863,7 +2863,7 @@ class GrParser {
 		closeContinuableSection();
 	}
 
-    GrVariable parseDeclarableArgument(GrType defaultType = grVoid) {
+    GrVariable parseDeclarableArgument() {
         GrVariable lvalue;
         GrType type = GrBaseType.VoidType;
         bool isAuto, isTyped = true;
@@ -2901,12 +2901,7 @@ class GrParser {
             lvalue = registerLocalVariable(identifier.svalue, type);
             lvalue.isAuto = true;
         }
-
-        if(lvalue.isAuto && defaultType.baseType != GrBaseType.VoidType) {
-            lvalue.isAuto = false;
-            lvalue.type = defaultType;
-        }
-
+        
         //A composite type does not need to be initialized.
         if(lvalue.type == GrBaseType.TupleType || lvalue.type == GrBaseType.StructType)
             lvalue.isInitialized = true;
@@ -2917,40 +2912,71 @@ class GrParser {
 
 	void parseForStatement() {
 		advance();
-		/*if(get().type != GrLexemeType.LeftParenthesis)
+		if(get().type != GrLexemeType.LeftParenthesis)
 			logError("Missing symbol", "A condition should always start with \'(\'");
 
 		advance();
         
-		GrVariable variable = parseDeclarableArgument(grVariant);
+		GrVariable variable = parseDeclarableArgument();
 		 
 		if(get().type != GrLexemeType.Comma)
 			logError("Missing symbol", "Did you forget the \',\' ?");
-		advance();*/
+		advance();
 
-		/* Init */
-		/*GrVariable iterator = registerSpecialVariable("iterator"d ~ to!dstring(scopeLevel), GrType(GrBaseType.IntType));
-		GrVariable index = registerSpecialVariable("index"d ~ to!dstring(scopeLevel), GrType(GrBaseType.IntType));
-		GrVariable array = registerSpecialVariable("array"d ~ to!dstring(scopeLevel), GrType(GrBaseType.ArrayType));
-		
 		//From length to 0
 		GrType arrayType = parseSubExpression();
-        convertType(arrayType, array.type);
-		addSetInstruction(array, grVoid, true);
-		addInstruction(GrOpcode.Length);
+
+        /* Init */
+        GrType subType = grUnmangle(arrayType.mangledType);
+		GrVariable iterator = registerSpecialVariable("iterator"d ~ to!dstring(scopeLevel), subType);
+		GrVariable index = registerSpecialVariable("index"d ~ to!dstring(scopeLevel), GrType(GrBaseType.IntType));
+		GrVariable array = registerSpecialVariable("array"d ~ to!dstring(scopeLevel), arrayType);
+		
+        if(variable.isAuto && subType.baseType != GrBaseType.VoidType) {
+            variable.isAuto = false;
+            variable.type = subType;
+        }
+
+		addSetInstruction(array, arrayType, true);
+        final switch(subType.baseType) with(GrBaseType) {
+        case BoolType:
+        case IntType:
+        case FunctionType:
+        case TaskType:
+		    addInstruction(GrOpcode.Length_Int);
+            break;
+        case FloatType:
+		    addInstruction(GrOpcode.Length_Float);
+            break;
+        case StringType:
+		    addInstruction(GrOpcode.Length_String);
+            break;
+        case ArrayType:
+        case StructType:
+        case UserType:
+        case ChanType:
+        case ReferenceType:
+		    addInstruction(GrOpcode.Length_Object);
+            break;
+        case VoidType:
+        case TupleType:
+        case InternalTupleType:
+            logError("Invalid array type", "Cannot have an array of this type");
+            break;
+        }
 		addInstruction(GrOpcode.SetupIterator);		
 		addSetInstruction(iterator);
 
 		//Set index to -1
 		addIntConstant(-1);
-		addSetInstruction(index);*/
+		addSetInstruction(index);
 
 		/* For is breakable and continuable. */
-		//openBreakableSection();
-		//openContinuableSection();
+		openBreakableSection();
+		openContinuableSection();
 
 		/* Continue jump. */
-		/*setContinuableSectionDestination();
+		setContinuableSectionDestination();
 
 
 		advance();
@@ -2969,18 +2995,43 @@ class GrParser {
 		addGetInstruction(index);
 		addInstruction(GrOpcode.Increment_Int);
 		addSetInstruction(index, grVoid, true);
-		addInstruction(GrOpcode.Index_Array);
-		convertType(grVariant, variable.type);
+        final switch(subType.baseType) with(GrBaseType) {
+        case BoolType:
+        case IntType:
+        case FunctionType:
+        case TaskType:
+		    addInstruction(GrOpcode.Index2_Int);
+            break;
+        case FloatType:
+		    addInstruction(GrOpcode.Index2_Float);
+            break;
+        case StringType:
+		    addInstruction(GrOpcode.Index2_String);
+            break;
+        case ArrayType:
+        case StructType:
+        case UserType:
+        case ChanType:
+        case ReferenceType:
+		    addInstruction(GrOpcode.Index2_Object);
+            break;
+        case VoidType:
+        case TupleType:
+        case InternalTupleType:
+            logError("Invalid array type", "Cannot have an array of this type");
+            break;
+        }
+		convertType(subType, variable.type);
 		addSetInstruction(variable);
 
 		parseBlock();
 
 		addInstruction(GrOpcode.Jump, cast(int)(blockPosition - currentFunction.instructions.length), true);
 		setInstruction(GrOpcode.JumpEqual, jumpPosition, cast(int)(currentFunction.instructions.length - jumpPosition), true);
-*/
+
 		/* For is breakable and continuable. */
-		//closeBreakableSection();
-		//closeContinuableSection();
+		closeBreakableSection();
+		closeContinuableSection();
 	}
 
 	void parseLoopStatement() {
