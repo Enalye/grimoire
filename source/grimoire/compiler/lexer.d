@@ -31,7 +31,7 @@ enum GrLexemeType {
 	Increment, Decrement,
 	Identifier, Integer, Float, Boolean, String,
 	Main, Event, Struct, Tuple, New, Copy, Send, Receive,
-	VoidType, IntType, FloatType, BoolType, StringType, ArrayType, VariantType, FunctionType, TaskType, ChanType, AutoType,
+	VoidType, IntType, FloatType, BoolType, StringType, ArrayType, FunctionType, TaskType, ChanType, AutoType,
 	If, Unless, Else, Switch, Select, Case, While, Do, For, Loop, Return,
 	Kill, KillAll, Yield, Break, Continue,
 }
@@ -645,10 +645,6 @@ class GrLexer {
 				break;
 			case "chan":
 				lex.type = GrLexemeType.ChanType;
-				lex.isType = true;
-				break;
-			case "var":
-				lex.type = GrLexemeType.VariantType;
 				lex.isType = true;
 				break;
             case "let":

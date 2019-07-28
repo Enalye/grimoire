@@ -50,9 +50,10 @@ GrTypesDatabase GrGetTypesDatabase() {
 */
 enum GrBaseType {
     VoidType, IntType, FloatType, BoolType, StringType,
-    ArrayType, VariantType, FunctionType, TaskType,
+    ArrayType, FunctionType, TaskType,
     StructType, TupleType, UserType, ChanType,
-    InternalTupleType
+    InternalTupleType,
+    ReferenceType, 
 }
 
 /**
@@ -66,6 +67,11 @@ struct GrType {
 
     this(GrBaseType newBaseType) {
         baseType = newBaseType;
+    }
+
+    this(GrBaseType newBaseType, dstring newMangledType) {
+        baseType = newBaseType;
+        mangledType = newMangledType;
     }
 
     GrType opOpAssign(string op)(GrBaseType t) {
@@ -91,8 +97,7 @@ const GrType grInt = GrType(GrBaseType.IntType);
 const GrType grFloat = GrType(GrBaseType.FloatType);
 const GrType grBool = GrType(GrBaseType.BoolType);
 const GrType grString = GrType(GrBaseType.StringType);
-const GrType grArray = GrType(GrBaseType.ArrayType);
-const GrType grVariant = GrType(GrBaseType.VariantType);
+const GrType grIntArray = GrType(GrBaseType.ArrayType, grMangleFunction([grInt]));
 
 
 GrType grPackTuple(GrType[] types) {

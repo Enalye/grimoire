@@ -44,10 +44,7 @@ dstring grMangleFunction(GrType[] signature) {
 			mangledName ~= "s";
 			break;
 		case ArrayType:
-			mangledName ~= "n";
-			break;
-		case VariantType:
-			mangledName ~= "v";
+			mangledName ~= "n(" ~ type.mangledType ~ ")";
 			break;
         case TupleType:
             mangledName ~= "l(" ~ type.mangledType ~ ")";
@@ -67,15 +64,14 @@ dstring grMangleFunction(GrType[] signature) {
         case ChanType:
 			mangledName ~= "c(" ~ type.mangledType ~ ")";
 			break;
+        case ReferenceType:
+            mangledName ~= "h(" ~ type.mangledType ~ ")";
+            break;
         case InternalTupleType:
             throw new Exception("Trying to mangle a tuple. Tuples should not exist here.");
 		}
 	}
 	return mangledName;
-}
-
-dstring grMangleVariant(GrType type) {
-    return grMangleFunction([type]);
 }
 
 /**
@@ -164,10 +160,10 @@ GrType grUnmangle(dstring mangledSignature) {
             currentType.baseType = GrBaseType.StringType;
             break;
         case 'n':
+            i ++;
             currentType.baseType = GrBaseType.ArrayType;
-            break;
-        case 'v':
-            currentType.baseType = GrBaseType.VariantType;
+            currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
+            i ++;
             break;
         case 'l':
             currentType.baseType = GrBaseType.TupleType;
@@ -282,9 +278,6 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
         case 'n':
             currentType.baseType = GrBaseType.ArrayType;
             break;
-        case 'v':
-            currentType.baseType = GrBaseType.VariantType;
-            break;
         case 'l':
             currentType.baseType = GrBaseType.TupleType;
             dstring tupleName;
@@ -378,9 +371,17 @@ string grGetPrettyType(GrType variableType) {
     case StringType:
         return "string";
     case ArrayType:
-        return "array";
-    case VariantType:
-        return "var";
+        string result = "array(";
+        int i;
+        auto parameters = grUnmangleSignature(variableType.mangledType);
+        foreach(parameter; parameters) {
+            result ~= grGetPrettyType(parameter);
+            if((i + 2) <= parameters.length)
+                result ~= ", ";
+            i ++;
+        }
+        result ~= ")";
+        return result;
     case FunctionType:
         string result = "func(";
         int i;
@@ -404,6 +405,18 @@ string grGetPrettyType(GrType variableType) {
         return result;
     case ChanType:
         string result = "chan(";
+        int i;
+        auto parameters = grUnmangleSignature(variableType.mangledType);
+        foreach(parameter; parameters) {
+            result ~= grGetPrettyType(parameter);
+            if((i + 2) <= parameters.length)
+                result ~= ", ";
+            i ++;
+        }
+        result ~= ")";
+        return result;
+    case ReferenceType:
+        string result = "ref(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach(parameter; parameters) {

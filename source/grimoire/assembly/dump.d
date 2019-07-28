@@ -18,50 +18,50 @@ private string[] instructions = [
     "nop", "raise", "try", "catch",
     "kill", "killall", "yield", "task", "anon_task", "new",
 
-    "chan.i", "chan.f", "chan.s", "chan.v", "chan.o",
-    "snd.i", "snd.f", "snd.s", "snd.v", "snd.o",
-    "rcv.i", "rcv.f", "rcv.s", "rcv.v", "rcv.o",
+    "chan.i", "chan.f", "chan.s", "chan.o",
+    "snd.i", "snd.f", "snd.s", "snd.o",
+    "rcv.i", "rcv.f", "rcv.s", "rcv.o",
     "select_start", "select_end", "chan_try", "chan_check",
 
-    "shift.i", "shift.f", "shift.s", "shift.v", "shift.o",
+    "shift.i", "shift.f", "shift.s", "shift.o",
     
-    "lstore.i", "lstore.f", "lstore.s", "lstore.v", "lstore.o",
-    "lstore2.i", "lstore2.f", "lstore2.s", "lstore2.v", "lstore2.o",
-    "lload.i", "lload.f", "lload.s", "lload.v", "lload.o",
+    "lstore.i", "lstore.f", "lstore.s", "lstore.o",
+    "lstore2.i", "lstore2.f", "lstore2.s", "lstore2.o",
+    "lload.i", "lload.f", "lload.s", "lload.o",
 
-    "gstore.i", "gstore.f", "gstore.s", "gstore.v", "gstore.o",
-    "gstore2.i", "gstore2.f", "gstore2.s", "gstore2.v", "gstore2.o",
-    "gload.i", "gload.f", "gload.s", "gload.v", "gload.o",
+    "gstore.i", "gstore.f", "gstore.s", "gstore.o",
+    "gstore2.i", "gstore2.f", "gstore2.s", "gstore2.o",
+    "gload.i", "gload.f", "gload.s", "gload.o",
     
-    "rstore.i", "rstore.f", "rstore.s", "rstore.v", "rstore.o",
-    "rstore2.i", "rstore2.f", "rstore2.s", "rstore2.v", "rstore2.o",
+    "rstore.i", "rstore.f", "rstore.s", "rstore.o",
+    "rstore2.i", "rstore2.f", "rstore2.s", "rstore2.o",
 
     "field",
-    "fstore.i", "fstore.f", "fstore.s", "fstore.v", "fstore.o",
-    "fload.i", "fload.f", "fload.s", "fload.v", "fload.o",
+    "fstore.i", "fstore.f", "fstore.s", "fstore.o",
+    "fload.i", "fload.f", "fload.s", "fload.o",
 
     "const.i", "const.f", "const.b", "const.s", "meta",
     
-    "gpush.i", "gpush.f", "gpush.s", "gpush.v", "gpush.o",
-    "gpop.i", "gpop.f", "gpop.s", "gpop.v", "gpop.o",
+    "gpush.i", "gpush.f", "gpush.s", "gpush.o",
+    "gpop.i", "gpop.f", "gpop.s", "gpop.o",
 
-    "eq.i", "eq.f", "eq.s", "eq.v",
-    "neq.i", "neq.f", "neq.s", "neq.v",
-    "geq.i", "geq.f", "geq.v",
-    "leq.i", "leq.f", "leq.v",
-    "gt.i", "gt.f", "gt.v",
-    "lt.i", "lt.f", "lt.v",
+    "eq.i", "eq.f", "eq.s",
+    "neq.i", "neq.f", "neq.s",
+    "geq.i", "geq.f",
+    "leq.i", "leq.f",
+    "gt.i", "gt.f",
+    "lt.i", "lt.f",
 
-    "and.i", "and.v", "or.i", "or.v", "not.i", "not.v",
-    "cat.s", "cat.v", "cat.n",
-    "add.i", "add.f", "add.v",
-    "sub.i", "sub.f", "sub.v",
-    "mul.i", "mul.f", "mul.v",
-    "div.i", "div.f", "div.v",
-    "rem.i", "rem.f", "rem.v",
-    "neg.i", "neg.f", "neg.v",
-    "inc.i", "inc.f", "inc.v",
-    "dec.i", "dec.f", "dec.v",
+    "and.i", "or.i", "not.i",
+    "cat.s", "cat.n",
+    "add.i", "add.f",
+    "sub.i", "sub.f",
+    "mul.i", "mul.f",
+    "div.i", "div.f",
+    "rem.i", "rem.f",
+    "neg.i", "neg.f",
+    "inc.i", "inc.f",
+    "dec.i", "dec.f",
 
     "setup_it",
 
@@ -70,11 +70,14 @@ private string[] instructions = [
     "jmp", "jmp_eq", "jmp_neq",
 
     "array", "len",
-    "index.n", "index.v",
-    "copy.n", "copy.v",
+    "index.n",
+    "copy.n",
     "append", "prepend",
 
-    "dyncast.v"
+    "array.i", "array.f", "array.s", "array.o",
+    "len.i", "len.f", "len.s", "len.o",
+    "idx.i", "idx.f", "idx.s", "idx.o",
+    "idx2.i", "idx2.f", "idx2.s", "idx2.o"
 ];
 
 /// Dump the bytecode's instruction list in a pretty format.
@@ -97,7 +100,8 @@ string grDump(GrBytecode bytecode) {
             (op >= GrOpcode.GlobalPush_Int && op <= GrOpcode.GlobalPush_Object) ||
             (op >= GrOpcode.LocalStack && op <= GrOpcode.Call) ||
             (op == GrOpcode.Array || op == GrOpcode.New || op == GrOpcode.GetField) ||
-            (op >= GrOpcode.Channel_Int && op <= GrOpcode.Channel_Object)
+            (op >= GrOpcode.Channel_Int && op <= GrOpcode.Channel_Object) ||
+            (op >= GrOpcode.Array_Int && op <= GrOpcode.Array_Object)
             )
             line ~= to!string(grGetInstructionUnsignedValue(opcode));
         else if(op >= GrOpcode.FieldStore_Int && op <= GrOpcode.FieldLoad_Object)
@@ -112,7 +116,7 @@ string grDump(GrBytecode bytecode) {
             line ~= to!string(bytecode.fconsts[grGetInstructionUnsignedValue(opcode)]);
         else if(op == GrOpcode.Const_Bool)
             line ~= (grGetInstructionUnsignedValue(opcode) ? "true" : "false");
-        else if(op == GrOpcode.Const_String || op == GrOpcode.Const_Meta || op == GrOpcode.VariantCall)
+        else if(op == GrOpcode.Const_String || op == GrOpcode.Const_Meta)
             line ~= "\"" ~ to!string(bytecode.sconsts[grGetInstructionUnsignedValue(opcode)]) ~ "\"";
         else if(op >= GrOpcode.Jump && op <= GrOpcode.JumpNotEqual)
             line ~= to!string(i + grGetInstructionSignedValue(opcode));

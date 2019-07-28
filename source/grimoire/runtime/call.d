@@ -3,7 +3,7 @@ module grimoire.runtime.call;
 import std.stdio: writeln;
 import std.conv: to;
 import grimoire.compiler;
-import grimoire.runtime.context, grimoire.runtime.variant, grimoire.runtime.array;
+import grimoire.runtime.context, grimoire.runtime.array;
 
 alias GrCallback = void function(GrCall);
 
@@ -14,7 +14,7 @@ class GrCall {
         GrCallback _callback;
 
         dstring[] _ilocals, _flocals, _slocals, _vlocals, _olocals;
-        int _iparams, _fparams, _sparams, _vparams, _oparams;
+        int _iparams, _fparams, _sparams, _oparams;
         int _iresults, _fresults, _sresults, _vresults, _oresults;
         bool _hasResult, _isInitialized;
     }
@@ -42,7 +42,6 @@ class GrCall {
         _iparams = 0;
         _fparams = 0;
         _sparams = 0;
-        _vparams = 0;
         _oparams = 0;
 
         auto inSignature =  _primitive.inSignature;
@@ -78,10 +77,6 @@ class GrCall {
                 _sparams ++;
                 _slocals ~= name;
                 break;
-            case VariantType:
-                _vparams ++;
-                _vlocals ~= name;
-                break;
             case TupleType:
                 auto structure = grGetTuple(type.mangledType);
                 setupLocals(name ~ ":", structure.fields, structure.signature);
@@ -102,7 +97,6 @@ class GrCall {
         _iresults = 0;
         _fresults = 0;
         _sresults = 0;
-        _vresults = 0;
         _oresults = 0;
         _hasError = false;
 
@@ -112,7 +106,6 @@ class GrCall {
         _context.istackPos -= (_iparams - _iresults);
         _context.fstackPos -= (_fparams - _fresults);
         _context.sstackPos -= (_sparams - _sresults);
-        _context.vstackPos -= (_vparams - _vresults);
         _context.ostackPos -= (_oparams - _oresults);
 
         if(_hasError)
@@ -123,8 +116,10 @@ class GrCall {
     alias getBool = getParameter!bool;
     alias getInt = getParameter!int;
     alias getFloat = getParameter!float;
-    alias getVariant = getParameter!GrVariant;
-    alias getArray = getUserData!GrArray;
+    alias getIntArray = getUserData!GrIntArray;
+    alias getFloatArray = getUserData!GrFloatArray;
+    alias getStringArray = getUserData!GrStringArray;
+    alias getObjectArray = getUserData!GrObjectArray;
 
     T getUserData(T)(dstring parameter) {
         return cast(T)getParameter!(void*)(parameter);
@@ -175,17 +170,6 @@ class GrCall {
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.sstack[(_context.sstackPos - _sparams) + index + 1];
         }
-        else static if(is(T == GrVariant)) {
-            int index;
-            for(; index < _vlocals.length; index ++) {
-                if(parameter == _vlocals[index])
-                    break;
-            }
-            if(index == _vlocals.length)
-                throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
-                    ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
-            return _context.vstack[(_context.vstackPos - _vparams) + index + 1];
-        }
         else static if(is(T == void*)) {
             int index;
             for(; index < _olocals.length; index ++) {
@@ -203,8 +187,10 @@ class GrCall {
     alias setBool = setResult!bool;
     alias setInt = setResult!int;
     alias setFloat = setResult!float;
-    alias setVariant = setResult!GrVariant;
-    alias setArray = setUserData!GrArray;
+    alias setIntArray = setUserData!GrIntArray;
+    alias setFloatArray = setUserData!GrFloatArray;
+    alias setStringArray = setUserData!GrStringArray;
+    alias setObjectArray = setUserData!GrObjectArray;
     
     void setUserData(T)(T value) {
         setResult!(void*)(cast(void*)value);
@@ -226,10 +212,6 @@ class GrCall {
         else static if(is(T == dstring)) {
             _sresults ++;
             _context.sstack[(_context.sstackPos - _sparams) + _sresults] = value;
-        }
-        else static if(is(T == GrVariant)) {
-            _vresults ++;
-            _context.vstack[(_context.vstackPos - _vparams) + _vresults] = value;
         }
         else static if(is(T == void*)) {
             _oresults ++;

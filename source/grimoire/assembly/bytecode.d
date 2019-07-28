@@ -19,50 +19,50 @@ enum GrOpcode {
     Nop, Raise, Try, Catch,
     Kill, KillAll, Yield, Task, AnonymousTask, New,
 
-    Channel_Int, Channel_Float, Channel_String, Channel_Variant, Channel_Object,
-    Send_Int, Send_Float, Send_String, Send_Variant, Send_Object,
-    Receive_Int, Receive_Float, Receive_String, Receive_Variant, Receive_Object,
+    Channel_Int, Channel_Float, Channel_String, Channel_Object,
+    Send_Int, Send_Float, Send_String, Send_Object,
+    Receive_Int, Receive_Float, Receive_String, Receive_Object,
     StartSelectChannel, EndSelectChannel, TryChannel, CheckChannel,
    
-    ShiftStack_Int, ShiftStack_Float, ShiftStack_String, ShiftStack_Variant, ShiftStack_Object,
+    ShiftStack_Int, ShiftStack_Float, ShiftStack_String, ShiftStack_Object,
     
-    LocalStore_Int, LocalStore_Float, LocalStore_String, LocalStore_Variant, LocalStore_Object,
-    LocalStore2_Int, LocalStore2_Float, LocalStore2_String, LocalStore2_Variant, LocalStore2_Object,
-    LocalLoad_Int, LocalLoad_Float, LocalLoad_String, LocalLoad_Variant, LocalLoad_Object,
+    LocalStore_Int, LocalStore_Float, LocalStore_String, LocalStore_Object,
+    LocalStore2_Int, LocalStore2_Float, LocalStore2_String, LocalStore2_Object,
+    LocalLoad_Int, LocalLoad_Float, LocalLoad_String, LocalLoad_Object,
     
-    GlobalStore_Int, GlobalStore_Float, GlobalStore_String, GlobalStore_Variant, GlobalStore_Object,
-    GlobalStore2_Int, GlobalStore2_Float, GlobalStore2_String, GlobalStore2_Variant, GlobalStore2_Object,
-    GlobalLoad_Int, GlobalLoad_Float, GlobalLoad_String, GlobalLoad_Variant, GlobalLoad_Object,
+    GlobalStore_Int, GlobalStore_Float, GlobalStore_String, GlobalStore_Object,
+    GlobalStore2_Int, GlobalStore2_Float, GlobalStore2_String, GlobalStore2_Object,
+    GlobalLoad_Int, GlobalLoad_Float, GlobalLoad_String, GlobalLoad_Object,
 
-    RefStore_Int, RefStore_Float, RefStore_String, RefStore_Variant, RefStore_Object,
-    RefStore2_Int, RefStore2_Float, RefStore2_String, RefStore2_Variant, RefStore2_Object,
-    
+    RefStore_Int, RefStore_Float, RefStore_String, RefStore_Object,
+    RefStore2_Int, RefStore2_Float, RefStore2_String, RefStore2_Object,
+
     GetField,
-    FieldStore_Int, FieldStore_Float, FieldStore_String, FieldStore_Variant, FieldStore_Object,
-    FieldLoad_Int, FieldLoad_Float, FieldLoad_String, FieldLoad_Variant, FieldLoad_Object,
+    FieldStore_Int, FieldStore_Float, FieldStore_String, FieldStore_Object,
+    FieldLoad_Int, FieldLoad_Float, FieldLoad_String, FieldLoad_Object,
 
     Const_Int, Const_Float, Const_Bool, Const_String, Const_Meta,
     
-    GlobalPush_Int, GlobalPush_Float, GlobalPush_String, GlobalPush_Variant, GlobalPush_Object,
-    GlobalPop_Int, GlobalPop_Float, GlobalPop_String, GlobalPop_Variant, GlobalPop_Object,
+    GlobalPush_Int, GlobalPush_Float, GlobalPush_String, GlobalPush_Object,
+    GlobalPop_Int, GlobalPop_Float, GlobalPop_String, GlobalPop_Object,
 
-    Equal_Int, Equal_Float, Equal_String, Equal_Variant,
-    NotEqual_Int, NotEqual_Float, NotEqual_String, NotEqual_Variant,
-    GreaterOrEqual_Int, GreaterOrEqual_Float, GreaterOrEqual_Variant,
-    LesserOrEqual_Int, LesserOrEqual_Float, LesserOrEqual_Variant,
-    Greater_Int, Greater_Float, Greater_Variant,
-    Lesser_Int, Lesser_Float, Lesser_Variant,
+    Equal_Int, Equal_Float, Equal_String,
+    NotEqual_Int, NotEqual_Float, NotEqual_String,
+    GreaterOrEqual_Int, GreaterOrEqual_Float,
+    LesserOrEqual_Int, LesserOrEqual_Float,
+    Greater_Int, Greater_Float,
+    Lesser_Int, Lesser_Float,
 
-    And_Int, And_Variant, Or_Int, Or_Variant, Not_Int, Not_Variant,
-    Concatenate_String, Concatenate_Variant, Concatenate_Array,
-    Add_Int, Add_Float, Add_Variant,
-    Substract_Int, Substract_Float, Substract_Variant,
-    Multiply_Int, Multiply_Float, Multiply_Variant,
-    Divide_Int, Divide_Float, Divide_Variant,
-    Remainder_Int, Remainder_Float, Remainder_Variant,
-    Negative_Int, Negative_Float, Negative_Variant,
-    Increment_Int, Increment_Float, Increment_Variant,
-    Decrement_Int, Decrement_Float, Decrement_Variant,
+    And_Int, Or_Int, Not_Int,
+    Concatenate_String, Concatenate_Array,
+    Add_Int, Add_Float,
+    Substract_Int, Substract_Float,
+    Multiply_Int, Multiply_Float,
+    Divide_Int, Divide_Float,
+    Remainder_Int, Remainder_Float,
+    Negative_Int, Negative_Float,
+    Increment_Int, Increment_Float,
+    Decrement_Int, Decrement_Float,
 
     SetupIterator,
 
@@ -71,11 +71,14 @@ enum GrOpcode {
     Jump, JumpEqual, JumpNotEqual,
 
     Array, Length,
-    Index_Array, Index_Variant,
-    Copy_Array, Copy_Variant,
+    Index_Array,
+    Copy_Array,
     Append, Prepend,
 
-    DynCast_Variant
+    Array_Int, Array_Float, Array_String, Array_Object,
+    Length_Int, Length_Float, Length_String, Length_Object,
+    Index_Int, Index_Float, Index_String, Index_Object,
+    Index2_Int, Index2_Float, Index2_String, Index2_Object
 }
 
 /// Compiled form of grimoire

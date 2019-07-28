@@ -9,7 +9,6 @@
 module grimoire.runtime.context;
 
 import grimoire.runtime.engine;
-import grimoire.runtime.variant;
 import grimoire.runtime.array;
 import grimoire.runtime.object;
 
@@ -31,7 +30,6 @@ struct GrContextState {
     int istackPos,
         fstackPos,
         sstackPos,
-        vstackPos,
         ostackPos;
     GrStackFrame stackFrame;
     uint stackPos;
@@ -57,7 +55,6 @@ final class GrContext {
     int[] ilocals;
     float[] flocals;
     dstring[] slocals;
-    GrVariant[] vlocals;
     void*[] olocals;
 
     /// Callstack
@@ -69,7 +66,6 @@ final class GrContext {
     int[] istack;
     float[] fstack;
     dstring[] sstack;
-    GrVariant[] vstack;
     void*[] ostack;
 
     /// Operation pointer.
@@ -83,7 +79,6 @@ final class GrContext {
     int istackPos = -1,
         fstackPos = -1,
         sstackPos = -1,
-        vstackPos = -1,
         ostackPos = -1;
 
     /// Kill state, unwind the call stack and call all registered deferred statements.
@@ -124,7 +119,6 @@ final class GrContext {
         istack = new int[stackLimit];
         fstack = new float[stackLimit];
         sstack = new dstring[stackLimit];
-        vstack = new GrVariant[stackLimit];
         ostack = new void*[stackLimit];
     }
 
@@ -137,7 +131,6 @@ final class GrContext {
         ilocals = new int[localsLimit];
         flocals = new float[localsLimit];
         slocals = new dstring[localsLimit];
-        vlocals = new GrVariant[localsLimit];
         olocals = new void*[localsLimit];
     }
 
@@ -153,8 +146,8 @@ final class GrContext {
     alias setBool = setValue!bool;
     alias setInt = setValue!int;
     alias setFloat = setValue!float;
-    alias setVariant = setValue!GrVariant;
-    alias setArray = setValue!(GrVariant[]);
+    //alias setVariant = setValue!GrVariant;
+    //alias setArray = setValue!(GrVariant[]);
 
     void setUserData(T)(T value) {
         setValue!(void*)(cast(void*)value);
@@ -177,10 +170,10 @@ final class GrContext {
             sstackPos ++;
             sstack[sstackPos] = value;
         }
-        else static if(is(T == GrVariant)) {
+        /*else static if(is(T == GrVariant)) {
             vstackPos ++;
             vstack[vstackPos] = value;
-        }
+        }*/
         else static if(is(T == void*)) {
             ostackPos ++;
             ostack[ostackPos] = value;
@@ -192,7 +185,6 @@ final class GrContext {
         state.istackPos = istackPos;
         state.fstackPos = fstackPos;
         state.sstackPos = sstackPos;
-        state.vstackPos = vstackPos;
         state.ostackPos = ostackPos;
         state.stackPos = stackPos;
         state.stackFrame = callStack[stackPos];
@@ -207,7 +199,6 @@ final class GrContext {
         istackPos = state.istackPos;
         fstackPos = state.fstackPos;
         sstackPos = state.sstackPos;
-        vstackPos = state.vstackPos;
         ostackPos = state.ostackPos;
         stackPos = state.stackPos;
         localsPos = state.localsPos;

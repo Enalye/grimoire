@@ -1,7 +1,5 @@
 module grimoire.runtime.object;
 
-import grimoire.runtime.variant;
-
 final class GrFieldValue {
     union {
         int ivalue;

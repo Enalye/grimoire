@@ -19,16 +19,14 @@ void grLoadStdLibPrint() {
 	grAddPrimitive(&printb, "print", ["value"], [grBool]);
 	grAddPrimitive(&printi, "print", ["value"], [grInt]);
 	grAddPrimitive(&printf, "print", ["value"], [grFloat]);
-	grAddPrimitive(&printv, "print", ["value"], [grVariant]);
-	grAddPrimitive(&printn, "print", ["value"], [grArray]);
+	grAddPrimitive(&printni, "print", ["value"], [grIntArray]);
 
     //printl
     grAddPrimitive(&printls, "printl", ["value"], [grString]);
 	grAddPrimitive(&printlb, "printl", ["value"], [grBool]);
 	grAddPrimitive(&printli, "printl", ["value"], [grInt]);
 	grAddPrimitive(&printlf, "printl", ["value"], [grFloat]);
-	grAddPrimitive(&printlv, "printl", ["value"], [grVariant]);
-	grAddPrimitive(&println, "printl", ["value"], [grArray]);
+	grAddPrimitive(&printlni, "printl", ["value"], [grIntArray]);
 }
 
 // print
@@ -48,13 +46,9 @@ private void printf(GrCall call) {
 	write(call.getFloat("value"));
 }
 
-private void printv(GrCall call) {
-	write(call.getVariant("value").getString(call));
-}
-
-private void printn(GrCall call) {
-    auto ary = call.getArray("value");
-    write(ary.getString(call));
+private void printni(GrCall call) {
+    auto ary = call.getIntArray("value");
+    write(ary.data);
 }
 
 // printl
@@ -75,11 +69,7 @@ private void printlf(GrCall call) {
 	writeln(call.getFloat("value"));
 }
 
-private void printlv(GrCall call) {
-	writeln(call.getVariant("value").getString(call));
-}
-
-private void println(GrCall call) {
-    auto ary = call.getArray("value");
-    writeln(ary.getString(call));
+private void printlni(GrCall call) {
+    auto ary = call.getIntArray("value");
+    writeln(ary.data);
 }
