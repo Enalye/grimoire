@@ -53,7 +53,7 @@ private string[] instructions = [
     "lt.i", "lt.f",
 
     "and.i", "or.i", "not.i",
-    "cat.s", "cat.n",
+    "cat.s",
     "add.i", "add.f",
     "sub.i", "sub.f",
     "mul.i", "mul.f",
@@ -77,7 +77,10 @@ private string[] instructions = [
     "array.i", "array.f", "array.s", "array.o",
     "len.i", "len.f", "len.s", "len.o",
     "idx.i", "idx.f", "idx.s", "idx.o",
-    "idx2.i", "idx2.f", "idx2.s", "idx2.o"
+    "idx2.i", "idx2.f", "idx2.s", "idx2.o",
+    "ncat.i", "ncat.f", "ncat.s", "ncat.o",
+    "append.i", "append.f", "append.s", "append.o",
+    "prepend.i", "prepend.f", "prepend.s", "prepend.o"
 ];
 
 /// Dump the bytecode's instruction list in a pretty format.

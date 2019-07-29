@@ -54,7 +54,7 @@ enum GrOpcode {
     Lesser_Int, Lesser_Float,
 
     And_Int, Or_Int, Not_Int,
-    Concatenate_String, Concatenate_Array,
+    Concatenate_String,
     Add_Int, Add_Float,
     Substract_Int, Substract_Float,
     Multiply_Int, Multiply_Float,
@@ -78,7 +78,11 @@ enum GrOpcode {
     Array_Int, Array_Float, Array_String, Array_Object,
     Length_Int, Length_Float, Length_String, Length_Object,
     Index_Int, Index_Float, Index_String, Index_Object,
-    Index2_Int, Index2_Float, Index2_String, Index2_Object
+    Index2_Int, Index2_Float, Index2_String, Index2_Object,
+
+    ConcatenateArray_Int, ConcatenateArray_Float, ConcatenateArray_String, ConcatenateArray_Object,
+    Append_Int, Append_Float, Append_String, Append_Object,
+    Prepend_Int, Prepend_Float, Prepend_String, Prepend_Object
 }
 
 /// Compiled form of grimoire

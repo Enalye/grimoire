@@ -1357,6 +1357,38 @@ class GrEngine {
                     context.ostackPos --;
 					context.pc ++;
 					break;
+                case ConcatenateArray_Int:
+                    GrIntArray nArray = new GrIntArray;
+                    context.ostackPos --;
+					nArray.data = (cast(GrIntArray)context.ostack[context.ostackPos]).data
+                        ~ (cast(GrIntArray)context.ostack[context.ostackPos + 1]).data;
+                    context.ostack[context.ostackPos] = cast(void*)nArray;
+					context.pc ++;
+					break;
+                case ConcatenateArray_Float:
+                    GrFloatArray nArray = new GrFloatArray;
+                    context.ostackPos --;
+					nArray.data = (cast(GrFloatArray)context.ostack[context.ostackPos]).data
+                        ~ (cast(GrFloatArray)context.ostack[context.ostackPos + 1]).data;
+                    context.ostack[context.ostackPos] = cast(void*)nArray;
+					context.pc ++;
+					break;
+                case ConcatenateArray_String:
+                    GrStringArray nArray = new GrStringArray;
+                    context.ostackPos --;
+					nArray.data = (cast(GrStringArray)context.ostack[context.ostackPos]).data
+                        ~ (cast(GrStringArray)context.ostack[context.ostackPos + 1]).data;
+                    context.ostack[context.ostackPos] = cast(void*)nArray;
+					context.pc ++;
+					break;
+                case ConcatenateArray_Object:
+                    GrObjectArray nArray = new GrObjectArray;
+                    context.ostackPos --;
+					nArray.data = (cast(GrObjectArray)context.ostack[context.ostackPos]).data
+                        ~ (cast(GrObjectArray)context.ostack[context.ostackPos + 1]).data;
+                    context.ostack[context.ostackPos] = cast(void*)nArray;
+					context.pc ++;
+					break;
 				default:
 					throw new Exception("Invalid instruction at (" ~ to!string(context.pc) ~ "): " ~ to!string(grGetInstructionOpcode(opcode)));
                 }

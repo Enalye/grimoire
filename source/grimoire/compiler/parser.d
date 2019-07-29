@@ -779,8 +779,30 @@ class GrParser {
         case ArrayType:
             switch(lexType) with(GrLexemeType) {
             case Concatenate:
-				addInstruction(GrOpcode.Concatenate_Array);
-				return GrType(GrBaseType.ArrayType);
+				GrType subType = grUnmangle(varType.mangledType);
+                switch(subType.baseType) with(GrBaseType) {
+                case IntType:
+                case BoolType:
+                case FunctionType:
+                case TaskType:
+                    addInstruction(GrOpcode.ConcatenateArray_Int);
+                    return varType;
+                case FloatType:
+                    addInstruction(GrOpcode.ConcatenateArray_Float);
+                    return varType;
+                case StringType:
+                    addInstruction(GrOpcode.ConcatenateArray_String);
+                    return varType;
+                case StructType:
+                case ArrayType:
+                case UserType:
+                case ChanType:
+                    addInstruction(GrOpcode.ConcatenateArray_Object);
+                    return varType;
+                default:
+                    break;
+                }
+                break;
             default:
                 break;
             }
