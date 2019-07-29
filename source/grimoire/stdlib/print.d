@@ -20,6 +20,8 @@ void grLoadStdLibPrint() {
 	grAddPrimitive(&printi, "print", ["value"], [grInt]);
 	grAddPrimitive(&printf, "print", ["value"], [grFloat]);
 	grAddPrimitive(&printni, "print", ["value"], [grIntArray]);
+	grAddPrimitive(&printnf, "print", ["value"], [grFloatArray]);
+	grAddPrimitive(&printns, "print", ["value"], [grStringArray]);
 
     //printl
     grAddPrimitive(&printls, "printl", ["value"], [grString]);
@@ -27,6 +29,8 @@ void grLoadStdLibPrint() {
 	grAddPrimitive(&printli, "printl", ["value"], [grInt]);
 	grAddPrimitive(&printlf, "printl", ["value"], [grFloat]);
 	grAddPrimitive(&printlni, "printl", ["value"], [grIntArray]);
+	grAddPrimitive(&printlnf, "printl", ["value"], [grFloatArray]);
+	grAddPrimitive(&printlns, "printl", ["value"], [grStringArray]);
 }
 
 // print
@@ -51,6 +55,16 @@ private void printni(GrCall call) {
     write(ary.data);
 }
 
+private void printnf(GrCall call) {
+    auto ary = call.getFloatArray("value");
+    write(ary.data);
+}
+
+private void printns(GrCall call) {
+    auto ary = call.getStringArray("value");
+    write(ary.data);
+}
+
 // printl
 
 private void printls(GrCall call) {
@@ -71,5 +85,15 @@ private void printlf(GrCall call) {
 
 private void printlni(GrCall call) {
     auto ary = call.getIntArray("value");
+    writeln(ary.data);
+}
+
+private void printlnf(GrCall call) {
+    auto ary = call.getFloatArray("value");
+    writeln(ary.data);
+}
+
+private void printlns(GrCall call) {
+    auto ary = call.getStringArray("value");
     writeln(ary.data);
 }

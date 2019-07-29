@@ -98,6 +98,8 @@ const GrType grFloat = GrType(GrBaseType.FloatType);
 const GrType grBool = GrType(GrBaseType.BoolType);
 const GrType grString = GrType(GrBaseType.StringType);
 const GrType grIntArray = GrType(GrBaseType.ArrayType, grMangleFunction([grInt]));
+const GrType grFloatArray = GrType(GrBaseType.ArrayType, grMangleFunction([grFloat]));
+const GrType grStringArray = GrType(GrBaseType.ArrayType, grMangleFunction([grString]));
 
 
 GrType grPackTuple(GrType[] types) {
