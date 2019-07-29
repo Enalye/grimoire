@@ -69,18 +69,18 @@ private string[] instructions = [
     "ret", "unwind", "defer",
     "jmp", "jmp_eq", "jmp_neq",
 
-    "array", "len",
-    "index.n",
-    "copy.n",
-    "append", "prepend",
-
     "array.i", "array.f", "array.s", "array.o",
     "len.i", "len.f", "len.s", "len.o",
     "idx.i", "idx.f", "idx.s", "idx.o",
+
     "idx2.i", "idx2.f", "idx2.s", "idx2.o",
-    "ncat.i", "ncat.f", "ncat.s", "ncat.o",
+    "cat.ni", "cat.nf", "cat.ns", "cat.no",
+
     "append.i", "append.f", "append.s", "append.o",
-    "prepend.i", "prepend.f", "prepend.s", "prepend.o"
+    "prepend.i", "prepend.f", "prepend.s", "prepend.o",
+
+    "eq.ni", "eq.nf", "eq.ns",
+    "neq.ni", "neq.nf", "neq.ns",
 ];
 
 /// Dump the bytecode's instruction list in a pretty format.
@@ -102,7 +102,7 @@ string grDump(GrBytecode bytecode) {
             (op >= GrOpcode.GlobalStore_Int && op <= GrOpcode.GlobalLoad_Object) ||
             (op >= GrOpcode.GlobalPush_Int && op <= GrOpcode.GlobalPush_Object) ||
             (op >= GrOpcode.LocalStack && op <= GrOpcode.Call) ||
-            (op == GrOpcode.Array || op == GrOpcode.New || op == GrOpcode.GetField) ||
+            (op == GrOpcode.New || op == GrOpcode.GetField) ||
             (op >= GrOpcode.Channel_Int && op <= GrOpcode.Channel_Object) ||
             (op >= GrOpcode.Array_Int && op <= GrOpcode.Array_Object)
             )

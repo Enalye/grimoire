@@ -70,19 +70,17 @@ enum GrOpcode {
     Return, Unwind, Defer,
     Jump, JumpEqual, JumpNotEqual,
 
-    Array, Length,
-    Index_Array,
-    Copy_Array,
-    Append, Prepend,
-
     Array_Int, Array_Float, Array_String, Array_Object,
     Length_Int, Length_Float, Length_String, Length_Object,
     Index_Int, Index_Float, Index_String, Index_Object,
     Index2_Int, Index2_Float, Index2_String, Index2_Object,
 
-    ConcatenateArray_Int, ConcatenateArray_Float, ConcatenateArray_String, ConcatenateArray_Object,
+    Concatenate_IntArray, Concatenate_FloatArray, Concatenate_StringArray, Concatenate_ObjectArray,
     Append_Int, Append_Float, Append_String, Append_Object,
-    Prepend_Int, Prepend_Float, Prepend_String, Prepend_Object
+    Prepend_Int, Prepend_Float, Prepend_String, Prepend_Object,
+
+    Equal_IntArray, Equal_FloatArray, Equal_StringArray,
+    NotEqual_IntArray, NotEqual_FloatArray, NotEqual_StringArray
 }
 
 /// Compiled form of grimoire

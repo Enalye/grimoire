@@ -1357,7 +1357,7 @@ class GrEngine {
                     context.ostackPos --;
 					context.pc ++;
 					break;
-                case ConcatenateArray_Int:
+                case Concatenate_IntArray:
                     GrIntArray nArray = new GrIntArray;
                     context.ostackPos --;
 					nArray.data = (cast(GrIntArray)context.ostack[context.ostackPos]).data
@@ -1365,7 +1365,7 @@ class GrEngine {
                     context.ostack[context.ostackPos] = cast(void*)nArray;
 					context.pc ++;
 					break;
-                case ConcatenateArray_Float:
+                case Concatenate_FloatArray:
                     GrFloatArray nArray = new GrFloatArray;
                     context.ostackPos --;
 					nArray.data = (cast(GrFloatArray)context.ostack[context.ostackPos]).data
@@ -1373,7 +1373,7 @@ class GrEngine {
                     context.ostack[context.ostackPos] = cast(void*)nArray;
 					context.pc ++;
 					break;
-                case ConcatenateArray_String:
+                case Concatenate_StringArray:
                     GrStringArray nArray = new GrStringArray;
                     context.ostackPos --;
 					nArray.data = (cast(GrStringArray)context.ostack[context.ostackPos]).data
@@ -1381,7 +1381,7 @@ class GrEngine {
                     context.ostack[context.ostackPos] = cast(void*)nArray;
 					context.pc ++;
 					break;
-                case ConcatenateArray_Object:
+                case Concatenate_ObjectArray:
                     GrObjectArray nArray = new GrObjectArray;
                     context.ostackPos --;
 					nArray.data = (cast(GrObjectArray)context.ostack[context.ostackPos]).data
@@ -1453,6 +1453,54 @@ class GrEngine {
                     context.ostack[context.ostackPos] = cast(void*)nArray;
 					context.pc ++;
                     break;
+                case Equal_IntArray:
+                    context.istackPos ++;
+					context.istack[context.istackPos] =
+                        (cast(GrIntArray)context.ostack[context.ostackPos - 1]).data
+                        == (cast(GrIntArray)context.ostack[context.ostackPos]).data;
+                    context.ostackPos -= 2;
+					context.pc ++;
+					break;
+                case Equal_FloatArray:
+                    context.istackPos ++;
+					context.istack[context.istackPos] =
+                        (cast(GrFloatArray)context.ostack[context.ostackPos - 1]).data
+                        == (cast(GrFloatArray)context.ostack[context.ostackPos]).data;
+                    context.ostackPos -= 2;
+					context.pc ++;
+					break;
+                case Equal_StringArray:
+                    context.istackPos ++;
+					context.istack[context.istackPos] =
+                        (cast(GrStringArray)context.ostack[context.ostackPos - 1]).data
+                        == (cast(GrStringArray)context.ostack[context.ostackPos]).data;
+                    context.ostackPos -= 2;
+					context.pc ++;
+					break;
+                case NotEqual_IntArray:
+                    context.istackPos ++;
+					context.istack[context.istackPos] =
+                        (cast(GrIntArray)context.ostack[context.ostackPos - 1]).data
+                        != (cast(GrIntArray)context.ostack[context.ostackPos]).data;
+                    context.ostackPos -= 2;
+					context.pc ++;
+					break;
+                case NotEqual_FloatArray:
+                    context.istackPos ++;
+					context.istack[context.istackPos] =
+                        (cast(GrFloatArray)context.ostack[context.ostackPos - 1]).data
+                        != (cast(GrFloatArray)context.ostack[context.ostackPos]).data;
+                    context.ostackPos -= 2;
+					context.pc ++;
+					break;
+                case NotEqual_StringArray:
+                    context.istackPos ++;
+					context.istack[context.istackPos] =
+                        (cast(GrStringArray)context.ostack[context.ostackPos - 1]).data
+                        != (cast(GrStringArray)context.ostack[context.ostackPos]).data;
+                    context.ostackPos -= 2;
+					context.pc ++;
+					break;
 				default:
 					throw new Exception("Invalid instruction at (" ~ to!string(context.pc) ~ "): " ~ to!string(grGetInstructionOpcode(opcode)));
                 }

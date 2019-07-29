@@ -822,6 +822,44 @@ class GrParser {
 			break;
         case ArrayType:
             switch(lexType) with(GrLexemeType) {
+            case Equal:
+                const GrType subType = grUnmangle(varType.mangledType);
+                switch(subType.baseType) with(GrBaseType) {
+                case IntType:
+                case BoolType:
+                case FunctionType:
+                case TaskType:
+                    addInstruction(GrOpcode.Equal_IntArray);
+                    return grBool;
+                case FloatType:
+                    addInstruction(GrOpcode.Equal_FloatArray);
+                    return grBool;
+                case StringType:
+                    addInstruction(GrOpcode.Equal_StringArray);
+                    return grBool;
+                default:
+                    break;
+                }
+                break;
+            case NotEqual:
+                const GrType subType = grUnmangle(varType.mangledType);
+                switch(subType.baseType) with(GrBaseType) {
+                case IntType:
+                case BoolType:
+                case FunctionType:
+                case TaskType:
+                    addInstruction(GrOpcode.NotEqual_IntArray);
+                    return grBool;
+                case FloatType:
+                    addInstruction(GrOpcode.NotEqual_FloatArray);
+                    return grBool;
+                case StringType:
+                    addInstruction(GrOpcode.NotEqual_StringArray);
+                    return grBool;
+                default:
+                    break;
+                }
+                break;
             case Concatenate:
 				const GrType subType = grUnmangle(varType.mangledType);
                 switch(subType.baseType) with(GrBaseType) {
@@ -829,19 +867,19 @@ class GrParser {
                 case BoolType:
                 case FunctionType:
                 case TaskType:
-                    addInstruction(GrOpcode.ConcatenateArray_Int);
+                    addInstruction(GrOpcode.Concatenate_IntArray);
                     return varType;
                 case FloatType:
-                    addInstruction(GrOpcode.ConcatenateArray_Float);
+                    addInstruction(GrOpcode.Concatenate_FloatArray);
                     return varType;
                 case StringType:
-                    addInstruction(GrOpcode.ConcatenateArray_String);
+                    addInstruction(GrOpcode.Concatenate_StringArray);
                     return varType;
                 case StructType:
                 case ArrayType:
                 case UserType:
                 case ChanType:
-                    addInstruction(GrOpcode.ConcatenateArray_Object);
+                    addInstruction(GrOpcode.Concatenate_ObjectArray);
                     return varType;
                 default:
                     break;
@@ -4042,18 +4080,6 @@ class GrParser {
 				currentType = parseChannelBuilder();
                 hasValue = true;
                 typeStack ~= currentType;
-                break;
-            case Copy:
-                switch(currentType.baseType) with(GrBaseType) {
-                case ArrayType:
-                    addInstruction(GrOpcode.Copy_Array);
-                    break;
-                default:
-                    logError("Invalid copy", "Cannot apply copy operator to that");
-                }
-                hasValue = true;
-                hadValue = false;
-                checkAdvance();
                 break;
             case Period:
                 if(currentType.baseType != GrBaseType.StructType)

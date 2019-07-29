@@ -1,4 +1,0 @@
-main {
-    loop yield;
-    assert(1 > 2, "HEY");
-}
