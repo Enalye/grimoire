@@ -3346,15 +3346,20 @@ class GrParser {
     }
 
     GrType parseArrayBuilder() {
-
         GrType arrayType = GrType(GrBaseType.ArrayType);
+        GrType subType = grVoid;
 
-        dstring[] temp;
-        auto signature = parseInSignature(temp, true);
-        if(signature.length > 1)
-            logError("Array type error", "Arrays can only have one type");
-        GrType subType = signature[0];
-        arrayType.mangledType = grMangleFunction(signature);
+        //Explicit type like: array(int)[1, 2, 3]
+        if(get().type == GrLexemeType.ArrayType) {
+            dstring[] temp;
+            auto signature = parseInSignature(temp, true);
+            if(signature.length > 1)
+                logError("Array type error", "Arrays can only have one type");
+            subType = signature[0];
+            arrayType.mangledType = grMangleFunction(signature);
+            if(subType.baseType == GrBaseType.VoidType)
+                logError("Array type error", "Array can not be of type void");
+        }
 
         if(get().type != GrLexemeType.LeftBracket)
             logError("Missing [", "Missing [");
@@ -3362,7 +3367,16 @@ class GrParser {
 
         int arraySize;
         while(get().type != GrLexemeType.RightBracket) {
-            convertType(parseSubExpression(false, true, true, false), subType);
+            if(subType.baseType == GrBaseType.VoidType) {
+                //Implicit type specified by the type of the first element.
+                subType = parseSubExpression(false, true, true, false);
+                arrayType.mangledType = grMangleFunction([subType]);
+                if(subType.baseType == GrBaseType.VoidType)
+                    logError("Array type error", "Array can not be of type void");
+            }
+            else {
+                convertType(parseSubExpression(false, true, true, false), subType);
+            }
             arraySize ++;
 
             if(get().type == GrLexemeType.RightBracket)
@@ -3862,50 +3876,55 @@ class GrParser {
                 break;
             case LeftBracket:
                 //Index
-                if(!hadValue)
-                    logError("Index error", "No array to index from");
-                hadValue = false;
-                currentType = parseArrayIndex(lastType);
-                hasReference = true;
-                //Check if there is an assignement or not, discard if it's only a rvalue
-                const auto nextLexeme = get();
-                if(requireLValue(nextLexeme.type)) {
-                    hasLValue = true;
-                    GrVariable refVar = new GrVariable;
-                    refVar.type.baseType = GrBaseType.ReferenceType;
-                    refVar.type.mangledType = grMangleFunction([currentType]);
-                    lvalues ~= refVar;
-                } else {
-                    final switch(currentType.baseType) with(GrBaseType) {
-                    case BoolType:
-                    case IntType:
-                    case FunctionType:
-                    case TaskType:
-                        setInstruction(GrOpcode.Index2_Int, cast(int)currentFunction.instructions.length - 1);
-                        break;
-                    case FloatType:
-                        setInstruction(GrOpcode.Index2_Float, cast(int)currentFunction.instructions.length - 1);
-                        break;
-                    case StringType:
-                        setInstruction(GrOpcode.Index2_String, cast(int)currentFunction.instructions.length - 1);
-                        break;
-                    case ArrayType:
-                    case StructType:
-                    case UserType:
-                    case ChanType:
-                    case ReferenceType:
-                        setInstruction(GrOpcode.Index2_Object, cast(int)currentFunction.instructions.length - 1);
-                        break;
-                    case VoidType:
-                    case TupleType:
-                    case InternalTupleType:
-                        logError("Array Error", "Cannot index an array of this type");
-                        break;
+                if(hadValue) {
+                    hadValue = false;
+                    currentType = parseArrayIndex(lastType);
+                    hasReference = true;
+                    //Check if there is an assignement or not, discard if it's only a rvalue
+                    const auto nextLexeme = get();
+                    if(requireLValue(nextLexeme.type)) {
+                        hasLValue = true;
+                        GrVariable refVar = new GrVariable;
+                        refVar.type.baseType = GrBaseType.ReferenceType;
+                        refVar.type.mangledType = grMangleFunction([currentType]);
+                        lvalues ~= refVar;
+                    } else {
+                        final switch(currentType.baseType) with(GrBaseType) {
+                        case BoolType:
+                        case IntType:
+                        case FunctionType:
+                        case TaskType:
+                            setInstruction(GrOpcode.Index2_Int, cast(int)currentFunction.instructions.length - 1);
+                            break;
+                        case FloatType:
+                            setInstruction(GrOpcode.Index2_Float, cast(int)currentFunction.instructions.length - 1);
+                            break;
+                        case StringType:
+                            setInstruction(GrOpcode.Index2_String, cast(int)currentFunction.instructions.length - 1);
+                            break;
+                        case ArrayType:
+                        case StructType:
+                        case UserType:
+                        case ChanType:
+                        case ReferenceType:
+                            setInstruction(GrOpcode.Index2_Object, cast(int)currentFunction.instructions.length - 1);
+                            break;
+                        case VoidType:
+                        case TupleType:
+                        case InternalTupleType:
+                            logError("Array Error", "Cannot index an array of this type");
+                            break;
+                        }
                     }
+                    lastType = currentType;
+                    typeStack[$ - 1] = currentType;
+                    hasValue = true;
                 }
-                lastType = currentType;
-                typeStack[$ - 1] = currentType;
-                hasValue = true;
+                else {
+                    currentType = parseArrayBuilder();
+                    typeStack ~= currentType;
+                    hasValue = true;
+                }
                 break;
             case Colon:
                 currentType = parseTupleField(currentType);
