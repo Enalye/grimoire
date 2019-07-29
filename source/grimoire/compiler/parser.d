@@ -571,16 +571,60 @@ class GrParser {
                 resultType = addCustomBinaryOperator(lexType, leftType, rightType);
             }
         }
-        /*else if(lexType == GrLexemeType.Concatenate && leftType.baseType == GrBaseType.ArrayType && leftType != rightType) {
-            convertType(rightType, grVariant);
-            addInstruction(GrOpcode.Append);
+        else if(lexType == GrLexemeType.Concatenate && leftType.baseType == GrBaseType.ArrayType && leftType != rightType) {
+            const GrType subType = grUnmangle(leftType.mangledType);
+            convertType(rightType, subType);
+            switch(subType.baseType) with(GrBaseType) {
+            case IntType:
+            case BoolType:
+            case FunctionType:
+            case TaskType:
+                addInstruction(GrOpcode.Append_Int);
+                break;
+            case FloatType:
+                addInstruction(GrOpcode.Append_Float);
+                break;
+            case StringType:
+                addInstruction(GrOpcode.Append_String);
+                break;
+            case StructType:
+            case ArrayType:
+            case UserType:
+            case ChanType:
+                addInstruction(GrOpcode.Append_Object);
+                break;
+            default:
+                break;
+            }
             resultType = leftType;
         }
         else if(lexType == GrLexemeType.Concatenate && rightType.baseType == GrBaseType.ArrayType && leftType != rightType) {
-            convertType(leftType, grVariant);
-            addInstruction(GrOpcode.Prepend);
+            const GrType subType = grUnmangle(rightType.mangledType);
+            convertType(leftType, subType);
+            switch(subType.baseType) with(GrBaseType) {
+            case IntType:
+            case BoolType:
+            case FunctionType:
+            case TaskType:
+                addInstruction(GrOpcode.Prepend_Int);
+                break;
+            case FloatType:
+                addInstruction(GrOpcode.Prepend_Float);
+                break;
+            case StringType:
+                addInstruction(GrOpcode.Prepend_String);
+                break;
+            case StructType:
+            case ArrayType:
+            case UserType:
+            case ChanType:
+                addInstruction(GrOpcode.Prepend_Object);
+                break;
+            default:
+                break;
+            }
             resultType = rightType;
-        }*/
+        }
         else if(leftType != rightType) {
             //Check custom operator
             resultType = addCustomBinaryOperator(lexType, leftType, rightType);
@@ -779,7 +823,7 @@ class GrParser {
         case ArrayType:
             switch(lexType) with(GrLexemeType) {
             case Concatenate:
-				GrType subType = grUnmangle(varType.mangledType);
+				const GrType subType = grUnmangle(varType.mangledType);
                 switch(subType.baseType) with(GrBaseType) {
                 case IntType:
                 case BoolType:
