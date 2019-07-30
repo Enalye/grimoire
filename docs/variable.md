@@ -20,16 +20,15 @@ A variable must be initialized before accessing its content, else it will raise 
 They're only a handful of basic type recognised by grimoire.
 * Void type
 * Integer declared with **int** ex: 2
-* Floating number declared with **float** ex: 2.35
+* Floating number declared with **float** ex: 2.35f
 * Boolean declared with **bool** ex: true, false
 * String declared with **string** ex: "Hello"
-* Array declared with **array** ex: [1, 2.3, [true, "Hi!"]]
-* Generic type declared with **var**
-* Function/Task (see anonymous function page)
+* Array (see Array section)
+* Function/Task (see Anonymous Functions section)
+* Channel (see Channel section)
 * Structure type
 * Custom type (User defined type in D)
-* Object (TODO)
-* Channel (TODO)
+* Tuple (See Tuple section)
 
 ### Auto Type
 **let** is a special keyword that let the compiler automatically infer the type of a declared variable.
@@ -41,19 +40,6 @@ main {
 }
 ```
 let can only be used on variable declaration and cannot be part of a function signature because it's not a type !
-
-### Generic Type
-If you want your variable to be able to store any type of value, you can let your variable be a generic.
-For that, you use the type **var** like `var a = "Hello";`.
-
-You can also change its type dynamically:
-```cpp
-main {
-  var a = 2;
-  a = true;
-  a = "Hi!";
-}
-```
 
 ## Scope
 A variable can either be local or global.

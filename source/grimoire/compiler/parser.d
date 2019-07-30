@@ -3032,8 +3032,8 @@ class GrParser {
 
         /* Init */
         GrType subType = grUnmangle(arrayType.mangledType);
-		GrVariable iterator = registerSpecialVariable("iterator"d ~ to!dstring(scopeLevel), subType);
-		GrVariable index = registerSpecialVariable("index"d ~ to!dstring(scopeLevel), GrType(GrBaseType.IntType));
+		GrVariable iterator = registerSpecialVariable("iterator"d ~ to!dstring(scopeLevel), grInt);
+		GrVariable index = registerSpecialVariable("index"d ~ to!dstring(scopeLevel), grInt);
 		GrVariable array = registerSpecialVariable("array"d ~ to!dstring(scopeLevel), arrayType);
 		
         if(variable.isAuto && subType.baseType != GrBaseType.VoidType) {
