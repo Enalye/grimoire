@@ -246,7 +246,7 @@ GrType grUnmangle(dstring mangledSignature) {
 
 string grGetPrettyFunctionCall(dstring mangledName) {
     import std.string;
-    int index = indexOf(mangledName, '$');
+    int index = cast(int)indexOf(mangledName, '$');
     if(index <= 0)
         throw new Exception("Invalid mangling format, not a named function");
 
