@@ -90,6 +90,10 @@ struct GrLexeme {
 	dstring getLine() {
 		return lexer.getLine(this);
 	}
+
+	dstring getFile() {
+		return lexer.getFile(this);
+	}
 }
 
 /**
@@ -117,6 +121,12 @@ class GrLexer {
 		if(lex.line >= lines.length)
 			throw new Exception("Lexeme line count out of bounds");
 		return lines[lex.line];
+	}
+
+	package dstring getFile(GrLexeme lex) {
+		if(lex.fileId >= filesImported.length)
+			throw new Exception("Lexeme fileId out of bounds");
+		return filesImported[lex.fileId];
 	}
 
 	bool advance(bool startFromCurrent = false) {

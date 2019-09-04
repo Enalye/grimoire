@@ -4555,9 +4555,9 @@ class GrParser {
 
 			//Separator
 			if(error.mustHalt)
-				report ~= "\n\033[0;36m--\033[0;91m Error \033[0;36m-------------------- " ~ error.lex.lexer.file ~ "\033[0m\n";
+				report ~= "\n\033[0;36m--\033[0;91m Error \033[0;36m-------------------- " ~ error.lex.getFile() ~ "\033[0m\n";
 			else
-				report ~= "\n\033[0;36m--\033[0;93m Warning \033[0;36m-------------------- " ~ error.lex.lexer.file ~ "\033[0m\n";
+				report ~= "\n\033[0;36m--\033[0;93m Warning \033[0;36m-------------------- " ~ error.lex.getFile() ~ "\033[0m\n";
 
 			//Error report
 			report ~= error.msg ~ ":\033[1;34m\n";
