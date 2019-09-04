@@ -44,11 +44,14 @@ struct GrLexeme {
 	this(GrLexer _lexer) {
 		line = _lexer.line;
 		column = _lexer.current - _lexer.positionOfLine;
+		fileId = _lexer.fileId;
 		lexer = _lexer;
 	}
 
     /// Parent lexer.
 	GrLexer lexer;
+
+	uint fileId;
 
     /// Position information in case of errors.
 	uint line, column, textLength = 1;
@@ -85,7 +88,7 @@ struct GrLexeme {
 
     /// Returns the entire line from where the token is located.
 	dstring getLine() {
-		return lexer.lines[line];
+		return lexer.getLine(this);
 	}
 }
 
@@ -96,7 +99,7 @@ class GrLexer {
 	dstring[] filesToImport, filesImported;
 	dstring[] lines;
 	dstring file, text;
-	uint line, current, positionOfLine;
+	uint line, current, positionOfLine, fileId;
 	GrLexeme[] lexemes;
 
 	dchar get(int offset = 0) {
@@ -104,6 +107,16 @@ class GrLexer {
 		if(position < 0 || position >= text.length)
 			throw new Exception("Unexpected end of script.");
 		return text[position];
+	}
+
+	package dstring getLine(GrLexeme lex) {
+		if(lex.fileId >= filesImported.length)
+			throw new Exception("Lexeme fileId out of bounds");
+		auto text = to!dstring(readText(to!string(filesImported[lex.fileId])));
+		lines = split(text, "\n");
+		if(lex.line >= lines.length)
+			throw new Exception("Lexeme line count out of bounds");
+		return lines[lex.line];
 	}
 
 	bool advance(bool startFromCurrent = false) {
@@ -184,12 +197,12 @@ class GrLexer {
 	}
 
 	void scanFile(dstring fileName) {
-		filesImported ~= fileName;
 		filesToImport ~= fileName;
 
 		while(filesToImport.length) {
-			text = to!dstring(readText(to!string(filesToImport[$-1])));
 			file = filesToImport[$-1];
+			filesImported ~= file;
+			text = to!dstring(readText(to!string(file)));
 			filesToImport.length --;
 
 			line = 0u;
@@ -197,6 +210,8 @@ class GrLexer {
 			lines = split(text, "\n");
 
 			scanScript();
+
+			fileId ++;
 		}
 	}
 
@@ -716,7 +731,7 @@ class GrLexer {
 			current ++;
 		}
 
-		if(filesImported.canFind(buffer))
+		if(filesImported.canFind(buffer) || filesToImport.canFind(buffer))
 			return;
 
 		filesToImport ~= buffer;
