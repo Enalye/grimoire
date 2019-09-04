@@ -1286,7 +1286,7 @@ class GrParser {
 			return func.outSignature;
 		}
 		else
-			logError("Undeclared function", "The function \'" ~ to!string(call.mangledName) ~ "\' is not declared");
+			logError("Undeclared function", "The function \'" ~ grGetPrettyFunctionCall(call.mangledName) ~ "\' is not declared");
 
 		return [];
 	}
