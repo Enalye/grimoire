@@ -58,7 +58,7 @@ struct Vec2(T) {
 		y = ny;
 	}
 
-	T distance(Vec2!T v) {
+	T distance(Vec2!T v) const {
 		static if(__traits(isUnsigned, T))
 			alias V = int;
 		else
