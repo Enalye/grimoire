@@ -45,15 +45,13 @@ class GrEngine {
         void** _oglobals;
 
         /// Global integral stack.
-        int[] _iglobalStack;
+        int[] _iglobalStackIn, _iglobalStackOut;
         /// Global floating point stack.
-        float[] _fglobalStack;
+        float[] _fglobalStackIn, _fglobalStackOut;
         /// Global string stack.
-        dstring[] _sglobalStack;
-        /// Global dynamic value stack.
-        //GrVariant[] _vglobalStack;
+        dstring[] _sglobalStackIn, _sglobalStackOut;
         /// Global object stack.
-        void*[] _oglobalStack;
+        void*[] _oglobalStackIn, _oglobalStackOut;
 
         /// Context array.
 	    DynamicIndexedArray!GrContext _contexts, _contextsToSpawn;
@@ -162,7 +160,7 @@ class GrEngine {
         if(context.isPanicking)
             return;
         //Error message.
-        _sglobalStack ~= message;
+        _sglobalStackIn ~= message;
         
         //We indicate that the coroutine is in a panic state until a catch is found.
         context.isPanicking = true;
@@ -196,8 +194,8 @@ class GrEngine {
 
             //The VM is now panicking.
             _isPanicking = true;
-            _panicMessage = _sglobalStack[$ - 1];
-            _sglobalStack.length --;
+            _panicMessage = _sglobalStackIn[$ - 1];
+            _sglobalStackIn.length --;
         }
     }
 
@@ -215,6 +213,11 @@ class GrEngine {
 			for(int index = _contextsToSpawn.length - 1; index >= 0; index --)
 				_contexts.push(_contextsToSpawn[index]);
 			_contextsToSpawn.reset();
+			import std.algorithm.mutation: swap;
+			swap(_iglobalStackIn, _iglobalStackOut);
+			swap(_fglobalStackIn, _fglobalStackOut);
+			swap(_sglobalStackIn, _sglobalStackOut);
+			swap(_oglobalStackIn, _oglobalStackOut);
 		}
 		contextsLabel: for(uint index = 0u; index < _contexts.length; index ++) {
 			GrContext context = _contexts.data[index];
@@ -227,7 +230,7 @@ class GrEngine {
                 case Raise:
                     if(!context.isPanicking) {
                         //Error message.
-                        _sglobalStack ~= context.sstack[context.sstackPos];
+                        _sglobalStackIn ~= context.sstack[context.sstackPos];
                         context.sstackPos --;
 
                         //We indicate that the coroutine is in a panic state until a catch is found.
@@ -259,8 +262,8 @@ class GrEngine {
 
                         //The VM is now panicking.
                         _isPanicking = true;
-                        _panicMessage = _sglobalStack[$ - 1];
-                        _sglobalStack.length --;
+                        _panicMessage = _sglobalStackIn[$ - 1];
+                        _sglobalStackIn.length --;
 
                         //Every deferred call has been executed, now die.
                         _contexts.markInternalForRemoval(index);
@@ -845,53 +848,53 @@ class GrEngine {
 				case GlobalPush_Int:
 					const uint nbParams = grGetInstructionUnsignedValue(opcode);
 					for(uint i = 1u; i <= nbParams; i++)
-						_iglobalStack ~= context.istack[(context.istackPos - nbParams) + i];
+						_iglobalStackOut ~= context.istack[(context.istackPos - nbParams) + i];
 					context.istackPos -= nbParams;
 					context.pc ++;
 					break;
 				case GlobalPush_Float:
 					const uint nbParams = grGetInstructionUnsignedValue(opcode);
 					for(uint i = 1u; i <= nbParams; i++)
-						_fglobalStack ~= context.fstack[(context.fstackPos - nbParams) + i];
+						_fglobalStackOut ~= context.fstack[(context.fstackPos - nbParams) + i];
 					context.fstackPos -= nbParams;
 					context.pc ++;
 					break;
 				case GlobalPush_String:
 					const uint nbParams = grGetInstructionUnsignedValue(opcode);
 					for(uint i = 1u; i <= nbParams; i++)
-						_sglobalStack ~= context.sstack[(context.sstackPos - nbParams) + i];
+						_sglobalStackOut ~= context.sstack[(context.sstackPos - nbParams) + i];
 					context.sstackPos -= nbParams;
 					context.pc ++;
 					break;
                 case GlobalPush_Object:
 					const uint nbParams = grGetInstructionUnsignedValue(opcode);
 					for(uint i = 1u; i <= nbParams; i++)
-						_oglobalStack ~= context.ostack[(context.ostackPos - nbParams) + i];
+						_oglobalStackOut ~= context.ostack[(context.ostackPos - nbParams) + i];
 					context.ostackPos -= nbParams;
 					context.pc ++;
 					break;
 				case GlobalPop_Int:
                     context.istackPos ++;
-					context.istack[context.istackPos] = _iglobalStack[$ - 1];
-					_iglobalStack.length --;
+					context.istack[context.istackPos] = _iglobalStackIn[$ - 1];
+					_iglobalStackIn.length --;
 					context.pc ++;
 					break;
 				case GlobalPop_Float:
                     context.fstackPos ++;
-					context.fstack[context.fstackPos] = _fglobalStack[$ - 1];
-					_fglobalStack.length --;
+					context.fstack[context.fstackPos] = _fglobalStackIn[$ - 1];
+					_fglobalStackIn.length --;
 					context.pc ++;
 					break;
 				case GlobalPop_String:
                     context.sstackPos ++;
-					context.sstack[context.sstackPos] = _sglobalStack[$ - 1];
-					_sglobalStack.length --;
+					context.sstack[context.sstackPos] = _sglobalStackIn[$ - 1];
+					_sglobalStackIn.length --;
 					context.pc ++;
 					break;
                 case GlobalPop_Object:
                     context.ostackPos ++;
-					context.ostack[context.ostackPos] = _oglobalStack[$ - 1];
-					_oglobalStack.length --;
+					context.ostack[context.ostackPos] = _oglobalStackIn[$ - 1];
+					_oglobalStackIn.length --;
 					context.pc ++;
 					break;
 				case Equal_Int:
@@ -1139,8 +1142,8 @@ class GrEngine {
 
                             //The VM is now panicking.
                             _isPanicking = true;
-                            _panicMessage = _sglobalStack[$ - 1];
-                            _sglobalStack.length --;
+                            _panicMessage = _sglobalStackIn[$ - 1];
+                            _sglobalStackIn.length --;
 
                             //Every deferred call has been executed, now die.
                             _contexts.markInternalForRemoval(index);
