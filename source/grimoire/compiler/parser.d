@@ -53,6 +53,10 @@ class GrParser {
 
     bool isTypeChecking;
 
+    private {
+        uint _lastAssignationScopeLevel;
+    }
+
     /// Reset to the start of the sequence.
 	void reset() {
 		current = 0u;
@@ -952,6 +956,7 @@ class GrParser {
     }
 
 	void addSetInstruction(GrVariable variable, GrType valueType = grVoid, bool isGettingValue = false) {
+        _lastAssignationScopeLevel = scopeLevel;
         if(variable.type.baseType == GrBaseType.ReferenceType) {
             valueType = convertType(valueType, grUnmangle(variable.type.mangledType));
             switch(valueType.baseType) with(GrBaseType) {
@@ -1100,20 +1105,23 @@ class GrParser {
 		}
 	}
 
+    ///Add a load opcode, or optimize a previous store.
 	void addGetInstruction(GrVariable variable, GrType expectedType = GrType(GrBaseType.VoidType), bool allowOptimization = true) {
-        /*
-            BUG: This shouldn't be optimized as it will crash the VM.
-            "main {
-                bool a = true;
-                loop {
-                    if(a) {}
-                    yield
-                }
-            }"
-            To avoid that, we disallow optimization until this is fixed.
-        */
-        allowOptimization = false;
-        //--------
+        if(_lastAssignationScopeLevel != scopeLevel) {
+            /+--------------------------
+                Optimizing getters should take care of scope levels as jumps will break the VM.
+                This shouldn't be optimized as the stack will be empty on the second pass.
+                "main {
+                    bool a = true;
+                    loop {
+                        if(a) {}  //a is just after a = true, so will be optimized.
+                        yield
+                    } //We jump back to the loop where lstore2 is, crashing the VM.
+                }"
+                To avoid that, we disallow optimization of different scope levels.
+            -------------------------+/
+            allowOptimization = false;
+        }
 
         if(variable.isField) {
             logError("Internal error", "Attempt to get field value");
