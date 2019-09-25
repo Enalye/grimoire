@@ -3987,6 +3987,34 @@ class GrParser {
                     //Check if there is an assignement or not, discard if it's only a rvalue
                     const auto nextLexeme = get();
                     if(requireLValue(nextLexeme.type)) {
+                        if(nextLexeme.type > GrLexemeType.Assign && nextLexeme.type <= GrLexemeType.PowerAssign) {
+                            final switch(currentType.baseType) with(GrBaseType) {
+                            case BoolType:
+                            case IntType:
+                            case FunctionType:
+                            case TaskType:
+                                setInstruction(GrOpcode.Index3_Int, cast(int)currentFunction.instructions.length - 1);
+                                break;
+                            case FloatType:
+                                setInstruction(GrOpcode.Index3_Float, cast(int)currentFunction.instructions.length - 1);
+                                break;
+                            case StringType:
+                                setInstruction(GrOpcode.Index3_String, cast(int)currentFunction.instructions.length - 1);
+                                break;
+                            case ArrayType:
+                            case StructType:
+                            case UserType:
+                            case ChanType:
+                            case ReferenceType:
+                                setInstruction(GrOpcode.Index3_Object, cast(int)currentFunction.instructions.length - 1);
+                                break;
+                            case VoidType:
+                            case TupleType:
+                            case InternalTupleType:
+                                logError("Array Error", "Cannot index an array of this type");
+                                break;
+                            }
+                        }
                         hasLValue = true;
                         GrVariable refVar = new GrVariable;
                         refVar.type.baseType = GrBaseType.ReferenceType;

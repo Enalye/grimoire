@@ -1360,6 +1360,62 @@ class GrEngine {
                     context.ostack[context.ostackPos] = ary.data[idx];
 					context.pc ++;
                     break;
+				case Index3_Int:
+                    GrIntArray ary = cast(GrIntArray)context.ostack[context.ostackPos];
+                    auto idx = context.istack[context.istackPos];
+					if(idx < 0) {
+						idx = (cast(int)ary.data.length) + idx;
+					}
+                    if(idx >= ary.data.length) {
+                        raise(context, "Array overflow");
+                        break;
+                    }
+                    context.istack[context.istackPos] = ary.data[idx];
+                    context.ostack[context.ostackPos] = &ary.data[idx];
+					context.pc ++;
+                    break;
+				case Index3_Float:
+                    GrIntArray ary = cast(GrIntArray)context.ostack[context.ostackPos];
+                    auto idx = context.istack[context.istackPos];
+					if(idx < 0) {
+						idx = (cast(int)ary.data.length) + idx;
+					}
+                    if(idx >= ary.data.length) {
+                        raise(context, "Array overflow");
+                        break;
+                    }
+                    context.istack[context.istackPos] = ary.data[idx];
+                    context.ostack[context.ostackPos] = &ary.data[idx];
+					context.pc ++;
+                    break;
+				case Index3_String:
+                    GrIntArray ary = cast(GrIntArray)context.ostack[context.ostackPos];
+                    auto idx = context.istack[context.istackPos];
+					if(idx < 0) {
+						idx = (cast(int)ary.data.length) + idx;
+					}
+                    if(idx >= ary.data.length) {
+                        raise(context, "Array overflow");
+                        break;
+                    }
+                    context.istack[context.istackPos] = ary.data[idx];
+                    context.ostack[context.ostackPos] = &ary.data[idx];
+					context.pc ++;
+                    break;
+				case Index3_Object:
+                    GrIntArray ary = cast(GrIntArray)context.ostack[context.ostackPos];
+                    auto idx = context.istack[context.istackPos];
+					if(idx < 0) {
+						idx = (cast(int)ary.data.length) + idx;
+					}
+                    if(idx >= ary.data.length) {
+                        raise(context, "Array overflow");
+                        break;
+                    }
+                    context.istack[context.istackPos] = ary.data[idx];
+                    context.ostack[context.ostackPos] = &ary.data[idx];
+					context.pc ++;
+                    break;
 				case Length_Int:
                     context.istackPos ++;
 					context.istack[context.istackPos] = cast(int)((cast(GrIntArray)context.ostack[context.ostackPos]).data.length);

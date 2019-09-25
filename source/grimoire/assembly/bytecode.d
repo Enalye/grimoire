@@ -74,6 +74,7 @@ enum GrOpcode {
     Length_Int, Length_Float, Length_String, Length_Object,
     Index_Int, Index_Float, Index_String, Index_Object,
     Index2_Int, Index2_Float, Index2_String, Index2_Object,
+    Index3_Int, Index3_Float, Index3_String, Index3_Object,
 
     Concatenate_IntArray, Concatenate_FloatArray, Concatenate_StringArray, Concatenate_ObjectArray,
     Append_Int, Append_Float, Append_String, Append_Object,
