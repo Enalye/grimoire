@@ -2111,7 +2111,7 @@ class GrParser {
             if(inSignature.length != 1uL)
                 logError("Invalid format", "A conversion function has to take only 1 parameter");
             outSignature = parseOutSignature();
-            if(!outSignature.length != 1uL)
+            if(outSignature.length != 1uL)
                 logError("Invalid format", "A conversion function can only have 1 return type");
 
             inSignature ~= outSignature[0];

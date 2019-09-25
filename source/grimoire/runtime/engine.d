@@ -1246,7 +1246,10 @@ class GrEngine {
                     break;
                 case Index_Int:
                     GrIntArray ary = cast(GrIntArray)context.ostack[context.ostackPos];
-                    const auto idx = context.istack[context.istackPos];
+                    auto idx = context.istack[context.istackPos];
+					if(idx < 0) {
+						idx = (cast(int)ary.data.length) + idx;
+					}
                     if(idx >= ary.data.length) {
                         raise(context, "Array overflow");
                         break;
@@ -1257,7 +1260,10 @@ class GrEngine {
                     break;
                 case Index_Float:
                     GrFloatArray ary = cast(GrFloatArray)context.ostack[context.ostackPos];
-                    const auto idx = context.istack[context.istackPos];
+                    auto idx = context.istack[context.istackPos];
+					if(idx < 0) {
+						idx = (cast(int)ary.data.length) + idx;
+					}
                     if(idx >= ary.data.length) {
                         raise(context, "Array overflow");
                         break;
@@ -1268,7 +1274,10 @@ class GrEngine {
                     break;
                 case Index_String:
                     GrStringArray ary = cast(GrStringArray)context.ostack[context.ostackPos];
-                    const auto idx = context.istack[context.istackPos];
+                    auto idx = context.istack[context.istackPos];
+					if(idx < 0) {
+						idx = (cast(int)ary.data.length) + idx;
+					}
                     if(idx >= ary.data.length) {
                         raise(context, "Array overflow");
                         break;
@@ -1279,7 +1288,10 @@ class GrEngine {
                     break;
                 case Index_Object:
                     GrObjectArray ary = cast(GrObjectArray)context.ostack[context.ostackPos];
-                    const auto idx = context.istack[context.istackPos];
+                    auto idx = context.istack[context.istackPos];
+					if(idx < 0) {
+						idx = (cast(int)ary.data.length) + idx;
+					}
                     if(idx >= ary.data.length) {
                         raise(context, "Array overflow");
                         break;
@@ -1290,7 +1302,10 @@ class GrEngine {
                     break;
                 case Index2_Int:
                     GrIntArray ary = cast(GrIntArray)context.ostack[context.ostackPos];
-                    const auto idx = context.istack[context.istackPos];
+                    auto idx = context.istack[context.istackPos];
+					if(idx < 0) {
+						idx = (cast(int)ary.data.length) + idx;
+					}
                     if(idx >= ary.data.length) {
                         raise(context, "Array overflow");
                         break;
@@ -1301,7 +1316,10 @@ class GrEngine {
                     break;
                 case Index2_Float:
                     GrFloatArray ary = cast(GrFloatArray)context.ostack[context.ostackPos];
-                    const auto idx = context.istack[context.istackPos];
+                    auto idx = context.istack[context.istackPos];
+					if(idx < 0) {
+						idx = (cast(int)ary.data.length) + idx;
+					}
                     if(idx >= ary.data.length) {
                         raise(context, "Array overflow");
                         break;
@@ -1314,7 +1332,10 @@ class GrEngine {
                     break;
                 case Index2_String:
                     GrStringArray ary = cast(GrStringArray)context.ostack[context.ostackPos];
-                    const auto idx = context.istack[context.istackPos];
+                    auto idx = context.istack[context.istackPos];
+					if(idx < 0) {
+						idx = (cast(int)ary.data.length) + idx;
+					}
                     if(idx >= ary.data.length) {
                         raise(context, "Array overflow");
                         break;
@@ -1327,7 +1348,10 @@ class GrEngine {
                     break;
                 case Index2_Object:
                     GrObjectArray ary = cast(GrObjectArray)context.ostack[context.ostackPos];
-                    const auto idx = context.istack[context.istackPos];
+                    auto idx = context.istack[context.istackPos];
+					if(idx < 0) {
+						idx = (cast(int)ary.data.length) + idx;
+					}
                     if(idx >= ary.data.length) {
                         raise(context, "Array overflow");
                         break;
