@@ -3987,7 +3987,10 @@ class GrParser {
                     //Check if there is an assignement or not, discard if it's only a rvalue
                     const auto nextLexeme = get();
                     if(requireLValue(nextLexeme.type)) {
-                        if(nextLexeme.type > GrLexemeType.Assign && nextLexeme.type <= GrLexemeType.PowerAssign) {
+                        if((nextLexeme.type > GrLexemeType.Assign &&
+                            nextLexeme.type <= GrLexemeType.PowerAssign) ||
+                            nextLexeme.type == GrLexemeType.Increment ||
+                            nextLexeme.type == GrLexemeType.Decrement) {
                             final switch(currentType.baseType) with(GrBaseType) {
                             case BoolType:
                             case IntType:
@@ -4314,6 +4317,7 @@ class GrParser {
 	
 			switch(operator) with(GrLexemeType) {
 			case Assign:
+            writeln(isGettingValue, ", ", operatorsStack);
 				addSetInstruction(lvalues[$ - 1], currentType, isGettingValue || operatorsStack.length > 1uL);
 				lvalues.length --;
 
@@ -4441,7 +4445,7 @@ class GrParser {
                     for(;;) {
                         if(i >= anonSignature.length)
                             logError("Invalid anonymous call", "The number of parameters does not match");
-                        GrType subType = parseSubExpression(false, false, true, true);
+                        GrType subType = parseSubExpression(false, false, true, true, false, true);
                         if(subType.baseType == GrBaseType.InternalTupleType) {
                             auto types = grUnpackTuple(subType);
                             if(types.length) {
@@ -4497,7 +4501,7 @@ class GrParser {
                 //Signature parsing, no coercion is made
                 if(get().type != GrLexemeType.RightParenthesis) {
                     for(;;) {
-                        auto type = parseSubExpression(false, false, true, true);
+                        auto type = parseSubExpression(false, false, true, true, false, true);
                         if(type.baseType == GrBaseType.InternalTupleType) {
                             auto types = grUnpackTuple(type);
                             if(types.length)

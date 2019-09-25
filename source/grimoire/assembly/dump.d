@@ -74,7 +74,7 @@ private string[] instructions = [
     "idx.i", "idx.f", "idx.s", "idx.o",
     "idx2.i", "idx2.f", "idx2.s", "idx2.o",
     "idx3.i", "idx3.f", "idx3.s", "idx3.o",
-    
+
     "cat.ni", "cat.nf", "cat.ns", "cat.no",
     "append.i", "append.f", "append.s", "append.o",
     "prepend.i", "prepend.f", "prepend.s", "prepend.o",
