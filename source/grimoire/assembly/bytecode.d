@@ -37,9 +37,10 @@ enum GrOpcode {
     RefStore_Int, RefStore_Float, RefStore_String, RefStore_Object,
     RefStore2_Int, RefStore2_Float, RefStore2_String, RefStore2_Object,
 
-    GetField,
     FieldStore_Int, FieldStore_Float, FieldStore_String, FieldStore_Object,
+    FieldLoad,
     FieldLoad_Int, FieldLoad_Float, FieldLoad_String, FieldLoad_Object,
+    FieldLoad2_Int, FieldLoad2_Float, FieldLoad2_String, FieldLoad2_Object,
 
     Const_Int, Const_Float, Const_Bool, Const_String, Const_Meta,
     

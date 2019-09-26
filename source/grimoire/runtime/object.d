@@ -5,7 +5,7 @@ final class GrFieldValue {
         int ivalue;
         float fvalue;
         dstring svalue;
-
+        void* ovalue;
     }
 }
 

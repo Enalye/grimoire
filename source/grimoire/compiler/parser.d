@@ -1024,14 +1024,29 @@ class GrParser {
         variable.isInitialized = true;
 
         if(variable.isField) {
-            switch(variable.type.baseType) with(GrBaseType) {
+            final switch(variable.type.baseType) with(GrBaseType) {
 			case BoolType:
 			case IntType:
 			case FunctionType:
 			case TaskType:
 				addInstruction(GrOpcode.FieldStore_Int, isGettingValue ? 0 : -1, true);
 				break;
-            default:
+			case FloatType:
+				addInstruction(GrOpcode.FieldStore_Float, isGettingValue ? 0 : -1, true);
+				break;
+			case StringType:
+				addInstruction(GrOpcode.FieldStore_String, isGettingValue ? 0 : -1, true);
+				break;
+			case UserType:
+			case ReferenceType:
+			case ChanType:
+			case ArrayType:
+			case StructType:
+				addInstruction(GrOpcode.FieldStore_Object, isGettingValue ? 0 : -1, true);
+				break;
+            case VoidType:
+            case InternalTupleType:
+            case TupleType:
 				logError("Invalid type", "Cannot assign to a \'" ~ to!string(variable.type) ~ "\' type");
 			} 
         }
@@ -4161,35 +4176,50 @@ class GrParser {
                         hadValue = false;
 					    hasLValue = true;
                         hadLValue = false;
-                        addInstruction(GrOpcode.GetField, fieldLValue.index);
 
-                        void addLoadFieldInstruction(GrType type, bool asCopy) {
-                            int stackShift = asCopy ? 0 : -1;
-
-                            switch(type.baseType) with(GrBaseType) {
+                        void addLoadFieldInstruction(GrType type, uint index, bool asCopy) {
+                            final switch(type.baseType) with(GrBaseType) {
                             case BoolType:
                             case IntType:
                             case FunctionType:
                             case TaskType:
-                                addInstruction(GrOpcode.FieldLoad_Int, stackShift, true);
+                                addInstruction(asCopy ? GrOpcode.FieldLoad2_Int : GrOpcode.FieldLoad_Int, index);
                                 break;
-                            default:
-                                logError("Not implemented", "parseSubExpression:Period");
+                            case FloatType:
+                                addInstruction(asCopy ? GrOpcode.FieldLoad2_Float : GrOpcode.FieldLoad_Float, index);
+                                break;
+                            case StringType:
+                                addInstruction(asCopy ? GrOpcode.FieldLoad2_String : GrOpcode.FieldLoad_String, index);
+                                break;
+                            case ReferenceType:
+                            case ChanType:
+                            case StructType:
+                            case ArrayType:
+                            case UserType:
+                                addInstruction(asCopy ? GrOpcode.FieldLoad2_Object : GrOpcode.FieldLoad_Object, index);
+                                break;
+                            case TupleType:
+                            case InternalTupleType:
+                            case VoidType:
+                                logError("Invalid field type", "Cannot access this field");
                                 break;
                             }
                         }
 
                         switch(get().type) with(GrLexemeType) {
                         case Period:
+                            addInstruction(GrOpcode.FieldLoad_Object, fieldLValue.index);
+                            break;
+                        case Assign:
+                            addInstruction(GrOpcode.FieldLoad, fieldLValue.index);
+                            break;
                         case Increment:
                         case Decrement:
-                        case Assign:
-                            break;
                         case AddAssign: .. case PowerAssign:
-                            addLoadFieldInstruction(currentType, true);
+                            addLoadFieldInstruction(currentType, fieldLValue.index, true);
                             break;
                         default:
-                            addLoadFieldInstruction(currentType, false);
+                            addLoadFieldInstruction(currentType, fieldLValue.index, false);
                             break;
                         }
                         break;
@@ -4337,7 +4367,6 @@ class GrParser {
 	
 			switch(operator) with(GrLexemeType) {
 			case Assign:
-            writeln(isGettingValue, ", ", operatorsStack);
 				addSetInstruction(lvalues[$ - 1], currentType, isGettingValue || operatorsStack.length > 1uL);
 				lvalues.length --;
 

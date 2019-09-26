@@ -36,9 +36,10 @@ private string[] instructions = [
     "rstore.i", "rstore.f", "rstore.s", "rstore.o",
     "rstore2.i", "rstore2.f", "rstore2.s", "rstore2.o",
 
-    "field",
     "fstore.i", "fstore.f", "fstore.s", "fstore.o",
+    "fload",
     "fload.i", "fload.f", "fload.s", "fload.o",
+    "fload2.i", "fload2.f", "fload2.s", "fload2.o",
 
     "const.i", "const.f", "const.b", "const.s", "meta",
     
@@ -102,12 +103,13 @@ string grDump(GrBytecode bytecode) {
             (op >= GrOpcode.GlobalStore_Int && op <= GrOpcode.GlobalLoad_Object) ||
             (op >= GrOpcode.GlobalPush_Int && op <= GrOpcode.GlobalPush_Object) ||
             (op >= GrOpcode.LocalStack && op <= GrOpcode.Call) ||
-            (op == GrOpcode.New || op == GrOpcode.GetField) ||
+            (op == GrOpcode.New) ||
+            (op >= GrOpcode.FieldLoad && op <= GrOpcode.FieldLoad2_Object) ||
             (op >= GrOpcode.Channel_Int && op <= GrOpcode.Channel_Object) ||
             (op >= GrOpcode.Array_Int && op <= GrOpcode.Array_Object)
             )
             line ~= to!string(grGetInstructionUnsignedValue(opcode));
-        else if(op >= GrOpcode.FieldStore_Int && op <= GrOpcode.FieldLoad_Object)
+        else if(op >= GrOpcode.FieldStore_Int && op <= GrOpcode.FieldStore_Object)
             line ~= to!string(grGetInstructionSignedValue(opcode));
         else if(op >= GrOpcode.ShiftStack_Int && op <= GrOpcode.ShiftStack_Object)
             line ~= to!string(grGetInstructionSignedValue(opcode));
