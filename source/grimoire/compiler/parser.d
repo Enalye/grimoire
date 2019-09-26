@@ -1115,7 +1115,7 @@ class GrParser {
                     bool a = true;
                     loop {
                         if(a) {}  //a is just after a = true, so will be optimized.
-                        yield
+                        yield;
                     } //We jump back to the loop where lstore2 is, crashing the VM.
                 }"
                 To avoid that, we disallow optimization of different scope levels.
@@ -2266,7 +2266,8 @@ class GrParser {
             }
         }
         else {
-            parseStatement();
+            if(get().type != GrLexemeType.Semicolon)
+                parseStatement();
         }
 
         if(isMultiline) {
@@ -2338,18 +2339,27 @@ class GrParser {
     void parseKill() {
         if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
 		    addKill();
-        advance();                    
+        advance();
+        if(get().type != GrLexemeType.Semicolon)
+            logError("Missing semicolon", "An expression must end with a semicolon");
+        advance();
     }
 
     void parseKillAll() {
         if(currentFunction.instructions[$ - 1].opcode != GrOpcode.KillAll)
 		    addKillAll();
-        advance();                    
+        advance();
+        if(get().type != GrLexemeType.Semicolon)
+            logError("Missing semicolon", "An expression must end with a semicolon");
+        advance();                  
     }
 
     void parseYield() {
 		addInstruction(GrOpcode.Yield, 0u);
-        advance();                    
+        advance();
+        if(get().type != GrLexemeType.Semicolon)
+            logError("Missing semicolon", "An expression must end with a semicolon");
+        advance();
     }
 
     //Exception handling
@@ -2655,16 +2665,18 @@ class GrParser {
 		uint jumpPosition = cast(uint)currentFunction.instructions.length;
         //Jumps to if(0) for "if", if(!= 0) for "unless".
 		addInstruction(isNegative ? GrOpcode.JumpNotEqual : GrOpcode.JumpEqual);
-
+        
 		parseBlock(); //{ .. }
-
+        
 		//If(1){}, jumps out.
 		uint[] exitJumps;
-		exitJumps ~= cast(uint)currentFunction.instructions.length;
-		addInstruction(GrOpcode.Jump);
+		if(get().type == GrLexemeType.Else) {
+            exitJumps ~= cast(uint)currentFunction.instructions.length;
+            addInstruction(GrOpcode.Jump);
+        }
 
-		//Jumps to if(0) for "if", if(!= 0) for "unless".
-		setInstruction(isNegative ? GrOpcode.JumpNotEqual : GrOpcode.JumpEqual,
+        //Jumps to if(0) for "if", if(!= 0) for "unless".
+        setInstruction(isNegative ? GrOpcode.JumpNotEqual : GrOpcode.JumpEqual,
             jumpPosition,
             cast(int)(currentFunction.instructions.length - jumpPosition),
             true);
@@ -2706,7 +2718,7 @@ class GrParser {
 			}
 		}
 		while(isElseIf);
-
+        
 		foreach(uint position; exitJumps)
 			setInstruction(GrOpcode.Jump, position, cast(int)(currentFunction.instructions.length - position), true);
 	}
