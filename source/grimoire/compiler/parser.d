@@ -3173,13 +3173,161 @@ class GrParser {
 		closeContinuableSection();
 	}
 
+    void skipParenthesis() {
+        if(get().type != GrLexemeType.LeftParenthesis)
+            return;
+        advance();
+        
+        __loop: while(!isEnd()) {
+            switch(get().type) with(GrLexemeType) {
+            case RightParenthesis:
+                advance();
+                return;
+            case RightBracket:
+            case RightCurlyBrace:
+            case Semicolon:
+                break __loop;
+            case LeftParenthesis:
+                skipParenthesis();
+                break;
+            case LeftBracket:
+                skipBrackets();
+                break;
+            case LeftCurlyBrace:
+                skipBlock();
+                break;
+            default:
+                advance();
+                break;
+            }
+        }
+    }
+
+    void skipBrackets() {
+        if(get().type != GrLexemeType.LeftBracket)
+            return;
+        advance();
+
+        __loop: while(!isEnd()) {
+            switch(get().type) with(GrLexemeType) {
+            case RightBracket:
+                advance();
+                return;
+            case RightParenthesis:
+            case RightCurlyBrace:
+            case Semicolon:
+                break __loop;
+            case LeftParenthesis:
+                skipParenthesis();
+                break;
+            case LeftBracket:
+                skipBrackets();
+                break;
+            case LeftCurlyBrace:
+                skipBlock();
+                break;
+            default:
+                advance();
+                break;
+            }
+        }
+    }
+
+    int checkArity() {
+        int arity;
+        const int position = current;
+
+        bool useParenthesis, useBrackets, useCurlyBraces;
+
+		switch(get().type) with(GrLexemeType) {
+        case LeftParenthesis:
+            advance();
+            useParenthesis = true;
+            if(get(1).type != GrLexemeType.RightParenthesis)
+                arity ++;
+            break;
+        case LeftBracket:
+            advance();
+            useBrackets = true;
+            if(get(1).type != GrLexemeType.RightBracket)
+                arity ++;
+            break;
+        case LeftCurlyBrace:
+            advance();
+            useCurlyBraces = true;
+            if(get(1).type != GrLexemeType.RightCurlyBrace)
+                arity ++;
+            break;
+        default:
+            logError("Arity check error", "Cannot evaluate the arity of an unknown compound");
+            break;
+        }
+
+        __loop: while(!isEnd()) {
+            switch(get().type) with(GrLexemeType) {
+            case Comma:
+                arity ++;
+                advance();
+                break;
+            case RightParenthesis:
+                if(!useParenthesis)
+                    goto default;
+                break __loop;
+            case RightBracket:
+                if(!useBrackets)
+                    goto default;
+                break __loop;
+            case RightCurlyBrace:
+                if(!useCurlyBraces)
+                    goto default;
+                break __loop;
+            case Semicolon:
+                break __loop;
+            case LeftParenthesis:
+                skipParenthesis();
+                break;
+            case LeftBracket:
+                skipBrackets();
+                break;
+            case LeftCurlyBrace:
+                skipBlock();
+                break;
+            default:
+                advance();
+                break;
+            }
+        }
+
+        current = position;
+        return arity;
+    }
+
 	void parseLoopStatement() {
-        bool isInfinite;
-        GrVariable iterator;
+        bool isInfinite, hasCustomIterator;
+        GrVariable iterator, customIterator;
         
 		advance();
 		if(get().type == GrLexemeType.LeftParenthesis) {
+            const int arity = checkArity();
             advance();
+            if(arity == 2) {
+                hasCustomIterator = true;
+                customIterator = parseDeclarableArgument();
+                if(customIterator.isAuto) {
+                    customIterator.isAuto = false;
+                    customIterator.type = grInt;
+                }
+                else if(customIterator.type != grInt) {
+                    logError("Loop iterator type error", "The type of the iterator must be int, not " ~ grGetPrettyType(customIterator.type));
+                }
+
+                addIntConstant(0);
+                addSetInstruction(customIterator);
+		 
+                if(get().type != GrLexemeType.Comma)
+                    logError("Missing symbol", "Did you forget the \',\' ?");
+                advance();
+            }
 
             /* Init */
             iterator = registerSpecialVariable("iterator"d ~ to!dstring(scopeLevel), GrType(GrBaseType.IntType));
@@ -3188,7 +3336,7 @@ class GrParser {
             GrType type = parseSubExpression();
     		advance();
 
-            convertType(type, GrType(GrBaseType.IntType));
+            convertType(type, grInt);
             addInstruction(GrOpcode.SetupIterator);
             addSetInstruction(iterator);
         }
@@ -3207,16 +3355,22 @@ class GrParser {
         uint jumpPosition;
 
         if(!isInfinite) {
-            addGetInstruction(iterator, GrType(GrBaseType.IntType), false);
+            addGetInstruction(iterator, grInt, false);
             addInstruction(GrOpcode.Decrement_Int);
             addSetInstruction(iterator);
 
-            addGetInstruction(iterator, GrType(GrBaseType.IntType));
+            addGetInstruction(iterator, grInt);
             jumpPosition = cast(uint)currentFunction.instructions.length;
             addInstruction(GrOpcode.JumpEqual);
         }
 
 		parseBlock();
+
+        if(!isInfinite && hasCustomIterator) {
+            addGetInstruction(customIterator, grInt, false);
+            addInstruction(GrOpcode.Increment_Int);
+            addSetInstruction(customIterator);
+        }
 
 		addInstruction(GrOpcode.Jump, cast(int)(blockPosition - currentFunction.instructions.length), true);
 		if(!isInfinite)
@@ -4169,8 +4323,15 @@ class GrParser {
                         fieldLValue.type = currentType;
                         fieldLValue.index = i;
 
-                        lvalues[$ - 1] = fieldLValue;
-                        typeStack[$ - 1] = currentType;
+                        if(hadLValue)
+                            lvalues[$ - 1] = fieldLValue;
+                        else
+                            lvalues ~= fieldLValue;
+
+                        if(hadValue)
+                            typeStack[$ - 1] = currentType;
+                        else
+                            typeStack ~= currentType;
 
                         hasValue = true;
                         hadValue = false;
