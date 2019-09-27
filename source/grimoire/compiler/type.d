@@ -82,12 +82,12 @@ struct GrType {
     bool opEquals(const GrBaseType v) const {
 		return (baseType == v);
 	}
-
+    
     bool opEquals(const GrType v) const {
         if(baseType != v.baseType)
             return false;
         if(baseType == GrBaseType.FunctionType || baseType == GrBaseType.TaskType)
-           return mangledType == v.mangledType && mangledReturnType && v.mangledReturnType; 
+           return mangledType == v.mangledType && mangledReturnType == v.mangledReturnType;
         return true;
 	}
 }

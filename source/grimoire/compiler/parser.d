@@ -3249,7 +3249,7 @@ class GrParser {
                         "The returned type \'"
                         ~ to!string(types[i])
                         ~ "\' does not match the function definition \'"
-                        ~ to!string(currentFunction.outSignature[0])
+                        ~ to!string(currentFunction.outSignature[i])
                         ~ "\'");
             }
         }
@@ -4174,7 +4174,7 @@ class GrParser {
 
                         hasValue = true;
                         hadValue = false;
-					    hasLValue = true;
+                        hasLValue = true;
                         hadLValue = false;
 
                         void addLoadFieldInstruction(GrType type, uint index, bool asCopy) {
@@ -4419,7 +4419,7 @@ class GrParser {
             for(;;) {
                 if(i >= anonSignature.length)
                     logError("Invalid anonymous call", "The number of parameters does not match");
-                GrType subType = parseSubExpression(false, false, true, true);
+                GrType subType = parseSubExpression(false, false, true, true, false, true);
                 signature ~= convertType(subType, anonSignature[i]);
                 if(get().type == GrLexemeType.RightParenthesis)
                     break;
@@ -4427,6 +4427,8 @@ class GrParser {
                 i ++;
             }
         }
+        if(signature.length != anonSignature.length)
+            logError("Invalid function call", "The signature does not match");
         checkAdvance();
 
         //Push the values on the global stack for task spawning.
