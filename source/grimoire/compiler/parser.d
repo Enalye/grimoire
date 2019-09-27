@@ -54,7 +54,7 @@ class GrParser {
     bool isTypeChecking;
 
     private {
-        uint _lastAssignationScopeLevel;
+        uint _lastAssignationScopeLevel, _blockLevel;
     }
 
     /// Reset to the start of the sequence.
@@ -956,7 +956,7 @@ class GrParser {
     }
 
 	void addSetInstruction(GrVariable variable, GrType valueType = grVoid, bool isGettingValue = false) {
-        _lastAssignationScopeLevel = scopeLevel;
+        _lastAssignationScopeLevel = _blockLevel;
         if(variable.type.baseType == GrBaseType.ReferenceType) {
             valueType = convertType(valueType, grUnmangle(variable.type.mangledType));
             switch(valueType.baseType) with(GrBaseType) {
@@ -1122,7 +1122,7 @@ class GrParser {
 
     ///Add a load opcode, or optimize a previous store.
 	void addGetInstruction(GrVariable variable, GrType expectedType = GrType(GrBaseType.VoidType), bool allowOptimization = true) {
-        if(_lastAssignationScopeLevel != scopeLevel) {
+        if(_lastAssignationScopeLevel != _blockLevel) {
             /+--------------------------
                 Optimizing getters should take care of scope levels as jumps will break the VM.
                 This shouldn't be optimized as the stack will be empty on the second pass.
@@ -2219,17 +2219,26 @@ class GrParser {
             case Select:
                 parseSelectStatement();
                 break;
+            case Until:
             case While:
+                _blockLevel ++;
                 parseWhileStatement();
+                _blockLevel --;
                 break;
             case Do:
+                _blockLevel ++;
                 parseDoWhileStatement();
+                _blockLevel --;
                 break;
             case For:
+                _blockLevel ++;
                 parseForStatement();
+                _blockLevel --;
                 break;
             case Loop:
+                _blockLevel ++;
                 parseLoopStatement();
+                _blockLevel --;
                 break;
             case Raise:
                 parseRaiseStatement();
@@ -2940,6 +2949,7 @@ class GrParser {
     }
 
 	void parseWhileStatement() {
+        const bool isNegative = get().type == GrLexemeType.Until;
 		advance();
 		if(get().type != GrLexemeType.LeftParenthesis)
 			logError("Missing symbol", "A condition should always start with \'(\'");
@@ -2964,7 +2974,7 @@ class GrParser {
 		parseBlock();
 
 		addInstruction(GrOpcode.Jump, cast(int)(blockPosition - currentFunction.instructions.length), true);
-		setInstruction(GrOpcode.JumpEqual, conditionPosition, cast(int)(currentFunction.instructions.length - conditionPosition), true);
+		setInstruction(isNegative ? GrOpcode.JumpNotEqual : GrOpcode.JumpEqual, conditionPosition, cast(int)(currentFunction.instructions.length - conditionPosition), true);
 
 		/* While is breakable and continuable. */
 		closeBreakableSection();
@@ -2981,7 +2991,11 @@ class GrParser {
 		uint blockPosition = cast(uint)currentFunction.instructions.length;
 
 		parseBlock();
-		if(get().type != GrLexemeType.While)
+
+        bool isNegative;
+		if(get().type == GrLexemeType.Until)
+            isNegative = true;
+		else if(get().type != GrLexemeType.While)
 			logError("Missing while", "A do-while statement expects the keyword while after \'}\'");
 		advance();
 
@@ -2995,7 +3009,7 @@ class GrParser {
 		parseSubExpression();
 		advance();
 
-		addInstruction(GrOpcode.JumpNotEqual, cast(int)(blockPosition - currentFunction.instructions.length), true);
+		addInstruction(isNegative ? GrOpcode.JumpEqual : GrOpcode.JumpNotEqual, cast(int)(blockPosition - currentFunction.instructions.length), true);
 
 		/* While is breakable and continuable. */
 		closeBreakableSection();
