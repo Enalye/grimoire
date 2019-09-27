@@ -379,9 +379,6 @@ class GrLexer {
 			case ',':
 				lex.type = GrLexemeType.Comma;
 				break;
-            case '@':
-                lex.type = GrLexemeType.New;
-                break;
 			case '^':
 				lex.type = GrLexemeType.Copy;
 				break;
@@ -671,6 +668,10 @@ class GrLexer {
 			case "chan":
 				lex.type = GrLexemeType.ChanType;
 				lex.isType = true;
+				break;
+			case "new":
+				lex.type = GrLexemeType.New;
+				lex.isType = false;
 				break;
             case "let":
                 lex.type = GrLexemeType.AutoType;
