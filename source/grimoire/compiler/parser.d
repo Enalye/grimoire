@@ -2297,9 +2297,9 @@ class GrParser {
         if(isMultiline) {
             if(get().type != GrLexemeType.RightCurlyBrace)
                 logError("Missing symbol", "A block should always end with \'}\'");
+		    checkAdvance();
         }
 		closeBlock();
-		checkAdvance();
 	}
 
     bool isDeclaration() {
@@ -2322,15 +2322,92 @@ class GrParser {
 		if(get().type == GrLexemeType.LeftCurlyBrace) {
             isMultiline = true;
             if(!checkAdvance())
-			    logError("Unexpected end of file");
+                logError("Unexpected end of file");
         }
 		openBlock();
 
 		void skipStatement() {
             switch(get().type) with(GrLexemeType) {
+            case LeftParenthesis:
+                skipParenthesis();
+                break;
+            case LeftBracket:
+                skipBrackets();
+                break;
 			case LeftCurlyBrace:
 				skipBlock();
 				break;
+            case Defer:
+                checkAdvance();
+                skipBlock();
+                break;
+            case Switch:
+                checkAdvance();
+                skipParenthesis();
+                while(get().type == GrLexemeType.Case) {
+                    checkAdvance();
+                    if(get().type == GrLexemeType.LeftParenthesis)
+                        skipParenthesis();
+                    skipBlock();
+                }
+                break;
+            case If:
+            case Unless:
+                checkAdvance();
+                skipParenthesis();
+                skipBlock();
+                break;
+            case Select:
+                checkAdvance();
+                while(get().type == GrLexemeType.Case) {
+                    checkAdvance();
+                    if(get().type == GrLexemeType.LeftParenthesis)
+                        skipParenthesis();
+                    skipBlock();
+                }
+                break;
+            case Until:
+            case While:
+                checkAdvance();
+                skipBlock();
+                break;
+            case Do:
+                checkAdvance();
+                skipBlock();
+                checkAdvance();
+                skipParenthesis();
+                break;
+            case For:
+                checkAdvance();
+                skipParenthesis();
+                skipBlock();
+                break;
+            case Loop:
+                checkAdvance();
+                if(get().type == GrLexemeType.LeftParenthesis)
+                    skipParenthesis();
+                skipBlock();
+                break;
+            case Raise:
+                checkAdvance();
+                skipBlock();
+                break;
+            case Try:
+                checkAdvance();
+                skipBlock();
+                if(get().type == GrLexemeType.Catch) {
+                    checkAdvance();
+                    skipParenthesis();
+                    skipBlock();
+                }
+                break;
+            case Yield:
+                checkAdvance();
+                break;
+            case Return:
+                checkAdvance();
+                skipBlock();
+                break;
 			default:
 				checkAdvance();
 				break;
@@ -2341,48 +2418,47 @@ class GrParser {
             while(!isEnd()) {
                 if(get().type == GrLexemeType.RightCurlyBrace)
                     break;
-                skipStatement();
-            }
-        }
-        else {
-            while(!isEnd()) {
-                if(get().type == GrLexemeType.Semicolon)
+                switch(get().type) with(GrLexemeType) {
+                case LeftParenthesis:
+                    skipParenthesis();
                     break;
-                skipStatement();
+                case LeftBracket:
+                    skipBrackets();
+                    break;
+                case LeftCurlyBrace:
+                    skipBlock();
+                    break;
+                default:
+                    checkAdvance();
+                    break;
+                }
             }
-        }
 
-        if(isMultiline) {
             if(get().type != GrLexemeType.RightCurlyBrace)
                 logError("Missing symbol", "A block should always end with \'}\'");
+		    checkAdvance(); 
+        }
+        else {
+            if(get().type != GrLexemeType.Semicolon)
+                skipStatement();
         }
 		closeBlock();
-		checkAdvance();
 	}
 
     void parseKill() {
         if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
 		    addKill();
         advance();
-        if(get().type != GrLexemeType.Semicolon)
-            logError("Missing semicolon", "An expression must end with a semicolon");
-        advance();
     }
 
     void parseKillAll() {
         if(currentFunction.instructions[$ - 1].opcode != GrOpcode.KillAll)
 		    addKillAll();
-        advance();
-        if(get().type != GrLexemeType.Semicolon)
-            logError("Missing semicolon", "An expression must end with a semicolon");
-        advance();                  
+        advance();                
     }
 
     void parseYield() {
 		addInstruction(GrOpcode.Yield, 0u);
-        advance();
-        if(get().type != GrLexemeType.Semicolon)
-            logError("Missing semicolon", "An expression must end with a semicolon");
         advance();
     }
 
