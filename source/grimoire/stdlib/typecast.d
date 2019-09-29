@@ -24,6 +24,10 @@ void grLoadStdLibTypecast() {
     //As string
 	grAddCast(&typecast_i2s, "value", grInt, grString);
 	grAddCast(&typecast_r2s, "value", grFloat, grString);
+	grAddCast(&typecast_as2s, "value", grStringArray, grString);
+
+    //As String Array
+	grAddCast(&typecast_s2as, "value", grString, grStringArray);
 }
 
 //As int
@@ -47,4 +51,21 @@ private void typecast_i2s(GrCall call) {
 
 private void typecast_r2s(GrCall call) {
 	call.setString(to!dstring(call.getFloat("value")));
+}
+
+private void typecast_as2s(GrCall call) {
+    dstring result;
+    foreach(const sub; call.getStringArray("value").data) {
+        result ~= sub;
+    }
+	call.setString(result);
+}
+
+//As string array
+private void typecast_s2as(GrCall call) {
+    GrStringArray result = new GrStringArray;
+    foreach(const sub; call.getString("value")) {
+        result.data ~= to!dstring(sub);
+    }
+	call.setStringArray(result);
 }

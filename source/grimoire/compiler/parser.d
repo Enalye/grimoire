@@ -535,7 +535,7 @@ class GrParser {
         return resultType;     
     }
 
-    GrType addCustomUnaryOperator(GrLexemeType lexType, GrType type) {
+    GrType addCustomUnaryOperator(GrLexemeType lexType, const GrType type) {
         GrType resultType = GrBaseType.VoidType;
         dstring mangledName = grMangleNamedFunction("@op_" ~ grGetPrettyLexemeType(lexType), [type]);
         
@@ -562,7 +562,7 @@ class GrParser {
         return resultType;     
     }
 
-    GrType addBinaryOperator(GrLexemeType lexType, GrType leftType, GrType rightType) {
+    GrType addBinaryOperator(GrLexemeType lexType, const GrType leftType, const GrType rightType) {
         if(leftType.baseType == GrBaseType.InternalTupleType || rightType.baseType == GrBaseType.InternalTupleType)
             logError("Multiple values operation", "Cannot use an operator on an expression list");
         GrType resultType = GrBaseType.VoidType;
@@ -647,7 +647,6 @@ class GrParser {
                 resultType = addCustomBinaryOperator(lexType, leftType, rightType);
             }
         }
-        
         if(resultType.baseType == GrBaseType.VoidType)
             logError("Operator Undefined", "There is no "
                 ~ to!string(grGetPrettyLexemeType(lexType))
@@ -659,7 +658,7 @@ class GrParser {
         return resultType;
     }
 
-    GrType addUnaryOperator(GrLexemeType lexType, GrType type) {
+    GrType addUnaryOperator(GrLexemeType lexType, const GrType type) {
         if(type.baseType == GrBaseType.InternalTupleType)
             logError("Multiple values operation", "Cannot use an operator on an expression list");
         GrType resultType = GrBaseType.VoidType;
@@ -2465,7 +2464,7 @@ class GrParser {
     //Exception handling
     void parseRaiseStatement() {
         advance();
-        GrType type = parseSubExpression(true, false, false, false);
+        GrType type = parseSubExpression(GR_SUBEXPR_TERMINATE_SEMICOLON).type;
         convertType(type, grString);
         addInstruction(GrOpcode.Raise);
         checkDeferStatement();
@@ -2884,7 +2883,7 @@ class GrParser {
 			logError("Missing symbol", "A switch statement should always start with \'(\'");
 
         advance();
-		GrType switchType = parseSubExpression();
+		GrType switchType = parseSubExpression().type;
         GrVariable switchVar = registerSpecialVariable("switch"d ~ to!dstring(scopeLevel), switchType);
         addSetInstruction(switchVar);
         advance();
@@ -2903,7 +2902,7 @@ class GrParser {
 			        logError("Missing symbol", "A case statement should always start with \'(\'");
                 advance();
                 addGetInstruction(switchVar);
-                GrType caseType = parseSubExpression();
+                GrType caseType = parseSubExpression().type;
                 addBinaryOperator(GrLexemeType.Equal, switchType, caseType);
                 advance();
 
@@ -3153,7 +3152,7 @@ class GrParser {
 		advance();
 
 		//From length to 0
-		GrType arrayType = parseSubExpression();
+		GrType arrayType = parseSubExpression().type;
 
         /* Init */
         GrType subType = grUnmangle(arrayType.mangledType);
@@ -3423,7 +3422,7 @@ class GrParser {
             iterator = registerSpecialVariable("iterator"d ~ to!dstring(scopeLevel), GrType(GrBaseType.IntType));
         
             //Init counter
-            GrType type = parseSubExpression();
+            GrType type = parseSubExpression().type;
     		advance();
 
             convertType(type, grInt);
@@ -3752,13 +3751,13 @@ class GrParser {
         while(get().type != GrLexemeType.RightBracket) {
             if(subType.baseType == GrBaseType.VoidType) {
                 //Implicit type specified by the type of the first element.
-                subType = parseSubExpression(false, true, true, false);
+                subType = parseSubExpression(GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA).type;
                 arrayType.mangledType = grMangleFunction([subType]);
                 if(subType.baseType == GrBaseType.VoidType)
                     logError("Array type error", "Array can not be of type void");
             }
             else {
-                convertType(parseSubExpression(false, true, true, false), subType);
+                convertType(parseSubExpression(GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA).type, subType);
             }
             arraySize ++;
 
@@ -3807,7 +3806,7 @@ class GrParser {
         for(;;) {
             if(get().type == GrLexemeType.Comma)
                 logError("Missing value", "bottom text");
-            auto index = parseSubExpression(false, true, true, false);
+            auto index = parseSubExpression(GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA).type;
             if(index.baseType == GrBaseType.VoidType)
                 logError("Syntax Error", "right there");
             convertType(index, grInt);
@@ -3965,18 +3964,32 @@ class GrParser {
 
 	void parseExpression() {
         bool isAssignmentList;
-        if(get().type == GrLexemeType.Identifier) {
-            const auto tempPos = current;
-            checkAdvance();
-            while(get().type == GrLexemeType.Identifier
-                || get().type == GrLexemeType.Colon) {
-                checkAdvance();
-            }
-            if(get().type == GrLexemeType.Comma)
+        const auto tempPos = current;
+        checkAdvance();
+        __skipLoop: while(!isEnd()) {
+            switch(get().type) with(GrLexemeType) {
+            case LeftBracket:
+                skipBrackets();
+                break;
+            case LeftParenthesis:
+                skipParenthesis();
+                break;
+            case LeftCurlyBrace:
+                skipBlock();
+                break;
+            case Semicolon:
+                isAssignmentList = false;
+                break __skipLoop;
+            case Comma:
                 isAssignmentList = true;
-            current = tempPos;
+                break __skipLoop;
+            default:
+                checkAdvance();
+                break;
+            }
         }
-
+        current = tempPos;
+        
         if(isAssignmentList) {
             //Get list of lvalues
             GrVariable[] lvalues;
@@ -3986,22 +3999,21 @@ class GrParser {
                 //Identifier
                 if(get().type != GrLexemeType.Identifier)
                     logError("Missing identifier", "Expected a name such as \'foo\'");
-
-                lvalues ~= parseLValue();
+                lvalues ~= parseSubExpression(GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_ASSIGN | GR_SUBEXPR_EXPECTING_LVALUE).lvalue;
             }
             while(get().type == GrLexemeType.Comma);
 
             parseAssignList(lvalues);
         }
         else {
-            parseSubExpression(true, false, false, false, true);
+            parseSubExpression(GR_SUBEXPR_TERMINATE_SEMICOLON | GR_SUBEXPR_MUST_CLEAN);
         }
 	}
 
     GrType[] parseExpressionList() {
         GrType[] expressionTypes;
         for(;;) {
-            GrType type = parseSubExpression(true, false, true, false, false, true);
+            GrType type = parseSubExpression(GR_SUBEXPR_TERMINATE_SEMICOLON | GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_EXPECTING_VALUE).type;
             if(type.baseType == GrBaseType.InternalTupleType) {
                 auto types = grUnpackTuple(type);
                 if(!types.length)
@@ -4162,26 +4174,50 @@ class GrParser {
         checkAdvance();
         return currentType;
     }
+
+    private enum {
+        GR_SUBEXPR_TERMINATE_SEMICOLON = 0x1,
+        GR_SUBEXPR_TERMINATE_BRACKET = 0x2,
+        GR_SUBEXPR_TERMINATE_COMMA = 0x4,
+        GR_SUBEXPR_TERMINATE_PARENTHESIS = 0x8,
+        GR_SUBEXPR_TERMINATE_ASSIGN = 0x10,
+        GR_SUBEXPR_MUST_CLEAN = 0x20,
+        GR_SUBEXPR_EXPECTING_VALUE = 0x40,
+        GR_SUBEXPR_EXPECTING_LVALUE = 0x80,
+    }
+
+    private struct GrSubExprResult {
+        GrType type;
+        GrVariable lvalue;
+    }
     
-	GrType parseSubExpression(
-            bool useSemicolon = false,
-            bool useBracket = false,
-            bool useComma = false,
-            bool useParenthesis = true,
-            bool mustCleanValue = false,
-            bool isGettingValue = false) {
+    /**
+        Evaluate a single subexpression.
+    */
+	GrSubExprResult parseSubExpression(int flags = GR_SUBEXPR_TERMINATE_PARENTHESIS) {
+        const bool useSemicolon = (flags & GR_SUBEXPR_TERMINATE_SEMICOLON) > 0;
+        const bool useBracket = (flags & GR_SUBEXPR_TERMINATE_BRACKET) > 0;
+        const bool useComma = (flags & GR_SUBEXPR_TERMINATE_COMMA) > 0;
+        const bool useParenthesis = (flags & GR_SUBEXPR_TERMINATE_PARENTHESIS) > 0;
+        const bool useAssign = (flags & GR_SUBEXPR_TERMINATE_ASSIGN) > 0;
+        const bool mustCleanValue = (flags & GR_SUBEXPR_MUST_CLEAN) > 0;
+        const bool isGettingValue = (flags & GR_SUBEXPR_EXPECTING_VALUE) > 0;
+        const bool canReturnLValue = (flags & GR_SUBEXPR_EXPECTING_LVALUE) > 0;
+        
 		GrVariable[] lvalues;
 		GrLexemeType[] operatorsStack;
 		GrType[] typeStack;
-		GrType currentType = GrType(GrBaseType.VoidType), lastType = GrType(GrBaseType.VoidType);
+		GrType currentType = grVoid, lastType = grVoid;
 		bool hasValue = false, hadValue = false,
         hasLValue = false, hadLValue = false,
         hasReference = false, hadReference = false,
 		isRightUnaryOperator = true, isEndOfExpression = false;
 
+        GrSubExprResult result;
+
 		do {
-			if(hasValue && currentType != lastType && lastType != GrType(GrBaseType.VoidType)) {
-				lastType = currentType;//convertType(currentType, lastType);
+			if(hasValue && currentType != lastType && lastType != grVoid) {
+				lastType = currentType;
 				currentType = lastType;
 			}
             else
@@ -4246,9 +4282,41 @@ class GrParser {
                 }
                 else {
                     advance();
-                    currentType = parseSubExpression();
+                    currentType = parseSubExpression().type;
                     advance();
                     hasValue = true;
+                    typeStack ~= currentType;
+                }
+                break;
+            case MethodCall:
+                advance();
+                if(!hadValue)
+                    logError("Empty method call", "Cannot call a function on nothing");
+                if(get().type != GrLexemeType.Identifier)
+                    logError("Missing identifier", "Expecting a function name");
+                
+                GrType selfValue = grVoid;
+                selfValue = typeStack[$ - 1];
+                typeStack.length --;
+                hadValue = false;
+                
+                GrVariable lvalue;
+				currentType = parseIdentifier(lvalue, lastType, selfValue);
+                //Unpack function value for 1 or less return values
+                //Multiples values are left as a tuple for parseExpressionList()
+                if(currentType.baseType == GrBaseType.InternalTupleType) {
+                    auto types = grUnpackTuple(currentType);
+                    if(!types.length)
+                        currentType = grVoid;
+                    else if(types.length == 1uL)
+                        currentType = types[0];
+                }
+
+                const auto nextLexeme = get();
+                if(nextLexeme.type == GrLexemeType.LeftBracket)
+                    hasReference = true;
+				if(currentType != GrType(GrBaseType.VoidType)) {
+					hasValue = true;
                     typeStack ~= currentType;
                 }
                 break;
@@ -4265,7 +4333,8 @@ class GrParser {
                     hasReference = true;
                     //Check if there is an assignement or not, discard if it's only a rvalue
                     const auto nextLexeme = get();
-                    if(requireLValue(nextLexeme.type)) {
+                    if(requireLValue(nextLexeme.type) ||
+                        (canReturnLValue && nextLexeme.type == GrLexemeType.Comma)) {
                         if((nextLexeme.type > GrLexemeType.Assign &&
                             nextLexeme.type <= GrLexemeType.PowerAssign) ||
                             nextLexeme.type == GrLexemeType.Increment ||
@@ -4501,7 +4570,13 @@ class GrParser {
                 typeStack ~= currentType;
 				hasValue = true;
 				break;
-			case Assign: .. case PowerAssign:
+            case Assign:
+                if(useAssign) {
+                    isEndOfExpression = true;
+                    break;
+                }
+                goto case AddAssign;
+			case AddAssign: .. case PowerAssign:
 				if(!hadLValue)
 					logError("Expression invalid", "Missing lvalue in expression");
 				hadLValue = false;
@@ -4579,7 +4654,8 @@ class GrParser {
 
                 //Check if there is an assignement or not, discard if it's only a rvalue
                 const auto nextLexeme = get();
-				if(lvalue !is null && requireLValue(nextLexeme.type)) {
+				if(lvalue !is null && (requireLValue(nextLexeme.type) ||
+                        (canReturnLValue && nextLexeme.type == GrLexemeType.Comma))) {
 					hasLValue = true;
 					lvalues ~= lvalue;
 
@@ -4647,11 +4723,16 @@ class GrParser {
 
 			operatorsStack.length --;
 		}
+
+        if(canReturnLValue && hadLValue) {
+            result.lvalue = lvalues[$ - 1];
+        }
         
         if(mustCleanValue && hadValue && currentType.baseType != GrBaseType.VoidType)
             shiftStackPosition(currentType, -1);
         
-        return currentType;
+        result.type = currentType;
+        return result;
 	}
 
     GrType parseAnonymousCall(GrType type) {
@@ -4670,7 +4751,7 @@ class GrParser {
             for(;;) {
                 if(i >= anonSignature.length)
                     logError("Invalid anonymous call", "The number of parameters does not match");
-                GrType subType = parseSubExpression(false, false, true, true, false, true);
+                GrType subType = parseSubExpression(GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_PARENTHESIS | GR_SUBEXPR_EXPECTING_VALUE).type;
                 signature ~= convertType(subType, anonSignature[i]);
                 if(get().type == GrLexemeType.RightParenthesis)
                     break;
@@ -4703,12 +4784,12 @@ class GrParser {
     }
 
 	//Parse an identifier or function call and return the deduced return type and lvalue.
-	GrType parseIdentifier(ref GrVariable variable, GrType expectedType) {
+	GrType parseIdentifier(ref GrVariable variable, GrType expectedType, GrType selfValue = grVoid) {
         if(expectedType.isField)
             writeln("ISFIELD");//TODO
 		GrType returnType = GrBaseType.VoidType;
 		GrLexeme identifier = get();		
-		bool isFunctionCall = false;
+		bool isFunctionCall = false, isMethodCall = false, hasParenthesis = false;
         dstring identifierName = identifier.svalue;
 
 		advance();
@@ -4729,12 +4810,21 @@ class GrParser {
             }
         }
 
-		if(get().type == GrLexemeType.LeftParenthesis)
+        if(selfValue.baseType != GrBaseType.VoidType) {
+            isMethodCall = true;
 			isFunctionCall = true;
+        }
+
+		if(get().type == GrLexemeType.LeftParenthesis) {
+			isFunctionCall = true;
+            hasParenthesis = true;
+        }
 
 		if(isFunctionCall) {
 			GrType[] signature;
-			advance();
+
+		    if(hasParenthesis)
+			    advance();
 
 			auto var = (identifierName in currentFunction.localVariables);
             if(var is null)
@@ -4743,16 +4833,20 @@ class GrParser {
                 //Signature parsing with type conversion
                 GrType[] anonSignature = grUnmangleSignature(var.type.mangledType);
                 int i;
-                if(get().type != GrLexemeType.RightParenthesis) {
+                if(isMethodCall) {
+                    signature ~= convertType(selfValue, anonSignature[i]);                    
+                    i ++;
+                }
+                if(hasParenthesis && get().type != GrLexemeType.RightParenthesis) {
                     for(;;) {
                         if(i >= anonSignature.length)
                             logError("Invalid anonymous call", "The number of parameters does not match");
-                        GrType subType = parseSubExpression(false, false, true, true, false, true);
+                        GrType subType = parseSubExpression(GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_PARENTHESIS | GR_SUBEXPR_EXPECTING_VALUE).type;
                         if(subType.baseType == GrBaseType.InternalTupleType) {
                             auto types = grUnpackTuple(subType);
                             if(types.length) {
                                 for(int y; y < types.length; y ++, i ++) {
-                                    signature ~= types[y];
+                                    signature ~= convertType(types[y], anonSignature[i]);
                                 }
                             }
                             else
@@ -4769,10 +4863,11 @@ class GrParser {
                         }
                         advance();
                     }
+                    if(hasParenthesis  && get().type == GrLexemeType.RightParenthesis)
+                        advance();
                 }
                 else if(anonSignature.length)
                      logError("Invalid anonymous call", "The number of parameters does not match");
-                checkAdvance();
 
                 //Push the values on the global stack for task spawning.
                 if(var.type.baseType == GrBaseType.TaskType)
@@ -4800,10 +4895,13 @@ class GrParser {
 				}*/
 			}
 			else {
+                if(isMethodCall) {
+                    signature ~= selfValue;
+                }
                 //Signature parsing, no coercion is made
-                if(get().type != GrLexemeType.RightParenthesis) {
+                if(hasParenthesis && get().type != GrLexemeType.RightParenthesis) {
                     for(;;) {
-                        auto type = parseSubExpression(false, false, true, true, false, true);
+                        auto type = parseSubExpression(GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_PARENTHESIS | GR_SUBEXPR_EXPECTING_VALUE).type;
                         if(type.baseType == GrBaseType.InternalTupleType) {
                             auto types = grUnpackTuple(type);
                             if(types.length)
@@ -4819,7 +4917,8 @@ class GrParser {
                         advance();
                     }
                 }
-                checkAdvance();
+                if(hasParenthesis  && get().type == GrLexemeType.RightParenthesis)
+                    advance();
 
                 //Mangling function name
 				dstring mangledName = grMangleNamedFunction(identifierName, signature);

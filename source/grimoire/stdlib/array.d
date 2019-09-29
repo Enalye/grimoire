@@ -5,6 +5,7 @@ import grimoire.compiler, grimoire.runtime;
 package(grimoire.stdlib)
 void grLoadStdLibArray() {
 	grAddPrimitive(&_range, "range", ["min", "max"], [grInt, grInt], [grIntArray]);
+	grAddPrimitive(&_size_s, "size", ["array"], [grStringArray], [grInt]);
 }
 
 private void _range(GrCall call) {
@@ -22,4 +23,8 @@ private void _range(GrCall call) {
     }
     array.data ~= max;
     call.setIntArray(array);
+}
+
+private void _size_s(GrCall call) {
+    call.setInt(cast(int)call.getStringArray("array").data.length);
 }
