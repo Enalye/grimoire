@@ -954,7 +954,7 @@ class GrParser {
         return GrType(GrBaseType.VoidType);
     }
 
-	void addSetInstruction(GrVariable variable, GrType valueType = grVoid, bool isGettingValue = false) {
+	void addSetInstruction(GrVariable variable, GrType valueType = grVoid, bool isExpectingValue = false) {
         _lastAssignationScopeLevel = _blockLevel;
         if(variable.type.baseType == GrBaseType.ReferenceType) {
             valueType = convertType(valueType, grUnmangle(variable.type.mangledType));
@@ -964,27 +964,27 @@ class GrParser {
 			case FunctionType:
 			case TaskType:
 			case ChanType:
-				addInstruction(isGettingValue ? GrOpcode.RefStore2_Int : GrOpcode.RefStore_Int);
+				addInstruction(isExpectingValue ? GrOpcode.RefStore2_Int : GrOpcode.RefStore_Int);
 				break;
 			case FloatType:
-				addInstruction(isGettingValue ? GrOpcode.RefStore2_Float : GrOpcode.RefStore_Float);
+				addInstruction(isExpectingValue ? GrOpcode.RefStore2_Float : GrOpcode.RefStore_Float);
 				break;
 			case StringType:
-				addInstruction(isGettingValue ? GrOpcode.RefStore2_String : GrOpcode.RefStore_String);
+				addInstruction(isExpectingValue ? GrOpcode.RefStore2_String : GrOpcode.RefStore_String);
 				break;
 			case StructType:
-				addInstruction(isGettingValue ? GrOpcode.RefStore2_Object : GrOpcode.RefStore_Object);
+				addInstruction(isExpectingValue ? GrOpcode.RefStore2_Object : GrOpcode.RefStore_Object);
 				break;
             case TupleType:
                 auto tuple = grGetTuple(variable.type.mangledType);
                 const auto nbFields = tuple.signature.length;
                 for(int i = 1; i <= nbFields; i ++) {
-                    addSetInstruction(getVariable(variable.name ~ ":" ~ tuple.fields[nbFields - i]), tuple.signature[nbFields - i], isGettingValue);
+                    addSetInstruction(getVariable(variable.name ~ ":" ~ tuple.fields[nbFields - i]), tuple.signature[nbFields - i], isExpectingValue);
                 }
                 break;
             case ArrayType:
             case UserType:
-				addInstruction(isGettingValue ? GrOpcode.RefStore2_Object : GrOpcode.RefStore_Object);
+				addInstruction(isExpectingValue ? GrOpcode.RefStore2_Object : GrOpcode.RefStore_Object);
 				break;
 			default:
 				logError("Invalid type", "Cannot assign to a \'" ~ to!string(variable.type) ~ "\' type");
@@ -1018,7 +1018,7 @@ class GrParser {
         if(valueType.baseType != GrBaseType.VoidType)
             convertType(valueType, variable.type);
 
-        //if(!variable.isInitialized && isGettingValue)
+        //if(!variable.isInitialized && isExpectingValue)
         //    logError("Uninitialized variable", "The variable is being used without being assigned");
         variable.isInitialized = true;
 
@@ -1028,20 +1028,20 @@ class GrParser {
 			case IntType:
 			case FunctionType:
 			case TaskType:
-				addInstruction(GrOpcode.FieldStore_Int, isGettingValue ? 0 : -1, true);
+				addInstruction(GrOpcode.FieldStore_Int, isExpectingValue ? 0 : -1, true);
 				break;
 			case FloatType:
-				addInstruction(GrOpcode.FieldStore_Float, isGettingValue ? 0 : -1, true);
+				addInstruction(GrOpcode.FieldStore_Float, isExpectingValue ? 0 : -1, true);
 				break;
 			case StringType:
-				addInstruction(GrOpcode.FieldStore_String, isGettingValue ? 0 : -1, true);
+				addInstruction(GrOpcode.FieldStore_String, isExpectingValue ? 0 : -1, true);
 				break;
 			case UserType:
 			case ReferenceType:
 			case ChanType:
 			case ArrayType:
 			case StructType:
-				addInstruction(GrOpcode.FieldStore_Object, isGettingValue ? 0 : -1, true);
+				addInstruction(GrOpcode.FieldStore_Object, isExpectingValue ? 0 : -1, true);
 				break;
             case VoidType:
             case InternalTupleType:
@@ -1056,27 +1056,27 @@ class GrParser {
 			case FunctionType:
 			case TaskType:
 			case ChanType:
-				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Int : GrOpcode.GlobalStore_Int, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Int : GrOpcode.GlobalStore_Int, variable.index);
 				break;
 			case FloatType:
-				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Float : GrOpcode.GlobalStore_Float, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Float : GrOpcode.GlobalStore_Float, variable.index);
 				break;
 			case StringType:
-				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_String : GrOpcode.GlobalStore_String, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_String : GrOpcode.GlobalStore_String, variable.index);
 				break;
 			case StructType:
-				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.index);
 				break;
             case TupleType:
                 auto tuple = grGetTuple(variable.type.mangledType);
                 const auto nbFields = tuple.signature.length;
                 for(int i = 1; i <= nbFields; i ++) {
-                    addSetInstruction(getVariable(variable.name ~ ":" ~ tuple.fields[nbFields - i]), tuple.signature[nbFields - i], isGettingValue);
+                    addSetInstruction(getVariable(variable.name ~ ":" ~ tuple.fields[nbFields - i]), tuple.signature[nbFields - i], isExpectingValue);
                 }
                 break;
             case ArrayType:
             case UserType:
-				addInstruction(isGettingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.index);
 				break;
 			default:
 				logError("Invalid type", "Cannot assign to a \'" ~ to!string(variable.type) ~ "\' type");
@@ -1088,16 +1088,16 @@ class GrParser {
 			case IntType:
 			case FunctionType:
 			case TaskType:
-				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Int : GrOpcode.LocalStore_Int, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_Int : GrOpcode.LocalStore_Int, variable.index);
 				break;
 			case FloatType:
-				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Float : GrOpcode.LocalStore_Float, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_Float : GrOpcode.LocalStore_Float, variable.index);
 				break;
 			case StringType:
-				addInstruction(isGettingValue ? GrOpcode.LocalStore2_String : GrOpcode.LocalStore_String, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_String : GrOpcode.LocalStore_String, variable.index);
 				break;
 			case StructType:
-				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Object : GrOpcode.LocalStore_Object, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_Object : GrOpcode.LocalStore_Object, variable.index);
 				break;
             case TupleType:
                 auto tuple = grGetTuple(variable.type.mangledType);
@@ -1105,13 +1105,13 @@ class GrParser {
                 for(int i = 1; i <= nbFields; i ++) {
                     addSetInstruction(getVariable(variable.name ~ ":" ~ tuple.fields[nbFields - i]), tuple.signature[nbFields - i]);
                 }
-                if(isGettingValue)
+                if(isExpectingValue)
                     shiftStackPosition(variable.type, 1);
                 break;
             case ArrayType:
             case UserType:
 			case ChanType:
-				addInstruction(isGettingValue ? GrOpcode.LocalStore2_Object : GrOpcode.LocalStore_Object, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_Object : GrOpcode.LocalStore_Object, variable.index);
 				break;
 			default:
 				logError("Invalid type", "Cannot assign to a \'" ~ to!string(variable.type) ~ "\' type");
@@ -1199,7 +1199,7 @@ class GrParser {
 		}
 		else {
             if(!variable.isInitialized)
-                logError("Uninitialized variable", "The local variable is being used without being assigned");
+                assert(false);//logError("Uninitialized variable", "The local variable is being used without being assigned");
             
 			switch(variable.type.baseType) with(GrBaseType) {
 			case BoolType:
@@ -4201,8 +4201,8 @@ class GrParser {
         const bool useParenthesis = (flags & GR_SUBEXPR_TERMINATE_PARENTHESIS) > 0;
         const bool useAssign = (flags & GR_SUBEXPR_TERMINATE_ASSIGN) > 0;
         const bool mustCleanValue = (flags & GR_SUBEXPR_MUST_CLEAN) > 0;
-        const bool isGettingValue = (flags & GR_SUBEXPR_EXPECTING_VALUE) > 0;
-        const bool canReturnLValue = (flags & GR_SUBEXPR_EXPECTING_LVALUE) > 0;
+        const bool isExpectingValue = (flags & GR_SUBEXPR_EXPECTING_VALUE) > 0;
+        const bool isExpectingLValue = (flags & GR_SUBEXPR_EXPECTING_LVALUE) > 0;
         
 		GrVariable[] lvalues;
 		GrLexemeType[] operatorsStack;
@@ -4301,7 +4301,7 @@ class GrParser {
                 hadValue = false;
                 
                 GrVariable lvalue;
-				currentType = parseIdentifier(lvalue, lastType, selfValue);
+				currentType = parseIdentifier(lvalue, lastType, selfValue, isExpectingLValue);
                 //Unpack function value for 1 or less return values
                 //Multiples values are left as a tuple for parseExpressionList()
                 if(currentType.baseType == GrBaseType.InternalTupleType) {
@@ -4334,7 +4334,7 @@ class GrParser {
                     //Check if there is an assignement or not, discard if it's only a rvalue
                     const auto nextLexeme = get();
                     if(requireLValue(nextLexeme.type) ||
-                        (canReturnLValue && nextLexeme.type == GrLexemeType.Comma)) {
+                        (isExpectingLValue && nextLexeme.type == GrLexemeType.Comma)) {
                         if((nextLexeme.type > GrLexemeType.Assign &&
                             nextLexeme.type <= GrLexemeType.PowerAssign) ||
                             nextLexeme.type == GrLexemeType.Increment ||
@@ -4538,6 +4538,10 @@ class GrParser {
                         case AddAssign: .. case PowerAssign:
                             addLoadFieldInstruction(currentType, fieldLValue.index, true);
                             break;
+                        case Comma:
+                            if(isExpectingLValue)
+                                goto case Assign;
+                            goto default;
                         default:
                             addLoadFieldInstruction(currentType, fieldLValue.index, false);
                             break;
@@ -4597,6 +4601,8 @@ class GrParser {
 				isRightUnaryOperator = true;
 				goto case Multiply;
 			case Multiply: .. case Not:
+                if(isExpectingLValue)
+                    logError("Unexpected operation", "Cannot do this kind of operation on the left side of an assignment");
 				if(!hadValue
                     && lex.type != GrLexemeType.Plus
                     && lex.type != GrLexemeType.Minus
@@ -4641,7 +4647,7 @@ class GrParser {
 				break;
 			case Identifier:
 				GrVariable lvalue;
-				currentType = parseIdentifier(lvalue, lastType);
+				currentType = parseIdentifier(lvalue, lastType, grVoid, isExpectingLValue);
                 //Unpack function value for 1 or less return values
                 //Multiples values are left as a tuple for parseExpressionList()
                 if(currentType.baseType == GrBaseType.InternalTupleType) {
@@ -4655,7 +4661,7 @@ class GrParser {
                 //Check if there is an assignement or not, discard if it's only a rvalue
                 const auto nextLexeme = get();
 				if(lvalue !is null && (requireLValue(nextLexeme.type) ||
-                        (canReturnLValue && nextLexeme.type == GrLexemeType.Comma))) {
+                        (isExpectingLValue && nextLexeme.type == GrLexemeType.Comma))) {
 					hasLValue = true;
 					lvalues ~= lvalue;
 
@@ -4694,7 +4700,7 @@ class GrParser {
 	
 			switch(operator) with(GrLexemeType) {
 			case Assign:
-				addSetInstruction(lvalues[$ - 1], currentType, isGettingValue || operatorsStack.length > 1uL);
+				addSetInstruction(lvalues[$ - 1], currentType, isExpectingValue || operatorsStack.length > 1uL);
 				lvalues.length --;
 
                 if(operatorsStack.length <= 1uL)
@@ -4702,7 +4708,7 @@ class GrParser {
 				break;
 			case AddAssign: .. case PowerAssign:
 				currentType = addOperator(operator - (GrLexemeType.AddAssign - GrLexemeType.Add), typeStack);
-				addSetInstruction(lvalues[$ - 1], currentType, isGettingValue || operatorsStack.length > 1uL);			
+				addSetInstruction(lvalues[$ - 1], currentType, isExpectingValue || operatorsStack.length > 1uL);			
 				lvalues.length --;
 
                 if(operatorsStack.length <= 1uL)
@@ -4710,7 +4716,7 @@ class GrParser {
 				break;
 			case Increment: .. case Decrement:
 				currentType = addOperator(operator, typeStack);
-				addSetInstruction(lvalues[$ - 1], currentType, isGettingValue || operatorsStack.length > 1uL);
+				addSetInstruction(lvalues[$ - 1], currentType, isExpectingValue || operatorsStack.length > 1uL);
 				lvalues.length --;
 
                 if(operatorsStack.length <= 1uL)
@@ -4724,7 +4730,9 @@ class GrParser {
 			operatorsStack.length --;
 		}
 
-        if(canReturnLValue && hadLValue) {
+        if(isExpectingLValue) {
+            if(!hadLValue)
+                logError("Not an lvalue", "Left side of an assignation list must be an lvalue");
             result.lvalue = lvalues[$ - 1];
         }
         
@@ -4784,7 +4792,7 @@ class GrParser {
     }
 
 	//Parse an identifier or function call and return the deduced return type and lvalue.
-	GrType parseIdentifier(ref GrVariable variable, GrType expectedType, GrType selfValue = grVoid) {
+	GrType parseIdentifier(ref GrVariable variable, GrType expectedType, GrType selfValue = grVoid, bool isAssignment = false) {
         if(expectedType.isField)
             writeln("ISFIELD");//TODO
 		GrType returnType = GrBaseType.VoidType;
@@ -4939,11 +4947,7 @@ class GrParser {
 			returnType = variable.type;
             //If it's an assignement, we want the GET instruction to be after the assignement, not there.
             const auto nextLexeme = get();
-            /*if(nextLexeme.type == GrLexemeType.LeftBracket) {
-                addInstruction(GrOpcode.LocalLoad_Object, variable.index);
-                returnType = GrType(GrBaseType.VariantType);
-            }
-            else */if(nextLexeme.type != GrLexemeType.Assign)
+            if(!(nextLexeme.type == GrLexemeType.Assign || (isAssignment && nextLexeme.type == GrLexemeType.Comma)))
                 addGetInstruction(variable, expectedType);
 		}
 		return returnType;

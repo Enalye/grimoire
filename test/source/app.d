@@ -17,7 +17,6 @@ void main() {
         auto startTime = MonoTime.currTime();
         grInitPrimitivesDatabase();
         grInitTypesDatabase();
-        grAddUserType("Test");
         grLoadStdLibrary();
         auto bytecode = grCompileFile("test.gr");
         auto compilationTime = MonoTime.currTime() - startTime;

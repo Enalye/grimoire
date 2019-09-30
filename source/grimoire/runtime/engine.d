@@ -1229,7 +1229,7 @@ class GrEngine {
 					context.pc ++;
 					break;
 				case Call:
-                    if(((context.stackPos >> 1) + 1) >= context.callStackLimit)
+                    if((context.stackPos + 1) >= context.callStackLimit)
                         context.doubleCallStackSize();
 					context.localsPos += context.callStack[context.stackPos].localStackSize;
 					context.callStack[context.stackPos].retPosition = context.pc + 1u;
@@ -1237,7 +1237,7 @@ class GrEngine {
 					context.pc = grGetInstructionUnsignedValue(opcode);
 					break;
 				case AnonymousCall:
-                    if((context.stackPos >> 1) >= context.callStackLimit)
+                    if((context.stackPos + 1) >= context.callStackLimit)
                         context.doubleCallStackSize();
 					context.localsPos += context.callStack[context.stackPos].localStackSize;
 					context.callStack[context.stackPos].retPosition = context.pc + 1u;
