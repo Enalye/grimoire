@@ -244,11 +244,15 @@ GrType grUnmangle(dstring mangledSignature) {
     return currentType;
 }
 
+/// Displayable format for a mangled string of format: function$signature \
+/// Return signature is not used.
 string grGetPrettyFunctionCall(dstring mangledName) {
-    import std.string;
+    import std.string: indexOf;
     int index = cast(int)indexOf(mangledName, '$');
-    if(index <= 0)
-        throw new Exception("Invalid mangling format, not a named function");
+    assert(index != 0 && mangledName.length, "Invalid mangling format, named function have no name.");
+
+    if(index < 0)
+        return to!string(mangledName) ~ "()";
 
     dstring name = mangledName[0.. index];
     mangledName = mangledName[index.. $];

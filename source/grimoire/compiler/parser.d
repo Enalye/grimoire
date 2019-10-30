@@ -314,9 +314,9 @@ class GrParser {
 				logError("Multiple declaration", "The function \'" ~ to!string(name) ~ "\' is already declared.");
 		
             if(isEvent)
-			    events[mangledName] = func;
+                events[mangledName] = func;
             else
-			    functions[mangledName] = func;
+                functions[mangledName] = func;
 		}
 
 		functionStack ~= currentFunction;
@@ -416,7 +416,7 @@ class GrParser {
 
 		var = (name in currentFunction.localVariables);
 		if(var is null)
-            logError("Undeclared variable", "The variable \'" ~ to!string(name) ~ "\' is not declared");
+            logError("Undeclared variable", "The variable \'" ~ to!string(name) ~ "\' is not declared", -1);
         return *var;
 	}
 
@@ -1199,7 +1199,7 @@ class GrParser {
 		}
 		else {
             if(!variable.isInitialized)
-                assert(false);//logError("Uninitialized variable", "The local variable is being used without being assigned");
+                logError("Uninitialized variable", "The local variable is being used without being assigned");
             
 			switch(variable.type.baseType) with(GrBaseType) {
 			case BoolType:
@@ -4779,7 +4779,7 @@ class GrParser {
         GrType retTypes = grPackTuple(grUnmangleSignature(type.mangledReturnType));
 
         if(type.baseType == GrBaseType.FunctionType) {
-		    addGetInstruction(functionId, GrType(GrBaseType.IntType));
+            addGetInstruction(functionId, GrType(GrBaseType.IntType));
         }
 
         if(type.baseType == GrBaseType.FunctionType)
@@ -4992,37 +4992,64 @@ class GrParser {
 
 			//Separator
 			if(error.mustHalt)
-				report ~= "\n\033[0;36m--\033[0;91m Error \033[0;36m-------------------- " ~ error.lex.getFile() ~ "\033[0m\n";
+				report ~= "\033[0;91merror";
 			else
-				report ~= "\n\033[0;36m--\033[0;93m Warning \033[0;36m-------------------- " ~ error.lex.getFile() ~ "\033[0m\n";
+				report ~= "\033[0;93mwarning";
 
 			//Error report
-			report ~= error.msg ~ ":\033[1;34m\n";
+			report ~= "\033[37;1m: " ~ error.msg ~ "\033[0m\n";
+
+            //File path
+			dstring lineNumber = to!dstring(error.lex.line + 1u) ~ "| ";
+            foreach(x; 1 .. lineNumber.length)
+				report ~= " ";
+
+			report ~= "\033[0;36m->\033[0m " ~ error.lex.getFile()
+                ~ "(" ~ to!dstring(error.lex.line + 1u)
+                ~ "," ~ to!dstring(error.lex.column)
+                ~ ")\n";
+            
+			report ~= "\033[0;36m";
+
+            foreach(x; 1 .. lineNumber.length)
+				report ~= " ";
+            report ~= "\033[0;36m|\n";
 
 			//Script snippet
-			dstring lineNumber = to!dstring(error.lex.line + 1u) ~ "| ";
-			report ~= lineNumber;
-			report ~= error.lex.getLine().replace("\t", " ") ~ "\n";
+			report ~= " " ~ lineNumber;
+			report ~= "\033[1;34m" ~ error.lex.getLine().replace("\t", " ") ~ "\033[0;36m\n";
 
 			//Red underline
-			foreach(x; 1 .. lineNumber.length + error.lex.column)
+            foreach(x; 1 .. lineNumber.length)
+				report ~= " ";
+            report ~= "\033[0;36m|";
+			foreach(x; 0 .. error.lex.column)
 				report ~= " ";
 
 			if(error.mustHalt)
 				report ~= "\033[1;31m"; //Red color
 			else
-				report ~= "\033[1;93m"; //Red color
+				report ~= "\033[1;93m"; //Orange color
 
             auto lexLength = error.lex.textLength;
             if(error.lex.type == GrLexemeType.String)
                 lexLength += 2;
 			foreach(x; 0 .. lexLength)
 				report ~= "^";
-			report ~= "\033[0m\n"; //White color
+			
 
 			//Error description
+            if(error.mustHalt)
+				report ~= "\033[0;31m"; //Red color
+			else
+				report ~= "\033[0;93m"; //Orange color
+
 			if(error.info.length)
-				report ~= error.info ~ ".\n";
+				report ~= "  " ~ error.info ~ "\n";
+
+            foreach(x; 1 .. lineNumber.length)
+				report ~= " ";
+            report ~= "\033[0;36m|\n";
 			writeln(report);
 		}
 		throw new Exception("\033[0mCompilation aborted...");

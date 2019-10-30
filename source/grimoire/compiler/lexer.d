@@ -129,9 +129,10 @@ class GrLexer {
 		return filesImported[lex.fileId];
 	}
 
+	/// Advance the current character pointer and skips whitespaces and comments.
 	bool advance(bool startFromCurrent = false) {
         if(!startFromCurrent)
-		    current ++;
+			current ++;
 
 		if(current >= text.length)
 			return false;
@@ -206,6 +207,7 @@ class GrLexer {
 		return true;
 	}
 
+	/// Start scanning the root file and all its dependencies.
 	void scanFile(dstring fileName) {
 		filesToImport ~= fileName;
 
@@ -225,6 +227,7 @@ class GrLexer {
 		}
 	}
 
+	/// Scan the content of a single file.
 	void scanScript() {
 		//Skip the first escape characters.
 		advance(true);
@@ -562,8 +565,8 @@ class GrLexer {
 		lex.textLength = cast(uint)buffer.length;
 
 		switch(buffer) {
-			case "import":
-				scanImport();
+			case "use":
+				scanUse();
 				return;
 			case "main":
 				lex.type = GrLexemeType.Main;
@@ -732,8 +735,16 @@ class GrLexer {
 		lexemes ~= lex;
 	}
 
-	void scanImport() {
-		advance();
+	/// Transform the path in your path system.
+	private string convertPathToImport(string path) {
+		import std.regex : replaceAll, regex;
+		import std.path: dirSeparator;
+		return replaceAll(path, regex(r"\\/|/|\\"), dirSeparator);
+	}
+
+	/// Add a single file path delimited by `" "` to the import list.
+	private void scanFilePath() {
+		import std.path: dirName, buildNormalizedPath, absolutePath;
 
 		if(get() != '\"')
 			throw new Exception("Expected \'\"\' at the beginning of the import.");
@@ -743,7 +754,7 @@ class GrLexer {
 		for(;;) {
 			if(current >= text.length)
 				throw new Exception("Missing \'\"\' character.");
-			dchar symbol = get();
+			const dchar symbol = get();
 			if(symbol == '\n') {
 				positionOfLine = current;
 				line ++;
@@ -754,14 +765,52 @@ class GrLexer {
 			buffer ~= symbol;
 			current ++;
 		}
-
+		string filePath = to!string(buffer);
+		filePath = buildNormalizedPath(dirName(to!string(file)), convertPathToImport(filePath));
+		filePath = absolutePath(filePath);
+		buffer = to!dstring(filePath);
 		if(filesImported.canFind(buffer) || filesToImport.canFind(buffer))
 			return;
-
 		filesToImport ~= buffer;
+	}
+
+	/// Scan a `use` directive. \
+	/// Syntax: \
+	/// `use "FILEPATH"` or \
+	/// `use { "FILEPATH1", "FILEPATH2", "FILEPATH3" }` \
+	/// ---
+	/// Add a file to the list of files to import.
+	void scanUse() {
+		advance();
+
+		// Multiple files import.
+		if(get() == '{') {
+			advance();
+			bool isFirst = true;
+			for(;;) {
+				if(isFirst)
+					isFirst = false;
+				else if(get() == '\"')
+					advance();
+				else
+					throw new Exception("Missing \'\"\' character.");
+				// EOF
+				if(current >= text.length)
+					throw new Exception("Missing \'}\' after import list.");
+				// End of the import list.
+				if(get() == '}')
+					break;
+				// Scan
+				scanFilePath();
+			}
+		}
+		else {
+			scanFilePath();
+		}
 	}
 }
 
+/// Returns a displayable version of a token type.
 dstring grGetPrettyLexemeType(GrLexemeType operator) {
     dstring[] lexemeTypeStrTable = [
         "[", "]", "(", ")", "{", "}",
