@@ -288,6 +288,9 @@ class GrLexer {
 
 			if(symbol >= '0' && symbol <= '9')
 				buffer ~= symbol;
+			else if(symbol == '_') {
+				// Do nothing, only cosmetic (e.g. 1_000_000).
+			}
 			else if(symbol == '.') {
 				if(isFloat)
 					break;
