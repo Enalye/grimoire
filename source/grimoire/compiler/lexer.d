@@ -209,6 +209,12 @@ class GrLexer {
 
 	/// Start scanning the root file and all its dependencies.
 	void scanFile(dstring fileName) {
+		import std.path: buildNormalizedPath, absolutePath;
+		string filePath = to!string(fileName);
+		filePath = buildNormalizedPath(convertPathToImport(filePath));
+		filePath = absolutePath(filePath);
+		fileName = to!dstring(filePath);
+
 		filesToImport ~= fileName;
 
 		while(filesToImport.length) {
