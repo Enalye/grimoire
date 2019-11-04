@@ -13,7 +13,7 @@ import grimoire.runtime.array;
 import grimoire.runtime.object;
 
 /**
-    Represents a single function context in the callStack.
+Represents a single function context in the callStack.
 */
 struct GrStackFrame {
     /// Size of the locals in the calling function.
@@ -26,26 +26,41 @@ struct GrStackFrame {
     uint[] exceptionHandlers;
 }
 
+/**
+Snapshot of the context's state. \
+Used when we need to restore the context to a previous state.
+*/
 struct GrContextState {
+    /// Current expression stack top
     int istackPos,
+    /// Ditto
         fstackPos,
+    /// Ditto
         sstackPos,
+    /// Ditto
         ostackPos;
+    
+    /// Callstack
     GrStackFrame stackFrame;
+
+    /// Stack frame pointer for the current function.
+    /// Each function takes 2 integer: the return pc, and the local variable size.
     uint stackPos;
-    uint localsPos;    
+
+    /// Local variables: Access with Xlocals[localsPos + variableIndex]
+    uint localsPos;
 }
 
 /**
-    Coroutines are contexts that hold local data.
+Coroutines are contexts that hold local data.
 */
 final class GrContext {
     /// Default ctor.
-    this(GrEngine e) {
-        engine = e;
-        setupCallStack(16);
-        setupStack(32);
-        setupLocals(256);
+    this(GrEngine engine_) {
+        engine = engine_;
+        setupCallStack(4);
+        setupStack(8);
+        setupLocals(8);
     }
 
     /// Parent engine where the context is running.
@@ -53,19 +68,23 @@ final class GrContext {
 
     /// Local variables
     int[] ilocals;
+    /// Ditto
     float[] flocals;
+    /// Ditto
     dstring[] slocals;
+    /// Ditto
     void*[] olocals;
 
     /// Callstack
     GrStackFrame[] callStack;
-    uint[][] deferStack;
-    uint[][] exceptionHandlers;
 
     /// Expression stack.
     int[] istack;
+    /// Ditto
     float[] fstack;
+    /// Ditto
     dstring[] sstack;
+    /// Ditto
     void*[] ostack;
 
     /// Operation pointer.
@@ -76,9 +95,13 @@ final class GrContext {
     /// Each function takes 2 integer: the return pc, and the local variable size.
         stackPos;
     
+    /// Current expression stack top
     int istackPos = -1,
+    /// Ditto
         fstackPos = -1,
+    /// Ditto
         sstackPos = -1,
+    /// Ditto
         ostackPos = -1;
 
     /// Kill state, unwind the call stack and call all registered deferred statements.
@@ -102,7 +125,9 @@ final class GrContext {
     GrContextState[] states;
 
     /// Current callstack max depth.
-    uint callStackLimit;
+    uint callStackLimit,
+    /// Current max local variable available.
+        localsLimit;
 
     /// Initialize the call stacks.
     void setupCallStack(uint size) {
@@ -110,20 +135,13 @@ final class GrContext {
         callStack = new GrStackFrame[callStackLimit];   
     }
 
-    /// Current expression stack limit.
-    uint stackLimit;
-
     /// Initialize the expression stacks.
     void setupStack(uint size) {
-        stackLimit = size;
-        istack = new int[stackLimit];
-        fstack = new float[stackLimit];
-        sstack = new dstring[stackLimit];
-        ostack = new void*[stackLimit];
+        istack = new int[size];
+        fstack = new float[size];
+        sstack = new dstring[size];
+        ostack = new void*[size];
     }
-
-    /// Current max local variable available.
-    uint localsLimit;
 
     /// Initialize the local variable stacks.
     void setupLocals(uint size) {
@@ -134,20 +152,25 @@ final class GrContext {
         olocals = new void*[localsLimit];
     }
 
-    /// Double the current call stacks' size.
+    /// Double the current callstack size.
     void doubleCallStackSize() {
         callStackLimit <<= 1;
-        callStack.length = callStackLimit << 1;
-        deferStack.length = callStackLimit;
-        exceptionHandlers.length = callStackLimit;
+        callStack.length = callStackLimit;
+    }
+
+    /// Double the current locals stacks' size.
+    void doubleLocalsStackSize() {
+        localsLimit <<= 1;
+        ilocals.length = localsLimit;
+        flocals.length = localsLimit;
+        slocals.length = localsLimit;
+        olocals.length = localsLimit;
     }
 
     alias setString = setValue!dstring;
     alias setBool = setValue!bool;
     alias setInt = setValue!int;
     alias setFloat = setValue!float;
-    //alias setVariant = setValue!GrVariant;
-    //alias setArray = setValue!(GrVariant[]);
 
     void setUserData(T)(T value) {
         setValue!(void*)(cast(void*)value);
@@ -170,16 +193,13 @@ final class GrContext {
             sstackPos ++;
             sstack[sstackPos] = value;
         }
-        /*else static if(is(T == GrVariant)) {
-            vstackPos ++;
-            vstack[vstackPos] = value;
-        }*/
         else static if(is(T == void*)) {
             ostackPos ++;
             ostack[ostackPos] = value;
         }
     }
 
+    /// Register the current state of the context
     void pushState() {
         GrContextState state;
         state.istackPos = istackPos;
@@ -192,6 +212,7 @@ final class GrContext {
         states ~= state;
     }
 
+    /// Restore the last state of the context
     void restoreState() {
         if(!states.length)
             throw new Exception("Fatal error: pop context state");
@@ -205,6 +226,7 @@ final class GrContext {
         callStack[stackPos] = state.stackFrame;
     }
 
+    /// Remove last state of the context
     void popState() {
         states.length --;
     }
