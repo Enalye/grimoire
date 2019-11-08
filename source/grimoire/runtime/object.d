@@ -1,6 +1,17 @@
+/**
+Object definition.
+
+Copyright: (c) Enalye 2019
+License: Zlib
+Authors: Enalye
+*/
+
 module grimoire.runtime.object;
 
-final class GrFieldValue {
+/// A single field of an object. \
+/// We can't know at runtime the type of a field,
+/// so you need to check with its type definition.
+package final class GrFieldValue {
     union {
         int ivalue;
         float fvalue;
@@ -9,13 +20,18 @@ final class GrFieldValue {
     }
 }
 
+/// Object value in Grimoire runtime.
 final class GrObjectValue {
-    GrFieldValue[] fields;
+    package {
+        /// Inner fields, indexes are known at compile time.
+        GrFieldValue[] fields;
 
-    this(uint sz) {
-        fields.length = sz;
-        for(uint i; i < sz; i ++) {
-            fields[i] = new GrFieldValue;
+        /// Ctor
+        this(uint nbFields) {
+            fields.length = nbFields;
+            for(uint i; i < nbFields; i ++) {
+                fields[i] = new GrFieldValue;
+            }
         }
     }
 }

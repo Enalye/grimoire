@@ -1,0 +1,7 @@
+
+
+func test() {
+    foo();
+}
+
+func foo() { "hey"::printl; }

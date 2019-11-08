@@ -18,7 +18,7 @@ void main() {
         grInitPrimitivesDatabase();
         grInitTypesDatabase();
         grLoadStdLibrary();
-        auto bytecode = grCompileFile("test.gr");
+        auto bytecode = grCompileFile("script/test.gr");
         auto compilationTime = MonoTime.currTime() - startTime;
         
         writeln(grDump(bytecode));
@@ -29,11 +29,11 @@ void main() {
         
         write("> ");
         startTime = MonoTime.currTime();
-        auto mangledName = grMangleNamedFunction("hey", [grString]);
+        /*auto mangledName = grMangleNamedFunction("hey", [grString]);
         if(vm.hasEvent(mangledName)) {
             GrContext ev = vm.spawnEvent(mangledName);
             ev.setString("you !");
-        }
+        }*/
 
         while(vm.hasCoroutines)
             vm.process();

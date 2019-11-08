@@ -93,6 +93,7 @@ class GrCall {
         }
     }
 
+    /// The actual runtime call to the primitive.
     void call(GrContext context) {
         _iresults = 0;
         _fresults = 0;

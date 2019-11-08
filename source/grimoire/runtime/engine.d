@@ -70,6 +70,7 @@ class GrEngine {
         GrPrimitivesDatabase _primitivesDatabase;
     }
 
+	/// External way of stopping the VM.
     __gshared bool isRunning = true;
 
     @property {
@@ -84,6 +85,7 @@ class GrEngine {
 
         /// Extra type compiler information.
         dstring meta() const { return _meta; }
+		/// Ditto
         dstring meta(dstring newMeta) { return _meta = newMeta; }
     }
 
@@ -96,7 +98,6 @@ class GrEngine {
 	}
 
     private void initialize() {
-        setupGlobals(512);
         _contexts = new DynamicIndexedArray!GrContext;
 		_contextsToSpawn = new DynamicIndexedArray!GrContext;
     }
@@ -108,21 +109,13 @@ class GrEngine {
 		_fconsts = bytecode.fconsts.idup;
 		_sconsts = bytecode.sconsts.idup;
 		_opcodes = bytecode.opcodes.idup;
+		_iglobals = (new int[bytecode.iglobalsCount]).ptr;
+        _fglobals = (new float[bytecode.fglobalsCount]).ptr;
+        _sglobals = (new dstring[bytecode.sglobalsCount]).ptr;
+        _oglobals = (new void*[bytecode.oglobalsCount]).ptr;
         _events = bytecode.events;
         _primitivesDatabase = grGetPrimitivesDatabase();
 	}
-
-    /// Current max global variable available.
-    private uint _globalsLimit;
-
-    /// Initialize the global variable stacks.
-    void setupGlobals(uint size) {
-        _globalsLimit = size;
-        _iglobals = (new int[_globalsLimit]).ptr;
-        _fglobals = (new float[_globalsLimit]).ptr;
-        _sglobals = (new dstring[_globalsLimit]).ptr;
-        _oglobals = (new void*[_globalsLimit]).ptr;
-    }
 
     /**
 	Create the main context.
@@ -229,6 +222,9 @@ class GrEngine {
         }
     }
 
+	/**
+	Marks each coroutine as killed and prevents any new coroutine from spawning.
+	*/
     private void killAll() {
         foreach(coroutine; _contexts) {
             coroutine.pc = cast(uint)(cast(int) _opcodes.length - 1);

@@ -23,7 +23,7 @@ enum GrOpcode {
     Send_Int, Send_Float, Send_String, Send_Object,
     Receive_Int, Receive_Float, Receive_String, Receive_Object,
     StartSelectChannel, EndSelectChannel, TryChannel, CheckChannel,
-   
+
     ShiftStack_Int, ShiftStack_Float, ShiftStack_String, ShiftStack_Object,
     
     LocalStore_Int, LocalStore_Float, LocalStore_String, LocalStore_Object,
@@ -85,14 +85,34 @@ enum GrOpcode {
     NotEqual_IntArray, NotEqual_FloatArray, NotEqual_StringArray
 }
 
-/// Compiled form of grimoire
+/// Compiled form of grimoire.
 struct GrBytecode {
+    /// All the instructions.
 	uint[] opcodes;
+
+    /// Integer constants.
 	int[] iconsts;
+
+    /// Floating point constants.
 	float[] fconsts;
+
+    /// String constants.
 	dstring[] sconsts;
+
+    /// Number of int based global variables declared.
+    uint iglobalsCount,
+    /// Number of float based global variables declared.
+        fglobalsCount,
+    /// Number of string based global variables declared.
+        sglobalsCount,
+    /// Number of ptr based global variables declared.
+        oglobalsCount;
+
+    /// Global event functions.
+    /// Their name are in a mangled state.
     uint[dstring] events;
 
+    /// Serialize the content.
 	void toOutBuffer(ref OutBuffer buffer) {
 		buffer.write(cast(uint)iconsts.length);
 		buffer.write(cast(uint)fconsts.length);

@@ -13,6 +13,6 @@
 	"-ddoxTool": "scod",
 	"subPackages": [
 		"./test/",
-        "./unittests",
+        "./unittests"
 	]
 }

@@ -53,6 +53,15 @@ class GrParser {
 
     bool isTypeChecking;
 
+    /// Number of int based global variables declared.
+    uint iglobalsCount,
+    /// Number of float based global variables declared.
+        fglobalsCount,
+    /// Number of string based global variables declared.
+        sglobalsCount,
+    /// Number of ptr based global variables declared.
+        oglobalsCount;
+
     private {
         uint _lastAssignationScopeLevel, _blockLevel;
     }
@@ -235,7 +244,7 @@ class GrParser {
             currentFunction.localFreeVariables.length --;
         }
         else {
-		    variable.index = currentFunction.localVariableIndex;
+            variable.index = currentFunction.localVariableIndex;
             currentFunction.localVariableIndex ++;
         }
 		variable.isGlobal = false;
@@ -523,7 +532,7 @@ class GrParser {
 
         //GrFunction check
         if(resultType.baseType == GrBaseType.VoidType) {
-    		const auto func = (mangledName in functions);
+            const auto func = (mangledName in functions);
             if(func !is null) {
                 auto outSignature = addFunctionCall(mangledName);
                 if(outSignature.length != 1uL)
@@ -1308,7 +1317,7 @@ class GrParser {
 			return func.outSignature;
 		}
 		else
-			logError("Undeclared function", "The function \'" ~ grGetPrettyFunctionCall(call.mangledName) ~ "\' is not declared");
+			logError("Undeclared function", "The function \'" ~ grGetPrettyFunctionCall(call.mangledName) ~ "\' is not declared", -1);
 
 		return [];
 	}
@@ -1414,6 +1423,14 @@ class GrParser {
 				logError("Invalid type", "The type should be either main, func or task");
 			}
 		}
+
+        foreach(variable; globalVariables) {
+            const auto counter = countSubTypes(variable.type);
+            iglobalsCount += counter.iCount;
+            fglobalsCount += counter.fCount;
+            sglobalsCount += counter.sCount;
+            oglobalsCount += counter.oCount;
+        }
 	}
 
 	void preParseScript(GrLexer lexer) {
@@ -2082,7 +2099,7 @@ class GrParser {
             signature ~= outSignature[0];
         }
         else
-		    parseOutSignature();
+            parseOutSignature();
 
 		beginFunction(name, signature);
         openDeferrableSection();
@@ -2798,7 +2815,7 @@ class GrParser {
 
 					jumpPosition = cast(uint)currentFunction.instructions.length;
 					//Jumps to if(0) for "if", if(!= 0) for "unless".
-		            addInstruction(isNegative ? GrOpcode.JumpNotEqual : GrOpcode.JumpEqual);
+                    addInstruction(isNegative ? GrOpcode.JumpNotEqual : GrOpcode.JumpEqual);
 
 					parseBlock(); //{ .. }
 
@@ -3138,6 +3155,9 @@ class GrParser {
         return lvalue;
     }
 
+    /**
+    The for statement takes an iterator and an array.
+    */
 	void parseForStatement() {
 		advance();
 		if(get().type != GrLexemeType.LeftParenthesis)
@@ -3146,7 +3166,7 @@ class GrParser {
 		advance();
         
 		GrVariable variable = parseDeclarableArgument();
-		 
+
 		if(get().type != GrLexemeType.Comma)
 			logError("Missing symbol", "Did you forget the \',\' ?");
 		advance();
@@ -3171,20 +3191,20 @@ class GrParser {
         case IntType:
         case FunctionType:
         case TaskType:
-		    addInstruction(GrOpcode.Length_Int);
+            addInstruction(GrOpcode.Length_Int);
             break;
         case FloatType:
-		    addInstruction(GrOpcode.Length_Float);
+            addInstruction(GrOpcode.Length_Float);
             break;
         case StringType:
-		    addInstruction(GrOpcode.Length_String);
+            addInstruction(GrOpcode.Length_String);
             break;
         case ArrayType:
         case StructType:
         case UserType:
         case ChanType:
         case ReferenceType:
-		    addInstruction(GrOpcode.Length_Object);
+            addInstruction(GrOpcode.Length_Object);
             break;
         case VoidType:
         case TupleType:
@@ -3228,20 +3248,20 @@ class GrParser {
         case IntType:
         case FunctionType:
         case TaskType:
-		    addInstruction(GrOpcode.Index2_Int);
+            addInstruction(GrOpcode.Index2_Int);
             break;
         case FloatType:
-		    addInstruction(GrOpcode.Index2_Float);
+            addInstruction(GrOpcode.Index2_Float);
             break;
         case StringType:
-		    addInstruction(GrOpcode.Index2_String);
+            addInstruction(GrOpcode.Index2_String);
             break;
         case ArrayType:
         case StructType:
         case UserType:
         case ChanType:
         case ReferenceType:
-		    addInstruction(GrOpcode.Index2_Object);
+            addInstruction(GrOpcode.Index2_Object);
             break;
         case VoidType:
         case TupleType:
@@ -3262,6 +3282,7 @@ class GrParser {
 		closeContinuableSection();
 	}
 
+    /// Skips everything from a `(` to its matching `)`.
     void skipParenthesis() {
         if(get().type != GrLexemeType.LeftParenthesis)
             return;
@@ -3292,6 +3313,7 @@ class GrParser {
         }
     }
 
+    /// Skips everything from a `[` to its matching `]`.
     void skipBrackets() {
         if(get().type != GrLexemeType.LeftBracket)
             return;
@@ -3322,6 +3344,7 @@ class GrParser {
         }
     }
 
+    /// Returns the number of parameters separated by commas inside a pair of (), [] or {}.
     int checkArity() {
         int arity;
         const int position = current;
@@ -3391,6 +3414,21 @@ class GrParser {
         return arity;
     }
 
+    /**
+    There are 3 types of loop.
+    - The infinite loop with no parameters:
+    ---
+    loop printl("I'm infinite !");
+    ---
+    - The finite loop, with 1 parameter:
+    ---
+    loop(5) printl("I'm printed 5 times !");
+    ---
+    - The finite loop with an iterator:
+    ---
+    loop(i, 5) printl("Iterator = " ~ i as string);
+    ---
+    */
 	void parseLoopStatement() {
         bool isInfinite, hasCustomIterator;
         GrVariable iterator, customIterator;
@@ -3412,7 +3450,7 @@ class GrParser {
 
                 addIntConstant(0);
                 addSetInstruction(customIterator);
-		 
+
                 if(get().type != GrLexemeType.Comma)
                     logError("Missing symbol", "Did you forget the \',\' ?");
                 advance();
@@ -3423,7 +3461,7 @@ class GrParser {
         
             //Init counter
             GrType type = parseSubExpression().type;
-    		advance();
+            advance();
 
             convertType(type, grInt);
             addInstruction(GrOpcode.SetupIterator);
@@ -3470,6 +3508,14 @@ class GrParser {
 		closeContinuableSection();
 	}
 
+    /**
+    The type of the return must be that of the signature of the function. \
+    Doesn't need a `;` if there a no return value.
+    ---
+    return "Hello"; // Returns a string.
+    return // No ';' because there is no expression.
+    ---
+    */
 	void parseReturnStatement() {
 		checkAdvance();
         if(currentFunction.name == "main" || currentFunction.isTask) {
@@ -3498,21 +3544,25 @@ class GrParser {
         }
 	}
 
+    /// Add a `return` instruction that pop the callstack.
     void addReturn() {
         checkDeferStatement();
         addInstruction(GrOpcode.Return);
     }
 
+    /// Add a `kill` instruction that stops the current task.
     void addKill() {
         checkDeferStatement();
         addInstruction(GrOpcode.Kill);
     }
 
+    /// Add a `killall` instruction that stops every tasks.
     void addKillAll() {
         checkDeferStatement();
         addInstruction(GrOpcode.KillAll);
     }
 
+    /// The more it is, the less you need parenthesis.
     uint getLeftOperatorPriority(GrLexemeType type) {
 		switch(type) with(GrLexemeType) {
         case Assign: .. case PowerAssign:
@@ -3547,6 +3597,7 @@ class GrParser {
 		}
 	}
 
+    /// The more it is, the less you need parenthesis.
 	uint getRightOperatorPriority(GrLexemeType type) {
 		switch(type) with(GrLexemeType) {
         case Assign: .. case PowerAssign:
@@ -3581,6 +3632,7 @@ class GrParser {
 		}
 	}
 
+    /// Attempt to convert `src` type to the `dst` type.
 	GrType convertType(GrType src, GrType dst, bool noFail = false, bool isExplicit = false) {
         if(src.baseType == dst.baseType) {
             final switch(src.baseType) with(GrBaseType) {
@@ -3619,11 +3671,12 @@ class GrParser {
             return dst;
         
         if(!noFail)
-		    logError("Incompatible types", "Cannot convert \'"
+            logError("Incompatible types", "Cannot convert \'"
                 ~ grGetPrettyType(src) ~ "\' to \'" ~ grGetPrettyType(dst) ~ "\'", -1);
 		return GrType(GrBaseType.VoidType);	
 	}
 
+    /// Convert with a primitive or function.
     GrType addCustomConversion(GrType leftType, GrType rightType, bool isExplicit) {
         GrType resultType = GrBaseType.VoidType;
 
@@ -3715,7 +3768,7 @@ class GrParser {
 
         //GrFunction check
         if(resultType.baseType == GrBaseType.VoidType) {
-    		const auto func = (mangledName in functions);
+            const auto func = (mangledName in functions);
             if(func !is null) {
                 auto outSignature = addFunctionCall(mangledName);
                 if(outSignature.length != 1uL)
@@ -3727,6 +3780,16 @@ class GrParser {
         return resultType;     
     }
 
+    /**
+    Parse an array creation.
+    The type is optional if the array is not empty.
+    If no type is specified, the array subtype is set to the type of the first element.
+    ---
+    array(int)[1, 2, 3]
+    ["1", "2", "3"]
+    array(string)[]
+    ---
+    */
     GrType parseArrayBuilder() {
         GrType arrayType = GrType(GrBaseType.ArrayType);
         GrType subType = grVoid;
@@ -3918,6 +3981,12 @@ class GrParser {
         return fieldType;
     }
 
+    /**
+    Parse a cast, or `as` operation.
+    ---
+    1 as float
+    ---
+    */
     GrType parseConversionOperator(GrType[] typeStack) {
         if(!typeStack.length)
             logError("Conversion Error", "You can only convert a value");
@@ -3928,6 +3997,7 @@ class GrParser {
         return asType;
     }
 
+    /// Parse an assignable (named) element.
     GrVariable parseLValue() {
         if(get().type != GrLexemeType.Identifier)
             logError("Missing lvalue", "Missing lvalue");
@@ -3962,6 +4032,7 @@ class GrParser {
         return *lvalue;
     }
 
+    /// Parse a single expression, not a statement.
 	void parseExpression() {
         bool isAssignmentList;
         const auto tempPos = current;
@@ -4010,6 +4081,7 @@ class GrParser {
         }
 	}
 
+    /// Parse the right side of a multiple assignment.
     GrType[] parseExpressionList() {
         GrType[] expressionTypes;
         for(;;) {
@@ -4035,6 +4107,7 @@ class GrParser {
         return expressionTypes;
     }
 
+    /// Parse the right side of a multiple assignment and associate them with the `lvalues`.
     void parseAssignList(GrVariable[] lvalues) {
         switch(get().type) with(GrLexemeType) {
         case Assign:
@@ -4088,7 +4161,7 @@ class GrParser {
         }
     }
 
-    void shiftStackPosition(GrType type, short count) {
+    auto countSubTypes(GrType type) {
         struct TypeCounter {
             int iCount, fCount, sCount, oCount;
         }
@@ -4128,7 +4201,12 @@ class GrParser {
             }
         }
         countSubTypes(type, counter);
+        return counter;
+    }
 
+    /// Add an instruction to clean up a value from the stack.
+    void shiftStackPosition(GrType type, short count) {
+        const auto counter = countSubTypes(type);
         if(counter.iCount)
             addInstruction(GrOpcode.ShiftStack_Int, counter.iCount * count, true);
         if(counter.fCount)
@@ -4139,6 +4217,7 @@ class GrParser {
             addInstruction(GrOpcode.ShiftStack_Object, counter.oCount * count, true);
     }
 
+    /// Does this operation require a left-expr ?
     bool requireLValue(GrLexemeType operatorType) {
         switch(operatorType) with(GrLexemeType) {
         case Period:
@@ -4151,6 +4230,10 @@ class GrParser {
         }
     }
 
+    /**
+        Parse a function reference expression. \
+        Converts a public function/task/primitive into an anonymous value.
+    */
     GrType parseFunctionPointer(GrType currentType) {
         checkAdvance();
         if(get().type == GrLexemeType.LeftParenthesis) {
@@ -4743,6 +4826,7 @@ class GrParser {
         return result;
 	}
 
+    /// Parse a function call from a runtime value.
     GrType parseAnonymousCall(GrType type) {
         GrVariable functionId;
         if(type.baseType == GrBaseType.FunctionType) {
@@ -4791,7 +4875,7 @@ class GrParser {
         return retTypes;
     }
 
-	//Parse an identifier or function call and return the deduced return type and lvalue.
+	/// Parse an identifier or function call and return the deduced return type and lvalue.
 	GrType parseIdentifier(ref GrVariable variable, GrType expectedType, GrType selfValue = grVoid, bool isAssignment = false) {
         if(expectedType.isField)
             writeln("ISFIELD");//TODO
@@ -4831,8 +4915,8 @@ class GrParser {
 		if(isFunctionCall) {
 			GrType[] signature;
 
-		    if(hasParenthesis)
-			    advance();
+            if(hasParenthesis)
+                advance();
 
 			auto var = (identifierName in currentFunction.localVariables);
             if(var is null)
@@ -4875,7 +4959,7 @@ class GrParser {
                         advance();
                 }
                 else if(anonSignature.length)
-                     logError("Invalid anonymous call", "The number of parameters does not match");
+                    logError("Invalid anonymous call", "The number of parameters does not match");
 
                 //Push the values on the global stack for task spawning.
                 if(var.type.baseType == GrBaseType.TaskType)
@@ -4953,15 +5037,21 @@ class GrParser {
 		return returnType;
 	}
 
-	//Error handling
+	/// Error handling
 	struct Error {
-		dstring msg, info;
+        /// Error title.
+		dstring msg,
+        /// What's wrong.
+            info;
+        /// The lexeme of the error.
 		GrLexeme lex;
+        /// Compilation stops immediatly (throw an exception).
 		bool mustHalt;
 	}
 
 	Error[] errors;
 
+    /// Log a warning without throwing an exception.
 	void logWarning(string msg, string info = "") {
 		Error error;
 		error.msg = to!dstring(msg);
@@ -4971,6 +5061,7 @@ class GrParser {
 		errors ~= error;
 	}
 
+    /// Log an error and throw an exception.
 	void logError(string msg, string info = "", int offset = 0) {
 		Error error;
 		error.msg = to!dstring(msg);
@@ -4986,6 +5077,7 @@ class GrParser {
 		raiseError();
 	}
 
+    /// Format compilation problems and throw an exception with them.
 	void raiseError() {
 		foreach(error; errors) {
 			dstring report;
@@ -5052,6 +5144,6 @@ class GrParser {
             report ~= "\033[0;36m|\n";
 			writeln(report);
 		}
-		throw new Exception("\033[0mCompilation aborted...");
+        throw new Exception("\033[0mCompilation aborted...");
 	}
 }

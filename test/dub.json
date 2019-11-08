@@ -5,5 +5,5 @@
 		"grimoire": {"path": "../"}
 	},
 	"targetPath": "bin",
-	"workingDirectory": "script"
+	"workingDirectory": "."
 }

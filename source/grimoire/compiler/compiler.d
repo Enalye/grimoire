@@ -101,10 +101,22 @@ private {
         opcodes[$ - 1] = makeOpcode(cast(uint)GrOpcode.Unwind, 0);
 
 		GrBytecode bytecode;
+
+		//Constants.
 		bytecode.iconsts = parser.iconsts;
 		bytecode.fconsts = parser.fconsts;
 		bytecode.sconsts = parser.sconsts;
+
+		//Global variables.
+		bytecode.iglobalsCount = parser.iglobalsCount;
+		bytecode.fglobalsCount = parser.fglobalsCount;
+		bytecode.sglobalsCount = parser.sglobalsCount;
+		bytecode.oglobalsCount = parser.oglobalsCount;
+
+		//Instuctions.
 		bytecode.opcodes = opcodes;
+
+		//Global events.
 		bytecode.events = events;
 		return bytecode;
 	}
