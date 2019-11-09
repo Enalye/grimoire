@@ -3039,8 +3039,8 @@ class GrParser {
         else {
             /* Without default case, the select statement is a blocking operation until one case is processed.
 	         * So, we add a yield then jump back to the beggining of the statement to evaluate the select statement again. */
-             addInstruction(GrOpcode.Yield);
-             addInstruction(GrOpcode.Jump, cast(int)(startJump - currentFunction.instructions.length), true);
+            addInstruction(GrOpcode.Yield);
+            addInstruction(GrOpcode.Jump, cast(int)(startJump - currentFunction.instructions.length), true);
         }
 
         /* A switch is breakable. */
@@ -4549,7 +4549,7 @@ class GrParser {
                 hasValue = true;
                 typeStack ~= currentType;
                 GrStruct structure = _data.getStruct(get().svalue);
-                addInstruction(GrOpcode.New, cast(int)structure.signature.length);
+                addInstruction(GrOpcode.New, cast(uint)structure.index);
                 checkAdvance();
                 break;
             case ChanType:
@@ -4647,7 +4647,7 @@ class GrParser {
                     }
                 }
                 if(!hasField)
-                    logError("Field not found", "Can't find it");
+                    logError("Unknown field", "This field does not exist", -1);
                 break;
             case Pointer:
                 currentType = parseFunctionPointer(currentType);

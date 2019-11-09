@@ -3,7 +3,7 @@ module grimoire.runtime.call;
 import std.stdio: writeln;
 import std.conv: to;
 import grimoire.compiler;
-import grimoire.runtime.context, grimoire.runtime.array;
+import grimoire.runtime.context, grimoire.runtime.array, grimoire.runtime.object, grimoire.runtime.channel;
 
 alias GrCallback = void function(GrCall);
 
@@ -119,6 +119,7 @@ class GrCall {
     alias getBool = getParameter!bool;
     alias getInt = getParameter!int;
     alias getFloat = getParameter!float;
+    alias getObject = getUserData!GrObject;
     alias getIntArray = getUserData!GrIntArray;
     alias getFloatArray = getUserData!GrFloatArray;
     alias getStringArray = getUserData!GrStringArray;
@@ -190,6 +191,7 @@ class GrCall {
     alias setBool = setResult!bool;
     alias setInt = setResult!int;
     alias setFloat = setResult!float;
+    alias setObject = setUserData!GrObject;
     alias setIntArray = setUserData!GrIntArray;
     alias setFloatArray = setUserData!GrFloatArray;
     alias setStringArray = setUserData!GrStringArray;

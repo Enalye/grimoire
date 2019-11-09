@@ -358,7 +358,9 @@ class GrEngine {
                     context.ostackPos ++;
 					if(context.ostackPos == context.ostack.length)
 						context.ostack.length *= 2;
-					context.ostack[context.ostackPos] = cast(void*)new GrObjectValue(grGetInstructionUnsignedValue(opcode));
+					context.ostack[context.ostackPos] = cast(void*)new GrObject(
+						_data._structures[grGetInstructionUnsignedValue(opcode)]
+						);
 					context.pc ++;
                     break;
 				case Channel_Int:
@@ -864,39 +866,39 @@ class GrEngine {
                     context.pc ++;
                     break;
                 case FieldStore_Int:
-                    (cast(GrFieldValue)context.ostack[context.ostackPos]).ivalue = context.istack[context.istackPos];
+                    (cast(GrField)context.ostack[context.ostackPos]).ivalue = context.istack[context.istackPos];
                     context.istackPos += grGetInstructionSignedValue(opcode);
                     context.ostackPos --;
 					context.pc ++;
                     break;
 				case FieldStore_Float:
-                    (cast(GrFieldValue)context.ostack[context.ostackPos]).fvalue = context.fstack[context.fstackPos];
+                    (cast(GrField)context.ostack[context.ostackPos]).fvalue = context.fstack[context.fstackPos];
                     context.fstackPos += grGetInstructionSignedValue(opcode);
                     context.ostackPos --;
 					context.pc ++;
                     break;
 				case FieldStore_String:
-                    (cast(GrFieldValue)context.ostack[context.ostackPos]).svalue = context.sstack[context.sstackPos];
+                    (cast(GrField)context.ostack[context.ostackPos]).svalue = context.sstack[context.sstackPos];
                     context.sstackPos += grGetInstructionSignedValue(opcode);
                     context.ostackPos --;
 					context.pc ++;
                     break;
 				case FieldStore_Object:
 					context.ostackPos --;
-                    (cast(GrFieldValue)context.ostack[context.ostackPos]).ovalue = context.ostack[context.ostackPos + 1];
+                    (cast(GrField)context.ostack[context.ostackPos]).ovalue = context.ostack[context.ostackPos + 1];
 					context.ostack[context.ostackPos] = context.ostack[context.ostackPos + 1];
                     context.ostackPos += grGetInstructionSignedValue(opcode);
 					context.pc ++;
                     break;
 				case FieldLoad:
-					context.ostack[context.ostackPos] = cast(void*)((cast(GrObjectValue)context.ostack[context.ostackPos]).fields[grGetInstructionUnsignedValue(opcode)]);
+					context.ostack[context.ostackPos] = cast(void*)((cast(GrObject)context.ostack[context.ostackPos])._fields[grGetInstructionUnsignedValue(opcode)]);
 					context.pc ++;
                     break;
                 case FieldLoad_Int:
                     context.istackPos ++;
 					if(context.istackPos == context.istack.length)
 						context.istack.length *= 2;
-					context.istack[context.istackPos] = (cast(GrObjectValue)context.ostack[context.ostackPos]).fields[grGetInstructionUnsignedValue(opcode)].ivalue;
+					context.istack[context.istackPos] = (cast(GrObject)context.ostack[context.ostackPos])._fields[grGetInstructionUnsignedValue(opcode)].ivalue;
                     context.ostackPos --;
 					context.pc ++;
                     break;
@@ -904,7 +906,7 @@ class GrEngine {
                     context.fstackPos ++;
 					if(context.fstackPos == context.fstack.length)
 						context.fstack.length *= 2;
-					context.fstack[context.fstackPos] = (cast(GrObjectValue)context.ostack[context.ostackPos]).fields[grGetInstructionUnsignedValue(opcode)].fvalue;
+					context.fstack[context.fstackPos] = (cast(GrObject)context.ostack[context.ostackPos])._fields[grGetInstructionUnsignedValue(opcode)].fvalue;
                     context.ostackPos --;
 					context.pc ++;
                     break;
@@ -912,19 +914,19 @@ class GrEngine {
                     context.sstackPos ++;
 					if(context.sstackPos == context.sstack.length)
 						context.sstack.length *= 2;
-					context.sstack[context.sstackPos] = (cast(GrObjectValue)context.ostack[context.ostackPos]).fields[grGetInstructionUnsignedValue(opcode)].svalue;
+					context.sstack[context.sstackPos] = (cast(GrObject)context.ostack[context.ostackPos])._fields[grGetInstructionUnsignedValue(opcode)].svalue;
                     context.ostackPos --;
 					context.pc ++;
                     break;
 				case FieldLoad_Object:
-					context.ostack[context.ostackPos] = (cast(GrObjectValue)context.ostack[context.ostackPos]).fields[grGetInstructionUnsignedValue(opcode)].ovalue;
+					context.ostack[context.ostackPos] = (cast(GrObject)context.ostack[context.ostackPos])._fields[grGetInstructionUnsignedValue(opcode)].ovalue;
 					context.pc ++;
                     break;
 				case FieldLoad2_Int:
                     context.istackPos ++;
 					if(context.istackPos == context.istack.length)
 						context.istack.length *= 2;
-					GrFieldValue field = (cast(GrObjectValue)context.ostack[context.ostackPos]).fields[grGetInstructionUnsignedValue(opcode)];
+					GrField field = (cast(GrObject)context.ostack[context.ostackPos])._fields[grGetInstructionUnsignedValue(opcode)];
 					context.istack[context.istackPos] = field.ivalue;
 					context.ostack[context.ostackPos] = cast(void*)field;
 					context.pc ++;
@@ -933,7 +935,7 @@ class GrEngine {
                     context.fstackPos ++;
 					if(context.fstackPos == context.fstack.length)
 						context.fstack.length *= 2;
-					GrFieldValue field = (cast(GrObjectValue)context.ostack[context.ostackPos]).fields[grGetInstructionUnsignedValue(opcode)];
+					GrField field = (cast(GrObject)context.ostack[context.ostackPos])._fields[grGetInstructionUnsignedValue(opcode)];
 					context.fstack[context.fstackPos] = field.fvalue;
 					context.ostack[context.ostackPos] = cast(void*)field;
 					context.pc ++;
@@ -942,7 +944,7 @@ class GrEngine {
                     context.sstackPos ++;
 					if(context.sstackPos == context.sstack.length)
 						context.sstack.length *= 2;
-					GrFieldValue field = (cast(GrObjectValue)context.ostack[context.ostackPos]).fields[grGetInstructionUnsignedValue(opcode)];
+					GrField field = (cast(GrObject)context.ostack[context.ostackPos])._fields[grGetInstructionUnsignedValue(opcode)];
 					context.sstack[context.sstackPos] = field.svalue;
 					context.ostack[context.ostackPos] = cast(void*)field;
 					context.pc ++;
@@ -951,7 +953,7 @@ class GrEngine {
 					context.ostackPos ++;
 					if(context.ostackPos == context.ostack.length)
 						context.ostack.length *= 2;
-					GrFieldValue field = (cast(GrObjectValue)context.ostack[context.ostackPos - 1]).fields[grGetInstructionUnsignedValue(opcode)];
+					GrField field = (cast(GrObject)context.ostack[context.ostackPos - 1])._fields[grGetInstructionUnsignedValue(opcode)];
 					context.ostack[context.ostackPos] = field.ovalue;
 					context.ostack[context.ostackPos - 1] = cast(void*)field;
 					context.pc ++;

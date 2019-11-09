@@ -98,7 +98,6 @@ class GrVariable {
     dstring name;
 }
 
-
 GrType grGetUserType(dstring name) {
     GrType type = GrBaseType.UserType;
     type.mangledType = name;
@@ -116,11 +115,11 @@ GrType grGetTupleType(dstring name) {
     return stType;
 }
 
-
-
 class GrStruct {
+    dstring name;
     GrType[] signature;
     dstring[] fields;
+    size_t index;
 }
 
 GrType grGetStructType(dstring name) {

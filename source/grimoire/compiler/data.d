@@ -15,7 +15,7 @@ else they won't be linked.
 class GrData {
     package(grimoire) {
         dstring[] _userTypes;
-        GrStruct[dstring] _structures;
+        GrStruct[] _structures;
         GrTuple[dstring] _tuples;
 
         /// All primitives, used for both the compiler and the runtime.
@@ -87,9 +87,11 @@ class GrData {
     GrType addStruct(dstring name, dstring[] fields, GrType[] signature) {
         assert(fields.length == signature.length, "GrStruct signature mismatch");
         GrStruct st = new GrStruct;
+        st.name = name;
         st.signature = signature;
         st.fields = fields;
-        _structures[name] = st;
+        st.index = _structures.length;
+        _structures ~= st;
 
         GrType stType = GrBaseType.StructType;
         stType.mangledType = name;
@@ -98,17 +100,21 @@ class GrData {
 
     /// Is the struct defined ?
     bool isStruct(dstring name) {
-        if(name in _structures)
-            return true;
+        foreach(structure; _structures) {
+            if(structure.name == name)
+                return true;
+        }
         return false;
     }
 
     /// Return the struct definition.
     GrStruct getStruct(dstring name) {
         import std.conv: to;
-        auto structure = (name in _structures);
-        assert(structure !is null, "Undefined structure \'" ~ to!string(name) ~ "\'");
-        return *structure;
+        foreach(structure; _structures) {
+            if(structure.name == name)
+                return structure;
+        }
+        assert(false, "Undefined structure \'" ~ to!string(name) ~ "\'");
     }
 
     /**
