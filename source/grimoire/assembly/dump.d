@@ -85,7 +85,7 @@ private string[] instructions = [
 ];
 
 /// Dump the bytecode's instruction list in a pretty format.
-string grDump(GrBytecode bytecode) {
+string grDump(GrData data, GrBytecode bytecode) {
     /*writeln("\n----- VM DUMP ------");
     writeln("iconsts: ", bytecode.iconsts);
     writeln("fconsts: ", bytecode.fconsts);
@@ -114,7 +114,7 @@ string grDump(GrBytecode bytecode) {
         else if(op >= GrOpcode.ShiftStack_Int && op <= GrOpcode.ShiftStack_Object)
             line ~= to!string(grGetInstructionSignedValue(opcode));
         else if(op == GrOpcode.PrimitiveCall)
-            line ~= grGetPrimitiveDisplayById(grGetInstructionUnsignedValue(opcode));
+            line ~= data.getPrimitiveDisplayById(grGetInstructionUnsignedValue(opcode));
         else if(op == GrOpcode.Const_Int)
             line ~= to!string(bytecode.iconsts[grGetInstructionUnsignedValue(opcode)]);
         else if(op == GrOpcode.Const_Float)

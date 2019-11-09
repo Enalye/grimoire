@@ -11,23 +11,22 @@ module grimoire.stdlib.typecast;
 import std.conv;
 import grimoire.compiler, grimoire.runtime;
 
-
 package(grimoire.stdlib)
-void grLoadStdLibTypecast() {
+void grLoadStdLibTypecast(GrData data) {
     //As int
-    grAddCast(&typecast_r2i, "value", grFloat, grInt, true);
-    grAddCast(&typecast_b2i, "value", grBool, grInt);
+    data.addCast(&typecast_r2i, "value", grFloat, grInt, true);
+    data.addCast(&typecast_b2i, "value", grBool, grInt);
 
     //As float
-    grAddCast(&typecast_i2r, "value", grInt, grFloat, true);
+    data.addCast(&typecast_i2r, "value", grInt, grFloat, true);
 
     //As string
-	grAddCast(&typecast_i2s, "value", grInt, grString);
-	grAddCast(&typecast_r2s, "value", grFloat, grString);
-	grAddCast(&typecast_as2s, "value", grStringArray, grString);
+	data.addCast(&typecast_i2s, "value", grInt, grString);
+	data.addCast(&typecast_r2s, "value", grFloat, grString);
+	data.addCast(&typecast_as2s, "value", grStringArray, grString);
 
     //As String Array
-	grAddCast(&typecast_s2as, "value", grString, grStringArray);
+	data.addCast(&typecast_s2as, "value", grString, grStringArray);
 }
 
 //As int

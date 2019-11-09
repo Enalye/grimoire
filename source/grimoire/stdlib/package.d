@@ -17,11 +17,11 @@ import grimoire.stdlib.test;
 import grimoire.stdlib.time;
 import grimoire.stdlib.typecast;
 
-void grLoadStdLibrary() {
-    grLoadStdLibArray();
-    grLoadStdLibPrint();
-    grLoadStdLibRandom();
-    grLoadStdLibTest();
-    grLoadStdLibTime();
-    grLoadStdLibTypecast();
+void grLoadStdLibrary(GrData data) {
+    grLoadStdLibArray(data);
+    grLoadStdLibPrint(data);
+    grLoadStdLibRandom(data);
+    grLoadStdLibTest(data);
+    grLoadStdLibTime(data);
+    grLoadStdLibTypecast(data);
 }

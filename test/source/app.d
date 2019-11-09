@@ -15,16 +15,16 @@ import grimoire;
 void main() {
 	try {
         auto startTime = MonoTime.currTime();
-        grInitPrimitivesDatabase();
-        grInitTypesDatabase();
-        grLoadStdLibrary();
-        auto bytecode = grCompileFile("script/test.gr");
+        GrData data = new GrData;
+        grLoadStdLibrary(data);
+
+        auto bytecode = grCompileFile(data, "script/test.gr");
         auto compilationTime = MonoTime.currTime() - startTime;
         
-        writeln(grDump(bytecode));
+        writeln(grDump(data, bytecode));
 
         GrEngine vm = new GrEngine;
-        vm.load(bytecode);
+        vm.load(data, bytecode);
         vm.spawn();
         
         write("> ");
@@ -40,9 +40,6 @@ void main() {
         if(vm.isPanicking)
             writeln("Unhandled Exception: " ~ to!string(vm.panicMessage));
         auto executionTime = MonoTime.currTime() - startTime;
-
-        grClosePrimitivesDatabase();
-        grCloseTypesDatabase();
             
         //Benchmark
         writeln("Compilation took: \t", compilationTime);

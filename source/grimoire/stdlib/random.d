@@ -6,8 +6,8 @@ import grimoire.compiler, grimoire.runtime;
 
 
 package(grimoire.stdlib)
-void grLoadStdLibRandom() {
-	grAddPrimitive(&_random, "random", ["max"], [grInt], [grInt]);
+void grLoadStdLibRandom(GrData data) {
+	data.addPrimitive(&_random, "random", ["max"], [grInt], [grInt]);
 }
 
 private void _random(GrCall call) {

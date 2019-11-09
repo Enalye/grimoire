@@ -9,6 +9,7 @@ alias GrCallback = void function(GrCall);
 
 class GrCall {
     private {
+        GrData _data;
         GrContext _context;
         GrPrimitive _primitive;
         GrCallback _callback;
@@ -29,7 +30,8 @@ class GrCall {
         dstring meta() const { return _context.engine.meta; }
     }
 
-    package(grimoire) this(GrPrimitive primitive) {
+    package(grimoire) this(GrData data, GrPrimitive primitive) {
+        _data = data;
         _primitive = primitive;
         _callback = _primitive.callback;
     }
@@ -78,7 +80,7 @@ class GrCall {
                 _slocals ~= name;
                 break;
             case TupleType:
-                auto structure = grGetTuple(type.mangledType);
+                auto structure = _data.getTuple(type.mangledType);
                 setupLocals(name ~ ":", structure.fields, structure.signature);
                 break;
             case ArrayType:
@@ -134,7 +136,7 @@ class GrCall {
                     break;
             }
             if(index == _ilocals.length)
-                throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
+                throw new Exception("Primitive \'" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.istack[(_context.istackPos - _iparams) + index + 1];
         }
@@ -145,7 +147,7 @@ class GrCall {
                     break;
             }
             if(index == _ilocals.length)
-                throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
+                throw new Exception("Primitive \'" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.istack[(_context.istackPos - _iparams) + index + 1] > 0;
         }
@@ -156,7 +158,7 @@ class GrCall {
                     break;
             }
             if(index == _flocals.length)
-                throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
+                throw new Exception("Primitive \'" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.fstack[(_context.fstackPos - _fparams) + index + 1];
         }
@@ -167,7 +169,7 @@ class GrCall {
                     break;
             }
             if(index == _slocals.length)
-                throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
+                throw new Exception("Primitive \'" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.sstack[(_context.sstackPos - _sparams) + index + 1];
         }
@@ -178,7 +180,7 @@ class GrCall {
                     break;
             }
             if(index == _olocals.length)
-                throw new Exception("Primitive \'" ~ grGetPrimitiveDisplayById(_primitive.index, true)
+                throw new Exception("Primitive \'" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
                     ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
             return _context.ostack[(_context.ostackPos - _oparams) + index + 1];
         }

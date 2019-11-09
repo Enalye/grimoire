@@ -8,8 +8,8 @@ import grimoire.compiler, grimoire.runtime;
 
 
 package(grimoire.stdlib)
-void grLoadStdLibTime() {
-	grAddPrimitive(&_clock, "clock", [], [], [grInt]);
+void grLoadStdLibTime(GrData data) {
+	data.addPrimitive(&_clock, "clock", [], [], [grInt]);
 }
 
 private void _clock(GrCall call) {

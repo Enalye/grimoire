@@ -10,15 +10,16 @@ module grimoire.compiler.compiler;
 
 import std.stdio, std.string, std.array, std.conv, std.math, std.file;
 import grimoire.runtime, grimoire.assembly;
-import grimoire.compiler.lexer, grimoire.compiler.parser, grimoire.compiler.primitive, grimoire.compiler.type;
+import grimoire.compiler.lexer, grimoire.compiler.parser, grimoire.compiler.primitive;
+import grimoire.compiler.type, grimoire.compiler.data;
 
 /// Compile a source file into bytecode
-GrBytecode grCompileFile(string fileName) {
+GrBytecode grCompileFile(GrData data, string fileName) {
 	GrLexer lexer = new GrLexer;
 	lexer.scanFile(to!dstring(fileName));
 
 	GrParser parser = new GrParser;
-	parser.parseScript(lexer);
+	parser.parseScript(data, lexer);
 
 	return generate(parser);
 }

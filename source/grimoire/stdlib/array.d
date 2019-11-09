@@ -3,9 +3,9 @@ module grimoire.stdlib.array;
 import grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib)
-void grLoadStdLibArray() {
-	grAddPrimitive(&_range, "range", ["min", "max"], [grInt, grInt], [grIntArray]);
-	grAddPrimitive(&_size_s, "size", ["array"], [grStringArray], [grInt]);
+void grLoadStdLibArray(GrData data) {
+	data.addPrimitive(&_range, "range", ["min", "max"], [grInt, grInt], [grIntArray]);
+	data.addPrimitive(&_size_s, "size", ["array"], [grStringArray], [grInt]);
 }
 
 private void _range(GrCall call) {

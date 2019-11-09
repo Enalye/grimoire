@@ -66,8 +66,8 @@ class GrEngine {
         /// Extra type compiler information.
         dstring _meta;
 
-        /// Primitives database.
-        GrPrimitivesDatabase _primitivesDatabase;
+        /// Primitives and types database.
+        GrData _data;
     }
 
 	/// External way of stopping the VM.
@@ -93,8 +93,8 @@ class GrEngine {
 	this() {}
 
     /// Load the bytecode.
-	this(GrBytecode bytecode) {
-		load(bytecode);
+	this(GrData data, GrBytecode bytecode) {
+		load(data, bytecode);
 	}
 
     private void initialize() {
@@ -103,8 +103,9 @@ class GrEngine {
     }
 
     /// Load the bytecode.
-	final void load(GrBytecode bytecode) {
+	final void load(GrData data, GrBytecode bytecode) {
         initialize();
+        _data = data;
 		_iconsts = bytecode.iconsts.idup;
 		_fconsts = bytecode.fconsts.idup;
 		_sconsts = bytecode.sconsts.idup;
@@ -114,7 +115,6 @@ class GrEngine {
         _sglobals = (new dstring[bytecode.sglobalsCount]).ptr;
         _oglobals = (new void*[bytecode.oglobalsCount]).ptr;
         _events = bytecode.events;
-        _primitivesDatabase = grGetPrimitivesDatabase();
 	}
 
     /**
@@ -1353,7 +1353,7 @@ class GrEngine {
 					context.istackPos --;
 					break;
 				case PrimitiveCall:
-					_primitivesDatabase.primitives[grGetInstructionUnsignedValue(opcode)].callObject.call(context);
+					_data._primitives[grGetInstructionUnsignedValue(opcode)].callObject.call(context);
 					context.pc ++;
 					break;
 				case Jump:

@@ -22,6 +22,7 @@ import grimoire.compiler.lexer;
 import grimoire.compiler.mangle;
 import grimoire.compiler.type;
 import grimoire.compiler.primitive;
+import grimoire.compiler.data;
 
 /**
     Analyses the syntax and produce the data for the VM
@@ -52,6 +53,8 @@ class GrParser {
 	GrLexeme[] lexemes;
 
     bool isTypeChecking;
+
+    private GrData _data;
 
     /// Number of int based global variables declared.
     uint iglobalsCount,
@@ -164,7 +167,7 @@ class GrParser {
     GrVariable registerGlobalVariable(dstring name, GrType type) {
         if(type.baseType == GrBaseType.TupleType) {
             //Register each field
-            auto tuple = grGetTuple(type.mangledType);
+            auto tuple = _data.getTuple(type.mangledType);
             for(int i; i < tuple.signature.length; i ++) {
                 registerLocalVariable(name ~ ":" ~ tuple.fields[i], tuple.signature[i]);
             }
@@ -211,7 +214,7 @@ class GrParser {
 	GrVariable registerLocalVariable(dstring name, GrType type) {
         if(type.baseType == GrBaseType.TupleType) {
             //Register each field
-            auto tuple = grGetTuple(type.mangledType);
+            auto tuple = _data.getTuple(type.mangledType);
             for(int i; i < tuple.signature.length; i ++) {
                 registerLocalVariable(name ~ ":" ~ tuple.fields[i], tuple.signature[i]);
             }
@@ -358,7 +361,7 @@ class GrParser {
                     addInstruction(GrOpcode.GlobalPop_String, 0u);
                 break;
             case TupleType:
-                auto tuple = grGetTuple(type.mangledType);
+                auto tuple = _data.getTuple(type.mangledType);
                 const auto nbFields = tuple.signature.length;
                 for(int i = 1; i <= tuple.signature.length; i ++) {
                     fetchParameter(name ~ ":" ~ tuple.fields[nbFields - i], tuple.signature[nbFields - i]);
@@ -523,8 +526,8 @@ class GrParser {
         dstring mangledName = grMangleNamedFunction("@op_" ~ grGetPrettyLexemeType(lexType), [leftType, rightType]);
         
         //GrPrimitive check
-        if(grIsPrimitiveDeclared(mangledName)) {
-            GrPrimitive primitive = grGetPrimitive(mangledName);
+        if(_data.isPrimitiveDeclared(mangledName)) {
+            GrPrimitive primitive = _data.getPrimitive(mangledName);
             addInstruction(GrOpcode.PrimitiveCall, primitive.index);
             if(primitive.outSignature.length != 1uL)
                     logError("Return signature error", "An operator can only have one return value");
@@ -550,8 +553,8 @@ class GrParser {
         dstring mangledName = grMangleNamedFunction("@op_" ~ grGetPrettyLexemeType(lexType), [type]);
         
         //GrPrimitive check
-        if(grIsPrimitiveDeclared(mangledName)) {
-            GrPrimitive primitive = grGetPrimitive(mangledName);
+        if(_data.isPrimitiveDeclared(mangledName)) {
+            GrPrimitive primitive = _data.getPrimitive(mangledName);
             addInstruction(GrOpcode.PrimitiveCall, primitive.index);
             if(primitive.outSignature.length != 1uL)
                     logError("Return signature error", "An operator can only have one return value");
@@ -986,7 +989,7 @@ class GrParser {
 				addInstruction(isExpectingValue ? GrOpcode.RefStore2_Object : GrOpcode.RefStore_Object);
 				break;
             case TupleType:
-                auto tuple = grGetTuple(variable.type.mangledType);
+                auto tuple = _data.getTuple(variable.type.mangledType);
                 const auto nbFields = tuple.signature.length;
                 for(int i = 1; i <= nbFields; i ++) {
                     addSetInstruction(getVariable(variable.name ~ ":" ~ tuple.fields[nbFields - i]), tuple.signature[nbFields - i], isExpectingValue);
@@ -1007,7 +1010,7 @@ class GrParser {
             variable.isAuto = false;
             variable.type = valueType;
             if(valueType.baseType == GrBaseType.TupleType) {
-                auto tuple = grGetTuple(valueType.mangledType);
+                auto tuple = _data.getTuple(valueType.mangledType);
                 if(variable.isGlobal) {
                     globalFreeVariables ~= variable.index;
                     for(int i; i < tuple.signature.length; i ++) {
@@ -1078,7 +1081,7 @@ class GrParser {
 				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.index);
 				break;
             case TupleType:
-                auto tuple = grGetTuple(variable.type.mangledType);
+                auto tuple = _data.getTuple(variable.type.mangledType);
                 const auto nbFields = tuple.signature.length;
                 for(int i = 1; i <= nbFields; i ++) {
                     addSetInstruction(getVariable(variable.name ~ ":" ~ tuple.fields[nbFields - i]), tuple.signature[nbFields - i], isExpectingValue);
@@ -1110,7 +1113,7 @@ class GrParser {
 				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_Object : GrOpcode.LocalStore_Object, variable.index);
 				break;
             case TupleType:
-                auto tuple = grGetTuple(variable.type.mangledType);
+                auto tuple = _data.getTuple(variable.type.mangledType);
                 const auto nbFields = tuple.signature.length;
                 for(int i = 1; i <= nbFields; i ++) {
                     addSetInstruction(getVariable(variable.name ~ ":" ~ tuple.fields[nbFields - i]), tuple.signature[nbFields - i]);
@@ -1188,7 +1191,7 @@ class GrParser {
 			    	addInstruction(GrOpcode.GlobalLoad_Object, variable.index);
 				break;
             case TupleType:
-                auto tuple = grGetTuple(variable.type.mangledType);
+                auto tuple = _data.getTuple(variable.type.mangledType);
                 for(int i; i < tuple.signature.length; i ++) {
                     addGetInstruction(getVariable(variable.name ~ ":" ~ tuple.fields[i]), tuple.signature[i]);
                 }
@@ -1248,7 +1251,7 @@ class GrParser {
 				    addInstruction(GrOpcode.LocalLoad_Object, variable.index);
 				break;
             case TupleType:
-                auto tuple = grGetTuple(variable.type.mangledType);
+                auto tuple = _data.getTuple(variable.type.mangledType);
                 for(int i; i < tuple.signature.length; i ++) {
                     addGetInstruction(getVariable(variable.name ~ ":" ~ tuple.fields[i]), tuple.signature[i]);
                 }
@@ -1385,7 +1388,8 @@ class GrParser {
 		}
 	}
 
-	void parseScript(GrLexer lexer) {
+	void parseScript(GrData data, GrLexer lexer) {
+        _data = data;
 		preParseScript(lexer);
 		reset();
 
@@ -1466,11 +1470,11 @@ class GrParser {
 		}
 
         //Resolve all unresolved field types
-        grResolveTupleSignature();
-        grResolveStructSignature();
+        _data.resolveTupleSignature();
+        _data.resolveStructSignature();
 
         //Then we can resolve _primitives' signature
-        grResolvePrimitiveSignature();
+        _data.resolvePrimitiveSignature();
         
         //Function definitions
         reset();
@@ -1542,7 +1546,7 @@ class GrParser {
                 parseGlobalDeclaration();
                 break;
             case Identifier:
-                if(grIsTuple(get().svalue) || grIsUserType(get().svalue)) {
+                if(_data.isTuple(get().svalue) || _data.isUserType(get().svalue)) {
                     parseGlobalDeclaration();
                     break;
                 }
@@ -1606,7 +1610,7 @@ class GrParser {
                 break;
             }
         }
-        grAddTuple(structName, fields, signature);
+        _data.addTuple(structName, fields, signature);
     }
 
 
@@ -1662,7 +1666,7 @@ class GrParser {
                 break;
             }
         }
-        grAddStruct(structName, fields, signature);
+        _data.addStruct(structName, fields, signature);
     }
 
     void skipDeclaration() {
@@ -1700,19 +1704,19 @@ class GrParser {
 
         GrLexeme lex = get();
         if(!lex.isType) {
-            if(lex.type == GrLexemeType.Identifier && grIsTuple(lex.svalue)) {
+            if(lex.type == GrLexemeType.Identifier && _data.isTuple(lex.svalue)) {
                 currentType.baseType = GrBaseType.TupleType;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
                 return currentType;
             }
-            else if(lex.type == GrLexemeType.Identifier && grIsStruct(lex.svalue)) {
+            else if(lex.type == GrLexemeType.Identifier && _data.isStruct(lex.svalue)) {
                 currentType.baseType = GrBaseType.StructType;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
                 return currentType;
             }
-            else if(lex.type == GrLexemeType.Identifier && grIsUserType(lex.svalue)) {
+            else if(lex.type == GrLexemeType.Identifier && _data.isUserType(lex.svalue)) {
                 currentType.baseType = GrBaseType.UserType;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
@@ -1799,7 +1803,7 @@ class GrParser {
             addInstruction(GrOpcode.GlobalPop_String, 0u);
             break;
         case TupleType:
-            auto tuple = grGetTuple(type.mangledType);
+            auto tuple = _data.getTuple(type.mangledType);
             for(int i; i < tuple.signature.length; i ++) {
                 addGlobalPop(tuple.signature[i]);
             }
@@ -1836,7 +1840,7 @@ class GrParser {
             addInstruction(GrOpcode.GlobalPush_String, nbPush);
             break;
         case TupleType:
-            auto tuple = grGetTuple(type.mangledType);
+            auto tuple = _data.getTuple(type.mangledType);
             for(int i = 1; i <= tuple.signature.length; i ++) {
                 addGlobalPush(tuple.signature[tuple.signature.length - i], nbPush);
             }
@@ -1875,7 +1879,7 @@ class GrParser {
                 typeCounter.nbStringParams ++;
                 break;
             case TupleType:
-                auto tuple = grGetTuple(type.mangledType);
+                auto tuple = _data.getTuple(type.mangledType);
                 for(int i = 1; i <= tuple.signature.length; i ++) {
                     countParameters(typeCounter, tuple.signature[tuple.signature.length - i]);
                 }
@@ -2294,7 +2298,7 @@ class GrParser {
                     goto default;
                 break;
             case Identifier:
-                if(grIsTuple(get().svalue) || grIsStruct(get().svalue) || grIsUserType(get().svalue))
+                if(_data.isTuple(get().svalue) || _data.isStruct(get().svalue) || _data.isUserType(get().svalue))
                     parseLocalDeclaration();
                 else
                     goto default;
@@ -3128,7 +3132,7 @@ class GrParser {
             type = parseType();
             break;
         case Identifier:
-            if(grIsTuple(get().svalue) || grIsStruct(get().svalue) || grIsUserType(get().svalue))
+            if(_data.isTuple(get().svalue) || _data.isStruct(get().svalue) || _data.isUserType(get().svalue))
                 type = parseType();
             else
                 isTyped = false;
@@ -3696,7 +3700,7 @@ class GrParser {
                 switch(rightType.baseType) with(GrBaseType) {
                 case ArrayType:
                 case VariantType:
-                    auto tuple = grGetTuple(leftType.mangledType);
+                    auto tuple = _data.getTuple(leftType.mangledType);
                     const auto nbFields = tuple.signature.length;
                     for(int i = 1; i <= nbFields; i ++) {
                         convertType(tuple.signature[nbFields - i], grVariant, isExplicit);
@@ -3714,7 +3718,7 @@ class GrParser {
                     leftType = convertType(leftType, grVariant);
                     goto case VariantType;
                 case VariantType:
-                    auto tuple = grGetTuple(rightType.mangledType);
+                    auto tuple = _data.getTuple(rightType.mangledType);
                     addMetaConstant(grMangleFunction(tuple.signature));
                     addInstruction(GrOpcode.DynCast_Variant);
                     return rightType;
@@ -3761,8 +3765,8 @@ class GrParser {
         }*/
         
         //GrPrimitive check
-        if(grIsPrimitiveDeclared(mangledName)) {
-            GrPrimitive primitive = grGetPrimitive(mangledName);
+        if(_data.isPrimitiveDeclared(mangledName)) {
+            GrPrimitive primitive = _data.getPrimitive(mangledName);
             //Some implicit conversions are disabled.
             //ex: float -> int because we might lose information.
             if(primitive.isExplicit && !isExplicit)
@@ -3974,7 +3978,7 @@ class GrParser {
             logError("Missing struct field", "Missing struct field");
         fieldName = get().svalue;
         advance();
-        auto tuple = grGetTuple(type.mangledType);
+        auto tuple = _data.getTuple(type.mangledType);
         const auto nbFields = tuple.fields.length;
         for(int i = 1; i <= tuple.fields.length; i ++) {
             if(fieldName == tuple.fields[nbFields - i]) {
@@ -4198,7 +4202,7 @@ class GrParser {
                 counter.oCount ++;
                 break;
             case TupleType:
-                auto tuple = grGetTuple(type.mangledType);
+                auto tuple = _data.getTuple(type.mangledType);
                 const auto nbFields = tuple.fields.length;
                 for(int i = 1; i <= tuple.fields.length; i ++) {
                     countSubTypes(tuple.signature[nbFields - i], counter);
@@ -4544,7 +4548,7 @@ class GrParser {
                 currentType = grGetStructType(get().svalue);
                 hasValue = true;
                 typeStack ~= currentType;
-                GrStruct structure = grGetStruct(get().svalue);
+                GrStruct structure = _data.getStruct(get().svalue);
                 addInstruction(GrOpcode.New, cast(int)structure.signature.length);
                 checkAdvance();
                 break;
@@ -4561,7 +4565,7 @@ class GrParser {
                     logError("Missing identifier", "Missing field name after the \'.\'");
                 const dstring identifier = get().svalue;
                 checkAdvance();
-                GrStruct structure = grGetStruct(currentType.mangledType);
+                GrStruct structure = _data.getStruct(currentType.mangledType);
                 const auto nbFields = structure.signature.length;
                 bool hasField;
                 for(int i; i < nbFields; i ++) {
@@ -5040,8 +5044,8 @@ class GrParser {
 				dstring mangledName = grMangleNamedFunction(identifierName, signature);
 				
 				//GrPrimitive call.
-				if(grIsPrimitiveDeclared(mangledName)) {
-					GrPrimitive primitive = grGetPrimitive(mangledName);
+				if(_data.isPrimitiveDeclared(mangledName)) {
+					GrPrimitive primitive = _data.getPrimitive(mangledName);
 					addInstruction(GrOpcode.PrimitiveCall, primitive.index);
 					returnType = grPackTuple(primitive.outSignature);
 				}

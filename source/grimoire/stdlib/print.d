@@ -1,9 +1,9 @@
 /**
-    Log functions.
+Log functions.
 
-    Copyright: (c) Enalye 2018
-    License: Zlib
-    Authors: Enalye
+Copyright: (c) Enalye 2018
+License: Zlib
+Authors: Enalye
 */
 
 module grimoire.stdlib.print;
@@ -13,24 +13,24 @@ import std.conv: to;
 import grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib)
-void grLoadStdLibPrint() {
+void grLoadStdLibPrint(GrData data) {
     //print
-	grAddPrimitive(&prints, "print", ["value"], [grString]);
-	grAddPrimitive(&printb, "print", ["value"], [grBool]);
-	grAddPrimitive(&printi, "print", ["value"], [grInt]);
-	grAddPrimitive(&printf, "print", ["value"], [grFloat]);
-	grAddPrimitive(&printni, "print", ["value"], [grIntArray]);
-	grAddPrimitive(&printnf, "print", ["value"], [grFloatArray]);
-	grAddPrimitive(&printns, "print", ["value"], [grStringArray]);
+	data.addPrimitive(&prints, "print", ["value"], [grString]);
+	data.addPrimitive(&printb, "print", ["value"], [grBool]);
+	data.addPrimitive(&printi, "print", ["value"], [grInt]);
+	data.addPrimitive(&printf, "print", ["value"], [grFloat]);
+	data.addPrimitive(&printni, "print", ["value"], [grIntArray]);
+	data.addPrimitive(&printnf, "print", ["value"], [grFloatArray]);
+	data.addPrimitive(&printns, "print", ["value"], [grStringArray]);
 
     //printl
-    grAddPrimitive(&printls, "printl", ["value"], [grString]);
-	grAddPrimitive(&printlb, "printl", ["value"], [grBool]);
-	grAddPrimitive(&printli, "printl", ["value"], [grInt]);
-	grAddPrimitive(&printlf, "printl", ["value"], [grFloat]);
-	grAddPrimitive(&printlni, "printl", ["value"], [grIntArray]);
-	grAddPrimitive(&printlnf, "printl", ["value"], [grFloatArray]);
-	grAddPrimitive(&printlns, "printl", ["value"], [grStringArray]);
+    data.addPrimitive(&printls, "printl", ["value"], [grString]);
+	data.addPrimitive(&printlb, "printl", ["value"], [grBool]);
+	data.addPrimitive(&printli, "printl", ["value"], [grInt]);
+	data.addPrimitive(&printlf, "printl", ["value"], [grFloat]);
+	data.addPrimitive(&printlni, "printl", ["value"], [grIntArray]);
+	data.addPrimitive(&printlnf, "printl", ["value"], [grFloatArray]);
+	data.addPrimitive(&printlns, "printl", ["value"], [grStringArray]);
 }
 
 // print
