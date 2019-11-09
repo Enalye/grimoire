@@ -1,0 +1,10 @@
+main {
+    assert("Hello World !"::invert == "! dlroW olleH");
+}
+
+func invert(string str) string {
+    let result = str as array(string);
+    loop(i, result::size / 2)
+        result[i], result[-(i + 1)] = result[-(i + 1)], result[i];
+    return result as string;
+}

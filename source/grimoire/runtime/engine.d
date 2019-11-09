@@ -71,7 +71,7 @@ class GrEngine {
     }
 
 	/// External way of stopping the VM.
-    __gshared bool isRunning = true;
+    shared bool isRunning = true;
 
     @property {
         /// Check if there is a coroutine currently running.

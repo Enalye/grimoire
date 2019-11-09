@@ -38,7 +38,7 @@ class GrParser {
     uint[] globalFreeVariables;
 
 	GrFunction[dstring] functions, events;
-	GrFunction[] anonymousFunctions;
+	GrFunction[dstring] anonymousFunctions;
 
 	uint current;
 	GrFunction currentFunction;
@@ -308,7 +308,8 @@ class GrParser {
 			func.anonParent = currentFunction;
 			func.anonReference = cast(uint)currentFunction.instructions.length;
 			func.name = currentFunction.name ~ "@anon"d ~ to!dstring(func.index);
-			anonymousFunctions ~= func;
+            dstring mangledName = grMangleNamedFunction(func.name, func.inSignature);
+			anonymousFunctions[mangledName] = func;
 
 			//Is replaced by the addr of the function later (see solveFunctionCalls).
 			addInstruction(GrOpcode.LocalStore_Int, 0u);
@@ -1259,8 +1260,8 @@ class GrParser {
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Object
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Object;
-                else	
-				    addInstruction(GrOpcode.LocalLoad_Object, variable.index);
+                else
+                    addInstruction(GrOpcode.LocalLoad_Object, variable.index);
 				break;
 			default:
 				logError("Invalid type", "Cannot fetch from a \'" ~ to!string(variable.type) ~ "\' type");
@@ -1268,15 +1269,16 @@ class GrParser {
 		}
 	}
 
-    GrType addFunctionAddress(dstring mangledName) {
+    private GrType addFunctionAddress(dstring mangledName) {
         GrFunctionCall call = new GrFunctionCall;
 		call.mangledName = mangledName;
 		call.caller = currentFunction;
 		functionCalls ~= call;
 		currentFunction.functionCalls ~= call;
         call.isAddress = true;
-
 		auto func = (call.mangledName in functions);
+        if(func is null)
+            func = (call.mangledName in anonymousFunctions);
 		if(func !is null) {
 		    call.functionToCall = *func;
             call.isAddress = true;
@@ -1342,6 +1344,8 @@ class GrParser {
 	void solveFunctionCalls(ref uint[] opcodes) {
 		foreach(GrFunctionCall call; functionCalls) {
 			auto func = (call.mangledName in functions);
+            if(func is null)
+                func = (call.mangledName in anonymousFunctions);
 			if(func !is null) {
                 if(call.isAddress)
                     setOpcode(opcodes, call.position, GrOpcode.Const_Int, registerIntConstant(func.position));
@@ -1531,7 +1535,7 @@ class GrParser {
                 if(get(1).type != GrLexemeType.Identifier &&
                     get(1).type != GrLexemeType.As)
                     goto case VoidType;
-    			skipDeclaration();
+                skipDeclaration();
                 break;
             case VoidType: .. case ArrayType:
             case AutoType:
@@ -2179,7 +2183,7 @@ class GrParser {
 
         if(isTask) {
             if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
-		        addKill();
+                addKill();
         }
         else {
             if(!outSignature.length) {
@@ -2207,12 +2211,15 @@ class GrParser {
         return functionType;
 	}
 
+    /**
+    Parse either multiple lines between `{` and `}` or a single expression.
+    */
 	void parseBlock() {
         bool isMultiline;
 		if(get().type == GrLexemeType.LeftCurlyBrace) {
             isMultiline = true;
             if(!checkAdvance())
-			    logError("Unexpected end of file");
+                logError("Unexpected end of file");
         }
 		openBlock();
 
@@ -2313,7 +2320,7 @@ class GrParser {
         if(isMultiline) {
             if(get().type != GrLexemeType.RightCurlyBrace)
                 logError("Missing symbol", "A block should always end with \'}\'");
-		    checkAdvance();
+            checkAdvance();
         }
 		closeBlock();
 	}
@@ -4161,6 +4168,9 @@ class GrParser {
         }
     }
 
+    /**
+    Count the number of D types used (int, float, string and void*).
+    */
     auto countSubTypes(GrType type) {
         struct TypeCounter {
             int iCount, fCount, sCount, oCount;
@@ -4231,8 +4241,8 @@ class GrParser {
     }
 
     /**
-        Parse a function reference expression. \
-        Converts a public function/task/primitive into an anonymous value.
+    Parse a function reference expression. \
+    Converts a public function/task into an anonymous one.
     */
     GrType parseFunctionPointer(GrType currentType) {
         checkAdvance();
@@ -4275,7 +4285,7 @@ class GrParser {
     }
     
     /**
-        Evaluate a single subexpression.
+    Evaluate a single subexpression.
     */
 	GrSubExprResult parseSubExpression(int flags = GR_SUBEXPR_TERMINATE_PARENTHESIS) {
         const bool useSemicolon = (flags & GR_SUBEXPR_TERMINATE_SEMICOLON) > 0;
@@ -4647,6 +4657,16 @@ class GrParser {
                 hasValue = true;
                 hadValue = false;
                 break;
+			case Self:
+                // Parse a function call that refers to its parent. 
+                checkAdvance();
+                const dstring mangledName = grMangleNamedFunction(currentFunction.name, currentFunction.inSignature);
+                currentType = addFunctionAddress(mangledName);
+                if(currentType.baseType == GrBaseType.VoidType)
+                    logError("Self reference error", "Couldn't find parent function", -1);
+                typeStack ~= currentType;
+				hasValue = true;
+                break;
 			case FunctionType:
 				currentType = parseAnonymousFunction(false);
                 typeStack ~= currentType;
@@ -4955,11 +4975,15 @@ class GrParser {
                         }
                         advance();
                     }
-                    if(hasParenthesis  && get().type == GrLexemeType.RightParenthesis)
+                    if(hasParenthesis && get().type == GrLexemeType.RightParenthesis)
                         advance();
                 }
-                else if(anonSignature.length)
-                    logError("Invalid anonymous call", "The number of parameters does not match");
+                else {
+                    if(hasParenthesis && get().type == GrLexemeType.RightParenthesis)
+                        advance();
+                    if(anonSignature.length)
+                        logError("Invalid anonymous call", "The number of parameters does not match");
+                }
 
                 //Push the values on the global stack for task spawning.
                 if(var.type.baseType == GrBaseType.TaskType)

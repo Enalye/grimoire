@@ -1,0 +1,25 @@
+main {
+    assert(20::fib_loop == 20::fib_recur);
+    assert(10::fib_self == 55);
+    assert(
+        func(int n) int {
+            if(n < 2) return n;
+            return self(n - 1) + self(n - 2);
+        }(10) == 55);
+}
+
+func fib_loop(int n) int {
+    let a, b = 0, 1;
+    loop(n) a, b = b, a + b;
+    return a;
+}
+
+func fib_recur(int n) int {
+    if(n < 2) return n;
+    return fib_recur(n - 1) + fib_recur(n - 2);
+}
+
+func fib_self(int n) int {
+    if(n < 2) return n;
+    return self(n - 1) + self(n - 2);
+}

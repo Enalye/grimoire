@@ -32,8 +32,8 @@ private void testFolder(string dirPath) {
     auto files = dirEntries(dirPath, "{*.gr}", SpanMode.depth);
     const auto moduleStartTime = MonoTime.currTime();
     uint successes, total;
-    ScriptHandler handler = new ScriptHandler;
     foreach(file; files) {
+        ScriptHandler handler = new ScriptHandler;
         if(!file.isFile)
             continue;
         total ++;
