@@ -49,7 +49,7 @@ dstring grMangleFunction(GrType[] signature) {
         case TupleType:
             mangledName ~= "l(" ~ type.mangledType ~ ")";
             break;
-        case StructType:
+        case ObjectType:
 			mangledName ~= "p(" ~ type.mangledType ~ ")";
 			break;
         case UserType:
@@ -183,7 +183,7 @@ GrType grUnmangle(dstring mangledSignature) {
             currentType.mangledType = tupleName;
             break;
         case 'p':
-            currentType.baseType = GrBaseType.StructType;
+            currentType.baseType = GrBaseType.ObjectType;
             dstring structName;
             if((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid unmangle mangling format in struct");
@@ -325,7 +325,7 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
             currentType.mangledType = tupleName;
             break;
         case 'p':
-            currentType.baseType = GrBaseType.StructType;
+            currentType.baseType = GrBaseType.ObjectType;
             dstring structName;
             if((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid mangling format");
@@ -469,7 +469,7 @@ string grGetPrettyType(GrType variableType) {
         result ~= ")";
         return result;
     case TupleType:
-    case StructType:
+    case ObjectType:
     case UserType:
         return to!string(variableType.mangledType);
     case InternalTupleType:

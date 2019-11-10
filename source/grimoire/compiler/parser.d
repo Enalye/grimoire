@@ -367,7 +367,7 @@ class GrParser {
                     fetchParameter(name ~ ":" ~ tuple.fields[nbFields - i], tuple.signature[nbFields - i]);
                 }
                 break;
-            case StructType:
+            case ObjectType:
             case ArrayType:
             case UserType:
             case ChanType:
@@ -604,7 +604,7 @@ class GrParser {
             case StringType:
                 addInstruction(GrOpcode.Append_String);
                 break;
-            case StructType:
+            case ObjectType:
             case ArrayType:
             case UserType:
             case ChanType:
@@ -631,7 +631,7 @@ class GrParser {
             case StringType:
                 addInstruction(GrOpcode.Prepend_String);
                 break;
-            case StructType:
+            case ObjectType:
             case ArrayType:
             case UserType:
             case ChanType:
@@ -891,7 +891,7 @@ class GrParser {
                 case StringType:
                     addInstruction(GrOpcode.Concatenate_StringArray);
                     return varType;
-                case StructType:
+                case ObjectType:
                 case ArrayType:
                 case UserType:
                 case ChanType:
@@ -922,7 +922,7 @@ class GrParser {
                 case StringType:
                     addInstruction(GrOpcode.Send_String);
                     return chanType;
-                case StructType:
+                case ObjectType:
                 case ArrayType:
                 case UserType:
                 case ChanType:
@@ -947,7 +947,7 @@ class GrParser {
                 case StringType:
                     addInstruction(GrOpcode.Receive_String);
                     return chanType;
-                case StructType:
+                case ObjectType:
                 case ArrayType:
                 case UserType:
                 case ChanType:
@@ -985,7 +985,7 @@ class GrParser {
 			case StringType:
 				addInstruction(isExpectingValue ? GrOpcode.RefStore2_String : GrOpcode.RefStore_String);
 				break;
-			case StructType:
+			case ObjectType:
 				addInstruction(isExpectingValue ? GrOpcode.RefStore2_Object : GrOpcode.RefStore_Object);
 				break;
             case TupleType:
@@ -1053,7 +1053,7 @@ class GrParser {
 			case ReferenceType:
 			case ChanType:
 			case ArrayType:
-			case StructType:
+			case ObjectType:
 				addInstruction(GrOpcode.FieldStore_Object, isExpectingValue ? 0 : -1, true);
 				break;
             case VoidType:
@@ -1077,7 +1077,7 @@ class GrParser {
 			case StringType:
 				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_String : GrOpcode.GlobalStore_String, variable.index);
 				break;
-			case StructType:
+			case ObjectType:
 				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.index);
 				break;
             case TupleType:
@@ -1109,7 +1109,7 @@ class GrParser {
 			case StringType:
 				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_String : GrOpcode.LocalStore_String, variable.index);
 				break;
-			case StructType:
+			case ObjectType:
 				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_Object : GrOpcode.LocalStore_Object, variable.index);
 				break;
             case TupleType:
@@ -1164,7 +1164,7 @@ class GrParser {
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Int;
                 else
-				    addInstruction(GrOpcode.GlobalLoad_Int, variable.index);
+                    addInstruction(GrOpcode.GlobalLoad_Int, variable.index);
 				break;
 			case FloatType:
                 if(allowOptimization
@@ -1172,7 +1172,7 @@ class GrParser {
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Float;
                 else
-			    	addInstruction(GrOpcode.GlobalLoad_Float, variable.index);
+                    addInstruction(GrOpcode.GlobalLoad_Float, variable.index);
 				break;
 			case StringType:
                 if(allowOptimization
@@ -1180,15 +1180,15 @@ class GrParser {
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_String;
                 else
-				    addInstruction(GrOpcode.GlobalLoad_String, variable.index);
+                    addInstruction(GrOpcode.GlobalLoad_String, variable.index);
 				break;
-			case StructType:
+			case ObjectType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Object
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Object;
-                else			
-			    	addInstruction(GrOpcode.GlobalLoad_Object, variable.index);
+                else
+                    addInstruction(GrOpcode.GlobalLoad_Object, variable.index);
 				break;
             case TupleType:
                 auto tuple = _data.getTuple(variable.type.mangledType);
@@ -1203,8 +1203,8 @@ class GrParser {
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Object
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Object;
-                else			
-			    	addInstruction(GrOpcode.GlobalLoad_Object, variable.index);
+                else
+                    addInstruction(GrOpcode.GlobalLoad_Object, variable.index);
 				break;
 			default:
 				logError("Invalid type", "Cannot fetch from a \'" ~ to!string(variable.type) ~ "\' type");
@@ -1224,7 +1224,7 @@ class GrParser {
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Int;
                 else
-				    addInstruction(GrOpcode.LocalLoad_Int, variable.index);
+                    addInstruction(GrOpcode.LocalLoad_Int, variable.index);
 				break;
 			case FloatType:
                 if(allowOptimization
@@ -1232,7 +1232,7 @@ class GrParser {
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Float;
                 else
-				    addInstruction(GrOpcode.LocalLoad_Float, variable.index);
+                    addInstruction(GrOpcode.LocalLoad_Float, variable.index);
 				break;
 			case StringType:
                 if(allowOptimization
@@ -1240,15 +1240,15 @@ class GrParser {
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_String;
                 else
-				    addInstruction(GrOpcode.LocalLoad_String, variable.index);
+                    addInstruction(GrOpcode.LocalLoad_String, variable.index);
 				break;
-			case StructType:
+			case ObjectType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Object
                     && currentFunction.instructions[$ - 1].value == variable.index)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Object;
-                else			
-				    addInstruction(GrOpcode.LocalLoad_Object, variable.index);
+                else
+                    addInstruction(GrOpcode.LocalLoad_Object, variable.index);
 				break;
             case TupleType:
                 auto tuple = _data.getTuple(variable.type.mangledType);
@@ -1402,7 +1402,7 @@ class GrParser {
                 checkAdvance();
                 break;
             case Tuple:
-            case Struct:
+            case Object:
                 skipDeclaration();
                 break;
 			case Main:
@@ -1454,7 +1454,7 @@ class GrParser {
             case Tuple:
                 parseTupleDeclaration();
                 break;
-            case Struct:
+            case Object:
                 parseStructDeclaration();
                 break;
 			case Main:
@@ -1469,12 +1469,8 @@ class GrParser {
 			}
 		}
 
-        //Resolve all unresolved field types
-        _data.resolveTupleSignature();
-        _data.resolveStructSignature();
-
-        //Then we can resolve _primitives' signature
-        _data.resolvePrimitiveSignature();
+        // Finish definitions and signatures.
+        _data.resolveSignatures();
         
         //Function definitions
         reset();
@@ -1485,7 +1481,7 @@ class GrParser {
                 checkAdvance();
                 break;
             case Tuple:
-            case Struct:
+            case Object:
                 skipDeclaration();
                 break;
 			case Main:
@@ -1526,7 +1522,7 @@ class GrParser {
                 break;
             case Event:
             case Tuple:
-            case Struct:
+            case Object:
 			case Main:
 				skipDeclaration();
 				break;
@@ -1666,7 +1662,7 @@ class GrParser {
                 break;
             }
         }
-        _data.addStruct(structName, fields, signature);
+        _data.addObject(structName, fields, signature);
     }
 
     void skipDeclaration() {
@@ -1710,8 +1706,8 @@ class GrParser {
                 checkAdvance();
                 return currentType;
             }
-            else if(lex.type == GrLexemeType.Identifier && _data.isStruct(lex.svalue)) {
-                currentType.baseType = GrBaseType.StructType;
+            else if(lex.type == GrLexemeType.Identifier && _data.isObject(lex.svalue)) {
+                currentType.baseType = GrBaseType.ObjectType;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
                 return currentType;
@@ -1808,7 +1804,7 @@ class GrParser {
                 addGlobalPop(tuple.signature[i]);
             }
             break;
-        case StructType:
+        case ObjectType:
         case ArrayType:
         case UserType:
         case ChanType:
@@ -1845,7 +1841,7 @@ class GrParser {
                 addGlobalPush(tuple.signature[tuple.signature.length - i], nbPush);
             }
             break;
-        case StructType:
+        case ObjectType:
         case ArrayType:
         case UserType:
         case ChanType:
@@ -1884,7 +1880,7 @@ class GrParser {
                     countParameters(typeCounter, tuple.signature[tuple.signature.length - i]);
                 }
                 break;
-            case StructType:
+            case ObjectType:
             case ArrayType:
             case UserType:
             case ChanType:
@@ -2298,7 +2294,7 @@ class GrParser {
                     goto default;
                 break;
             case Identifier:
-                if(_data.isTuple(get().svalue) || _data.isStruct(get().svalue) || _data.isUserType(get().svalue))
+                if(_data.isTuple(get().svalue) || _data.isObject(get().svalue) || _data.isUserType(get().svalue))
                     parseLocalDeclaration();
                 else
                     goto default;
@@ -2729,7 +2725,7 @@ class GrParser {
             lvalues ~= lvalue;
 
             //A composite type does not need to be initialized.
-            if(lvalue.type == GrBaseType.TupleType || lvalue.type == GrBaseType.StructType)
+            if(lvalue.type == GrBaseType.TupleType || lvalue.type == GrBaseType.ObjectType)
                 lvalue.isInitialized = true;
             
             checkAdvance();
@@ -2890,7 +2886,7 @@ class GrParser {
         case StringType:
             addInstruction(GrOpcode.Channel_String, channelSize);
             break;
-        case StructType:
+        case ObjectType:
         case ArrayType:
         case UserType:
         case ChanType:
@@ -3132,7 +3128,7 @@ class GrParser {
             type = parseType();
             break;
         case Identifier:
-            if(_data.isTuple(get().svalue) || _data.isStruct(get().svalue) || _data.isUserType(get().svalue))
+            if(_data.isTuple(get().svalue) || _data.isObject(get().svalue) || _data.isUserType(get().svalue))
                 type = parseType();
             else
                 isTyped = false;
@@ -3159,7 +3155,7 @@ class GrParser {
         }
         
         //A composite type does not need to be initialized.
-        if(lvalue.type == GrBaseType.TupleType || lvalue.type == GrBaseType.StructType)
+        if(lvalue.type == GrBaseType.TupleType || lvalue.type == GrBaseType.ObjectType)
             lvalue.isInitialized = true;
 
 		checkAdvance();
@@ -3211,7 +3207,7 @@ class GrParser {
             addInstruction(GrOpcode.Length_String);
             break;
         case ArrayType:
-        case StructType:
+        case ObjectType:
         case UserType:
         case ChanType:
         case ReferenceType:
@@ -3268,7 +3264,7 @@ class GrParser {
             addInstruction(GrOpcode.Index2_String);
             break;
         case ArrayType:
-        case StructType:
+        case ObjectType:
         case UserType:
         case ChanType:
         case ReferenceType:
@@ -3663,7 +3659,7 @@ class GrParser {
                 return dst;
             case ArrayType:
             case TupleType:
-            case StructType:
+            case ObjectType:
             case UserType:
             case ChanType:
             case ReferenceType:
@@ -3730,7 +3726,7 @@ class GrParser {
                 switch(leftType.baseType) with(GrBaseType) {
                 case FunctionType:
                 case TaskType:
-                case StructType:
+                case ObjectType:
                     //We can't know in advance what'll be the signature of the anonymous function we want to convert.
                     //So we add the mangling as a runtime meta value.
                     addMetaConstant(grMangleVariant(leftType));
@@ -3748,7 +3744,7 @@ class GrParser {
                 switch(rightType.baseType) with(GrBaseType) {
                 case FunctionType:
                 case TaskType:
-                case StructType:               
+                case ObjectType:               
                     //We can't know in advance what'll be the signature of the anonymous function we want to convert.
                     //So we add the mangling as a runtime meta value.
                     addMetaConstant(grMangleVariant(rightType));
@@ -3856,7 +3852,7 @@ class GrParser {
             addInstruction(GrOpcode.Array_String, arraySize);
             break;
         case ArrayType:
-        case StructType:
+        case ObjectType:
         case UserType:
         case ChanType:
         case ReferenceType:
@@ -3903,7 +3899,7 @@ class GrParser {
                         addInstruction(GrOpcode.Index_String);
                         break;
                     case ArrayType:
-                    case StructType:
+                    case ObjectType:
                     case UserType:
                     case ChanType:
                     case ReferenceType:
@@ -3945,7 +3941,7 @@ class GrParser {
                     addInstruction(GrOpcode.Index_String);
                     break;
                 case ArrayType:
-                case StructType:
+                case ObjectType:
                 case UserType:
                 case ChanType:
                 case ReferenceType:
@@ -4194,7 +4190,7 @@ class GrParser {
             case StringType:
                 counter.sCount ++;
                 break;
-            case StructType:
+            case ObjectType:
             case ArrayType:
             case UserType:
             case ChanType:
@@ -4450,7 +4446,7 @@ class GrParser {
                                 setInstruction(GrOpcode.Index3_String, cast(int)currentFunction.instructions.length - 1);
                                 break;
                             case ArrayType:
-                            case StructType:
+                            case ObjectType:
                             case UserType:
                             case ChanType:
                             case ReferenceType:
@@ -4483,7 +4479,7 @@ class GrParser {
                             setInstruction(GrOpcode.Index2_String, cast(int)currentFunction.instructions.length - 1);
                             break;
                         case ArrayType:
-                        case StructType:
+                        case ObjectType:
                         case UserType:
                         case ChanType:
                         case ReferenceType:
@@ -4545,11 +4541,11 @@ class GrParser {
                 checkAdvance();
                 if(get().type != GrLexemeType.Identifier)
                     logError("Missing type", "Missing a type name to instanciate");
-                currentType = grGetStructType(get().svalue);
+                currentType = grGetObjectType(get().svalue);
                 hasValue = true;
                 typeStack ~= currentType;
-                GrStruct structure = _data.getStruct(get().svalue);
-                addInstruction(GrOpcode.New, cast(uint)structure.index);
+                GrObjectDefinition object = _data.getObject(get().svalue);
+                addInstruction(GrOpcode.New, cast(uint)object.index);
                 checkAdvance();
                 break;
             case ChanType:
@@ -4558,20 +4554,20 @@ class GrParser {
                 typeStack ~= currentType;
                 break;
             case Period:
-                if(currentType.baseType != GrBaseType.StructType)
+                if(currentType.baseType != GrBaseType.ObjectType)
                     logError("Field operator error", "It's not a struct type");
                 checkAdvance();
                 if(get().type != GrLexemeType.Identifier) //TODO: change to handle tuples
                     logError("Missing identifier", "Missing field name after the \'.\'");
                 const dstring identifier = get().svalue;
                 checkAdvance();
-                GrStruct structure = _data.getStruct(currentType.mangledType);
-                const auto nbFields = structure.signature.length;
+                GrObjectDefinition object = _data.getObject(currentType.mangledType);
+                const auto nbFields = object.signature.length;
                 bool hasField;
                 for(int i; i < nbFields; i ++) {
-                    if(identifier == structure.fields[i]) {
+                    if(identifier == object.fields[i]) {
                         hasField = true;
-                        currentType = structure.signature[i];
+                        currentType = object.signature[i];
                         currentType.isField = true;
                         GrVariable fieldLValue = new GrVariable;
                         fieldLValue.isInitialized = true;
@@ -4610,7 +4606,7 @@ class GrParser {
                                 break;
                             case ReferenceType:
                             case ChanType:
-                            case StructType:
+                            case ObjectType:
                             case ArrayType:
                             case UserType:
                                 addInstruction(asCopy ? GrOpcode.FieldLoad2_Object : GrOpcode.FieldLoad_Object, index);

@@ -359,7 +359,7 @@ class GrEngine {
 					if(context.ostackPos == context.ostack.length)
 						context.ostack.length *= 2;
 					context.ostack[context.ostackPos] = cast(void*)new GrObject(
-						_data._structures[grGetInstructionUnsignedValue(opcode)]
+						_data._objectTypes[grGetInstructionUnsignedValue(opcode)]
 						);
 					context.pc ++;
                     break;

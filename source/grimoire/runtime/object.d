@@ -11,9 +11,11 @@ module grimoire.runtime.object;
 import grimoire.compiler;
 import grimoire.runtime.array;
 
-/// A single field of an object. \
-/// We can't know at runtime the type of a field,
-/// so you need to check with its type definition.
+/**
+A single field of an object. \
+We can't know at runtime the type of a field,
+so you need to check with its type definition.
+*/
 package final class GrField {
     union {
         int ivalue;
@@ -26,12 +28,12 @@ package final class GrField {
 /// Object value in Grimoire runtime.
 final class GrObject {
     package {
-        GrStruct _type;
+        GrObjectDefinition _type;
         /// Inner fields, indexes are known at compile time.
         GrField[] _fields;
 
         /// Ctor
-        this(GrStruct type) {
+        this(GrObjectDefinition type) {
             _type = type;
             _fields.length = type.fields.length;
             for(size_t index; index < _fields.length; ++ index) {
@@ -107,5 +109,4 @@ final class GrObject {
         }
         assert(false, "Invalid field name");
     }
-
 }

@@ -14,9 +14,14 @@ else they won't be linked.
 */
 class GrData {
     package(grimoire) {
+        /// Opaque pointer types. \
+        /// They're pointer only defined by a name. \
+        /// Can only be used with primitives.
         dstring[] _userTypes;
-        GrStruct[] _structures;
-        GrTuple[dstring] _tuples;
+        /// Object types.
+        GrObjectDefinition[] _objectTypes;
+        /// Tuples types.
+        GrTupleDefinition[dstring] _tupleTypes;
 
         /// All primitives, used for both the compiler and the runtime.
         GrPrimitive[] _primitives;
@@ -57,11 +62,11 @@ class GrData {
 
     /// Define a tuple type.
     GrType addTuple(dstring name, dstring[] fields, GrType[] signature) {
-        assert(fields.length == signature.length, "GrTuple signature mismatch");
-        GrTuple st = new GrTuple;
-        st.signature = signature;
-        st.fields = fields;
-        _tuples[name] = st;
+        assert(fields.length == signature.length, "GrTupleDefinition signature mismatch");
+        GrTupleDefinition tuple = new GrTupleDefinition;
+        tuple.signature = signature;
+        tuple.fields = fields;
+        _tupleTypes[name] = tuple;
 
         GrType stType = GrBaseType.TupleType;
         stType.mangledType = name;
@@ -70,51 +75,51 @@ class GrData {
 
     /// Is the tuple defined ?
     bool isTuple(dstring name) {
-        if(name in _tuples)
+        if(name in _tupleTypes)
             return true;
         return false;
     }
 
     /// Return the tuple definition.
-    GrTuple getTuple(dstring name) {
+    GrTupleDefinition getTuple(dstring name) {
         import std.conv: to;
-        auto tuple = (name in _tuples);
+        auto tuple = (name in _tupleTypes);
         assert(tuple !is null, "Undefined tuple \'" ~ to!string(name) ~ "\'");
         return *tuple;
     }
 
     /// Defined a struct type.
-    GrType addStruct(dstring name, dstring[] fields, GrType[] signature) {
-        assert(fields.length == signature.length, "GrStruct signature mismatch");
-        GrStruct st = new GrStruct;
-        st.name = name;
-        st.signature = signature;
-        st.fields = fields;
-        st.index = _structures.length;
-        _structures ~= st;
+    GrType addObject(dstring name, dstring[] fields, GrType[] signature) {
+        assert(fields.length == signature.length, "GrObjectDefinition signature mismatch");
+        GrObjectDefinition object = new GrObjectDefinition;
+        object.name = name;
+        object.signature = signature;
+        object.fields = fields;
+        object.index = _objectTypes.length;
+        _objectTypes ~= object;
 
-        GrType stType = GrBaseType.StructType;
+        GrType stType = GrBaseType.ObjectType;
         stType.mangledType = name;
         return stType;
     }
 
     /// Is the struct defined ?
-    bool isStruct(dstring name) {
-        foreach(structure; _structures) {
-            if(structure.name == name)
+    bool isObject(dstring name) {
+        foreach(object; _objectTypes) {
+            if(object.name == name)
                 return true;
         }
         return false;
     }
 
     /// Return the struct definition.
-    GrStruct getStruct(dstring name) {
+    GrObjectDefinition getObject(dstring name) {
         import std.conv: to;
-        foreach(structure; _structures) {
-            if(structure.name == name)
-                return structure;
+        foreach(object; _objectTypes) {
+            if(object.name == name)
+                return object;
         }
-        assert(false, "Undefined structure \'" ~ to!string(name) ~ "\'");
+        assert(false, "Undefined object \'" ~ to!string(name) ~ "\'");
     }
 
     /**
@@ -197,9 +202,19 @@ class GrData {
         return result;
     }
 
+    /// Resolve signatures
+    package void resolveSignatures() {
+        //Resolve all unresolved field types
+        resolveTupleSignatures();
+        resolveObjectSignatures();
+
+        //Then we can resolve _primitives' signature
+        resolvePrimitiveSignatures();
+    }
+
     /// Resolve tuple fields that couldn't be defined beforehand.
-    void resolveTupleSignature() {
-        foreach(tuple; _tuples) {
+    private void resolveTupleSignatures() {
+        foreach(tuple; _tupleTypes) {
             for(int i; i < tuple.signature.length; i ++) {
                 if(tuple.signature[i].baseType == GrBaseType.VoidType) {
                     assert(isTuple(tuple.signature[i].mangledType), "Cannot resolve tuple field");
@@ -210,19 +225,19 @@ class GrData {
     }
 
     /// Resolve struct fields that couldn't be defined beforehand.
-    void resolveStructSignature() {
-        foreach(structure; _structures) {
-            for(int i; i < structure.signature.length; i ++) {
-                if(structure.signature[i].baseType == GrBaseType.VoidType) {
-                    assert(isStruct(structure.signature[i].mangledType), "Cannot resolve structure field");
-                    structure.signature[i].baseType = GrBaseType.StructType;
+    private void resolveObjectSignatures() {
+        foreach(object; _objectTypes) {
+            for(int i; i < object.signature.length; i ++) {
+                if(object.signature[i].baseType == GrBaseType.VoidType) {
+                    assert(isObject(object.signature[i].mangledType), "Cannot resolve object field");
+                    object.signature[i].baseType = GrBaseType.ObjectType;
                 }
             }
         }
     }
 
     /// Initialize every primitives.
-    void resolvePrimitiveSignature() {
+    private void resolvePrimitiveSignatures() {
         foreach(primitive; _primitives) {
             primitive.callObject.setup();
         }

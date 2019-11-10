@@ -1,9 +1,9 @@
 /**
-    Scan a file and produce a list of tokens.
+Scan a file and produce a list of tokens.
 
-    Copyright: (c) Enalye 2018
-    License: Zlib
-    Authors: Enalye
+Copyright: (c) Enalye 2018
+License: Zlib
+Authors: Enalye
 */
 
 module grimoire.compiler.lexer;
@@ -17,7 +17,7 @@ import std.file;
 import std.algorithm: canFind;
 
 /**
-    Kinds of valid token.
+Kinds of valid token.
 */
 enum GrLexemeType {
 	LeftBracket, RightBracket, LeftParenthesis, RightParenthesis, LeftCurlyBrace, RightCurlyBrace,
@@ -30,14 +30,14 @@ enum GrLexemeType {
 	And, Or, Xor, Not,
 	Increment, Decrement,
 	Identifier, Integer, Float, Boolean, String,
-	Main, Event, Struct, Tuple, New, Copy, Send, Receive,
+	Main, Event, Object, Tuple, New, Copy, Send, Receive,
 	VoidType, IntType, FloatType, BoolType, StringType, ArrayType, FunctionType, TaskType, ChanType, AutoType,
 	If, Unless, Else, Switch, Select, Case, While, Do, Until, For, Loop, Return, Self,
 	Kill, KillAll, Yield, Break, Continue,
 }
 
 /**
-    Describe the smallest element found in a source file.
+Describe the smallest element found in a source file.
 */
 struct GrLexeme {
     /// Default.
@@ -97,7 +97,7 @@ struct GrLexeme {
 }
 
 /**
-    The lexer scans the entire file and all the imported files it references.
+The lexer scans the entire file and all the imported files it references.
 */
 class GrLexer {
 	dstring[] filesToImport, filesImported;
@@ -269,6 +269,9 @@ class GrLexer {
         while(advance());
 	}
 
+	/**
+	Outputs every tokens (lexemes) scanned.
+	*/
 	void debugShowScan() {
 		writeln("Scan:");
 
@@ -277,6 +280,12 @@ class GrLexer {
 		}
 	}
 
+	/**
+	Scan either a integer or a floating point number. \
+	Floats can start with a `.` \
+	A number finishing with `f` will be scanned as a float. \
+	Underscores `_` are ignored inside a number.
+	*/
 	void scanNumber() {
 		GrLexeme lex = GrLexeme(this);
 		lex.isLiteral = true;
@@ -326,6 +335,9 @@ class GrLexer {
 		lexemes ~= lex;
 	}
 
+	/**
+	Scan a `"` delimited string.
+	*/
 	void scanString() {
 		GrLexeme lex = GrLexeme(this);
 		lex.type = GrLexemeType.String;
@@ -356,6 +368,9 @@ class GrLexer {
 		lexemes ~= lex;
 	}
 
+	/**
+	Scan a symbol-based operator.
+	*/
 	void scanOperator() {
 		GrLexeme lex = GrLexeme(this);
 		lex.isOperator = true;
@@ -553,6 +568,9 @@ class GrLexer {
 		lexemes ~= lex;
 	}
 
+	/**
+	Scan a known keyword or an identifier otherwise.
+	*/
 	void scanWord() {
 		GrLexeme lex = GrLexeme(this);
 		lex.isKeyword = true;
@@ -583,8 +601,8 @@ class GrLexer {
             case "event":
 				lex.type = GrLexemeType.Event;
 				break;
-            case "struct":
-				lex.type = GrLexemeType.Struct;
+            case "object":
+				lex.type = GrLexemeType.Object;
 				break;
             case "tuple":
 				lex.type = GrLexemeType.Tuple;
@@ -790,7 +808,7 @@ class GrLexer {
 	/// Syntax: \
 	/// `use "FILEPATH"` or \
 	/// `use { "FILEPATH1", "FILEPATH2", "FILEPATH3" }` \
-	/// ---
+	/// ___
 	/// Add a file to the list of files to import.
 	void scanUse() {
 		advance();
@@ -835,7 +853,7 @@ dstring grGetPrettyLexemeType(GrLexemeType operator) {
         "and", "or", "xor", "not",
         "++", "--",
         "identifier", "const_int", "const_float", "const_bool", "const_str",
-        "main", "event", "struct", "tuple", "new", "copy", "send", "receive",
+        "main", "event", "object", "tuple", "new", "copy", "send", "receive",
         "void", "int", "float", "bool", "string", "array", "var", "func", "task", "chan", "let",
         "if", "unless", "else", "switch", "select", "case", "while", "do", "until", "for", "loop", "return", "self",
 		"kill", "killall", "yield", "break", "continue"

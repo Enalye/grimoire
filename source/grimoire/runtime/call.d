@@ -84,7 +84,7 @@ class GrCall {
                 setupLocals(name ~ ":", structure.fields, structure.signature);
                 break;
             case ArrayType:
-            case StructType:
+            case ObjectType:
             case UserType:
                 _oparams ++;
                 _olocals ~= name;
