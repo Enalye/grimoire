@@ -63,10 +63,10 @@ final class ScriptHandler {
         }
     }
 
-    void load(string name) {
-        auto bytecode = grCompileFile(name);
+    void load(GrData data, string name) {
+        auto bytecode = grCompileFile(data, name);
         engine = new GrEngine;
-        engine.load(bytecode);
+        engine.load(data, bytecode);
         engine.spawn();
         _timeout = new TimeoutThread(this);
         _timeout.start();

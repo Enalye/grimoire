@@ -7,9 +7,8 @@ import grimoire;
 import scripthandler;
 
 void testAll() {
-    grInitPrimitivesDatabase();
-    grInitTypesDatabase();
-    grLoadStdLibrary();
+    GrData data = new GrData;
+    grLoadStdLibrary(data);
 
     auto directories = dirEntries("", SpanMode.shallow);
     const auto startTime = MonoTime.currTime();
@@ -19,16 +18,13 @@ void testAll() {
             continue;
         modules ++;
         writeln("\033[1;34mTesting ", directory, "\033[0m");
-        testFolder(directory);
+        testFolder(data, directory);
     }
     auto totalTime = MonoTime.currTime() - startTime;
     writeln("\033[1;34mTested ", modules, " in ", totalTime, "\033[0m");
-
-    grClosePrimitivesDatabase();
-    grCloseTypesDatabase();
 }
 
-private void testFolder(string dirPath) {
+private void testFolder(GrData data, string dirPath) {
     auto files = dirEntries(dirPath, "{*.gr}", SpanMode.depth);
     const auto moduleStartTime = MonoTime.currTime();
     uint successes, total;
@@ -38,7 +34,7 @@ private void testFolder(string dirPath) {
             continue;
         total ++;
         string report;
-        handler.load(file);
+        handler.load(data, file);
 
         while(handler.isRunning)
             handler.run();
