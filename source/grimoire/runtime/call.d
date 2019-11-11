@@ -244,4 +244,14 @@ class GrCall {
         //and will increment the pc, so we prevent that.
         _context.pc --;
     }
+
+    /// Create a new object of type `typeName`.
+    GrObject createObject(dstring typeName) {
+        int index;
+        for(; index < _data._objectTypes.length; index ++) {
+            if(typeName == _data._objectTypes[index].name)
+                return new GrObject(_data._objectTypes[index]);
+        }
+        return null;
+    }
 }
