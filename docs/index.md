@@ -50,6 +50,19 @@ The following are keyword used by the language, they cannot be used as identifie
 
 `use`, `main`, `event`, `func`, `task`, `event`, `do`, `while`, `until`, `if`, `unless`, `else`, `switch`, `select`, `case`, `loop`, `for`, `true`, `false`, `let`, `bool`, `int`, `float`, `string`, `array`, `object`, `tuple`, `chan`, `break`, `continue`, `return`, `self`, `kill`, `killall`, `yield`, `as`, `is`, `try`, `catch`, `raise`, `new`, `defer`, `void`, `not`, `and`, `or`, `xor`.
 
+## Comments
+
+Comments are text that are entierly ignored by the compiler, they serve as note for you.
+
+```c
+// Everything after those 2 slashes is ignore until the end of the line.
+
+/*
+Everything between / * and * / are ignored
+/* Nested comments works too */
+*/
+```
+
 ## Numbers
 
 Numbers can either be integers or floating point values.
@@ -80,6 +93,34 @@ The whole `print("Hello World!");` form a single expression terminated by a semi
 
 Then we pass the "Hello World!" string to the **print** primitive and here is what the output displays: `Hello World!`.
 
+# Main
+
+Main is the starting point of the script, only one `main` is allowed.
+It cannot be called except by D.
+```d
+vm.spawn(); // Call the "main" function
+```
+
+Note: the `main {}` won't be specified during this tutorial even when needed to avoid repetitions.
+All operations (except type definitions and global variables) must exist inside a local scope.
+
+# Importing files
+
+You can separate a script between multiple files.
+To import them, use the `use` keyword with your file paths.
+```c
+use "foo/myscript.gr"
+
+// With {} you can specify multiple paths.
+use {
+	"../lib/myotherscript.gr"
+	"C:/MyScripts/script.gr"
+}
+```
+
+The path is relative to the file importing it.
+Two import with the same absolute path (i.e. the same file) will be included only once.
+
 * * *
 
 # Variables
@@ -101,11 +142,11 @@ They're only a handful of basic type recognised by grimoire.
 * Floating number declared with **float** ex: 2.35f
 * Boolean declared with **bool** ex: true, false
 * String declared with **string** ex: "Hello"
-* Array (see Array section)
-* Function/Task (see Anonymous Functions section)
-* Channel (see Channel section)
-* Object type
-* Custom type (User defined type in D)
+* Array (See Array section)
+* Function/Task (See Anonymous Functions section)
+* Channel (See Channel section)
+* Object type (See Object section)
+* Opaque type (User defined type in D)
 * Tuple (See Tuple section)
 
 ### Auto Type
@@ -164,9 +205,75 @@ Here:
 * *c = "Hi!"* and is of type **string**,
 * *d = "Hi!"* and is of type **string**.
 
-### Type casting
+# Type casting
 
 You can explicitly cast a value to any type with the keyword `as`, it must be followed by the desired type like this: `float a = 5 as float;`.
+
+## Custom casting
+
+You can define your own cast by naming a function with `as`.
+It must only have one input and one output.
+
+```c
+object Obj {}
+
+main {
+    let obj = new Obj;
+    printl(obj as string); // Prints "Hello"
+}
+
+func as(Obj a) string {
+    return "Hello";
+}
+```
+
+Note that if a default convertion exist, it'll call that instead,
+so overloading a `+` operator between 2 ints is useless.
+
+## In D
+
+To define a new cast, add it to the GrData.
+```d
+data.addCast(&myCast, "myObj", myObjType, grString);
+```
+
+Then, define the function itself:
+```d
+void myCast(GrCall call) {
+    auto myObj = call.getObject("myObj");
+    call.setString("Hello");
+}
+```
+
+# Operators
+
+Much like custom convertions, you can define your own operators.
+The name of the function must be `operator` followed by the operation.
+You also have to respect the number of input the operator uses (1 or 2).
+
+```c
+main {
+    printl(3.5f + 2);
+}
+
+func operator+(float a, int b) float {
+    return a + b as float;
+}
+```
+
+## In D
+
+Like addCast, but using addOperator instead.
+```d
+data.addOperator(&myOperator, "+", ["a", "b"], [grFloat, grInt], grFloat);
+```
+
+Then writing the function itself.
+```d
+void myOperator(GrCall call) {
+    call.setFloat(call.getFloat("a") + cast(int) call.getInt("b"));
+}
+```
 
 * * *
 
@@ -235,7 +342,7 @@ A `case` without value is considered to be a default case like the `else` above,
 
 ## Select statement
 
-Select statements are a bit like switch but for channels evaluations.
+A select is syntaxically like a switch, but differs in that it doesn't do value comparison, it checks each case for an operation that can process whithout blocking.
 
 ```c
 select
@@ -248,7 +355,7 @@ case() {
 ```
 
 Each cases contain a potentially blocking operation, the first non-blocking operation case is run.
-If no default case is present, the select statement is blocking if all cases are blocked, otherwise the default case will run when others are blocked.
+The default case is optional, but without one, the select statement is a blocking operation, otherwise the default case will execute if when others are blocked.
 
 ```c
 select
@@ -265,7 +372,6 @@ case() {
 }
 ```
 
-
 ## Loops
 
 A loop is a structure that can be executed several time, there are two type of loops.
@@ -274,10 +380,8 @@ A loop is a structure that can be executed several time, there are two type of l
 
 An infinite loop is as the title imply, see for yourself:
 ```c
-main {
-	loop {
-		printl("Hello !");
-	}
+loop {
+	printl("Hello !");
 }
 ```
 This script will prompt "Hello !" infinitely until process is killed, be cautious with it.
@@ -288,36 +392,44 @@ You may want to add either a `yield` or an exit condition.
 Finite loops, on the other hand, have a finite number of time they will run.
 Contrary to the infinite one, they take an int as a parameter, which indicate the number of loops:
 ```c
-main {
-	loop(10) {
-		printl("I loop 10 times !");
-	}
+loop(10) {
+	printl("I loop 10 times !");
 }
 ```
 This will only print the message 10 times.
+
+You can also specify an iterator, which must be of type `int`.
+```c
+loop(i, 10)
+	printl(i); // Prints from 0 to 9
+
+// Same as above, but we declare i.
+loop(int i, 10)
+	printl(i);
+
+// Also valid.
+loop(let i, 10)
+	printl(i);
+```
 
 ## While/Do While
 
 "while" and "do while" are, akin to loops, statements that can execute their code several time.
 The difference is, they do not have a finite number of loop, instead, they have a condition (like "if" statements).
 ```c
-main {
-	int i = 0;
-	while(i < 10) {
-		printl(i); // Here, the output is 0, 1, 2, 3, 4, 5, 6, 7, 8 and 9.
-		i ++;
-	}
+int i = 0;
+while(i < 10) {
+	printl(i); // Here, the output is 0, 1, 2, 3, 4, 5, 6, 7, 8 and 9.
+	i ++;
 }
 ```
 "do while" is the same as "while" but the condition is checked after having run the code one time.
 ```c
-main {
-	int i = 11;
-	do { //This is garanteed to run at least once, even if the condition is not met.
-		printl(i); //Will print "11"
-	}
-	while(i < 10)
+int i = 11;
+do { //This is garanteed to run at least once, even if the condition is not met.
+	printl(i); //Will print "11"
 }
+while(i < 10)
 ```
 
 ## For
@@ -325,10 +437,8 @@ main {
 "for" loops are yet another kind of loop that will automatically iterate on an array of values.
 For instance:
 ```c
-main {
-	for(i, [1, 2, 3, 4]) {
-		printl(i);
-	}
+for(i, [1, 2, 3, 4]) {
+	printl(i);
 }
 ```
 Here, the for statement will take each value of the array, then assign them to the variable "i" specified.
@@ -336,16 +446,12 @@ Here, the for statement will take each value of the array, then assign them to t
 The variable can be already declared, or declared inside the for statement like this:
 
 ```c
-main {
-	int i;
-	for(i, [1, 2]) {}
-}
+int i;
+for(i, [1, 2]) {}
 ```
 Or,
 ```c
-main {
-	for(int i, [1, 2]) {}
-}
+for(int i, [1, 2]) {}
 ```
 If no type is specified, or declared as let, the variable will be automatically declared as `var`.
 
@@ -464,9 +570,7 @@ main {
 }
 ```
 
-* * *
-
-# Self
+## Self
 
 If you want to refer to the current function, but you're inside an anonymous function you can't because the function has no name.
 
@@ -687,18 +791,6 @@ main {
 }
 ```
 Here, foo will be blocked until something is written on the channel, then it'll print it.
-
-## Select statement
-
-A select is syntaxically like a switch, but differs in that it doesn't do value comparison, it checks each case for an operation that can process.
-
-```c
-select
-case { printl("Nothing is ready"); }
-case(i = <- c) { printl("received: " ~ i as string); } 
-case(c <- "Hey") { printl("sent value 'Hey'"); } 
-```
-The default case is optional, but without one, the select statement is a blocking operation, else the default case will execute if nothing is ready.
 
 * * *
 
