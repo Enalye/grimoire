@@ -20,23 +20,28 @@ Grimoire is in 2 parts:
 - The runtime
 
 First you need to compile your file with `grCompileFile()`.
-It takes the script's file path, compiles in into a bytecode, and returns it to you.
+It takes a GrData and the script's file path.
+It compiles it into a bytecode, and returns it to you.
 ```d
-auto bytecode = grCompileFile("test.gr");
+auto data = new GrData;
+// Define things in data here..
+auto bytecode = grCompileFile(data, "test.gr");
 ```
-The binded D-functions/types must be before compiling the file.
-The binded functions/types must be the same (and in the same order) for the compiler and the runtime else it will crash.
 
-Then, create the runtime's virtual machine `GrEngine`, load the bytecode and spawn the main task.
+The GrData object contains all binded D-functions and types definitions.
+If you want to bind D-functions or create types with it, you must do so before calling `grCompileFile()`.
+The GrData object will be used by the runtime as well, so it must remains the same between compilation and runtime.
+
+Then, create the runtime's virtual machine `GrEngine`, load the data and bytecode then spawn the main task.
 ```d
 GrEngine vm = new GrEngine;
-vm.load(bytecode);
+vm.load(data, bytecode);
 vm.spawn();
 ```
 
 You're not forced to spawn the main, you can spawn any other named event like this:
 ```d
-auto mangledName = grMangleNamedFunction("hey", []);
+auto mangledName = grMangleNamedFunction("myEvent", []);
 if(vm.hasEvent(mangledName))
     GrContext ev = vm.spawnEvent(mangledName);
 ```
@@ -61,7 +66,7 @@ if(vm.isPanicking)
 The classic Hello World ! nice to meet you !
 ```cpp
 main {
-    print("Hello World!");
+    printl("Hello World!");
 }
 ```
 You can find the language documentation [> here ! <](https://enalye.github.io/grimoire)

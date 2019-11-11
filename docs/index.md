@@ -31,3 +31,761 @@ You can easily define custom functions and types from D.
   - [Custom Primitives](primitive.md)
 
 
+* * *
+
+# Syntax
+
+## Identifier
+
+An identifier is a name used to identify something like a variable, a function, a type, etc.
+
+It must not be reserved word, it can use any alphanumeric character, lower and upper cases, or underscores be it can't start with a digit.
+
+Exemple of valid identifiers:
+_myVariable
+MyVAR1__23
+
+## Reserved words
+
+The following are keyword used by the language, they cannot be used as identifier (variables, functions, etc):
+`use`, `main`, `event`, `func`, `task`, `event`, `do`, `while`, `until`, `if`, `unless`, `else`, `switch`, `select`, `case`, `loop`, `for`, `true`, `false`, `let`, `bool`, `int`, `float`, `string`, `array`, `object`, `tuple`, `chan`, `break`, `continue`, `return`, `self`, `kill`, `killall`, `yield`, `as`, `is`, `try`, `catch`, `raise`, `new`, `defer`, `void`, `not`, `and`, `or`, `xor`.
+
+## Numbers
+
+Numbers can either be integers or floating point values.
+
+An integer is defined by digits from 0 to 9.
+A float is similar but must either:
+- Have a decimal part separated by a `.` : `5.678`, `.123`
+- Have a `f` at the end of the number : `1f`, `.25f`
+
+You can also use underscores `_` inside the number (not in front) to make it more readable: `100_000`
+The underscores won't be parsed by the compiler.
+
+* * *
+
+* * *
+
+# First Program
+
+Starting with the traditionnal "Hello World" :
+```ruby
+main {
+  printl("Hello World!");
+}
+```
+The code is composed of the keyword **main**, it's a special function that indicate the entry point of the script.
+Then we have a left curly brace `{` with a right curly brace `}` some lines after.
+Those curly braces delimit the scope of the statement (here, the **main**).
+Everything inside those curly braces (called a **block**) will be executed when the **main** is run.
+The whole `print("Hello World!");` form a single expression terminated by a semicolon.
+
+Then we pass the "Hello World!" string to the **print** primitive and here is what the output displays: `Hello World!`.
+
+
+* * *
+
+* * *
+
+# Variables
+
+Variable can store a value that can be used later.
+A variable is defined by its type and must be declared before use.
+
+`int a = 0;`
+Here we created a variable **a** of type **int** initialized with the value **0**.
+
+If we print the content of a with 'print(a)'. The prompt will display **0**.
+
+A variable must be initialized before accessing its content, else it will raise an error !
+
+## Basic Types
+They're only a handful of basic type recognised by grimoire.
+* Void type
+* Integer declared with **int** ex: 2
+* Floating number declared with **float** ex: 2.35f
+* Boolean declared with **bool** ex: true, false
+* String declared with **string** ex: "Hello"
+* Array (see Array section)
+* Function/Task (see Anonymous Functions section)
+* Channel (see Channel section)
+* Object type
+* Custom type (User defined type in D)
+* Tuple (See Tuple section)
+
+### Auto Type
+**let** is a special keyword that let the compiler automatically infer the type of a declared variable.
+Example:
+```ruby
+main {
+  let a = 3.2; //'a' is inferred to be a float type.
+  printl(a);
+}
+```
+let can only be used on variable declaration and cannot be part of a function signature because it's not a type !
+
+## Scope
+A variable can either be local or global.
+* A global variable is declared outside of any function/task/etc and is accessible in everywhere in every file.
+* A local variable is only accessible inside the function/task/etc where it was declared.
+
+Example:
+```ruby
+int globalVar; //Declared outside of any scope, accessible everywhere.
+
+main {
+  int localVar; //Declared inside the main, only accessible within the main.
+}
+```
+
+## Declaration List
+
+You can also declare multiple variables at once separating each identifier with a comma. `int a, b;`
+
+Initialization will be done in the same order:
+`int a, b = 2, 3;` Here *a = 2* and *b = 3*.
+
+If there is not enough values to assign, the other variable will be assigned the last value: `int a, b, c = 2, 3;` Here *a = 2*, *b = 3*, *c = 3*.
+
+You can skip one or more values by leaving a blank comma, it'll then copy the last value:
+
+`int a, b, c = 12,, 5;`
+Both *a* and *b* are equal to *12* while *c* is equal to 5.
+
+`int a, b, c, d = 12,,, 5;`
+Both *a*, *b*, and *c* are equal to *12* while *c* is equal to 5.
+
+The first value cannot be blank, you cannot do this: `int a, b, c = , 5, 2;`
+
+
+Every variable on the same initialization list must be of the same type.
+Ex: `int a, b = 2, "Hi"` will raise an error because *b* is expected to be **int** and you are passing a **string**.
+
+But you can use **let** to initialize automatically different types :
+`let a, b, c, d = 1, 2.3, "Hi!";`
+Here:
+* *a = 1* and is of type **int**,
+* *b = 2.3* and is of type **float**,
+* *c = "Hi!"* and is of type **string**,
+* *d = "Hi!"* and is of type **string**.
+
+### Type casting
+
+You can explicitly cast a value to any type with the keyword `as`, it must be followed by the desired type like this: `float a = 5 as float;`.
+
+
+* * *
+
+
+* * *
+
+# Control flow
+
+## If/Else/Unless
+
+"if" is a keyword that allows you to runs a portion of code only if its condition is true, "unless" do the opposite.
+You can combine it with optionals "else if" or "else unless" to do the same thing, only if the previous ones aren't run.
+Finally you can add an optional "else" that is run *only* if others are not run.
+
+Exemple:
+```ruby
+main {
+	if(5 < 2) {
+		//This code won't run because 5 is never less than 2.
+		printl("5 is less than 2 !");
+	}
+
+	unless(5 < 2) {
+		//This one will, because unless do the opposite of if
+		//It's the same thing as if(not 5 < 2) {}
+		printl("5 is not less than 2...");
+	}
+}
+```
+Another one:
+```ruby
+main {
+	let i = 5;
+	if(i > 10) {
+		printl("i is more than 10");
+	}
+	else if(i >= 5) {
+		printl("i is 5 or more but less than 10");
+	}
+	else unless(i < 2) {
+		printl("i is 2 or more, but less than 5");
+	}
+	else { //else must always be put at the end of the (if/unless)/else (if/unless)/else serie, but it's optional.
+		printl("i is 2 or less");
+	}
+}
+```
+
+## Switch statement
+
+"switch" let us do comparisons a bit like "if", but in a more concise manner.
+
+```ruby
+let i = "Hello";
+switch(i)
+case {
+	printl("I don't know what he said");
+}
+case("Hey") {
+	printl("He said hey");
+}
+case("Hello") {
+	printl("He said hello");
+}
+```
+
+Contrary to "if" statement, cases can be put in any order, and will check equality between the switch value and each cases value.
+A case without value is considered to be a default case like the "else" above, you can only have one maximum per switch statement.
+
+## Select statement
+
+TODO: write about channels and select
+
+## Loops
+
+A loop is a structure that can be executed several time, there are two type of loops.
+
+### Infinite loops
+
+An infinite loop is as the title imply, see for yourself:
+```ruby
+main {
+	loop {
+		printl("Hello !");
+	}
+}
+```
+This script will prompt "Hello !" infinitely until process is killed, be cautious with it.
+You may want to add either a `yield` or an exit condition.
+
+### Finite loops
+
+Finite loops, on the other hand, have a finite number of time they will run.
+Contrary to the infinite one, they take an int as a parameter, which indicate the number of loops:
+```ruby
+main {
+	loop(10) {
+		printl("I loop 10 times !");
+	}
+}
+```
+This will only print the message 10 times.
+
+## While/Do While
+
+"while" and "do while" are, akin to loops, statements that can execute their code several time.
+The difference is, they do not have a finite number of loop, instead, they have a condition (like "if" statements).
+```ruby
+main {
+	int i = 0;
+	while(i < 10) {
+		printl(i); // Here, the output is 0, 1, 2, 3, 4, 5, 6, 7, 8 and 9.
+		i ++;
+	}
+}
+```
+"do while" is the same as "while" but the condition is checked after having run the code one time.
+```ruby
+main {
+	int i = 11;
+	do { //This is garanteed to run at least once, even if the condition is not met.
+		printl(i); //Will print "11"
+	}
+	while(i < 10)
+}
+```
+
+## For
+
+"for" loops are yet another kind of loop that will automatically iterate on an array of values.
+For instance:
+```ruby
+main {
+	for(i, [1, 2, 3, 4]) {
+		printl(i);
+	}
+}
+```
+Here, the for statement will take each value of the array, then assign them to the variable "i" specified.
+
+The variable can be already declared, or declared inside the for statement like this:
+
+```ruby
+main {
+	int i;
+	for(i, [1, 2]) {}
+}
+```
+Or,
+```ruby
+main {
+	for(int i, [1, 2]) {}
+}
+```
+If no type is specified, or declared as let, the variable will be automatically declared as `var`.
+
+The variable type must be convertible from the array's values, or it will raise a runtime error.
+
+* * *
+
+# Function
+
+Like any other language, functions behave the same. They are declared like this:
+```cpp
+func myFunction() {}
+```
+Here, the function myFunction takes no parameter, returns nothing and do nothing, which is boring..
+
+Here is a function that takes 2 int, and returns the sum of them
+```cpp
+func add(int a, int b) int {
+  return a + b;
+}
+```
+The return type is always put after the parenthesis, if there is no return value, you can put void or leave it blank.
+If there is no return type, you can use return alone to exit the function anywhere.
+```cpp
+func foo(int n) {
+  if(n == 0) {
+    printl("n is equal to 0");
+    return
+  }
+  printl("n is different from 0");
+}
+```
+
+* * *
+
+
+* * *
+
+# Task
+
+Task are Grimoire's implementation of coroutines. They are syntaxically similar to function except from a few points:
+* A task have no return type and can't return anything.
+* When called, a task will not execute immediately and will not interrupt the caller's flow.
+* A task will only be executed if other tasks are killed or on yield.
+
+Syntax:
+```cpp
+task doThing() {
+  printl("3");
+  yield
+  printl("5");
+}
+
+main {
+  printl("1");
+  doThing();
+  printl("2");
+  yield
+  printl("4");
+}
+```
+Here, the main will printl 1, spawn the doThing task, printl 2 then yield to the doThing task which will printl 3 then yield again to the main which will printl 4. Then the main will die so the doThing task will resume and printl 5.
+
+To interrupt the flow of execution of the task and let other task continue, you can use the keyword **yield**.
+The task will run again after all other tasks have run once.
+
+You can also delete the task with the keyword **kill**. Also be aware that inside the scope of a task, the keyword **return** will behave the same as **kill**.
+
+Note: The main is a special case of a task.
+
+* * *
+
+# Anonymous functions/tasks
+
+You can declare a function or a task inside another function (or task).
+Like this:
+
+```ruby
+main {
+	let f = func() {};
+	let t = task() {};
+}
+```
+
+You can also decide to just run it immediately:
+```ruby
+main {
+	int a = 7;
+	int b = func(int c) int {
+		return c * 2;
+	}(a);
+	printl(b); //Prints 14
+}
+```
+
+The type of a function/task is the same as its declaration without the parameters' name:
+```ruby
+main {
+	func(int, float) string, int myFunction = func(int a, float b) string, int { return "Hey", 2; };
+}
+```
+
+You can use a global function/task as an anonymous by getting its address.
+You can do so by using the & operator.
+The operator & does not require the function type, except when it has no way to know it at compilation time, like when declaring with let.
+
+```ruby
+func square(int i) int {
+	return i * i;
+};
+
+main {
+	let f1 = &square; //Error, & has no way to know the type inside a variant at compilation time.
+	let f2 = &(func(int) int)square; //Valid, an explicit type prevent this problem.
+	f2 = &square; //Now valid, because it's now typed by the previous assignment.
+
+	func(int) int f3 = &square; //Error, can't know the type of f3 since f3 doesn't exist at the time of declaration.
+	f3 = &square; //Valid, since f3 is already declared with a type.
+}
+```
+
+* * *
+
+# Self
+
+If you want to refer to the current function, but you're inside an anonymous function you can't because the function has no name.
+
+Except `self`. Self is used to refers to the current function/task/etc event anonymous ones.
+
+It allows you to do things like this anonymous fibonacci:
+```ruby
+func(int n) int {
+    if(n < 2) return n;
+    return self(n - 1) + self(n - 2);
+}(10)::printl;
+```
+
+* * *
+
+# Event functions
+
+Events are like tasks that can only be spawned from D.
+
+They are declared like tasks and can only be global:
+```cpp
+event foo(string msg) {
+	printl(msg);
+}
+```
+
+To spawn this one from D:
+```d
+auto mangledName = grMangleNamedFunction("foo", [grString]);
+if(vm.hasEvent(mangledName))
+    GrContext ev = vm.spawnEvent(mangledName);
+```
+Here the process is a little bit special.
+First, we need to know the mangled name (name + signature) of the event with "grMangleNamedFunction".
+Then, we call it.
+
+* * *
+
+# Array
+
+Array are a collection of a single type of value.
+
+The type of an array is `array()` with the type of its content inside the parenthesis:
+```ruby
+array(int) myCollection = [1, 2, 3];
+```
+
+By default, a new array has the type of its first element.
+So, `[1, 2, 3]` will be an `array(int)`.
+
+You can write it explicitly by preceding the array with its type: `array(int)[1, 2, 3]`
+
+If your new array is empty `[]`, you **have** to write the type explicitly else compilation will fail: `array(string)[]`.
+
+To access an array element, the array index (from 0) in written between brackets:
+```ruby
+let a = [10, 20, 30][1]; //New array, then immediately take the index 1 of [10, 20, 30], which is 20
+
+let b = [[1, 2, 3], [11, 12, 13], [21, 22, 23]]; //New array
+let c = b[1][2]; //Here we access the element at index 1 -> [21, 22, 23], the element at index 2 -> 23
+let d = b[1, 2]; //Same as above in a nicer syntax
+```
+
+When accessing an array element, you can also modify it:
+```ruby
+let a = [11, 12, 13];
+a[0] = 9; //a now has [9, 12, 13]
+```
+
+Array and array indexes are passed by references, that mean manipulating array do not make copies.
+```ruby
+let a = [1, 2, [3, 4]];
+let b = a[2]; //b is now a reference to the 3rd value of a
+b[0] = 9;
+
+printl(a); //Prints [1, 2, [9, 4]]
+```
+
+You can concatenate values into an array by using the concatenation operator ~
+```ruby
+let a = 1 ~ [2, 3, 4] ~ [5, 6] ~ 7; //a is now [1, 2, 3, 4, 5, 6, 7]
+```
+
+* * *
+
+# Tuples
+
+Tuples are a way to combine several types into a single one.
+
+They are declared like this:
+```ruby
+tuple MyTuple {
+	int a;
+	float b;
+}
+```
+
+Each field can be accessed with ":"
+```ruby
+main {
+	MyTuple t;
+	t:a = 5;
+	t:b = 8.7;
+}
+```
+
+* * *
+
+# Object
+
+Object are types that can hold fields of different types.
+
+## Definition
+
+Declaration is made with the `object` keyword.
+```ruby
+object MyObject {
+    int myInteger;
+    string myString;
+}
+```
+
+It is equivalent to :
+```d
+data.addObject("MyObject", ["myInteger", "myString"], [grInt, grString]);
+```
+In the D side of thing, you declare an object type with `addObject` to the `GrData`.
+
+## New
+
+To create an object, you use the `new` keyword followed by the object type.
+```ruby
+MyObject obj = new MyObject;
+```
+
+You can create an object in D by using the `createObject()` method of GrCall.
+Here's a little example:
+
+* Declaration:
+```d
+auto messageType = data.addObject("Message", ["greetings"], [grString]);
+data.addPrimitive(&createMessage, "createMessage", [], [], [messageType]);
+```
+
+* Primitive:
+```d
+void createMessage(GrCall call) {
+    auto obj = call.createObject("Message");
+    if(obj is null) {
+        call.raise("Message not declared");
+        return;
+    }
+    obj.setString("greetings", "Hello World !");
+    call.setObject(obj);
+}
+```
+
+Grimoire code:
+```ruby
+main {
+    let myObj = createMessage();
+    myObj.greetings::printl;
+}
+```
+
+It'll print "Hello World !".
+
+
+## Access a field
+
+To access a field, use the `.` notation.
+```ruby
+obj.myInteger = 5;
+obj.myString = "Hello";
+printl(obj.myString);
+```
+
+In D, use set and get functions.
+```d
+void _prim(GrCall call) {
+    auto obj = call.getObject("obj");
+    writeln(obj.getInt("myInteger"));
+    obj.setInt("myInteger", 5);
+}
+```
+
+* * *
+
+* * *
+
+# Channels
+
+Channels are a concept that allow synchronised communication between tasks.
+If you know them from Go, it's roughly the same.
+
+Channels are created like this:
+```ruby
+chan(int) c = chan(int, 5);
+```
+Here, we create a channel that will hold up to 5 int values.
+The size (5) of the channel is optional, by default, it's 1.
+
+To pass a value around, you need to use the <- operator
+```ruby
+let c = chan(int);
+c <- 1; //We send the value 1 through the channel
+int value = <-c; //We receive the value from the channel
+```
+
+But a send or receive operation is blocking, you can't do it on the same task.
+
+```ruby
+task foo(chan(int) c) {
+	print(<-c);
+}
+main {
+	let c = chan(int);
+	foo(c);
+	c <- "Hello World !";
+}
+```
+Here, foo will be blocked until something is written on the channel, then it'll print it.
+
+## Select statement
+
+A select is syntaxically like a switch, but differs in that it doesn't do value comparison, it checks each case for an operation that can process.
+
+```ruby
+select
+case { printl("Nothing is ready"); }
+case(i = <- c) { printl("received: " ~ i as string); } 
+case(c <- "Hey") { printl("sent value 'Hey'"); } 
+```
+The default case is optional, but without one, the select statement is a blocking operation, else the default case will execute if nothing is ready.
+
+* * *
+
+* * *
+
+# Error Handling
+
+Error handling in Grimoire is done by raising/catching errors
+
+To raise an error, simply write:
+```ruby
+raise "Error";
+```
+If you do nothing about it, the entire VM will panic, because the current task does nothing to catch it.
+
+So we should probably catch it:
+```ruby
+main {
+	try {
+		raise "Error";
+	}
+	catch(e) {
+		print("I caught " ~ e);
+	}
+}
+```
+And everything is fine.
+
+
+* * *
+
+* * *
+
+# Deferred statements
+
+Code put inside a defer statement, is *garanteed* to be executed at the end of the function/task,
+even if an error is thrown before the end of the scope.
+
+```cpp
+main {
+	defer { printl("Inside defer !"); }
+	printl("Before defer");
+	raise "Error";
+}
+```
+Here, the prompt will show "Before defer", then "Inside defer !", even if we raise an error before the end of the scope.
+It's useful for handling resources that need to be freed.
+
+* * *
+
+* * *
+
+# Custom Primitives
+
+## What's a primitive
+
+In this language, a primitive is a function declared in D accessible from a script.
+`print` for instance, is a primitive.
+
+They must be declared before the compilation anb remain unchanged in the VM.
+
+## Primitive declaration
+
+To declare your primitive use `grAddPrimitive`.
+This function takes a callback to your primitive, the name which your primitive will be known as in scripts,
+an array of parameters' name, the parameters' type and, optionally, an array of return value types.
+Exemple:
+```d
+//A function print that takes a string and returns nothing
+data.addPrimitive(&print_a_string, "print", ["value"], [grString]);
+//Function mul() that takes 2 floats and returns one.
+data.addPrimitive(&multiply, "mul", ["a", "b"], [grFloat, grFloat], [grFloat]);
+```
+
+If you want to multiply 2 things, a better idea is to declare an operator (if it doesn't already exists for your types):
+
+```d
+data.addOperator(&multiply, "*", ["a", "b"], [grFloat, grFloat], grFloat);
+```
+An operator declaration only take the name of the operator it surcharges, 1 or 2 parameters, and a single return type.
+
+But if you want to convert from one type to another using a primitive, you can do so with this function:
+```d
+data.addCast(&cast_float_to_int, "value", grFloat, grInt);
+```
+Much simpler, it takes a single parameter and return value.
+
+## The primitive itself
+
+The callback takes a GrCall object and return nothing.
+The GrCall object contains everything you need about the current running context.
+
+It looks like this:
+```d
+void myPrimitive(GrCall call) {
+	writeln(call.getFloat("value"));
+    call.setInt(99);
+}
+```
+Here, the primitive takes a float parameter called `"value"`, and prints it, then returns the int value 99.
+getXXX methods fetch the parameters, they have the same name/type as declared, else it will throw an exception.
+setXXX methods returns a value on the stack, beware of the order in which you call setXXX functions.
+
+
+* * *

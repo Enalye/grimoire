@@ -14,20 +14,20 @@ Task are Grimoire's implementation of coroutines. They are syntaxically similar 
 Syntax:
 ```cpp
 task doThing() {
-  print("3");
+  printl("3");
   yield
-  print("5");
+  printl("5");
 }
 
 main {
-  print("1");
+  printl("1");
   doThing();
-  print("2");
+  printl("2");
   yield
-  print("4");
+  printl("4");
 }
 ```
-Here, the main will print 1, spawn the doThing task, print 2 then yield to the doThing task which will print 3 then yield again to the main which will print 4. Then the main will die so the doThing task will resume and print 5.
+Here, the main will printl 1, spawn the doThing task, printl 2 then yield to the doThing task which will printl 3 then yield again to the main which will printl 4. Then the main will die so the doThing task will resume and printl 5.
 
 To interrupt the flow of execution of the task and let other task continue, you can use the keyword **yield**.
 The task will run again after all other tasks have run once.
