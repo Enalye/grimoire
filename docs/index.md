@@ -3,33 +3,32 @@
 Grimoire is an embedded language for D applications.
 You can easily define custom functions and types from D.
 
-## Navigation
+## Sommaire
 
 - Basics:
-  - [Basic syntax](syntax.md)
-  - [First program](first_program.md)
-  - [What's a variable ?](variable.md)
-  - [Control flow](control.md)
+  - Basic syntax
+  - First program
+  - What's a variable ?
+  - Control flow
 
 - Functions:
-  - [Creating a function](func.md)
-  - [Task, Grimoire's coroutine](task.md)
-  - [Anonymous function/task](anon.md)
-  - [Event function, or how to call a function from D](event.md)
+  - Creating a function
+  - Task, Grimoire's coroutine
+  - Anonymous function/task
+  - Event function, or how to call a function from D
 
-- Special types:
-  - [Array](array.md)
-  - [Tuple](tuple.md)
-  - [Structure](struct.md)
-  - [Channels](chan.md)
+- Compound types:
+  - Arrays
+  - Tuples
+  - Objects
+  - Channels
 
 - Errors:
-  - [Error Handling](error.md)
-  - [Deferring](defer.md)
+  - Error Handling
+  - Deferring code
 
 - Implementation:
-  - [Custom Primitives](primitive.md)
-
+  - Custom Primitives
 
 * * *
 
@@ -48,6 +47,7 @@ MyVAR1__23
 ## Reserved words
 
 The following are keyword used by the language, they cannot be used as identifier (variables, functions, etc):
+
 `use`, `main`, `event`, `func`, `task`, `event`, `do`, `while`, `until`, `if`, `unless`, `else`, `switch`, `select`, `case`, `loop`, `for`, `true`, `false`, `let`, `bool`, `int`, `float`, `string`, `array`, `object`, `tuple`, `chan`, `break`, `continue`, `return`, `self`, `kill`, `killall`, `yield`, `as`, `is`, `try`, `catch`, `raise`, `new`, `defer`, `void`, `not`, `and`, `or`, `xor`.
 
 ## Numbers
@@ -56,7 +56,7 @@ Numbers can either be integers or floating point values.
 
 An integer is defined by digits from 0 to 9.
 A float is similar but must either:
-- Have a decimal part separated by a `.` : `5.678`, `.123`
+- Have a decimal part separated by a `.` dot : `5.678`, `.123`
 - Have a `f` at the end of the number : `1f`, `.25f`
 
 You can also use underscores `_` inside the number (not in front) to make it more readable: `100_000`
@@ -64,12 +64,10 @@ The underscores won't be parsed by the compiler.
 
 * * *
 
-* * *
-
 # First Program
 
 Starting with the traditionnal "Hello World" :
-```ruby
+```c
 main {
   printl("Hello World!");
 }
@@ -81,9 +79,6 @@ Everything inside those curly braces (called a **block**) will be executed when 
 The whole `print("Hello World!");` form a single expression terminated by a semicolon.
 
 Then we pass the "Hello World!" string to the **print** primitive and here is what the output displays: `Hello World!`.
-
-
-* * *
 
 * * *
 
@@ -116,7 +111,7 @@ They're only a handful of basic type recognised by grimoire.
 ### Auto Type
 **let** is a special keyword that let the compiler automatically infer the type of a declared variable.
 Example:
-```ruby
+```c
 main {
   let a = 3.2; //'a' is inferred to be a float type.
   printl(a);
@@ -130,7 +125,7 @@ A variable can either be local or global.
 * A local variable is only accessible inside the function/task/etc where it was declared.
 
 Example:
-```ruby
+```c
 int globalVar; //Declared outside of any scope, accessible everywhere.
 
 main {
@@ -173,22 +168,18 @@ Here:
 
 You can explicitly cast a value to any type with the keyword `as`, it must be followed by the desired type like this: `float a = 5 as float;`.
 
-
-* * *
-
-
 * * *
 
 # Control flow
 
 ## If/Else/Unless
 
-"if" is a keyword that allows you to runs a portion of code only if its condition is true, "unless" do the opposite.
-You can combine it with optionals "else if" or "else unless" to do the same thing, only if the previous ones aren't run.
-Finally you can add an optional "else" that is run *only* if others are not run.
+`if` is a keyword that allows you to runs a portion of code only if its condition is true, "unless" do the opposite.
+You can combine it with optionals `else if` or `else unless` to do the same thing, only if the previous ones aren't run.
+Finally you can add an optional `else` that is run *only* if others are not run.
 
 Exemple:
-```ruby
+```c
 main {
 	if(5 < 2) {
 		//This code won't run because 5 is never less than 2.
@@ -203,7 +194,7 @@ main {
 }
 ```
 Another one:
-```ruby
+```c
 main {
 	let i = 5;
 	if(i > 10) {
@@ -223,12 +214,12 @@ main {
 
 ## Switch statement
 
-"switch" let us do comparisons a bit like "if", but in a more concise manner.
+`switch` let us do comparisons a bit like `if`, but in a more concise manner.
 
-```ruby
+```c
 let i = "Hello";
 switch(i)
-case {
+case() { // Default case if others aren't valid.
 	printl("I don't know what he said");
 }
 case("Hey") {
@@ -239,12 +230,41 @@ case("Hello") {
 }
 ```
 
-Contrary to "if" statement, cases can be put in any order, and will check equality between the switch value and each cases value.
-A case without value is considered to be a default case like the "else" above, you can only have one maximum per switch statement.
+Contrary to `if` statement, cases can be put in any order, and will check equality between the switch value and each cases value.
+A `case` without value is considered to be a default case like the `else` above, you can only have one maximum per switch statement.
 
 ## Select statement
 
-TODO: write about channels and select
+Select statements are a bit like switch but for channels evaluations.
+
+```c
+select
+case( /* channel operation  */ ) {
+
+}
+case() {
+	/* run if the one above is blocked */
+}
+```
+
+Each cases contain a potentially blocking operation, the first non-blocking operation case is run.
+If no default case is present, the select statement is blocking if all cases are blocked, otherwise the default case will run when others are blocked.
+
+```c
+select
+case(myValue = <- myChannel) { // Receive operation
+	printl("Received " ~ myValue);
+}
+case(myOtherChannel <- "Hello") { // Send operation
+	printl("Sent Hello");
+}
+case() {
+	// Run if no one else can run.
+	// If it's not present, select will blocking until one of the case is non-blocking.
+	printl("Did nothing");
+}
+```
+
 
 ## Loops
 
@@ -253,7 +273,7 @@ A loop is a structure that can be executed several time, there are two type of l
 ### Infinite loops
 
 An infinite loop is as the title imply, see for yourself:
-```ruby
+```c
 main {
 	loop {
 		printl("Hello !");
@@ -267,7 +287,7 @@ You may want to add either a `yield` or an exit condition.
 
 Finite loops, on the other hand, have a finite number of time they will run.
 Contrary to the infinite one, they take an int as a parameter, which indicate the number of loops:
-```ruby
+```c
 main {
 	loop(10) {
 		printl("I loop 10 times !");
@@ -280,7 +300,7 @@ This will only print the message 10 times.
 
 "while" and "do while" are, akin to loops, statements that can execute their code several time.
 The difference is, they do not have a finite number of loop, instead, they have a condition (like "if" statements).
-```ruby
+```c
 main {
 	int i = 0;
 	while(i < 10) {
@@ -290,7 +310,7 @@ main {
 }
 ```
 "do while" is the same as "while" but the condition is checked after having run the code one time.
-```ruby
+```c
 main {
 	int i = 11;
 	do { //This is garanteed to run at least once, even if the condition is not met.
@@ -304,7 +324,7 @@ main {
 
 "for" loops are yet another kind of loop that will automatically iterate on an array of values.
 For instance:
-```ruby
+```c
 main {
 	for(i, [1, 2, 3, 4]) {
 		printl(i);
@@ -315,14 +335,14 @@ Here, the for statement will take each value of the array, then assign them to t
 
 The variable can be already declared, or declared inside the for statement like this:
 
-```ruby
+```c
 main {
 	int i;
 	for(i, [1, 2]) {}
 }
 ```
 Or,
-```ruby
+```c
 main {
 	for(int i, [1, 2]) {}
 }
@@ -358,9 +378,6 @@ func foo(int n) {
   printl("n is different from 0");
 }
 ```
-
-* * *
-
 
 * * *
 
@@ -403,7 +420,7 @@ Note: The main is a special case of a task.
 You can declare a function or a task inside another function (or task).
 Like this:
 
-```ruby
+```c
 main {
 	let f = func() {};
 	let t = task() {};
@@ -411,7 +428,7 @@ main {
 ```
 
 You can also decide to just run it immediately:
-```ruby
+```c
 main {
 	int a = 7;
 	int b = func(int c) int {
@@ -422,7 +439,7 @@ main {
 ```
 
 The type of a function/task is the same as its declaration without the parameters' name:
-```ruby
+```c
 main {
 	func(int, float) string, int myFunction = func(int a, float b) string, int { return "Hey", 2; };
 }
@@ -432,7 +449,7 @@ You can use a global function/task as an anonymous by getting its address.
 You can do so by using the & operator.
 The operator & does not require the function type, except when it has no way to know it at compilation time, like when declaring with let.
 
-```ruby
+```c
 func square(int i) int {
 	return i * i;
 };
@@ -456,7 +473,7 @@ If you want to refer to the current function, but you're inside an anonymous fun
 Except `self`. Self is used to refers to the current function/task/etc event anonymous ones.
 
 It allows you to do things like this anonymous fibonacci:
-```ruby
+```c
 func(int n) int {
     if(n < 2) return n;
     return self(n - 1) + self(n - 2);
@@ -493,7 +510,7 @@ Then, we call it.
 Array are a collection of a single type of value.
 
 The type of an array is `array()` with the type of its content inside the parenthesis:
-```ruby
+```c
 array(int) myCollection = [1, 2, 3];
 ```
 
@@ -505,7 +522,7 @@ You can write it explicitly by preceding the array with its type: `array(int)[1,
 If your new array is empty `[]`, you **have** to write the type explicitly else compilation will fail: `array(string)[]`.
 
 To access an array element, the array index (from 0) in written between brackets:
-```ruby
+```c
 let a = [10, 20, 30][1]; //New array, then immediately take the index 1 of [10, 20, 30], which is 20
 
 let b = [[1, 2, 3], [11, 12, 13], [21, 22, 23]]; //New array
@@ -514,13 +531,13 @@ let d = b[1, 2]; //Same as above in a nicer syntax
 ```
 
 When accessing an array element, you can also modify it:
-```ruby
+```c
 let a = [11, 12, 13];
 a[0] = 9; //a now has [9, 12, 13]
 ```
 
 Array and array indexes are passed by references, that mean manipulating array do not make copies.
-```ruby
+```c
 let a = [1, 2, [3, 4]];
 let b = a[2]; //b is now a reference to the 3rd value of a
 b[0] = 9;
@@ -529,7 +546,7 @@ printl(a); //Prints [1, 2, [9, 4]]
 ```
 
 You can concatenate values into an array by using the concatenation operator ~
-```ruby
+```c
 let a = 1 ~ [2, 3, 4] ~ [5, 6] ~ 7; //a is now [1, 2, 3, 4, 5, 6, 7]
 ```
 
@@ -540,7 +557,7 @@ let a = 1 ~ [2, 3, 4] ~ [5, 6] ~ 7; //a is now [1, 2, 3, 4, 5, 6, 7]
 Tuples are a way to combine several types into a single one.
 
 They are declared like this:
-```ruby
+```c
 tuple MyTuple {
 	int a;
 	float b;
@@ -548,7 +565,7 @@ tuple MyTuple {
 ```
 
 Each field can be accessed with ":"
-```ruby
+```c
 main {
 	MyTuple t;
 	t:a = 5;
@@ -565,7 +582,7 @@ Object are types that can hold fields of different types.
 ## Definition
 
 Declaration is made with the `object` keyword.
-```ruby
+```c
 object MyObject {
     int myInteger;
     string myString;
@@ -581,7 +598,7 @@ In the D side of thing, you declare an object type with `addObject` to the `GrDa
 ## New
 
 To create an object, you use the `new` keyword followed by the object type.
-```ruby
+```c
 MyObject obj = new MyObject;
 ```
 
@@ -608,7 +625,7 @@ void createMessage(GrCall call) {
 ```
 
 Grimoire code:
-```ruby
+```c
 main {
     let myObj = createMessage();
     myObj.greetings::printl;
@@ -621,7 +638,7 @@ It'll print "Hello World !".
 ## Access a field
 
 To access a field, use the `.` notation.
-```ruby
+```c
 obj.myInteger = 5;
 obj.myString = "Hello";
 printl(obj.myString);
@@ -638,22 +655,20 @@ void _prim(GrCall call) {
 
 * * *
 
-* * *
-
 # Channels
 
 Channels are a concept that allow synchronised communication between tasks.
 If you know them from Go, it's roughly the same.
 
 Channels are created like this:
-```ruby
+```c
 chan(int) c = chan(int, 5);
 ```
 Here, we create a channel that will hold up to 5 int values.
 The size (5) of the channel is optional, by default, it's 1.
 
 To pass a value around, you need to use the <- operator
-```ruby
+```c
 let c = chan(int);
 c <- 1; //We send the value 1 through the channel
 int value = <-c; //We receive the value from the channel
@@ -661,7 +676,7 @@ int value = <-c; //We receive the value from the channel
 
 But a send or receive operation is blocking, you can't do it on the same task.
 
-```ruby
+```c
 task foo(chan(int) c) {
 	print(<-c);
 }
@@ -677,7 +692,7 @@ Here, foo will be blocked until something is written on the channel, then it'll 
 
 A select is syntaxically like a switch, but differs in that it doesn't do value comparison, it checks each case for an operation that can process.
 
-```ruby
+```c
 select
 case { printl("Nothing is ready"); }
 case(i = <- c) { printl("received: " ~ i as string); } 
@@ -687,20 +702,18 @@ The default case is optional, but without one, the select statement is a blockin
 
 * * *
 
-* * *
-
 # Error Handling
 
 Error handling in Grimoire is done by raising/catching errors
 
 To raise an error, simply write:
-```ruby
+```c
 raise "Error";
 ```
 If you do nothing about it, the entire VM will panic, because the current task does nothing to catch it.
 
 So we should probably catch it:
-```ruby
+```c
 main {
 	try {
 		raise "Error";
@@ -711,9 +724,6 @@ main {
 }
 ```
 And everything is fine.
-
-
-* * *
 
 * * *
 
@@ -734,8 +744,6 @@ It's useful for handling resources that need to be freed.
 
 * * *
 
-* * *
-
 # Custom Primitives
 
 ## What's a primitive
@@ -747,7 +755,7 @@ They must be declared before the compilation anb remain unchanged in the VM.
 
 ## Primitive declaration
 
-To declare your primitive use `grAddPrimitive`.
+To declare your primitive use `addPrimitive`.
 This function takes a callback to your primitive, the name which your primitive will be known as in scripts,
 an array of parameters' name, the parameters' type and, optionally, an array of return value types.
 Exemple:

@@ -114,7 +114,7 @@ class GrParser {
 	GrLexeme get(int offset = 0) {
 		uint position = current + offset;
 		if(position < 0 || position >= cast(uint)lexemes.length) {
-			logError("Unexpected end of file");
+			logError("Unexpected end of file", "Unexpected end of file");
 		}
 		return lexemes[position];
 	}
@@ -2219,7 +2219,7 @@ class GrParser {
 		if(get().type == GrLexemeType.LeftCurlyBrace) {
             isMultiline = true;
             if(!checkAdvance())
-                logError("Unexpected end of file");
+                logError("Unexpected end of file", "Missing }");
         }
 		openBlock();
 
@@ -2345,7 +2345,7 @@ class GrParser {
 		if(get().type == GrLexemeType.LeftCurlyBrace) {
             isMultiline = true;
             if(!checkAdvance())
-                logError("Unexpected end of file");
+                logError("Unexpected end of file", "Missing }");
         }
 		openBlock();
 
@@ -2775,6 +2775,14 @@ class GrParser {
         return returnType;
     }
 
+    /**
+    ---
+    if(SUBEXPR) BLOCK
+    else if(SUBEXPR) BLOCK
+    else unless(SUBEXPR) BLOCK
+    else(SUBEXPR) BLOCK
+    ---
+    */
 	void parseIfStatement() {
         bool isNegative = get().type == GrLexemeType.Unless;
 		advance();
@@ -2901,10 +2909,18 @@ class GrParser {
         return chanType;
     }
 
+    /**
+    ---
+    switch(SUBEXPR)
+    case(SUBEXPR) BLOCK
+    case(SUBEXPR) BLOCK
+    case() BLOCK
+    ---
+    */
     void parseSwitchStatement() {
         advance();
-        if(get().type != GrLexemeType.LeftParenthesis)
-			logError("Missing symbol", "A switch statement should always start with \'(\'");
+        assertError(get().type == GrLexemeType.LeftParenthesis,
+            "Missing symbol", "A switch statement should always start with \'(\'");
 
         advance();
 		GrType switchType = parseSubExpression().type;
@@ -2919,12 +2935,19 @@ class GrParser {
         bool hasCase, hasDefaultCase;
 
         while(get().type == GrLexemeType.Case) {
-            if(get(1).type == GrLexemeType.LeftParenthesis) {
+            advance();
+            assertError(get().type == GrLexemeType.LeftParenthesis, 
+                "Invalid case syntax", "It should be either case(...) or case()");
+            advance();
+            if(get().type == GrLexemeType.RightParenthesis) {
+                assertError(!hasDefaultCase, "Multiple default cases", "There must be only one default case per switch statement");
+                advance();
+                hasDefaultCase = true;
+                defaultCasePosition = current;
+                skipBlock();
+            }
+            else {
                 hasCase = true;
-                advance();
-                if(get().type != GrLexemeType.LeftParenthesis)
-			        logError("Missing symbol", "A case statement should always start with \'(\'");
-                advance();
                 addGetInstruction(switchVar);
                 GrType caseType = parseSubExpression().type;
                 addBinaryOperator(GrLexemeType.Equal, switchType, caseType);
@@ -2945,23 +2968,10 @@ class GrParser {
                     cast(int)(currentFunction.instructions.length - jumpPosition),
                     true);
             }
-            else if(get(1).type == GrLexemeType.LeftCurlyBrace) {
-                if(hasDefaultCase)
-                    logError("Multiple default cases", "There must be only one default case per switch statement");
-                hasDefaultCase = true;
-
-                advance();
-                defaultCasePosition = current;
-
-                skipBlock();
-            }
-            else {
-                logError("Invalid case syntax", "It should be either case(VALUE) {} or case {}");
-            }
         }
 
         if(hasDefaultCase) {
-            uint tmp = current;
+            const uint tmp = current;
             current = defaultCasePosition;
             parseBlock();
             current = tmp;
@@ -2974,6 +2984,14 @@ class GrParser {
 			setInstruction(GrOpcode.Jump, position, cast(int)(currentFunction.instructions.length - position), true);
     }
 
+    /**
+    ---
+    select
+    case(SUBEXPR) BLOCK
+    case(SUBEXPR) BLOCK
+    case() BLOCK
+    ---
+    */
     void parseSelectStatement() {
         advance();
 
@@ -2986,12 +3004,20 @@ class GrParser {
 
         addInstruction(GrOpcode.StartSelectChannel);
         while(get().type == GrLexemeType.Case) {
-            if(get(1).type == GrLexemeType.LeftParenthesis) {
+            advance();
+            assertError(get().type == GrLexemeType.LeftParenthesis, 
+                "Invalid case syntax", "It should be either case(...) or case()");
+            advance();
+
+            if(get().type == GrLexemeType.RightParenthesis) {
+                assertError(hasDefaultCase, "Multiple default cases", "There must be only one default case per switch statement");
+                advance();
+                hasDefaultCase = true;
+                defaultCasePosition = current;
+                skipBlock();
+            }
+            else {
                 hasCase = true;
-                advance();
-                if(get().type != GrLexemeType.LeftParenthesis)
-			        logError("Missing symbol", "A case statement should always start with \'(\'");
-                advance();
                 jumpPosition = cast(uint)currentFunction.instructions.length;
                 addInstruction(GrOpcode.TryChannel);
                 parseSubExpression();
@@ -3009,25 +3035,12 @@ class GrParser {
                     cast(int)(currentFunction.instructions.length - jumpPosition),
                     true);
             }
-            else if(get(1).type == GrLexemeType.LeftCurlyBrace) {
-                if(hasDefaultCase)
-                    logError("Multiple default cases", "There must be only one default case per switch statement");
-                hasDefaultCase = true;
-
-                advance();
-                defaultCasePosition = current;
-
-                skipBlock();
-            }
-            else {
-                logError("Invalid case syntax", "It should be either case(VALUE) {} or case {}");
-            }
         }
 
         if(hasDefaultCase) {
             /* With a default case specified, it is processed if no previous case has been processed in the select statement.
 		     * The select statement is not blocking here because at least one case is executed. */
-            uint tmp = current;
+            const uint tmp = current;
             current = defaultCasePosition;
             parseBlock();
             current = tmp;
@@ -3047,6 +3060,12 @@ class GrParser {
         addInstruction(GrOpcode.EndSelectChannel);
     }
 
+    /**
+    ---
+    while(SUBEXPR)
+        BLOCK
+    ---
+    */
 	void parseWhileStatement() {
         const bool isNegative = get().type == GrLexemeType.Until;
 		advance();
@@ -3080,6 +3099,12 @@ class GrParser {
 		closeContinuableSection();
 	}
 
+    /**
+    ---
+    do BLOCK
+    while(SUBEXPR)
+    ---
+    */
 	void parseDoWhileStatement() {
 		advance();
 
@@ -4897,8 +4922,6 @@ class GrParser {
 
 	/// Parse an identifier or function call and return the deduced return type and lvalue.
 	GrType parseIdentifier(ref GrVariable variable, GrType expectedType, GrType selfValue = grVoid, bool isAssignment = false) {
-        if(expectedType.isField)
-            writeln("ISFIELD");//TODO
 		GrType returnType = GrBaseType.VoidType;
 		GrLexeme identifier = get();		
 		bool isFunctionCall = false, isMethodCall = false, hasParenthesis = false;
@@ -5062,7 +5085,7 @@ class GrParser {
 	}
 
 	/// Error handling
-	struct Error {
+	private struct Error {
         /// Error title.
 		dstring msg,
         /// What's wrong.
@@ -5073,20 +5096,39 @@ class GrParser {
 		bool mustHalt;
 	}
 
-	Error[] errors;
+	private Error[] errors;
+
+    /// Check an raise an error.
+    void assertWarning(bool assertion, string msg, string info, int offset = 0) {
+        if(!assertion)
+            return;
+        logWarning(msg, info, offset);
+    }
 
     /// Log a warning without throwing an exception.
-	void logWarning(string msg, string info = "") {
+	void logWarning(string msg, string info, int offset = 0) {
 		Error error;
 		error.msg = to!dstring(msg);
 		error.info = to!dstring(info);
-		error.lex = get();
 		error.mustHalt = false;
+		if(isEnd() && offset >= 0) {
+			error.lex = get(-1);
+		}
+		else
+			error.lex = get(offset);
+
 		errors ~= error;
 	}
 
+    /// Check an raise an error.
+    void assertError(bool assertion, string msg, string info, int offset = 0) {
+        if(assertion)
+            return;
+        logError(msg, info, offset);
+    }
+
     /// Log an error and throw an exception.
-	void logError(string msg, string info = "", int offset = 0) {
+	void logError(string msg, string info, int offset = 0) {
 		Error error;
 		error.msg = to!dstring(msg);
 		error.info = to!dstring(info);
