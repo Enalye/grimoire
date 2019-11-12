@@ -159,8 +159,9 @@ final class GrContext {
     }
 
     /// Double the current locals stacks' size.
-    void doubleLocalsStackSize() {
-        localsLimit <<= 1;
+    void doubleLocalsStackSize(uint localsStackSize) {
+        while(localsStackSize >= localsLimit)
+            localsLimit <<= 1;
         ilocals.length = localsLimit;
         flocals.length = localsLimit;
         slocals.length = localsLimit;

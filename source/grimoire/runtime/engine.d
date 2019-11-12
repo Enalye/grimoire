@@ -1334,7 +1334,7 @@ class GrEngine {
                     const auto stackSize = grGetInstructionUnsignedValue(opcode);
 					context.callStack[context.stackPos].localStackSize = stackSize;
 					if((context.localsPos + stackSize) >= context.localsLimit)
-                        context.doubleLocalsStackSize();
+                        context.doubleLocalsStackSize(context.localsPos + stackSize);
 					context.pc ++;
 					break;
 				case Call:
