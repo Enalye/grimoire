@@ -5145,6 +5145,7 @@ class GrParser {
 
     /// Format compilation problems and throw an exception with them.
 	void raiseError() {
+        string totalReport;
 		foreach(error; errors) {
 			dstring report;
 
@@ -5208,8 +5209,10 @@ class GrParser {
             foreach(x; 1 .. lineNumber.length)
 				report ~= " ";
             report ~= "\033[0;36m|\n";
-			writeln(report);
+            if(totalReport.length)
+                totalReport ~= "\n";
+            totalReport ~= to!string(report);
 		}
-        throw new Exception("\033[0mCompilation aborted...");
+        throw new Exception(totalReport);
 	}
 }
