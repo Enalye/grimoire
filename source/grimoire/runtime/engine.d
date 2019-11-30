@@ -38,12 +38,12 @@ class GrEngine {
         uint[dstring] _events;
 
         /// Global integral variables.
-        int* _iglobals;
+        int[] _iglobals;
         /// Global floating point variables.
-        float* _fglobals;
+        float[] _fglobals;
         /// Global string variables.
-        dstring* _sglobals;
-        void** _oglobals;
+        dstring[] _sglobals;
+        void*[] _oglobals;
 
         /// Global integral stack.
         int[] _iglobalStackIn, _iglobalStackOut;
@@ -110,10 +110,10 @@ class GrEngine {
 		_fconsts = bytecode.fconsts.idup;
 		_sconsts = bytecode.sconsts.idup;
 		_opcodes = bytecode.opcodes.idup;
-		_iglobals = (new int[bytecode.iglobalsCount]).ptr;
-        _fglobals = (new float[bytecode.fglobalsCount]).ptr;
-        _sglobals = (new dstring[bytecode.sglobalsCount]).ptr;
-        _oglobals = (new void*[bytecode.oglobalsCount]).ptr;
+		_iglobals = new int[bytecode.iglobalsCount];
+        _fglobals = new float[bytecode.fglobalsCount];
+        _sglobals = new dstring[bytecode.sglobalsCount];
+        _oglobals = new void*[bytecode.oglobalsCount];
         _events = bytecode.events;
 	}
 
