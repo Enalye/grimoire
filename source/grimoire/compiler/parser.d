@@ -35,9 +35,6 @@ class GrParser {
 	uint scopeLevel;
 
 	GrVariable[dstring] globalVariables;
-    uint globalVariableIndex;
-    uint[] globalFreeVariables;
-
 	GrFunction[dstring] functions, events;
 	GrFunction[dstring] anonymousFunctions;
 
@@ -164,12 +161,12 @@ class GrParser {
 	}
 
     /// Register a global variable
-    GrVariable registerGlobalVariable(dstring name, GrType type) {
+    GrVariable registerGlobalVariable(dstring name, GrType type, bool isAuto) {
         if(type.baseType == GrBaseType.TupleType) {
             //Register each field
             auto tuple = _data.getTuple(type.mangledType);
             for(int i; i < tuple.signature.length; i ++) {
-                registerLocalVariable(name ~ ":" ~ tuple.fields[i], tuple.signature[i]);
+                registerGlobalVariable(name ~ ":" ~ tuple.fields[i], tuple.signature[i], false);
             }
             //Register the struct itself with the id of the first field
             auto previousVariable = (name in globalVariables);
@@ -177,7 +174,6 @@ class GrParser {
                 logError("Multiple declaration", "The global variable \'" ~ to!string(name) ~ "\' is already declared.");
 
             GrVariable variable = new GrVariable;
-            variable.index = globalVariableIndex;
             variable.isGlobal = true;
             variable.isInitialized = false;
             variable.type = type;
@@ -193,21 +189,49 @@ class GrParser {
 			logError("Multiple declaration", "The global variable \'" ~ to!string(name) ~ "\' is already declared.");
 
 		GrVariable variable = new GrVariable;
-        if(globalFreeVariables.length) {
-            variable.index = globalFreeVariables[$ - 1];
-            globalFreeVariables.length --;
-        }
-        else {
-            variable.index = globalVariableIndex;
-            globalVariableIndex ++;
-        }
+        variable.isAuto = isAuto;
 		variable.isGlobal = true;
         variable.isInitialized = false;
 		variable.type = type;
         variable.name = name;
+        if(!isAuto)
+            setGlobalVariableIndex(variable, type);
 		globalVariables[name] = variable;
 
 		return variable;
+    }
+
+    private void setGlobalVariableIndex(GrVariable variable, GrType type) {
+        final switch(type.baseType) with(GrBaseType) {
+        case IntType:
+        case BoolType:
+        case FunctionType:
+        case TaskType:
+            variable.index = iglobalsCount;
+            iglobalsCount ++;
+            break;
+        case FloatType:
+            variable.index = fglobalsCount;
+            fglobalsCount ++;
+            break;
+        case StringType:
+            variable.index = sglobalsCount;
+            sglobalsCount ++;
+            break;
+        case ArrayType:
+        case ObjectType:
+        case UserType:
+        case ChanType:
+            variable.index = oglobalsCount;
+            oglobalsCount ++;
+            break;
+        case TupleType:
+        case InternalTupleType:
+        case ReferenceType:
+        case VoidType:
+            logError("Invalid type", "Cannot declare a global variable of type " ~ grGetPrettyType(type));
+            break;
+        }
     }
 
     /// Register a local variable
@@ -1012,9 +1036,8 @@ class GrParser {
             if(valueType.baseType == GrBaseType.TupleType) {
                 auto tuple = _data.getTuple(valueType.mangledType);
                 if(variable.isGlobal) {
-                    globalFreeVariables ~= variable.index;
                     for(int i; i < tuple.signature.length; i ++) {
-                        registerGlobalVariable(variable.name ~ ":" ~ tuple.fields[i], tuple.signature[i]);
+                        registerGlobalVariable(variable.name ~ ":" ~ tuple.fields[i], tuple.signature[i], false);
                     }
                 }
                 else {
@@ -1025,7 +1048,10 @@ class GrParser {
                 }
             }
             else if(valueType.baseType == GrBaseType.VoidType)
-                logError("GrVariable type error", "Cannot infer the type of variable");
+                logError("Variable type error", "Cannot infer the type of variable");
+            else if(variable.isGlobal) {
+                setGlobalVariableIndex(variable, valueType);
+            }
         }
         
         if(valueType.baseType != GrBaseType.VoidType)
@@ -1431,14 +1457,14 @@ class GrParser {
 				logError("Invalid type", "The type should be either main, func or task");
 			}
 		}
-
+/*
         foreach(variable; globalVariables) {
             const auto counter = countSubTypes(variable.type);
             iglobalsCount += counter.iCount;
             fglobalsCount += counter.fCount;
             sglobalsCount += counter.sCount;
             oglobalsCount += counter.oCount;
-        }
+        }*/
 	}
 
 	void preParseScript(GrLexer lexer) {
@@ -2682,8 +2708,7 @@ class GrParser {
             dstring identifier = get().svalue;
 
             //Registering
-            GrVariable lvalue = registerGlobalVariable(identifier, type);
-            lvalue.isAuto = isAuto;
+            GrVariable lvalue = registerGlobalVariable(identifier, type, isAuto);
             lvalues ~= lvalue;
 
             //A tuple does not need to be initialized.
@@ -2695,6 +2720,11 @@ class GrParser {
         while(get().type == GrLexemeType.Comma);
 
 		parseAssignList(lvalues);
+
+        foreach(lvalue; lvalues) {
+            if(lvalue.isAuto && !lvalue.isInitialized)
+                logError("Declaration error", "Cannot infer a non-initialized global auto-type");
+        }
     }
 
 	//Type Identifier [= EXPRESSION] ;
@@ -5147,6 +5177,7 @@ class GrParser {
 
     /// Format compilation problems and throw an exception with them.
 	void raiseError() {
+        string totalReport;
 		foreach(error; errors) {
 			dstring report;
 
@@ -5210,8 +5241,10 @@ class GrParser {
             foreach(x; 1 .. lineNumber.length)
 				report ~= " ";
             report ~= "\033[0;36m|\n";
-			writeln(report);
+            if(totalReport.length)
+                totalReport ~= "\n";
+            totalReport ~= to!string(report);
 		}
-        throw new Exception("\033[0mCompilation aborted...");
+        throw new Exception(totalReport);
 	}
 }
