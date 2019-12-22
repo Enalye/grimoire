@@ -4354,8 +4354,10 @@ class GrParser {
 			GrLexeme lex = get();
 			switch(lex.type) with(GrLexemeType) {
 			case Semicolon:
-				if(useSemicolon)
+				if(useSemicolon) {
 					isEndOfExpression = true;
+                    checkAdvance();
+                }
                 else
 					logError("Unexpected symbol", "A \';\' cannot exist inside this expression");
 				break;
