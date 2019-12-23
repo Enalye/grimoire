@@ -107,9 +107,9 @@ class GrLexer {
 	GrLexeme[] lexemes;
 
 	dchar get(int offset = 0) {
-		uint position = to!int(current) + offset;
+		const uint position = to!int(current) + offset;
 		if(position < 0 || position >= text.length)
-			throw new Exception("Unexpected end of script.");
+			throw new Exception("Unexpected end of script");
 		return text[position];
 	}
 
@@ -239,6 +239,8 @@ class GrLexer {
 		advance(true);
     
 		do {
+			if(current >= text.length)
+				break;
 			switch(get()) {
 				case '0': .. case '9':
 					scanNumber();

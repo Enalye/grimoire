@@ -2034,8 +2034,8 @@ class GrParser {
         
         openDeferrableSection();
 		parseBlock();
-		if(currentFunction.instructions[$ - 1].opcode != GrOpcode.KillAll)
-            addKillAll();
+		if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
+            addKill();
         closeDeferrableSection();
         registerDeferBlocks();
 
@@ -3606,7 +3606,7 @@ class GrParser {
 		checkAdvance();
         if(currentFunction.name == "main" || currentFunction.isTask) {
             if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
-                addKillAll();
+                addKill();
         }
         else if(!currentFunction.outSignature.length) {
             if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)

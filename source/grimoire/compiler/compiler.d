@@ -44,6 +44,10 @@ private {
         //We leave space for one kill instruction at the end.
         nbOpcodes ++;
 
+		//Without "main", we put a kill instruction instead.
+		if(("main"d in parser.functions) is null)
+			nbOpcodes ++;
+
 		//Opcodes
 		uint[] opcodes = new uint[nbOpcodes];
 
@@ -58,16 +62,19 @@ private {
 
 		//Then write the main function (not callable).
 		auto mainFunc = "main"d in parser.functions;
-		if(mainFunc is null)
-			throw new Exception("No main declared.");
-
-        mainFunc.position = lastOpcodeCount;
-		foreach(size_t i, instruction; mainFunc.instructions)
-			opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint)instruction.opcode, instruction.value);
-        foreach(call; mainFunc.functionCalls)
-			call.position += lastOpcodeCount;
-		lastOpcodeCount += cast(uint)mainFunc.instructions.length;
-		parser.functions.remove("main"d);
+		if(mainFunc) {
+			mainFunc.position = lastOpcodeCount;
+			foreach(size_t i, instruction; mainFunc.instructions)
+				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint)instruction.opcode, instruction.value);
+			foreach(call; mainFunc.functionCalls)
+				call.position += lastOpcodeCount;
+			lastOpcodeCount += cast(uint)mainFunc.instructions.length;
+			parser.functions.remove("main"d);
+		}
+		else {
+			opcodes[lastOpcodeCount] = makeOpcode(cast(uint) GrOpcode.Kill, 0u);
+			lastOpcodeCount ++;
+		}
 
 		//Every other functions.
         uint[dstring] events;
