@@ -14,13 +14,13 @@ import std.conv;
 import std.math;
 import std.algorithm.mutation: swapAt;
 
-import grimoire.core.indexedarray;
 import grimoire.compiler;
 import grimoire.assembly;
 import grimoire.runtime.context;
 import grimoire.runtime.array;
 import grimoire.runtime.object;
 import grimoire.runtime.channel;
+import grimoire.runtime.indexedarray;
 
 /**
 Grimoire's virtual machine.

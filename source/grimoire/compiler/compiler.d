@@ -11,17 +11,53 @@ module grimoire.compiler.compiler;
 import std.stdio, std.string, std.array, std.conv, std.math, std.file;
 import grimoire.runtime, grimoire.assembly;
 import grimoire.compiler.lexer, grimoire.compiler.parser, grimoire.compiler.primitive;
-import grimoire.compiler.type, grimoire.compiler.data;
+import grimoire.compiler.type, grimoire.compiler.data, grimoire.compiler.error;
 
-/// Compile a source file into bytecode
-GrBytecode grCompileFile(GrData data, string fileName) {
-	GrLexer lexer = new GrLexer;
-	lexer.scanFile(to!dstring(fileName));
+/// Compiler class, generate bytecode and hold errors.
+final class GrCompiler {
+	private {
+		GrData _data;
+		GrError _error;
+	}
 
-	GrParser parser = new GrParser;
-	parser.parseScript(data, lexer);
+	/// Ctor
+	this(GrData data) {
+		_data = data;
+	}
 
-	return generate(parser);
+	/** 
+	 * Compile a source file into bytecode
+	 * Params:
+	 *	The bytecode struct passed by ref
+	 *  fileName = Path to script file to compile
+	 * Returns:
+	 *  True if compilation was successful, otherwise check `getError()`
+	 */
+	bool compileFile(ref GrBytecode bytecode, string fileName) {
+		_error = null;
+		try {
+			GrLexer lexer = new GrLexer;
+			lexer.scanFile(to!dstring(fileName));
+
+			GrParser parser = new GrParser;
+			parser.parseScript(_data, lexer);
+
+			bytecode = generate(parser);
+		}
+		catch(GrLexerException e) {
+			_error = e.error;
+			return false;
+		}
+		catch(GrParserException e) {
+			_error = e.error;
+			return false;
+		}
+		return true;
+	}
+
+	GrError getError() {
+		return _error;
+	}
 }
 
 private {

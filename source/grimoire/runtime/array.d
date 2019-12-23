@@ -8,7 +8,6 @@ Authors: Enalye
 
 module grimoire.runtime.array;
 
-import grimoire.core;
 import grimoire.compiler.primitive;
 
 import grimoire.runtime.call;

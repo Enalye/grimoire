@@ -12,8 +12,6 @@ import std.stdio;
 import std.file;
 import std.outbuffer;
 
-import grimoire.core;
-
 /// Low level instruction for the VM
 enum GrOpcode {
     Nop, Raise, Try, Catch,

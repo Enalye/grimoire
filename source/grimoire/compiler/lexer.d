@@ -15,6 +15,7 @@ import std.conv;
 import std.math;
 import std.file;
 import std.algorithm: canFind;
+import grimoire.compiler.error;
 
 /**
 Kinds of valid token.
@@ -109,23 +110,23 @@ class GrLexer {
 	dchar get(int offset = 0) {
 		const uint position = to!int(current) + offset;
 		if(position < 0 || position >= text.length)
-			throw new Exception("Unexpected end of script");
+			raiseError("Unexpected end of script");
 		return text[position];
 	}
 
 	package dstring getLine(GrLexeme lex) {
 		if(lex.fileId >= filesImported.length)
-			throw new Exception("Lexeme fileId out of bounds");
+			raiseError("Lexeme fileId out of bounds");
 		auto text = to!dstring(readText(to!string(filesImported[lex.fileId])));
 		lines = split(text, "\n");
 		if(lex.line >= lines.length)
-			throw new Exception("Lexeme line count out of bounds");
+			raiseError("Lexeme line count out of bounds");
 		return lines[lex.line];
 	}
 
 	package dstring getFile(GrLexeme lex) {
 		if(lex.fileId >= filesImported.length)
-			throw new Exception("Lexeme fileId out of bounds");
+			raiseError("Lexeme fileId out of bounds");
 		return filesImported[lex.fileId];
 	}
 
@@ -346,13 +347,13 @@ class GrLexer {
 		lex.isLiteral = true;
 
 		if(get() != '\"')
-			throw new Exception("Expected \'\"\' at the beginning of the string.");
+			raiseError("Expected \'\"\' at the beginning of the string.");
 		current ++;
 
 		dstring buffer;
 		for(;;) {
 			if(current >= text.length)
-				throw new Exception("Missing \'\"\' character.");
+				raiseError("Missing \'\"\' character.");
 			dchar symbol = get();
 			if(symbol == '\n') {
 				positionOfLine = current;
@@ -365,7 +366,7 @@ class GrLexer {
 			current ++;
 		}
 
-		lex.textLength = cast(uint)buffer.length;
+		lex.textLength = cast(uint)buffer.length + 2u;
 		lex.svalue = buffer;
 		lexemes ~= lex;
 	}
@@ -564,7 +565,7 @@ class GrLexer {
 				}
 				break;
 			default:
-				throw new Exception("GrLexer: Invalid operator.");
+				raiseError("GrLexer: Invalid operator.");
 		}
 
 		lexemes ~= lex;
@@ -779,13 +780,13 @@ class GrLexer {
 		import std.path: dirName, buildNormalizedPath, absolutePath;
 
 		if(get() != '\"')
-			throw new Exception("Expected \'\"\' at the beginning of the import.");
+			raiseError("Expected \'\"\' at the beginning of the import.");
 		current ++;
 
 		dstring buffer;
 		for(;;) {
 			if(current >= text.length)
-				throw new Exception("Missing \'\"\' character.");
+				raiseError("Missing \'\"\' character.");
 			const dchar symbol = get();
 			if(symbol == '\n') {
 				positionOfLine = current;
@@ -825,10 +826,10 @@ class GrLexer {
 				else if(get() == '\"')
 					advance();
 				else
-					throw new Exception("Missing \'\"\' character.");
+					raiseError("Missing \'\"\' character.");
 				// EOF
 				if(current >= text.length)
-					throw new Exception("Missing \'}\' after import list.");
+					raiseError("Missing \'}\' after import list.");
 				// End of the import list.
 				if(get() == '}')
 					break;
@@ -839,6 +840,32 @@ class GrLexer {
 		else {
 			scanFilePath();
 		}
+	}
+
+	private void raiseError(string message) {
+		GrError error = new GrError;
+		error.type = GrError.Type.lexer;
+
+		error.message = message;
+		error.info = "";
+
+		if(lexemes.length) {
+			GrLexeme lexeme = lexemes[$ - 1];
+			error.filePath = to!string(lexeme.getFile());
+			error.lineText = to!string(lexeme.getLine()).replace("\t", " ");
+			error.line = lexeme.line + 1u; // By convention, the first line is 1, not 0.
+			error.column = lexeme.column;
+			error.textLength = lexeme.textLength;
+		}
+		else {
+			error.filePath = to!string(file);
+			error.lineText = to!string(lines[line]);
+			error.line = line + 1u; // By convention, the first line is 1, not 0.
+			error.column = current - positionOfLine;
+			error.textLength = 0u;
+		}
+
+		throw new GrLexerException(error);
 	}
 }
 
@@ -861,4 +888,14 @@ dstring grGetPrettyLexemeType(GrLexemeType operator) {
 		"kill", "killall", "yield", "break", "continue"
     ];
     return lexemeTypeStrTable[operator];
+}
+
+package final class GrLexerException: Exception {
+    GrError error;
+
+    /// Ctor
+    this(GrError error_, string file = __FILE__, size_t line = __LINE__) {
+        super(error_.message, file, line);
+        error = error_;
+    }
 }

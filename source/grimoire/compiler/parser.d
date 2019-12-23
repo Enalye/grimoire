@@ -23,6 +23,7 @@ import grimoire.compiler.mangle;
 import grimoire.compiler.type;
 import grimoire.compiler.primitive;
 import grimoire.compiler.data;
+import grimoire.compiler.error;
 
 /**
     Analyses the syntax and produce the data for the VM
@@ -5139,135 +5140,37 @@ class GrParser {
 		return returnType;
 	}
 
-	/// Error handling
-	private struct Error {
-        /// Error title.
-		dstring msg,
-        /// What's wrong.
-            info;
-        /// The lexeme of the error.
-		GrLexeme lex;
-        /// Compilation stops immediatly (throw an exception).
-		bool mustHalt;
-	}
-
-	private Error[] errors;
-
     /// Check an raise an error.
-    void assertWarning(bool assertion, string msg, string info, int offset = 0) {
-        if(!assertion)
-            return;
-        logWarning(msg, info, offset);
-    }
-
-    /// Log a warning without throwing an exception.
-	void logWarning(string msg, string info, int offset = 0) {
-		Error error;
-		error.msg = to!dstring(msg);
-		error.info = to!dstring(info);
-		error.mustHalt = false;
-		if(isEnd() && offset >= 0) {
-			error.lex = get(-1);
-		}
-		else
-			error.lex = get(offset);
-
-		errors ~= error;
-	}
-
-    /// Check an raise an error.
-    void assertError(bool assertion, string msg, string info, int offset = 0) {
+    void assertError(bool assertion, string message, string info, int offset = 0) {
         if(assertion)
             return;
-        logError(msg, info, offset);
+        logError(message, info, offset);
     }
 
     /// Log an error and throw an exception.
-	void logError(string msg, string info, int offset = 0) {
-		Error error;
-		error.msg = to!dstring(msg);
-		error.info = to!dstring(info);
-		error.mustHalt = true;
-		if(isEnd() && offset >= 0) {
-			error.lex = get(-1);
-		}
-		else
-			error.lex = get(offset);
+	void logError(string message, string info, int offset = 0) {
+		GrError error = new GrError;
+        error.type = GrError.Type.parser;
+		error.message = message;
+		error.info = info;
 
-		errors ~= error;
-		raiseError();
+        GrLexeme lex = (isEnd() && offset >= 0) ? get(-1) : get(offset);
+        error.filePath = to!string(lex.getFile());
+        error.lineText = to!string(lex.getLine()).replace("\t", " ");
+        error.line = lex.line + 1u; // By convention, the first line is 1, not 0.
+        error.column = lex.column;
+        error.textLength = lex.textLength;
+
+		throw new GrParserException(error);
 	}
+}
 
-    /// Format compilation problems and throw an exception with them.
-	void raiseError() {
-        string totalReport;
-		foreach(error; errors) {
-			dstring report;
+package final class GrParserException: Exception {
+    GrError error;
 
-			//Separator
-			if(error.mustHalt)
-				report ~= "\033[0;91merror";
-			else
-				report ~= "\033[0;93mwarning";
-
-			//Error report
-			report ~= "\033[37;1m: " ~ error.msg ~ "\033[0m\n";
-
-            //File path
-			dstring lineNumber = to!dstring(error.lex.line + 1u) ~ "| ";
-            foreach(x; 1 .. lineNumber.length)
-				report ~= " ";
-
-			report ~= "\033[0;36m->\033[0m " ~ error.lex.getFile()
-                ~ "(" ~ to!dstring(error.lex.line + 1u)
-                ~ "," ~ to!dstring(error.lex.column)
-                ~ ")\n";
-            
-			report ~= "\033[0;36m";
-
-            foreach(x; 1 .. lineNumber.length)
-				report ~= " ";
-            report ~= "\033[0;36m|\n";
-
-			//Script snippet
-			report ~= " " ~ lineNumber;
-			report ~= "\033[1;34m" ~ error.lex.getLine().replace("\t", " ") ~ "\033[0;36m\n";
-
-			//Red underline
-            foreach(x; 1 .. lineNumber.length)
-				report ~= " ";
-            report ~= "\033[0;36m|";
-			foreach(x; 0 .. error.lex.column)
-				report ~= " ";
-
-			if(error.mustHalt)
-				report ~= "\033[1;31m"; //Red color
-			else
-				report ~= "\033[1;93m"; //Orange color
-
-            auto lexLength = error.lex.textLength;
-            if(error.lex.type == GrLexemeType.String)
-                lexLength += 2;
-			foreach(x; 0 .. lexLength)
-				report ~= "^";
-			
-
-			//Error description
-            if(error.mustHalt)
-				report ~= "\033[0;31m"; //Red color
-			else
-				report ~= "\033[0;93m"; //Orange color
-
-			if(error.info.length)
-				report ~= "  " ~ error.info ~ "\n";
-
-            foreach(x; 1 .. lineNumber.length)
-				report ~= " ";
-            report ~= "\033[0;36m|\n";
-            if(totalReport.length)
-                totalReport ~= "\n";
-            totalReport ~= to!string(report);
-		}
-        throw new Exception(totalReport);
-	}
+    /// Ctor
+    this(GrError error_, string file = __FILE__, size_t line = __LINE__) {
+        super(error_.message, file, line);
+        error = error_;
+    }
 }

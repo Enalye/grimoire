@@ -29,7 +29,7 @@ it freely, subject to the following restrictions:
 		markInternalForRemoval function.
 */
 
-module grimoire.core.indexedarray;
+module grimoire.runtime.indexedarray;
 
 import std.parallelism;
 import std.range;
