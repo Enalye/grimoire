@@ -65,6 +65,8 @@ enum GrOpcode {
     Increment_Int, Increment_Float,
     Decrement_Int, Decrement_Float,
 
+    Swap_Int, Swap_Float, Swap_String, Swap_Object,
+
     SetupIterator,
 
     LocalStack, Call, AnonymousCall, VariantCall, PrimitiveCall,

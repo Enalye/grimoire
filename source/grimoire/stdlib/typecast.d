@@ -18,7 +18,7 @@ void grLoadStdLibTypecast(GrData data) {
     data.addCast(&typecast_b2i, "value", grBool, grInt);
 
     //As float
-    data.addCast(&typecast_i2r, "value", grInt, grFloat, true);
+    data.addCast(&typecast_i2r, "value", grInt, grFloat);
 
     //As string
 	data.addCast(&typecast_i2s, "value", grInt, grString);

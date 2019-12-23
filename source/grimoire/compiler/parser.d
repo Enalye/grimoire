@@ -587,7 +587,7 @@ class GrParser {
 
         //GrFunction check
         if(resultType.baseType == GrBaseType.VoidType) {
-    		const auto func = (mangledName in functions);
+            const auto func = (mangledName in functions);
             if(func !is null) {
                 auto outSignature = addFunctionCall(mangledName);
                 if(outSignature.length != 1uL)
@@ -666,6 +666,11 @@ class GrParser {
             }
             resultType = rightType;
         }
+        else if(leftType.baseType == GrBaseType.IntType && rightType.baseType == GrBaseType.FloatType) {
+            // Special case, we need to convert int to float, then swap the 2 values when needed.
+            convertType(leftType, rightType);
+            resultType = addInternalOperator(lexType, rightType, true);
+        }
         else if(leftType != rightType) {
             //Check custom operator
             resultType = addCustomBinaryOperator(lexType, leftType, rightType);
@@ -728,7 +733,7 @@ class GrParser {
         return GrType(GrBaseType.VoidType);		
 	}
 
-    GrType addInternalOperator(GrLexemeType lexType, GrType varType) {
+    GrType addInternalOperator(GrLexemeType lexType, GrType varType, bool isSwapped = false) {
         switch(varType.baseType) with(GrBaseType) {
         case BoolType:
             switch(lexType) with(GrLexemeType) {
@@ -801,15 +806,21 @@ class GrParser {
 				addInstruction(GrOpcode.Add_Float);
 				return GrType(GrBaseType.FloatType);
 			case Substract:
+                if(isSwapped)
+                    addInstruction(GrOpcode.Swap_Float);
 				addInstruction(GrOpcode.Substract_Float);
 				return GrType(GrBaseType.FloatType);
 			case Multiply:
 				addInstruction(GrOpcode.Multiply_Float);
 				return GrType(GrBaseType.FloatType);
 			case Divide:
+                if(isSwapped)
+                    addInstruction(GrOpcode.Swap_Float);
 				addInstruction(GrOpcode.Divide_Float);
 				return GrType(GrBaseType.FloatType);
             case Remainder:
+                if(isSwapped)
+                    addInstruction(GrOpcode.Swap_Float);
 				addInstruction(GrOpcode.Remainder_Float);
 				return GrType(GrBaseType.FloatType);
 			case Minus:
@@ -830,16 +841,28 @@ class GrParser {
 				addInstruction(GrOpcode.NotEqual_Float);
 				return GrType(GrBaseType.BoolType);
 			case Greater:
-				addInstruction(GrOpcode.Greater_Float);
+                if(isSwapped)
+                    addInstruction(GrOpcode.LesserOrEqual_Float);
+                else
+                    addInstruction(GrOpcode.Greater_Float);
 				return GrType(GrBaseType.BoolType);
 			case GreaterOrEqual:
-				addInstruction(GrOpcode.GreaterOrEqual_Float);
+                if(isSwapped)
+                    addInstruction(GrOpcode.Lesser_Float);
+                else
+                    addInstruction(GrOpcode.GreaterOrEqual_Float);
 				return GrType(GrBaseType.BoolType);
 			case Lesser:
-				addInstruction(GrOpcode.Lesser_Float);
+                if(isSwapped)
+                    addInstruction(GrOpcode.GreaterOrEqual_Float);
+                else
+                    addInstruction(GrOpcode.Lesser_Float);
 				return GrType(GrBaseType.BoolType);
 			case LesserOrEqual:
-				addInstruction(GrOpcode.LesserOrEqual_Float);
+                if(isSwapped)
+                    addInstruction(GrOpcode.Greater_Float);
+                else
+                    addInstruction(GrOpcode.LesserOrEqual_Float);
 				return GrType(GrBaseType.BoolType);
 			default:
 				break;

@@ -12,6 +12,7 @@ import std.string;
 import std.array;
 import std.conv;
 import std.math;
+import std.algorithm.mutation: swapAt;
 
 import grimoire.core.indexedarray;
 import grimoire.compiler;
@@ -1235,6 +1236,22 @@ class GrEngine {
 					break;
 				case Decrement_Float:
 					context.fstack[context.fstackPos] -= 1f;
+					context.pc ++;
+					break;
+				case Swap_Int:
+					swapAt(context.istack, context.istackPos - 1, context.istackPos);
+					context.pc ++;
+					break;
+				case Swap_Float:
+					swapAt(context.fstack, context.fstackPos - 1, context.fstackPos);
+					context.pc ++;
+					break;
+				case Swap_String:
+					swapAt(context.sstack, context.sstackPos - 1, context.sstackPos);
+					context.pc ++;
+					break;
+				case Swap_Object:
+					swapAt(context.ostack, context.ostackPos - 1, context.ostackPos);
 					context.pc ++;
 					break;
 				case SetupIterator:
