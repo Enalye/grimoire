@@ -2485,7 +2485,7 @@ class GrParser {
 
             if(get().type != GrLexemeType.RightCurlyBrace)
                 logError("Missing symbol", "A block should always end with \'}\'");
-		    checkAdvance(); 
+            checkAdvance(); 
         }
         else {
             if(get().type != GrLexemeType.Semicolon)
@@ -2496,13 +2496,13 @@ class GrParser {
 
     void parseKill() {
         if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
-		    addKill();
+            addKill();
         advance();
     }
 
     void parseKillAll() {
         if(currentFunction.instructions[$ - 1].opcode != GrOpcode.KillAll)
-		    addKillAll();
+            addKillAll();
         advance();                
     }
 
@@ -2515,6 +2515,7 @@ class GrParser {
     void parseRaiseStatement() {
         advance();
         GrType type = parseSubExpression(GR_SUBEXPR_TERMINATE_SEMICOLON).type;
+        checkAdvance();
         convertType(type, grString);
         addInstruction(GrOpcode.Raise);
         checkDeferStatement();
@@ -4140,6 +4141,7 @@ class GrParser {
         }
         else {
             parseSubExpression(GR_SUBEXPR_TERMINATE_SEMICOLON | GR_SUBEXPR_MUST_CLEAN);
+            checkAdvance();
         }
 	}
 
@@ -4384,10 +4386,8 @@ class GrParser {
 			GrLexeme lex = get();
 			switch(lex.type) with(GrLexemeType) {
 			case Semicolon:
-				if(useSemicolon) {
+				if(useSemicolon)
 					isEndOfExpression = true;
-                    checkAdvance();
-                }
                 else
 					logError("Unexpected symbol", "A \';\' cannot exist inside this expression");
 				break;
