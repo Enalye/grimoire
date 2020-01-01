@@ -51,6 +51,7 @@ enum GrOpcode {
     LesserOrEqual_Int, LesserOrEqual_Float,
     Greater_Int, Greater_Float,
     Lesser_Int, Lesser_Float,
+    IsNonNull_Object,
 
     And_Int, Or_Int, Not_Int,
     Concatenate_String,

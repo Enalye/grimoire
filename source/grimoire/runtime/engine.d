@@ -1145,6 +1145,12 @@ class GrEngine {
 					context.fstackPos -= 2;
 					context.pc ++;
 					break;
+				case IsNonNull_Object:
+                    context.istackPos ++;
+					context.istack[context.istackPos] = (context.ostack[context.ostackPos] !is null);
+                    context.ostackPos --;
+					context.pc ++;
+					break;
 				case And_Int:
 					context.istackPos --;
 					context.istack[context.istackPos] = context.istack[context.istackPos] && context.istack[context.istackPos + 1];
@@ -1575,7 +1581,7 @@ class GrEngine {
 					context.pc ++;
                     break;
 				case Index3_Float:
-                    GrIntArray ary = cast(GrIntArray)context.ostack[context.ostackPos];
+                    GrFloatArray ary = cast(GrFloatArray)context.ostack[context.ostackPos];
                     auto idx = context.istack[context.istackPos];
 					if(idx < 0) {
 						idx = (cast(int)ary.data.length) + idx;
@@ -1584,12 +1590,14 @@ class GrEngine {
                         raise(context, "Array overflow");
                         break;
                     }
-                    context.istack[context.istackPos] = ary.data[idx];
+					context.istackPos --;
+					context.fstackPos ++;
+                    context.fstack[context.fstackPos] = ary.data[idx];
                     context.ostack[context.ostackPos] = &ary.data[idx];
 					context.pc ++;
                     break;
 				case Index3_String:
-                    GrIntArray ary = cast(GrIntArray)context.ostack[context.ostackPos];
+                    GrStringArray ary = cast(GrStringArray)context.ostack[context.ostackPos];
                     auto idx = context.istack[context.istackPos];
 					if(idx < 0) {
 						idx = (cast(int)ary.data.length) + idx;
@@ -1598,12 +1606,14 @@ class GrEngine {
                         raise(context, "Array overflow");
                         break;
                     }
-                    context.istack[context.istackPos] = ary.data[idx];
+					context.istackPos --;
+					context.sstackPos ++;
+                    context.sstack[context.sstackPos] = ary.data[idx];
                     context.ostack[context.ostackPos] = &ary.data[idx];
 					context.pc ++;
                     break;
 				case Index3_Object:
-                    GrIntArray ary = cast(GrIntArray)context.ostack[context.ostackPos];
+                    GrObjectArray ary = cast(GrObjectArray)context.ostack[context.ostackPos];
                     auto idx = context.istack[context.istackPos];
 					if(idx < 0) {
 						idx = (cast(int)ary.data.length) + idx;
@@ -1612,8 +1622,10 @@ class GrEngine {
                         raise(context, "Array overflow");
                         break;
                     }
-                    context.istack[context.istackPos] = ary.data[idx];
+					context.istackPos --;
                     context.ostack[context.ostackPos] = &ary.data[idx];
+					context.ostackPos ++;
+                    context.ostack[context.ostackPos] = ary.data[idx];
 					context.pc ++;
                     break;
 				case Length_Int:
