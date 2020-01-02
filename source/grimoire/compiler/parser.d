@@ -1118,7 +1118,6 @@ class GrParser {
 			case IntType:
 			case FunctionType:
 			case TaskType:
-			case ChanType:
 				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Int : GrOpcode.GlobalStore_Int, variable.index);
 				break;
 			case FloatType:
@@ -1127,9 +1126,6 @@ class GrParser {
 			case StringType:
 				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_String : GrOpcode.GlobalStore_String, variable.index);
 				break;
-			case ObjectType:
-				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.index);
-				break;
             case TupleType:
                 auto tuple = _data.getTuple(variable.type.mangledType);
                 const auto nbFields = tuple.signature.length;
@@ -1137,6 +1133,8 @@ class GrParser {
                     addSetInstruction(getVariable(variable.name ~ ":" ~ tuple.fields[nbFields - i]), tuple.signature[nbFields - i], isExpectingValue);
                 }
                 break;
+            case ChanType:
+			case ObjectType:
             case ArrayType:
             case UserType:
 				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.index);
