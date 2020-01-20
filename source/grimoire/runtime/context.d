@@ -231,4 +231,14 @@ final class GrContext {
     void popState() {
         states.length --;
     }
+
+    dstring dump() {
+        import std.conv: to;
+        dstring result = "Context Dump:";
+        result ~= "\nfstack: " ~ to!dstring(fstack[0.. (fstackPos + 1)]);
+        result ~= "\nistack: " ~ to!dstring(istack[0.. (istackPos + 1)]);
+        result ~= "\nsstack: " ~ to!dstring(sstack[0.. (sstackPos + 1)]);
+        result ~= "\nostack: " ~ to!dstring(ostack[0.. (ostackPos + 1)]);
+        return result;
+    }
 }
