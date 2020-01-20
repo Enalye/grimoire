@@ -379,11 +379,6 @@ class GrParser {
 		functionStack ~= currentFunction;
 		currentFunction = func;
 
-		addInstruction(GrOpcode.LocalStack_Int, 0u);
-		addInstruction(GrOpcode.LocalStack_Float, 0u);
-		addInstruction(GrOpcode.LocalStack_String, 0u);
-		addInstruction(GrOpcode.LocalStack_Object, 0u);
-
 		void fetchParameter(dstring name, GrType type) {
             final switch(type.baseType) with(GrBaseType) {
             case VoidType:
@@ -445,61 +440,29 @@ class GrParser {
 	}
 
 	void endFunction() {
-        struct TypeCounter {
-            uint nbIntParams, nbFloatParams, nbStringParams, nbObjectParams;
+        int prependInstructionCount;
+        if(currentFunction.ilocalsCount > 0) {
+            addInstructionInFront(GrOpcode.LocalStack_Int, currentFunction.ilocalsCount);
+            prependInstructionCount ++;
         }
-        void countParameters(ref TypeCounter typeCounter, GrType type) {
-            final switch(type.baseType) with(GrBaseType) {
-            case IntType:
-            case BoolType:
-            case FunctionType:
-            case TaskType:
-                typeCounter.nbIntParams ++;
-                break;
-            case FloatType:
-                typeCounter.nbFloatParams ++;
-                break;
-            case StringType:
-                typeCounter.nbStringParams ++;
-                break;
-            case ObjectType:
-            case ArrayType:
-            case UserType:
-            case ChanType:
-            case ReferenceType:
-                typeCounter.nbObjectParams ++;
-                break;
-            case VoidType:
-            case TupleType:
-            case InternalTupleType:
-                throw new Exception("Function locals error");
-            }
-        }
-
-        TypeCounter typeCounter;
-        foreach(localVar; currentFunction.localVariables) {
-            countParameters(typeCounter, localVar.type);
-        }
-
-        if(typeCounter.nbIntParams > 0)
-            setInstruction(GrOpcode.LocalStack_Int, 0u, typeCounter.nbIntParams);
-        else
-            setInstruction(GrOpcode.Nop, 0u, 0u);
         
-        if(typeCounter.nbFloatParams > 0)
-            setInstruction(GrOpcode.LocalStack_Float, 1u, typeCounter.nbFloatParams);
-        else
-            setInstruction(GrOpcode.Nop, 1u, 0u);
+        if(currentFunction.flocalsCount > 0) {
+            addInstructionInFront(GrOpcode.LocalStack_Float, currentFunction.flocalsCount);
+            prependInstructionCount ++;
+        }
 
-        if(typeCounter.nbStringParams > 0)
-            setInstruction(GrOpcode.LocalStack_String, 2u, typeCounter.nbStringParams);
-        else
-            setInstruction(GrOpcode.Nop, 2u, 0u);
+        if(currentFunction.slocalsCount > 0) {
+            addInstructionInFront(GrOpcode.LocalStack_String, currentFunction.slocalsCount);
+            prependInstructionCount ++;
+        }
 
-        if(typeCounter.nbObjectParams > 0)
-            setInstruction(GrOpcode.LocalStack_Object, 3u, typeCounter.nbObjectParams);
-        else
-            setInstruction(GrOpcode.Nop, 3u, 0u);
+        if(currentFunction.olocalsCount > 0) {
+            addInstructionInFront(GrOpcode.LocalStack_Object, currentFunction.olocalsCount);
+            prependInstructionCount ++;
+        }
+
+		foreach(call; currentFunction.functionCalls)
+            call.position += prependInstructionCount;
 
 		if(!functionStack.length)
 			logError("Missing symbol", "A \'}\' is missing, causing a mismatch");
@@ -579,6 +542,22 @@ class GrParser {
 		else
 			instruction.value = value;
 		currentFunction.instructions ~= instruction;
+	}
+
+    void addInstructionInFront(GrOpcode opcode, int value = 0, bool isSigned = false) {
+		if(currentFunction is null)
+			logError("Not in function", "The expression is located outside of a function or task, which is forbidden");
+
+		GrInstruction instruction;
+		instruction.opcode = opcode;
+		if(isSigned) {
+			if((value >= 0x800000) || (-value >= 0x800000))
+				logError("Internal failure", "An opcode\'s signed value is exceeding limits");		
+			instruction.value = value + 0x800000;
+		}
+		else
+			instruction.value = value;
+		currentFunction.instructions = instruction ~ currentFunction.instructions;
 	}
 
 	void setInstruction(GrOpcode opcode, uint index, int value = 0u, bool isSigned = false) {
