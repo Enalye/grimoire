@@ -1075,6 +1075,7 @@ class GrParser {
 
 	void addSetInstruction(GrVariable variable, GrType valueType = grVoid, bool isExpectingValue = false) {
         _lastAssignationScopeLevel = _blockLevel;
+        writeln("set: ", _lastAssignationScopeLevel);
         if(variable.type.baseType == GrBaseType.ReferenceType) {
             valueType = convertType(valueType, grUnmangle(variable.type.mangledType));
             switch(valueType.baseType) with(GrBaseType) {
@@ -1240,6 +1241,7 @@ class GrParser {
 
     ///Add a load opcode, or optimize a previous store.
 	void addGetInstruction(GrVariable variable, GrType expectedType = GrType(GrBaseType.VoidType), bool allowOptimization = true) {
+        writeln("get: ", _lastAssignationScopeLevel, ", ", _blockLevel);
         if(_lastAssignationScopeLevel != _blockLevel) {
             /+--------------------------
                 Optimizing getters should take care of scope levels as jumps will break the VM.
@@ -2320,7 +2322,9 @@ class GrParser {
     /**
     Parse either multiple lines between `{` and `}` or a single expression.
     */
-	void parseBlock() {
+	void parseBlock(bool changeOptimizationBlockLevel = false) {
+        if(changeOptimizationBlockLevel)
+            _blockLevel ++;
         bool isMultiline;
 		if(get().type == GrLexemeType.LeftCurlyBrace) {
             isMultiline = true;
@@ -2350,24 +2354,16 @@ class GrParser {
                 break;
             case Until:
             case While:
-                _blockLevel ++;
                 parseWhileStatement();
-                _blockLevel --;
                 break;
             case Do:
-                _blockLevel ++;
                 parseDoWhileStatement();
-                _blockLevel --;
                 break;
             case For:
-                _blockLevel ++;
                 parseForStatement();
-                _blockLevel --;
                 break;
             case Loop:
-                _blockLevel ++;
                 parseLoopStatement();
-                _blockLevel --;
                 break;
             case Raise:
                 parseRaiseStatement();
@@ -2429,6 +2425,8 @@ class GrParser {
             checkAdvance();
         }
 		closeBlock();
+        if(changeOptimizationBlockLevel)
+            _blockLevel --;
 	}
 
     bool isDeclaration() {
@@ -2632,7 +2630,7 @@ class GrParser {
         addInstruction(GrOpcode.GlobalPop_String);
         addSetInstruction(errVariable, grString);
 
-        parseBlock();
+        parseBlock(true);
 
         const auto endPosition = currentFunction.instructions.length;
 
@@ -2699,7 +2697,7 @@ class GrParser {
             scopeLevel = deferBlock.scopeLevel;
 
             currentFunction.isDeferrableSectionLocked[$ - 1] = true;
-            parseBlock();
+            parseBlock(true);
             currentFunction.isDeferrableSectionLocked[$ - 1] = false;
 
             addInstruction(GrOpcode.Unwind);
@@ -2909,7 +2907,7 @@ class GrParser {
         //Jumps to if(0) for "if", if(!= 0) for "unless".
 		addInstruction(isNegative ? GrOpcode.JumpNotEqual : GrOpcode.JumpEqual);
         
-		parseBlock(); //{ .. }
+		parseBlock(true); //{ .. }
         
 		//If(1){}, jumps out.
 		uint[] exitJumps;
@@ -2944,7 +2942,7 @@ class GrParser {
 					//Jumps to if(0) for "if", if(!= 0) for "unless".
                     addInstruction(isNegative ? GrOpcode.JumpNotEqual : GrOpcode.JumpEqual);
 
-					parseBlock(); //{ .. }
+					parseBlock(true); //{ .. }
 
 					//If(1){}, jumps out.
 					exitJumps ~= cast(uint)currentFunction.instructions.length;
@@ -2957,7 +2955,7 @@ class GrParser {
                         true);
 				}
 				else
-					parseBlock();
+					parseBlock(true);
 			}
 		}
 		while(isElseIf);
@@ -3069,7 +3067,7 @@ class GrParser {
                 //Jumps to if(0).
                 addInstruction(GrOpcode.JumpEqual);
 
-                parseBlock();
+                parseBlock(true);
 
                 exitJumps ~= cast(uint)currentFunction.instructions.length;
                 addInstruction(GrOpcode.Jump);
@@ -3085,7 +3083,7 @@ class GrParser {
         if(hasDefaultCase) {
             const uint tmp = current;
             current = defaultCasePosition;
-            parseBlock();
+            parseBlock(true);
             current = tmp;
         }
 
@@ -3137,7 +3135,7 @@ class GrParser {
 
                 addInstruction(GrOpcode.CheckChannel);
 
-                parseBlock();
+                parseBlock(true);
 
                 exitJumps ~= cast(uint)currentFunction.instructions.length;
                 addInstruction(GrOpcode.Jump);
@@ -3154,7 +3152,7 @@ class GrParser {
 		     * The select statement is not blocking here because at least one case is executed. */
             const uint tmp = current;
             current = defaultCasePosition;
-            parseBlock();
+            parseBlock(true);
             current = tmp;
         }
         else {
@@ -3201,7 +3199,7 @@ class GrParser {
 		conditionPosition = cast(uint)currentFunction.instructions.length;
 		addInstruction(GrOpcode.JumpEqual);
 
-		parseBlock();
+		parseBlock(true);
 
 		addInstruction(GrOpcode.Jump, cast(int)(blockPosition - currentFunction.instructions.length), true);
 		setInstruction(isNegative ? GrOpcode.JumpNotEqual : GrOpcode.JumpEqual, conditionPosition, cast(int)(currentFunction.instructions.length - conditionPosition), true);
@@ -3226,7 +3224,7 @@ class GrParser {
 
 		uint blockPosition = cast(uint)currentFunction.instructions.length;
 
-		parseBlock();
+		parseBlock(true);
 
         bool isNegative;
 		if(get().type == GrLexemeType.Until)
@@ -3416,7 +3414,7 @@ class GrParser {
 		convertType(subType, variable.type);
 		addSetInstruction(variable);
 
-		parseBlock();
+		parseBlock(true);
 
 		addInstruction(GrOpcode.Jump, cast(int)(blockPosition - currentFunction.instructions.length), true);
 		setInstruction(GrOpcode.JumpEqual, jumpPosition, cast(int)(currentFunction.instructions.length - jumpPosition), true);
@@ -3635,7 +3633,7 @@ class GrParser {
             addInstruction(GrOpcode.JumpEqual);
         }
 
-		parseBlock();
+		parseBlock(true);
 
         if(!isInfinite && hasCustomIterator) {
             addGetInstruction(customIterator, grInt, false);
