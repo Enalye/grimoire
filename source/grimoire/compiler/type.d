@@ -104,8 +104,8 @@ A local or global variable.
 package class GrVariable {
     /// Its type.
 	GrType type;
-    /// An ID unique for each function.
-	uint index;
+    /// Register position, separate for each type (int, float, string and objects);
+    uint register;
     /// Declared from the global scope ?
 	bool isGlobal;
     /// Declared from an object definition ?
@@ -186,8 +186,6 @@ Function/Task/Event definition.
 class GrFunction {
     /// Every variable declared within its scope.
 	GrVariable[dstring] localVariables;
-    /// Variable indexes that aren't used.
-    uint[] localFreeVariables;
     /// All the function instructions.
 	GrInstruction[] instructions;
 	uint stackSize, index;
@@ -201,9 +199,10 @@ class GrFunction {
     /// Function calls made from within its scope.
 	GrFunctionCall[] functionCalls;
 	GrFunction anonParent;
-	uint position, anonReference, localVariableIndex;
+	uint position, anonReference;
 
 	uint nbIntegerParameters, nbFloatParameters, nbStringParameters, nbObjectParameters;
+    uint ilocalsCount, flocalsCount, slocalsCount, olocalsCount;
 
     GrDeferrableSection[] deferrableSections;
     GrDeferBlock[] registeredDeferBlocks;

@@ -196,41 +196,65 @@ class GrParser {
 		variable.type = type;
         variable.name = name;
         if(!isAuto)
-            setGlobalVariableIndex(variable, type);
+            setVariableRegister(variable);
 		globalVariables[name] = variable;
 
 		return variable;
     }
 
-    private void setGlobalVariableIndex(GrVariable variable, GrType type) {
-        final switch(type.baseType) with(GrBaseType) {
+    private void setVariableRegister(GrVariable variable) {
+        final switch(variable.type.baseType) with(GrBaseType) {
         case IntType:
         case BoolType:
         case FunctionType:
         case TaskType:
-            variable.index = iglobalsCount;
-            iglobalsCount ++;
+            if(variable.isGlobal) {
+                variable.register = iglobalsCount;
+                iglobalsCount ++;
+            }
+            else {
+                variable.register = currentFunction.ilocalsCount;
+                currentFunction.ilocalsCount ++;
+            }
             break;
         case FloatType:
-            variable.index = fglobalsCount;
-            fglobalsCount ++;
+            if(variable.isGlobal) {
+                variable.register = fglobalsCount;
+                fglobalsCount ++;
+            }
+            else {
+                variable.register = currentFunction.flocalsCount;
+                currentFunction.flocalsCount ++;
+            }
             break;
         case StringType:
-            variable.index = sglobalsCount;
-            sglobalsCount ++;
+            if(variable.isGlobal) {
+                variable.register = sglobalsCount;
+                sglobalsCount ++;
+            }
+            else {
+                variable.register = currentFunction.slocalsCount;
+                currentFunction.slocalsCount ++;
+            }
             break;
         case ArrayType:
         case ObjectType:
         case UserType:
         case ChanType:
-            variable.index = oglobalsCount;
-            oglobalsCount ++;
+            if(variable.isGlobal) {
+                variable.register = oglobalsCount;
+                oglobalsCount ++;
+            }
+            else {
+                variable.register = currentFunction.olocalsCount;
+                currentFunction.olocalsCount ++;
+            }
             break;
         case TupleType:
         case InternalTupleType:
         case ReferenceType:
         case VoidType:
-            logError("Invalid type", "Cannot declare a global variable of type " ~ grGetPrettyType(type));
+            logError("Invalid type", "Cannot declare a global variable of type " ~ grGetPrettyType(variable.type));
             break;
         }
     }
@@ -249,10 +273,11 @@ class GrParser {
                 logError("Multiple declaration", "The local variable \'" ~ to!string(name) ~ "\' is already declared.");
 
             GrVariable variable = new GrVariable;
-            variable.index = currentFunction.localVariableIndex;
             variable.isGlobal = false;
             variable.type = type;
             variable.name = name;
+            if(variable.type.baseType != GrBaseType.TupleType)
+                setVariableRegister(variable);
             currentFunction.localVariables[name] = variable;
 
             return variable;
@@ -267,17 +292,11 @@ class GrParser {
 			logError("Multiple declaration", "The local variable \'" ~ to!string(name) ~ "\' is already declared.");
 
 		GrVariable variable = new GrVariable;
-        if(currentFunction.localFreeVariables.length) {
-            variable.index = currentFunction.localFreeVariables[$ - 1];
-            currentFunction.localFreeVariables.length --;
-        }
-        else {
-            variable.index = currentFunction.localVariableIndex;
-            currentFunction.localVariableIndex ++;
-        }
 		variable.isGlobal = false;
 		variable.type = type;
         variable.name = name;
+        if(variable.type.baseType != GrBaseType.TupleType)
+            setVariableRegister(variable);
 		currentFunction.localVariables[name] = variable;
 
 		return variable;
@@ -411,14 +430,13 @@ class GrParser {
             GrVariable newVar = new GrVariable;
             newVar.type = type;
             newVar.isInitialized = true;
-            newVar.index = func.localVariableIndex;
-            if(type.baseType != GrBaseType.TupleType)
-                func.localVariableIndex ++;
             newVar.isGlobal = false;
             newVar.name = name;
             func.localVariables[name] = newVar;
-            if(type.baseType != GrBaseType.TupleType)
+            if(type.baseType != GrBaseType.TupleType) {
+                setVariableRegister(newVar);
                 addSetInstruction(newVar);
+            }
         }
 
         foreach_reverse(size_t i, inputVariable; inputVariables) {
@@ -1075,7 +1093,6 @@ class GrParser {
 
 	void addSetInstruction(GrVariable variable, GrType valueType = grVoid, bool isExpectingValue = false) {
         _lastAssignationScopeLevel = _blockLevel;
-        writeln("set: ", _lastAssignationScopeLevel);
         if(variable.type.baseType == GrBaseType.ReferenceType) {
             valueType = convertType(valueType, grUnmangle(variable.type.mangledType));
             switch(valueType.baseType) with(GrBaseType) {
@@ -1124,7 +1141,6 @@ class GrParser {
                     }
                 }
                 else {
-                    currentFunction.localFreeVariables ~= variable.index;
                     for(int i; i < tuple.signature.length; i ++) {
                         registerLocalVariable(variable.name ~ ":" ~ tuple.fields[i], tuple.signature[i]);
                     }
@@ -1132,9 +1148,8 @@ class GrParser {
             }
             else if(valueType.baseType == GrBaseType.VoidType)
                 logError("Variable type error", "Cannot infer the type of variable");
-            else if(variable.isGlobal) {
-                setGlobalVariableIndex(variable, valueType);
-            }
+            else
+                setVariableRegister(variable);
         }
         
         if(valueType.baseType != GrBaseType.VoidType)
@@ -1177,13 +1192,13 @@ class GrParser {
 			case IntType:
 			case FunctionType:
 			case TaskType:
-				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Int : GrOpcode.GlobalStore_Int, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Int : GrOpcode.GlobalStore_Int, variable.register);
 				break;
 			case FloatType:
-				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Float : GrOpcode.GlobalStore_Float, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Float : GrOpcode.GlobalStore_Float, variable.register);
 				break;
 			case StringType:
-				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_String : GrOpcode.GlobalStore_String, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_String : GrOpcode.GlobalStore_String, variable.register);
 				break;
             case TupleType:
                 auto tuple = _data.getTuple(variable.type.mangledType);
@@ -1196,7 +1211,7 @@ class GrParser {
 			case ObjectType:
             case ArrayType:
             case UserType:
-				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.register);
 				break;
 			default:
 				logError("Invalid type", "Cannot assign to a \'" ~ to!string(variable.type) ~ "\' type");
@@ -1208,16 +1223,16 @@ class GrParser {
 			case IntType:
 			case FunctionType:
 			case TaskType:
-				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_Int : GrOpcode.LocalStore_Int, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_Int : GrOpcode.LocalStore_Int, variable.register);
 				break;
 			case FloatType:
-				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_Float : GrOpcode.LocalStore_Float, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_Float : GrOpcode.LocalStore_Float, variable.register);
 				break;
 			case StringType:
-				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_String : GrOpcode.LocalStore_String, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_String : GrOpcode.LocalStore_String, variable.register);
 				break;
 			case ObjectType:
-				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_Object : GrOpcode.LocalStore_Object, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_Object : GrOpcode.LocalStore_Object, variable.register);
 				break;
             case TupleType:
                 auto tuple = _data.getTuple(variable.type.mangledType);
@@ -1231,7 +1246,7 @@ class GrParser {
             case ArrayType:
             case UserType:
 			case ChanType:
-				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_Object : GrOpcode.LocalStore_Object, variable.index);
+				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_Object : GrOpcode.LocalStore_Object, variable.register);
 				break;
 			default:
 				logError("Invalid type", "Cannot assign to a \'" ~ to!string(variable.type) ~ "\' type");
@@ -1241,7 +1256,6 @@ class GrParser {
 
     ///Add a load opcode, or optimize a previous store.
 	void addGetInstruction(GrVariable variable, GrType expectedType = GrType(GrBaseType.VoidType), bool allowOptimization = true) {
-        writeln("get: ", _lastAssignationScopeLevel, ", ", _blockLevel);
         if(_lastAssignationScopeLevel != _blockLevel) {
             /+--------------------------
                 Optimizing getters should take care of scope levels as jumps will break the VM.
@@ -1269,34 +1283,34 @@ class GrParser {
 			case TaskType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Int
-                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Int;
                 else
-                    addInstruction(GrOpcode.GlobalLoad_Int, variable.index);
+                    addInstruction(GrOpcode.GlobalLoad_Int, variable.register);
 				break;
 			case FloatType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Float
-                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Float;
                 else
-                    addInstruction(GrOpcode.GlobalLoad_Float, variable.index);
+                    addInstruction(GrOpcode.GlobalLoad_Float, variable.register);
 				break;
 			case StringType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_String
-                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_String;
                 else
-                    addInstruction(GrOpcode.GlobalLoad_String, variable.index);
+                    addInstruction(GrOpcode.GlobalLoad_String, variable.register);
 				break;
 			case ObjectType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Object
-                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Object;
                 else
-                    addInstruction(GrOpcode.GlobalLoad_Object, variable.index);
+                    addInstruction(GrOpcode.GlobalLoad_Object, variable.register);
 				break;
             case TupleType:
                 auto tuple = _data.getTuple(variable.type.mangledType);
@@ -1309,10 +1323,10 @@ class GrParser {
 			case ChanType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Object
-                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Object;
                 else
-                    addInstruction(GrOpcode.GlobalLoad_Object, variable.index);
+                    addInstruction(GrOpcode.GlobalLoad_Object, variable.register);
 				break;
 			default:
 				logError("Invalid type", "Cannot fetch from a \'" ~ to!string(variable.type) ~ "\' type");
@@ -1329,34 +1343,34 @@ class GrParser {
 			case TaskType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Int
-                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Int;
                 else
-                    addInstruction(GrOpcode.LocalLoad_Int, variable.index);
+                    addInstruction(GrOpcode.LocalLoad_Int, variable.register);
 				break;
 			case FloatType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Float
-                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Float;
                 else
-                    addInstruction(GrOpcode.LocalLoad_Float, variable.index);
+                    addInstruction(GrOpcode.LocalLoad_Float, variable.register);
 				break;
 			case StringType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_String
-                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_String;
                 else
-                    addInstruction(GrOpcode.LocalLoad_String, variable.index);
+                    addInstruction(GrOpcode.LocalLoad_String, variable.register);
 				break;
 			case ObjectType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Object
-                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Object;
                 else
-                    addInstruction(GrOpcode.LocalLoad_Object, variable.index);
+                    addInstruction(GrOpcode.LocalLoad_Object, variable.register);
 				break;
             case TupleType:
                 auto tuple = _data.getTuple(variable.type.mangledType);
@@ -1369,10 +1383,10 @@ class GrParser {
 			case ChanType:
                 if(allowOptimization
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Object
-                    && currentFunction.instructions[$ - 1].value == variable.index)
+                    && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Object;
                 else
-                    addInstruction(GrOpcode.LocalLoad_Object, variable.index);
+                    addInstruction(GrOpcode.LocalLoad_Object, variable.register);
 				break;
 			default:
 				logError("Invalid type", "Cannot fetch from a \'" ~ to!string(variable.type) ~ "\' type");
@@ -4731,7 +4745,7 @@ class GrParser {
                         fieldLValue.isInitialized = true;
                         fieldLValue.isField = true;
                         fieldLValue.type = currentType;
-                        fieldLValue.index = i;
+                        fieldLValue.register = i;
 
                         if(hadLValue)
                             lvalues[$ - 1] = fieldLValue;
@@ -4779,22 +4793,22 @@ class GrParser {
 
                         switch(get().type) with(GrLexemeType) {
                         case Period:
-                            addInstruction(GrOpcode.FieldLoad_Object, fieldLValue.index);
+                            addInstruction(GrOpcode.FieldLoad_Object, fieldLValue.register);
                             break;
                         case Assign:
-                            addInstruction(GrOpcode.FieldLoad, fieldLValue.index);
+                            addInstruction(GrOpcode.FieldLoad, fieldLValue.register);
                             break;
                         case Increment:
                         case Decrement:
                         case AddAssign: .. case PowerAssign:
-                            addLoadFieldInstruction(currentType, fieldLValue.index, true);
+                            addLoadFieldInstruction(currentType, fieldLValue.register, true);
                             break;
                         case Comma:
                             if(isExpectingLValue)
                                 goto case Assign;
                             goto default;
                         default:
-                            addLoadFieldInstruction(currentType, fieldLValue.index, false);
+                            addLoadFieldInstruction(currentType, fieldLValue.register, false);
                             break;
                         }
                         break;
