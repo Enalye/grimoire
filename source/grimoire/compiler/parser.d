@@ -254,7 +254,7 @@ class GrParser {
         case InternalTupleType:
         case ReferenceType:
         case VoidType:
-            logError("Invalid type", "Cannot declare a global variable of type " ~ grGetPrettyType(variable.type));
+            logError("Invalid type", "Cannot declare a variable of type " ~ grGetPrettyType(variable.type));
             break;
         }
     }
@@ -295,7 +295,7 @@ class GrParser {
 		variable.isGlobal = false;
 		variable.type = type;
         variable.name = name;
-        if(variable.type.baseType != GrBaseType.TupleType)
+        if(variable.type.baseType != GrBaseType.VoidType && variable.type.baseType != GrBaseType.TupleType)
             setVariableRegister(variable);
 		currentFunction.localVariables[name] = variable;
 
