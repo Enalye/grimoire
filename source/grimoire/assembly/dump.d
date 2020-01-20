@@ -68,7 +68,8 @@ private string[] instructions = [
 
     "setup_it",
 
-    "localstack", "call", "acall", "vcall", "pcall",
+    "loc.i", "loc.f", "loc.s", "loc.o",
+    "call", "acall", "pcall",
     "ret", "unwind", "defer",
     "jmp", "jmp_eq", "jmp_neq",
 
@@ -104,7 +105,7 @@ string grDump(GrData data, GrBytecode bytecode) {
             (op >= GrOpcode.LocalStore_Int && op <= GrOpcode.LocalLoad_Object) ||
             (op >= GrOpcode.GlobalStore_Int && op <= GrOpcode.GlobalLoad_Object) ||
             (op >= GrOpcode.GlobalPush_Int && op <= GrOpcode.GlobalPush_Object) ||
-            (op >= GrOpcode.LocalStack && op <= GrOpcode.Call) ||
+            (op >= GrOpcode.LocalStack_Int && op <= GrOpcode.Call) ||
             (op == GrOpcode.New) ||
             (op >= GrOpcode.FieldLoad && op <= GrOpcode.FieldLoad2_Object) ||
             (op >= GrOpcode.Channel_Int && op <= GrOpcode.Channel_Object) ||

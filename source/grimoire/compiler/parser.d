@@ -360,7 +360,10 @@ class GrParser {
 		functionStack ~= currentFunction;
 		currentFunction = func;
 
-		addInstruction(GrOpcode.LocalStack, 0u);
+		addInstruction(GrOpcode.LocalStack_Int, 0u);
+		addInstruction(GrOpcode.LocalStack_Float, 0u);
+		addInstruction(GrOpcode.LocalStack_String, 0u);
+		addInstruction(GrOpcode.LocalStack_Object, 0u);
 
 		void fetchParameter(dstring name, GrType type) {
             final switch(type.baseType) with(GrBaseType) {
@@ -424,7 +427,62 @@ class GrParser {
 	}
 
 	void endFunction() {
-		setInstruction(GrOpcode.LocalStack, 0u, currentFunction.localVariableIndex);
+        struct TypeCounter {
+            uint nbIntParams, nbFloatParams, nbStringParams, nbObjectParams;
+        }
+        void countParameters(ref TypeCounter typeCounter, GrType type) {
+            final switch(type.baseType) with(GrBaseType) {
+            case IntType:
+            case BoolType:
+            case FunctionType:
+            case TaskType:
+                typeCounter.nbIntParams ++;
+                break;
+            case FloatType:
+                typeCounter.nbFloatParams ++;
+                break;
+            case StringType:
+                typeCounter.nbStringParams ++;
+                break;
+            case ObjectType:
+            case ArrayType:
+            case UserType:
+            case ChanType:
+            case ReferenceType:
+                typeCounter.nbObjectParams ++;
+                break;
+            case VoidType:
+            case TupleType:
+            case InternalTupleType:
+                throw new Exception("Function locals error");
+            }
+        }
+
+        TypeCounter typeCounter;
+        foreach(localVar; currentFunction.localVariables) {
+            countParameters(typeCounter, localVar.type);
+        }
+
+        if(typeCounter.nbIntParams > 0)
+            setInstruction(GrOpcode.LocalStack_Int, 0u, typeCounter.nbIntParams);
+        else
+            setInstruction(GrOpcode.Nop, 0u, 0u);
+        
+        if(typeCounter.nbFloatParams > 0)
+            setInstruction(GrOpcode.LocalStack_Float, 1u, typeCounter.nbFloatParams);
+        else
+            setInstruction(GrOpcode.Nop, 1u, 0u);
+
+        if(typeCounter.nbStringParams > 0)
+            setInstruction(GrOpcode.LocalStack_String, 2u, typeCounter.nbStringParams);
+        else
+            setInstruction(GrOpcode.Nop, 2u, 0u);
+
+        if(typeCounter.nbObjectParams > 0)
+            setInstruction(GrOpcode.LocalStack_Object, 3u, typeCounter.nbObjectParams);
+        else
+            setInstruction(GrOpcode.Nop, 3u, 0u);
+
 		if(!functionStack.length)
 			logError("Missing symbol", "A \'}\' is missing, causing a mismatch");
         

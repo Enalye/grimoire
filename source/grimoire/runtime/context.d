@@ -17,7 +17,7 @@ Represents a single function context in the callStack.
 */
 struct GrStackFrame {
     /// Size of the locals in the calling function.
-    uint localStackSize;
+    uint ilocalStackSize, flocalStackSize, slocalStackSize, olocalStackSize;
     /// PC to jumps back to.
     uint retPosition;
     /// All current function deferred blocks.
@@ -47,8 +47,8 @@ struct GrContextState {
     /// Each function takes 2 integer: the return pc, and the local variable size.
     uint stackPos;
 
-    /// Local variables: Access with Xlocals[localsPos + variableIndex]
-    uint localsPos;
+    /// Local variables: Access with Xlocals[XlocalsPos + variableIndex]
+    uint ilocalsPos, flocalsPos, slocalsPos, olocalsPos;
 }
 
 /**
@@ -60,7 +60,7 @@ final class GrContext {
         engine = engine_;
         setupCallStack(4);
         setupStack(8);
-        setupLocals(8);
+        setupLocals(2, 2, 2, 2);
     }
 
     /// Parent engine where the context is running.
@@ -88,12 +88,12 @@ final class GrContext {
     void*[] ostack;
 
     /// Operation pointer.
-    uint pc,
-    /// Local variables: Access with Xlocals[localsPos + variableIndex]
-        localsPos,
+    uint pc;
+    /// Local variables: Access with Xlocals[XlocalsPos + variableIndex]
+    uint ilocalsPos, flocalsPos, slocalsPos, olocalsPos;
     /// Stack frame pointer for the current function.
     /// Each function takes 2 integer: the return pc, and the local variable size.
-        stackPos;
+    uint stackPos;
     
     /// Current expression stack top
     int istackPos = -1,
@@ -125,9 +125,9 @@ final class GrContext {
     GrContextState[] states;
 
     /// Current callstack max depth.
-    uint callStackLimit,
+    uint callStackLimit;
     /// Current max local variable available.
-        localsLimit;
+    uint ilocalsLimit, flocalsLimit, slocalsLimit, olocalsLimit;
 
     /// Initialize the call stacks.
     void setupCallStack(uint size) {
@@ -144,12 +144,15 @@ final class GrContext {
     }
 
     /// Initialize the local variable stacks.
-    void setupLocals(uint size) {
-        localsLimit = size;
-        ilocals = new int[localsLimit];
-        flocals = new float[localsLimit];
-        slocals = new dstring[localsLimit];
-        olocals = new void*[localsLimit];
+    void setupLocals(uint isize, uint fsize, uint ssize, uint osize) {
+        ilocalsLimit = isize;
+        flocalsLimit = fsize;
+        slocalsLimit = ssize;
+        olocalsLimit = osize;
+        ilocals = new int[ilocalsLimit];
+        flocals = new float[flocalsLimit];
+        slocals = new dstring[slocalsLimit];
+        olocals = new void*[olocalsLimit];
     }
 
     /// Double the current callstack size.
@@ -158,14 +161,32 @@ final class GrContext {
         callStack.length = callStackLimit;
     }
 
-    /// Double the current locals stacks' size.
-    void doubleLocalsStackSize(uint localsStackSize) {
-        while(localsStackSize >= localsLimit)
-            localsLimit <<= 1;
-        ilocals.length = localsLimit;
-        flocals.length = localsLimit;
-        slocals.length = localsLimit;
-        olocals.length = localsLimit;
+    /// Double the current integer locals stacks' size.
+    void doubleIntLocalsStackSize(uint localsStackSize) {
+        while(localsStackSize >= ilocalsLimit)
+            ilocalsLimit <<= 1;
+        ilocals.length = ilocalsLimit;
+    }
+
+    /// Double the current float locals stacks' size.
+    void doubleFloatLocalsStackSize(uint localsStackSize) {
+        while(localsStackSize >= flocalsLimit)
+            flocalsLimit <<= 1;
+        flocals.length = flocalsLimit;
+    }
+
+    /// Double the current string locals stacks' size.
+    void doubleStringLocalsStackSize(uint localsStackSize) {
+        while(localsStackSize >= slocalsLimit)
+            slocalsLimit <<= 1;
+        slocals.length = slocalsLimit;
+    }
+
+    /// Double the current object locals stacks' size.
+    void doubleObjectLocalsStackSize(uint localsStackSize) {
+        while(localsStackSize >= olocalsLimit)
+            olocalsLimit <<= 1;
+        olocals.length = olocalsLimit;
     }
 
     alias setString = setValue!dstring;
@@ -209,7 +230,10 @@ final class GrContext {
         state.ostackPos = ostackPos;
         state.stackPos = stackPos;
         state.stackFrame = callStack[stackPos];
-        state.localsPos = localsPos;
+        state.ilocalsPos = ilocalsPos;
+        state.flocalsPos = flocalsPos;
+        state.slocalsPos = slocalsPos;
+        state.olocalsPos = olocalsPos;
         states ~= state;
     }
 
@@ -223,7 +247,10 @@ final class GrContext {
         sstackPos = state.sstackPos;
         ostackPos = state.ostackPos;
         stackPos = state.stackPos;
-        localsPos = state.localsPos;
+        ilocalsPos = state.ilocalsPos;
+        flocalsPos = state.flocalsPos;
+        slocalsPos = state.slocalsPos;
+        olocalsPos = state.olocalsPos;
         callStack[stackPos] = state.stackFrame;
     }
 

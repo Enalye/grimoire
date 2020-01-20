@@ -206,7 +206,10 @@ class GrEngine {
         else if(context.stackPos) {
             //Then returns to the last context, raise will be run again.
             context.stackPos --;
-            context.localsPos -= context.callStack[context.stackPos].localStackSize;
+            context.ilocalsPos -= context.callStack[context.stackPos].ilocalStackSize;
+            context.flocalsPos -= context.callStack[context.stackPos].flocalStackSize;
+            context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
+            context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
         }
         else {
             //Kill the others.
@@ -281,7 +284,10 @@ class GrEngine {
                     else if(context.stackPos) {
                         //Then returns to the last context, raise will be run again.
                         context.stackPos --;
-                        context.localsPos -= context.callStack[context.stackPos].localStackSize;
+                        context.ilocalsPos -= context.callStack[context.stackPos].ilocalStackSize;
+                        context.flocalsPos -= context.callStack[context.stackPos].flocalStackSize;
+                        context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
+                        context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
                     }
                     else {
                         //Kill the others.
@@ -338,7 +344,10 @@ class GrEngine {
                         //Then returns to the last context.
                         context.stackPos --;
                         context.pc = context.callStack[context.stackPos].retPosition;
-                        context.localsPos -= context.callStack[context.stackPos].localStackSize;
+                        context.ilocalsPos -= context.callStack[context.stackPos].ilocalStackSize;
+                        context.flocalsPos -= context.callStack[context.stackPos].flocalStackSize;
+                        context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
+                        context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
 
                         //Flag as killed so the entire stack will be unwinded.
                         context.isKilled = true;
@@ -695,67 +704,67 @@ class GrEngine {
 					context.pc ++;
 					break;
 				case LocalStore_Int:
-					context.ilocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.istack[context.istackPos];
+					context.ilocals[context.ilocalsPos + grGetInstructionUnsignedValue(opcode)] = context.istack[context.istackPos];
                     context.istackPos --;
 					context.pc ++;
 					break;
 				case LocalStore_Float:
-					context.flocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.fstack[context.fstackPos];
+					context.flocals[context.flocalsPos + grGetInstructionUnsignedValue(opcode)] = context.fstack[context.fstackPos];
                     context.fstackPos --;
 					context.pc ++;
 					break;
 				case LocalStore_String:
-					context.slocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.sstack[context.sstackPos];		
+					context.slocals[context.slocalsPos + grGetInstructionUnsignedValue(opcode)] = context.sstack[context.sstackPos];		
                     context.sstackPos --;
 					context.pc ++;
 					break;
                 case LocalStore_Object:
-					context.olocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
+					context.olocals[context.olocalsPos + grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
                     context.ostackPos --;
 					context.pc ++;
 					break;
                 case LocalStore2_Int:
-					context.ilocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.istack[context.istackPos];
+					context.ilocals[context.ilocalsPos + grGetInstructionUnsignedValue(opcode)] = context.istack[context.istackPos];
 					context.pc ++;
 					break;
 				case LocalStore2_Float:
-					context.flocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.fstack[context.fstackPos];
+					context.flocals[context.flocalsPos + grGetInstructionUnsignedValue(opcode)] = context.fstack[context.fstackPos];
 					context.pc ++;
 					break;
 				case LocalStore2_String:
-					context.slocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.sstack[context.sstackPos];		
+					context.slocals[context.slocalsPos + grGetInstructionUnsignedValue(opcode)] = context.sstack[context.sstackPos];		
 					context.pc ++;
 					break;
                 case LocalStore2_Object:
-					context.olocals[context.localsPos + grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
+					context.olocals[context.olocalsPos + grGetInstructionUnsignedValue(opcode)] = context.ostack[context.ostackPos];
 					context.pc ++;
 					break;
 				case LocalLoad_Int:
                     context.istackPos ++;
 					if(context.istackPos == context.istack.length)
 						context.istack.length *= 2;
-					context.istack[context.istackPos] = context.ilocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
+					context.istack[context.istackPos] = context.ilocals[context.ilocalsPos + grGetInstructionUnsignedValue(opcode)];
                     context.pc ++;
 					break;
 				case LocalLoad_Float:
                     context.fstackPos ++;
 					if(context.fstackPos == context.fstack.length)
 						context.fstack.length *= 2;
-					context.fstack[context.fstackPos] = context.flocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
+					context.fstack[context.fstackPos] = context.flocals[context.flocalsPos + grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
 				case LocalLoad_String:
                     context.sstackPos ++;
 					if(context.sstackPos == context.sstack.length)
 						context.sstack.length *= 2;
-					context.sstack[context.sstackPos] = context.slocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
+					context.sstack[context.sstackPos] = context.slocals[context.slocalsPos + grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
                 case LocalLoad_Object:
                     context.ostackPos ++;
 					if(context.ostackPos == context.ostack.length)
 						context.ostack.length *= 2;
-					context.ostack[context.ostackPos] = context.olocals[context.localsPos + grGetInstructionUnsignedValue(opcode)];
+					context.ostack[context.ostackPos] = context.olocals[context.olocalsPos + grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
 					break;
                 case GlobalStore_Int:
@@ -1277,7 +1286,10 @@ class GrEngine {
                         //Then returns to the last context.
                         context.stackPos --;
                         context.pc = context.callStack[context.stackPos].retPosition;
-                        context.localsPos -= context.callStack[context.stackPos].localStackSize;
+                        context.ilocalsPos -= context.callStack[context.stackPos].ilocalStackSize;
+                        context.flocalsPos -= context.callStack[context.stackPos].flocalStackSize;
+                        context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
+                        context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
                     }
 					break;
                 case Unwind:
@@ -1297,7 +1309,10 @@ class GrEngine {
                         if(context.stackPos) {
                             //Then returns to the last context without modifying the pc.
                             context.stackPos --;
-                            context.localsPos -= context.callStack[context.stackPos].localStackSize;
+                            context.ilocalsPos -= context.callStack[context.stackPos].ilocalStackSize;
+                            context.flocalsPos -= context.callStack[context.stackPos].flocalStackSize;
+                            context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
+                            context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
                         }
                         else {
                             //Every deferred call has been executed, now die.
@@ -1311,7 +1326,10 @@ class GrEngine {
                         if(context.stackPos) {
                             //Then returns to the last context without modifying the pc.
                             context.stackPos --;
-                            context.localsPos -= context.callStack[context.stackPos].localStackSize;
+                            context.ilocalsPos -= context.callStack[context.stackPos].ilocalStackSize;
+                            context.flocalsPos -= context.callStack[context.stackPos].flocalStackSize;
+                            context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
+                            context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
 
                             //Exception handler found in the current function, just jump.
                             if(context.callStack[context.stackPos].exceptionHandlers.length) {
@@ -1340,24 +1358,51 @@ class GrEngine {
                         //Then returns to the last context.
                         context.stackPos --;
                         context.pc = context.callStack[context.stackPos].retPosition;
-                        context.localsPos -= context.callStack[context.stackPos].localStackSize;
+                        context.ilocalsPos -= context.callStack[context.stackPos].ilocalStackSize;
+                        context.flocalsPos -= context.callStack[context.stackPos].flocalStackSize;
+                        context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
+                        context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
                     }
                     break;
                 case Defer:
                     context.callStack[context.stackPos].deferStack ~= context.pc + grGetInstructionSignedValue(opcode);
 					context.pc ++;
                     break;
-				case LocalStack:
-                    const auto stackSize = grGetInstructionUnsignedValue(opcode);
-					context.callStack[context.stackPos].localStackSize = stackSize;
-					if((context.localsPos + stackSize) >= context.localsLimit)
-                        context.doubleLocalsStackSize(context.localsPos + stackSize);
+				case LocalStack_Int:
+                    const auto istackSize = grGetInstructionUnsignedValue(opcode);
+					context.callStack[context.stackPos].ilocalStackSize = istackSize;
+					if((context.ilocalsPos + istackSize) >= context.ilocalsLimit)
+                        context.doubleIntLocalsStackSize(context.ilocalsPos + istackSize);
+					context.pc ++;
+					break;
+				case LocalStack_Float:
+                    const auto fstackSize = grGetInstructionUnsignedValue(opcode);
+					context.callStack[context.stackPos].flocalStackSize = fstackSize;
+					if((context.flocalsPos + fstackSize) >= context.flocalsLimit)
+                        context.doubleFloatLocalsStackSize(context.flocalsPos + fstackSize);
+					context.pc ++;
+					break;
+				case LocalStack_String:
+                    const auto sstackSize = grGetInstructionUnsignedValue(opcode);
+					context.callStack[context.stackPos].slocalStackSize = sstackSize;
+					if((context.slocalsPos + sstackSize) >= context.slocalsLimit)
+                        context.doubleStringLocalsStackSize(context.slocalsPos + sstackSize);
+					context.pc ++;
+					break;
+				case LocalStack_Object:
+                    const auto ostackSize = grGetInstructionUnsignedValue(opcode);
+					context.callStack[context.stackPos].olocalStackSize = ostackSize;
+					if((context.olocalsPos + ostackSize) >= context.olocalsLimit)
+                        context.doubleObjectLocalsStackSize(context.olocalsPos + ostackSize);
 					context.pc ++;
 					break;
 				case Call:
                     if((context.stackPos + 1) >= context.callStackLimit)
                         context.doubleCallStackSize();
-					context.localsPos += context.callStack[context.stackPos].localStackSize;
+					context.ilocalsPos += context.callStack[context.stackPos].ilocalStackSize;
+					context.flocalsPos += context.callStack[context.stackPos].flocalStackSize;
+					context.slocalsPos += context.callStack[context.stackPos].slocalStackSize;
+					context.olocalsPos += context.callStack[context.stackPos].olocalStackSize;
 					context.callStack[context.stackPos].retPosition = context.pc + 1u;
 					context.stackPos ++;
 					context.pc = grGetInstructionUnsignedValue(opcode);
@@ -1365,7 +1410,10 @@ class GrEngine {
 				case AnonymousCall:
                     if((context.stackPos + 1) >= context.callStackLimit)
                         context.doubleCallStackSize();
-					context.localsPos += context.callStack[context.stackPos].localStackSize;
+					context.ilocalsPos += context.callStack[context.stackPos].ilocalStackSize;
+					context.flocalsPos += context.callStack[context.stackPos].flocalStackSize;
+					context.slocalsPos += context.callStack[context.stackPos].slocalStackSize;
+					context.olocalsPos += context.callStack[context.stackPos].olocalStackSize;
 					context.callStack[context.stackPos].retPosition = context.pc + 1u;
 					context.stackPos ++;
 					context.pc = context.istack[context.istackPos];
