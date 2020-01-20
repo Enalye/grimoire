@@ -1261,6 +1261,7 @@ class GrParser {
 			case FunctionType:
 			case TaskType:
                 if(allowOptimization
+                    && currentFunction.instructions.length
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Int
                     && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Int;
@@ -1269,6 +1270,7 @@ class GrParser {
 				break;
 			case FloatType:
                 if(allowOptimization
+                    && currentFunction.instructions.length
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Float
                     && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Float;
@@ -1277,6 +1279,7 @@ class GrParser {
 				break;
 			case StringType:
                 if(allowOptimization
+                    && currentFunction.instructions.length
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_String
                     && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_String;
@@ -1285,6 +1288,7 @@ class GrParser {
 				break;
 			case ObjectType:
                 if(allowOptimization
+                    && currentFunction.instructions.length
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Object
                     && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Object;
@@ -1301,6 +1305,7 @@ class GrParser {
             case UserType:
 			case ChanType:
                 if(allowOptimization
+                    && currentFunction.instructions.length
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Object
                     && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.GlobalStore2_Object;
@@ -1321,6 +1326,7 @@ class GrParser {
 			case FunctionType:
 			case TaskType:
                 if(allowOptimization
+                    && currentFunction.instructions.length
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Int
                     && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Int;
@@ -1329,6 +1335,7 @@ class GrParser {
 				break;
 			case FloatType:
                 if(allowOptimization
+                    && currentFunction.instructions.length
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Float
                     && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Float;
@@ -1337,6 +1344,7 @@ class GrParser {
 				break;
 			case StringType:
                 if(allowOptimization
+                    && currentFunction.instructions.length
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_String
                     && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_String;
@@ -1345,6 +1353,7 @@ class GrParser {
 				break;
 			case ObjectType:
                 if(allowOptimization
+                    && currentFunction.instructions.length
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Object
                     && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Object;
@@ -1361,6 +1370,7 @@ class GrParser {
             case UserType:
 			case ChanType:
                 if(allowOptimization
+                    && currentFunction.instructions.length
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Object
                     && currentFunction.instructions[$ - 1].value == variable.register)
                     currentFunction.instructions[$ - 1].opcode = GrOpcode.LocalStore2_Object;
@@ -2086,7 +2096,8 @@ class GrParser {
         
         openDeferrableSection();
 		parseBlock();
-		if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
+		if(!currentFunction.instructions.length
+            || currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
             addKill();
         closeDeferrableSection();
         registerDeferBlocks();
@@ -2112,7 +2123,8 @@ class GrParser {
         
         openDeferrableSection();
 		parseBlock();
-		if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
+		if(!currentFunction.instructions.length
+            || currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
             addKill();
         closeDeferrableSection();
         registerDeferBlocks();
@@ -2146,7 +2158,8 @@ class GrParser {
 
         openDeferrableSection();
 		parseBlock();
-		if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
+		if(!currentFunction.instructions.length
+            || currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
             addKill();
         closeDeferrableSection();
         registerDeferBlocks();
@@ -2210,13 +2223,13 @@ class GrParser {
         openDeferrableSection();
 		parseBlock();
         if(!currentFunction.outSignature.length) {
-            if(currentFunction.instructions.length
-                && currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
+            if(!currentFunction.instructions.length
+                || currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
                 addReturn();
         }
         else {
-            if(currentFunction.instructions.length
-                && currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
+            if(!currentFunction.instructions.length
+                || currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
                 logError("Missing return", "The function is missing a return at the end of the scope");
         }
         closeDeferrableSection();
@@ -2283,18 +2296,16 @@ class GrParser {
 		parseBlock();
 
         if(isTask) {
-            if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
+            if(!currentFunction.instructions.length || currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
                 addKill();
         }
         else {
             if(!outSignature.length) {
-                if(currentFunction.instructions.length
-                    && currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
+                if(!currentFunction.instructions.length || currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
                     addReturn();
             }
             else {
-                if(currentFunction.instructions.length
-                    && currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
+                if(!currentFunction.instructions.length || currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
                     logError("Missing return", "The function is missing a return at the end of the scope");
             }
         }
@@ -2566,13 +2577,13 @@ class GrParser {
 	}
 
     void parseKill() {
-        if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
+        if(!currentFunction.instructions.length || currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
             addKill();
         advance();
     }
 
     void parseKillAll() {
-        if(currentFunction.instructions[$ - 1].opcode != GrOpcode.KillAll)
+        if(!currentFunction.instructions.length || currentFunction.instructions[$ - 1].opcode != GrOpcode.KillAll)
             addKillAll();
         advance();                
     }
@@ -3654,11 +3665,11 @@ class GrParser {
 	void parseReturnStatement() {
 		checkAdvance();
         if(currentFunction.name == "main" || currentFunction.isTask) {
-            if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
+            if(!currentFunction.instructions.length || currentFunction.instructions[$ - 1].opcode != GrOpcode.Kill)
                 addKill();
         }
         else if(!currentFunction.outSignature.length) {
-            if(currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
+            if(!currentFunction.instructions.length || currentFunction.instructions[$ - 1].opcode != GrOpcode.Return)
                 addReturn();
         }
         else {
