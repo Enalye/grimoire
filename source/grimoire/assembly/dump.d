@@ -52,6 +52,7 @@ private string[] instructions = [
     "leq.i", "leq.f",
     "gt.i", "gt.f",
     "lt.i", "lt.f",
+    "nnull.o",
 
     "and.i", "or.i", "not.i",
     "cat.s",

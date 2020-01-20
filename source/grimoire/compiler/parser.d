@@ -1176,7 +1176,6 @@ class GrParser {
 			case IntType:
 			case FunctionType:
 			case TaskType:
-			case ChanType:
 				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Int : GrOpcode.GlobalStore_Int, variable.index);
 				break;
 			case FloatType:
@@ -1185,9 +1184,6 @@ class GrParser {
 			case StringType:
 				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_String : GrOpcode.GlobalStore_String, variable.index);
 				break;
-			case ObjectType:
-				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.index);
-				break;
             case TupleType:
                 auto tuple = _data.getTuple(variable.type.mangledType);
                 const auto nbFields = tuple.signature.length;
@@ -1195,6 +1191,8 @@ class GrParser {
                     addSetInstruction(getVariable(variable.name ~ ":" ~ tuple.fields[nbFields - i]), tuple.signature[nbFields - i], isExpectingValue);
                 }
                 break;
+            case ChanType:
+			case ObjectType:
             case ArrayType:
             case UserType:
 				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.index);
@@ -2903,7 +2901,8 @@ class GrParser {
 			logError("Missing symbol", "A condition should always start with \'(\'");
 
 		advance();
-		parseSubExpression();
+		GrSubExprResult result = parseSubExpression();
+        convertType(result.type, grBool);
 		advance();
 
 		uint jumpPosition = cast(uint)currentFunction.instructions.length;
@@ -3810,6 +3809,28 @@ class GrParser {
 
         if(src.baseType == GrBaseType.InternalTupleType || dst.baseType == GrBaseType.InternalTupleType)
             logError("Convertion error", "Cannot convert multiple values from an expression list");
+
+        if(dst.baseType == GrBaseType.BoolType) {
+            final switch(src.baseType) with(GrBaseType) {
+            case FunctionType:
+            case TaskType:
+            case VoidType:
+            case BoolType:
+            case IntType:
+            case FloatType:
+            case StringType:
+            case TupleType:
+            case InternalTupleType:
+                break;
+            case ArrayType:
+            case ObjectType:
+            case UserType:
+            case ChanType:
+            case ReferenceType:
+                addInstruction(GrOpcode.IsNonNull_Object);
+                return dst;
+            }
+        }
 		
         //User-defined conversions.
         if(addCustomConversion(src, dst, isExplicit) == dst)
