@@ -256,7 +256,8 @@ class GrLexer {
 				case '#': .. case '&':
 				case '(': .. case '-':
 				case '/':
-				case ':': .. case '@':
+				case ':': .. case '>':
+				case '@':
 				case '[': .. case '^':
 				case '{': .. case '~':
 					scanOperator();
@@ -583,8 +584,8 @@ class GrLexer {
 			if(current >= text.length)
 				break;
 
-			dchar symbol = get();
-			if(symbol <= '&' || (symbol >= '(' && symbol <= '/') || (symbol >= ':' && symbol <= '@') || (symbol >= '[' && symbol <= '^') || (symbol >= '{' && symbol <= 0x7F))
+			const dchar symbol = get();
+			if(symbol <= '&' || (symbol >= '(' && symbol <= '/') || (symbol >= ':' && symbol <= '>') || (symbol == '@') || (symbol >= '[' && symbol <= '^') || (symbol >= '{' && symbol <= 0x7F))
 				break;
 
 			buffer ~= symbol;
