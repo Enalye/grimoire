@@ -84,7 +84,9 @@ enum GrOpcode {
     Prepend_Int, Prepend_Float, Prepend_String, Prepend_Object,
 
     Equal_IntArray, Equal_FloatArray, Equal_StringArray,
-    NotEqual_IntArray, NotEqual_FloatArray, NotEqual_StringArray
+    NotEqual_IntArray, NotEqual_FloatArray, NotEqual_StringArray,
+
+    Debug_ProfileBegin, Debug_ProfileEnd
 }
 
 /// Compiled form of grimoire.

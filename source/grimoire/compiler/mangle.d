@@ -268,7 +268,28 @@ string grGetPrettyFunctionCall(dstring mangledName) {
     }
     result ~= ")";
     return result;
-    
+}
+
+/// Prettify a function class.
+string grGetPrettyFunction(GrFunction func) {
+    string result = to!string(func.name) ~ "(";
+    int i;
+    foreach(type; func.inSignature) {
+        result ~= grGetPrettyType(type);
+        if((i + 2) <= func.inSignature.length)
+            result ~= ", ";
+        i ++;
+    }
+    result ~= ")";
+    if(func.outSignature.length)
+        result ~= " ";
+    foreach(type; func.outSignature) {
+        result ~= grGetPrettyType(type);
+        if((i + 2) <= func.outSignature.length)
+            result ~= ", ";
+        i ++;
+    }
+    return result;
 }
 
 /**

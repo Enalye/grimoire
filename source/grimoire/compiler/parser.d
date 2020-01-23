@@ -65,6 +65,11 @@ class GrParser {
 
     private {
         uint _lastAssignationScopeLevel, _blockLevel;
+        bool _isProfiling;
+    }
+
+    void setProfiling(bool isProfiling) {
+        _isProfiling = true;
     }
 
     /// Reset to the start of the sequence.
@@ -359,7 +364,7 @@ class GrParser {
 			anonymousFunctions[mangledName] = func;
 
 			//Is replaced by the addr of the function later (see solveFunctionCalls).
-			addInstruction(GrOpcode.LocalStore_Int, 0u);
+			addInstruction(GrOpcode.Const_Int, 0u);
 		}
 		else {
 			func.index = cast(uint)functions.length;
@@ -433,7 +438,7 @@ class GrParser {
                 addSetInstruction(newVar);
             }
         }
-
+        
         foreach_reverse(size_t i, inputVariable; inputVariables) {
             fetchParameter(inputVariables[i], signature[i]);
         }
@@ -441,6 +446,12 @@ class GrParser {
 
 	void endFunction() {
         int prependInstructionCount;
+        if(_isProfiling) {
+            prependInstructionCount ++;
+            const uint index = registerStringConstant(to!dstring(grGetPrettyFunction(currentFunction)));
+            addInstructionInFront(GrOpcode.Debug_ProfileBegin, index);
+        }
+
         if(currentFunction.ilocalsCount > 0) {
             addInstructionInFront(GrOpcode.LocalStack_Int, currentFunction.ilocalsCount);
             prependInstructionCount ++;
@@ -463,6 +474,8 @@ class GrParser {
 
 		foreach(call; currentFunction.functionCalls)
             call.position += prependInstructionCount;
+
+        currentFunction.offset += prependInstructionCount;
 
 		if(!functionStack.length)
 			logError("Missing symbol", "A \'}\' is missing, causing a mismatch");
@@ -1107,7 +1120,7 @@ class GrParser {
 			}
             return;
         }
-        
+
         if(variable.isAuto && !variable.isInitialized) {
             variable.isInitialized = true;
             variable.isAuto = false;
@@ -1232,7 +1245,7 @@ class GrParser {
 			}
 		}
 	}
-
+    
     ///Add a load opcode, or optimize a previous store.
 	void addGetInstruction(GrVariable variable, GrType expectedType = GrType(GrBaseType.VoidType), bool allowOptimization = true) {
         if(_lastAssignationScopeLevel != _blockLevel) {
@@ -1439,7 +1452,8 @@ class GrParser {
 	}
 
 	void setOpcode(ref uint[] opcodes, uint position, GrOpcode opcode, uint value = 0u, bool isSigned = false) {
-		GrInstruction instruction;
+		assert(position != 0);
+        GrInstruction instruction;
 		instruction.opcode = opcode;
 		if(isSigned) {
 			if((value >= 0x800000) || (-value >= 0x800000))
@@ -1473,7 +1487,7 @@ class GrParser {
 		}
 
 		foreach(func; anonymousFunctions)
-			setOpcode(opcodes, func.anonParent.position + func.anonReference, GrOpcode.Const_Int, registerIntConstant(func.position));
+			setOpcode(opcodes, func.anonParent.position + func.anonParent.offset + func.anonReference, GrOpcode.Const_Int, registerIntConstant(func.position));
 	}
 
 	void dump() {
@@ -3329,6 +3343,7 @@ class GrParser {
         if(variable.isAuto && subType.baseType != GrBaseType.VoidType) {
             variable.isAuto = false;
             variable.type = subType;
+            setVariableRegister(variable);
         }
 
 		addSetInstruction(array, arrayType, true);
@@ -3589,6 +3604,7 @@ class GrParser {
                 if(customIterator.isAuto) {
                     customIterator.isAuto = false;
                     customIterator.type = grInt;
+                    setVariableRegister(customIterator);
                 }
                 else if(customIterator.type != grInt) {
                     logError("Loop iterator type error", "The type of the iterator must be int, not " ~ grGetPrettyType(customIterator.type));
@@ -3693,18 +3709,27 @@ class GrParser {
     /// Add a `return` instruction that pop the callstack.
     void addReturn() {
         checkDeferStatement();
+        if(_isProfiling) {
+            addInstruction(GrOpcode.Debug_ProfileEnd);
+        }
         addInstruction(GrOpcode.Return);
     }
 
     /// Add a `kill` instruction that stops the current task.
     void addKill() {
         checkDeferStatement();
+        if(_isProfiling) {
+            addInstruction(GrOpcode.Debug_ProfileEnd);
+        }
         addInstruction(GrOpcode.Kill);
     }
 
     /// Add a `killall` instruction that stops every tasks.
     void addKillAll() {
         checkDeferStatement();
+        if(_isProfiling) {
+            addInstruction(GrOpcode.Debug_ProfileEnd);
+        }
         addInstruction(GrOpcode.KillAll);
     }
 

@@ -105,7 +105,7 @@ package class GrVariable {
     /// Its type.
 	GrType type;
     /// Register position, separate for each type (int, float, string and objects);
-    uint register;
+    uint register = uint.max;
     /// Declared from the global scope ?
 	bool isGlobal;
     /// Declared from an object definition ?
@@ -188,7 +188,7 @@ class GrFunction {
 	GrVariable[dstring] localVariables;
     /// All the function instructions.
 	GrInstruction[] instructions;
-	uint stackSize, index;
+	uint stackSize, index, offset;
 
     /// Unmangled function name.
 	dstring name;

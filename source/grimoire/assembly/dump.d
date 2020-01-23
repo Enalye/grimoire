@@ -86,6 +86,8 @@ private string[] instructions = [
 
     "eq.ni", "eq.nf", "eq.ns",
     "neq.ni", "neq.nf", "neq.ns",
+
+    "dbg_prfbegin", "dbg_prfend"
 ];
 
 /// Dump the bytecode's instruction list in a pretty format.
@@ -125,7 +127,7 @@ string grDump(GrData data, GrBytecode bytecode) {
             line ~= to!string(bytecode.fconsts[grGetInstructionUnsignedValue(opcode)]);
         else if(op == GrOpcode.Const_Bool)
             line ~= (grGetInstructionUnsignedValue(opcode) ? "true" : "false");
-        else if(op == GrOpcode.Const_String || op == GrOpcode.Const_Meta)
+        else if(op == GrOpcode.Const_String || op == GrOpcode.Const_Meta || op == GrOpcode.Debug_ProfileBegin)
             line ~= "\"" ~ to!string(bytecode.sconsts[grGetInstructionUnsignedValue(opcode)]) ~ "\"";
         else if(op >= GrOpcode.Jump && op <= GrOpcode.JumpNotEqual)
             line ~= to!string(i + grGetInstructionSignedValue(opcode));

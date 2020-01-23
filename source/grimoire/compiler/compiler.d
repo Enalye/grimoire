@@ -15,6 +15,11 @@ import grimoire.compiler.type, grimoire.compiler.data, grimoire.compiler.error;
 
 /// Compiler class, generate bytecode and hold errors.
 final class GrCompiler {
+	enum Flags {
+		none = 0x1,
+		profile = 0x2
+	}
+
 	private {
 		GrData _data;
 		GrError _error;
@@ -33,13 +38,15 @@ final class GrCompiler {
 	 * Returns:
 	 *  True if compilation was successful, otherwise check `getError()`
 	 */
-	bool compileFile(ref GrBytecode bytecode, string fileName) {
+	bool compileFile(ref GrBytecode bytecode, string fileName, int flags = Flags.none) {
 		_error = null;
 		try {
 			GrLexer lexer = new GrLexer;
 			lexer.scanFile(to!dstring(fileName));
 
 			GrParser parser = new GrParser;
+			if(flags & Flags.profile)
+				parser.setProfiling(true);
 			parser.parseScript(_data, lexer);
 
 			bytecode = generate(parser);

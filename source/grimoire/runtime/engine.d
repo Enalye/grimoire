@@ -210,6 +210,9 @@ class GrEngine {
             context.flocalsPos -= context.callStack[context.stackPos].flocalStackSize;
             context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
             context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
+
+			if(_isDebug)
+				debugProfileEnd();
         }
         else {
             //Kill the others.
@@ -288,6 +291,9 @@ class GrEngine {
                         context.flocalsPos -= context.callStack[context.stackPos].flocalStackSize;
                         context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
                         context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
+
+						if(_isDebug)
+							debugProfileEnd();
                     }
                     else {
                         //Kill the others.
@@ -1319,6 +1325,9 @@ class GrEngine {
                             context.flocalsPos -= context.callStack[context.stackPos].flocalStackSize;
                             context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
                             context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
+
+							if(_isDebug)
+								debugProfileEnd();
                         }
                         else {
                             //Every deferred call has been executed, now die.
@@ -1336,6 +1345,9 @@ class GrEngine {
                             context.flocalsPos -= context.callStack[context.stackPos].flocalStackSize;
                             context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
                             context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
+
+							if(_isDebug)
+								debugProfileEnd();
 
                             //Exception handler found in the current function, just jump.
                             if(context.callStack[context.stackPos].exceptionHandlers.length) {
@@ -1368,6 +1380,9 @@ class GrEngine {
                         context.flocalsPos -= context.callStack[context.stackPos].flocalStackSize;
                         context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
                         context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
+
+						if(_isDebug)
+							debugProfileEnd();
                     }
                     break;
                 case Defer:
@@ -1864,6 +1879,14 @@ class GrEngine {
                     context.ostackPos -= 2;
 					context.pc ++;
 					break;
+				case Debug_ProfileBegin:
+					debugProfileBegin(opcode, context.pc);
+					context.pc ++;
+					break;
+				case Debug_ProfileEnd:
+					debugProfileEnd();
+					context.pc ++;
+					break;
 				default:
 					throw new Exception("Invalid instruction at (" ~ to!string(context.pc) ~ "): " ~ to!string(grGetInstructionOpcode(opcode)));
                 }
@@ -1871,4 +1894,49 @@ class GrEngine {
 		}
 		_contexts.sweepMarkedData();
     }
+
+import core.time: MonoTime, Duration;
+	private {
+		bool _isDebug;
+		DebugFunction[int] _debugFunctions;
+		DebugFunction[] _debugFunctionsStack;
+	}
+
+	DebugFunction[int] dumpProfiling() {
+		return _debugFunctions;
+	}
+
+	final class DebugFunction {
+		private MonoTime _start;
+		Duration total;
+		ulong count;
+		int pc;
+		dstring name;
+	}
+
+	private void debugProfileEnd() {
+		if(!_debugFunctionsStack.length)
+			return;
+		auto p = _debugFunctionsStack[$ - 1];
+		_debugFunctionsStack.length --;
+		p.total += MonoTime.currTime() - p._start;
+		p.count ++;
+	}
+
+	private void debugProfileBegin(uint opcode, int pc) {
+		_isDebug = true;
+		auto p = (pc in _debugFunctions);
+		if(p) {
+			p._start = MonoTime.currTime();
+			_debugFunctionsStack ~= *p;
+		}
+		else {
+			auto debugFunc = new DebugFunction;
+			debugFunc.pc = pc;
+			debugFunc.name = _sconsts[grGetInstructionUnsignedValue(opcode)];
+			debugFunc._start = MonoTime.currTime();
+			_debugFunctions[pc] = debugFunc;
+			_debugFunctionsStack ~= debugFunc;
+		}
+	}
 }

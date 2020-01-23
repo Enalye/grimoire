@@ -102,8 +102,8 @@ class GrCall {
         _sresults = 0;
         _oresults = 0;
         _hasError = false;
-
         _context = context;
+
         _callback(this);
         
         _context.istackPos -= (_iparams - _iresults);
