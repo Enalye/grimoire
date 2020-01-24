@@ -1,15 +1,11 @@
-/**
-Array.
-
-Copyright: (c) Enalye 2018
-License: Zlib
-Authors: Enalye
-*/
-
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 module grimoire.runtime.array;
 
 import grimoire.compiler.primitive;
-
 import grimoire.runtime.call;
 
 alias GrIntArray = GrArray!int;

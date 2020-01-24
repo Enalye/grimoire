@@ -1,11 +1,8 @@
-/**
-    Grimoire compiler.
-
-    Copyright: (c) Enalye 2018
-    License: Zlib
-    Authors: Enalye
-*/
-
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 module grimoire.compiler.compiler;
 
 import std.stdio, std.string, std.array, std.conv, std.math, std.file;
@@ -15,9 +12,12 @@ import grimoire.compiler.type, grimoire.compiler.data, grimoire.compiler.error;
 
 /// Compiler class, generate bytecode and hold errors.
 final class GrCompiler {
+	/// Compiler options
 	enum Flags {
-		none = 0x1,
-		profile = 0x2
+		/// Default
+		none = 0x0,
+		/// Add profiling commands to bytecode to fill profiling information
+		profile = 0x1
 	}
 
 	private {
@@ -62,6 +62,7 @@ final class GrCompiler {
 		return true;
 	}
 
+	/// If an error occurred, fetch it here.
 	GrError getError() {
 		return _error;
 	}

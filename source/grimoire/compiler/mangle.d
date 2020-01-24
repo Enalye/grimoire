@@ -1,11 +1,8 @@
-/**
-    Mangling functions for type signatures.
-
-    Copyright: (c) Enalye 2018
-    License: Zlib
-    Authors: Enalye
-*/
-
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 module grimoire.compiler.mangle;
 
 import std.conv: to;
@@ -16,9 +13,9 @@ import grimoire.compiler.type;
 
     Example:
     ---
-    func(int i, string s, func(bool, float)) float {}
+    [int, string, func(bool, float)]
     ---
-    Will be mangled as `$i$s$f($b$f)$v`
+    Will be mangled as `$i$s$f($b$f)()`
 
     The return type is not conserved in the mangled form as its not part of its signature.
     But function. passed as parameters have theirs.
@@ -81,7 +78,7 @@ dstring grMangleFunction(GrType[] signature) {
     ---
     func test(int i, string s, func(bool, float)) float {}
     ---
-    Will be mangled as `test$i$s$f($b$f)$v`
+    Will be mangled as `test$i$s$f($b$f)()`
 
     The return type is not conserved in the mangled form as its not part of its signature.
     But function. passed as parameters have theirs.

@@ -1,11 +1,8 @@
-/**
-Object definition.
-
-Copyright: (c) Enalye 2019
-License: Zlib
-Authors: Enalye
-*/
-
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 module grimoire.runtime.object;
 
 import grimoire.compiler;

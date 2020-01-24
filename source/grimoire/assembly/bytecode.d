@@ -1,18 +1,15 @@
-/**
-    Bytecode definition.
-
-    Copyright: (c) Enalye 2018
-    License: Zlib
-    Authors: Enalye
-*/
-
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 module grimoire.assembly.bytecode;
 
 import std.stdio;
 import std.file;
 import std.outbuffer;
 
-/// Low level instruction for the VM
+/// Low-level instructions for the VM.
 enum GrOpcode {
     Nop, Raise, Try, Catch,
     Kill, KillAll, Yield, Task, AnonymousTask, New,
@@ -186,6 +183,7 @@ pure uint grGetInstructionOpcode(uint instruction) {
     return instruction & 0xff;
 }
 
+/// Format an instruction.
 pure uint grMakeInstruction(uint instr, uint value1, uint value2) {
     return ((value2 << 16u) & 0xffff0000) | ((value1 << 8u) & 0xff00) | (instr & 0xff);
 }

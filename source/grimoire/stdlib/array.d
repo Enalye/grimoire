@@ -1,3 +1,8 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 module grimoire.stdlib.array;
 
 import std.range;

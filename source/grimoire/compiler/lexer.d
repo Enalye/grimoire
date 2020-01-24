@@ -1,11 +1,8 @@
-/**
-Scan a file and produce a list of tokens.
-
-Copyright: (c) Enalye 2018
-License: Zlib
-Authors: Enalye
-*/
-
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 module grimoire.compiler.lexer;
 
 import std.stdio;

@@ -1,3 +1,8 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 module grimoire.stdlib.test;
 
 import grimoire.compiler, grimoire.runtime;

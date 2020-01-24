@@ -1,3 +1,8 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 module grimoire.runtime.channel;
 
 alias GrIntChannel = GrChannel!int;

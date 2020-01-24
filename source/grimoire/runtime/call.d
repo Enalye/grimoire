@@ -1,3 +1,8 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 module grimoire.runtime.call;
 
 import std.stdio: writeln;
@@ -5,8 +10,10 @@ import std.conv: to;
 import grimoire.compiler;
 import grimoire.runtime.context, grimoire.runtime.array, grimoire.runtime.object, grimoire.runtime.channel;
 
+/// Primitive type.
 alias GrCallback = void function(GrCall);
 
+/// Primitive context.
 class GrCall {
     private {
         GrData _data;

@@ -1,11 +1,8 @@
-/**
-Log functions.
-
-Copyright: (c) Enalye 2018
-License: Zlib
-Authors: Enalye
-*/
-
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 module grimoire.stdlib.print;
 
 import std.stdio: write, writeln;

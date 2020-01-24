@@ -1,11 +1,8 @@
-/**
-    Primitives are hard-coded grimoire's functions, they are used the same as any other function.
-
-    Copyright: (c) Enalye 2018
-    License: Zlib
-    Authors: Enalye
-*/
-
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 module grimoire.compiler.primitive;
 
 import std.exception;
@@ -19,7 +16,8 @@ import grimoire.compiler.mangle;
 import grimoire.compiler.data;
 
 /**
-A single primitive.
+A single primitive. \
+Primitives are hard-coded grimoire's functions, they are used the same way as other functions.
 */
 class GrPrimitive {
     /// The D function.
