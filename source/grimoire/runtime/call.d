@@ -86,10 +86,6 @@ class GrCall {
                 _sparams ++;
                 _slocals ~= name;
                 break;
-            case TupleType:
-                auto structure = _data.getTuple(type.mangledType);
-                setupLocals(name ~ ":", structure.fields, structure.signature);
-                break;
             case ArrayType:
             case ObjectType:
             case UserType:

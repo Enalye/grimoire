@@ -21,7 +21,7 @@ to represent them.
 enum GrBaseType {
     VoidType, IntType, FloatType, BoolType, StringType,
     ArrayType, FunctionType, TaskType,
-    ObjectType, TupleType, UserType, ChanType,
+    ObjectType, UserType, ChanType,
     InternalTupleType,
     ReferenceType, 
 }
@@ -133,13 +133,6 @@ class GrTupleDefinition {
     GrType[] signature;
     /// List of field names.
     dstring[] fields;
-}
-
-/// Create a GrType of TupleType for the type system.
-GrType grGetTupleType(dstring name) {
-    GrType stType = GrBaseType.TupleType;
-    stType.mangledType = name;
-    return stType;
 }
 
 /**

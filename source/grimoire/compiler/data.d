@@ -60,34 +60,6 @@ class GrData {
         return false;
     }
 
-    /// Define a tuple type.
-    GrType addTuple(dstring name, dstring[] fields, GrType[] signature) {
-        assert(fields.length == signature.length, "GrTupleDefinition signature mismatch");
-        GrTupleDefinition tuple = new GrTupleDefinition;
-        tuple.signature = signature;
-        tuple.fields = fields;
-        _tupleTypes[name] = tuple;
-
-        GrType stType = GrBaseType.TupleType;
-        stType.mangledType = name;
-        return stType;
-    }
-
-    /// Is the tuple defined ?
-    bool isTuple(dstring name) {
-        if(name in _tupleTypes)
-            return true;
-        return false;
-    }
-
-    /// Return the tuple definition.
-    GrTupleDefinition getTuple(dstring name) {
-        import std.conv: to;
-        auto tuple = (name in _tupleTypes);
-        assert(tuple !is null, "Undefined tuple \'" ~ to!string(name) ~ "\'");
-        return *tuple;
-    }
-
     /// Defined a struct type.
     GrType addObject(dstring name, dstring[] fields, GrType[] signature) {
         assert(fields.length == signature.length, "GrObjectDefinition signature mismatch");
@@ -205,23 +177,10 @@ class GrData {
     /// Resolve signatures
     package void resolveSignatures() {
         //Resolve all unresolved field types
-        resolveTupleSignatures();
         resolveObjectSignatures();
 
         //Then we can resolve _primitives' signature
         resolvePrimitiveSignatures();
-    }
-
-    /// Resolve tuple fields that couldn't be defined beforehand.
-    private void resolveTupleSignatures() {
-        foreach(tuple; _tupleTypes) {
-            for(int i; i < tuple.signature.length; i ++) {
-                if(tuple.signature[i].baseType == GrBaseType.VoidType) {
-                    assert(isTuple(tuple.signature[i].mangledType), "Cannot resolve tuple field");
-                    tuple.signature[i].baseType = GrBaseType.TupleType;
-                }
-            }
-        }
     }
 
     /// Resolve struct fields that couldn't be defined beforehand.
