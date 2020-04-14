@@ -4,4 +4,4 @@ func test() {
     foo();
 }
 
-func foo() { "hey"::printl; }
+func foo() { "hey":printl; }

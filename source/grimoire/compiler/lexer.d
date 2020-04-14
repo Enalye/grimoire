@@ -19,7 +19,7 @@ Kinds of valid token.
 */
 enum GrLexemeType {
 	LeftBracket, RightBracket, LeftParenthesis, RightParenthesis, LeftCurlyBrace, RightCurlyBrace,
-	Period, Semicolon, Colon, MethodCall, Comma, At, Pointer, As, Is, Try, Catch, Raise, Defer,
+	Period, Semicolon, MethodCall, Comma, At, Pointer, As, Is, Try, Catch, Raise, Defer,
 	Assign,
 	AddAssign, SubstractAssign, MultiplyAssign, DivideAssign, ConcatenateAssign, RemainderAssign, PowerAssign,
 	Plus, Minus,
@@ -47,13 +47,15 @@ struct GrLexeme {
 	}
 
     /// Parent lexer.
-	GrLexer lexer;
+	private GrLexer lexer;
 
-	uint fileId;
+	/// Id of the file the token is in.
+	private uint fileId;
 
     /// Position information in case of errors.
 	uint line, column, textLength = 1;
 
+	/// Kind of token.
 	GrLexemeType type;
 
     /// Whether the lexeme is a constant value.
@@ -351,7 +353,7 @@ class GrLexer {
 		for(;;) {
 			if(current >= text.length)
 				raiseError("Missing \'\"\' character.");
-			dchar symbol = get();
+			const dchar symbol = get();
 			if(symbol == '\n') {
 				positionOfLine = current;
 				line ++;
@@ -401,14 +403,7 @@ class GrLexer {
 				lex.type = GrLexemeType.Semicolon;
 				break;
 			case ':':
-				lex.type = GrLexemeType.Colon;
-				if(current + 1 >= text.length)
-					break;
-				if(get(1) == ':') {
-					lex.type = GrLexemeType.MethodCall;
-					lex.textLength = 2;
-					current ++;
-				}
+				lex.type = GrLexemeType.MethodCall;
 				break;
 			case ',':
 				lex.type = GrLexemeType.Comma;
@@ -586,7 +581,11 @@ class GrLexer {
 				current ++;
 				break;
 			}
-			if(symbol <= '&' || (symbol >= '(' && symbol <= '/') || (symbol >= ':' && symbol <= '@') || (symbol >= '[' && symbol <= '^') || (symbol >= '{' && symbol <= 0x7F))
+			if(symbol <= '&' ||
+				(symbol >= '(' && symbol <= '/') ||
+				(symbol >= ':' && symbol <= '@') ||
+				(symbol >= '[' && symbol <= '^') ||
+				(symbol >= '{' && symbol <= 0x7F))
 				break;
 
 			buffer ~= symbol;

@@ -1,6 +1,6 @@
 main {
-    assert(20::fib_loop == 20::fib_recur);
-    assert(10::fib_self == 55);
+    assert(20:fib_loop == 20:fib_recur);
+    assert(10:fib_self == 55);
     assert(
         func(int n) int {
             if(n < 2) return n;
