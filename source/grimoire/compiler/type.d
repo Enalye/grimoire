@@ -21,7 +21,7 @@ to represent them.
 enum GrBaseType {
     VoidType, IntType, FloatType, BoolType, StringType,
     ArrayType, FunctionType, TaskType,
-    ObjectType, UserType, ChanType,
+    ObjectType, UserType, ChanType, EnumType,
     InternalTupleType,
     ReferenceType, 
 }
@@ -125,14 +125,35 @@ GrType grGetUserType(dstring name) {
 }
 
 /**
-Define the content of a tuple. \
+Define the content of an enum. \
 Not to be confused with GrType used by the type system.
 */
-class GrTupleDefinition {
-    /// List of field types.
-    GrType[] signature;
+class GrEnumDefinition {
+    /// Identifier.
+    dstring name;
     /// List of field names.
     dstring[] fields;
+    /// Unique ID of the enum definition.
+    size_t index;
+
+    bool hasField(dstring name) const {
+        foreach(field; fields) {
+            if(field == name)
+                return true;
+        }
+        return false;
+    }
+
+    int getField(dstring name) const {
+        import std.conv: to;
+        int fieldIndex = 0;
+        foreach(field; fields) {
+            if(field == name)
+                return fieldIndex;
+            fieldIndex ++;
+        }
+        assert(false, "Undefined enum \'" ~ to!string(name) ~ "\'");
+    }
 }
 
 /**

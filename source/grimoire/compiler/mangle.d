@@ -46,6 +46,9 @@ dstring grMangleFunction(GrType[] signature) {
         case ObjectType:
 			mangledName ~= "p(" ~ type.mangledType ~ ")";
 			break;
+        case EnumType:
+			mangledName ~= "e(" ~ type.mangledType ~ ")";
+			break;
         case UserType:
             mangledName ~= "u(" ~ type.mangledType ~ ")";
             break;
@@ -158,6 +161,23 @@ GrType grUnmangle(dstring mangledSignature) {
             currentType.baseType = GrBaseType.ArrayType;
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             i ++;
+            break;
+        case 'e':
+            currentType.baseType = GrBaseType.EnumType;
+            dstring enumName;
+            if((i + 2) >= mangledSignature.length)
+                throw new Exception("Invalid unmangle mangling format in struct");
+            i ++;
+            if(mangledSignature[i] != '(')
+                throw new Exception("Invalid unmangle mangling format in struct");
+            i ++;
+            while(mangledSignature[i] != ')') {
+                enumName ~= mangledSignature[i];
+                i ++;
+                if(i >= mangledSignature.length)
+                    throw new Exception("Invalid unmangle mangling format in struct");
+            }
+            currentType.mangledType = enumName;
             break;
         case 'p':
             currentType.baseType = GrBaseType.ObjectType;
@@ -279,7 +299,7 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
     while(i < mangledSignature.length) {
         //Type separator
         if(mangledSignature[i] != '$')
-            throw new Exception("Invalid unmanglesignature mangling format, missing $");
+            throw new Exception("Invalid unmangle signature mangling format, missing $");
         i ++;
 
         //Value
@@ -304,6 +324,23 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
             i ++;
             currentType.baseType = GrBaseType.ArrayType;
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
+            break;
+        case 'e':
+            currentType.baseType = GrBaseType.EnumType;
+            dstring enumName;
+            if((i + 2) >= mangledSignature.length)
+                throw new Exception("Invalid mangling format");
+            i ++;
+            if(mangledSignature[i] != '(')
+                throw new Exception("Invalid mangling format");
+            i ++;
+            while(mangledSignature[i] != ')') {
+                enumName ~= mangledSignature[i];
+                i ++;
+                if(i >= mangledSignature.length)
+                    throw new Exception("Invalid mangling format");
+            }
+            currentType.mangledType = enumName;
             break;
         case 'p':
             currentType.baseType = GrBaseType.ObjectType;
@@ -449,6 +486,7 @@ string grGetPrettyType(GrType variableType) {
         }
         result ~= ")";
         return result;
+    case EnumType:
     case ObjectType:
     case UserType:
         return to!string(variableType.mangledType);

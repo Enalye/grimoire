@@ -190,6 +190,7 @@ class GrParser {
         case BoolType:
         case FunctionType:
         case TaskType:
+        case EnumType:
             if(variable.isGlobal) {
                 variable.register = iglobalsCount;
                 iglobalsCount ++;
@@ -348,6 +349,7 @@ class GrParser {
             case BoolType:
             case FunctionType:
             case TaskType:
+            case EnumType:
                 func.nbIntegerParameters ++;
                 if(func.isTask)
                     addInstruction(GrOpcode.GlobalPop_Int, 0u);
@@ -619,7 +621,12 @@ class GrParser {
             logError("Multiple values operation", "Cannot use an operator on an expression list");
         GrType resultType = GrBaseType.VoidType;
 
-        if(leftType.baseType == GrBaseType.ChanType) {
+        if(leftType.baseType == GrBaseType.EnumType &&
+            rightType.baseType == GrBaseType.EnumType &&
+            leftType.mangledType == rightType.mangledType) {
+            resultType = addInternalOperator(lexType, leftType);
+        }
+        else if(leftType.baseType == GrBaseType.ChanType) {
             GrType chanType = grUnmangle(leftType.mangledType);
             convertType(rightType, chanType);
             resultType = addInternalOperator(lexType, leftType);
@@ -750,6 +757,30 @@ class GrParser {
 
     GrType addInternalOperator(GrLexemeType lexType, GrType varType, bool isSwapped = false) {
         switch(varType.baseType) with(GrBaseType) {
+        case EnumType:
+			switch(lexType) with(GrLexemeType) {
+			case Equal:
+				addInstruction(GrOpcode.Equal_Int);
+				return GrType(GrBaseType.BoolType);
+			case NotEqual:
+				addInstruction(GrOpcode.NotEqual_Int);
+				return GrType(GrBaseType.BoolType);
+			case Greater:
+				addInstruction(GrOpcode.Greater_Int);
+				return GrType(GrBaseType.BoolType);
+			case GreaterOrEqual:
+				addInstruction(GrOpcode.GreaterOrEqual_Int);
+				return GrType(GrBaseType.BoolType);
+			case Lesser:
+				addInstruction(GrOpcode.Lesser_Int);
+				return GrType(GrBaseType.BoolType);
+			case LesserOrEqual:
+				addInstruction(GrOpcode.LesserOrEqual_Int);
+                return GrType(GrBaseType.BoolType);
+			default:
+				break;
+			}
+			break;
         case BoolType:
             switch(lexType) with(GrLexemeType) {
             case And:
@@ -1033,12 +1064,13 @@ class GrParser {
         _lastAssignationScopeLevel = _blockLevel;
         if(variable.type.baseType == GrBaseType.ReferenceType) {
             valueType = convertType(valueType, grUnmangle(variable.type.mangledType));
-            switch(valueType.baseType) with(GrBaseType) {
+            final switch(valueType.baseType) with(GrBaseType) {
 			case BoolType:
 			case IntType:
 			case FunctionType:
 			case TaskType:
 			case ChanType:
+			case EnumType:
 				addInstruction(isExpectingValue ? GrOpcode.RefStore2_Int : GrOpcode.RefStore_Int);
 				break;
 			case FloatType:
@@ -1054,7 +1086,9 @@ class GrParser {
             case UserType:
 				addInstruction(isExpectingValue ? GrOpcode.RefStore2_Object : GrOpcode.RefStore_Object);
 				break;
-			default:
+			case VoidType:
+			case InternalTupleType:
+			case ReferenceType:
 				logError("Invalid type", "Cannot assign to a \'" ~ to!string(variable.type) ~ "\' type");
 			}
             return;
@@ -1083,6 +1117,7 @@ class GrParser {
 			case IntType:
 			case FunctionType:
 			case TaskType:
+            case EnumType:
 				addInstruction(GrOpcode.FieldStore_Int, isExpectingValue ? 0 : -1, true);
 				break;
 			case FloatType:
@@ -1104,11 +1139,12 @@ class GrParser {
 			} 
         }
 		else if(variable.isGlobal) {
-			switch(variable.type.baseType) with(GrBaseType) {
+			final switch(variable.type.baseType) with(GrBaseType) {
 			case BoolType:
 			case IntType:
 			case FunctionType:
 			case TaskType:
+            case EnumType:
 				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Int : GrOpcode.GlobalStore_Int, variable.register);
 				break;
 			case FloatType:
@@ -1123,16 +1159,19 @@ class GrParser {
             case UserType:
 				addInstruction(isExpectingValue ? GrOpcode.GlobalStore2_Object : GrOpcode.GlobalStore_Object, variable.register);
 				break;
-			default:
+			case VoidType:
+			case InternalTupleType:
+			case ReferenceType:
 				logError("Invalid type", "Cannot assign to a \'" ~ to!string(variable.type) ~ "\' type");
 			}
 		}
 		else {
-			switch(variable.type.baseType) with(GrBaseType) {
+			final switch(variable.type.baseType) with(GrBaseType) {
 			case BoolType:
 			case IntType:
 			case FunctionType:
 			case TaskType:
+            case EnumType:
 				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_Int : GrOpcode.LocalStore_Int, variable.register);
 				break;
 			case FloatType:
@@ -1149,7 +1188,9 @@ class GrParser {
 			case ChanType:
 				addInstruction(isExpectingValue ? GrOpcode.LocalStore2_Object : GrOpcode.LocalStore_Object, variable.register);
 				break;
-			default:
+			case VoidType:
+			case InternalTupleType:
+			case ReferenceType:
 				logError("Invalid type", "Cannot assign to a \'" ~ to!string(variable.type) ~ "\' type");
 			}
 		}
@@ -1177,11 +1218,12 @@ class GrParser {
             logError("Internal error", "Attempt to get field value");
         }
         else if(variable.isGlobal) {
-			switch(variable.type.baseType) with(GrBaseType) {
+			final switch(variable.type.baseType) with(GrBaseType) {
 			case BoolType:
 			case IntType:
 			case FunctionType:
 			case TaskType:
+			case EnumType:
                 if(allowOptimization
                     && currentFunction.instructions.length
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.GlobalStore_Int
@@ -1228,7 +1270,9 @@ class GrParser {
                 else
                     addInstruction(GrOpcode.GlobalLoad_Object, variable.register);
 				break;
-			default:
+			case VoidType:
+			case InternalTupleType:
+			case ReferenceType:
 				logError("Invalid type", "Cannot fetch from a \'" ~ to!string(variable.type) ~ "\' type");
 			}
 		}
@@ -1236,11 +1280,12 @@ class GrParser {
             if(!variable.isInitialized)
                 logError("Uninitialized variable", "The local variable is being used without being assigned");
             
-			switch(variable.type.baseType) with(GrBaseType) {
+			final switch(variable.type.baseType) with(GrBaseType) {
 			case BoolType:
 			case IntType:
 			case FunctionType:
 			case TaskType:
+			case EnumType:
                 if(allowOptimization
                     && currentFunction.instructions.length
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.LocalStore_Int
@@ -1287,7 +1332,9 @@ class GrParser {
                 else
                     addInstruction(GrOpcode.LocalLoad_Object, variable.register);
 				break;
-			default:
+			case VoidType:
+			case InternalTupleType:
+			case ReferenceType:
 				logError("Invalid type", "Cannot fetch from a \'" ~ to!string(variable.type) ~ "\' type");
 			}
 		}
@@ -1423,7 +1470,7 @@ class GrParser {
             case Semicolon:
                 checkAdvance();
                 break;
-            case Tuple:
+            case Enum:
             case Object:
                 skipDeclaration();
                 break;
@@ -1476,6 +1523,9 @@ class GrParser {
             case Object:
                 parseStructDeclaration();
                 break;
+            case Enum:
+                parseEnumDeclaration();
+                break;
 			case Main:
             case Event:
 			case TaskType:
@@ -1499,7 +1549,7 @@ class GrParser {
             case Semicolon:
                 checkAdvance();
                 break;
-            case Tuple:
+            case Enum:
             case Object:
                 skipDeclaration();
                 break;
@@ -1540,7 +1590,7 @@ class GrParser {
                 checkAdvance();
                 break;
             case Event:
-            case Tuple:
+            case Enum:
             case Object:
 			case Main:
 				skipDeclaration();
@@ -1573,7 +1623,37 @@ class GrParser {
         endGlobalScope();
 	}
 
-    void parseStructDeclaration() {
+    private void parseEnumDeclaration() {
+        checkAdvance();
+        if(get().type != GrLexemeType.Identifier)
+            logError("Missing Identifier", "An enum must be named");
+        const dstring enumName = get().svalue;
+        checkAdvance();
+        if(get().type != GrLexemeType.LeftCurlyBrace)
+            logError("Missing {", "The enum definition does not have a body");
+        checkAdvance();
+
+        dstring[] fields;
+        while(!isEnd()) {
+            if(get().type == GrLexemeType.RightCurlyBrace) {
+                checkAdvance();
+                break;
+            }
+            if(get().type != GrLexemeType.Identifier)
+                logError("Missing Identifier", "An enum field must be named");
+
+            auto fieldName = get().svalue;
+            checkAdvance();
+            fields ~= fieldName;
+
+            if(get().type != GrLexemeType.Semicolon)
+                logError("Missing semicolon", "A struct field declaration must end with a semicolon");
+            checkAdvance();
+        }
+        _data.addEnum(enumName, fields);
+    }
+
+    private void parseStructDeclaration() {
 		checkAdvance();
         if(get().type != GrLexemeType.Identifier)
             logError("Missing Identifier", "struct must have a name");
@@ -1669,6 +1749,12 @@ class GrParser {
                 checkAdvance();
                 return currentType;
             }
+            else if(lex.type == GrLexemeType.Identifier && _data.isEnum(lex.svalue)) {
+                currentType.baseType = GrBaseType.EnumType;
+                currentType.mangledType = lex.svalue;
+                checkAdvance();
+                return currentType;
+            }
             else if(lex.type == GrLexemeType.Identifier && _data.isUserType(lex.svalue)) {
                 currentType.baseType = GrBaseType.UserType;
                 currentType.mangledType = lex.svalue;
@@ -1747,6 +1833,7 @@ class GrParser {
         case BoolType:
         case FunctionType:
         case TaskType:
+        case EnumType:
             addInstruction(GrOpcode.GlobalPop_Int, 0u);
             break;
         case FloatType:
@@ -1778,6 +1865,7 @@ class GrParser {
         case BoolType:
         case FunctionType:
         case TaskType:
+        case EnumType:
             addInstruction(GrOpcode.GlobalPush_Int, nbPush);
             break;
         case FloatType:
@@ -1811,6 +1899,7 @@ class GrParser {
             case BoolType:
             case FunctionType:
             case TaskType:
+            case EnumType:
                 typeCounter.nbIntParams ++;
                 break;
             case FloatType:
@@ -2228,7 +2317,7 @@ class GrParser {
                     goto default;
                 break;
             case Identifier:
-                if(_data.isObject(get().svalue) || _data.isUserType(get().svalue))
+                if(_data.isEnum(get().svalue) || _data.isObject(get().svalue) || _data.isUserType(get().svalue))
                     parseLocalDeclaration();
                 else
                     goto default;
@@ -2824,6 +2913,7 @@ class GrParser {
         case BoolType:
         case FunctionType:
         case TaskType:
+        case EnumType:
             addInstruction(GrOpcode.Channel_Int, channelSize);
             break;
         case FloatType:
@@ -3090,7 +3180,7 @@ class GrParser {
             type = parseType();
             break;
         case Identifier:
-            if(_data.isObject(get().svalue) || _data.isUserType(get().svalue))
+            if(_data.isEnum(get().svalue) || _data.isObject(get().svalue) || _data.isUserType(get().svalue))
                 type = parseType();
             else
                 isTyped = false;
@@ -3161,6 +3251,7 @@ class GrParser {
         case IntType:
         case FunctionType:
         case TaskType:
+        case EnumType:
             addInstruction(GrOpcode.Length_Int);
             break;
         case FloatType:
@@ -3217,6 +3308,7 @@ class GrParser {
         case IntType:
         case FunctionType:
         case TaskType:
+        case EnumType:
             addInstruction(GrOpcode.Index2_Int);
             break;
         case FloatType:
@@ -3627,6 +3719,7 @@ class GrParser {
             case IntType:
             case FloatType:
             case StringType:
+            case EnumType:
                 return dst;
             case ArrayType:
             case ObjectType:
@@ -3653,6 +3746,7 @@ class GrParser {
             case FloatType:
             case StringType:
             case InternalTupleType:
+            case EnumType:
                 break;
             case ArrayType:
             case ObjectType:
@@ -3834,6 +3928,7 @@ class GrParser {
         case IntType:
         case FunctionType:
         case TaskType:
+        case EnumType:
             addInstruction(GrOpcode.Array_Int, arraySize);
             break;
         case FloatType:
@@ -3880,6 +3975,7 @@ class GrParser {
                     case IntType:
                     case FunctionType:
                     case TaskType:
+                    case EnumType:
                         addInstruction(GrOpcode.Index_Int);
                         break;
                     case FloatType:
@@ -3921,6 +4017,7 @@ class GrParser {
                 case IntType:
                 case FunctionType:
                 case TaskType:
+                case EnumType:
                     addInstruction(GrOpcode.Index_Int);
                     break;
                 case FloatType:
@@ -4130,6 +4227,7 @@ class GrParser {
             case BoolType:
             case FunctionType:
             case TaskType:
+            case EnumType:
                 counter.iCount ++;
                 break;
             case FloatType:
@@ -4378,6 +4476,7 @@ class GrParser {
                             case IntType:
                             case FunctionType:
                             case TaskType:
+                            case EnumType:
                                 setInstruction(GrOpcode.Index3_Int, cast(int)currentFunction.instructions.length - 1);
                                 break;
                             case FloatType:
@@ -4410,6 +4509,7 @@ class GrParser {
                         case IntType:
                         case FunctionType:
                         case TaskType:
+                        case EnumType:
                             setInstruction(GrOpcode.Index2_Int, cast(int)currentFunction.instructions.length - 1);
                             break;
                         case FloatType:
@@ -4528,6 +4628,7 @@ class GrParser {
                             case IntType:
                             case FunctionType:
                             case TaskType:
+                            case EnumType:
                                 addInstruction(asCopy ? GrOpcode.FieldLoad2_Int : GrOpcode.FieldLoad_Int, index);
                                 break;
                             case FloatType:
@@ -4827,9 +4928,9 @@ class GrParser {
     }
 
 	/// Parse an identifier or function call and return the deduced return type and lvalue.
-	GrType parseIdentifier(ref GrVariable variable, GrType expectedType, GrType selfValue = grVoid, bool isAssignment = false) {
+	private GrType parseIdentifier(ref GrVariable variable, GrType expectedType, GrType selfValue = grVoid, bool isAssignment = false) {
 		GrType returnType = GrBaseType.VoidType;
-		GrLexeme identifier = get();		
+		const GrLexeme identifier = get();		
 		bool isFunctionCall = false, isMethodCall = false, hasParenthesis = false;
         dstring identifierName = identifier.svalue;
 
@@ -4962,6 +5063,22 @@ class GrParser {
 					returnType = grPackTuple(addFunctionCall(mangledName));
 			}
 		}
+        else if(_data.isEnum(identifier.svalue)) {
+            const GrEnumDefinition definition = _data.getEnum(identifier.svalue);
+            if(get().type != GrLexemeType.Period)
+                logError("Missing enum field", "Must be of the form Foo.bar");
+            checkAdvance();
+            if(get().type != GrLexemeType.Identifier)
+                logError("Missing enum field", "Must be of the form Foo.bar");
+            const dstring fieldName = get().svalue;
+            if(!definition.hasField(fieldName))
+                logError("Unknown field", "This field does not exist");
+            checkAdvance();
+
+            returnType = GrType(GrBaseType.EnumType);
+            returnType.mangledType = definition.name;
+            addIntConstant(definition.getField(fieldName));
+        }
 		else {
 			//Declared variable.
 			variable = getVariable(identifierName);

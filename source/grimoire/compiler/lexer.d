@@ -28,7 +28,7 @@ enum GrLexemeType {
 	And, Or, Xor, Not,
 	Increment, Decrement,
 	Identifier, Integer, Float, Boolean, String,
-	Main, Event, Object, Tuple, New, Copy, Send, Receive,
+	Main, Event, Object, Enum, New, Copy, Send, Receive,
 	VoidType, IntType, FloatType, BoolType, StringType, ArrayType, FunctionType, TaskType, ChanType, AutoType,
 	If, Unless, Else, Switch, Select, Case, While, Do, Until, For, Loop, Return, Self,
 	Kill, KillAll, Yield, Break, Continue,
@@ -608,8 +608,8 @@ class GrLexer {
             case "object":
 				lex.type = GrLexemeType.Object;
 				break;
-            case "tuple":
-				lex.type = GrLexemeType.Tuple;
+            case "enum":
+				lex.type = GrLexemeType.Enum;
 				break;
 			case "if":
 				lex.type = GrLexemeType.If;
@@ -883,7 +883,7 @@ dstring grGetPrettyLexemeType(GrLexemeType operator) {
         "and", "or", "xor", "not",
         "++", "--",
         "identifier", "const_int", "const_float", "const_bool", "const_str",
-        "main", "event", "object", "tuple", "new", "copy", "send", "receive",
+        "main", "event", "object", "enum", "new", "copy", "send", "receive",
         "void", "int", "float", "bool", "string", "array", "var", "func", "task", "chan", "let",
         "if", "unless", "else", "switch", "select", "case", "while", "do", "until", "for", "loop", "return", "self",
 		"kill", "killall", "yield", "break", "continue"

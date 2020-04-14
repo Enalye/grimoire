@@ -18,10 +18,10 @@ class GrData {
         /// They're pointer only defined by a name. \
         /// Can only be used with primitives.
         dstring[] _userTypes;
+        /// Enum types.
+        GrEnumDefinition[] _enumTypes;
         /// Object types.
         GrObjectDefinition[] _objectTypes;
-        /// Tuples types.
-        GrTupleDefinition[dstring] _tupleTypes;
 
         /// All primitives, used for both the compiler and the runtime.
         GrPrimitive[] _primitives;
@@ -60,6 +60,18 @@ class GrData {
         return false;
     }
 
+    GrType addEnum(dstring name, dstring[] fields) {
+        GrEnumDefinition enumDef = new GrEnumDefinition;
+        enumDef.name = name;
+        enumDef.fields = fields;
+        enumDef.index = _enumTypes.length;
+        _enumTypes ~= enumDef;
+
+        GrType stType = GrBaseType.EnumType;
+        stType.mangledType = name;
+        return stType;
+    }
+
     /// Defined a struct type.
     GrType addObject(dstring name, dstring[] fields, GrType[] signature) {
         assert(fields.length == signature.length, "GrObjectDefinition signature mismatch");
@@ -73,6 +85,25 @@ class GrData {
         GrType stType = GrBaseType.ObjectType;
         stType.mangledType = name;
         return stType;
+    }
+
+    /// Is the enum defined ?
+    bool isEnum(dstring name) {
+        foreach(enumType; _enumTypes) {
+            if(enumType.name == name)
+                return true;
+        }
+        return false;
+    }
+
+    /// Return the enum definition.
+    GrEnumDefinition getEnum(dstring name) {
+        import std.conv: to;
+        foreach(enumType; _enumTypes) {
+            if(enumType.name == name)
+                return enumType;
+        }
+        assert(false, "Undefined enum \'" ~ to!string(name) ~ "\'");
     }
 
     /// Is the struct defined ?
