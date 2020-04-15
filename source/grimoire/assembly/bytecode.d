@@ -11,79 +11,79 @@ import std.outbuffer;
 
 /// Low-level instructions for the VM.
 enum GrOpcode {
-    Nop, Raise, Try, Catch,
-    Kill, KillAll, Yield, Task, AnonymousTask, New,
+    nop, raise_, try_, catch_,
+    kill_, killAll_, yield, task, anonymousTask, new_,
 
-    Channel_Int, Channel_Float, Channel_String, Channel_Object,
-    Send_Int, Send_Float, Send_String, Send_Object,
-    Receive_Int, Receive_Float, Receive_String, Receive_Object,
-    StartSelectChannel, EndSelectChannel, TryChannel, CheckChannel,
+    channel_Int, channel_Float, channel_String, channel_Object,
+    send_Int, send_Float, send_String, send_Object,
+    receive_Int, receive_Float, receive_String, receive_Object,
+    startSelectChannel, endSelectChannel, tryChannel, checkChannel,
 
-    ShiftStack_Int, ShiftStack_Float, ShiftStack_String, ShiftStack_Object,
+    shiftStack_Int, shiftStack_Float, shiftStack_String, shiftStack_Object,
     
-    LocalStore_Int, LocalStore_Float, LocalStore_String, LocalStore_Object,
-    LocalStore2_Int, LocalStore2_Float, LocalStore2_String, LocalStore2_Object,
-    LocalLoad_Int, LocalLoad_Float, LocalLoad_String, LocalLoad_Object,
+    localStore_Int, localStore_Float, localStore_String, localStore_Object,
+    localStore2_Int, localStore2_Float, localStore2_String, localStore2_Object,
+    localLoad_Int, localLoad_Float, localLoad_String, localLoad_Object,
     
-    GlobalStore_Int, GlobalStore_Float, GlobalStore_String, GlobalStore_Object,
-    GlobalStore2_Int, GlobalStore2_Float, GlobalStore2_String, GlobalStore2_Object,
-    GlobalLoad_Int, GlobalLoad_Float, GlobalLoad_String, GlobalLoad_Object,
+    globalStore_Int, globalStore_Float, globalStore_String, globalStore_Object,
+    globalStore2_Int, globalStore2_Float, globalStore2_String, globalStore2_Object,
+    globalLoad_Int, globalLoad_Float, globalLoad_String, globalLoad_Object,
 
-    RefStore_Int, RefStore_Float, RefStore_String, RefStore_Object,
-    RefStore2_Int, RefStore2_Float, RefStore2_String, RefStore2_Object,
+    refStore_Int, refStore_Float, refStore_String, refStore_Object,
+    refStore2_Int, refStore2_Float, refStore2_String, refStore2_Object,
 
-    FieldStore_Int, FieldStore_Float, FieldStore_String, FieldStore_Object,
-    FieldLoad,
-    FieldLoad_Int, FieldLoad_Float, FieldLoad_String, FieldLoad_Object,
-    FieldLoad2_Int, FieldLoad2_Float, FieldLoad2_String, FieldLoad2_Object,
+    fieldStore_Int, fieldStore_Float, fieldStore_String, fieldStore_Object,
+    fieldLoad,
+    fieldLoad_Int, fieldLoad_Float, fieldLoad_String, fieldLoad_Object,
+    fieldLoad2_Int, fieldLoad2_Float, fieldLoad2_String, fieldLoad2_Object,
 
-    Const_Int, Const_Float, Const_Bool, Const_String, Const_Meta,
+    const_Int, const_Float, const_Bool, const_String, const_Meta,
     
-    GlobalPush_Int, GlobalPush_Float, GlobalPush_String, GlobalPush_Object,
-    GlobalPop_Int, GlobalPop_Float, GlobalPop_String, GlobalPop_Object,
+    globalPush_Int, globalPush_Float, globalPush_String, globalPush_Object,
+    globalPop_Int, globalPop_Float, globalPop_String, globalPop_Object,
 
-    Equal_Int, Equal_Float, Equal_String,
-    NotEqual_Int, NotEqual_Float, NotEqual_String,
-    GreaterOrEqual_Int, GreaterOrEqual_Float,
-    LesserOrEqual_Int, LesserOrEqual_Float,
-    Greater_Int, Greater_Float,
-    Lesser_Int, Lesser_Float,
-    IsNonNull_Object,
+    equal_Int, equal_Float, equal_String,
+    notEqual_Int, notEqual_Float, notEqual_String,
+    greaterOrEqual_Int, greaterOrEqual_Float,
+    lesserOrEqual_Int, lesserOrEqual_Float,
+    greater_Int, greater_Float,
+    lesser_Int, lesser_Float,
+    isNonNull_Object,
 
-    And_Int, Or_Int, Not_Int,
-    Concatenate_String,
-    Add_Int, Add_Float,
-    Substract_Int, Substract_Float,
-    Multiply_Int, Multiply_Float,
-    Divide_Int, Divide_Float,
-    Remainder_Int, Remainder_Float,
-    Negative_Int, Negative_Float,
-    Increment_Int, Increment_Float,
-    Decrement_Int, Decrement_Float,
+    and_Int, or_Int, not_Int,
+    concatenate_String,
+    add_Int, add_Float,
+    substract_Int, substract_Float,
+    multiply_Int, multiply_Float,
+    divide_Int, divide_Float,
+    remainder_Int, remainder_Float,
+    negative_Int, negative_Float,
+    increment_Int, increment_Float,
+    decrement_Int, decrement_Float,
 
-    Swap_Int, Swap_Float, Swap_String, Swap_Object,
+    swap_Int, swap_Float, swap_String, swap_Object,
 
-    SetupIterator,
+    setupIterator,
 
-    LocalStack_Int, LocalStack_Float, LocalStack_String, LocalStack_Object,
-    Call, AnonymousCall, PrimitiveCall,
-    Return, Unwind, Defer,
-    Jump, JumpEqual, JumpNotEqual,
+    localStack_Int, localStack_Float, localStack_String, localStack_Object,
+    call, anonymousCall, primitiveCall,
+    return_, unwind, defer,
+    jump, jumpEqual, jumpNotEqual,
 
-    Array_Int, Array_Float, Array_String, Array_Object,
-    Length_Int, Length_Float, Length_String, Length_Object,
-    Index_Int, Index_Float, Index_String, Index_Object,
-    Index2_Int, Index2_Float, Index2_String, Index2_Object,
-    Index3_Int, Index3_Float, Index3_String, Index3_Object,
+    array_Int, array_Float, array_String, array_Object,
+    length_Int, length_Float, length_String, length_Object,
+    index_Int, index_Float, index_String, index_Object,
+    index2_Int, index2_Float, index2_String, index2_Object,
+    index3_Int, index3_Float, index3_String, index3_Object,
 
-    Concatenate_IntArray, Concatenate_FloatArray, Concatenate_StringArray, Concatenate_ObjectArray,
-    Append_Int, Append_Float, Append_String, Append_Object,
-    Prepend_Int, Prepend_Float, Prepend_String, Prepend_Object,
+    concatenate_IntArray, concatenate_FloatArray, concatenate_StringArray, concatenate_ObjectArray,
+    append_Int, append_Float, append_String, append_Object,
+    prepend_Int, prepend_Float, prepend_String, prepend_Object,
 
-    Equal_IntArray, Equal_FloatArray, Equal_StringArray,
-    NotEqual_IntArray, NotEqual_FloatArray, NotEqual_StringArray,
+    equal_IntArray, equal_FloatArray, equal_StringArray,
+    notEqual_IntArray, notEqual_FloatArray, notEqual_StringArray,
 
-    Debug_ProfileBegin, Debug_ProfileEnd
+    debug_ProfileBegin, debug_ProfileEnd
 }
 
 /// Compiled form of grimoire.
@@ -109,7 +109,7 @@ struct GrBytecode {
     /// Number of ptr based global variables declared.
         oglobalsCount;
 
-    /// Global event functions.
+    /// global event functions.
     /// Their name are in a mangled state.
     uint[dstring] events;
 

@@ -25,46 +25,46 @@ dstring grMangleFunction(GrType[] signature) {
 	foreach(type; signature) {
 		mangledName ~= "$";
 		final switch(type.baseType) with(GrBaseType) {
-		case VoidType:
+		case void_:
 			mangledName ~= "*";
 			break;
-		case IntType:
+		case int_:
 			mangledName ~= "i";
 			break;
-		case FloatType:
+		case float_:
 			mangledName ~= "r";
 			break;
-		case BoolType:
+		case bool_:
 			mangledName ~= "b";
 			break;
-		case StringType:
+		case string_:
 			mangledName ~= "s";
 			break;
-		case ArrayType:
+		case array_:
 			mangledName ~= "n(" ~ type.mangledType ~ ")";
 			break;
-        case ObjectType:
+        case class_:
 			mangledName ~= "p(" ~ type.mangledType ~ ")";
 			break;
-        case EnumType:
+        case enum_:
 			mangledName ~= "e(" ~ type.mangledType ~ ")";
 			break;
-        case UserType:
+        case foreign:
             mangledName ~= "u(" ~ type.mangledType ~ ")";
             break;
-		case FunctionType:
+		case function_:
 			mangledName ~= "f(" ~ type.mangledType ~ ")(" ~ type.mangledReturnType ~ ")";
 			break;
-		case TaskType:
+		case task:
 			mangledName ~= "t(" ~ type.mangledType ~ ")";
 			break;
-        case ChanType:
+        case chan:
 			mangledName ~= "c(" ~ type.mangledType ~ ")";
 			break;
-        case ReferenceType:
+        case reference:
             mangledName ~= "h(" ~ type.mangledType ~ ")";
             break;
-        case InternalTupleType:
+        case internalTuple:
             throw new Exception("Trying to mangle a tuple. Tuples should not exist here.");
 		}
 	}
@@ -91,7 +91,7 @@ dstring grMangleNamedFunction(dstring name, GrType[] signature) {
     Get the type of the function.
 */
 GrType grGetFunctionAsType(GrFunction func) {
-    GrType type = func.isTask ? GrBaseType.TaskType : GrBaseType.FunctionType;
+    GrType type = func.isTask ? GrBaseType.task : GrBaseType.function_;
     type.mangledType = grMangleNamedFunction("", func.inSignature);
     type.mangledReturnType = grMangleNamedFunction("", func.outSignature);
     return type;
@@ -130,7 +130,7 @@ dstring grUnmangleSubFunction(dstring mangledSignature, ref int i) {
     Reverse the mangling operation for a single type.
 */
 GrType grUnmangle(dstring mangledSignature) {
-    GrType currentType = GrBaseType.VoidType;
+    GrType currentType = GrBaseType.void_;
 
     int i;
     if(i < mangledSignature.length) {
@@ -142,28 +142,28 @@ GrType grUnmangle(dstring mangledSignature) {
         //Value
         switch(mangledSignature[i]) {
         case '*':
-            currentType.baseType = GrBaseType.VoidType;
+            currentType.baseType = GrBaseType.void_;
             break;
         case 'i':
-            currentType.baseType = GrBaseType.IntType;
+            currentType.baseType = GrBaseType.int_;
             break;
         case 'r':
-            currentType.baseType = GrBaseType.FloatType;
+            currentType.baseType = GrBaseType.float_;
             break;
         case 'b':
-            currentType.baseType = GrBaseType.BoolType;
+            currentType.baseType = GrBaseType.bool_;
             break;
         case 's':
-            currentType.baseType = GrBaseType.StringType;
+            currentType.baseType = GrBaseType.string_;
             break;
         case 'n':
             i ++;
-            currentType.baseType = GrBaseType.ArrayType;
+            currentType.baseType = GrBaseType.array_;
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             i ++;
             break;
         case 'e':
-            currentType.baseType = GrBaseType.EnumType;
+            currentType.baseType = GrBaseType.enum_;
             dstring enumName;
             if((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid unmangle mangling format in struct");
@@ -180,7 +180,7 @@ GrType grUnmangle(dstring mangledSignature) {
             currentType.mangledType = enumName;
             break;
         case 'p':
-            currentType.baseType = GrBaseType.ObjectType;
+            currentType.baseType = GrBaseType.class_;
             dstring structName;
             if((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid unmangle mangling format in struct");
@@ -197,7 +197,7 @@ GrType grUnmangle(dstring mangledSignature) {
             currentType.mangledType = structName;
             break;
         case 'u':
-            currentType.baseType = GrBaseType.UserType;
+            currentType.baseType = GrBaseType.foreign;
             dstring userTypeName;
             if((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid unmangle mangling format in usertype");
@@ -215,7 +215,7 @@ GrType grUnmangle(dstring mangledSignature) {
             break;
         case 'f':
             i ++;
-            currentType.baseType = GrBaseType.FunctionType;
+            currentType.baseType = GrBaseType.function_;
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             i ++;
             currentType.mangledReturnType = grUnmangleSubFunction(mangledSignature, i);
@@ -223,13 +223,13 @@ GrType grUnmangle(dstring mangledSignature) {
             break;
         case 't':
             i ++;
-            currentType.baseType = GrBaseType.TaskType;
+            currentType.baseType = GrBaseType.task;
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             i ++;
             break;
         case 'c':
             i ++;
-            currentType.baseType = GrBaseType.ChanType;
+            currentType.baseType = GrBaseType.chan;
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             i ++;
             break;
@@ -303,30 +303,30 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
         i ++;
 
         //Value
-        GrType currentType = GrBaseType.VoidType;
+        GrType currentType = GrBaseType.void_;
         switch(mangledSignature[i]) {
         case '*':
-            currentType.baseType = GrBaseType.VoidType;
+            currentType.baseType = GrBaseType.void_;
             break;
         case 'i':
-            currentType.baseType = GrBaseType.IntType;
+            currentType.baseType = GrBaseType.int_;
             break;
         case 'r':
-            currentType.baseType = GrBaseType.FloatType;
+            currentType.baseType = GrBaseType.float_;
             break;
         case 'b':
-            currentType.baseType = GrBaseType.BoolType;
+            currentType.baseType = GrBaseType.bool_;
             break;
         case 's':
-            currentType.baseType = GrBaseType.StringType;
+            currentType.baseType = GrBaseType.string_;
             break;
         case 'n':
             i ++;
-            currentType.baseType = GrBaseType.ArrayType;
+            currentType.baseType = GrBaseType.array_;
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             break;
         case 'e':
-            currentType.baseType = GrBaseType.EnumType;
+            currentType.baseType = GrBaseType.enum_;
             dstring enumName;
             if((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid mangling format");
@@ -343,7 +343,7 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
             currentType.mangledType = enumName;
             break;
         case 'p':
-            currentType.baseType = GrBaseType.ObjectType;
+            currentType.baseType = GrBaseType.class_;
             dstring structName;
             if((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid mangling format");
@@ -360,7 +360,7 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
             currentType.mangledType = structName;
             break;
         case 'u':
-            currentType.baseType = GrBaseType.UserType;
+            currentType.baseType = GrBaseType.foreign;
             dstring userTypeName;
             if((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid mangling format");
@@ -378,19 +378,19 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
             break;
         case 'f':
             i ++;
-            currentType.baseType = GrBaseType.FunctionType;
+            currentType.baseType = GrBaseType.function_;
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             i ++;
             currentType.mangledReturnType = grUnmangleSubFunction(mangledSignature, i);
             break;
         case 't':
             i ++;
-            currentType.baseType = GrBaseType.TaskType;
+            currentType.baseType = GrBaseType.task;
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             break;
         case 'c':
             i ++;
-            currentType.baseType = GrBaseType.ChanType;
+            currentType.baseType = GrBaseType.chan;
             currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
             break;
         default:
@@ -407,17 +407,17 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
 */
 string grGetPrettyType(GrType variableType) {
     final switch(variableType.baseType) with(GrBaseType) {
-    case VoidType:
+    case void_:
         return "void";
-    case IntType:
+    case int_:
         return "int";
-    case FloatType:
+    case float_:
         return "float";
-    case BoolType:
+    case bool_:
         return "bool";
-    case StringType:
+    case string_:
         return "string";
-    case ArrayType:
+    case array_:
         string result = "array(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
@@ -429,7 +429,7 @@ string grGetPrettyType(GrType variableType) {
         }
         result ~= ")";
         return result;
-    case FunctionType:
+    case function_:
         string result = "func(";
         int i;
         auto inSignature = grUnmangleSignature(variableType.mangledType);
@@ -450,7 +450,7 @@ string grGetPrettyType(GrType variableType) {
             i ++;
         }
         return result;
-    case ChanType:
+    case chan:
         string result = "chan(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
@@ -462,7 +462,7 @@ string grGetPrettyType(GrType variableType) {
         }
         result ~= ")";
         return result;
-    case ReferenceType:
+    case reference:
         string result = "ref(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
@@ -474,7 +474,7 @@ string grGetPrettyType(GrType variableType) {
         }
         result ~= ")";
         return result;
-    case TaskType:
+    case task:
         string result = "task(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
@@ -486,11 +486,11 @@ string grGetPrettyType(GrType variableType) {
         }
         result ~= ")";
         return result;
-    case EnumType:
-    case ObjectType:
-    case UserType:
+    case enum_:
+    case class_:
+    case foreign:
         return to!string(variableType.mangledType);
-    case InternalTupleType:
+    case internalTuple:
         throw new Exception("Trying to display a tuple. Tuples should not exist here.");
     }
 }

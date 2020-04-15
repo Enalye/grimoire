@@ -17,11 +17,11 @@ class GrData {
         /// Opaque pointer types. \
         /// They're pointer only defined by a name. \
         /// Can only be used with primitives.
-        dstring[] _userTypes;
+        dstring[] _foreigns;
         /// Enum types.
         GrEnumDefinition[] _enumTypes;
         /// Object types.
-        GrObjectDefinition[] _objectTypes;
+        GrClassDefinition[] _classTypes;
 
         /// All primitives, used for both the compiler and the runtime.
         GrPrimitive[] _primitives;
@@ -36,30 +36,31 @@ class GrData {
     }
 
     /// Define an opaque pointer type.
-    GrType addUserType(dstring name) {
+    GrType addForeign(dstring name) {
         bool isDeclared;
-        foreach(usertype; _userTypes) {
-            if(usertype == name)
+        foreach(foreign; _foreigns) {
+            if(foreign == name)
                 isDeclared = true;
         }
 
         if(!isDeclared)
-            _userTypes ~= name;
+            _foreigns ~= name;
 
-        GrType type = GrBaseType.UserType;
+        GrType type = GrBaseType.foreign;
         type.mangledType = name;
         return type;
     }
 
     /// Is the user-type defined ?
-    bool isUserType(dstring name) {
-        foreach(usertype; _userTypes) {
-            if(usertype == name)
+    bool isForeign(dstring name) {
+        foreach(foreign; _foreigns) {
+            if(foreign == name)
                 return true;
         }
         return false;
     }
 
+    /// Define an enum type.
     GrType addEnum(dstring name, dstring[] fields) {
         GrEnumDefinition enumDef = new GrEnumDefinition;
         enumDef.name = name;
@@ -67,22 +68,22 @@ class GrData {
         enumDef.index = _enumTypes.length;
         _enumTypes ~= enumDef;
 
-        GrType stType = GrBaseType.EnumType;
+        GrType stType = GrBaseType.enum_;
         stType.mangledType = name;
         return stType;
     }
 
-    /// Defined a struct type.
-    GrType addObject(dstring name, dstring[] fields, GrType[] signature) {
-        assert(fields.length == signature.length, "GrObjectDefinition signature mismatch");
-        GrObjectDefinition object = new GrObjectDefinition;
-        object.name = name;
-        object.signature = signature;
-        object.fields = fields;
-        object.index = _objectTypes.length;
-        _objectTypes ~= object;
+    /// Define a class type.
+    GrType addClass(dstring name, dstring[] fields, GrType[] signature) {
+        assert(fields.length == signature.length, "Class signature mismatch");
+        GrClassDefinition class_ = new GrClassDefinition;
+        class_.name = name;
+        class_.signature = signature;
+        class_.fields = fields;
+        class_.index = _classTypes.length;
+        _classTypes ~= class_;
 
-        GrType stType = GrBaseType.ObjectType;
+        GrType stType = GrBaseType.class_;
         stType.mangledType = name;
         return stType;
     }
@@ -107,22 +108,22 @@ class GrData {
     }
 
     /// Is the struct defined ?
-    bool isObject(dstring name) {
-        foreach(object; _objectTypes) {
-            if(object.name == name)
+    bool isClass(dstring name) {
+        foreach(class_; _classTypes) {
+            if(class_.name == name)
                 return true;
         }
         return false;
     }
 
     /// Return the struct definition.
-    GrObjectDefinition getObject(dstring name) {
+    GrClassDefinition getClass(dstring name) {
         import std.conv: to;
-        foreach(object; _objectTypes) {
-            if(object.name == name)
-                return object;
+        foreach(class_; _classTypes) {
+            if(class_.name == name)
+                return class_;
         }
-        assert(false, "Undefined object \'" ~ to!string(name) ~ "\'");
+        assert(false, "Undefined class_ \'" ~ to!string(name) ~ "\'");
     }
 
     /**
@@ -208,19 +209,19 @@ class GrData {
     /// Resolve signatures
     package void resolveSignatures() {
         //Resolve all unresolved field types
-        resolveObjectSignatures();
+        resolveClassSignatures();
 
         //Then we can resolve _primitives' signature
         resolvePrimitiveSignatures();
     }
 
     /// Resolve struct fields that couldn't be defined beforehand.
-    private void resolveObjectSignatures() {
-        foreach(object; _objectTypes) {
-            for(int i; i < object.signature.length; i ++) {
-                if(object.signature[i].baseType == GrBaseType.VoidType) {
-                    assert(isObject(object.signature[i].mangledType), "Cannot resolve object field");
-                    object.signature[i].baseType = GrBaseType.ObjectType;
+    private void resolveClassSignatures() {
+        foreach(class_; _classTypes) {
+            for(int i; i < class_.signature.length; i ++) {
+                if(class_.signature[i].baseType == GrBaseType.void_) {
+                    assert(isClass(class_.signature[i].mangledType), "Cannot resolve class member");
+                    class_.signature[i].baseType = GrBaseType.class_;
                 }
             }
         }

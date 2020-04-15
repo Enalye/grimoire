@@ -19,11 +19,11 @@ Complex types use mangledType and mangledReturnType
 to represent them.
 */
 enum GrBaseType {
-    VoidType, IntType, FloatType, BoolType, StringType,
-    ArrayType, FunctionType, TaskType,
-    ObjectType, UserType, ChanType, EnumType,
-    InternalTupleType,
-    ReferenceType, 
+    void_, int_, float_, bool_, string_,
+    array_, function_, task,
+    class_, foreign, chan, enum_,
+    internalTuple,
+    reference, 
 }
 
 /**
@@ -65,32 +65,45 @@ struct GrType {
     bool opEquals(const GrType v) const {
         if(baseType != v.baseType)
             return false;
-        if(baseType == GrBaseType.FunctionType || baseType == GrBaseType.TaskType)
+        if(baseType == GrBaseType.function_ || baseType == GrBaseType.task)
             return mangledType == v.mangledType && mangledReturnType == v.mangledReturnType;
         return true;
 	}
+
+    /// Only to disable warnings because of opEquals.
+	size_t toHash() const @safe pure nothrow {
+		return 0;
+	}
 }
 
-const GrType grVoid = GrType(GrBaseType.VoidType);
-const GrType grInt = GrType(GrBaseType.IntType);
-const GrType grFloat = GrType(GrBaseType.FloatType);
-const GrType grBool = GrType(GrBaseType.BoolType);
-const GrType grString = GrType(GrBaseType.StringType);
-const GrType grIntArray = GrType(GrBaseType.ArrayType, grMangleFunction([grInt]));
-const GrType grFloatArray = GrType(GrBaseType.ArrayType, grMangleFunction([grFloat]));
-const GrType grStringArray = GrType(GrBaseType.ArrayType, grMangleFunction([grString]));
+/// No type
+const GrType grVoid = GrType(GrBaseType.void_);
+/// Integer
+const GrType grInt = GrType(GrBaseType.int_);
+/// Float
+const GrType grFloat = GrType(GrBaseType.float_);
+/// Bool
+const GrType grBool = GrType(GrBaseType.bool_);
+/// String
+const GrType grString = GrType(GrBaseType.string_);
+/// Int array
+const GrType grIntArray = GrType(GrBaseType.array_, grMangleFunction([grInt]));
+/// Float array
+const GrType grFloatArray = GrType(GrBaseType.array_, grMangleFunction([grFloat]));
+/// String array
+const GrType grStringArray = GrType(GrBaseType.array_, grMangleFunction([grString]));
 
 /// Pack multiple types as a single one.
 package GrType grPackTuple(GrType[] types) {
     const dstring mangledName = grMangleFunction(types);
-    GrType type = GrBaseType.InternalTupleType;
+    GrType type = GrBaseType.internalTuple;
     type.mangledType = mangledName;
     return type;
 }
 
 /// Unpack multiple types from a single one.
 package GrType[] grUnpackTuple(GrType type) {
-    if(type.baseType != GrBaseType.InternalTupleType)
+    if(type.baseType != GrBaseType.internalTuple)
         throw new Exception("Cannot unpack a not tuple type.");
     return grUnmangleSignature(type.mangledType);
 }
@@ -117,9 +130,9 @@ package class GrVariable {
     dstring name;
 }
 
-/// Create a GrType of UserType for the type system.
-GrType grGetUserType(dstring name) {
-    GrType type = GrBaseType.UserType;
+/// Create a foreign GrType for the type system.
+GrType grGetForeignType(dstring name) {
+    GrType type = GrBaseType.foreign;
     type.mangledType = name;
     return type;
 }
@@ -136,6 +149,7 @@ class GrEnumDefinition {
     /// Unique ID of the enum definition.
     size_t index;
 
+    /// Does the field name exists ?
     bool hasField(dstring name) const {
         foreach(field; fields) {
             if(field == name)
@@ -144,6 +158,7 @@ class GrEnumDefinition {
         return false;
     }
 
+    /// Returns the value of the field
     int getField(dstring name) const {
         import std.conv: to;
         int fieldIndex = 0;
@@ -165,7 +180,7 @@ object MyObject {
 }
 ---
 */
-class GrObjectDefinition {
+class GrClassDefinition {
     /// Identifier.
     dstring name;
     /// List of field types.
@@ -176,9 +191,9 @@ class GrObjectDefinition {
     size_t index;
 }
 
-/// Create a GrType of ObjectType for the type system.
-GrType grGetObjectType(dstring name) {
-    GrType stType = GrBaseType.ObjectType;
+/// Create a GrType of class for the type system.
+GrType grGetClassType(dstring name) {
+    GrType stType = GrBaseType.class_;
     stType.mangledType = name;
     return stType;
 }
@@ -194,7 +209,7 @@ struct GrInstruction {
 /**
 Function/Task/Event definition.
 */
-class GrFunction {
+package class GrFunction {
     /// Every variable declared within its scope.
 	GrVariable[dstring] localVariables;
     /// All the function instructions.
@@ -220,7 +235,7 @@ class GrFunction {
     bool[] isDeferrableSectionLocked = [false];
 }
 
-class GrFunctionCall {
+package class GrFunctionCall {
 	dstring mangledName;
 	uint position;
 	GrFunction caller, functionToCall;
@@ -228,13 +243,13 @@ class GrFunctionCall {
     bool isAddress;
 }
 
-class GrDeferrableSection {
+package class GrDeferrableSection {
     GrDeferBlock[] deferredBlocks;
     uint deferInitPositions;
     uint[] deferredCalls;
 }
 
-class GrDeferBlock {
+package class GrDeferBlock {
     uint position;
     uint parsePosition;
     uint scopeLevel;

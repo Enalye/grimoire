@@ -25,12 +25,12 @@ package final class GrField {
 /// Object value in Grimoire runtime.
 final class GrObject {
     package {
-        GrObjectDefinition _type;
+        GrClassDefinition _type;
         /// Inner fields, indexes are known at compile time.
         GrField[] _fields;
 
         /// Ctor
-        this(GrObjectDefinition type) {
+        this(GrClassDefinition type) {
             _type = type;
             _fields.length = type.fields.length;
             for(size_t index; index < _fields.length; ++ index) {

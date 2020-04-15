@@ -116,7 +116,7 @@ private {
 			parser.functions.remove("main"d);
 		}
 		else {
-			opcodes[lastOpcodeCount] = makeOpcode(cast(uint) GrOpcode.Kill, 0u);
+			opcodes[lastOpcodeCount] = makeOpcode(cast(uint) GrOpcode.kill_, 0u);
 			lastOpcodeCount ++;
 		}
 
@@ -150,7 +150,7 @@ private {
 		parser.solveFunctionCalls(opcodes);
 
         //The contexts will jump here if the VM is panicking.
-        opcodes[$ - 1] = makeOpcode(cast(uint)GrOpcode.Unwind, 0);
+        opcodes[$ - 1] = makeOpcode(cast(uint)GrOpcode.unwind, 0);
 
 		GrBytecode bytecode;
 

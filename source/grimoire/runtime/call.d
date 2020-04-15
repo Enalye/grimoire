@@ -67,32 +67,35 @@ class GrCall {
         }
 
         for(int i; i < inSignature.length; i ++) {
-            GrType type = inSignature[i];
+            const GrType type = inSignature[i];
             dstring name = prefix ~ parameters[i];
-            switch(type.baseType) with(GrBaseType) {
-            case BoolType:
-            case IntType:
-            case FunctionType:
-            case TaskType:
-            case ChanType:
+            final switch(type.baseType) with(GrBaseType) {
+            case bool_:
+            case int_:
+            case function_:
+            case task:
+            case enum_:
+            case chan:
                 _iparams ++;
                 _ilocals ~= name;
                 break;
-            case FloatType:
+            case float_:
                 _fparams ++;
                 _flocals ~= name;
                 break;
-            case StringType:
+            case string_:
                 _sparams ++;
                 _slocals ~= name;
                 break;
-            case ArrayType:
-            case ObjectType:
-            case UserType:
+            case array_:
+            case class_:
+            case foreign:
                 _oparams ++;
                 _olocals ~= name;
                 break;
-            default:
+            case void_:
+            case internalTuple:
+            case reference:
                 throw new Exception("Call object: invalid type during setup");
             }
         }
@@ -251,9 +254,9 @@ class GrCall {
     /// Create a new object of type `typeName`.
     GrObject createObject(dstring typeName) {
         int index;
-        for(; index < _data._objectTypes.length; index ++) {
-            if(typeName == _data._objectTypes[index].name)
-                return new GrObject(_data._objectTypes[index]);
+        for(; index < _data._classTypes.length; index ++) {
+            if(typeName == _data._classTypes[index].name)
+                return new GrObject(_data._classTypes[index]);
         }
         return null;
     }
