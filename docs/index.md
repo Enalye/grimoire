@@ -22,6 +22,7 @@ You can easily define custom functions and types from D.
   - Enumerations
   - Classes
   - Channels
+  - Type aliases
 
 - Errors:
   - Error Handling
@@ -821,6 +822,30 @@ main {
 }
 ```
 Here, foo will be blocked until something is written on the channel, then it'll print it.
+
+* * *
+
+# Type Aliases
+
+A type alias allow types to be named differently, making long signatures shorter.
+
+```cpp
+func square(int i) int {
+	return i * i;
+};
+
+type MyFunc = func(int) int;
+
+main {
+    MyFunc myFunc = &(MyFunc) square;
+	10:myFunc:printl;
+}
+```
+
+You can also declare aliases in D by calling `addTypeAlias` on your `GrData`:
+```d
+data.addTypeAlias("MyInt", grInt);
+```
 
 * * *
 

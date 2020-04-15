@@ -1513,6 +1513,7 @@ final class GrParser {
             case voidType: .. case arrayType:
             case autoType:
             case identifier:
+            case type_:
                 skipExpression();
                 break;
 			default:
@@ -1544,6 +1545,9 @@ final class GrParser {
                 break;
             case enum_:
                 parseEnumDeclaration();
+                break;
+            case type_:
+                parseTypeAliasDeclaration();
                 break;
 			case main_:
             case event_:
@@ -1592,6 +1596,7 @@ final class GrParser {
             case voidType: .. case arrayType:
             case autoType:
             case identifier:
+            case type_:
                 skipExpression();
                 break;
 			default:
@@ -1635,12 +1640,34 @@ final class GrParser {
                     break;
                 }
                 goto default;
+            case type_:
+                skipExpression();
+                break;
 			default:
 				logError("Invalid type", "The type should be either main, func, task or struct");
 			}
 		}
         endGlobalScope();
 	}
+
+    /**
+    Declare a new alias of a type.
+    */
+    private void parseTypeAliasDeclaration() {
+        checkAdvance();
+        if(get().type != GrLexemeType.identifier)
+            logError("Missing Identifier", "A type alias must be named");
+        const dstring typeAliasName = get().svalue;
+        checkAdvance();
+        if(get().type != GrLexemeType.assign)
+            logError("Missing =", "This should be an assignment");
+        checkAdvance();
+        GrType type = parseType(true);
+        if(get().type != GrLexemeType.semicolon)
+            logError("Missing ;", "The definition must end with a semicolon");
+
+        _data.addTypeAlias(typeAliasName, type);
+    }
 
     private void parseEnumDeclaration() {
         checkAdvance();
@@ -1762,7 +1789,12 @@ final class GrParser {
 
         GrLexeme lex = get();
         if(!lex.isType) {
-            if(lex.type == GrLexemeType.identifier && _data.isClass(lex.svalue)) {
+            if(lex.type == GrLexemeType.identifier && _data.isTypeAlias(lex.svalue)) {
+                currentType = _data.getTypeAlias(lex.svalue).type;
+                checkAdvance();
+                return currentType;
+            }
+            else if(lex.type == GrLexemeType.identifier && _data.isClass(lex.svalue)) {
                 currentType.baseType = GrBaseType.class_;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
@@ -2340,7 +2372,7 @@ final class GrParser {
                     goto default;
                 break;
             case identifier:
-                if(_data.isEnum(get().svalue) || _data.isClass(get().svalue) || _data.isForeign(get().svalue))
+                if(_data.isTypeAlias(get().svalue) || _data.isEnum(get().svalue) || _data.isClass(get().svalue) || _data.isForeign(get().svalue))
                     parseLocalDeclaration();
                 else
                     goto default;
@@ -3217,7 +3249,7 @@ final class GrParser {
             type = parseType();
             break;
         case identifier:
-            if(_data.isEnum(get().svalue) || _data.isClass(get().svalue) || _data.isForeign(get().svalue))
+            if(_data.isTypeAlias(get().svalue) || _data.isEnum(get().svalue) || _data.isClass(get().svalue) || _data.isForeign(get().svalue))
                 type = parseType();
             else
                 isTyped = false;
@@ -5063,7 +5095,7 @@ final class GrParser {
                 else {
                     if(hasParenthesis && get().type == GrLexemeType.rightParenthesis)
                         advance();
-                    if(anonSignature.length)
+                    if(signature.length != anonSignature.length)
                         logError("Invalid anonymous call", "The number of parameters does not match");
                 }
 

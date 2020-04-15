@@ -23,6 +23,8 @@ class GrData {
         /// They're pointer only defined by a name. \
         /// Can only be used with primitives.
         dstring[] _foreigns;
+        /// Type aliases
+        GrTypeAliasDefinition[] _typeAliases;
         /// Enum types.
         GrEnumDefinition[] _enumTypes;
         /// Object types.
@@ -38,31 +40,6 @@ class GrData {
         if(value + 1 > value)
             assert(false, "TODO: Implement later");
         return grVoid;
-    }
-
-    /// Define an opaque pointer type.
-    GrType addForeign(dstring name) {
-        bool isDeclared;
-        foreach(foreign; _foreigns) {
-            if(foreign == name)
-                isDeclared = true;
-        }
-
-        if(!isDeclared)
-            _foreigns ~= name;
-
-        GrType type = GrBaseType.foreign;
-        type.mangledType = name;
-        return type;
-    }
-
-    /// Is the user-type defined ?
-    bool isForeign(dstring name) {
-        foreach(foreign; _foreigns) {
-            if(foreign == name)
-                return true;
-        }
-        return false;
     }
 
     /// Define an enum type.
@@ -93,10 +70,62 @@ class GrData {
         return stType;
     }
 
+    /// Define an opaque pointer type.
+    GrType addForeign(dstring name) {
+        bool isDeclared;
+        foreach(foreign; _foreigns) {
+            if(foreign == name)
+                isDeclared = true;
+        }
+
+        if(!isDeclared)
+            _foreigns ~= name;
+
+        GrType type = GrBaseType.foreign;
+        type.mangledType = name;
+        return type;
+    }
+
+    /// Define an alias of another type.
+    GrType addTypeAlias(dstring name, GrType type) {
+        GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
+        typeAlias.name = name;
+        typeAlias.type = type;
+        _typeAliases ~= typeAlias;
+        return type;
+    }
+
     /// Is the enum defined ?
     bool isEnum(dstring name) {
         foreach(enumType; _enumTypes) {
             if(enumType.name == name)
+                return true;
+        }
+        return false;
+    }
+
+    /// Is the class defined ?
+    bool isClass(dstring name) {
+        foreach(class_; _classTypes) {
+            if(class_.name == name)
+                return true;
+        }
+        return false;
+    }
+
+    /// Is the user-type defined ?
+    bool isForeign(dstring name) {
+        foreach(foreign; _foreigns) {
+            if(foreign == name)
+                return true;
+        }
+        return false;
+    }
+
+    /// Is the type alias defined ?
+    bool isTypeAlias(dstring name) {
+        foreach(typeAlias; _typeAliases) {
+            if(typeAlias.name == name)
                 return true;
         }
         return false;
@@ -112,23 +141,24 @@ class GrData {
         assert(false, "Undefined enum \'" ~ to!string(name) ~ "\'");
     }
 
-    /// Is the struct defined ?
-    bool isClass(dstring name) {
-        foreach(class_; _classTypes) {
-            if(class_.name == name)
-                return true;
-        }
-        return false;
-    }
-
-    /// Return the struct definition.
+    /// Return the class definition.
     GrClassDefinition getClass(dstring name) {
         import std.conv: to;
         foreach(class_; _classTypes) {
             if(class_.name == name)
                 return class_;
         }
-        assert(false, "Undefined class_ \'" ~ to!string(name) ~ "\'");
+        assert(false, "Undefined class \'" ~ to!string(name) ~ "\'");
+    }
+
+    /// Return the type alias definition.
+    GrTypeAliasDefinition getTypeAlias(dstring name) {
+        import std.conv: to;
+        foreach(typeAlias; _typeAliases) {
+            if(typeAlias.name == name)
+                return typeAlias;
+        }
+        assert(false, "Undefined  \'" ~ to!string(name) ~ "\'");
     }
 
     /**

@@ -138,10 +138,30 @@ GrType grGetForeignType(dstring name) {
 }
 
 /**
+Define the content of a type alias. \
+Not to be confused with GrType used by the type system.
+---
+type MyNewType = AnotherType;
+---
+*/
+final class GrTypeAliasDefinition {
+    /// Identifier.
+    dstring name;
+    /// The type aliased.
+    GrType type;
+}
+
+/**
 Define the content of an enum. \
 Not to be confused with GrType used by the type system.
+---
+enum MyEnum {
+    field1;
+    field2;
+}
+---
 */
-class GrEnumDefinition {
+final class GrEnumDefinition {
     /// Identifier.
     dstring name;
     /// List of field names.
@@ -172,15 +192,15 @@ class GrEnumDefinition {
 }
 
 /**
-Define the content of an object. \
+Define the content of a class. \
 Not to be confused with GrType used by the type system.
 ---
-object MyObject {
+class MyClass {
     // Fields
 }
 ---
 */
-class GrClassDefinition {
+final class GrClassDefinition {
     /// Identifier.
     dstring name;
     /// List of field types.
