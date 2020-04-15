@@ -326,7 +326,7 @@ final class GrParser {
 			anonymousFunctions[mangledName] = func;
 
 			//Is replaced by the addr of the function later (see solveFunctionCalls).
-			addInstruction(GrOpcode.const_Int, 0u);
+			addInstruction(GrOpcode.const_int, 0u);
 		}
 		else {
 			func.index = cast(uint)functions.length;
@@ -359,17 +359,17 @@ final class GrParser {
             case enum_:
                 func.nbIntegerParameters ++;
                 if(func.isTask)
-                    addInstruction(GrOpcode.globalPop_Int, 0u);
+                    addInstruction(GrOpcode.globalPop_int, 0u);
                 break;
             case float_:
                 func.nbFloatParameters ++;
                 if(func.isTask)
-                    addInstruction(GrOpcode.globalPop_Float, 0u);
+                    addInstruction(GrOpcode.globalPop_float, 0u);
                 break;
             case string_:
                 func.nbStringParameters ++;
                 if(func.isTask)
-                    addInstruction(GrOpcode.globalPop_String, 0u);
+                    addInstruction(GrOpcode.globalPop_string, 0u);
                 break;
             case class_:
             case array_:
@@ -378,7 +378,7 @@ final class GrParser {
             case reference:
                 func.nbObjectParameters ++;
                 if(func.isTask)
-                    addInstruction(GrOpcode.globalPop_Object, 0u);
+                    addInstruction(GrOpcode.globalPop_object, 0u);
                 break;
             case internalTuple:
                 throw new Exception("Tuples should not exist here.");
@@ -404,26 +404,26 @@ final class GrParser {
         if(_isProfiling) {
             prependInstructionCount ++;
             const uint index = registerStringConstant(to!dstring(grGetPrettyFunction(currentFunction)));
-            addInstructionInFront(GrOpcode.debug_ProfileBegin, index);
+            addInstructionInFront(GrOpcode.debugProfileBegin, index);
         }
 
         if(currentFunction.ilocalsCount > 0) {
-            addInstructionInFront(GrOpcode.localStack_Int, currentFunction.ilocalsCount);
+            addInstructionInFront(GrOpcode.localStack_int, currentFunction.ilocalsCount);
             prependInstructionCount ++;
         }
         
         if(currentFunction.flocalsCount > 0) {
-            addInstructionInFront(GrOpcode.localStack_Float, currentFunction.flocalsCount);
+            addInstructionInFront(GrOpcode.localStack_float, currentFunction.flocalsCount);
             prependInstructionCount ++;
         }
 
         if(currentFunction.slocalsCount > 0) {
-            addInstructionInFront(GrOpcode.localStack_String, currentFunction.slocalsCount);
+            addInstructionInFront(GrOpcode.localStack_string, currentFunction.slocalsCount);
             prependInstructionCount ++;
         }
 
         if(currentFunction.olocalsCount > 0) {
-            addInstructionInFront(GrOpcode.localStack_Object, currentFunction.olocalsCount);
+            addInstructionInFront(GrOpcode.localStack_object, currentFunction.olocalsCount);
             prependInstructionCount ++;
         }
 
@@ -477,23 +477,23 @@ final class GrParser {
     }
 
 	private void addIntConstant(int value) {
-		addInstruction(GrOpcode.const_Int, registerIntConstant(value));
+		addInstruction(GrOpcode.const_int, registerIntConstant(value));
 	}
 
 	private void addFloatConstant(float value) {
-		addInstruction(GrOpcode.const_Float, registerFloatConstant(value));
+		addInstruction(GrOpcode.const_float, registerFloatConstant(value));
 	}
 
 	private void addBoolConstant(bool value) {
-		addInstruction(GrOpcode.const_Bool, value);
+		addInstruction(GrOpcode.const_bool, value);
 	}
 
 	private void addStringConstant(dstring value) {
-		addInstruction(GrOpcode.const_String, registerStringConstant(value));
+		addInstruction(GrOpcode.const_string, registerStringConstant(value));
 	}
 
     private void addMetaConstant(dstring value) {
-		addInstruction(GrOpcode.const_Meta, registerStringConstant(value));
+		addInstruction(GrOpcode.const_meta, registerStringConstant(value));
     }
 
 	private void addInstruction(GrOpcode opcode, int value = 0, bool isSigned = false) {
@@ -652,19 +652,19 @@ final class GrParser {
             case bool_:
             case function_:
             case task:
-                addInstruction(GrOpcode.append_Int);
+                addInstruction(GrOpcode.append_int);
                 break;
             case float_:
-                addInstruction(GrOpcode.append_Float);
+                addInstruction(GrOpcode.append_float);
                 break;
             case string_:
-                addInstruction(GrOpcode.append_String);
+                addInstruction(GrOpcode.append_string);
                 break;
             case class_:
             case array_:
             case foreign:
             case chan:
-                addInstruction(GrOpcode.append_Object);
+                addInstruction(GrOpcode.append_object);
                 break;
             default:
                 break;
@@ -681,19 +681,19 @@ final class GrParser {
             case bool_:
             case function_:
             case task:
-                addInstruction(GrOpcode.prepend_Int);
+                addInstruction(GrOpcode.prepend_int);
                 break;
             case float_:
-                addInstruction(GrOpcode.prepend_Float);
+                addInstruction(GrOpcode.prepend_float);
                 break;
             case string_:
-                addInstruction(GrOpcode.prepend_String);
+                addInstruction(GrOpcode.prepend_string);
                 break;
             case class_:
             case array_:
             case foreign:
             case chan:
-                addInstruction(GrOpcode.prepend_Object);
+                addInstruction(GrOpcode.prepend_object);
                 break;
             default:
                 break;
@@ -772,22 +772,22 @@ final class GrParser {
         case enum_:
 			switch(lexType) with(GrLexemeType) {
 			case equal:
-				addInstruction(GrOpcode.equal_Int);
+				addInstruction(GrOpcode.equal_int);
 				return GrType(GrBaseType.bool_);
 			case notEqual:
-				addInstruction(GrOpcode.notEqual_Int);
+				addInstruction(GrOpcode.notEqual_int);
 				return GrType(GrBaseType.bool_);
 			case greater:
-				addInstruction(GrOpcode.greater_Int);
+				addInstruction(GrOpcode.greater_int);
 				return GrType(GrBaseType.bool_);
 			case greaterOrEqual:
-				addInstruction(GrOpcode.greaterOrEqual_Int);
+				addInstruction(GrOpcode.greaterOrEqual_int);
 				return GrType(GrBaseType.bool_);
 			case lesser:
-				addInstruction(GrOpcode.lesser_Int);
+				addInstruction(GrOpcode.lesser_int);
 				return GrType(GrBaseType.bool_);
 			case lesserOrEqual:
-				addInstruction(GrOpcode.lesserOrEqual_Int);
+				addInstruction(GrOpcode.lesserOrEqual_int);
                 return GrType(GrBaseType.bool_);
 			default:
 				break;
@@ -796,13 +796,13 @@ final class GrParser {
         case bool_:
             switch(lexType) with(GrLexemeType) {
             case and:
-				addInstruction(GrOpcode.and_Int);
+				addInstruction(GrOpcode.and_int);
                 return GrType(GrBaseType.bool_);
 			case or:
-				addInstruction(GrOpcode.or_Int);
+				addInstruction(GrOpcode.or_int);
                 return GrType(GrBaseType.bool_);
 			case not:
-				addInstruction(GrOpcode.not_Int);
+				addInstruction(GrOpcode.not_int);
                 return GrType(GrBaseType.bool_);				
             default:
                 break;
@@ -811,48 +811,48 @@ final class GrParser {
 		case int_:
 			switch(lexType) with(GrLexemeType) {
 			case add:
-				addInstruction(GrOpcode.add_Int);
+				addInstruction(GrOpcode.add_int);
 				return GrType(GrBaseType.int_);
 			case substract:
-				addInstruction(GrOpcode.substract_Int);
+				addInstruction(GrOpcode.substract_int);
 				return GrType(GrBaseType.int_);
 			case multiply:
-				addInstruction(GrOpcode.multiply_Int);
+				addInstruction(GrOpcode.multiply_int);
 				return GrType(GrBaseType.int_);
 			case divide:
-				addInstruction(GrOpcode.divide_Int);
+				addInstruction(GrOpcode.divide_int);
 				return GrType(GrBaseType.int_);
             case remainder:
-				addInstruction(GrOpcode.remainder_Int);
+				addInstruction(GrOpcode.remainder_int);
 				return GrType(GrBaseType.int_);
 			case minus:
-				addInstruction(GrOpcode.negative_Int);
+				addInstruction(GrOpcode.negative_int);
 				return GrType(GrBaseType.int_);
 			case plus:
 				return GrType(GrBaseType.int_);
 			case increment:
-				addInstruction(GrOpcode.increment_Int);
+				addInstruction(GrOpcode.increment_int);
 				return GrType(GrBaseType.int_);
 			case decrement:
-				addInstruction(GrOpcode.decrement_Int);
+				addInstruction(GrOpcode.decrement_int);
 				return GrType(GrBaseType.int_);
 			case equal:
-				addInstruction(GrOpcode.equal_Int);
+				addInstruction(GrOpcode.equal_int);
 				return GrType(GrBaseType.bool_);
 			case notEqual:
-				addInstruction(GrOpcode.notEqual_Int);
+				addInstruction(GrOpcode.notEqual_int);
 				return GrType(GrBaseType.bool_);
 			case greater:
-				addInstruction(GrOpcode.greater_Int);
+				addInstruction(GrOpcode.greater_int);
 				return GrType(GrBaseType.bool_);
 			case greaterOrEqual:
-				addInstruction(GrOpcode.greaterOrEqual_Int);
+				addInstruction(GrOpcode.greaterOrEqual_int);
 				return GrType(GrBaseType.bool_);
 			case lesser:
-				addInstruction(GrOpcode.lesser_Int);
+				addInstruction(GrOpcode.lesser_int);
 				return GrType(GrBaseType.bool_);
 			case lesserOrEqual:
-				addInstruction(GrOpcode.lesserOrEqual_Int);
+				addInstruction(GrOpcode.lesserOrEqual_int);
                 return GrType(GrBaseType.bool_);
 			default:
 				break;
@@ -861,66 +861,66 @@ final class GrParser {
 		case float_:
 			switch(lexType) with(GrLexemeType) {
 			case add:
-				addInstruction(GrOpcode.add_Float);
+				addInstruction(GrOpcode.add_float);
 				return GrType(GrBaseType.float_);
 			case substract:
                 if(isSwapped)
-                    addInstruction(GrOpcode.swap_Float);
-				addInstruction(GrOpcode.substract_Float);
+                    addInstruction(GrOpcode.swap_float);
+				addInstruction(GrOpcode.substract_float);
 				return GrType(GrBaseType.float_);
 			case multiply:
-				addInstruction(GrOpcode.multiply_Float);
+				addInstruction(GrOpcode.multiply_float);
 				return GrType(GrBaseType.float_);
 			case divide:
                 if(isSwapped)
-                    addInstruction(GrOpcode.swap_Float);
-				addInstruction(GrOpcode.divide_Float);
+                    addInstruction(GrOpcode.swap_float);
+				addInstruction(GrOpcode.divide_float);
 				return GrType(GrBaseType.float_);
             case remainder:
                 if(isSwapped)
-                    addInstruction(GrOpcode.swap_Float);
-				addInstruction(GrOpcode.remainder_Float);
+                    addInstruction(GrOpcode.swap_float);
+				addInstruction(GrOpcode.remainder_float);
 				return GrType(GrBaseType.float_);
 			case minus:
-				addInstruction(GrOpcode.negative_Float);
+				addInstruction(GrOpcode.negative_float);
 				return GrType(GrBaseType.float_);
 			case plus:
 				return GrType(GrBaseType.float_);
 			case increment:
-				addInstruction(GrOpcode.increment_Float);
+				addInstruction(GrOpcode.increment_float);
 				return GrType(GrBaseType.float_);
 			case decrement:
-				addInstruction(GrOpcode.decrement_Float);
+				addInstruction(GrOpcode.decrement_float);
 				return GrType(GrBaseType.float_);
 			case equal:
-				addInstruction(GrOpcode.equal_Float);
+				addInstruction(GrOpcode.equal_float);
 				return GrType(GrBaseType.bool_);
 			case notEqual:
-				addInstruction(GrOpcode.notEqual_Float);
+				addInstruction(GrOpcode.notEqual_float);
 				return GrType(GrBaseType.bool_);
 			case greater:
                 if(isSwapped)
-                    addInstruction(GrOpcode.lesserOrEqual_Float);
+                    addInstruction(GrOpcode.lesserOrEqual_float);
                 else
-                    addInstruction(GrOpcode.greater_Float);
+                    addInstruction(GrOpcode.greater_float);
 				return GrType(GrBaseType.bool_);
 			case greaterOrEqual:
                 if(isSwapped)
-                    addInstruction(GrOpcode.lesser_Float);
+                    addInstruction(GrOpcode.lesser_float);
                 else
-                    addInstruction(GrOpcode.greaterOrEqual_Float);
+                    addInstruction(GrOpcode.greaterOrEqual_float);
 				return GrType(GrBaseType.bool_);
 			case lesser:
                 if(isSwapped)
-                    addInstruction(GrOpcode.greaterOrEqual_Float);
+                    addInstruction(GrOpcode.greaterOrEqual_float);
                 else
-                    addInstruction(GrOpcode.lesser_Float);
+                    addInstruction(GrOpcode.lesser_float);
 				return GrType(GrBaseType.bool_);
 			case lesserOrEqual:
                 if(isSwapped)
-                    addInstruction(GrOpcode.greater_Float);
+                    addInstruction(GrOpcode.greater_float);
                 else
-                    addInstruction(GrOpcode.lesserOrEqual_Float);
+                    addInstruction(GrOpcode.lesserOrEqual_float);
 				return GrType(GrBaseType.bool_);
 			default:
 				break;
@@ -929,13 +929,13 @@ final class GrParser {
 		case string_:
 			switch(lexType) with(GrLexemeType) {
 			case concatenate:
-				addInstruction(GrOpcode.concatenate_String);
+				addInstruction(GrOpcode.concatenate_string);
 				return GrType(GrBaseType.string_);
 			case equal:
-				addInstruction(GrOpcode.equal_String);
+				addInstruction(GrOpcode.equal_string);
 				return GrType(GrBaseType.bool_);
 			case notEqual:
-				addInstruction(GrOpcode.notEqual_String);
+				addInstruction(GrOpcode.notEqual_string);
 				return GrType(GrBaseType.bool_);
 			default:
 				break;
@@ -950,13 +950,13 @@ final class GrParser {
                 case bool_:
                 case function_:
                 case task:
-                    addInstruction(GrOpcode.equal_IntArray);
+                    addInstruction(GrOpcode.equal_intArray);
                     return grBool;
                 case float_:
-                    addInstruction(GrOpcode.equal_FloatArray);
+                    addInstruction(GrOpcode.equal_floatArray);
                     return grBool;
                 case string_:
-                    addInstruction(GrOpcode.equal_StringArray);
+                    addInstruction(GrOpcode.equal_stringArray);
                     return grBool;
                 default:
                     break;
@@ -969,13 +969,13 @@ final class GrParser {
                 case bool_:
                 case function_:
                 case task:
-                    addInstruction(GrOpcode.notEqual_IntArray);
+                    addInstruction(GrOpcode.notEqual_intArray);
                     return grBool;
                 case float_:
-                    addInstruction(GrOpcode.notEqual_FloatArray);
+                    addInstruction(GrOpcode.notEqual_floatArray);
                     return grBool;
                 case string_:
-                    addInstruction(GrOpcode.notEqual_StringArray);
+                    addInstruction(GrOpcode.notEqual_stringArray);
                     return grBool;
                 default:
                     break;
@@ -988,19 +988,19 @@ final class GrParser {
                 case bool_:
                 case function_:
                 case task:
-                    addInstruction(GrOpcode.concatenate_IntArray);
+                    addInstruction(GrOpcode.concatenate_intArray);
                     return varType;
                 case float_:
-                    addInstruction(GrOpcode.concatenate_FloatArray);
+                    addInstruction(GrOpcode.concatenate_floatArray);
                     return varType;
                 case string_:
-                    addInstruction(GrOpcode.concatenate_StringArray);
+                    addInstruction(GrOpcode.concatenate_stringArray);
                     return varType;
                 case class_:
                 case array_:
                 case foreign:
                 case chan:
-                    addInstruction(GrOpcode.concatenate_ObjectArray);
+                    addInstruction(GrOpcode.concatenate_objectArray);
                     return varType;
                 default:
                     break;
@@ -1019,19 +1019,19 @@ final class GrParser {
                 case bool_:
                 case function_:
                 case task:
-                    addInstruction(GrOpcode.send_Int);
+                    addInstruction(GrOpcode.send_int);
                     return chanType;
                 case float_:
-                    addInstruction(GrOpcode.send_Float);
+                    addInstruction(GrOpcode.send_float);
                     return chanType;
                 case string_:
-                    addInstruction(GrOpcode.send_String);
+                    addInstruction(GrOpcode.send_string);
                     return chanType;
                 case class_:
                 case array_:
                 case foreign:
                 case chan:
-                    addInstruction(GrOpcode.send_Object);
+                    addInstruction(GrOpcode.send_object);
                     return chanType;
                 default:
                     break;
@@ -1044,19 +1044,19 @@ final class GrParser {
                 case bool_:
                 case function_:
                 case task:
-                    addInstruction(GrOpcode.receive_Int);
+                    addInstruction(GrOpcode.receive_int);
                     return chanType;
                 case float_:
-                    addInstruction(GrOpcode.receive_Float);
+                    addInstruction(GrOpcode.receive_float);
                     return chanType;
                 case string_:
-                    addInstruction(GrOpcode.receive_String);
+                    addInstruction(GrOpcode.receive_string);
                     return chanType;
                 case class_:
                 case array_:
                 case foreign:
                 case chan:
-                    addInstruction(GrOpcode.receive_Object);
+                    addInstruction(GrOpcode.receive_object);
                     return chanType;
                 default:
                     break;
@@ -1083,20 +1083,20 @@ final class GrParser {
 			case task:
 			case chan:
 			case enum_:
-				addInstruction(isExpectingValue ? GrOpcode.refStore2_Int : GrOpcode.refStore_Int);
+				addInstruction(isExpectingValue ? GrOpcode.refStore2_int : GrOpcode.refStore_int);
 				break;
 			case float_:
-				addInstruction(isExpectingValue ? GrOpcode.refStore2_Float : GrOpcode.refStore_Float);
+				addInstruction(isExpectingValue ? GrOpcode.refStore2_float : GrOpcode.refStore_float);
 				break;
 			case string_:
-				addInstruction(isExpectingValue ? GrOpcode.refStore2_String : GrOpcode.refStore_String);
+				addInstruction(isExpectingValue ? GrOpcode.refStore2_string : GrOpcode.refStore_string);
 				break;
 			case class_:
-				addInstruction(isExpectingValue ? GrOpcode.refStore2_Object : GrOpcode.refStore_Object);
+				addInstruction(isExpectingValue ? GrOpcode.refStore2_object : GrOpcode.refStore_object);
 				break;
             case array_:
             case foreign:
-				addInstruction(isExpectingValue ? GrOpcode.refStore2_Object : GrOpcode.refStore_Object);
+				addInstruction(isExpectingValue ? GrOpcode.refStore2_object : GrOpcode.refStore_object);
 				break;
 			case void_:
 			case internalTuple:
@@ -1130,20 +1130,20 @@ final class GrParser {
 			case function_:
 			case task:
             case enum_:
-				addInstruction(GrOpcode.fieldStore_Int, isExpectingValue ? 0 : -1, true);
+				addInstruction(GrOpcode.fieldStore_int, isExpectingValue ? 0 : -1, true);
 				break;
 			case float_:
-				addInstruction(GrOpcode.fieldStore_Float, isExpectingValue ? 0 : -1, true);
+				addInstruction(GrOpcode.fieldStore_float, isExpectingValue ? 0 : -1, true);
 				break;
 			case string_:
-				addInstruction(GrOpcode.fieldStore_String, isExpectingValue ? 0 : -1, true);
+				addInstruction(GrOpcode.fieldStore_string, isExpectingValue ? 0 : -1, true);
 				break;
 			case foreign:
 			case reference:
 			case chan:
 			case array_:
 			case class_:
-				addInstruction(GrOpcode.fieldStore_Object, isExpectingValue ? 0 : -1, true);
+				addInstruction(GrOpcode.fieldStore_object, isExpectingValue ? 0 : -1, true);
 				break;
             case void_:
             case internalTuple:
@@ -1157,19 +1157,19 @@ final class GrParser {
 			case function_:
 			case task:
             case enum_:
-				addInstruction(isExpectingValue ? GrOpcode.globalStore2_Int : GrOpcode.globalStore_Int, variable.register);
+				addInstruction(isExpectingValue ? GrOpcode.globalStore2_int : GrOpcode.globalStore_int, variable.register);
 				break;
 			case float_:
-				addInstruction(isExpectingValue ? GrOpcode.globalStore2_Float : GrOpcode.globalStore_Float, variable.register);
+				addInstruction(isExpectingValue ? GrOpcode.globalStore2_float : GrOpcode.globalStore_float, variable.register);
 				break;
 			case string_:
-				addInstruction(isExpectingValue ? GrOpcode.globalStore2_String : GrOpcode.globalStore_String, variable.register);
+				addInstruction(isExpectingValue ? GrOpcode.globalStore2_string : GrOpcode.globalStore_string, variable.register);
 				break;
             case chan:
 			case class_:
             case array_:
             case foreign:
-				addInstruction(isExpectingValue ? GrOpcode.globalStore2_Object : GrOpcode.globalStore_Object, variable.register);
+				addInstruction(isExpectingValue ? GrOpcode.globalStore2_object : GrOpcode.globalStore_object, variable.register);
 				break;
 			case void_:
 			case internalTuple:
@@ -1184,21 +1184,21 @@ final class GrParser {
 			case function_:
 			case task:
             case enum_:
-				addInstruction(isExpectingValue ? GrOpcode.localStore2_Int : GrOpcode.localStore_Int, variable.register);
+				addInstruction(isExpectingValue ? GrOpcode.localStore2_int : GrOpcode.localStore_int, variable.register);
 				break;
 			case float_:
-				addInstruction(isExpectingValue ? GrOpcode.localStore2_Float : GrOpcode.localStore_Float, variable.register);
+				addInstruction(isExpectingValue ? GrOpcode.localStore2_float : GrOpcode.localStore_float, variable.register);
 				break;
 			case string_:
-				addInstruction(isExpectingValue ? GrOpcode.localStore2_String : GrOpcode.localStore_String, variable.register);
+				addInstruction(isExpectingValue ? GrOpcode.localStore2_string : GrOpcode.localStore_string, variable.register);
 				break;
 			case class_:
-				addInstruction(isExpectingValue ? GrOpcode.localStore2_Object : GrOpcode.localStore_Object, variable.register);
+				addInstruction(isExpectingValue ? GrOpcode.localStore2_object : GrOpcode.localStore_object, variable.register);
 				break;
             case array_:
             case foreign:
 			case chan:
-				addInstruction(isExpectingValue ? GrOpcode.localStore2_Object : GrOpcode.localStore_Object, variable.register);
+				addInstruction(isExpectingValue ? GrOpcode.localStore2_object : GrOpcode.localStore_object, variable.register);
 				break;
 			case void_:
 			case internalTuple:
@@ -1240,49 +1240,49 @@ final class GrParser {
 			case enum_:
                 if(allowOptimization
                     && currentFunction.instructions.length
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.globalStore_Int
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.globalStore_int
                     && currentFunction.instructions[$ - 1].value == variable.register)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.globalStore2_Int;
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.globalStore2_int;
                 else
-                    addInstruction(GrOpcode.globalLoad_Int, variable.register);
+                    addInstruction(GrOpcode.globalLoad_int, variable.register);
 				break;
 			case float_:
                 if(allowOptimization
                     && currentFunction.instructions.length
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.globalStore_Float
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.globalStore_float
                     && currentFunction.instructions[$ - 1].value == variable.register)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.globalStore2_Float;
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.globalStore2_float;
                 else
-                    addInstruction(GrOpcode.globalLoad_Float, variable.register);
+                    addInstruction(GrOpcode.globalLoad_float, variable.register);
 				break;
 			case string_:
                 if(allowOptimization
                     && currentFunction.instructions.length
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.globalStore_String
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.globalStore_string
                     && currentFunction.instructions[$ - 1].value == variable.register)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.globalStore2_String;
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.globalStore2_string;
                 else
-                    addInstruction(GrOpcode.globalLoad_String, variable.register);
+                    addInstruction(GrOpcode.globalLoad_string, variable.register);
 				break;
 			case class_:
                 if(allowOptimization
                     && currentFunction.instructions.length
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.globalStore_Object
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.globalStore_object
                     && currentFunction.instructions[$ - 1].value == variable.register)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.globalStore2_Object;
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.globalStore2_object;
                 else
-                    addInstruction(GrOpcode.globalLoad_Object, variable.register);
+                    addInstruction(GrOpcode.globalLoad_object, variable.register);
 				break;
             case array_:
             case foreign:
 			case chan:
                 if(allowOptimization
                     && currentFunction.instructions.length
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.globalStore_Object
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.globalStore_object
                     && currentFunction.instructions[$ - 1].value == variable.register)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.globalStore2_Object;
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.globalStore2_object;
                 else
-                    addInstruction(GrOpcode.globalLoad_Object, variable.register);
+                    addInstruction(GrOpcode.globalLoad_object, variable.register);
 				break;
 			case void_:
 			case internalTuple:
@@ -1302,49 +1302,49 @@ final class GrParser {
 			case enum_:
                 if(allowOptimization
                     && currentFunction.instructions.length
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.localStore_Int
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.localStore_int
                     && currentFunction.instructions[$ - 1].value == variable.register)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.localStore2_Int;
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.localStore2_int;
                 else
-                    addInstruction(GrOpcode.localLoad_Int, variable.register);
+                    addInstruction(GrOpcode.localLoad_int, variable.register);
 				break;
 			case float_:
                 if(allowOptimization
                     && currentFunction.instructions.length
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.localStore_Float
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.localStore_float
                     && currentFunction.instructions[$ - 1].value == variable.register)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.localStore2_Float;
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.localStore2_float;
                 else
-                    addInstruction(GrOpcode.localLoad_Float, variable.register);
+                    addInstruction(GrOpcode.localLoad_float, variable.register);
 				break;
 			case string_:
                 if(allowOptimization
                     && currentFunction.instructions.length
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.localStore_String
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.localStore_string
                     && currentFunction.instructions[$ - 1].value == variable.register)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.localStore2_String;
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.localStore2_string;
                 else
-                    addInstruction(GrOpcode.localLoad_String, variable.register);
+                    addInstruction(GrOpcode.localLoad_string, variable.register);
 				break;
 			case class_:
                 if(allowOptimization
                     && currentFunction.instructions.length
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.localStore_Object
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.localStore_object
                     && currentFunction.instructions[$ - 1].value == variable.register)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.localStore2_Object;
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.localStore2_object;
                 else
-                    addInstruction(GrOpcode.localLoad_Object, variable.register);
+                    addInstruction(GrOpcode.localLoad_object, variable.register);
 				break;
             case array_:
             case foreign:
 			case chan:
                 if(allowOptimization
                     && currentFunction.instructions.length
-                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.localStore_Object
+                    && currentFunction.instructions[$ - 1].opcode == GrOpcode.localStore_object
                     && currentFunction.instructions[$ - 1].value == variable.register)
-                    currentFunction.instructions[$ - 1].opcode = GrOpcode.localStore2_Object;
+                    currentFunction.instructions[$ - 1].opcode = GrOpcode.localStore2_object;
                 else
-                    addInstruction(GrOpcode.localLoad_Object, variable.register);
+                    addInstruction(GrOpcode.localLoad_object, variable.register);
 				break;
 			case void_:
 			case internalTuple:
@@ -1368,7 +1368,7 @@ final class GrParser {
 		    call.functionToCall = *func;
             call.isAddress = true;
             call.position = cast(uint)currentFunction.instructions.length;
-            addInstruction(GrOpcode.const_Int, 0);
+            addInstruction(GrOpcode.const_int, 0);
 
             return grGetFunctionAsType(*func);
         }
@@ -1389,13 +1389,13 @@ final class GrParser {
 			call.functionToCall = *func;
             if(func.isTask) {
                 if(func.nbIntegerParameters > 0)
-                    addInstruction(GrOpcode.globalPush_Int, func.nbIntegerParameters);
+                    addInstruction(GrOpcode.globalPush_int, func.nbIntegerParameters);
                 if(func.nbFloatParameters > 0)
-                    addInstruction(GrOpcode.globalPush_Float, func.nbFloatParameters);
+                    addInstruction(GrOpcode.globalPush_float, func.nbFloatParameters);
                 if(func.nbStringParameters > 0)
-                    addInstruction(GrOpcode.globalPush_String, func.nbStringParameters);
+                    addInstruction(GrOpcode.globalPush_string, func.nbStringParameters);
                 if(func.nbObjectParameters > 0)
-                    addInstruction(GrOpcode.globalPush_Object, func.nbObjectParameters);
+                    addInstruction(GrOpcode.globalPush_object, func.nbObjectParameters);
             }
 
             call.position = cast(uint)currentFunction.instructions.length;
@@ -1436,7 +1436,7 @@ final class GrParser {
                 func = (call.mangledName in anonymousFunctions);
 			if(func !is null) {
                 if(call.isAddress)
-                    setOpcode(opcodes, call.position, GrOpcode.const_Int, registerIntConstant(func.position));
+                    setOpcode(opcodes, call.position, GrOpcode.const_int, registerIntConstant(func.position));
 				else if(func.isTask)
 					setOpcode(opcodes, call.position, GrOpcode.task, func.position);
 				else
@@ -1449,7 +1449,7 @@ final class GrParser {
 		foreach(func; anonymousFunctions)
 			setOpcode(opcodes,
                 func.anonParent.position + func.anonParent.offset + func.anonReference,
-                GrOpcode.const_Int,
+                GrOpcode.const_int,
                 registerIntConstant(func.position));
 	}
 
@@ -1853,20 +1853,20 @@ final class GrParser {
         case function_:
         case task:
         case enum_:
-            addInstruction(GrOpcode.globalPop_Int, 0u);
+            addInstruction(GrOpcode.globalPop_int, 0u);
             break;
         case float_:
-            addInstruction(GrOpcode.globalPop_Float, 0u);
+            addInstruction(GrOpcode.globalPop_float, 0u);
             break;
         case string_:
-            addInstruction(GrOpcode.globalPop_String, 0u);
+            addInstruction(GrOpcode.globalPop_string, 0u);
             break;
         case class_:
         case array_:
         case foreign:
         case chan:
         case reference:
-            addInstruction(GrOpcode.globalPop_Object, 0u);
+            addInstruction(GrOpcode.globalPop_object, 0u);
             break;
         case internalTuple:
             throw new Exception("Tuples should not exist here.");
@@ -1885,20 +1885,20 @@ final class GrParser {
         case function_:
         case task:
         case enum_:
-            addInstruction(GrOpcode.globalPush_Int, nbPush);
+            addInstruction(GrOpcode.globalPush_int, nbPush);
             break;
         case float_:
-            addInstruction(GrOpcode.globalPush_Float, nbPush);
+            addInstruction(GrOpcode.globalPush_float, nbPush);
             break;
         case string_:
-            addInstruction(GrOpcode.globalPush_String, nbPush);
+            addInstruction(GrOpcode.globalPush_string, nbPush);
             break;
         case class_:
         case array_:
         case foreign:
         case chan:
         case reference:
-            addInstruction(GrOpcode.globalPush_Object, nbPush);
+            addInstruction(GrOpcode.globalPush_object, nbPush);
             break;
         case internalTuple:
             throw new Exception("Tuples should not exist here.");
@@ -1945,13 +1945,13 @@ final class GrParser {
         }
 
         if(typeCounter.nbIntParams > 0)
-            addInstruction(GrOpcode.globalPush_Int, typeCounter.nbIntParams);
+            addInstruction(GrOpcode.globalPush_int, typeCounter.nbIntParams);
         if(typeCounter.nbFloatParams > 0)
-            addInstruction(GrOpcode.globalPush_Float, typeCounter.nbFloatParams);
+            addInstruction(GrOpcode.globalPush_float, typeCounter.nbFloatParams);
         if(typeCounter.nbStringParams > 0)
-            addInstruction(GrOpcode.globalPush_String, typeCounter.nbStringParams);
+            addInstruction(GrOpcode.globalPush_string, typeCounter.nbStringParams);
         if(typeCounter.nbObjectParams > 0)
-            addInstruction(GrOpcode.globalPush_Object, typeCounter.nbObjectParams);
+            addInstruction(GrOpcode.globalPush_object, typeCounter.nbObjectParams);
     }
 
 	private GrType[] parseInSignature(ref dstring[] inputVariables, bool asType = false) {
@@ -2573,7 +2573,7 @@ final class GrParser {
         const auto catchPosition = currentFunction.instructions.length;
         addInstruction(GrOpcode.catch_);
 
-        addInstruction(GrOpcode.globalPop_String);
+        addInstruction(GrOpcode.globalPop_string);
         addSetInstruction(errVariable, grString);
 
         parseBlock(true);
@@ -2942,20 +2942,20 @@ final class GrParser {
         case function_:
         case task:
         case enum_:
-            addInstruction(GrOpcode.channel_Int, channelSize);
+            addInstruction(GrOpcode.channel_int, channelSize);
             break;
         case float_:
-            addInstruction(GrOpcode.channel_Float, channelSize);
+            addInstruction(GrOpcode.channel_float, channelSize);
             break;
         case string_:
-            addInstruction(GrOpcode.channel_String, channelSize);
+            addInstruction(GrOpcode.channel_string, channelSize);
             break;
         case class_:
         case array_:
         case foreign:
         case chan:
         case reference:
-            addInstruction(GrOpcode.channel_Object, channelSize);
+            addInstruction(GrOpcode.channel_object, channelSize);
             break;
         case void_:
         case internalTuple:
@@ -3289,20 +3289,20 @@ final class GrParser {
         case function_:
         case task:
         case enum_:
-            addInstruction(GrOpcode.length_Int);
+            addInstruction(GrOpcode.length_int);
             break;
         case float_:
-            addInstruction(GrOpcode.length_Float);
+            addInstruction(GrOpcode.length_float);
             break;
         case string_:
-            addInstruction(GrOpcode.length_String);
+            addInstruction(GrOpcode.length_string);
             break;
         case array_:
         case class_:
         case foreign:
         case chan:
         case reference:
-            addInstruction(GrOpcode.length_Object);
+            addInstruction(GrOpcode.length_object);
             break;
         case void_:
         case internalTuple:
@@ -3328,7 +3328,7 @@ final class GrParser {
 		uint blockPosition = cast(uint)currentFunction.instructions.length;
 
 		addGetInstruction(iterator, GrType(GrBaseType.int_));
-		addInstruction(GrOpcode.decrement_Int);
+		addInstruction(GrOpcode.decrement_int);
 		addSetInstruction(iterator);
 
 		addGetInstruction(iterator, GrType(GrBaseType.int_));
@@ -3338,7 +3338,7 @@ final class GrParser {
 		//Set Index
 		addGetInstruction(array);
 		addGetInstruction(index);
-		addInstruction(GrOpcode.increment_Int);
+		addInstruction(GrOpcode.increment_int);
 		addSetInstruction(index, grVoid, true);
         final switch(subType.baseType) with(GrBaseType) {
         case bool_:
@@ -3346,20 +3346,20 @@ final class GrParser {
         case function_:
         case task:
         case enum_:
-            addInstruction(GrOpcode.index2_Int);
+            addInstruction(GrOpcode.index2_int);
             break;
         case float_:
-            addInstruction(GrOpcode.index2_Float);
+            addInstruction(GrOpcode.index2_float);
             break;
         case string_:
-            addInstruction(GrOpcode.index2_String);
+            addInstruction(GrOpcode.index2_string);
             break;
         case array_:
         case class_:
         case foreign:
         case chan:
         case reference:
-            addInstruction(GrOpcode.index2_Object);
+            addInstruction(GrOpcode.index2_object);
             break;
         case void_:
         case internalTuple:
@@ -3582,7 +3582,7 @@ final class GrParser {
 
         if(!isInfinite) {
             addGetInstruction(iterator, grInt, false);
-            addInstruction(GrOpcode.decrement_Int);
+            addInstruction(GrOpcode.decrement_int);
             addSetInstruction(iterator);
 
             addGetInstruction(iterator, grInt);
@@ -3594,7 +3594,7 @@ final class GrParser {
 
         if(!isInfinite && hasCustomIterator) {
             addGetInstruction(customIterator, grInt, false);
-            addInstruction(GrOpcode.increment_Int);
+            addInstruction(GrOpcode.increment_int);
             addSetInstruction(customIterator);
         }
 
@@ -3652,7 +3652,7 @@ final class GrParser {
     private void addReturn() {
         checkDeferStatement();
         if(_isProfiling) {
-            addInstruction(GrOpcode.debug_ProfileEnd);
+            addInstruction(GrOpcode.debugProfileEnd);
         }
         addInstruction(GrOpcode.return_);
     }
@@ -3661,7 +3661,7 @@ final class GrParser {
     private void addKill() {
         checkDeferStatement();
         if(_isProfiling) {
-            addInstruction(GrOpcode.debug_ProfileEnd);
+            addInstruction(GrOpcode.debugProfileEnd);
         }
         addInstruction(GrOpcode.kill_);
     }
@@ -3670,7 +3670,7 @@ final class GrParser {
     private void addKillAll() {
         checkDeferStatement();
         if(_isProfiling) {
-            addInstruction(GrOpcode.debug_ProfileEnd);
+            addInstruction(GrOpcode.debugProfileEnd);
         }
         addInstruction(GrOpcode.killAll_);
     }
@@ -3796,7 +3796,7 @@ final class GrParser {
             case foreign:
             case chan:
             case reference:
-                addInstruction(GrOpcode.isNonNull_Object);
+                addInstruction(GrOpcode.isNonNull_object);
                 return dst;
             }
         }
@@ -3974,20 +3974,20 @@ final class GrParser {
         case function_:
         case task:
         case enum_:
-            addInstruction(GrOpcode.array_Int, arraySize);
+            addInstruction(GrOpcode.array_int, arraySize);
             break;
         case float_:
-            addInstruction(GrOpcode.array_Float, arraySize);
+            addInstruction(GrOpcode.array_float, arraySize);
             break;
         case string_:
-            addInstruction(GrOpcode.array_String, arraySize);
+            addInstruction(GrOpcode.array_string, arraySize);
             break;
         case array_:
         case class_:
         case foreign:
         case chan:
         case reference:
-            addInstruction(GrOpcode.array_Object, arraySize);
+            addInstruction(GrOpcode.array_object, arraySize);
             break;
         case void_:
         case internalTuple:
@@ -4021,20 +4021,20 @@ final class GrParser {
                     case function_:
                     case task:
                     case enum_:
-                        addInstruction(GrOpcode.index_Int);
+                        addInstruction(GrOpcode.index_int);
                         break;
                     case float_:
-                        addInstruction(GrOpcode.index_Float);
+                        addInstruction(GrOpcode.index_float);
                         break;
                     case string_:
-                        addInstruction(GrOpcode.index_String);
+                        addInstruction(GrOpcode.index_string);
                         break;
                     case array_:
                     case class_:
                     case foreign:
                     case chan:
                     case reference:
-                        addInstruction(GrOpcode.index_Object);
+                        addInstruction(GrOpcode.index_object);
                         break;
                     case void_:
                     case internalTuple:
@@ -4063,20 +4063,20 @@ final class GrParser {
                 case function_:
                 case task:
                 case enum_:
-                    addInstruction(GrOpcode.index_Int);
+                    addInstruction(GrOpcode.index_int);
                     break;
                 case float_:
-                    addInstruction(GrOpcode.index_Float);
+                    addInstruction(GrOpcode.index_float);
                     break;
                 case string_:
-                    addInstruction(GrOpcode.index_String);
+                    addInstruction(GrOpcode.index_string);
                     break;
                 case array_:
                 case class_:
                 case foreign:
                 case chan:
                 case reference:
-                    addInstruction(GrOpcode.index_Object);
+                    addInstruction(GrOpcode.index_object);
                     break;
                 case void_:
                 case internalTuple:
@@ -4308,13 +4308,13 @@ final class GrParser {
     private void shiftStackPosition(GrType type, short count) {
         const auto counter = countSubTypes(type);
         if(counter.iCount)
-            addInstruction(GrOpcode.shiftStack_Int, counter.iCount * count, true);
+            addInstruction(GrOpcode.shiftStack_int, counter.iCount * count, true);
         if(counter.fCount)
-            addInstruction(GrOpcode.shiftStack_Float, counter.fCount * count, true);
+            addInstruction(GrOpcode.shiftStack_float, counter.fCount * count, true);
         if(counter.sCount)
-            addInstruction(GrOpcode.shiftStack_String, counter.sCount * count, true);
+            addInstruction(GrOpcode.shiftStack_string, counter.sCount * count, true);
         if(counter.oCount)
-            addInstruction(GrOpcode.shiftStack_Object, counter.oCount * count, true);
+            addInstruction(GrOpcode.shiftStack_object, counter.oCount * count, true);
     }
 
     /// Does this operation require a left-expr ?
@@ -4528,15 +4528,15 @@ final class GrParser {
                             case function_:
                             case task:
                             case enum_:
-                                setInstruction(GrOpcode.index3_Int,
+                                setInstruction(GrOpcode.index3_int,
                                     cast(int) currentFunction.instructions.length - 1);
                                 break;
                             case float_:
-                                setInstruction(GrOpcode.index3_Float,
+                                setInstruction(GrOpcode.index3_float,
                                     cast(int) currentFunction.instructions.length - 1);
                                 break;
                             case string_:
-                                setInstruction(GrOpcode.index3_String,
+                                setInstruction(GrOpcode.index3_string,
                                     cast(int) currentFunction.instructions.length - 1);
                                 break;
                             case array_:
@@ -4544,7 +4544,7 @@ final class GrParser {
                             case foreign:
                             case chan:
                             case reference:
-                                setInstruction(GrOpcode.index3_Object,
+                                setInstruction(GrOpcode.index3_object,
                                     cast(int) currentFunction.instructions.length - 1);
                                 break;
                             case void_:
@@ -4565,15 +4565,15 @@ final class GrParser {
                         case function_:
                         case task:
                         case enum_:
-                            setInstruction(GrOpcode.index2_Int,
+                            setInstruction(GrOpcode.index2_int,
                                 cast(int) currentFunction.instructions.length - 1);
                             break;
                         case float_:
-                            setInstruction(GrOpcode.index2_Float,
+                            setInstruction(GrOpcode.index2_float,
                                 cast(int) currentFunction.instructions.length - 1);
                             break;
                         case string_:
-                            setInstruction(GrOpcode.index2_String,
+                            setInstruction(GrOpcode.index2_string,
                                 cast(int) currentFunction.instructions.length - 1);
                             break;
                         case array_:
@@ -4581,7 +4581,7 @@ final class GrParser {
                         case foreign:
                         case chan:
                         case reference:
-                            setInstruction(GrOpcode.index2_Object,
+                            setInstruction(GrOpcode.index2_object,
                                 cast(int) currentFunction.instructions.length - 1);
                             break;
                         case void_:
@@ -4688,20 +4688,20 @@ final class GrParser {
                             case function_:
                             case task:
                             case enum_:
-                                addInstruction(asCopy ? GrOpcode.fieldLoad2_Int : GrOpcode.fieldLoad_Int, index);
+                                addInstruction(asCopy ? GrOpcode.fieldLoad2_int : GrOpcode.fieldLoad_int, index);
                                 break;
                             case float_:
-                                addInstruction(asCopy ? GrOpcode.fieldLoad2_Float : GrOpcode.fieldLoad_Float, index);
+                                addInstruction(asCopy ? GrOpcode.fieldLoad2_float : GrOpcode.fieldLoad_float, index);
                                 break;
                             case string_:
-                                addInstruction(asCopy ? GrOpcode.fieldLoad2_String : GrOpcode.fieldLoad_String, index);
+                                addInstruction(asCopy ? GrOpcode.fieldLoad2_string : GrOpcode.fieldLoad_string, index);
                                 break;
                             case reference:
                             case chan:
                             case class_:
                             case array_:
                             case foreign:
-                                addInstruction(asCopy ? GrOpcode.fieldLoad2_Object : GrOpcode.fieldLoad_Object, index);
+                                addInstruction(asCopy ? GrOpcode.fieldLoad2_object : GrOpcode.fieldLoad_object, index);
                                 break;
                             case internalTuple:
                             case void_:
@@ -4712,7 +4712,7 @@ final class GrParser {
 
                         switch(get().type) with(GrLexemeType) {
                         case period:
-                            addInstruction(GrOpcode.fieldLoad_Object, fieldLValue.register);
+                            addInstruction(GrOpcode.fieldLoad_object, fieldLValue.register);
                             break;
                         case assign:
                             addInstruction(GrOpcode.fieldLoad, fieldLValue.register);

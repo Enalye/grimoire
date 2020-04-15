@@ -102,29 +102,29 @@ string grDump(GrData data, GrBytecode bytecode) {
 
         string line = leftJustify("[" ~ to!string(i) ~ "]", 10) ~ leftJustify(instructions[op], 15);
         if((op == GrOpcode.task) ||
-            (op >= GrOpcode.localStore_Int && op <= GrOpcode.localLoad_Object) ||
-            (op >= GrOpcode.globalStore_Int && op <= GrOpcode.globalLoad_Object) ||
-            (op >= GrOpcode.globalPush_Int && op <= GrOpcode.globalPush_Object) ||
-            (op >= GrOpcode.localStack_Int && op <= GrOpcode.call) ||
+            (op >= GrOpcode.localStore_int && op <= GrOpcode.localLoad_object) ||
+            (op >= GrOpcode.globalStore_int && op <= GrOpcode.globalLoad_object) ||
+            (op >= GrOpcode.globalPush_int && op <= GrOpcode.globalPush_object) ||
+            (op >= GrOpcode.localStack_int && op <= GrOpcode.call) ||
             (op == GrOpcode.new_) ||
-            (op >= GrOpcode.fieldLoad && op <= GrOpcode.fieldLoad2_Object) ||
-            (op >= GrOpcode.channel_Int && op <= GrOpcode.channel_Object) ||
-            (op >= GrOpcode.array_Int && op <= GrOpcode.array_Object)
+            (op >= GrOpcode.fieldLoad && op <= GrOpcode.fieldLoad2_object) ||
+            (op >= GrOpcode.channel_int && op <= GrOpcode.channel_object) ||
+            (op >= GrOpcode.array_int && op <= GrOpcode.array_object)
             )
             line ~= to!string(grGetInstructionUnsignedValue(opcode));
-        else if(op >= GrOpcode.fieldStore_Int && op <= GrOpcode.fieldStore_Object)
+        else if(op >= GrOpcode.fieldStore_int && op <= GrOpcode.fieldStore_object)
             line ~= to!string(grGetInstructionSignedValue(opcode));
-        else if(op >= GrOpcode.shiftStack_Int && op <= GrOpcode.shiftStack_Object)
+        else if(op >= GrOpcode.shiftStack_int && op <= GrOpcode.shiftStack_object)
             line ~= to!string(grGetInstructionSignedValue(opcode));
         else if(op == GrOpcode.primitiveCall)
             line ~= data.getPrimitiveDisplayById(grGetInstructionUnsignedValue(opcode));
-        else if(op == GrOpcode.const_Int)
+        else if(op == GrOpcode.const_int)
             line ~= to!string(bytecode.iconsts[grGetInstructionUnsignedValue(opcode)]);
-        else if(op == GrOpcode.const_Float)
+        else if(op == GrOpcode.const_float)
             line ~= to!string(bytecode.fconsts[grGetInstructionUnsignedValue(opcode)]);
-        else if(op == GrOpcode.const_Bool)
+        else if(op == GrOpcode.const_bool)
             line ~= (grGetInstructionUnsignedValue(opcode) ? "true" : "false");
-        else if(op == GrOpcode.const_String || op == GrOpcode.const_Meta || op == GrOpcode.debug_ProfileBegin)
+        else if(op == GrOpcode.const_string || op == GrOpcode.const_meta || op == GrOpcode.debugProfileBegin)
             line ~= "\"" ~ to!string(bytecode.sconsts[grGetInstructionUnsignedValue(opcode)]) ~ "\"";
         else if(op >= GrOpcode.jump && op <= GrOpcode.jumpNotEqual)
             line ~= to!string(i + grGetInstructionSignedValue(opcode));
