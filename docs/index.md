@@ -19,8 +19,8 @@ You can easily define custom functions and types from D.
 
 - Compound types:
   - Arrays
-  - Tuples
-  - Objects
+  - Enumerations
+  - Classes
   - Channels
 
 - Errors:
@@ -41,8 +41,11 @@ An identifier is a name used to identify something like a variable, a function, 
 It must not be reserved word, it can use any alphanumeric character, lower and upper cases, or underscores be it can't start with a digit.
 
 Exemple of valid identifiers:
-_myVariable
-MyVAR1__23
+`_myVariable`
+`MyVAR1__23`
+
+`?` and `!` are also valid *only* if they are put at the end of an identifier:
+`empty?`
 
 ## Reserved words
 
@@ -54,7 +57,7 @@ The following are keyword used by the language, they cannot be used as identifie
 
 Comments are text that are entierly ignored by the compiler, they serve as note for you.
 
-```c
+```cpp
 // Everything after those 2 slashes is ignore until the end of the line.
 
 /*
@@ -80,7 +83,7 @@ The underscores won't be parsed by the compiler.
 # First Program
 
 Starting with the traditionnal "Hello World" :
-```c
+```cpp
 main {
   printl("Hello World!");
 }
@@ -108,7 +111,7 @@ All operations (except type definitions and global variables) must exist inside 
 
 You can separate a script between multiple files.
 To import them, use the `use` keyword with your file paths.
-```c
+```cpp
 use "foo/myscript.gr"
 
 // With {} you can specify multiple paths.
@@ -145,14 +148,14 @@ They're only a handful of basic type recognised by grimoire.
 * Array (See Array section)
 * Function/Task (See Anonymous Functions section)
 * Channel (See Channel section)
-* Object type (See Object section)
-* Opaque type (User defined type in D)
-* Tuple (See Tuple section)
+* Object type (See Class section)
+* Foreign type (User defined type in D)
+* Enum (See Enumeration section)
 
 ### Auto Type
 **let** is a special keyword that let the compiler automatically infer the type of a declared variable.
 Example:
-```c
+```cpp
 main {
   let a = 3.2; //'a' is inferred to be a float type.
   printl(a);
@@ -166,7 +169,7 @@ A variable can either be local or global.
 * A local variable is only accessible inside the function/task/etc where it was declared.
 
 Example:
-```c
+```cpp
 int globalVar; //Declared outside of any scope, accessible everywhere.
 
 main {
@@ -214,7 +217,7 @@ You can explicitly cast a value to any type with the keyword `as`, it must be fo
 You can define your own cast by naming a function with `as`.
 It must only have one input and one output.
 
-```c
+```cpp
 object Obj {}
 
 main {
@@ -251,9 +254,9 @@ Much like custom convertions, you can define your own operators.
 The name of the function must be `operator` followed by the operation.
 You also have to respect the number of input the operator uses (1 or 2).
 
-```c
+```cpp
 main {
-    printl(3.5f + 2);
+    printl(3.5 + 2);
 }
 
 func operator+(float a, int b) float {
@@ -286,7 +289,7 @@ You can combine it with optionals `else if` or `else unless` to do the same thin
 Finally you can add an optional `else` that is run *only* if others are not run.
 
 Exemple:
-```c
+```cpp
 main {
 	if(5 < 2) {
 		//This code won't run because 5 is never less than 2.
@@ -301,7 +304,7 @@ main {
 }
 ```
 Another one:
-```c
+```cpp
 main {
 	let i = 5;
 	if(i > 10) {
@@ -313,7 +316,7 @@ main {
 	else unless(i < 2) {
 		printl("i is 2 or more, but less than 5");
 	}
-	else { //else must always be put at the end of the (if/unless)/else (if/unless)/else serie, but it's optional.
+	else { //else must always be put at the end of the (if/unless)/else (if/unless)/else serie, but is optional.
 		printl("i is 2 or less");
 	}
 }
@@ -323,7 +326,7 @@ main {
 
 `switch` let us do comparisons a bit like `if`, but in a more concise manner.
 
-```c
+```cpp
 let i = "Hello";
 switch(i)
 case() { // Default case if others aren't valid.
@@ -344,7 +347,7 @@ A `case` without value is considered to be a default case like the `else` above,
 
 A select is syntaxically like a switch, but differs in that it doesn't do value comparison, it checks each case for an operation that can process whithout blocking.
 
-```c
+```cpp
 select
 case( /* channel operation  */ ) {
 
@@ -354,10 +357,10 @@ case() {
 }
 ```
 
-Each cases contain a potentially blocking operation, the first non-blocking operation case is run.
+Each case contains a potentially blocking operation, the first non-blocking operation case is run.
 The default case is optional, but without one, the select statement is a blocking operation, otherwise the default case will execute if when others are blocked.
 
-```c
+```cpp
 select
 case(myValue = <- myChannel) { // Receive operation
 	printl("Received " ~ myValue);
@@ -379,19 +382,19 @@ A loop is a structure that can be executed several time, there are two type of l
 ### Infinite loops
 
 An infinite loop is as the title imply, see for yourself:
-```c
+```cpp
 loop {
 	printl("Hello !");
 }
 ```
-This script will prompt "Hello !" infinitely until process is killed, be cautious with it.
+This script will prompt "Hello !" infinitely until the process is killed, be cautious with it.
 You may want to add either a `yield` or an exit condition.
 
 ### Finite loops
 
 Finite loops, on the other hand, have a finite number of time they will run.
 Contrary to the infinite one, they take an int as a parameter, which indicate the number of loops:
-```c
+```cpp
 loop(10) {
 	printl("I loop 10 times !");
 }
@@ -399,7 +402,7 @@ loop(10) {
 This will only print the message 10 times.
 
 You can also specify an iterator, which must be of type `int`.
-```c
+```cpp
 loop(i, 10)
 	printl(i); // Prints from 0 to 9
 
@@ -416,7 +419,7 @@ loop(let i, 10)
 
 "while" and "do while" are, akin to loops, statements that can execute their code several time.
 The difference is, they do not have a finite number of loop, instead, they have a condition (like "if" statements).
-```c
+```cpp
 int i = 0;
 while(i < 10) {
 	printl(i); // Here, the output is 0, 1, 2, 3, 4, 5, 6, 7, 8 and 9.
@@ -424,7 +427,7 @@ while(i < 10) {
 }
 ```
 "do while" is the same as "while" but the condition is checked after having run the code one time.
-```c
+```cpp
 int i = 11;
 do { //This is garanteed to run at least once, even if the condition is not met.
 	printl(i); //Will print "11"
@@ -436,7 +439,7 @@ while(i < 10)
 
 "for" loops are yet another kind of loop that will automatically iterate on an array of values.
 For instance:
-```c
+```cpp
 for(i, [1, 2, 3, 4]) {
 	printl(i);
 }
@@ -445,12 +448,12 @@ Here, the for statement will take each value of the array, then assign them to t
 
 The variable can be already declared, or declared inside the for statement like this:
 
-```c
+```cpp
 int i;
 for(i, [1, 2]) {}
 ```
 Or,
-```c
+```cpp
 for(int i, [1, 2]) {}
 ```
 If no type is specified, or declared as let, the variable will be automatically declared as `var`.
@@ -485,12 +488,19 @@ func foo(int n) {
 }
 ```
 
+A function can have multiple return values, the types returned must correspond to the signature of the function.
+```cpp
+func foo() int, string, bool {
+	return 5, "Hello", false;
+}
+```
+
 * * *
 
 # Task
 
 Task are Grimoire's implementation of coroutines. They are syntaxically similar to function except from a few points:
-* A task have no return type and can't return anything.
+* A task have no return type and can't return anything (You'll be able to do so with channels).
 * When called, a task will not execute immediately and will not interrupt the caller's flow.
 * A task will only be executed if other tasks are killed or on yield.
 
@@ -517,7 +527,9 @@ The task will run again after all other tasks have run once.
 
 You can also delete the task with the keyword **kill**. Also be aware that inside the scope of a task, the keyword **return** will behave the same as **kill**.
 
-Note: The main is a special case of a task.
+There is also **killall** which simply kills all running tasks.
+
+*Note: The main is a special case of a task.*
 
 * * *
 
@@ -526,7 +538,7 @@ Note: The main is a special case of a task.
 You can declare a function or a task inside another function (or task).
 Like this:
 
-```c
+```cpp
 main {
 	let f = func() {};
 	let t = task() {};
@@ -534,7 +546,7 @@ main {
 ```
 
 You can also decide to just run it immediately:
-```c
+```cpp
 main {
 	int a = 7;
 	int b = func(int c) int {
@@ -545,7 +557,7 @@ main {
 ```
 
 The type of a function/task is the same as its declaration without the parameters' name:
-```c
+```cpp
 main {
 	func(int, float) string, int myFunction = func(int a, float b) string, int { return "Hey", 2; };
 }
@@ -555,13 +567,13 @@ You can use a global function/task as an anonymous by getting its address.
 You can do so by using the & operator.
 The operator & does not require the function type, except when it has no way to know it at compilation time, like when declaring with let.
 
-```c
+```cpp
 func square(int i) int {
 	return i * i;
 };
 
 main {
-	let f1 = &square; //Error, & has no way to know the type inside a variant at compilation time.
+	let f1 = &square; //Error, & has no way to know the type at during compilation (square could be overloaded).
 	let f2 = &(func(int) int)square; //Valid, an explicit type prevent this problem.
 	f2 = &square; //Now valid, because it's now typed by the previous assignment.
 
@@ -574,14 +586,14 @@ main {
 
 If you want to refer to the current function, but you're inside an anonymous function you can't because the function has no name.
 
-Except `self`. Self is used to refers to the current function/task/etc event anonymous ones.
+Except `self`. Self is used to refers to the current function/task/etc even anonymous ones.
 
-It allows you to do things like this anonymous fibonacci:
-```c
+It allows you to do things like this anonymous recursive fibonacci:
+```cpp
 func(int n) int {
     if(n < 2) return n;
     return self(n - 1) + self(n - 2);
-}(10)::printl;
+}(10):printl;
 ```
 
 * * *
@@ -600,12 +612,15 @@ event foo(string msg) {
 To spawn this one from D:
 ```d
 auto mangledName = grMangleNamedFunction("foo", [grString]);
-if(vm.hasEvent(mangledName))
-    GrContext ev = vm.spawnEvent(mangledName);
+if(vm.hasEvent(mangledName)) {
+    GrContext context = vm.spawnEvent(mangledName);
+	context.setString("Hello World!);
+}
 ```
 Here the process is a little bit special.
 First, we need to know the mangled name (name + signature) of the event with "grMangleNamedFunction".
 Then, we call it.
+If the event has parameters, you absolutely ***must*** push those values to the new context, else the VM will crash.
 
 * * *
 
@@ -614,7 +629,7 @@ Then, we call it.
 Array are a collection of a single type of value.
 
 The type of an array is `array()` with the type of its content inside the parenthesis:
-```c
+```cpp
 array(int) myCollection = [1, 2, 3];
 ```
 
@@ -626,7 +641,7 @@ You can write it explicitly by preceding the array with its type: `array(int)[1,
 If your new array is empty `[]`, you **have** to write the type explicitly else compilation will fail: `array(string)[]`.
 
 To access an array element, the array index (from 0) in written between brackets:
-```c
+```cpp
 let a = [10, 20, 30][1]; //New array, then immediately take the index 1 of [10, 20, 30], which is 20
 
 let b = [[1, 2, 3], [11, 12, 13], [21, 22, 23]]; //New array
@@ -635,13 +650,13 @@ let d = b[1, 2]; //Same as above in a nicer syntax
 ```
 
 When accessing an array element, you can also modify it:
-```c
+```cpp
 let a = [11, 12, 13];
 a[0] = 9; //a now has [9, 12, 13]
 ```
 
 Array and array indexes are passed by references, that mean manipulating array do not make copies.
-```c
+```cpp
 let a = [1, 2, [3, 4]];
 let b = a[2]; //b is now a reference to the 3rd value of a
 b[0] = 9;
@@ -650,60 +665,75 @@ printl(a); //Prints [1, 2, [9, 4]]
 ```
 
 You can concatenate values into an array by using the concatenation operator ~
-```c
+```cpp
 let a = 1 ~ [2, 3, 4] ~ [5, 6] ~ 7; //a is now [1, 2, 3, 4, 5, 6, 7]
 ```
 
 * * *
 
-# Tuples
+# Enumerations
 
-Tuples are a way to combine several types into a single one.
+Enumerations (or enum) are a set of named constants defined inside a single type.
+They can only be compared between them and can't do any arithmetic operation.
 
-They are declared like this:
-```c
-tuple MyTuple {
-	int a;
-	float b;
+## Definition
+
+They are declared with the keyword enum:
+```cpp
+enum Color {
+	red;
+	green;
+	blue;
 }
 ```
 
-Each field can be accessed with ":"
-```c
+Likely, you can declare it in D by calling `addEnum` on your `GrData`:
+```d
+data.addEnum("Color", ["red", "green", "blue"]);
+```
+
+## Accessing a field
+
+To access a value, just type the name of the enum with
+the name of the field you want separated with a dot:
+```cpp
 main {
-	MyTuple t;
-	t:a = 5;
-	t:b = 8.7;
+	Color myColor = Color.red;
+
+	switch(myColor)
+	case(Color.red) "The color is red !":printl;
+	case(Color.green) "The color is green !":printl;
+	case(Color.blue) "The color is blue !":printl;
 }
 ```
 
 * * *
 
-# Object
+# Classes
 
-Object are types that can hold fields of different types.
+Classes are types that can hold fields of different types.
 
 ## Definition
 
-Declaration is made with the `object` keyword.
-```c
-object MyObject {
-    int myInteger;
-    string myString;
+Declaration is made with the `class` keyword.
+```cpp
+class MyClass {
+    int foo;
+    string bar;
 }
 ```
 
 It is equivalent to :
 ```d
-data.addObject("MyObject", ["myInteger", "myString"], [grInt, grString]);
+data.addClass("MyClass", ["foo", "bar"], [grInt, grString]);
 ```
-In the D side of thing, you declare an object type with `addObject` to the `GrData`.
+In the D side of thing, you declare an object type with `addClass` to the `GrData`.
 
 ## New
 
-To create an object, you use the `new` keyword followed by the object type.
-```c
-MyObject obj = new MyObject;
+To create an instance of that class (i.e. an object), you use the `new` keyword followed by the class type.
+```cpp
+MyClass obj = new MyClass;
 ```
 
 You can create an object in D by using the `createObject()` method of GrCall.
@@ -711,7 +741,7 @@ Here's a little example:
 
 * Declaration:
 ```d
-auto messageType = data.addObject("Message", ["greetings"], [grString]);
+auto messageType = data.addClass("Message", ["greetings"], [grString]);
 data.addPrimitive(&createMessage, "createMessage", [], [], [messageType]);
 ```
 
@@ -729,31 +759,31 @@ void createMessage(GrCall call) {
 ```
 
 Grimoire code:
-```c
+```cpp
 main {
     let myObj = createMessage();
-    myObj.greetings::printl;
+    myObj.greetings:printl;
 }
 ```
 
 It'll print "Hello World !".
 
 
-## Access a field
+## Accessing a field
 
 To access a field, use the `.` notation.
-```c
-obj.myInteger = 5;
-obj.myString = "Hello";
-printl(obj.myString);
+```cpp
+obj.foo = 5;
+obj.bar = "Hello";
+printl(obj.bar);
 ```
 
 In D, use set and get functions.
 ```d
 void _prim(GrCall call) {
     auto obj = call.getObject("obj");
-    writeln(obj.getInt("myInteger"));
-    obj.setInt("myInteger", 5);
+    writeln(obj.getInt("foo"));
+    obj.setInt("bar", 5);
 }
 ```
 
@@ -765,14 +795,14 @@ Channels are a concept that allow synchronised communication between tasks.
 If you know them from Go, it's roughly the same.
 
 Channels are created like this:
-```c
+```cpp
 chan(int) c = chan(int, 5);
 ```
 Here, we create a channel that will hold up to 5 int values.
 The size (5) of the channel is optional, by default, it's 1.
 
 To pass a value around, you need to use the <- operator
-```c
+```cpp
 let c = chan(int);
 c <- 1; //We send the value 1 through the channel
 int value = <-c; //We receive the value from the channel
@@ -780,7 +810,7 @@ int value = <-c; //We receive the value from the channel
 
 But a send or receive operation is blocking, you can't do it on the same task.
 
-```c
+```cpp
 task foo(chan(int) c) {
 	print(<-c);
 }
@@ -799,19 +829,19 @@ Here, foo will be blocked until something is written on the channel, then it'll 
 Error handling in Grimoire is done by raising/catching errors
 
 To raise an error, simply write:
-```c
+```cpp
 raise "Error";
 ```
 If you do nothing about it, the entire VM will panic, because the current task does nothing to catch it.
 
 So we should probably catch it:
-```c
+```cpp
 main {
 	try {
 		raise "Error";
 	}
 	catch(e) {
-		print("I caught " ~ e);
+		printl("I caught " ~ e);
 	}
 }
 ```
