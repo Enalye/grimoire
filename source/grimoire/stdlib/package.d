@@ -14,6 +14,7 @@ import grimoire.stdlib.test;
 import grimoire.stdlib.time;
 import grimoire.stdlib.typecast;
 
+/// Load the standard library
 void grLoadStdLibrary(GrData data) {
     grLoadStdLibArray(data);
     grLoadStdLibPrint(data);

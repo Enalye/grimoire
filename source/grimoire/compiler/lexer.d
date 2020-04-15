@@ -35,25 +35,36 @@ enum GrLexemeType {
 }
 
 /**
-Describe the smallest element found in a source file.
+Describe the smallest element found in a source _file.
 */
 struct GrLexeme {
     /// Default.
 	this(GrLexer _lexer) {
-		line = _lexer.line;
-		column = _lexer.current - _lexer.positionOfLine;
-		fileId = _lexer.fileId;
+		_line = _lexer._line;
+		_column = _lexer._current - _lexer._positionOfLine;
+		_fileId = _lexer._fileId;
 		lexer = _lexer;
 	}
 
-    /// Parent lexer.
-	private GrLexer lexer;
+	private {
+		/// Parent lexer.
+		GrLexer lexer;
 
-	/// Id of the file the token is in.
-	private uint fileId;
+		/// Id of the _file the token is in.
+		uint _fileId;
 
-    /// Position information in case of errors.
-	uint line, column, textLength = 1;
+		/// Position information in case of errors.
+		uint _line, _column, _textLength = 1;
+	}
+
+	@property {
+		/// Line position
+		uint line() const { return _line; }
+		/// Column position
+		uint column() const { return _column; }
+		/// Text length
+		uint textLength() const { return _textLength; }
+	}
 
 	/// Kind of token.
 	GrLexemeType type;
@@ -86,7 +97,7 @@ struct GrLexeme {
     /// Can either describe a literal value like `"myString"` or an identifier.
 	dstring svalue;
 
-    /// Returns the entire line from where the token is located.
+    /// Returns the entire _line from where the token is located.
 	dstring getLine() {
 		return lexer.getLine(this);
 	}
@@ -99,112 +110,18 @@ struct GrLexeme {
 /**
 The lexer scans the entire file and all the imported files it references.
 */
-class GrLexer {
-	dstring[] filesToImport, filesImported;
-	dstring[] lines;
-	dstring file, text;
-	uint line, current, positionOfLine, fileId;
-	GrLexeme[] lexemes;
-
-	dchar get(int offset = 0) {
-		const uint position = to!int(current) + offset;
-		if(position < 0 || position >= text.length)
-			raiseError("Unexpected end of script");
-		return text[position];
+package final class GrLexer {
+	private {
+		dstring[] _filesToImport, _filesImported;
+		dstring[] _lines;
+		dstring _file, _text;
+		uint _line, _current, _positionOfLine, _fileId;
+		GrLexeme[] _lexemes;
 	}
 
-	package dstring getLine(GrLexeme lex) {
-		if(lex.fileId >= filesImported.length)
-			raiseError("Lexeme fileId out of bounds");
-		auto text = to!dstring(readText(to!string(filesImported[lex.fileId])));
-		lines = split(text, "\n");
-		if(lex.line >= lines.length)
-			raiseError("Lexeme line count out of bounds");
-		return lines[lex.line];
-	}
-
-	package dstring getFile(GrLexeme lex) {
-		if(lex.fileId >= filesImported.length)
-			raiseError("Lexeme fileId out of bounds");
-		return filesImported[lex.fileId];
-	}
-
-	/// Advance the current character pointer and skips whitespaces and comments.
-	bool advance(bool startFromCurrent = false) {
-        if(!startFromCurrent)
-			current ++;
-
-		if(current >= text.length)
-			return false;
-
-		dchar symbol = text[current];
-
-		whileLoop: while(symbol <= 0x20 || symbol == '/' || symbol == '#') {
-			if(current >= text.length)
-				return false;
-
-			symbol = text[current];
-
-			if(symbol == '\n') {
-				positionOfLine = current;
-				line ++;
-			}
-            else if(symbol == '#') {
-                do {
-                    if((current + 1) >= text.length)
-                        return false;
-                    current ++;
-                }
-                while(text[current] != '\n');
-                positionOfLine = current;
-                line ++;
-            }
-			else if(symbol == '/') {
-				if((current + 1) >= text.length)
-					return false;
-
-				switch(text[current + 1]) {
-					case '/':
-						do {
-							if((current + 1) >= text.length)
-								return false;
-							current ++;
-						}
-						while(text[current] != '\n');
-						positionOfLine = current;
-						line ++;
-						break;
-					case '*':
-						for(;;) {
-							if((current + 2) >= text.length)
-								return false;
-
-							if(text[current] == '\n') {
-								positionOfLine = current;
-								line ++;
-							}
-
-							if(text[current] == '*' && text[current + 1] == '/') {
-								current ++;
-								break;
-							}
-
-							current ++;
-						}
-						
-						break;
-					default:
-						break whileLoop;
-				}
-			}
-			current ++;
-
-			if(current >= text.length)
-				return false;
-
-			symbol = text[current];
-		}
-		return true;
+	@property {
+		/// Generated tokens.
+		GrLexeme[] lexemes() { return _lexemes; }
 	}
 
 	/// Start scanning the root file and all its dependencies.
@@ -215,31 +132,149 @@ class GrLexer {
 		filePath = absolutePath(filePath);
 		fileName = to!dstring(filePath);
 
-		filesToImport ~= fileName;
+		_filesToImport ~= fileName;
 
-		while(filesToImport.length) {
-			file = filesToImport[$-1];
-			filesImported ~= file;
-			text = to!dstring(readText(to!string(file)));
-			filesToImport.length --;
+		while(_filesToImport.length) {
+			_file = _filesToImport[$-1];
+			_filesImported ~= _file;
+			_text = to!dstring(readText(to!string(_file)));
+			_filesToImport.length --;
 
-			line = 0u;
-			current = 0u;
-			lines = split(text, "\n");
+			_line = 0u;
+			_current = 0u;
+			_lines = split(_text, "\n");
 
 			scanScript();
 
-			fileId ++;
+			_fileId ++;
 		}
 	}
 
+	/**
+	Outputs every tokens (lexemes) scanned.
+	*/
+	void debugShowScan() {
+		writeln("Scan:");
+
+		foreach(lexeme; _lexemes) {
+			writeln(lexeme);
+		}
+	}
+
+	/**
+	Fetch the entire line where a lexeme is.
+	*/
+	package dstring getLine(GrLexeme lex) {
+		if(lex._fileId >= _filesImported.length)
+			raiseError("Lexeme _fileId out of bounds");
+		auto _text = to!dstring(readText(to!string(_filesImported[lex._fileId])));
+		_lines = split(_text, "\n");
+		if(lex._line >= _lines.length)
+			raiseError("Lexeme _line count out of bounds");
+		return _lines[lex._line];
+	}
+
+	/**
+	Fetch the file where a lexeme is.
+	*/
+	package dstring getFile(GrLexeme lex) {
+		if(lex._fileId >= _filesImported.length)
+			raiseError("Lexeme _fileId out of bounds");
+		return _filesImported[lex._fileId];
+	}
+
+	private dchar get(int offset = 0) {
+		const uint position = to!int(_current) + offset;
+		if(position < 0 || position >= _text.length)
+			raiseError("Unexpected end of script");
+		return _text[position];
+	}
+
+	/// Advance the _current character pointer and skips whitespaces and comments.
+	private bool advance(bool startFromCurrent = false) {
+        if(!startFromCurrent)
+			_current ++;
+
+		if(_current >= _text.length)
+			return false;
+
+		dchar symbol = _text[_current];
+
+		whileLoop: while(symbol <= 0x20 || symbol == '/' || symbol == '#') {
+			if(_current >= _text.length)
+				return false;
+
+			symbol = _text[_current];
+
+			if(symbol == '\n') {
+				_positionOfLine = _current;
+				_line ++;
+			}
+            else if(symbol == '#') {
+                do {
+                    if((_current + 1) >= _text.length)
+                        return false;
+                    _current ++;
+                }
+                while(_text[_current] != '\n');
+                _positionOfLine = _current;
+                _line ++;
+            }
+			else if(symbol == '/') {
+				if((_current + 1) >= _text.length)
+					return false;
+
+				switch(_text[_current + 1]) {
+					case '/':
+						do {
+							if((_current + 1) >= _text.length)
+								return false;
+							_current ++;
+						}
+						while(_text[_current] != '\n');
+						_positionOfLine = _current;
+						_line ++;
+						break;
+					case '*':
+						for(;;) {
+							if((_current + 2) >= _text.length)
+								return false;
+
+							if(_text[_current] == '\n') {
+								_positionOfLine = _current;
+								_line ++;
+							}
+
+							if(_text[_current] == '*' && _text[_current + 1] == '/') {
+								_current ++;
+								break;
+							}
+
+							_current ++;
+						}
+						
+						break;
+					default:
+						break whileLoop;
+				}
+			}
+			_current ++;
+
+			if(_current >= _text.length)
+				return false;
+
+			symbol = _text[_current];
+		}
+		return true;
+	}
+
 	/// Scan the content of a single file.
-	void scanScript() {
+	private void scanScript() {
 		//Skip the first escape characters.
 		advance(true);
     
 		do {
-			if(current >= text.length)
+			if(_current >= _text.length)
 				break;
 			switch(get()) {
 				case '0': .. case '9':
@@ -272,23 +307,12 @@ class GrLexer {
 	}
 
 	/**
-	Outputs every tokens (lexemes) scanned.
-	*/
-	void debugShowScan() {
-		writeln("Scan:");
-
-		foreach(lexeme; lexemes) {
-			writeln(lexeme);
-		}
-	}
-
-	/**
 	Scan either a integer or a floating point number. \
 	Floats can start with a `.` \
 	A number finishing with `f` will be scanned as a float. \
 	Underscores `_` are ignored inside a number.
 	*/
-	void scanNumber() {
+	private void scanNumber() {
 		GrLexeme lex = GrLexeme(this);
 		lex.isLiteral = true;
 
@@ -313,18 +337,18 @@ class GrLexer {
 				break;
 			}
 			else {
-				if(current)
-					current --;
+				if(_current)
+					_current --;
 				break;
 			}
 
-			current ++;
+			_current ++;
 
-			if(current >= text.length)
+			if(_current >= _text.length)
 				break;
 		}
 
-		lex.textLength = cast(uint)buffer.length;
+		lex._textLength = cast(uint)buffer.length;
 
 		if(isFloat) {
 			lex.type = GrLexemeType.float_;
@@ -334,7 +358,7 @@ class GrLexer {
 			lex.type = GrLexemeType.integer;
 			lex.ivalue = to!int(buffer);
 		}
-		lexemes ~= lex;
+		_lexemes ~= lex;
 	}
 
 	/**
@@ -347,33 +371,33 @@ class GrLexer {
 
 		if(get() != '\"')
 			raiseError("Expected \'\"\' at the beginning of the string.");
-		current ++;
+		_current ++;
 
 		dstring buffer;
 		for(;;) {
-			if(current >= text.length)
+			if(_current >= _text.length)
 				raiseError("Missing \'\"\' character.");
 			const dchar symbol = get();
 			if(symbol == '\n') {
-				positionOfLine = current;
-				line ++;
+				_positionOfLine = _current;
+				_line ++;
 			}
 			else if(symbol == '\"')
 				break;
 
 			buffer ~= symbol;
-			current ++;
+			_current ++;
 		}
 
-		lex.textLength = cast(uint)buffer.length + 2u;
+		lex._textLength = cast(uint)buffer.length + 2u;
 		lex.svalue = buffer;
-		lexemes ~= lex;
+		_lexemes ~= lex;
 	}
 
 	/**
 	Scan a symbol-based operator.
 	*/
-	void scanOperator() {
+	private void scanOperator() {
 		GrLexeme lex = GrLexeme(this);
 		lex.isOperator = true;
 
@@ -419,28 +443,28 @@ class GrLexer {
                 break;
 			case '~':
 				lex.type = GrLexemeType.concatenate;
-				if(current + 1 >= text.length)
+				if(_current + 1 >= _text.length)
 					break;
 				if(get(1) == '=') {
 					lex.type = GrLexemeType.concatenateAssign;
-					lex.textLength = 2;
-					current ++;
+					lex._textLength = 2;
+					_current ++;
 				}
 				break;
 			case '+':
 				lex.type = GrLexemeType.add;
-				if(current + 1 >= text.length)
+				if(_current + 1 >= _text.length)
 					break;
 				switch(get(1)) {
 					case '=':
 						lex.type = GrLexemeType.addAssign;
-						lex.textLength = 2;
-						current ++;
+						lex._textLength = 2;
+						_current ++;
 						break;
 					case '+':
 						lex.type = GrLexemeType.increment;
-						lex.textLength = 2;
-						current ++;
+						lex._textLength = 2;
+						_current ++;
 						break;
 					default:
 						break;
@@ -448,18 +472,18 @@ class GrLexer {
 				break;
 			case '-':
 				lex.type = GrLexemeType.substract;
-				if(current + 1 >= text.length)
+				if(_current + 1 >= _text.length)
 					break;
 				switch(get(1)) {
 					case '=':
 						lex.type = GrLexemeType.substractAssign;
-						lex.textLength = 2;
-						current ++;
+						lex._textLength = 2;
+						_current ++;
 						break;
 					case '-':
 						lex.type = GrLexemeType.decrement;
-						lex.textLength = 2;
-						current ++;
+						lex._textLength = 2;
+						_current ++;
 						break;
 					default:
 						break;
@@ -467,24 +491,24 @@ class GrLexer {
 				break;
 			case '*':
 				lex.type = GrLexemeType.multiply;
-				if(current + 1 >= text.length)
+				if(_current + 1 >= _text.length)
 					break;
 				switch(get(1)) {
 					case '=':
 						lex.type = GrLexemeType.multiplyAssign;
-						lex.textLength = 2;
-						current ++;
+						lex._textLength = 2;
+						_current ++;
 						break;
 					case '*':
 						lex.type = GrLexemeType.power;
-						lex.textLength = 2;
-						current ++;
-						if(current + 1 >= text.length)
+						lex._textLength = 2;
+						_current ++;
+						if(_current + 1 >= _text.length)
 							break;
 						if(get(1) == '=') {
 							lex.type = GrLexemeType.powerAssign;
-							lex.textLength = 3;
-							current ++;
+							lex._textLength = 3;
+							_current ++;
 						}
 						break;
 					default:
@@ -493,92 +517,92 @@ class GrLexer {
 				break;
 			case '/':
 				lex.type = GrLexemeType.divide;
-				if(current + 1 >= text.length)
+				if(_current + 1 >= _text.length)
 					break;
 				if(get(1) == '=') {
 					lex.type = GrLexemeType.divideAssign;
-					lex.textLength = 2;
-					current ++;
+					lex._textLength = 2;
+					_current ++;
 				}
 				break;
 			case '%':
 				lex.type = GrLexemeType.remainder;
-				if(current + 1 >= text.length)
+				if(_current + 1 >= _text.length)
 					break;
 				if(get(1) == '=') {
 					lex.type = GrLexemeType.remainderAssign;
-					lex.textLength = 2;
-					current ++;
+					lex._textLength = 2;
+					_current ++;
 				}
 				break;
 			case '=':
 				lex.type = GrLexemeType.assign;
-				if(current + 1 >= text.length)
+				if(_current + 1 >= _text.length)
 					break;
 				if(get(1) == '=') {
 					lex.type = GrLexemeType.equal;
-					lex.textLength = 2;
-					current ++;
+					lex._textLength = 2;
+					_current ++;
 				}
 				break;
 			case '<':
 				lex.type = GrLexemeType.lesser;
-				if(current + 1 >= text.length)
+				if(_current + 1 >= _text.length)
 					break;
 				if(get(1) == '=') {
 					lex.type = GrLexemeType.lesserOrEqual;
-					lex.textLength = 2;
-					current ++;
+					lex._textLength = 2;
+					_current ++;
 				}
 				else if(get(1) == '-') {
 					lex.type = GrLexemeType.send;
-					lex.textLength = 2;
-					current ++;
+					lex._textLength = 2;
+					_current ++;
 				}
 				break;
 			case '>':
 				lex.type = GrLexemeType.greater;
-				if(current + 1 >= text.length)
+				if(_current + 1 >= _text.length)
 					break;
 				if(get(1) == '=') {
 					lex.type = GrLexemeType.greaterOrEqual;
-					lex.textLength = 2;
-					current ++;
+					lex._textLength = 2;
+					_current ++;
 				}
 				break;
 			case '!':
 				lex.type = GrLexemeType.not;
-				if(current + 1 >= text.length)
+				if(_current + 1 >= _text.length)
 					break;
 				if(get(1) == '=') {
 					lex.type = GrLexemeType.notEqual;
-					lex.textLength = 2;
-					current ++;
+					lex._textLength = 2;
+					_current ++;
 				}
 				break;
 			default:
 				raiseError("GrLexer: Invalid operator.");
 		}
 
-		lexemes ~= lex;
+		_lexemes ~= lex;
 	}
 
 	/**
 	Scan a known keyword or an identifier otherwise.
 	*/
-	void scanWord() {
+	private void scanWord() {
 		GrLexeme lex = GrLexeme(this);
 		lex.isKeyword = true;
 
 		dstring buffer;
 		for(;;) {
-			if(current >= text.length)
+			if(_current >= _text.length)
 				break;
 
 			const dchar symbol = get();
 			if(symbol == '!' || symbol == '?') {
 				buffer ~= symbol;
-				current ++;
+				_current ++;
 				break;
 			}
 			if(symbol <= '&' ||
@@ -589,11 +613,11 @@ class GrLexer {
 				break;
 
 			buffer ~= symbol;
-			current ++;
+			_current ++;
 		}
-		current --;
+		_current --;
 
-		lex.textLength = cast(uint)buffer.length;
+		lex._textLength = cast(uint)buffer.length;
 
 		switch(buffer) {
 			case "use":
@@ -766,7 +790,7 @@ class GrLexer {
 				break;
 		}
 
-		lexemes ~= lex;
+		_lexemes ~= lex;
 	}
 
 	/// Transform the path in your path system.
@@ -776,36 +800,36 @@ class GrLexer {
 		return replaceAll(path, regex(r"\\/|/|\\"), dirSeparator);
 	}
 
-	/// add a single file path delimited by `" "` to the import list.
+	/// add a single _file path delimited by `" "` to the import list.
 	private void scanFilePath() {
 		import std.path: dirName, buildNormalizedPath, absolutePath;
 
 		if(get() != '\"')
 			raiseError("Expected \'\"\' at the beginning of the import.");
-		current ++;
+		_current ++;
 
 		dstring buffer;
 		for(;;) {
-			if(current >= text.length)
+			if(_current >= _text.length)
 				raiseError("Missing \'\"\' character.");
 			const dchar symbol = get();
 			if(symbol == '\n') {
-				positionOfLine = current;
-				line ++;
+				_positionOfLine = _current;
+				_line ++;
 			}
 			else if(symbol == '\"')
 				break;
 
 			buffer ~= symbol;
-			current ++;
+			_current ++;
 		}
 		string filePath = to!string(buffer);
-		filePath = buildNormalizedPath(dirName(to!string(file)), convertPathToImport(filePath));
+		filePath = buildNormalizedPath(dirName(to!string(_file)), convertPathToImport(filePath));
 		filePath = absolutePath(filePath);
 		buffer = to!dstring(filePath);
-		if(filesImported.canFind(buffer) || filesToImport.canFind(buffer))
+		if(_filesImported.canFind(buffer) || _filesToImport.canFind(buffer))
 			return;
-		filesToImport ~= buffer;
+		_filesToImport ~= buffer;
 	}
 
 	/// Scan a `use` directive. \
@@ -814,7 +838,7 @@ class GrLexer {
 	/// `use { "FILEPATH1", "FILEPATH2", "FILEPATH3" }` \
 	/// ___
 	/// add a file to the list of files to import.
-	void scanUse() {
+	private void scanUse() {
 		advance();
 
 		// Multiple files import.
@@ -829,7 +853,7 @@ class GrLexer {
 				else
 					raiseError("Missing \'\"\' character.");
 				// EOF
-				if(current >= text.length)
+				if(_current >= _text.length)
 					raiseError("Missing \'}\' after import list.");
 				// End of the import list.
 				if(get() == '}')
@@ -843,6 +867,9 @@ class GrLexer {
 		}
 	}
 
+	/**
+	Lexical error
+	*/
 	private void raiseError(string message) {
 		GrError error = new GrError;
 		error.type = GrError.Type.lexer;
@@ -850,19 +877,19 @@ class GrLexer {
 		error.message = message;
 		error.info = "";
 
-		if(lexemes.length) {
-			GrLexeme lexeme = lexemes[$ - 1];
+		if(_lexemes.length) {
+			GrLexeme lexeme = _lexemes[$ - 1];
 			error.filePath = to!string(lexeme.getFile());
 			error.lineText = to!string(lexeme.getLine()).replace("\t", " ");
-			error.line = lexeme.line + 1u; // By convention, the first line is 1, not 0.
-			error.column = lexeme.column;
-			error.textLength = lexeme.textLength;
+			error.line = lexeme._line + 1u; // By convention, the first line is 1, not 0.
+			error.column = lexeme._column;
+			error.textLength = lexeme._textLength;
 		}
 		else {
-			error.filePath = to!string(file);
-			error.lineText = to!string(lines[line]);
-			error.line = line + 1u; // By convention, the first line is 1, not 0.
-			error.column = current - positionOfLine;
+			error.filePath = to!string(_file);
+			error.lineText = to!string(_lines[_line]);
+			error.line = _line + 1u; // By convention, the first line is 1, not 0.
+			error.column = _current - _positionOfLine;
 			error.textLength = 0u;
 		}
 
@@ -891,12 +918,15 @@ dstring grGetPrettyLexemeType(GrLexemeType operator) {
     return lexemeTypeStrTable[operator];
 }
 
+/**
+Lexical error during tokenization
+*/
 package final class GrLexerException: Exception {
     GrError error;
 
     /// Ctor
-    this(GrError error_, string file = __FILE__, size_t line = __LINE__) {
-        super(error_.message, file, line);
+    this(GrError error_, string _file = __FILE__, size_t _line = __LINE__) {
+        super(error_.message, _file, _line);
         error = error_;
     }
 }

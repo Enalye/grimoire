@@ -904,14 +904,18 @@ class GrEngine {
 					context.pc ++;
                     break;
 				case fieldLoad:
-					context.ostack[context.ostackPos] = cast(void*)((cast(GrObject)context.ostack[context.ostackPos])._fields[grGetInstructionUnsignedValue(opcode)]);
+					context.ostack[context.ostackPos] =
+						cast(void*) ((cast(GrObject)context.ostack[context.ostackPos])._fields[
+						grGetInstructionUnsignedValue(opcode)]);
 					context.pc ++;
                     break;
                 case fieldLoad_Int:
                     context.istackPos ++;
 					if(context.istackPos == context.istack.length)
 						context.istack.length *= 2;
-					context.istack[context.istackPos] = (cast(GrObject)context.ostack[context.ostackPos])._fields[grGetInstructionUnsignedValue(opcode)].ivalue;
+					context.istack[context.istackPos] =
+						(cast(GrObject) context.ostack[context.ostackPos])._fields[
+						grGetInstructionUnsignedValue(opcode)].ivalue;
                     context.ostackPos --;
 					context.pc ++;
                     break;
@@ -919,7 +923,9 @@ class GrEngine {
                     context.fstackPos ++;
 					if(context.fstackPos == context.fstack.length)
 						context.fstack.length *= 2;
-					context.fstack[context.fstackPos] = (cast(GrObject)context.ostack[context.ostackPos])._fields[grGetInstructionUnsignedValue(opcode)].fvalue;
+					context.fstack[context.fstackPos] =
+						(cast(GrObject) context.ostack[context.ostackPos])._fields[
+						grGetInstructionUnsignedValue(opcode)].fvalue;
                     context.ostackPos --;
 					context.pc ++;
                     break;
@@ -927,19 +933,24 @@ class GrEngine {
                     context.sstackPos ++;
 					if(context.sstackPos == context.sstack.length)
 						context.sstack.length *= 2;
-					context.sstack[context.sstackPos] = (cast(GrObject)context.ostack[context.ostackPos])._fields[grGetInstructionUnsignedValue(opcode)].svalue;
+					context.sstack[context.sstackPos] =
+						(cast(GrObject) context.ostack[context.ostackPos])._fields[
+						grGetInstructionUnsignedValue(opcode)].svalue;
                     context.ostackPos --;
 					context.pc ++;
                     break;
 				case fieldLoad_Object:
-					context.ostack[context.ostackPos] = (cast(GrObject)context.ostack[context.ostackPos])._fields[grGetInstructionUnsignedValue(opcode)].ovalue;
+					context.ostack[context.ostackPos] =
+						(cast(GrObject) context.ostack[context.ostackPos])._fields[
+						grGetInstructionUnsignedValue(opcode)].ovalue;
 					context.pc ++;
                     break;
 				case fieldLoad2_Int:
                     context.istackPos ++;
 					if(context.istackPos == context.istack.length)
 						context.istack.length *= 2;
-					GrField field = (cast(GrObject)context.ostack[context.ostackPos])._fields[grGetInstructionUnsignedValue(opcode)];
+					GrField field = (cast(GrObject) context.ostack[context.ostackPos])._fields[
+						grGetInstructionUnsignedValue(opcode)];
 					context.istack[context.istackPos] = field.ivalue;
 					context.ostack[context.ostackPos] = cast(void*)field;
 					context.pc ++;
@@ -948,7 +959,8 @@ class GrEngine {
                     context.fstackPos ++;
 					if(context.fstackPos == context.fstack.length)
 						context.fstack.length *= 2;
-					GrField field = (cast(GrObject)context.ostack[context.ostackPos])._fields[grGetInstructionUnsignedValue(opcode)];
+					GrField field = (cast(GrObject) context.ostack[context.ostackPos])._fields[
+						grGetInstructionUnsignedValue(opcode)];
 					context.fstack[context.fstackPos] = field.fvalue;
 					context.ostack[context.ostackPos] = cast(void*)field;
 					context.pc ++;
@@ -957,7 +969,8 @@ class GrEngine {
                     context.sstackPos ++;
 					if(context.sstackPos == context.sstack.length)
 						context.sstack.length *= 2;
-					GrField field = (cast(GrObject)context.ostack[context.ostackPos])._fields[grGetInstructionUnsignedValue(opcode)];
+					GrField field = (cast(GrObject) context.ostack[context.ostackPos])._fields[
+						grGetInstructionUnsignedValue(opcode)];
 					context.sstack[context.sstackPos] = field.svalue;
 					context.ostack[context.ostackPos] = cast(void*)field;
 					context.pc ++;
@@ -966,7 +979,8 @@ class GrEngine {
 					context.ostackPos ++;
 					if(context.ostackPos == context.ostack.length)
 						context.ostack.length *= 2;
-					GrField field = (cast(GrObject)context.ostack[context.ostackPos - 1])._fields[grGetInstructionUnsignedValue(opcode)];
+					GrField field = (cast(GrObject) context.ostack[context.ostackPos - 1])._fields[
+						grGetInstructionUnsignedValue(opcode)];
 					context.ostack[context.ostackPos] = field.ovalue;
 					context.ostack[context.ostackPos - 1] = cast(void*)field;
 					context.pc ++;
@@ -1354,7 +1368,7 @@ class GrEngine {
                         else {
                             //Kill the others.
                             foreach(coroutine; _contexts) {
-                                coroutine.pc = cast(uint)(_opcodes.length - 1);
+                                coroutine.pc = cast(uint) (cast(int) _opcodes.length - 1);
                                 coroutine.isKilled = true;
                             }
 							_contextsToSpawn.reset();
@@ -1885,7 +1899,9 @@ class GrEngine {
 					context.pc ++;
 					break;
 				default:
-					throw new Exception("Invalid instruction at (" ~ to!string(context.pc) ~ "): " ~ to!string(grGetInstructionOpcode(opcode)));
+					throw new Exception("Invalid instruction at (" ~
+						to!string(context.pc) ~ "): " ~
+						to!string(grGetInstructionOpcode(opcode)));
                 }
 			}
 		}
@@ -1899,16 +1915,29 @@ import core.time: MonoTime, Duration;
 		DebugFunction[] _debugFunctionsStack;
 	}
 
+	/// Runtime information about every called functions
 	DebugFunction[int] dumpProfiling() {
 		return _debugFunctions;
 	}
 
+	/// Runtime information of a called function
 	final class DebugFunction {
-		private MonoTime _start;
-		Duration total;
-		ulong count;
-		int pc;
-		dstring name;
+		private {
+			MonoTime _start;
+			Duration _total;
+			ulong _count;
+			int _pc;
+			dstring _name;
+		}
+
+		@property {
+			/// Total execution time passed inside the function
+			Duration total() const { return _total; }
+			/// Total times the function was called
+			ulong count() const { return _count; }
+			/// Prettified name of the function
+			dstring name() const { return _name; }
+		}
 	}
 
 	private void debugProfileEnd() {
@@ -1916,8 +1945,8 @@ import core.time: MonoTime, Duration;
 			return;
 		auto p = _debugFunctionsStack[$ - 1];
 		_debugFunctionsStack.length --;
-		p.total += MonoTime.currTime() - p._start;
-		p.count ++;
+		p._total += MonoTime.currTime() - p._start;
+		p._count ++;
 	}
 
 	private void debugProfileBegin(uint opcode, int pc) {
@@ -1929,8 +1958,8 @@ import core.time: MonoTime, Duration;
 		}
 		else {
 			auto debugFunc = new DebugFunction;
-			debugFunc.pc = pc;
-			debugFunc.name = _sconsts[grGetInstructionUnsignedValue(opcode)];
+			debugFunc._pc = pc;
+			debugFunc._name = _sconsts[grGetInstructionUnsignedValue(opcode)];
 			debugFunc._start = MonoTime.currTime();
 			_debugFunctions[pc] = debugFunc;
 			_debugFunctionsStack ~= debugFunc;

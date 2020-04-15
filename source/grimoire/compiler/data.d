@@ -1,3 +1,8 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 module grimoire.compiler.data;
 
 import grimoire.runtime;
@@ -148,9 +153,13 @@ class GrData {
     An operator is a function that replace a binary or unary grimoire operator such as `+`, `==`, etc
     The name of the function must be that of the operator like "+", "-", "or", etc.
     */
-    GrPrimitive addOperator(GrCallback callback, dstring name, dstring[] parameters, GrType[] inSignature, GrType outType) {
+    GrPrimitive addOperator(GrCallback callback, dstring name,
+        dstring[] parameters, GrType[] inSignature, GrType outType) {
         import std.conv: to;
-        assert(inSignature.length <= 2uL, "The operator \'" ~ to!string(name) ~ "\' cannot take more than 2 parameters: " ~ to!string(to!dstring(parameters)));
+        assert(inSignature.length <= 2uL,
+            "The operator \'" ~ to!string(name) ~
+            "\' cannot take more than 2 parameters: " ~
+            to!string(to!dstring(parameters)));
         return addPrimitive(callback, "@op_" ~ name, parameters, inSignature, [outType]);
     }
 
@@ -158,12 +167,16 @@ class GrData {
     A cast operator allows to convert from one type to another.
     It have to have only one parameter and return the casted value.
     */
-    GrPrimitive addCast(GrCallback callback, dstring parameter, GrType srcType, GrType dstType, bool isExplicit = false) {
+    GrPrimitive addCast(GrCallback callback, dstring parameter,
+        GrType srcType, GrType dstType, bool isExplicit = false) {
         auto primitive = addPrimitive(callback, "@as", [parameter], [srcType, dstType], [dstType]);
         primitive.isExplicit = isExplicit;
         return primitive;
     }
 
+    /**
+    Is the primitive already declared ?
+    */
     bool isPrimitiveDeclared(dstring mangledName) {
         foreach(primitive; _primitives) {
             if(primitive.mangledName == mangledName)
@@ -172,6 +185,9 @@ class GrData {
         return false;
     }
 
+    /**
+    Returns the declared primitive definition.
+    */
     GrPrimitive getPrimitive(dstring mangledName) {
         import std.conv: to;
         foreach(primitive; _primitives) {
@@ -181,6 +197,9 @@ class GrData {
         assert(false, "Undeclared primitive " ~ to!string(mangledName));
     }
 
+    /**
+    Prettify a primitive signature.
+    */
     string getPrimitiveDisplayById(uint id, bool showParameters = false) {
         import std.conv: to;
         assert(id < _primitives.length, "Invalid primitive id");
@@ -210,7 +229,6 @@ class GrData {
     package void resolveSignatures() {
         //Resolve all unresolved field types
         resolveClassSignatures();
-
         //Then we can resolve _primitives' signature
         resolvePrimitiveSignatures();
     }

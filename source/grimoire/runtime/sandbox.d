@@ -3,20 +3,21 @@
  * License: Zlib
  * Authors: Enalye
  */
-module scripthandler;
+module grimoire.runtime.sandbox;
 
 import std.stdio, core.thread;
 import grimoire;
 
-final class ScriptHandler {
+/// Handle a grimoire VM safely.
+final class GrSandbox {
     private final class TimeoutThread: Thread {
         private {
-            __gshared ScriptHandler _script;
+            __gshared GrSandbox _script;
         }
         shared bool isRunning = true;
         shared bool isTimedout;
 
-        this(ScriptHandler script) {
+        this(GrSandbox script) {
             _script = script;
             super(&run);
         }
@@ -68,19 +69,14 @@ final class ScriptHandler {
         }
     }
 
-    void load(GrData data, string name) {
-        GrBytecode bytecode;
-        GrCompiler compiler = new GrCompiler(data);
-        if(!compiler.compileFile(bytecode, name)) {
-            return;
-        }
-
+    /*void load(string name) {
+        auto bytecode = grCompileFile(name);
         engine = new GrEngine;
-        engine.load(data, bytecode);
+        engine.load(bytecode);
         engine.spawn();
         _timeout = new TimeoutThread(this);
         _timeout.start();
-    }
+    }*/
 
     void run() {
         _isLoaded = true;

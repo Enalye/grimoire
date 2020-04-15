@@ -11,7 +11,7 @@ alias GrStringChannel = GrChannel!dstring;
 alias GrObjectChannel = GrChannel!(void*);
 
 /**
-    A pipe that allow synchronised communication between coroutines.
+A pipe that allow synchronised communication between coroutines.
 */
 final class GrChannel(T) {
     /// The channel is active.
@@ -25,11 +25,11 @@ final class GrChannel(T) {
 
     @property {
         /**
-            On a channel of size 1, the sender is blocked
-            until something tells him he is ready to receive the value.
+        On a channel of size 1, the sender is blocked
+        until something tells him he is ready to receive the value.
 
-            For any other size, the sender is never blocked
-            until the buffer is full.
+        For any other size, the sender is never blocked
+        until the buffer is full.
         */
         bool canSend() const {
             if(_capacity == 1u)
@@ -39,8 +39,8 @@ final class GrChannel(T) {
         }
 
         /**
-            You can receive whenever there is a value stored
-            without being blocked.
+        You can receive whenever there is a value stored
+        without being blocked.
         */
         bool canReceive() const { return _size > 0u; }
     }
@@ -70,8 +70,8 @@ final class GrChannel(T) {
     }
 
     /**
-        Notify the senders that they can write to
-        this channel because you are blocked on it.
+    Notify the senders that they can write to
+    this channel because you are blocked on it.
     */
     void setReceiverReady() {
         _isReceiverReady = true;

@@ -1,3 +1,8 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 main {
     assert(20:fib_loop == 20:fib_recur);
     assert(10:fib_self == 55);

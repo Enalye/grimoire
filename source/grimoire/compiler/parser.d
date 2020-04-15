@@ -5187,6 +5187,9 @@ final class GrParser {
 	}
 }
 
+/**
+Syntatic error during parsing
+*/
 package final class GrParserException: Exception {
     GrError error;
 

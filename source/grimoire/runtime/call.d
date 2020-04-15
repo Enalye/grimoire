@@ -24,12 +24,10 @@ class GrCall {
         dstring[] _ilocals, _flocals, _slocals, _vlocals, _olocals;
         int _iparams, _fparams, _sparams, _oparams;
         int _iresults, _fresults, _sresults, _vresults, _oresults;
-        bool _hasResult, _isInitialized;
+        bool _isInitialized;
     }
 
     @property {
-        bool hasResult(bool newHasResult) { return _hasResult = newHasResult; }
-
         /// Current task running the primitive.
         GrContext context() { return _context; }
 

@@ -256,6 +256,7 @@ final class GrContext {
         states.length --;
     }
 
+    /// Dump stacks info
     dstring dump() {
         import std.conv: to;
         dstring result = "Context Dump:";
