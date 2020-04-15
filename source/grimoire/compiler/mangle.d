@@ -198,20 +198,20 @@ GrType grUnmangle(dstring mangledSignature) {
             break;
         case 'u':
             currentType.baseType = GrBaseType.foreign;
-            dstring userTypeName;
+            dstring foreignName;
             if((i + 2) >= mangledSignature.length)
-                throw new Exception("Invalid unmangle mangling format in usertype");
+                throw new Exception("Invalid unmangle mangling format in foreign");
             i ++;
             if(mangledSignature[i] != '(')
-                throw new Exception("Invalid unmangle mangling format in usertype");
+                throw new Exception("Invalid unmangle mangling format in foreign");
             i ++;
             while(mangledSignature[i] != ')') {
-                userTypeName ~= mangledSignature[i];
+                foreignName ~= mangledSignature[i];
                 i ++;
                 if(i >= mangledSignature.length)
-                    throw new Exception("Invalid unmangle mangling format in usertype");
+                    throw new Exception("Invalid unmangle mangling format in foreign");
             }
-            currentType.mangledType = userTypeName;
+            currentType.mangledType = foreignName;
             break;
         case 'f':
             i ++;
@@ -361,7 +361,7 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
             break;
         case 'u':
             currentType.baseType = GrBaseType.foreign;
-            dstring userTypeName;
+            dstring foreignName;
             if((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid mangling format");
             i ++;
@@ -369,12 +369,12 @@ GrType[] grUnmangleSignature(dstring mangledSignature) {
                 throw new Exception("Invalid mangling format");
             i ++;
             while(mangledSignature[i] != ')') {
-                userTypeName ~= mangledSignature[i];
+                foreignName ~= mangledSignature[i];
                 i ++;
                 if(i >= mangledSignature.length)
                     throw new Exception("Invalid mangling format");
             }
-            currentType.mangledType = userTypeName;
+            currentType.mangledType = foreignName;
             break;
         case 'f':
             i ++;
