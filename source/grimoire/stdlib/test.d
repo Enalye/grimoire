@@ -22,5 +22,5 @@ private void _assert(GrCall call) {
 private void _assert_msg(GrCall call) {
     const bool value = call.getBool("value");
     if(!value)
-        call.raise(call.getString("msg"));
+        call.raise(call.getString!dstring("msg"));
 }

@@ -1908,7 +1908,7 @@ class GrEngine {
 		_contexts.sweepMarkedData();
     }
 
-import core.time: MonoTime, Duration;
+	import core.time: MonoTime, Duration;
 	private {
 		bool _isDebug;
 		DebugFunction[int] _debugFunctions;
@@ -1918,6 +1918,49 @@ import core.time: MonoTime, Duration;
 	/// Runtime information about every called functions
 	DebugFunction[int] dumpProfiling() {
 		return _debugFunctions;
+	}
+
+	/// Prettify the result from `dumpProfiling`
+	string prettifyProfiling() {
+		import std.algorithm.comparison: max;
+		import std.conv: to;
+
+		string report;
+		ulong functionNameLength = 10;
+		ulong countLength = 10;
+		ulong totalLength = 10;
+		ulong averageLength = 10;
+		foreach(func; dumpProfiling()) {
+			functionNameLength = max(func.name.length, functionNameLength);
+			countLength = max(to!string(func.count).length, countLength);
+			totalLength = max(to!string(func.total.total!"msecs").length, totalLength);
+			Duration average = func.count ? (func.total / func.count) : Duration.zero;
+			averageLength = max(to!string(average.total!"msecs").length, averageLength);
+		}
+		string header =
+			"| " ~ leftJustify("Function", functionNameLength) ~
+			" | " ~ leftJustify("Count", countLength) ~
+			" | " ~ leftJustify("Total", totalLength) ~
+			" | " ~ leftJustify("Average", averageLength)
+			~ " |";
+
+		string separator = "+" ~
+			leftJustify("", functionNameLength + 2, '-')  ~ "+" ~ 
+			leftJustify("", countLength + 2, '-')  ~ "+" ~ 
+			leftJustify("", totalLength + 2, '-')  ~ "+" ~ 
+			leftJustify("", averageLength + 2, '-')  ~ "+";
+		report ~= separator ~ "\n" ~ header ~ "\n" ~ separator ~ "\n";
+		foreach(func; dumpProfiling()) {
+			Duration average = func.count ? (func.total / func.count) : Duration.zero;
+			report ~=
+				"| " ~
+				leftJustify(to!string(func.name), functionNameLength) ~ " | " ~
+				leftJustify(to!string(func.count), countLength) ~ " | " ~
+				leftJustify(to!string(func.total.total!"msecs"), totalLength) ~ " | " ~
+				leftJustify(to!string(average.total!"msecs"), averageLength) ~ " |\n";
+		}
+		report ~= separator ~ "\n";
+		return report;
 	}
 
 	/// Runtime information of a called function

@@ -119,7 +119,6 @@ class GrCall {
             dispatchError();
     }
 
-    alias getString = getParameter!dstring;
     alias getBool = getParameter!bool;
     alias getInt = getParameter!int;
     alias getFloat = getParameter!float;
@@ -129,8 +128,22 @@ class GrCall {
     alias getStringArray = getUserData!GrStringArray;
     alias getObjectArray = getUserData!GrObjectArray;
 
+    T getString(T : dstring)(dstring parameter) {
+        return getParameter!dstring(parameter);
+    }
+
+    T getString(T)(dstring parameter) {
+        import std.traits: isSomeString;
+        static assert(isSomeString!T, "Not a string type");
+        return to!T(getParameter!dstring(parameter));
+    }
+
+    T getEnum(T)(dstring parameter) {
+        return cast(T) getInt(parameter);
+    }
+
     T getUserData(T)(dstring parameter) {
-        return cast(T)getParameter!(void*)(parameter);
+        return cast(T) getParameter!(void*)(parameter);
     }
 
     private T getParameter(T)(dstring parameter) {
@@ -191,7 +204,6 @@ class GrCall {
         }
     }
 
-    alias setString = setResult!dstring;
     alias setBool = setResult!bool;
     alias setInt = setResult!int;
     alias setFloat = setResult!float;
@@ -200,9 +212,23 @@ class GrCall {
     alias setFloatArray = setUserData!GrFloatArray;
     alias setStringArray = setUserData!GrStringArray;
     alias setObjectArray = setUserData!GrObjectArray;
+
+    void setString(T : dstring)(T value) {
+        setResult!dstring(value);
+    }
+
+    void setString(T)(T value) {
+        import std.traits: isSomeString;
+        static assert(isSomeString!T, "Not a string type");
+        setResult!dstring(to!dstring(value));
+    }
+
+    void setEnum(T)(T value) {
+        setInt(cast(int) value);
+    }
     
     void setUserData(T)(T value) {
-        setResult!(void*)(cast(void*)value);
+        setResult!(void*)(cast(void*) value);
     }
 
     private void setResult(T)(T value) {
