@@ -234,23 +234,38 @@ class GrCall {
     private void setResult(T)(T value) {
         static if(is(T == int)) {
             _iresults ++;
-            _context.istack[(_context.istackPos - _iparams) + _iresults] = value;
+            const size_t idx = (_context.istackPos - _iparams) + _iresults;
+            if(idx >= _context.istack.length)
+                _context.istack.length *= 2;
+            _context.istack[idx] = value;
         }
         else static if(is(T == bool)) {
             _iresults ++;
-            _context.istack[(_context.istackPos - _iparams) + _iresults] = value ? 1 : 0;
+            const size_t idx = (_context.istackPos - _iparams) + _iresults;
+            if(idx >= _context.istack.length)
+                _context.istack.length *= 2;
+            _context.istack[idx] = value ? 1 : 0;
         }
         else static if(is(T == float)) {
             _fresults ++;
-            _context.fstack[(_context.fstackPos - _fparams) + _fresults] = value;
+            const size_t idx = (_context.fstackPos - _fparams) + _fresults;
+            if(idx >= _context.fstack.length)
+                _context.fstack.length *= 2;
+            _context.fstack[idx] = value;
         }
         else static if(is(T == dstring)) {
             _sresults ++;
-            _context.sstack[(_context.sstackPos - _sparams) + _sresults] = value;
+            const size_t idx = (_context.sstackPos - _sparams) + _sresults;
+            if(idx >= _context.sstack.length)
+                _context.sstack.length *= 2;
+            _context.sstack[idx] = value;
         }
         else static if(is(T == void*)) {
             _oresults ++;
-            _context.ostack[(_context.ostackPos - _oparams) + _oresults] = value;
+            const size_t idx = (_context.ostackPos - _oparams) + _oresults;
+            if(idx >= _context.ostack.length)
+                _context.ostack.length *= 2;
+            _context.ostack[idx] = value;
         }
     }
 
