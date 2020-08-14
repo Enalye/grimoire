@@ -34,9 +34,9 @@ final class GrParser {
 
         uint scopeLevel;
 
-        GrVariable[dstring] globalVariables;
-        GrFunction[dstring] functions, events;
-        GrFunction[dstring] anonymousFunctions;
+        GrVariable[] globalVariables;
+        GrFunction[] functions, events;
+        GrFunction[] anonymousFunctions;
 
         uint current;
         GrFunction currentFunction;
@@ -167,11 +167,11 @@ final class GrParser {
 	}
 
     /// Register a global variable
-    private GrVariable registerGlobalVariable(dstring name, GrType type, bool isAuto) {
+    private GrVariable registerGlobalVariable(dstring name, GrType type, uint fileId, bool isAuto, bool isPublic) {
         //Check if declared globally.
-		const auto previousVariable = (name in globalVariables);
+		const auto previousVariable = getGlobalVariable(name, fileId);
 		if(previousVariable !is null)
-			logError("Multiple declaration", "The global variable \'" ~ to!string(name) ~ "\' is already declared.");
+			logError("Multiple declaration", "\'" ~ to!string(name) ~ "\' is already declared.");
 
 		GrVariable variable = new GrVariable;
         variable.isAuto = isAuto;
@@ -179,11 +179,28 @@ final class GrParser {
         variable.isInitialized = false;
 		variable.type = type;
         variable.name = name;
+        variable.isPublic = isPublic;
+        variable.fileId = fileId;
         if(!isAuto)
             setVariableRegister(variable);
-		globalVariables[name] = variable;
+		globalVariables ~= variable;
 
 		return variable;
+    }
+
+    private GrVariable getGlobalVariable(dstring name, uint fileId) {
+        foreach(GrVariable var; globalVariables) {
+            if(var.name == name && (var.fileId == fileId || var.isPublic))
+                return var;
+        }
+        return null;
+    }
+
+    private void assertNoGlobalDeclaration(dstring name, uint fileId) {
+        const GrVariable previousVariable = getGlobalVariable(name, fileId);
+        if(previousVariable !is null)
+            logError("Multiple declaration",
+                "\'" ~ to!string(name) ~ "\' is already declared as a global variable");
     }
 
     private void setVariableRegister(GrVariable variable) {
@@ -246,9 +263,7 @@ final class GrParser {
     /// Register a local variable
 	private GrVariable registerLocalVariable(dstring name, GrType type) {
 		//Check if declared globally
-        if(name in globalVariables)
-			logError("Multiple declaration",
-                "The local variable \'" ~ to!string(name) ~ "\' is already declared in a global scope.");
+        assertNoGlobalDeclaration(name, get().fileId);
 
 		//Check if declared locally.
 		const auto previousVariable = (name in currentFunction.localVariables);
@@ -268,10 +283,10 @@ final class GrParser {
 	}
 
     private void beginGlobalScope() {
-        auto globalScope = "@global"d in functions;
+        GrFunction globalScope = getFunction("@global"d, 0);
         if(globalScope) {
             functionStack ~= currentFunction;
-            currentFunction = *globalScope;
+            currentFunction = globalScope;
         }
         else {
             GrFunction func = new GrFunction;
@@ -279,7 +294,9 @@ final class GrParser {
             func.isTask = false;
             func.inSignature = [];
             func.outSignature = [];
-            functions["@global"d] = func;
+            func.isPublic = true;
+            func.fileId = 0;
+            functions ~= func;
             functionStack ~= currentFunction;
             currentFunction = func;
         }
@@ -293,55 +310,61 @@ final class GrParser {
         functionStack.length --;
     }
 
-	private void beginFunction(dstring name, GrType[] signature, bool isEvent = false) {
+	private void beginFunction(dstring name, uint fileId, GrType[] signature, bool isEvent = false) {
         const dstring mangledName = grMangleNamedFunction(name, signature);
 
-		GrFunction* func;
+		GrFunction func;
         if(isEvent)
-            func = mangledName in events;
+            func = getEvent(mangledName);
         else
-            func = mangledName in functions;
+            func = getFunction(mangledName, fileId);
 
 		if(func is null)
 			logError("Undeclared function", "The function \'" ~ to!string(name) ~ "\' is not declared.");
 
 		functionStack ~= currentFunction;
-		currentFunction = *func;
+		currentFunction = func;
 	}
 
-	private void preBeginFunction(dstring name, GrType[] signature,
+	private void preBeginFunction(dstring name, uint fileId, GrType[] signature,
         dstring[] inputVariables, bool isTask, GrType[] outSignature = [],
-        bool isAnonymous = false, bool isEvent = false) {
+        bool isAnonymous = false, bool isEvent = false, bool isPublic = false) {
 		GrFunction func = new GrFunction;
 		func.isTask = isTask;
 		func.inSignature = signature;
 		func.outSignature = outSignature;
+		func.fileId = fileId;
+
+        
+            import std.stdio;
+            writeln("DECL: n ", name, ",fid ", fileId, ", pub ", isPublic, ", anon ", isAnonymous, ", event ", isEvent, ", task ", isTask);
 
 		if(isAnonymous) {
-			func.index = cast(uint)anonymousFunctions.length;
+			func.index = cast(uint) anonymousFunctions.length;
 			func.anonParent = currentFunction;
 			func.anonReference = cast(uint)currentFunction.instructions.length;
 			func.name = currentFunction.name ~ "@anon"d ~ to!dstring(func.index);
-            dstring mangledName = grMangleNamedFunction(func.name, func.inSignature);
-			anonymousFunctions[mangledName] = func;
+            func.name = grMangleNamedFunction(func.name, func.inSignature);
+			anonymousFunctions ~= func;
 
 			//Is replaced by the addr of the function later (see solveFunctionCalls).
 			addInstruction(GrOpcode.const_int, 0u);
 		}
 		else {
-			func.index = cast(uint)functions.length;
+			func.index = cast(uint) functions.length;
 			func.name = name;
+            func.isPublic = isPublic;
 
 			dstring mangledName = grMangleNamedFunction(name, signature);
-			const auto previousFunc = (mangledName in functions);
+			const auto previousFunc = getFunction(mangledName, fileId);
 			if(previousFunc !is null)
 				logError("Multiple declaration",
-                    "The function \'" ~ to!string(name) ~ "\' is already declared.");
+                    "\'" ~ to!string(name) ~ "\' is already declared.");
 		
             if(isEvent)
-                events[mangledName] = func;
+                events ~= func;
             else
-                functions[mangledName] = func;
+                functions ~= func;
 		}
 
 		functionStack ~= currentFunction;
@@ -446,32 +469,66 @@ final class GrParser {
         functionStack.length --;
 	}
 
-	private GrFunction* getFunction(dstring name) {
-		auto func = (name in functions);
-		if(func is null)
-			logError("Undeclared function", "The function \'" ~ to!string(name) ~ "\' is not declared");
-		return func;
+	GrFunction getFunction(dstring name, uint fileId = 0) {
+        foreach(GrFunction func; functions) {
+            if(func.name == name && (func.fileId == fileId || func.isPublic))
+                return func;
+        }
+        return null;
 	}
+
+    void removeFunction(dstring name) {
+        import std.algorithm: remove;
+        for(int i; i < functions.length; ++ i) {
+            if(functions[i].name == name) {
+                functions = remove(functions, i);
+                return;
+            }
+        }
+    }
+
+    private GrFunction getEvent(dstring name) {
+        foreach(GrFunction func; events) {
+            if(func.name == name)
+                return func;
+        }
+        return null;
+	}
+
+    private GrFunction getAnonymousFunction(dstring name) {
+        foreach(GrFunction func; anonymousFunctions) {
+            if(func.name == name)
+                return func;
+        }
+        return null;
+	}
+
+    private void assertNoFunctionDeclaration(dstring name, uint fileId) {
+        const GrVariable previousVariable = getGlobalVariable(name, fileId);
+        if(previousVariable !is null)
+            logError("Multiple declaration",
+                "\'" ~ to!string(name) ~ "\' is already declared as a global variable");
+    }
 
     /// Retrieve a declared variable
-	private GrVariable getVariable(dstring name) {
-        auto var = (name in globalVariables);
-		if(var !is null)
-            return *var;
+	private GrVariable getVariable(dstring name, uint fileId) {
+        GrVariable globalVar = getGlobalVariable(name, fileId);
+		if(globalVar !is null)
+            return globalVar;
 
-		var = (name in currentFunction.localVariables);
-		if(var is null)
-            logError("Undeclared variable", "The variable \'" ~ to!string(name) ~ "\' is not declared", -1);
-        return *var;
+		GrVariable* localVar = (name in currentFunction.localVariables);
+		if(localVar is null)
+            logError("Undeclared variable", "\'" ~ to!string(name) ~ "\' is not declared", -1);
+        return *localVar;
 	}
 
-    private bool hasVariable(dstring name) {
-        auto var = (name in globalVariables);
-		if(var !is null)
+    private bool hasVariable(dstring name, uint fileId) {
+        GrVariable globalVar = getGlobalVariable(name, fileId);
+		if(globalVar !is null)
             return true;
 
-		var = (name in currentFunction.localVariables);
-		if(var !is null)
+		GrVariable* localVar = (name in currentFunction.localVariables);
+		if(localVar !is null)
             return true;
         return false;
     }
@@ -570,7 +627,7 @@ final class GrParser {
             return false;
     }
 
-    private GrType addCustomBinaryOperator(GrLexemeType lexType, GrType leftType, GrType rightType) {
+    private GrType addCustomBinaryOperator(GrLexemeType lexType, GrType leftType, GrType rightType, uint fileId) {
         GrType resultType = GrBaseType.void_;
         dstring mangledName = grMangleNamedFunction("@op_" ~ grGetPrettyLexemeType(lexType), [leftType, rightType]);
         
@@ -585,9 +642,9 @@ final class GrParser {
 
         //GrFunction check
         if(resultType.baseType == GrBaseType.void_) {
-            const auto func = (mangledName in functions);
+            const auto func = getFunction(mangledName, fileId);
             if(func !is null) {
-                auto outSignature = addFunctionCall(mangledName);
+                auto outSignature = addFunctionCall(mangledName, fileId);
                 if(outSignature.length != 1uL)
                     logError("Return signature error", "An operator can only have one return value");
                 resultType = outSignature[0];
@@ -597,7 +654,7 @@ final class GrParser {
         return resultType;     
     }
 
-    private GrType addCustomUnaryOperator(GrLexemeType lexType, const GrType type) {
+    private GrType addCustomUnaryOperator(GrLexemeType lexType, const GrType type, uint fileId) {
         GrType resultType = GrBaseType.void_;
         dstring mangledName = grMangleNamedFunction("@op_" ~ grGetPrettyLexemeType(lexType), [type]);
         
@@ -612,9 +669,9 @@ final class GrParser {
 
         //GrFunction check
         if(resultType.baseType == GrBaseType.void_) {
-            const auto func = (mangledName in functions);
+            const auto func = getFunction(mangledName, fileId);
             if(func !is null) {
-                auto outSignature = addFunctionCall(mangledName);
+                auto outSignature = addFunctionCall(mangledName, fileId);
                 if(outSignature.length != 1uL)
                     logError("Return signature error", "An operator can only have one return value");
                 resultType = outSignature[0];
@@ -624,7 +681,7 @@ final class GrParser {
         return resultType;     
     }
 
-    private GrType addBinaryOperator(GrLexemeType lexType, const GrType leftType, const GrType rightType) {
+    private GrType addBinaryOperator(GrLexemeType lexType, const GrType leftType, const GrType rightType, uint fileId) {
         if(leftType.baseType == GrBaseType.internalTuple || rightType.baseType == GrBaseType.internalTuple)
             logError("Multiple values operation", "Cannot use an operator on an expression list");
         GrType resultType = GrBaseType.void_;
@@ -639,7 +696,7 @@ final class GrParser {
             convertType(rightType, chanType);
             resultType = addInternalOperator(lexType, leftType);
             if(resultType.baseType == GrBaseType.void_) {
-                resultType = addCustomBinaryOperator(lexType, leftType, rightType);
+                resultType = addCustomBinaryOperator(lexType, leftType, rightType, fileId);
             }
         }
         else if(lexType == GrLexemeType.concatenate &&
@@ -707,20 +764,20 @@ final class GrParser {
         }
         else if(leftType != rightType) {
             //Check custom operator
-            resultType = addCustomBinaryOperator(lexType, leftType, rightType);
+            resultType = addCustomBinaryOperator(lexType, leftType, rightType, fileId);
 
             //If there is no custom operator defined, we try to convert and then try again
             if(resultType.baseType == GrBaseType.void_) {
                 resultType = convertType(rightType, leftType, true);
                 if(resultType.baseType != GrBaseType.void_) {
-                    resultType = addBinaryOperator(lexType, resultType, resultType);
+                    resultType = addBinaryOperator(lexType, resultType, resultType, fileId);
                 }
             }
         }
         else {
             resultType = addInternalOperator(lexType, leftType);
             if(resultType.baseType == GrBaseType.void_) {
-                resultType = addCustomBinaryOperator(lexType, leftType, rightType);
+                resultType = addCustomBinaryOperator(lexType, leftType, rightType, fileId);
             }
         }
         if(resultType.baseType == GrBaseType.void_)
@@ -734,14 +791,14 @@ final class GrParser {
         return resultType;
     }
 
-    private GrType addUnaryOperator(GrLexemeType lexType, const GrType type) {
+    private GrType addUnaryOperator(GrLexemeType lexType, const GrType type, uint fileId) {
         if(type.baseType == GrBaseType.internalTuple)
             logError("Multiple values operation", "Cannot use an operator on an expression list");
         GrType resultType = GrBaseType.void_;
         
         resultType = addInternalOperator(lexType, type);
         if(resultType.baseType == GrBaseType.void_) {
-            resultType = addCustomUnaryOperator(lexType, type);
+            resultType = addCustomUnaryOperator(lexType, type, fileId);
         }
     
         if(resultType.baseType == GrBaseType.void_)
@@ -753,14 +810,14 @@ final class GrParser {
         return resultType;
     }
 
-	private GrType addOperator(GrLexemeType lexType, ref GrType[] typeStack) {
+	private GrType addOperator(GrLexemeType lexType, ref GrType[] typeStack, uint fileId) {
         if(isBinaryOperator(lexType)) {
-            typeStack[$ - 2] = addBinaryOperator(lexType, typeStack[$ - 2], typeStack[$ - 1]);
+            typeStack[$ - 2] = addBinaryOperator(lexType, typeStack[$ - 2], typeStack[$ - 1], fileId);
             typeStack.length --;
             return typeStack[$ - 1];
         }
         else if(isUnaryOperator(lexType)) {
-            typeStack[$ - 1] = addUnaryOperator(lexType, typeStack[$ - 1]);
+            typeStack[$ - 1] = addUnaryOperator(lexType, typeStack[$ - 1], fileId);
             return typeStack[$ - 1];
         }
 
@@ -1354,39 +1411,42 @@ final class GrParser {
 		}
 	}
 
-    private GrType addFunctionAddress(dstring mangledName) {
+    private GrType addFunctionAddress(dstring mangledName, uint fileId) {
         GrFunctionCall call = new GrFunctionCall;
 		call.mangledName = mangledName;
 		call.caller = currentFunction;
 		functionCalls ~= call;
 		currentFunction.functionCalls ~= call;
         call.isAddress = true;
-		auto func = (call.mangledName in functions);
+		auto func = getFunction(call.mangledName, fileId);
         if(func is null)
-            func = (call.mangledName in anonymousFunctions);
+            func = getAnonymousFunction(call.mangledName);
 		if(func !is null) {
-		    call.functionToCall = *func;
+            call.functionToCall = func;
             call.isAddress = true;
             call.position = cast(uint)currentFunction.instructions.length;
             addInstruction(GrOpcode.const_int, 0);
 
-            return grGetFunctionAsType(*func);
+            return grGetFunctionAsType(func);
         }
 
 		return GrType(GrBaseType.void_);
     }
 
-	private GrType[] addFunctionCall(dstring mangledName) {
+	private GrType[] addFunctionCall(dstring mangledName, uint fileId) {
 		GrFunctionCall call = new GrFunctionCall;
 		call.mangledName = mangledName;
 		call.caller = currentFunction;
 		functionCalls ~= call;
 		currentFunction.functionCalls ~= call;
         call.isAddress = false;
+        call.fileId = fileId;
 
-		auto func = (call.mangledName in functions);
+            import std.stdio;
+            writeln(call.mangledName, ", ", call.fileId);
+		auto func = getFunction(call.mangledName, call.fileId);
 		if(func !is null) {
-			call.functionToCall = *func;
+			call.functionToCall = func;
             if(func.isTask) {
                 if(func.nbIntegerParameters > 0)
                     addInstruction(GrOpcode.globalPush_int, func.nbIntegerParameters);
@@ -1412,7 +1472,6 @@ final class GrParser {
 	}
 
 	private void setOpcode(ref uint[] opcodes, uint position, GrOpcode opcode, uint value = 0u, bool isSigned = false) {
-		assert(position != 0);
         GrInstruction instruction;
 		instruction.opcode = opcode;
 		if(isSigned) {
@@ -1431,9 +1490,9 @@ final class GrParser {
 
 	package void solveFunctionCalls(ref uint[] opcodes) {
 		foreach(GrFunctionCall call; functionCalls) {
-			auto func = (call.mangledName in functions);
+			auto func = getFunction(call.mangledName, call.fileId);
             if(func is null)
-                func = (call.mangledName in anonymousFunctions);
+                func = getAnonymousFunction(call.mangledName);
 			if(func !is null) {
                 if(call.isAddress)
                     setOpcode(opcodes, call.position, GrOpcode.const_int, registerIntConstant(func.position));
@@ -1464,11 +1523,11 @@ final class GrParser {
 		foreach(size_t i, dstring svalue; sconsts)
 			writeln(".sconst " ~ to!string(svalue) ~ "\t;" ~ to!string(i));
 
-		foreach(dstring funcName, GrFunction func; functions) {
+		foreach(GrFunction func; functions) {
 			if(func.isTask)
-				writeln("\n.task " ~ funcName);
+				writeln("\n.task " ~ func.name);
 			else
-				writeln("\n.function " ~ funcName);
+				writeln("\n.function " ~ func.name);
 
 			foreach(size_t i, GrInstruction instruction; func.instructions) {
 				writeln("[" ~ to!string(i) ~ "] " ~ to!string(instruction.opcode) ~ " " ~ to!string(instruction.value));
@@ -1483,8 +1542,15 @@ final class GrParser {
 
 		lexemes = lexer.lexemes;
 
+        bool isPublic = false;
 		while(!isEnd()) {
-			const GrLexeme lex = get();
+			GrLexeme lex = get();
+            isPublic = false;
+            if(lex.type == GrLexemeType.public_) {
+                isPublic = true;
+                checkAdvance();
+                lex = get();
+            }
 			switch(lex.type) with(GrLexemeType) {
             case semicolon:
                 checkAdvance();
@@ -1520,34 +1586,33 @@ final class GrParser {
 				logError("Invalid type", "The type should be either main, func or task");
 			}
 		}
-/*
-        foreach(variable; globalVariables) {
-            const auto counter = countSubTypes(variable.type);
-            iglobalsCount += counter.iCount;
-            fglobalsCount += counter.fCount;
-            sglobalsCount += counter.sCount;
-            oglobalsCount += counter.oCount;
-        }*/
 	}
 
 	private void preParseScript(GrLexer lexer) {
+        bool isPublic;
 		lexemes = lexer.lexemes;
 
         //Tuple definitions
         while(!isEnd()) {
-			const GrLexeme lex = get();
+			GrLexeme lex = get();
+            isPublic = false;
+            if(lex.type == GrLexemeType.public_) {
+                isPublic = true;
+                checkAdvance();
+                lex = get();
+            }
 			switch(lex.type) with(GrLexemeType) {
             case semicolon:
                 checkAdvance();
                 break;
             case class_:
-                parseClassDeclaration();
+                parseClassDeclaration(isPublic);
                 break;
             case enum_:
-                parseEnumDeclaration();
+                parseEnumDeclaration(isPublic);
                 break;
             case type_:
-                parseTypeAliasDeclaration();
+                parseTypeAliasDeclaration(isPublic);
                 break;
 			case main_:
             case event_:
@@ -1567,7 +1632,13 @@ final class GrParser {
         //Function definitions
         reset();
 		while(!isEnd()) {
-			const GrLexeme lex = get();
+			GrLexeme lex = get();
+            isPublic = false;
+            if(lex.type == GrLexemeType.public_) {
+                isPublic = true;
+                checkAdvance();
+                lex = get();
+            }
 			switch(lex.type) with(GrLexemeType) {
             case semicolon:
                 checkAdvance();
@@ -1577,21 +1648,21 @@ final class GrParser {
                 skipDeclaration();
                 break;
 			case main_:
-				preParseMainDeclaration();
+				preParseMainDeclaration(isPublic);
 				break;
             case event_:
-                preParseEventDeclaration();
+                preParseEventDeclaration(isPublic);
                 break;
 			case taskType:
                 if(get(1).type != GrLexemeType.identifier)
                     goto case voidType;
-				preParseTaskDeclaration();
+				preParseTaskDeclaration(isPublic);
 				break;
 			case functionType:
                 if(get(1).type != GrLexemeType.identifier &&
                     get(1).type != GrLexemeType.as)
                     goto case voidType;
-				preParseFunctionDeclaration();
+				preParseFunctionDeclaration(isPublic);
 				break;
             case voidType: .. case arrayType:
             case autoType:
@@ -1608,7 +1679,13 @@ final class GrParser {
         reset();
         beginGlobalScope();
 		while(!isEnd()) {
-			const GrLexeme lex = get();
+			GrLexeme lex = get();
+            isPublic = false;
+            if(lex.type == GrLexemeType.public_) {
+                isPublic = true;
+                checkAdvance();
+                lex = get();
+            }
 			switch(lex.type) with(GrLexemeType) {
             case semicolon:
                 checkAdvance();
@@ -1632,11 +1709,11 @@ final class GrParser {
                 break;
             case voidType: .. case arrayType:
             case autoType:
-                parseGlobalDeclaration();
+                parseGlobalDeclaration(isPublic);
                 break;
             case identifier:
                 if(_data.isForeign(get().svalue)) {
-                    parseGlobalDeclaration();
+                    parseGlobalDeclaration(isPublic);
                     break;
                 }
                 goto default;
@@ -1653,7 +1730,7 @@ final class GrParser {
     /**
     Declare a new alias of a type.
     */
-    private void parseTypeAliasDeclaration() {
+    private void parseTypeAliasDeclaration(bool isPublic) {
         checkAdvance();
         if(get().type != GrLexemeType.identifier)
             logError("Missing Identifier", "A type alias must be named");
@@ -1669,7 +1746,7 @@ final class GrParser {
         _data.addTypeAlias(typeAliasName, type);
     }
 
-    private void parseEnumDeclaration() {
+    private void parseEnumDeclaration(bool isPublic) {
         checkAdvance();
         if(get().type != GrLexemeType.identifier)
             logError("Missing Identifier", "An enum must be named");
@@ -1699,7 +1776,7 @@ final class GrParser {
         _data.addEnum(enumName, fields);
     }
 
-    private void parseClassDeclaration() {
+    private void parseClassDeclaration(bool isPublic) {
 		checkAdvance();
         if(get().type != GrLexemeType.identifier)
             logError("Missing Identifier", "struct must have a name");
@@ -2059,7 +2136,7 @@ final class GrParser {
 
 	private void parseMainDeclaration() {
 		checkAdvance();
-		beginFunction("main", []);
+		beginFunction("main", get().fileId, []);
         
         openDeferrableSection();
 		parseBlock();
@@ -2072,9 +2149,11 @@ final class GrParser {
 		endFunction();
 	}
 
-	private void preParseMainDeclaration() {
+	private void preParseMainDeclaration(bool isPublic) {
+        if(isPublic)
+            logError("Unexpected modifier", "main is already public");
 		checkAdvance();
-		preBeginFunction("main", [], [], false);
+		preBeginFunction("main", get().fileId, [], [], false, [], false, false, true);
 		skipBlock();
 		preEndFunction();
 	}
@@ -2086,7 +2165,7 @@ final class GrParser {
 		dstring name = get().svalue;
 		dstring[] inputs;
 		GrType[] signature = parseInSignature(inputs);
-		beginFunction(name, signature, true);
+		beginFunction(name, get().fileId, signature, true);
         
         openDeferrableSection();
 		parseBlock();
@@ -2099,14 +2178,16 @@ final class GrParser {
 		endFunction();
     }
 
-    private void preParseEventDeclaration() {
+    private void preParseEventDeclaration(bool isPublic) {
+        if(isPublic)
+            logError("Unexpected modifier", "An event is always public");
         checkAdvance();
 		if(get().type != GrLexemeType.identifier)
 			logError("Missing identifier", "Expected a name such as \'foo\'");
 		dstring name = get().svalue;
 		dstring[] inputs;
 		GrType[] signature = parseInSignature(inputs);
-		preBeginFunction(name, signature, inputs, false, [], false, true);
+		preBeginFunction(name, get().fileId, signature, inputs, false, [], false, true, true);
 		skipBlock();
 		preEndFunction();
     }
@@ -2116,13 +2197,10 @@ final class GrParser {
 		if(get().type != GrLexemeType.identifier)
 			logError("Missing identifier", "Expected a name such as \'foo\'");
 		dstring name = get().svalue;
-        const auto previousVariable = (name in globalVariables);
-        if(previousVariable !is null)
-            logError("Multiple declaration",
-                "The identifier \'" ~ to!string(name) ~ "\' is already declared as a global variable");
+        assertNoGlobalDeclaration(name, get().fileId);
 		dstring[] inputs;
 		GrType[] signature = parseInSignature(inputs);
-		beginFunction(name, signature);
+		beginFunction(name, get().fileId, signature);
 
         openDeferrableSection();
 		parseBlock();
@@ -2135,14 +2213,14 @@ final class GrParser {
 		endFunction();
 	}
 
-	private void preParseTaskDeclaration() {
+	private void preParseTaskDeclaration(bool isPublic) {
 		checkAdvance();
 		if(get().type != GrLexemeType.identifier)
 			logError("Missing identifier", "Expected a name such as \'foo\'");
 		dstring name = get().svalue;
 		dstring[] inputs;
 		GrType[] signature = parseInSignature(inputs);
-		preBeginFunction(name, signature, inputs, true);
+		preBeginFunction(name, get().fileId, signature, inputs, true, [], false, false, isPublic);
 		skipBlock();
 		preEndFunction();
 	}
@@ -2169,10 +2247,7 @@ final class GrParser {
                     logError("Invalid Operator", "The specified operator must be valid");
             }
         }
-        const auto previousVariable = (name in globalVariables);
-        if(previousVariable !is null)
-            logError("Multiple declaration",
-                "The identifier \'" ~ to!string(name) ~ "\' is already declared as a global variable");
+        assertNoGlobalDeclaration(name, get().fileId);
 		dstring[] inputs;
 		GrType[] signature = parseInSignature(inputs);
 
@@ -2188,7 +2263,7 @@ final class GrParser {
         else
             parseOutSignature();
 
-		beginFunction(name, signature);
+		beginFunction(name, get().fileId, signature);
         openDeferrableSection();
 		parseBlock();
         if(!currentFunction.outSignature.length) {
@@ -2207,7 +2282,7 @@ final class GrParser {
 		endFunction();
 	}
 
-	private void preParseFunctionDeclaration() {
+	private void preParseFunctionDeclaration(bool isPublic) {
 		checkAdvance();
         dstring name;
         bool isConversion;
@@ -2245,7 +2320,7 @@ final class GrParser {
         else
             outSignature = parseOutSignature();
 
-		preBeginFunction(name, inSignature, inputs, false, outSignature);
+		preBeginFunction(name, get().fileId, inSignature, inputs, false, outSignature, false, false, isPublic);
 		skipBlock();
 		preEndFunction();
 	}
@@ -2259,7 +2334,7 @@ final class GrParser {
 			//Return Type.
             outSignature = parseOutSignature();
 		}
-		preBeginFunction("$anon"d, inSignature, inputs, isTask, outSignature, true);
+		preBeginFunction("$anon"d, get().fileId, inSignature, inputs, isTask, outSignature, true);
 
         openDeferrableSection();
 		parseBlock();
@@ -2746,10 +2821,11 @@ final class GrParser {
 		advance();
 	}
 
-    private void parseGlobalDeclaration() {
+    private void parseGlobalDeclaration(bool isPublic) {
         //GrVariable type
         GrType type = GrBaseType.void_;
         bool isAuto;
+        
         if(get().type == GrLexemeType.autoType) {
             isAuto = true;
             checkAdvance();
@@ -2768,7 +2844,7 @@ final class GrParser {
             dstring identifier = get().svalue;
 
             //Registering
-            GrVariable lvalue = registerGlobalVariable(identifier, type, isAuto);
+            GrVariable lvalue = registerGlobalVariable(identifier, type, get().fileId, isAuto, isPublic);
             lvalues ~= lvalue;
             
             checkAdvance();
@@ -3039,7 +3115,7 @@ final class GrParser {
                 hasCase = true;
                 addGetInstruction(switchVar);
                 GrType caseType = parseSubExpression().type;
-                addBinaryOperator(GrLexemeType.equal, switchType, caseType);
+                addBinaryOperator(GrLexemeType.equal, switchType, caseType, get().fileId);
                 advance();
 
                 jumpPosition = cast(uint)currentFunction.instructions.length;
@@ -3266,8 +3342,8 @@ final class GrParser {
             lvalue = registerLocalVariable(identifier.svalue, type);
             lvalue.isAuto = isAuto;
         }
-        else if(hasVariable(identifier.svalue)) {
-            lvalue = getVariable(identifier.svalue);
+        else if(hasVariable(identifier.svalue, identifier.fileId)) {
+            lvalue = getVariable(identifier.svalue, identifier.fileId);
         }
         else {
             /// Automatic, same behaviour with let.
@@ -3834,7 +3910,7 @@ final class GrParser {
         }
 		
         //User-defined conversions.
-        if(addCustomConversion(src, dst, isExplicit) == dst)
+        if(addCustomConversion(src, dst, isExplicit, get().fileId) == dst)
             return dst;
         
         if(!noFail)
@@ -3844,7 +3920,7 @@ final class GrParser {
 	}
 
     /// Convert with a primitive or function.
-    private GrType addCustomConversion(GrType leftType, GrType rightType, bool isExplicit) {
+    private GrType addCustomConversion(GrType leftType, GrType rightType, bool isExplicit, uint fileId) {
         GrType resultType = GrBaseType.void_;
 
         //as opposed to other functions, we need the return type (rightType) to be part of the signature.
@@ -3935,9 +4011,9 @@ final class GrParser {
 
         //GrFunction check
         if(resultType.baseType == GrBaseType.void_) {
-            const auto func = (mangledName in functions);
+            const auto func = getFunction(mangledName, fileId);
             if(func !is null) {
-                const GrType[] outSignature = addFunctionCall(mangledName);
+                const GrType[] outSignature = addFunctionCall(mangledName, fileId);
                 if(outSignature.length != 1uL)
                     logError("Return signature error", "An operator can only have one return value");
                 resultType = rightType;
@@ -4150,14 +4226,16 @@ final class GrParser {
 
         checkAdvance();
 
-        auto lvalue = (identifierName in currentFunction.localVariables);
-        if(lvalue is null)
-            lvalue = (identifierName in globalVariables);
+        GrVariable* localLValue = (identifierName in currentFunction.localVariables);
+        if(localLValue !is null)
+            return *localLValue;
 
-        if(lvalue is null)
-            logError("Missing lvalue", "Missing lvalue");
+        GrVariable globalLValue = getGlobalVariable(identifierName, get().fileId);
+        if(globalLValue !is null)
+            return globalLValue;
         
-        return *lvalue;
+        logError("Missing lvalue", "Missing lvalue");
+        return null;
     }
 
     /// Parse a single expression, not a statement.
@@ -4384,7 +4462,7 @@ final class GrParser {
         if(currentType.baseType != GrBaseType.function_ && currentType.baseType != GrBaseType.task)
             logError("GrFunction ref error", "Cannot infer the type of \'" ~ to!string(get().svalue) ~ "\'");
 
-        GrType funcType = addFunctionAddress(get().svalue ~ currentType.mangledType);
+        GrType funcType = addFunctionAddress(get().svalue ~ currentType.mangledType, get().fileId);
         convertType(funcType, currentType);
         checkAdvance();
         return currentType;
@@ -4429,6 +4507,7 @@ final class GrParser {
 		isRightUnaryOperator = true, isEndOfExpression = false;
 
         GrSubExprResult result;
+        uint fileId;
 
 		do {
 			if(hasValue && currentType != lastType && lastType != grVoid) {
@@ -4449,6 +4528,7 @@ final class GrParser {
             hasReference = false;
 
 			GrLexeme lex = get();
+            fileId = lex.fileId;
 			switch(lex.type) with(GrLexemeType) {
 			case semicolon:
 				if(useSemicolon)
@@ -4784,7 +4864,7 @@ final class GrParser {
                 // Parse a function call that refers to its parent. 
                 checkAdvance();
                 const dstring mangledName = grMangleNamedFunction(currentFunction.name, currentFunction.inSignature);
-                currentType = addFunctionAddress(mangledName);
+                currentType = addFunctionAddress(mangledName, get().fileId);
                 if(currentType.baseType == GrBaseType.void_)
                     logError("self reference error", "Couldn't find parent function", -1);
                 typeStack ~= currentType;
@@ -4847,17 +4927,17 @@ final class GrParser {
 						lvalues.length --;
 						break;
 					case addAssign: .. case powerAssign:
-						currentType = addOperator(operator - (GrLexemeType.addAssign - GrLexemeType.add), typeStack);
+						currentType = addOperator(operator - (GrLexemeType.addAssign - GrLexemeType.add), typeStack, fileId);
 						addSetInstruction(lvalues[$ - 1], currentType, true);
 						lvalues.length --;
 						break;
 					case increment: .. case decrement:
-						currentType = addOperator(operator, typeStack);
+						currentType = addOperator(operator, typeStack, fileId);
 						addSetInstruction(lvalues[$ - 1], currentType, true);
 						lvalues.length --;
 						break;
 					default:
-						currentType = addOperator(operator, typeStack);
+						currentType = addOperator(operator, typeStack, fileId);
 						break;
 					}
 
@@ -4935,7 +5015,7 @@ final class GrParser {
                     hadValue = false;
 				break;
 			case addAssign: .. case powerAssign:
-				currentType = addOperator(operator - (GrLexemeType.addAssign - GrLexemeType.add), typeStack);
+				currentType = addOperator(operator - (GrLexemeType.addAssign - GrLexemeType.add), typeStack, fileId);
 				addSetInstruction(lvalues[$ - 1], currentType, isExpectingValue || operatorsStack.length > 1uL);			
 				lvalues.length --;
 
@@ -4943,7 +5023,7 @@ final class GrParser {
                     hadValue = false;
 				break;
 			case increment: .. case decrement:
-				currentType = addOperator(operator, typeStack);
+				currentType = addOperator(operator, typeStack, fileId);
 				addSetInstruction(lvalues[$ - 1], currentType, isExpectingValue || operatorsStack.length > 1uL);
 				lvalues.length --;
 
@@ -4951,7 +5031,7 @@ final class GrParser {
                     hadValue = false;
 				break;
 			default:
-				currentType = addOperator(operator, typeStack);
+				currentType = addOperator(operator, typeStack, fileId);
 				break;
 			}
 
@@ -5049,9 +5129,12 @@ final class GrParser {
             if(hasParenthesis)
                 advance();
 
-			auto var = (identifierName in currentFunction.localVariables);
-            if(var is null)
-                var = (identifierName in globalVariables);
+            GrVariable var;
+			GrVariable* localVar = (identifierName in currentFunction.localVariables);
+            if(localVar !is null)
+                var = *localVar;
+            else
+                var = getGlobalVariable(identifierName, get().fileId);
 			if(var !is null) {
                 //Signature parsing with type conversion
                 GrType[] anonSignature = grUnmangleSignature(var.type.mangledType);
@@ -5105,7 +5188,7 @@ final class GrParser {
 
 				//Anonymous call.
 				//bool hasAnonFunc = false;
-				addGetInstruction(*var);
+				addGetInstruction(var);
                 
 				returnType = grPackTuple(grUnmangleSignature(var.type.mangledReturnType));
 
@@ -5163,7 +5246,7 @@ final class GrParser {
 					returnType = grPackTuple(primitive.outSignature);
 				}
 				else //GrFunction/Task call.
-					returnType = grPackTuple(addFunctionCall(mangledName));
+					returnType = grPackTuple(addFunctionCall(mangledName, get().fileId));
 			}
 		}
         else if(_data.isEnum(identifier.svalue)) {
@@ -5184,7 +5267,7 @@ final class GrParser {
         }
 		else {
 			//Declared variable.
-			variable = getVariable(identifierName);
+			variable = getVariable(identifierName, get().fileId);
 			returnType = variable.type;
             //If it's an assignement, we want the GET instruction to be after the assignement, not there.
             const auto nextLexeme = get();

@@ -29,8 +29,6 @@ main {
 Grimoire is an concurrent programming language that can easily be embedded into another D programs.
 You can very easily interface your program with Grimoire's scripts.
 
-The language itself is focused on concurrency, and feature both static and dynamic typing.
-
 Hope you have fun with this project !
 
 [Documentation here !](https://enalye.github.io/grimoire)

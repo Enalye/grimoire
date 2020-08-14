@@ -128,6 +128,10 @@ package class GrVariable {
     bool isConstant;
     /// Its unique name inside its scope (function based scope).
     dstring name;
+    /// Is the variable visible from other files ? (Global only)
+    bool isPublic;
+    /// The file where the variable is declared.
+    uint fileId;
 }
 
 /// Create a foreign GrType for the type system.
@@ -253,6 +257,11 @@ package class GrFunction {
     GrDeferrableSection[] deferrableSections;
     GrDeferBlock[] registeredDeferBlocks;
     bool[] isDeferrableSectionLocked = [false];
+
+    /// Is the function visible from other files ?
+    bool isPublic;
+    /// The file where the function is declared.
+    uint fileId;
 }
 
 package class GrFunctionCall {
@@ -261,6 +270,7 @@ package class GrFunctionCall {
 	GrFunction caller, functionToCall;
 	GrType expectedType;
     bool isAddress;
+    uint fileId;
 }
 
 package class GrDeferrableSection {

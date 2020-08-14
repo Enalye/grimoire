@@ -28,7 +28,7 @@ enum GrLexemeType {
 	and, or, xor, not,
 	increment, decrement,
 	identifier, integer, float_, boolean, string_,
-	main_, type_, event_, class_, enum_, new_, copy, send, receive,
+	public_, main_, type_, event_, class_, enum_, new_, copy, send, receive,
 	voidType, intType, floatType, boolType, stringType, arrayType, functionType, taskType, chanType, autoType,
 	if_, unless, else_, switch_, select, case_, while_, do_, until, for_, loop, return_, self,
 	kill, killAll, yield, break_, continue_,
@@ -64,6 +64,8 @@ struct GrLexeme {
 		uint column() const { return _column; }
 		/// Text length
 		uint textLength() const { return _textLength; }
+		/// File id
+		uint fileId() const { return _fileId; }
 	}
 
 	/// Kind of token.
@@ -166,11 +168,11 @@ package final class GrLexer {
 	*/
 	package dstring getLine(GrLexeme lex) {
 		if(lex._fileId >= _filesImported.length)
-			raiseError("Lexeme _fileId out of bounds");
+			raiseError("Lexeme file id out of bounds");
 		auto _text = to!dstring(readText(to!string(_filesImported[lex._fileId])));
 		_lines = split(_text, "\n");
 		if(lex._line >= _lines.length)
-			raiseError("Lexeme _line count out of bounds");
+			raiseError("Lexeme line count out of bounds");
 		return _lines[lex._line];
 	}
 
@@ -179,7 +181,7 @@ package final class GrLexer {
 	*/
 	package dstring getFile(GrLexeme lex) {
 		if(lex._fileId >= _filesImported.length)
-			raiseError("Lexeme _fileId out of bounds");
+			raiseError("Lexeme file id out of bounds");
 		return _filesImported[lex._fileId];
 	}
 
@@ -581,7 +583,7 @@ package final class GrLexer {
 				}
 				break;
 			default:
-				raiseError("GrLexer: Invalid operator.");
+				raiseError("GrLexer: invalid operator");
 		}
 
 		_lexemes ~= lex;
@@ -623,6 +625,9 @@ package final class GrLexer {
 			case "use":
 				scanUse();
 				return;
+			case "pub":
+				lex.type = GrLexemeType.public_;
+				break;
 			case "main":
 				lex.type = GrLexemeType.main_;
 				break;

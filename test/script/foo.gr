@@ -1,7 +1,6 @@
 
-
-func test() {
-    foo();
+pub func foo() {
+    printl("Hello World !");
 }
 
-func foo() { "hey":printl; }
+pub let a = func() { "Hello":printl; };

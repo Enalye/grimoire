@@ -89,23 +89,23 @@ private {
         nbOpcodes ++;
 
 		//Without "main", we put a kill instruction instead.
-		if(("main"d in parser.functions) is null)
+		if(parser.getFunction("main"d) is null)
 			nbOpcodes ++;
 
 		//Opcodes
 		uint[] opcodes = new uint[nbOpcodes];
 
         //Start with the global initializations
-        auto globalScope = "@global"d in parser.functions;
+        auto globalScope = parser.getFunction("@global"d);
         if(globalScope) {
             foreach(size_t i, instruction; globalScope.instructions)
                 opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint)instruction.opcode, instruction.value);
             lastOpcodeCount += cast(uint)globalScope.instructions.length;
-            parser.functions.remove("@global"d);
+            parser.removeFunction("@global"d);
         }
 
 		//Then write the main function (not callable).
-		auto mainFunc = "main"d in parser.functions;
+		auto mainFunc = parser.getFunction("main"d);
 		if(mainFunc) {
 			mainFunc.position = lastOpcodeCount;
 			foreach(size_t i, instruction; mainFunc.instructions)
@@ -113,7 +113,7 @@ private {
 			foreach(call; mainFunc.functionCalls)
 				call.position += lastOpcodeCount;
 			lastOpcodeCount += cast(uint)mainFunc.instructions.length;
-			parser.functions.remove("main"d);
+			parser.removeFunction("main"d);
 		}
 		else {
 			opcodes[lastOpcodeCount] = makeOpcode(cast(uint) GrOpcode.kill_, 0u);
@@ -122,14 +122,14 @@ private {
 
 		//Every other functions.
         uint[dstring] events;
-        foreach(dstring mangledName, GrFunction func; parser.events) {
+        foreach(GrFunction func; parser.events) {
 			foreach(size_t i, instruction; func.instructions)
 				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint)instruction.opcode, instruction.value);
 			foreach(call; func.functionCalls)
 				call.position += lastOpcodeCount;
 			func.position = lastOpcodeCount;
 			lastOpcodeCount += func.instructions.length;
-            events[mangledName] = func.position;
+            events[func.name] = func.position;
 		}
 		foreach(func; parser.anonymousFunctions) {
 			foreach(size_t i, instruction; func.instructions)
