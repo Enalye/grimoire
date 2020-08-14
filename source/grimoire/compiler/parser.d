@@ -1712,7 +1712,10 @@ final class GrParser {
                 parseGlobalDeclaration(isPublic);
                 break;
             case identifier:
-                if(_data.isForeign(get().svalue)) {
+                if(_data.isForeign(get().svalue) ||
+                    _data.isClass(get().svalue) ||
+                    _data.isEnum(get().svalue) ||
+                    _data.isTypeAlias(get().svalue)) {
                     parseGlobalDeclaration(isPublic);
                     break;
                 }
@@ -2447,7 +2450,10 @@ final class GrParser {
                     goto default;
                 break;
             case identifier:
-                if(_data.isTypeAlias(get().svalue) || _data.isEnum(get().svalue) || _data.isClass(get().svalue) || _data.isForeign(get().svalue))
+                if(_data.isTypeAlias(get().svalue) ||
+                    _data.isEnum(get().svalue) ||
+                    _data.isClass(get().svalue) ||
+                    _data.isForeign(get().svalue))
                     parseLocalDeclaration();
                 else
                     goto default;
@@ -3325,7 +3331,10 @@ final class GrParser {
             type = parseType();
             break;
         case identifier:
-            if(_data.isTypeAlias(get().svalue) || _data.isEnum(get().svalue) || _data.isClass(get().svalue) || _data.isForeign(get().svalue))
+            if(_data.isTypeAlias(get().svalue) ||
+                _data.isEnum(get().svalue) ||
+                _data.isClass(get().svalue) ||
+                _data.isForeign(get().svalue))
                 type = parseType();
             else
                 isTyped = false;

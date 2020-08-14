@@ -195,6 +195,13 @@ final class GrEnumDefinition {
     }
 }
 
+/// Create a GrType of enum for the type system.
+GrType grGetEnumType(dstring name) {
+    GrType stType = GrBaseType.enum_;
+    stType.mangledType = name;
+    return stType;
+}
+
 /**
 Define the content of a class. \
 Not to be confused with GrType used by the type system.
