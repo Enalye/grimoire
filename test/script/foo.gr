@@ -1,6 +1,2 @@
 
-pub func foo() {
-    printl("Hello World !");
-}
-
-pub let a = func() { "Hello":printl; };
+pub type A = int;

@@ -335,10 +335,6 @@ final class GrParser {
 		func.outSignature = outSignature;
 		func.fileId = fileId;
 
-        
-            import std.stdio;
-            writeln("DECL: n ", name, ",fid ", fileId, ", pub ", isPublic, ", anon ", isAnonymous, ", event ", isEvent, ", task ", isTask);
-
 		if(isAnonymous) {
 			func.index = cast(uint) anonymousFunctions.length;
 			func.anonParent = currentFunction;
@@ -1442,8 +1438,6 @@ final class GrParser {
         call.isAddress = false;
         call.fileId = fileId;
 
-            import std.stdio;
-            writeln(call.mangledName, ", ", call.fileId);
 		auto func = getFunction(call.mangledName, call.fileId);
 		if(func !is null) {
 			call.functionToCall = func;
@@ -1712,10 +1706,7 @@ final class GrParser {
                 parseGlobalDeclaration(isPublic);
                 break;
             case identifier:
-                if(_data.isForeign(get().svalue) ||
-                    _data.isClass(get().svalue) ||
-                    _data.isEnum(get().svalue) ||
-                    _data.isTypeAlias(get().svalue)) {
+                if(_data.isTypeDeclared(get().svalue, get().fileId)) {
                     parseGlobalDeclaration(isPublic);
                     break;
                 }
@@ -1746,7 +1737,9 @@ final class GrParser {
         if(get().type != GrLexemeType.semicolon)
             logError("Missing ;", "The definition must end with a semicolon");
 
-        _data.addTypeAlias(typeAliasName, type);
+        if(_data.isTypeDeclared(typeAliasName, get().fileId))
+            logError("Multiple type declaration", "\'" ~ to!string(typeAliasName) ~ "\' is already declared");
+        _data.addTypeAlias(typeAliasName, type, get().fileId, isPublic);
     }
 
     private void parseEnumDeclaration(bool isPublic) {
@@ -1776,7 +1769,9 @@ final class GrParser {
                 logError("Missing semicolon", "A struct field declaration must end with a semicolon");
             checkAdvance();
         }
-        _data.addEnum(enumName, fields);
+        if(_data.isTypeDeclared(enumName, get().fileId))
+            logError("Multiple type declaration", "\'" ~ to!string(enumName) ~ "\' is already declared");
+        _data.addEnum(enumName, fields, get().fileId, isPublic);
     }
 
     private void parseClassDeclaration(bool isPublic) {
@@ -1831,7 +1826,9 @@ final class GrParser {
                 break;
             }
         }
-        _data.addClass(structName, fields, signature);
+        if(_data.isTypeDeclared(structName, get().fileId))
+            logError("Multiple type declaration", "\'" ~ to!string(structName) ~ "\' is already declared");
+        _data.addClass(structName, fields, signature, get().fileId, isPublic);
     }
 
     private void skipDeclaration() {
@@ -1869,18 +1866,18 @@ final class GrParser {
 
         GrLexeme lex = get();
         if(!lex.isType) {
-            if(lex.type == GrLexemeType.identifier && _data.isTypeAlias(lex.svalue)) {
-                currentType = _data.getTypeAlias(lex.svalue).type;
+            if(lex.type == GrLexemeType.identifier && _data.isTypeAlias(lex.svalue, lex.fileId)) {
+                currentType = _data.getTypeAlias(lex.svalue, lex.fileId).type;
                 checkAdvance();
                 return currentType;
             }
-            else if(lex.type == GrLexemeType.identifier && _data.isClass(lex.svalue)) {
+            else if(lex.type == GrLexemeType.identifier && _data.isClass(lex.svalue, lex.fileId)) {
                 currentType.baseType = GrBaseType.class_;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
                 return currentType;
             }
-            else if(lex.type == GrLexemeType.identifier && _data.isEnum(lex.svalue)) {
+            else if(lex.type == GrLexemeType.identifier && _data.isEnum(lex.svalue, lex.fileId)) {
                 currentType.baseType = GrBaseType.enum_;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
@@ -2450,10 +2447,7 @@ final class GrParser {
                     goto default;
                 break;
             case identifier:
-                if(_data.isTypeAlias(get().svalue) ||
-                    _data.isEnum(get().svalue) ||
-                    _data.isClass(get().svalue) ||
-                    _data.isForeign(get().svalue))
+                if(_data.isTypeDeclared(get().svalue, get().fileId))
                     parseLocalDeclaration();
                 else
                     goto default;
@@ -3331,10 +3325,7 @@ final class GrParser {
             type = parseType();
             break;
         case identifier:
-            if(_data.isTypeAlias(get().svalue) ||
-                _data.isEnum(get().svalue) ||
-                _data.isClass(get().svalue) ||
-                _data.isForeign(get().svalue))
+            if(_data.isTypeDeclared(get().svalue, get().fileId))
                 type = parseType();
             else
                 isTyped = false;
@@ -4756,7 +4747,7 @@ final class GrParser {
                 currentType = grGetClassType(get().svalue);
                 hasValue = true;
                 typeStack ~= currentType;
-                GrClassDefinition class_ = _data.getClass(get().svalue);
+                GrClassDefinition class_ = _data.getClass(get().svalue, get().fileId);
                 addInstruction(GrOpcode.new_, cast(uint) class_.index);
                 checkAdvance();
                 break;
@@ -4773,7 +4764,7 @@ final class GrParser {
                     logError("Missing identifier", "Missing field name after the \'.\'");
                 const dstring identifier = get().svalue;
                 checkAdvance();
-                GrClassDefinition class_ = _data.getClass(currentType.mangledType);
+                GrClassDefinition class_ = _data.getClass(currentType.mangledType, get().fileId);
                 const auto nbFields = class_.signature.length;
                 bool hasField;
                 for(int i; i < nbFields; i ++) {
@@ -5258,8 +5249,8 @@ final class GrParser {
 					returnType = grPackTuple(addFunctionCall(mangledName, get().fileId));
 			}
 		}
-        else if(_data.isEnum(identifier.svalue)) {
-            const GrEnumDefinition definition = _data.getEnum(identifier.svalue);
+        else if(_data.isEnum(identifier.svalue, get().fileId)) {
+            const GrEnumDefinition definition = _data.getEnum(identifier.svalue, identifier.fileId);
             if(get().type != GrLexemeType.period)
                 logError("Missing enum field", "Must be of the form Foo.bar");
             checkAdvance();

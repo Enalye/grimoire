@@ -5,6 +5,7 @@
  */
 module grimoire.compiler.data;
 
+import std.conv: to;
 import grimoire.runtime;
 import grimoire.compiler.primitive;
 import grimoire.compiler.type;
@@ -42,12 +43,56 @@ class GrData {
         return grVoid;
     }
 
+    /// Is a type already declared in this file
+    package bool isTypeDeclared(dstring name, uint fileId) {
+        if(isEnum(name, fileId))
+            return true;
+        if(isClass(name, fileId))
+            return true;
+        if(isTypeAlias(name, fileId))
+            return true;
+        if(isForeign(name))
+            return true;
+        return false;
+    }
+
+    /// Is a type already declared in this file
+    private bool isTypeDeclared(dstring name) {
+        if(isEnum(name))
+            return true;
+        if(isClass(name))
+            return true;
+        if(isTypeAlias(name))
+            return true;
+        if(isForeign(name))
+            return true;
+        return false;
+    }
+
     /// Define an enum type.
-    GrType addEnum(dstring name, dstring[] fields) {
+    package GrType addEnum(dstring name, dstring[] fields, uint fileId, bool isPublic) {
         GrEnumDefinition enumDef = new GrEnumDefinition;
         enumDef.name = name;
         enumDef.fields = fields;
         enumDef.index = _enumTypes.length;
+        enumDef.fileId = fileId;
+        enumDef.isPublic = isPublic;
+        _enumTypes ~= enumDef;
+
+        GrType stType = GrBaseType.enum_;
+        stType.mangledType = name;
+        return stType;
+    }
+
+    /// Ditto
+    GrType addEnum(dstring name, dstring[] fields) {
+        if(isTypeDeclared(name))
+            throw new Exception(to!string(name) ~ "is already declared");
+        GrEnumDefinition enumDef = new GrEnumDefinition;
+        enumDef.name = name;
+        enumDef.fields = fields;
+        enumDef.index = _enumTypes.length;
+        enumDef.isPublic = true;
         _enumTypes ~= enumDef;
 
         GrType stType = GrBaseType.enum_;
@@ -56,13 +101,15 @@ class GrData {
     }
 
     /// Define a class type.
-    GrType addClass(dstring name, dstring[] fields, GrType[] signature) {
+    package GrType addClass(dstring name, dstring[] fields, GrType[] signature, uint fileId, bool isPublic) {
         assert(fields.length == signature.length, "Class signature mismatch");
         GrClassDefinition class_ = new GrClassDefinition;
         class_.name = name;
         class_.signature = signature;
         class_.fields = fields;
         class_.index = _classTypes.length;
+        class_.fileId = fileId;
+        class_.isPublic = isPublic;
         _classTypes ~= class_;
 
         GrType stType = GrBaseType.class_;
@@ -70,33 +117,67 @@ class GrData {
         return stType;
     }
 
+    /// Ditto
+    GrType addClass(dstring name, dstring[] fields, GrType[] signature) {
+        if(isTypeDeclared(name))
+            throw new Exception(to!string(name) ~ "is already declared");
+        assert(fields.length == signature.length, "Class signature mismatch");
+        GrClassDefinition class_ = new GrClassDefinition;
+        class_.name = name;
+        class_.signature = signature;
+        class_.fields = fields;
+        class_.index = _classTypes.length;
+        class_.isPublic = true;
+        _classTypes ~= class_;
+
+        GrType stType = GrBaseType.class_;
+        stType.mangledType = name;
+        return stType;
+    }
+
+    /// Define an alias of another type.
+    package GrType addTypeAlias(dstring name, GrType type, uint fileId, bool isPublic) {
+        GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
+        typeAlias.name = name;
+        typeAlias.type = type;
+        typeAlias.fileId = fileId;
+        typeAlias.isPublic = isPublic;
+        _typeAliases ~= typeAlias;
+        return type;
+    }
+
+    /// Ditto
+    GrType addTypeAlias(dstring name, GrType type) {
+        if(isTypeDeclared(name))
+            throw new Exception(to!string(name) ~ "is already declared");
+        GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
+        typeAlias.name = name;
+        typeAlias.type = type;
+        typeAlias.isPublic = true;
+        _typeAliases ~= typeAlias;
+        return type;
+    }
+
     /// Define an opaque pointer type.
     GrType addForeign(dstring name) {
-        bool isDeclared;
-        foreach(foreign; _foreigns) {
-            if(foreign == name)
-                isDeclared = true;
-        }
-
-        if(!isDeclared)
-            _foreigns ~= name;
-
+        if(isTypeDeclared(name))
+            throw new Exception(to!string(name) ~ "is already declared");
         GrType type = GrBaseType.foreign;
         type.mangledType = name;
         return type;
     }
 
-    /// Define an alias of another type.
-    GrType addTypeAlias(dstring name, GrType type) {
-        GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
-        typeAlias.name = name;
-        typeAlias.type = type;
-        _typeAliases ~= typeAlias;
-        return type;
+    /// Is the enum defined ?
+    package bool isEnum(dstring name, uint fileId) {
+        foreach(enumType; _enumTypes) {
+            if(enumType.name == name && (enumType.fileId == fileId || enumType.isPublic))
+                return true;
+        }
+        return false;
     }
 
-    /// Is the enum defined ?
-    bool isEnum(dstring name) {
+    /// Ditto
+    private bool isEnum(dstring name) {
         foreach(enumType; _enumTypes) {
             if(enumType.name == name)
                 return true;
@@ -105,7 +186,16 @@ class GrData {
     }
 
     /// Is the class defined ?
-    bool isClass(dstring name) {
+    package bool isClass(dstring name, uint fileId) {
+        foreach(class_; _classTypes) {
+            if(class_.name == name && (class_.fileId == fileId || class_.isPublic))
+                return true;
+        }
+        return false;
+    }
+
+    /// Ditto
+    private bool isClass(dstring name) {
         foreach(class_; _classTypes) {
             if(class_.name == name)
                 return true;
@@ -113,8 +203,26 @@ class GrData {
         return false;
     }
 
+    /// Is the type alias defined ?
+    package bool isTypeAlias(dstring name, uint fileId) {
+        foreach(typeAlias; _typeAliases) {
+            if(typeAlias.name == name && (typeAlias.fileId == fileId || typeAlias.isPublic))
+                return true;
+        }
+        return false;
+    }
+
+    /// Ditto
+    private bool isTypeAlias(dstring name) {
+        foreach(typeAlias; _typeAliases) {
+            if(typeAlias.name == name)
+                return true;
+        }
+        return false;
+    }
+
     /// Is the user-type defined ?
-    bool isForeign(dstring name) {
+    package bool isForeign(dstring name) {
         foreach(foreign; _foreigns) {
             if(foreign == name)
                 return true;
@@ -122,40 +230,31 @@ class GrData {
         return false;
     }
 
-    /// Is the type alias defined ?
-    bool isTypeAlias(dstring name) {
-        foreach(typeAlias; _typeAliases) {
-            if(typeAlias.name == name)
-                return true;
-        }
-        return false;
-    }
-
     /// Return the enum definition.
-    GrEnumDefinition getEnum(dstring name) {
+    GrEnumDefinition getEnum(dstring name, uint fileId) {
         import std.conv: to;
         foreach(enumType; _enumTypes) {
-            if(enumType.name == name)
+            if(enumType.name == name && (enumType.fileId == fileId || enumType.isPublic))
                 return enumType;
         }
         assert(false, "Undefined enum \'" ~ to!string(name) ~ "\'");
     }
 
     /// Return the class definition.
-    GrClassDefinition getClass(dstring name) {
+    GrClassDefinition getClass(dstring name, uint fileId) {
         import std.conv: to;
         foreach(class_; _classTypes) {
-            if(class_.name == name)
+            if(class_.name == name && (class_.fileId == fileId || class_.isPublic))
                 return class_;
         }
         assert(false, "Undefined class \'" ~ to!string(name) ~ "\'");
     }
 
     /// Return the type alias definition.
-    GrTypeAliasDefinition getTypeAlias(dstring name) {
+    GrTypeAliasDefinition getTypeAlias(dstring name, uint fileId) {
         import std.conv: to;
         foreach(typeAlias; _typeAliases) {
-            if(typeAlias.name == name)
+            if(typeAlias.name == name && (typeAlias.fileId == fileId || typeAlias.isPublic))
                 return typeAlias;
         }
         assert(false, "Undefined  \'" ~ to!string(name) ~ "\'");
@@ -268,7 +367,7 @@ class GrData {
         foreach(class_; _classTypes) {
             for(int i; i < class_.signature.length; i ++) {
                 if(class_.signature[i].baseType == GrBaseType.void_) {
-                    assert(isClass(class_.signature[i].mangledType), "Cannot resolve class member");
+                    assert(isClass(class_.signature[i].mangledType, class_.fileId), "Cannot resolve class member");
                     class_.signature[i].baseType = GrBaseType.class_;
                 }
             }

@@ -153,6 +153,10 @@ final class GrTypeAliasDefinition {
     dstring name;
     /// The type aliased.
     GrType type;
+    /// Is the type visible from other files ?
+    bool isPublic;
+    /// The file where the type is declared.
+    uint fileId;
 }
 
 /**
@@ -172,6 +176,10 @@ final class GrEnumDefinition {
     dstring[] fields;
     /// Unique ID of the enum definition.
     size_t index;
+    /// Is the type visible from other files ?
+    bool isPublic;
+    /// The file where the type is declared.
+    uint fileId;
 
     /// Does the field name exists ?
     bool hasField(dstring name) const {
@@ -220,6 +228,10 @@ final class GrClassDefinition {
     dstring[] fields;
     /// Unique ID of the object definition.
     size_t index;
+    /// Is the type visible from other files ?
+    bool isPublic;
+    /// The file where the type is declared.
+    uint fileId;
 }
 
 /// Create a GrType of class for the type system.
