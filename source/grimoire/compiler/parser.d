@@ -1761,7 +1761,7 @@ final class GrParser {
             fields ~= fieldName;
 
             if(get().type != GrLexemeType.semicolon)
-                logError("Missing semicolon", "A struct field declaration must end with a semicolon");
+                logError("Missing semicolon", "An enum field must end with a semicolon");
             checkAdvance();
         }
         if(_data.isTypeDeclared(enumName, get().fileId, isPublic))
@@ -5194,7 +5194,10 @@ final class GrParser {
 			}
 			else {
                 if(isMethodCall) {
-                    signature ~= selfValue;
+                    if(selfValue.baseType == GrBaseType.internalTuple)
+                        signature ~= grUnpackTuple(selfValue);
+                    else
+                        signature ~= selfValue;
                 }
                 //Signature parsing, no coercion is made
                 if(hasParenthesis && get().type != GrLexemeType.rightParenthesis) {
@@ -5222,6 +5225,7 @@ final class GrParser {
                     advance();
 
                 //Mangling function name
+                writeln(identifierName, ", ", signature);
 				dstring mangledName = grMangleNamedFunction(identifierName, signature);
 				
 				//GrPrimitive call.

@@ -709,7 +709,7 @@ package final class GrLexer {
             case "catch":
                 lex.type = GrLexemeType.catch_;
                 break;
-            case "raise_":
+            case "raise":
                 lex.type = GrLexemeType.raise_;
                 break;
             case "defer":
