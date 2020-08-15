@@ -169,9 +169,7 @@ final class GrParser {
     /// Register a global variable
     private GrVariable registerGlobalVariable(dstring name, GrType type, uint fileId, bool isAuto, bool isPublic) {
         //Check if declared globally.
-		const auto previousVariable = getGlobalVariable(name, fileId);
-		if(previousVariable !is null)
-			logError("Multiple declaration", "\'" ~ to!string(name) ~ "\' is already declared.");
+		assertNoGlobalDeclaration(name, fileId, isPublic);
 
 		GrVariable variable = new GrVariable;
         variable.isAuto = isAuto;
@@ -188,19 +186,24 @@ final class GrParser {
 		return variable;
     }
 
-    private GrVariable getGlobalVariable(dstring name, uint fileId) {
+    private GrVariable getGlobalVariable(dstring name, uint fileId, bool isPublic = false) {
         foreach(GrVariable var; globalVariables) {
-            if(var.name == name && (var.fileId == fileId || var.isPublic))
+            if(var.name == name && (var.fileId == fileId || var.isPublic || isPublic))
                 return var;
         }
         return null;
     }
 
-    private void assertNoGlobalDeclaration(dstring name, uint fileId) {
-        const GrVariable previousVariable = getGlobalVariable(name, fileId);
-        if(previousVariable !is null)
+    private void assertNoGlobalDeclaration(dstring name, uint fileId, bool isPublic) {
+        if(getGlobalVariable(name, fileId, isPublic) !is null)
             logError("Multiple declaration",
                 "\'" ~ to!string(name) ~ "\' is already declared as a global variable");
+        if(getFunction(name, fileId, isPublic) !is null)
+            logError("Multiple declaration",
+                "\'" ~ to!string(name) ~ "\' is already declared");
+        if(getEvent(name) !is null)
+            logError("Multiple declaration",
+                "\'" ~ to!string(name) ~ "\' is already declared");
     }
 
     private void setVariableRegister(GrVariable variable) {
@@ -263,7 +266,7 @@ final class GrParser {
     /// Register a local variable
 	private GrVariable registerLocalVariable(dstring name, GrType type) {
 		//Check if declared globally
-        assertNoGlobalDeclaration(name, get().fileId);
+        assertNoGlobalDeclaration(name, get().fileId, false);
 
 		//Check if declared locally.
 		const auto previousVariable = (name in currentFunction.localVariables);
@@ -352,10 +355,7 @@ final class GrParser {
             func.isPublic = isPublic;
 
 			dstring mangledName = grMangleNamedFunction(name, signature);
-			const auto previousFunc = getFunction(mangledName, fileId);
-			if(previousFunc !is null)
-				logError("Multiple declaration",
-                    "\'" ~ to!string(name) ~ "\' is already declared.");
+            assertNoGlobalDeclaration(mangledName, fileId, isPublic);
 		
             if(isEvent)
                 events ~= func;
@@ -465,9 +465,9 @@ final class GrParser {
         functionStack.length --;
 	}
 
-	GrFunction getFunction(dstring name, uint fileId = 0) {
+	GrFunction getFunction(dstring name, uint fileId = 0, bool isPublic = false) {
         foreach(GrFunction func; functions) {
-            if(func.name == name && (func.fileId == fileId || func.isPublic))
+            if(func.name == name && (func.fileId == fileId || func.isPublic || isPublic))
                 return func;
         }
         return null;
@@ -498,13 +498,6 @@ final class GrParser {
         }
         return null;
 	}
-
-    private void assertNoFunctionDeclaration(dstring name, uint fileId) {
-        const GrVariable previousVariable = getGlobalVariable(name, fileId);
-        if(previousVariable !is null)
-            logError("Multiple declaration",
-                "\'" ~ to!string(name) ~ "\' is already declared as a global variable");
-    }
 
     /// Retrieve a declared variable
 	private GrVariable getVariable(dstring name, uint fileId) {
@@ -1706,7 +1699,7 @@ final class GrParser {
                 parseGlobalDeclaration(isPublic);
                 break;
             case identifier:
-                if(_data.isTypeDeclared(get().svalue, get().fileId)) {
+                if(_data.isTypeDeclared(get().svalue, get().fileId, false)) {
                     parseGlobalDeclaration(isPublic);
                     break;
                 }
@@ -1737,7 +1730,7 @@ final class GrParser {
         if(get().type != GrLexemeType.semicolon)
             logError("Missing ;", "The definition must end with a semicolon");
 
-        if(_data.isTypeDeclared(typeAliasName, get().fileId))
+        if(_data.isTypeDeclared(typeAliasName, get().fileId, isPublic))
             logError("Multiple type declaration", "\'" ~ to!string(typeAliasName) ~ "\' is already declared");
         _data.addTypeAlias(typeAliasName, type, get().fileId, isPublic);
     }
@@ -1769,7 +1762,7 @@ final class GrParser {
                 logError("Missing semicolon", "A struct field declaration must end with a semicolon");
             checkAdvance();
         }
-        if(_data.isTypeDeclared(enumName, get().fileId))
+        if(_data.isTypeDeclared(enumName, get().fileId, isPublic))
             logError("Multiple type declaration", "\'" ~ to!string(enumName) ~ "\' is already declared");
         _data.addEnum(enumName, fields, get().fileId, isPublic);
     }
@@ -1826,7 +1819,7 @@ final class GrParser {
                 break;
             }
         }
-        if(_data.isTypeDeclared(structName, get().fileId))
+        if(_data.isTypeDeclared(structName, get().fileId, isPublic))
             logError("Multiple type declaration", "\'" ~ to!string(structName) ~ "\' is already declared");
         _data.addClass(structName, fields, signature, get().fileId, isPublic);
     }
@@ -1866,18 +1859,18 @@ final class GrParser {
 
         GrLexeme lex = get();
         if(!lex.isType) {
-            if(lex.type == GrLexemeType.identifier && _data.isTypeAlias(lex.svalue, lex.fileId)) {
+            if(lex.type == GrLexemeType.identifier && _data.isTypeAlias(lex.svalue, lex.fileId, false)) {
                 currentType = _data.getTypeAlias(lex.svalue, lex.fileId).type;
                 checkAdvance();
                 return currentType;
             }
-            else if(lex.type == GrLexemeType.identifier && _data.isClass(lex.svalue, lex.fileId)) {
+            else if(lex.type == GrLexemeType.identifier && _data.isClass(lex.svalue, lex.fileId, false)) {
                 currentType.baseType = GrBaseType.class_;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
                 return currentType;
             }
-            else if(lex.type == GrLexemeType.identifier && _data.isEnum(lex.svalue, lex.fileId)) {
+            else if(lex.type == GrLexemeType.identifier && _data.isEnum(lex.svalue, lex.fileId, false)) {
                 currentType.baseType = GrBaseType.enum_;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
@@ -2197,7 +2190,6 @@ final class GrParser {
 		if(get().type != GrLexemeType.identifier)
 			logError("Missing identifier", "Expected a name such as \'foo\'");
 		dstring name = get().svalue;
-        assertNoGlobalDeclaration(name, get().fileId);
 		dstring[] inputs;
 		GrType[] signature = parseInSignature(inputs);
 		beginFunction(name, get().fileId, signature);
@@ -2247,7 +2239,6 @@ final class GrParser {
                     logError("Invalid Operator", "The specified operator must be valid");
             }
         }
-        assertNoGlobalDeclaration(name, get().fileId);
 		dstring[] inputs;
 		GrType[] signature = parseInSignature(inputs);
 
@@ -2447,7 +2438,7 @@ final class GrParser {
                     goto default;
                 break;
             case identifier:
-                if(_data.isTypeDeclared(get().svalue, get().fileId))
+                if(_data.isTypeDeclared(get().svalue, get().fileId, false))
                     parseLocalDeclaration();
                 else
                     goto default;
@@ -3325,7 +3316,7 @@ final class GrParser {
             type = parseType();
             break;
         case identifier:
-            if(_data.isTypeDeclared(get().svalue, get().fileId))
+            if(_data.isTypeDeclared(get().svalue, get().fileId, false))
                 type = parseType();
             else
                 isTyped = false;
@@ -5198,14 +5189,6 @@ final class GrParser {
 					addInstruction(GrOpcode.anonymousTask, 0u);
 				else
 					logError("Invalid anonymous type", "debug");
-
-				/*foreach(anonFunc; anonymousFunctions) {
-					if(anonFunc.name == currentFunction.name) {
-
-						hasAnonFunc = true;
-						break;
-					}
-				}*/
 			}
 			else {
                 if(isMethodCall) {
@@ -5249,7 +5232,7 @@ final class GrParser {
 					returnType = grPackTuple(addFunctionCall(mangledName, get().fileId));
 			}
 		}
-        else if(_data.isEnum(identifier.svalue, get().fileId)) {
+        else if(_data.isEnum(identifier.svalue, get().fileId, false)) {
             const GrEnumDefinition definition = _data.getEnum(identifier.svalue, identifier.fileId);
             if(get().type != GrLexemeType.period)
                 logError("Missing enum field", "Must be of the form Foo.bar");
