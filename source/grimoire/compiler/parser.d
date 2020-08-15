@@ -294,6 +294,7 @@ final class GrParser {
         else {
             GrFunction func = new GrFunction;
             func.name = "@global"d;
+            func.mangledName = func.name;
             func.isTask = false;
             func.inSignature = [];
             func.outSignature = [];
@@ -343,7 +344,7 @@ final class GrParser {
 			func.anonParent = currentFunction;
 			func.anonReference = cast(uint)currentFunction.instructions.length;
 			func.name = currentFunction.name ~ "@anon"d ~ to!dstring(func.index);
-            func.name = grMangleNamedFunction(func.name, func.inSignature);
+            func.mangledName = grMangleNamedFunction(func.name, func.inSignature);
 			anonymousFunctions ~= func;
 
 			//Is replaced by the addr of the function later (see solveFunctionCalls).
@@ -354,8 +355,8 @@ final class GrParser {
 			func.name = name;
             func.isPublic = isPublic;
 
-			dstring mangledName = grMangleNamedFunction(name, signature);
-            assertNoGlobalDeclaration(mangledName, fileId, isPublic);
+			func.mangledName = grMangleNamedFunction(name, signature);
+            assertNoGlobalDeclaration(func.mangledName, fileId, isPublic);
 		
             if(isEvent)
                 events ~= func;
@@ -467,8 +468,9 @@ final class GrParser {
 
 	GrFunction getFunction(dstring name, uint fileId = 0, bool isPublic = false) {
         foreach(GrFunction func; functions) {
-            if(func.name == name && (func.fileId == fileId || func.isPublic || isPublic))
+            if(func.mangledName == name && (func.fileId == fileId || func.isPublic || isPublic)) {
                 return func;
+            }
         }
         return null;
 	}
@@ -476,7 +478,7 @@ final class GrParser {
     void removeFunction(dstring name) {
         import std.algorithm: remove;
         for(int i; i < functions.length; ++ i) {
-            if(functions[i].name == name) {
+            if(functions[i].mangledName == name) {
                 functions = remove(functions, i);
                 return;
             }
@@ -485,7 +487,7 @@ final class GrParser {
 
     private GrFunction getEvent(dstring name) {
         foreach(GrFunction func; events) {
-            if(func.name == name)
+            if(func.mangledName == name)
                 return func;
         }
         return null;
@@ -493,7 +495,7 @@ final class GrParser {
 
     private GrFunction getAnonymousFunction(dstring name) {
         foreach(GrFunction func; anonymousFunctions) {
-            if(func.name == name)
+            if(func.mangledName == name)
                 return func;
         }
         return null;

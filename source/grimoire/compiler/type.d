@@ -261,6 +261,8 @@ package class GrFunction {
 
     /// Unmangled function name.
 	dstring name;
+    /// Mangled function name.
+	dstring mangledName;
     /// Function parameters' type.
 	GrType[] inSignature, outSignature;
 	bool isTask, isAnonymous;
