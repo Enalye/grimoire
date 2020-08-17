@@ -198,6 +198,9 @@ final class GrParser {
         if(getGlobalVariable(name, fileId, isPublic) !is null)
             logError("Multiple declaration",
                 "\'" ~ to!string(name) ~ "\' is already declared as a global variable");
+        if(_data.isPrimitiveDeclared(name))
+            logError("Multiple declaration",
+                "\'" ~ to!string(name) ~ "\' is already declared");
         if(getFunction(name, fileId, isPublic) !is null)
             logError("Multiple declaration",
                 "\'" ~ to!string(name) ~ "\' is already declared");
@@ -4017,8 +4020,9 @@ final class GrParser {
         checkAdvance();
         if(get().type != GrLexemeType.identifier)
             logError("Missing type", "Missing a type name to instanciate");
+        uint fileId = get().fileId;
         GrType classType = grGetClassType(get().svalue);
-        GrClassDefinition class_ = _data.getClass(get().svalue, get().fileId);
+        GrClassDefinition class_ = _data.getClass(get().svalue, fileId);
         addInstruction(GrOpcode.new_, cast(uint) class_.index);
         checkAdvance();
 
@@ -4074,7 +4078,7 @@ final class GrParser {
             fieldLValue.type = class_.signature[i];
             fieldLValue.register = i;
             addInstruction(GrOpcode.fieldLoad2, fieldLValue.register);
-            addDefaultValue(fieldLValue.type);
+            addDefaultValue(fieldLValue.type, fileId);
             addSetInstruction(fieldLValue, fieldLValue.type);
         }
 
@@ -4431,7 +4435,7 @@ final class GrParser {
                 foreach(lvalue; lvalues) {
                     if(lvalue.isAuto)
                         logError("Missing initialization", "Cannot infer the type for initialization");
-                    addDefaultValue(lvalue.type);
+                    addDefaultValue(lvalue.type, get().fileId);
                     addSetInstruction(lvalue, lvalue.type);
                 }
             }
@@ -4441,7 +4445,7 @@ final class GrParser {
         }
     }
 
-    private void addDefaultValue(GrType type) {
+    private void addDefaultValue(GrType type, uint fileId) {
         final switch(type.baseType) with(GrBaseType) {
         case int_:
         case bool_:
@@ -4455,8 +4459,35 @@ final class GrParser {
             addStringConstant("");
             break;
         case function_:
+            GrType[] inSignature = grUnmangleSignature(type.mangledType);
+            GrType[] outSignature = grUnmangleSignature(type.mangledReturnType);
+            dstring[] inputs;
+            for(int i; i < inSignature.length; ++ i) {
+                inputs ~= to!dstring(i);
+            }
+            preBeginFunction("$anon"d, fileId, inSignature, inputs, false, outSignature, true);
+            openDeferrableSection();
+            foreach(outType; outSignature) {
+                addDefaultValue(outType, fileId);
+            }
+            addReturn();
+            closeDeferrableSection();
+            registerDeferBlocks();
+            endFunction();
+            break;
         case task:
-            logError("Missing initialization", "Not implemented for now");
+            GrType[] inSignature = grUnmangleSignature(type.mangledType);
+            GrType[] outSignature = grUnmangleSignature(type.mangledReturnType);
+            dstring[] inputs;
+            for(int i; i < inSignature.length; ++ i) {
+                inputs ~= to!dstring(i);
+            }
+            preBeginFunction("$anon"d, fileId, inSignature, inputs, true, outSignature, true);
+            openDeferrableSection();
+            addKill();
+            closeDeferrableSection();
+            registerDeferBlocks();
+            endFunction();
             break;
         case array_:
             GrType[] subArrayTypes = grUnmangleSignature(type.mangledType);
@@ -4490,8 +4521,52 @@ final class GrParser {
             }
             break;
         case class_:
+            GrClassDefinition class_ = _data.getClass(type.mangledType, fileId);
+            addInstruction(GrOpcode.new_, cast(uint) class_.index);
+            for(int i; i < class_.fields.length; ++ i) {
+                GrVariable fieldLValue = new GrVariable;
+                fieldLValue.isInitialized = false;
+                fieldLValue.isField = true;
+                fieldLValue.type = class_.signature[i];
+                fieldLValue.register = i;
+                addInstruction(GrOpcode.fieldLoad2, fieldLValue.register);
+                addDefaultValue(fieldLValue.type, fileId);
+                addSetInstruction(fieldLValue, fieldLValue.type);
+            }
+            break;
         case foreign:
+            addInstruction(GrOpcode.const_null);
+            break;
         case chan:
+            GrType[] subType = grUnmangleSignature(type.mangledType);
+            if(subType.length != 1)
+                logError("Invalid channel type", "invalid channel signature");
+            final switch(subType[0].baseType) with(GrBaseType) {
+            case int_:
+            case bool_:
+            case function_:
+            case task:
+            case enum_:
+                addInstruction(GrOpcode.channel_int, 1);
+                break;
+            case float_:
+                addInstruction(GrOpcode.channel_float, 1);
+                break;
+            case string_:
+                addInstruction(GrOpcode.channel_string, 1);
+                break;
+            case class_:
+            case array_:
+            case foreign:
+            case chan:
+            case reference:
+                addInstruction(GrOpcode.channel_object, 1);
+                break;
+            case void_:
+            case internalTuple:
+                logError("Invalid channel type", "invalid channel type");
+            }
+            break;
         case reference:
         case void_:
         case internalTuple:
@@ -5351,7 +5426,6 @@ final class GrParser {
                     advance();
 
                 //Mangling function name
-                writeln(identifierName, ", ", signature);
 				dstring mangledName = grMangleNamedFunction(identifierName, signature);
 				
 				//GrPrimitive call.

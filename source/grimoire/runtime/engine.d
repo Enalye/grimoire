@@ -1026,6 +1026,13 @@ class GrEngine {
 					_meta = _sconsts[grGetInstructionUnsignedValue(opcode)];
 					context.pc ++;
                     break;
+				case const_null:
+                    context.ostackPos ++;
+					if(context.ostackPos == context.ostack.length)
+						context.ostack.length *= 2;
+					context.ostack[context.ostackPos] = null;
+					context.pc ++;
+					break;
 				case globalPush_int:
 					const uint nbParams = grGetInstructionUnsignedValue(opcode);
 					for(uint i = 1u; i <= nbParams; i++)

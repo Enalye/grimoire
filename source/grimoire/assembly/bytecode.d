@@ -37,7 +37,7 @@ enum GrOpcode {
     fieldLoad_int, fieldLoad_float, fieldLoad_string, fieldLoad_object,
     fieldLoad2_int, fieldLoad2_float, fieldLoad2_string, fieldLoad2_object,
 
-    const_int, const_float, const_bool, const_string, const_meta,
+    const_int, const_float, const_bool, const_string, const_meta, const_null,
     
     globalPush_int, globalPush_float, globalPush_string, globalPush_object,
     globalPop_int, globalPop_float, globalPop_string, globalPop_object,

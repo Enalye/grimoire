@@ -38,7 +38,7 @@ private string[] instructions = [
     "fload.i", "fload.f", "fload.s", "fload.o",
     "fload2.i", "fload2.f", "fload2.s", "fload2.o",
 
-    "const.i", "const.f", "const.b", "const.s", "meta",
+    "const.i", "const.f", "const.b", "const.s", "meta", "null",
     
     "gpush.i", "gpush.f", "gpush.s", "gpush.o",
     "gpop.i", "gpop.f", "gpop.s", "gpop.o",
