@@ -129,7 +129,7 @@ private {
 				call.position += lastOpcodeCount;
 			func.position = lastOpcodeCount;
 			lastOpcodeCount += func.instructions.length;
-            events[func.name] = func.position;
+            events[func.mangledName] = func.position;
 		}
 		foreach(func; parser.anonymousFunctions) {
 			foreach(size_t i, instruction; func.instructions)
