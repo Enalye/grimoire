@@ -159,6 +159,7 @@ class GrData {
         assert(!isTypeDeclared(name), to!string(name) ~ "is already declared");
         GrType type = GrBaseType.foreign;
         type.mangledType = name;
+        _foreigns ~= name;
         return type;
     }
 
