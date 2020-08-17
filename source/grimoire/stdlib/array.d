@@ -24,6 +24,22 @@ void grLoadStdLibArray(GrData data) {
 	data.addPrimitive(&_empty_i, "empty?", ["array"], [grIntArray], [grBool]);
 	data.addPrimitive(&_empty_f, "empty?", ["array"], [grFloatArray], [grBool]);
 	data.addPrimitive(&_empty_s, "empty?", ["array"], [grStringArray], [grBool]);
+
+	data.addPrimitive(&_pushfront_i, "push_front", ["array", "v"], [grIntArray, grInt]);
+	data.addPrimitive(&_pushback_i, "push_back", ["array", "v"], [grIntArray, grInt]);
+	data.addPrimitive(&_popfront_i, "pop_front", ["array", "sz"], [grIntArray, grInt]);
+	data.addPrimitive(&_popback_i, "pop_back", ["array", "sz"], [grIntArray, grInt]);
+
+	data.addPrimitive(&_pushfront_f, "push_front", ["array", "v"], [grFloatArray, grInt]);
+	data.addPrimitive(&_pushback_f, "push_back", ["array", "v"], [grFloatArray, grInt]);
+	data.addPrimitive(&_popfront_f, "pop_front", ["array", "sz"], [grFloatArray, grInt]);
+	data.addPrimitive(&_popback_f, "pop_back", ["array", "sz"], [grFloatArray, grInt]);
+
+	data.addPrimitive(&_pushfront_s, "push_front", ["array", "v"], [grStringArray, grInt]);
+	data.addPrimitive(&_pushback_s, "push_back", ["array", "v"], [grStringArray, grInt]);
+	data.addPrimitive(&_popfront_s, "pop_front", ["array", "sz"], [grStringArray, grInt]);
+	data.addPrimitive(&_popback_s, "pop_back", ["array", "sz"], [grStringArray, grInt]);
+
 }
 
 private void _range_i(GrCall call) {
@@ -103,4 +119,106 @@ private void _empty_f(GrCall call) {
 private void _empty_s(GrCall call) {
     const GrStringArray array = call.getStringArray("array");
     call.setBool(array.data.empty);
+}
+
+private void _pushfront_i(GrCall call) {
+    GrIntArray array = call.getIntArray("array");
+    array.data = call.getInt("v") ~ array.data;
+}
+
+private void _pushback_i(GrCall call) {
+    GrIntArray array = call.getIntArray("array");
+    array.data ~= call.getInt("v");
+}
+
+private void _popfront_i(GrCall call) {
+    GrIntArray array = call.getIntArray("array");
+    int sz = call.getInt("sz");
+    if(array.data.length < sz) {
+        sz = cast(int) array.data.length;
+    }
+    else if(sz < 0) {
+        sz = 0;
+    }
+    array.data = array.data[sz..$];
+}
+
+private void _popback_i(GrCall call) {
+    GrIntArray array = call.getIntArray("array");
+    int sz = call.getInt("sz");
+    if(array.data.length < sz) {
+        sz = cast(int) array.data.length;
+    }
+    else if(sz < 0) {
+        sz = 0;
+    }
+    array.data.length -= sz;
+}
+
+private void _pushfront_f(GrCall call) {
+    GrFloatArray array = call.getFloatArray("array");
+    array.data = call.getFloat("v") ~ array.data;
+}
+
+private void _pushback_f(GrCall call) {
+    GrFloatArray array = call.getFloatArray("array");
+    array.data ~= call.getFloat("v");
+}
+
+private void _popfront_f(GrCall call) {
+    GrFloatArray array = call.getFloatArray("array");
+    int sz = call.getInt("sz");
+    if(array.data.length < sz) {
+        sz = cast(int) array.data.length;
+    }
+    else if(sz < 0) {
+        sz = 0;
+    }
+    array.data = array.data[sz..$];
+}
+
+private void _popback_f(GrCall call) {
+    GrFloatArray array = call.getFloatArray("array");
+    int sz = call.getInt("sz");
+    if(array.data.length < sz) {
+        sz = cast(int) array.data.length;
+    }
+    else if(sz < 0) {
+        sz = 0;
+    }
+    array.data.length -= sz;
+}
+
+private void _pushfront_s(GrCall call) {
+    GrStringArray array = call.getStringArray("array");
+    array.data = call.getString!dstring("v") ~ array.data;
+}
+
+private void _pushback_s(GrCall call) {
+    GrStringArray array = call.getStringArray("array");
+    array.data ~= call.getString!dstring("v");
+}
+
+private void _popfront_s(GrCall call) {
+    GrStringArray array = call.getStringArray("array");
+    int sz = call.getInt("sz");
+    if(array.data.length < sz) {
+        sz = cast(int) array.data.length;
+    }
+    else if(sz < 0) {
+        sz = 0;
+    }
+    array.data = array.data[sz..$];
+}
+
+private void _popback_s(GrCall call) {
+    GrStringArray array = call.getStringArray("array");
+    int sz = call.getInt("sz");
+    if(array.data.length < sz) {
+        sz = cast(int) array.data.length;
+    }
+    else if(sz < 0) {
+        sz = 0;
+    }
+    array.data.length -= sz;
 }
