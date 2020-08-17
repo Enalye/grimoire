@@ -34,7 +34,7 @@ private string[] instructions = [
     "rstore2.i", "rstore2.f", "rstore2.s", "rstore2.o",
 
     "fstore.i", "fstore.f", "fstore.s", "fstore.o",
-    "fload",
+    "fload", "fload2",
     "fload.i", "fload.f", "fload.s", "fload.o",
     "fload2.i", "fload2.f", "fload2.s", "fload2.o",
 

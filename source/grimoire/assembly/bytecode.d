@@ -33,7 +33,7 @@ enum GrOpcode {
     refStore2_int, refStore2_float, refStore2_string, refStore2_object,
 
     fieldStore_int, fieldStore_float, fieldStore_string, fieldStore_object,
-    fieldLoad,
+    fieldLoad, fieldLoad2,
     fieldLoad_int, fieldLoad_float, fieldLoad_string, fieldLoad_object,
     fieldLoad2_int, fieldLoad2_float, fieldLoad2_string, fieldLoad2_object,
 

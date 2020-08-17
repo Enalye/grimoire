@@ -909,6 +909,15 @@ class GrEngine {
 						grGetInstructionUnsignedValue(opcode)]);
 					context.pc ++;
                     break;
+				case fieldLoad2:
+					context.ostackPos ++;
+					if(context.ostackPos == context.ostack.length)
+						context.ostack.length *= 2;
+					context.ostack[context.ostackPos] =
+						cast(void*) ((cast(GrObject)context.ostack[context.ostackPos - 1])._fields[
+						grGetInstructionUnsignedValue(opcode)]);
+					context.pc ++;
+                    break;
                 case fieldLoad_int:
                     context.istackPos ++;
 					if(context.istackPos == context.istack.length)

@@ -2844,12 +2844,7 @@ final class GrParser {
         }
         while(get().type == GrLexemeType.comma);
 
-		parseAssignList(lvalues);
-
-        foreach(lvalue; lvalues) {
-            if(lvalue.isAuto && !lvalue.isInitialized)
-                logError("Declaration error", "Cannot infer a non-initialized global auto-type");
-        }
+		parseAssignList(lvalues, true);
     }
 
 	//Type Identifier [= EXPRESSION] ;
@@ -2887,7 +2882,7 @@ final class GrParser {
         }
         while(get().type == GrLexemeType.comma);
 
-		parseAssignList(lvalues);
+        parseAssignList(lvalues, true);
 	}
 
     private GrType parseFunctionReturnType() {
@@ -4016,6 +4011,76 @@ final class GrParser {
         return resultType;     
     }
 
+    private GrType parseObjectBuilder() {
+        if(get().type != GrLexemeType.new_)
+            logError("Missing new", "An object is created with a \'new\'");
+        checkAdvance();
+        if(get().type != GrLexemeType.identifier)
+            logError("Missing type", "Missing a type name to instanciate");
+        GrType classType = grGetClassType(get().svalue);
+        GrClassDefinition class_ = _data.getClass(get().svalue, get().fileId);
+        addInstruction(GrOpcode.new_, cast(uint) class_.index);
+        checkAdvance();
+
+        bool[] initFields;
+        initFields.length = class_.fields.length;
+
+        // Init
+        if(get().type == GrLexemeType.leftCurlyBrace) {
+            checkAdvance();
+            while(!isEnd()) {
+                if(get().type == GrLexemeType.rightCurlyBrace) {
+                    checkAdvance();
+                    break;
+                }
+                else if(get().type == GrLexemeType.identifier) {
+                    const dstring fieldName = get().svalue;
+                    checkAdvance();
+                    bool hasField = false;
+                    for(int i; i < class_.fields.length; ++ i) {
+                        if(class_.fields[i] == fieldName) {
+                            hasField = true;
+
+                            if(initFields[i])
+                                logError("Initialization error", "This field is already initialized");
+                            initFields[i] = true;
+
+                            GrVariable fieldLValue = new GrVariable;
+                            fieldLValue.isInitialized = false;
+                            fieldLValue.isField = true;
+                            fieldLValue.type = class_.signature[i];
+                            fieldLValue.register = i;
+
+                            addInstruction(GrOpcode.fieldLoad2, fieldLValue.register);
+                            parseAssignList([fieldLValue], true);
+                            break;
+                        }
+                    }
+                    if(!hasField)
+                        logError("Initialization error", "This field does not exists");
+                }
+                else {
+                    logError("Initialization error", "Expecting an object's field name here");
+                }
+            }
+        }
+
+        for(int i; i < class_.fields.length; ++ i) {
+            if(initFields[i])
+                continue;
+            GrVariable fieldLValue = new GrVariable;
+            fieldLValue.isInitialized = false;
+            fieldLValue.isField = true;
+            fieldLValue.type = class_.signature[i];
+            fieldLValue.register = i;
+            addInstruction(GrOpcode.fieldLoad2, fieldLValue.register);
+            addDefaultValue(fieldLValue.type);
+            addSetInstruction(fieldLValue, fieldLValue.type);
+        }
+
+        return classType;
+    }
+
     /**
     Parse an array creation.
     The type is optional if the array is not empty.
@@ -4314,7 +4379,7 @@ final class GrParser {
     }
 
     /// Parse the right side of a multiple assignment and associate them with the `lvalues`.
-    private void parseAssignList(GrVariable[] lvalues) {
+    private void parseAssignList(GrVariable[] lvalues, bool isInitialization = false) {
         switch(get().type) with(GrLexemeType) {
         case assign:
             advance();
@@ -4361,9 +4426,76 @@ final class GrParser {
             break;
         case semicolon:
             advance();
+
+            if(isInitialization) {
+                foreach(lvalue; lvalues) {
+                    if(lvalue.isAuto)
+                        logError("Missing initialization", "Cannot infer the type for initialization");
+                    addDefaultValue(lvalue.type);
+                    addSetInstruction(lvalue, lvalue.type);
+                }
+            }
             break;
         default:
             logError("Invalid symbol", "A declaration must either be terminated by a ; or assigned with =");
+        }
+    }
+
+    private void addDefaultValue(GrType type) {
+        final switch(type.baseType) with(GrBaseType) {
+        case int_:
+        case bool_:
+        case enum_:
+            addIntConstant(0);
+            break;
+        case float_:
+            addFloatConstant(0f);
+            break;
+        case string_:
+            addStringConstant("");
+            break;
+        case function_:
+        case task:
+            logError("Missing initialization", "Not implemented for now");
+            break;
+        case array_:
+            GrType[] subArrayTypes = grUnmangleSignature(type.mangledType);
+            if(subArrayTypes.length != 1)
+                logError("Array type error", "Arrays can only have one type");
+            final switch(subArrayTypes[0].baseType) with(GrBaseType) {            
+            case bool_:
+            case int_:
+            case function_:
+            case task:
+            case enum_:
+                addInstruction(GrOpcode.array_int, 0);
+                break;
+            case float_:
+                addInstruction(GrOpcode.array_float, 0);
+                break;
+            case string_:
+                addInstruction(GrOpcode.array_string, 0);
+                break;
+            case array_:
+            case class_:
+            case foreign:
+            case chan:
+            case reference:
+                addInstruction(GrOpcode.array_object, 0);
+                break;
+            case void_:
+            case internalTuple:
+                logError("Array Error", "Cannot build an array of this type");
+                break;
+            }
+            break;
+        case class_:
+        case foreign:
+        case chan:
+        case reference:
+        case void_:
+        case internalTuple:
+            logError("Missing initialization", "Cannot infer the type for initialization");
         }
     }
 
@@ -4734,15 +4866,9 @@ final class GrParser {
 				checkAdvance();
 				break;
             case new_:
-                checkAdvance();
-                if(get().type != GrLexemeType.identifier)
-                    logError("Missing type", "Missing a type name to instanciate");
-                currentType = grGetClassType(get().svalue);
+                currentType = parseObjectBuilder();
                 hasValue = true;
                 typeStack ~= currentType;
-                GrClassDefinition class_ = _data.getClass(get().svalue, get().fileId);
-                addInstruction(GrOpcode.new_, cast(uint) class_.index);
-                checkAdvance();
                 break;
             case chanType:
 				currentType = parseChannelBuilder();
