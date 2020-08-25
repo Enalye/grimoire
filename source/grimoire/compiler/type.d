@@ -67,6 +67,9 @@ struct GrType {
             return false;
         if(baseType == GrBaseType.function_ || baseType == GrBaseType.task)
             return mangledType == v.mangledType && mangledReturnType == v.mangledReturnType;
+        if(baseType == GrBaseType.foreign || baseType == GrBaseType.class_ ||
+            baseType == GrBaseType.enum_ || baseType == GrBaseType.array_)
+            return mangledType == v.mangledType;
         return true;
 	}
 
@@ -132,6 +135,14 @@ package class GrVariable {
     bool isPublic;
     /// The file where the variable is declared.
     uint fileId;
+}
+
+/// Define an arbitrary D pointer.
+final class GrForeignDefinition {
+    /// Identifier.
+    dstring name;
+    /// Mother class it inherit from.
+    dstring parent;
 }
 
 /// Create a foreign GrType for the type system.
@@ -286,7 +297,8 @@ package class GrFunction {
 }
 
 package class GrFunctionCall {
-	dstring mangledName;
+	dstring name;
+    GrType[] signature;
 	uint position;
 	GrFunction caller, functionToCall;
 	GrType expectedType;

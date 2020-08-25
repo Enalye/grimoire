@@ -469,10 +469,20 @@ final class GrParser {
         functionStack.length --;
 	}
 
-	GrFunction getFunction(dstring name, uint fileId = 0, bool isPublic = false) {
+    GrFunction getFunction(dstring mangledName, uint fileId = 0, bool isPublic = false) {
         foreach(GrFunction func; functions) {
-            if(func.mangledName == name && (func.fileId == fileId || func.isPublic || isPublic)) {
+            if(func.mangledName == mangledName && (func.fileId == fileId || func.isPublic || isPublic)) {
                 return func;
+            }
+        }
+        return null;
+	}
+
+	GrFunction getFunction(dstring name, GrType[] signature, uint fileId = 0, bool isPublic = false) {
+        foreach(GrFunction func; functions) {
+            if(func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
+                if(_data.isSignatureCompatible(signature, func.inSignature))
+                    return func;
             }
         }
         return null;
@@ -500,6 +510,16 @@ final class GrParser {
         foreach(GrFunction func; anonymousFunctions) {
             if(func.mangledName == name)
                 return func;
+        }
+        return null;
+	}
+
+    GrFunction getAnonymousFunction(dstring name, GrType[] signature) {
+        foreach(GrFunction func; anonymousFunctions) {
+            if(func.name == name) {
+                if(_data.isSignatureCompatible(signature, func.inSignature))
+                    return func;
+            }
         }
         return null;
 	}
@@ -622,57 +642,53 @@ final class GrParser {
     }
 
     private GrType addCustomBinaryOperator(GrLexemeType lexType, GrType leftType, GrType rightType, uint fileId) {
-        GrType resultType = GrBaseType.void_;
-        dstring mangledName = grMangleNamedFunction("@op_" ~ grGetPrettyLexemeType(lexType), [leftType, rightType]);
+        dstring name = "@op_" ~ grGetPrettyLexemeType(lexType);
+        GrType[] signature = [leftType, rightType];
         
         //GrPrimitive check
-        if(_data.isPrimitiveDeclared(mangledName)) {
-            GrPrimitive primitive = _data.getPrimitive(mangledName);
+        const GrPrimitive primitive = _data.getPrimitive(name, signature);
+        if(primitive) {
             addInstruction(GrOpcode.primitiveCall, primitive.index);
             if(primitive.outSignature.length != 1uL)
                     logError("Return signature error", "An operator can only have one return value");
-            resultType = primitive.outSignature[0];
+            return primitive.outSignature[0];
         }
 
         //GrFunction check
-        if(resultType.baseType == GrBaseType.void_) {
-            const auto func = getFunction(mangledName, fileId);
-            if(func !is null) {
-                auto outSignature = addFunctionCall(mangledName, fileId);
-                if(outSignature.length != 1uL)
-                    logError("Return signature error", "An operator can only have one return value");
-                resultType = outSignature[0];
-            }
+        GrFunction func = getFunction(name, signature, fileId);
+        if(func) {
+            auto outSignature = addFunctionCall(func, fileId);
+            if(outSignature.length != 1uL)
+                logError("Return signature error", "An operator can only have one return value");
+            return outSignature[0];
         }
 
-        return resultType;     
+        return grVoid;     
     }
 
     private GrType addCustomUnaryOperator(GrLexemeType lexType, const GrType type, uint fileId) {
-        GrType resultType = GrBaseType.void_;
-        dstring mangledName = grMangleNamedFunction("@op_" ~ grGetPrettyLexemeType(lexType), [type]);
+        dstring name = "@op_" ~ grGetPrettyLexemeType(lexType);
+        GrType[] signature = [type];
         
         //GrPrimitive check
-        if(_data.isPrimitiveDeclared(mangledName)) {
-            GrPrimitive primitive = _data.getPrimitive(mangledName);
+        const GrPrimitive primitive = _data.getPrimitive(name, signature);
+        if(primitive) {
             addInstruction(GrOpcode.primitiveCall, primitive.index);
             if(primitive.outSignature.length != 1uL)
                     logError("Return signature error", "An operator can only have one return value");
-            resultType = primitive.outSignature[0];
+            return primitive.outSignature[0];
         }
 
         //GrFunction check
-        if(resultType.baseType == GrBaseType.void_) {
-            const auto func = getFunction(mangledName, fileId);
-            if(func !is null) {
-                auto outSignature = addFunctionCall(mangledName, fileId);
-                if(outSignature.length != 1uL)
-                    logError("Return signature error", "An operator can only have one return value");
-                resultType = outSignature[0];
-            }
+        GrFunction func = getFunction(name, signature, fileId);
+        if(func) {
+            auto outSignature = addFunctionCall(func, fileId);
+            if(outSignature.length != 1uL)
+                logError("Return signature error", "An operator can only have one return value");
+            return outSignature[0];
         }
 
-        return resultType;     
+        return grVoid;     
     }
 
     private GrType addBinaryOperator(GrLexemeType lexType, const GrType leftType, const GrType rightType, uint fileId) {
@@ -1405,19 +1421,19 @@ final class GrParser {
 		}
 	}
 
-    private GrType addFunctionAddress(dstring mangledName, uint fileId) {
+    private GrType addFunctionAddress(dstring name, GrType[] signature, uint fileId) {
         GrFunctionCall call = new GrFunctionCall;
-		call.mangledName = mangledName;
+        call.name = name;
+        call.signature = signature;
 		call.caller = currentFunction;
 		functionCalls ~= call;
 		currentFunction.functionCalls ~= call;
         call.isAddress = true;
-		auto func = getFunction(call.mangledName, fileId);
+		auto func = getFunction(name, signature, fileId);
         if(func is null)
-            func = getAnonymousFunction(call.mangledName);
+            func = getAnonymousFunction(name, signature);
 		if(func !is null) {
             call.functionToCall = func;
-            call.isAddress = true;
             call.position = cast(uint)currentFunction.instructions.length;
             addInstruction(GrOpcode.const_int, 0);
 
@@ -1427,17 +1443,30 @@ final class GrParser {
 		return GrType(GrBaseType.void_);
     }
 
-	private GrType[] addFunctionCall(dstring mangledName, uint fileId) {
+    private GrType addFunctionAddress(GrFunction func, uint fileId) {
+        GrFunctionCall call = new GrFunctionCall;
+		call.caller = currentFunction;
+		functionCalls ~= call;
+		currentFunction.functionCalls ~= call;
+        call.isAddress = true;
+        call.functionToCall = func;
+        call.position = cast(uint)currentFunction.instructions.length;
+        addInstruction(GrOpcode.const_int, 0);
+        return grGetFunctionAsType(func);
+    }
+
+	private GrType[] addFunctionCall(dstring name, GrType[] signature, uint fileId) {
 		GrFunctionCall call = new GrFunctionCall;
-		call.mangledName = mangledName;
+        call.name = name;
+        call.signature = signature;
 		call.caller = currentFunction;
 		functionCalls ~= call;
 		currentFunction.functionCalls ~= call;
         call.isAddress = false;
         call.fileId = fileId;
 
-		auto func = getFunction(call.mangledName, call.fileId);
-		if(func !is null) {
+		GrFunction func = getFunction(name, signature, call.fileId);
+		if(func) {
 			call.functionToCall = func;
             if(func.isTask) {
                 if(func.nbIntegerParameters > 0)
@@ -1450,17 +1479,45 @@ final class GrParser {
                     addInstruction(GrOpcode.globalPush_object, func.nbObjectParameters);
             }
 
-            call.position = cast(uint)currentFunction.instructions.length;
+            call.position = cast(uint) currentFunction.instructions.length;
             addInstruction(GrOpcode.call, 0);
 
 			return func.outSignature;
 		}
 		else
-			logError("Undeclared function", "The function \'" ~
-                grGetPrettyFunctionCall(call.mangledName) ~
+			logError("Undeclared function", "\'" ~
+                grGetPrettyFunctionCall(name, signature) ~
                 "\' is not declared", -1);
 
 		return [];
+	}
+
+    private GrType[] addFunctionCall(GrFunction func, uint fileId) {
+		GrFunctionCall call = new GrFunctionCall;
+        call.name = func.name;
+        call.signature = func.inSignature;
+		call.caller = currentFunction;
+		functionCalls ~= call;
+		currentFunction.functionCalls ~= call;
+        call.isAddress = false;
+        call.fileId = fileId;
+
+        call.functionToCall = func;
+        if(func.isTask) {
+            if(func.nbIntegerParameters > 0)
+                addInstruction(GrOpcode.globalPush_int, func.nbIntegerParameters);
+            if(func.nbFloatParameters > 0)
+                addInstruction(GrOpcode.globalPush_float, func.nbFloatParameters);
+            if(func.nbStringParameters > 0)
+                addInstruction(GrOpcode.globalPush_string, func.nbStringParameters);
+            if(func.nbObjectParameters > 0)
+                addInstruction(GrOpcode.globalPush_object, func.nbObjectParameters);
+        }
+
+        call.position = cast(uint) currentFunction.instructions.length;
+        addInstruction(GrOpcode.call, 0);
+
+        return func.outSignature;
 	}
 
 	private void setOpcode(ref uint[] opcodes, uint position, GrOpcode opcode, uint value = 0u, bool isSigned = false) {
@@ -1482,10 +1539,12 @@ final class GrParser {
 
 	package void solveFunctionCalls(ref uint[] opcodes) {
 		foreach(GrFunctionCall call; functionCalls) {
-			auto func = getFunction(call.mangledName, call.fileId);
-            if(func is null)
-                func = getAnonymousFunction(call.mangledName);
-			if(func !is null) {
+            GrFunction func = call.functionToCall;
+            if(!func)
+                func = getFunction(call.name, call.signature, call.fileId);
+            if(!func)
+                func = getAnonymousFunction(call.name, call.signature);
+			if(func) {
                 if(call.isAddress)
                     setOpcode(opcodes, call.position, GrOpcode.const_int, registerIntConstant(func.position));
 				else if(func.isTask)
@@ -1494,7 +1553,7 @@ final class GrParser {
 					setOpcode(opcodes, call.position, GrOpcode.call, func.position);
 			}
 			else
-				logError("Undeclared function", "The function \'" ~ to!string(call.mangledName) ~ "\' is not declared");
+				logError("Undeclared function", "\'" ~ grGetPrettyFunctionCall(call.name, call.signature) ~ "\' is not declared");
 		}
 
 		foreach(func; anonymousFunctions)
@@ -3865,12 +3924,22 @@ final class GrParser {
                 return dst;
             case array_:
             case class_:
-            case foreign:
             case chan:
             case reference:
             case internalTuple:
                 if(dst.mangledType == src.mangledType)
                     return dst;
+                break;
+            case foreign:
+                dstring foreignName = src.mangledType;
+                for(;;) {
+                    if(dst.mangledType == foreignName)
+                        return dst;
+                    const GrForeignDefinition foreignType = _data.getForeign(foreignName);
+                    if(!foreignType.parent.length)
+                        break;
+                    foreignName = foreignType.parent;
+                }
                 break;
             }
         }
@@ -3915,81 +3984,12 @@ final class GrParser {
         GrType resultType = GrBaseType.void_;
 
         //as opposed to other functions, we need the return type (rightType) to be part of the signature.
-        dstring mangledName = grMangleNamedFunction("@as", [leftType, rightType]);
-
-        //Special conversions
-        /*if(leftType != rightType) {
-            if(leftType.baseType == GrBaseType.TupleType) {
-                switch(rightType.baseType) with(GrBaseType) {
-                case array_:
-                case VariantType:
-                    auto tuple = _data.getTuple(leftType.mangledType);
-                    const auto nbFields = tuple.signature.length;
-                    for(int i = 1; i <= nbFields; i ++) {
-                        convertType(tuple.signature[nbFields - i], grVariant, isExplicit);
-                    }
-                    addInstruction(GrOpcode.array, cast(int)nbFields);
-                    convertType(grArray, rightType);
-                    return rightType;
-                default:
-                    break;
-                }
-            }
-            else if(rightType.baseType == GrBaseType.TupleType) {
-                switch(leftType.baseType) with(GrBaseType) {
-                case array_:
-                    leftType = convertType(leftType, grVariant);
-                    goto case VariantType;
-                case VariantType:
-                    auto tuple = _data.getTuple(rightType.mangledType);
-                    addMetaConstant(grMangleFunction(tuple.signature));
-                    addInstruction(GrOpcode.dynCast_Variant);
-                    return rightType;
-                default:
-                    break;
-                }
-            }
-            else if(rightType.baseType == GrBaseType.VariantType) {
-                switch(leftType.baseType) with(GrBaseType) {
-                case function_:
-                case task:
-                case class_:
-                    //We can't know in advance what'll be the signature of the anonymous function we want to convert.
-                    //So we add the mangling as a runtime meta value.
-                    addMetaConstant(grMangleVariant(leftType));
-                    //Then, we delete the mangling, and the cast primitive will do the same.
-                    GrType tempType = leftType;
-                    tempType.mangledType = grMangleNamedFunction("", []);
-                    tempType.mangledReturnType = "";
-                    mangledName = grMangleNamedFunction("@as", [tempType, rightType]);
-                    break;
-                default:
-                    break;
-                }
-            }
-            else if(leftType.baseType == GrBaseType.VariantType) {
-                switch(rightType.baseType) with(GrBaseType) {
-                case function_:
-                case task:
-                case class_:               
-                    //We can't know in advance what'll be the signature of the anonymous function we want to convert.
-                    //So we add the mangling as a runtime meta value.
-                    addMetaConstant(grMangleVariant(rightType));
-                    //Then, we delete the mangling, and the cast primitive will do the same.
-                    GrType tempType = rightType;
-                    tempType.mangledType = grMangleNamedFunction("", []);
-                    tempType.mangledReturnType = "";
-                    mangledName = grMangleNamedFunction("@as", [leftType, tempType]);
-                    break;
-                default:
-                    break;
-                }
-            }
-        }*/
+        dstring name = "@as";
+        GrType[] signature = [leftType, rightType];
         
         //GrPrimitive check
-        if(_data.isPrimitiveDeclared(mangledName)) {
-            GrPrimitive primitive = _data.getPrimitive(mangledName);
+        const GrPrimitive primitive = _data.getPrimitive(name, signature);
+        if(primitive) {
             //Some implicit conversions are disabled.
             //ex: float -> int because we might lose information.
             if(primitive.isExplicit && !isExplicit)
@@ -4002,9 +4002,9 @@ final class GrParser {
 
         //GrFunction check
         if(resultType.baseType == GrBaseType.void_) {
-            const auto func = getFunction(mangledName, fileId);
-            if(func !is null) {
-                const GrType[] outSignature = addFunctionCall(mangledName, fileId);
+            GrFunction func = getFunction(name, signature, fileId);
+            if(func) {
+                const GrType[] outSignature = addFunctionCall(func, fileId);
                 if(outSignature.length != 1uL)
                     logError("Return signature error", "An operator can only have one return value");
                 resultType = rightType;
@@ -4662,7 +4662,7 @@ final class GrParser {
         if(currentType.baseType != GrBaseType.function_ && currentType.baseType != GrBaseType.task)
             logError("GrFunction ref error", "Cannot infer the type of \'" ~ to!string(get().svalue) ~ "\'");
 
-        GrType funcType = addFunctionAddress(get().svalue ~ currentType.mangledType, get().fileId);
+        GrType funcType = addFunctionAddress(get().svalue, grUnmangleSignature(currentType.mangledType), get().fileId);
         convertType(funcType, currentType);
         checkAdvance();
         return currentType;
@@ -5057,8 +5057,7 @@ final class GrParser {
 			case self:
                 // Parse a function call that refers to its parent. 
                 checkAdvance();
-                const dstring mangledName = grMangleNamedFunction(currentFunction.name, currentFunction.inSignature);
-                currentType = addFunctionAddress(mangledName, get().fileId);
+                currentType = addFunctionAddress(currentFunction, get().fileId);
                 if(currentType.baseType == GrBaseType.void_)
                     logError("self reference error", "Couldn't find parent function", -1);
                 typeStack ~= currentType;
@@ -5424,18 +5423,15 @@ final class GrParser {
                 }
                 if(hasParenthesis  && get().type == GrLexemeType.rightParenthesis)
                     advance();
-
-                //Mangling function name
-				dstring mangledName = grMangleNamedFunction(identifierName, signature);
 				
 				//GrPrimitive call.
-				if(_data.isPrimitiveDeclared(mangledName)) {
-					GrPrimitive primitive = _data.getPrimitive(mangledName);
+                GrPrimitive primitive = _data.getPrimitive(identifierName, signature);
+				if(primitive) {
 					addInstruction(GrOpcode.primitiveCall, primitive.index);
 					returnType = grPackTuple(primitive.outSignature);
 				}
 				else //GrFunction/Task call.
-					returnType = grPackTuple(addFunctionCall(mangledName, get().fileId));
+					returnType = grPackTuple(addFunctionCall(identifierName, signature, get().fileId));
 			}
 		}
         else if(_data.isEnum(identifier.svalue, get().fileId, false)) {

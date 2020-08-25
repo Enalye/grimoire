@@ -267,6 +267,21 @@ string grGetPrettyFunctionCall(dstring mangledName) {
     return result;
 }
 
+/// Displayable format for a mangled string of format: function$signature \
+/// Return signature is not used.
+string grGetPrettyFunctionCall(dstring name, GrType[] signature) {
+    string result = to!string(name) ~ "(";
+    int i;
+    foreach(type; signature) {
+        result ~= grGetPrettyType(type);
+        if((i + 2) <= signature.length)
+            result ~= ", ";
+        i ++;
+    }
+    result ~= ")";
+    return result;
+}
+
 /// Prettify a function class.
 string grGetPrettyFunction(GrFunction func) {
     string result = to!string(func.name) ~ "(";

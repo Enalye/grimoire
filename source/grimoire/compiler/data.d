@@ -23,7 +23,7 @@ class GrData {
         /// Opaque pointer types. \
         /// They're pointer only defined by a name. \
         /// Can only be used with primitives.
-        dstring[] _foreigns;
+        GrForeignDefinition[] _foreigns;
         /// Type aliases
         GrTypeAliasDefinition[] _typeAliases;
         /// Enum types.
@@ -155,11 +155,15 @@ class GrData {
     }
 
     /// Define an opaque pointer type.
-    GrType addForeign(dstring name) {
+    GrType addForeign(dstring name, dstring parent = "") {
         assert(!isTypeDeclared(name), to!string(name) ~ "is already declared");
+        assert(name != parent, to!string(name) ~ ", you can't be your own parent");
+        GrForeignDefinition foreign = new GrForeignDefinition;
+        foreign.name = name;
+        foreign.parent = parent;
+        _foreigns ~= foreign;
         GrType type = GrBaseType.foreign;
         type.mangledType = name;
-        _foreigns ~= name;
         return type;
     }
 
@@ -220,10 +224,19 @@ class GrData {
     /// Is the user-type defined ?
     package bool isForeign(dstring name) {
         foreach(foreign; _foreigns) {
-            if(foreign == name)
+            if(foreign.name == name)
                 return true;
         }
         return false;
+    }
+
+    /// Return the user-type definition.
+    GrForeignDefinition getForeign(dstring name) {
+        foreach(foreign; _foreigns) {
+            if(foreign.name == name)
+                return foreign;
+        }
+        assert(false, "Undefined foreign \'" ~ to!string(name) ~ "\'");
     }
 
     /// Return the enum definition.
@@ -322,6 +335,39 @@ class GrData {
                 return primitive;
         }
         assert(false, "Undeclared primitive " ~ to!string(mangledName));
+    }
+
+    /// Ditto
+    package GrPrimitive getPrimitive(dstring name, GrType[] signature) {
+        foreach(GrPrimitive primitive; _primitives) {
+            if(primitive.name == name) {
+                if(isSignatureCompatible(signature, primitive.inSignature))
+                    return primitive;
+            }
+        }
+        return null;
+    }
+
+    /// Check if the first signature match or can be upgraded (Foreign inheritance) to the second one.
+    package bool isSignatureCompatible(GrType[] first, GrType[] second) {
+        if (first.length != second.length)
+            return false;
+        __signatureLoop: for (int i; i < first.length; ++ i) {
+            if(first[i].baseType == GrBaseType.foreign && second[i].baseType == GrBaseType.foreign) {
+                for(;;) {
+                    if(first[i] == second[i])
+                        continue __signatureLoop;
+                    const GrForeignDefinition foreignType = getForeign(first[i].mangledType);
+                    if(!foreignType.parent.length)
+                        return false;
+                    first[i].mangledType = foreignType.parent;
+                }
+            }
+            else if(first[i] != second[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
