@@ -113,6 +113,13 @@ final class GrParser {
 		return (current + offset) >= cast(uint)lexemes.length;
 	}
 
+    private void set(uint position_) {
+        current = position_;
+        if(current < 0 || current >= cast(uint)lexemes.length) {
+			current = 0;
+		}
+    }
+
     /// Return the lexeme at the current position.
 	private GrLexeme get(int offset = 0) {
 		const uint position = current + offset;
@@ -479,9 +486,15 @@ final class GrParser {
 	}
 
 	GrFunction getFunction(dstring name, GrType[] signature, uint fileId = 0, bool isPublic = false) {
+        const dstring mangledName = grMangleNamedFunction(name, signature);
+        foreach(GrFunction func; functions) {
+            if(func.mangledName == mangledName && (func.fileId == fileId || func.isPublic || isPublic)) {
+                return func;
+            }
+        }
         foreach(GrFunction func; functions) {
             if(func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
-                if(_data.isSignatureCompatible(signature, func.inSignature))
+                if(_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic))
                     return func;
             }
         }
@@ -514,10 +527,14 @@ final class GrParser {
         return null;
 	}
 
-    GrFunction getAnonymousFunction(dstring name, GrType[] signature) {
+    GrFunction getAnonymousFunction(dstring name, GrType[] signature, uint fileId) {
+        foreach(GrFunction func; anonymousFunctions) {
+            if(func.mangledName == name)
+                return func;
+        }
         foreach(GrFunction func; anonymousFunctions) {
             if(func.name == name) {
-                if(_data.isSignatureCompatible(signature, func.inSignature))
+                if(_data.isSignatureCompatible(signature, func.inSignature, fileId))
                     return func;
             }
         }
@@ -1431,7 +1448,7 @@ final class GrParser {
         call.isAddress = true;
 		auto func = getFunction(name, signature, fileId);
         if(func is null)
-            func = getAnonymousFunction(name, signature);
+            func = getAnonymousFunction(name, signature, fileId);
 		if(func !is null) {
             call.functionToCall = func;
             call.position = cast(uint)currentFunction.instructions.length;
@@ -1543,7 +1560,7 @@ final class GrParser {
             if(!func)
                 func = getFunction(call.name, call.signature, call.fileId);
             if(!func)
-                func = getAnonymousFunction(call.name, call.signature);
+                func = getAnonymousFunction(call.name, call.signature, call.fileId);
 			if(func) {
                 if(call.isAddress)
                     setOpcode(opcodes, call.position, GrOpcode.const_int, registerIntConstant(func.position));
@@ -1678,7 +1695,51 @@ final class GrParser {
 		}
 
         // Finish definitions and signatures.
-        _data.resolveSignatures();
+        
+        //Resolve class fields that couldn't be defined beforehand.
+        foreach(class_; _data._classTypes) {
+            for(int i; i < class_.signature.length; i ++) {
+                if(class_.signature[i].baseType == GrBaseType.void_) {
+                    if(!_data.isClass(class_.signature[i].mangledType, class_.fileId, false)) {
+                        set(class_.fieldPositions[i]);
+                        logError("Unknown type",
+                            "\'" ~
+                            to!string(class_.signature[i].mangledType) ~ 
+                            "\' is not defined");
+                    }
+                    class_.signature[i].baseType = GrBaseType.class_;
+                }
+            }
+        }
+
+        //Fetch fields and signatures of parent classes
+        foreach(class_; _data._classTypes) {
+            uint fileId = class_.fileId;
+            dstring parent = class_.parent;
+            GrClassDefinition lastClass = class_;
+            while(parent.length) {
+                GrClassDefinition parentClass = _data.getClass(parent, fileId);
+                if(!parentClass) {
+                    set(lastClass.position + 2u);
+                    logError("Unknown class",
+                        "\'" ~
+                        to!string(class_.name) ~
+                        "\' cannot inherit from \'" ~
+                        to!string(parent) ~
+                        "\'");
+                }
+                class_.fields = parentClass.fields ~ class_.fields;
+                class_.signature = parentClass.signature ~ class_.signature;
+                fileId = parentClass.fileId;
+                parent = parentClass.parent;
+                lastClass = parentClass;
+            }
+        }
+
+        //Initialize every primitives.
+        foreach(primitive; _data._primitives) {
+            primitive.callObject.setup();
+        }
         
         //Function definitions
         reset();
@@ -1833,25 +1894,38 @@ final class GrParser {
 
     private void parseClassDeclaration(bool isPublic) {
 		checkAdvance();
+        const uint fileId = get().fileId;
+        const uint declPosition = current;
+        uint[] fieldPositions;
         if(get().type != GrLexemeType.identifier)
             logError("Missing Identifier", "struct must have a name");
-        dstring structName = get().svalue;
+        const dstring className = get().svalue;
+        dstring parentClassName;
         checkAdvance();
+
+        //Inheritance
+        if(get().type == GrLexemeType.colon) {
+            checkAdvance();
+            if(get().type != GrLexemeType.identifier)
+                logError("Missing identifier", "the parent class name is missing");
+            parentClassName = get().svalue;
+            checkAdvance();
+        }
         if(get().type != GrLexemeType.leftCurlyBrace)
-            logError("Missing {", "struct does not have a body");
+            logError("Missing {", "the class does not have a body");
         checkAdvance();
 
         dstring[] fields;
         GrType[] signature;
         while(!isEnd()) {
             if(get().type == GrLexemeType.voidType)
-                logError("Field type error", "Void is not a valid field type");
+                logError("Field type error", "unknown field type");
             else if(get().type == GrLexemeType.rightCurlyBrace) {
                 checkAdvance();
                 break;
             }
 
-            //Lazy check because we can't know about other structs
+            //Lazy check because we can't know about other classes
             auto fieldType = parseType(false);
             do {
                 if(get().type == GrLexemeType.comma)
@@ -1864,18 +1938,18 @@ final class GrParser {
                 }
                 
                 if(get().type != GrLexemeType.identifier)
-                    logError("Missing Identifier", "struct field must have a name");
+                    logError("Missing Identifier", "class field must have a name");
 
-                auto fieldName = get().svalue;
-                checkAdvance();
-
+                const dstring fieldName = get().svalue;
                 signature ~= fieldType;
                 fields ~= fieldName;
+                fieldPositions ~= current;
+                checkAdvance();
             }
             while(get().type == GrLexemeType.comma);
 
             if(get().type != GrLexemeType.semicolon)
-                logError("Missing semicolon", "A struct field declaration must end with a semicolon");
+                logError("Missing semicolon", "A class field declaration must end with a semicolon");
             checkAdvance();
 
             if(get().type == GrLexemeType.rightCurlyBrace) {
@@ -1883,9 +1957,9 @@ final class GrParser {
                 break;
             }
         }
-        if(_data.isTypeDeclared(structName, get().fileId, isPublic))
-            logError("Multiple type declaration", "\'" ~ to!string(structName) ~ "\' is already declared");
-        _data.addClass(structName, fields, signature, get().fileId, isPublic);
+        if(_data.isTypeDeclared(className, fileId, isPublic))
+            logError("Multiple type declaration", "\'" ~ to!string(className) ~ "\' is already declared");
+        _data.addClass(className, parentClassName, fields, signature, fileId, isPublic, declPosition, fieldPositions);
     }
 
     private void skipDeclaration() {
@@ -4021,8 +4095,11 @@ final class GrParser {
         if(get().type != GrLexemeType.identifier)
             logError("Missing type", "Missing a type name to instanciate");
         uint fileId = get().fileId;
-        GrType classType = grGetClassType(get().svalue);
-        GrClassDefinition class_ = _data.getClass(get().svalue, fileId);
+        dstring className = get().svalue;
+        GrType classType = grGetClassType(className);
+        GrClassDefinition class_ = _data.getClass(className, fileId);
+        if(!class_)
+            logError("Unknown class", "\'" ~ to!string(className) ~ "\' is not declared");
         addInstruction(GrOpcode.new_, cast(uint) class_.index);
         checkAdvance();
 
@@ -4522,6 +4599,8 @@ final class GrParser {
             break;
         case class_:
             GrClassDefinition class_ = _data.getClass(type.mangledType, fileId);
+            if(!class_)
+                logError("Unknown class", "\'" ~ to!string(type.mangledType) ~ "\' is not declared");
             addInstruction(GrOpcode.new_, cast(uint) class_.index);
             for(int i; i < class_.fields.length; ++ i) {
                 GrVariable fieldLValue = new GrVariable;
@@ -4783,7 +4862,7 @@ final class GrParser {
                     typeStack ~= currentType;
                 }
                 break;
-            case methodCall:
+            case colon:
                 advance();
                 if(!hadValue)
                     logError("Empty method call", "Cannot call a function on nothing");
@@ -4959,6 +5038,8 @@ final class GrParser {
                 const dstring identifier = get().svalue;
                 checkAdvance();
                 GrClassDefinition class_ = _data.getClass(currentType.mangledType, get().fileId);
+                if(!class_)
+                    logError("Unknown class", "\'" ~ to!string(currentType.mangledType) ~ "\' is not declared");
                 const auto nbFields = class_.signature.length;
                 bool hasField;
                 for(int i; i < nbFields; i ++) {
@@ -5040,7 +5121,7 @@ final class GrParser {
                     }
                 }
                 if(!hasField)
-                    logError("Unknown field", "This field does not exist", -1);
+                    logError("Unknown field", "\'" ~ to!string(identifier) ~ "\' is not declared", -1);
                 break;
             case pointer:
                 currentType = parseFunctionPointer(currentType);
@@ -5049,7 +5130,7 @@ final class GrParser {
                 break;
             case as:
                 if(!hadValue)
-                    logError("","");
+                    logError("Missing value", "\'as\' has nothing to convert");
                 currentType = parseConversionOperator(typeStack);
                 hasValue = true;
                 hadValue = false;
@@ -5059,7 +5140,7 @@ final class GrParser {
                 checkAdvance();
                 currentType = addFunctionAddress(currentFunction, get().fileId);
                 if(currentType.baseType == GrBaseType.void_)
-                    logError("self reference error", "Couldn't find parent function", -1);
+                    logError("Self reference error", "\'self\' must be inside a function", -1);
                 typeStack ~= currentType;
 				hasValue = true;
                 break;

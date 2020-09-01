@@ -233,6 +233,8 @@ class MyClass {
 final class GrClassDefinition {
     /// Identifier.
     dstring name;
+    /// Mother class it inherit from.
+    dstring parent;
     /// List of field types.
     GrType[] signature;
     /// List of field names.
@@ -243,6 +245,10 @@ final class GrClassDefinition {
     bool isPublic;
     /// The file where the type is declared.
     uint fileId;
+    /// The lexeme that declared it.
+    uint position;
+    /// Each fields' lexeme.
+    uint[] fieldPositions;
 }
 
 /// Create a GrType of class for the type system.

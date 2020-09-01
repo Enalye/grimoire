@@ -100,14 +100,20 @@ class GrData {
     }
 
     /// Define a class type.
-    package GrType addClass(dstring name, dstring[] fields, GrType[] signature, uint fileId, bool isPublic) {
+    package GrType addClass(dstring name, dstring parent,
+            dstring[] fields, GrType[] signature,
+            uint fileId, bool isPublic,
+            uint position, uint[] fieldPositions) {
         GrClassDefinition class_ = new GrClassDefinition;
         class_.name = name;
+        class_.parent = parent;
         class_.signature = signature;
         class_.fields = fields;
         class_.index = _classTypes.length;
         class_.fileId = fileId;
         class_.isPublic = isPublic;
+        class_.position = position;
+        class_.fieldPositions = fieldPositions;
         _classTypes ~= class_;
 
         GrType stType = GrBaseType.class_;
@@ -116,11 +122,12 @@ class GrData {
     }
 
     /// Ditto
-    GrType addClass(dstring name, dstring[] fields, GrType[] signature) {
+    GrType addClass(dstring name, dstring[] fields, GrType[] signature, dstring parent = "") {
         assert(fields.length == signature.length, "Class signature mismatch");
         assert(!isTypeDeclared(name), to!string(name) ~ "is already declared");
         GrClassDefinition class_ = new GrClassDefinition;
         class_.name = name;
+        class_.parent = parent;
         class_.signature = signature;
         class_.fields = fields;
         class_.index = _classTypes.length;
@@ -250,13 +257,13 @@ class GrData {
     }
 
     /// Return the class definition.
-    GrClassDefinition getClass(dstring name, uint fileId) {
+    package GrClassDefinition getClass(dstring name, uint fileId, bool isPublic = false) {
         import std.conv: to;
         foreach(class_; _classTypes) {
-            if(class_.name == name && (class_.fileId == fileId || class_.isPublic))
+            if(class_.name == name && (class_.fileId == fileId || class_.isPublic || isPublic))
                 return class_;
         }
-        assert(false, "Undefined class \'" ~ to!string(name) ~ "\'");
+        return null;
     }
 
     /// Return the type alias definition.
@@ -339,17 +346,24 @@ class GrData {
 
     /// Ditto
     package GrPrimitive getPrimitive(dstring name, GrType[] signature) {
+        const dstring mangledName = grMangleNamedFunction(name, signature);
         foreach(GrPrimitive primitive; _primitives) {
             if(primitive.name == name) {
-                if(isSignatureCompatible(signature, primitive.inSignature))
+                if(primitive.mangledName == mangledName)
+                    return primitive;
+            }
+        }
+        foreach(GrPrimitive primitive; _primitives) {
+            if(primitive.name == name) {
+                if(isSignatureCompatible(signature, primitive.inSignature, 0, true))
                     return primitive;
             }
         }
         return null;
     }
 
-    /// Check if the first signature match or can be upgraded (Foreign inheritance) to the second one.
-    package bool isSignatureCompatible(GrType[] first, GrType[] second) {
+    /// Check if the first signature match or can be upgraded (by inheritance) to the second one.
+    package bool isSignatureCompatible(GrType[] first, GrType[] second, uint fileId, bool isPublic = false) {
         if (first.length != second.length)
             return false;
         __signatureLoop: for (int i; i < first.length; ++ i) {
@@ -361,6 +375,16 @@ class GrData {
                     if(!foreignType.parent.length)
                         return false;
                     first[i].mangledType = foreignType.parent;
+                }
+            }
+            else if(first[i].baseType == GrBaseType.class_ && second[i].baseType == GrBaseType.class_) {
+                for(;;) {
+                    if(first[i] == second[i])
+                        continue __signatureLoop;
+                    const GrClassDefinition classType = getClass(first[i].mangledType, fileId, isPublic);
+                    if(!classType.parent.length)
+                        return false;
+                    first[i].mangledType = classType.parent;
                 }
             }
             else if(first[i] != second[i]) {
@@ -398,32 +422,5 @@ class GrData {
             result ~= grGetPrettyType(primitive.outSignature[i]);
         }
         return result;
-    }
-
-    /// Resolve signatures
-    package void resolveSignatures() {
-        //Resolve all unresolved field types
-        resolveClassSignatures();
-        //Then we can resolve _primitives' signature
-        resolvePrimitiveSignatures();
-    }
-
-    /// Resolve struct fields that couldn't be defined beforehand.
-    private void resolveClassSignatures() {
-        foreach(class_; _classTypes) {
-            for(int i; i < class_.signature.length; i ++) {
-                if(class_.signature[i].baseType == GrBaseType.void_) {
-                    assert(isClass(class_.signature[i].mangledType, class_.fileId, false), "Cannot resolve class member");
-                    class_.signature[i].baseType = GrBaseType.class_;
-                }
-            }
-        }
-    }
-
-    /// Initialize every primitives.
-    private void resolvePrimitiveSignatures() {
-        foreach(primitive; _primitives) {
-            primitive.callObject.setup();
-        }
     }
 }

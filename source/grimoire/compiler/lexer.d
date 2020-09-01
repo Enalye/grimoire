@@ -19,7 +19,7 @@ Kinds of valid token.
 */
 enum GrLexemeType {
 	leftBracket, rightBracket, leftParenthesis, rightParenthesis, leftCurlyBrace, rightCurlyBrace,
-	period, semicolon, methodCall, comma, at, pointer, as, is_, try_, catch_, raise_, defer,
+	period, semicolon, colon, comma, at, pointer, as, is_, try_, catch_, raise_, defer,
 	assign,
 	addAssign, substractAssign, multiplyAssign, divideAssign, concatenateAssign, remainderAssign, powerAssign,
 	plus, minus,
@@ -429,7 +429,7 @@ package final class GrLexer {
 				lex.type = GrLexemeType.semicolon;
 				break;
 			case ':':
-				lex.type = GrLexemeType.methodCall;
+				lex.type = GrLexemeType.colon;
 				break;
 			case ',':
 				lex.type = GrLexemeType.comma;
