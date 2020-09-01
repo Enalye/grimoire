@@ -1701,7 +1701,7 @@ final class GrParser {
             for(int i; i < class_.signature.length; i ++) {
                 if(class_.signature[i].baseType == GrBaseType.void_) {
                     if(!_data.isClass(class_.signature[i].mangledType, class_.fileId, false)) {
-                        set(class_.fieldPositions[i]);
+                        set(class_.fieldsInfo[i].position);
                         logError("Unknown type",
                             "\'" ~
                             to!string(class_.signature[i].mangledType) ~ 
@@ -1917,12 +1917,19 @@ final class GrParser {
 
         dstring[] fields;
         GrType[] signature;
+        bool[] fieldScopes;
         while(!isEnd()) {
             if(get().type == GrLexemeType.voidType)
                 logError("Field type error", "unknown field type");
             else if(get().type == GrLexemeType.rightCurlyBrace) {
                 checkAdvance();
                 break;
+            }
+
+            bool isFieldPublic = false;
+            if(get().type == GrLexemeType.public_) {
+                isFieldPublic = true;
+                checkAdvance();
             }
 
             //Lazy check because we can't know about other classes
@@ -1943,6 +1950,7 @@ final class GrParser {
                 const dstring fieldName = get().svalue;
                 signature ~= fieldType;
                 fields ~= fieldName;
+                fieldScopes ~= isFieldPublic;
                 fieldPositions ~= current;
                 checkAdvance();
             }
@@ -1959,7 +1967,7 @@ final class GrParser {
         }
         if(_data.isTypeDeclared(className, fileId, isPublic))
             logError("Multiple type declaration", "\'" ~ to!string(className) ~ "\' is already declared");
-        _data.addClass(className, parentClassName, fields, signature, fileId, isPublic, declPosition, fieldPositions);
+        _data.addClass(className, parentClassName, fields, signature, fieldScopes, fileId, isPublic, declPosition, fieldPositions);
     }
 
     private void skipDeclaration() {
@@ -5044,6 +5052,8 @@ final class GrParser {
                 bool hasField;
                 for(int i; i < nbFields; i ++) {
                     if(identifier == class_.fields[i]) {
+                        if((class_.fieldsInfo[i].fileId != fileId) && !class_.fieldsInfo[i].isPublic)
+                            logError("Cannot access field", "\'" ~ to!string(identifier) ~ "\' is private", -1);
                         hasField = true;
                         currentType = class_.signature[i];
                         currentType.isField = true;

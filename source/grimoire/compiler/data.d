@@ -101,9 +101,9 @@ class GrData {
 
     /// Define a class type.
     package GrType addClass(dstring name, dstring parent,
-            dstring[] fields, GrType[] signature,
+            dstring[] fields, GrType[] signature, bool[] scopes,
             uint fileId, bool isPublic,
-            uint position, uint[] fieldPositions) {
+            uint position, uint[] fieldsPosition) {
         GrClassDefinition class_ = new GrClassDefinition;
         class_.name = name;
         class_.parent = parent;
@@ -113,8 +113,14 @@ class GrData {
         class_.fileId = fileId;
         class_.isPublic = isPublic;
         class_.position = position;
-        class_.fieldPositions = fieldPositions;
         _classTypes ~= class_;
+
+        class_.fieldsInfo.length = fields.length;
+        for(int i; i < class_.fieldsInfo.length; ++ i) {
+            class_.fieldsInfo[i].fileId = fileId;
+            class_.fieldsInfo[i].isPublic = scopes[i];
+            class_.fieldsInfo[i].position = fieldsPosition[i];
+        }
 
         GrType stType = GrBaseType.class_;
         stType.mangledType = name;
@@ -133,6 +139,13 @@ class GrData {
         class_.index = _classTypes.length;
         class_.isPublic = true;
         _classTypes ~= class_;
+
+        class_.fieldsInfo.length = fields.length;
+        for(int i; i < class_.fieldsInfo.length; ++ i) {
+            class_.fieldsInfo[i].fileId = 0;
+            class_.fieldsInfo[i].isPublic = true;
+            class_.fieldsInfo[i].position = 0;
+        }
 
         GrType stType = GrBaseType.class_;
         stType.mangledType = name;

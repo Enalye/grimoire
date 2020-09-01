@@ -239,16 +239,25 @@ final class GrClassDefinition {
     GrType[] signature;
     /// List of field names.
     dstring[] fields;
+
+    package {
+        struct FieldInfo {
+            bool isPublic;
+            uint fileId;
+            uint position;
+        }
+
+        FieldInfo[] fieldsInfo;
+
+        /// The lexeme that declared it.
+        uint position;
+    }
     /// Unique ID of the object definition.
     size_t index;
     /// Is the type visible from other files ?
     bool isPublic;
     /// The file where the type is declared.
     uint fileId;
-    /// The lexeme that declared it.
-    uint position;
-    /// Each fields' lexeme.
-    uint[] fieldPositions;
 }
 
 /// Create a GrType of class for the type system.
