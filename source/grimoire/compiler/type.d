@@ -35,7 +35,7 @@ struct GrType {
     /// and mangledReturnType.
     GrBaseType baseType;
     /// Used for compound types like arrays, functions, etc.
-    dstring mangledType, mangledReturnType;
+    string mangledType, mangledReturnType;
     /// Is this from an object field ?
     bool isField;
 
@@ -45,7 +45,7 @@ struct GrType {
     }
 
     /// Compound type.
-    this(GrBaseType baseType_, dstring mangledType_) {
+    this(GrBaseType baseType_, string mangledType_) {
         baseType = baseType_;
         mangledType = mangledType_;
     }
@@ -98,7 +98,7 @@ const GrType grStringArray = GrType(GrBaseType.array_, grMangleFunction([grStrin
 
 /// Pack multiple types as a single one.
 package GrType grPackTuple(GrType[] types) {
-    const dstring mangledName = grMangleFunction(types);
+    const string mangledName = grMangleFunction(types);
     GrType type = GrBaseType.internalTuple;
     type.mangledType = mangledName;
     return type;
@@ -130,7 +130,7 @@ package class GrVariable {
     /// Can we modify its value ?
     bool isConstant;
     /// Its unique name inside its scope (function based scope).
-    dstring name;
+    string name;
     /// Is the variable visible from other files ? (Global only)
     bool isPublic;
     /// The file where the variable is declared.
@@ -140,13 +140,13 @@ package class GrVariable {
 /// Define an arbitrary D pointer.
 final class GrForeignDefinition {
     /// Identifier.
-    dstring name;
+    string name;
     /// Mother class it inherit from.
-    dstring parent;
+    string parent;
 }
 
 /// Create a foreign GrType for the type system.
-GrType grGetForeignType(dstring name) {
+GrType grGetForeignType(string name) {
     GrType type = GrBaseType.foreign;
     type.mangledType = name;
     return type;
@@ -161,7 +161,7 @@ type MyNewType = AnotherType;
 */
 final class GrTypeAliasDefinition {
     /// Identifier.
-    dstring name;
+    string name;
     /// The type aliased.
     GrType type;
     /// Is the type visible from other files ?
@@ -182,9 +182,9 @@ enum MyEnum {
 */
 final class GrEnumDefinition {
     /// Identifier.
-    dstring name;
+    string name;
     /// List of field names.
-    dstring[] fields;
+    string[] fields;
     /// Unique ID of the enum definition.
     size_t index;
     /// Is the type visible from other files ?
@@ -193,7 +193,7 @@ final class GrEnumDefinition {
     uint fileId;
 
     /// Does the field name exists ?
-    bool hasField(dstring name) const {
+    bool hasField(string name) const {
         foreach(field; fields) {
             if(field == name)
                 return true;
@@ -202,7 +202,7 @@ final class GrEnumDefinition {
     }
 
     /// Returns the value of the field
-    int getField(dstring name) const {
+    int getField(string name) const {
         import std.conv: to;
         int fieldIndex = 0;
         foreach(field; fields) {
@@ -210,12 +210,12 @@ final class GrEnumDefinition {
                 return fieldIndex;
             fieldIndex ++;
         }
-        assert(false, "Undefined enum \'" ~ to!string(name) ~ "\'");
+        assert(false, "Undefined enum \'" ~ name ~ "\'");
     }
 }
 
 /// Create a GrType of enum for the type system.
-GrType grGetEnumType(dstring name) {
+GrType grGetEnumType(string name) {
     GrType stType = GrBaseType.enum_;
     stType.mangledType = name;
     return stType;
@@ -232,13 +232,13 @@ class MyClass {
 */
 final class GrClassDefinition {
     /// Identifier.
-    dstring name;
+    string name;
     /// Mother class it inherit from.
-    dstring parent;
+    string parent;
     /// List of field types.
     GrType[] signature;
     /// List of field names.
-    dstring[] fields;
+    string[] fields;
 
     package {
         struct FieldInfo {
@@ -261,7 +261,7 @@ final class GrClassDefinition {
 }
 
 /// Create a GrType of class for the type system.
-GrType grGetClassType(dstring name) {
+GrType grGetClassType(string name) {
     GrType stType = GrBaseType.class_;
     stType.mangledType = name;
     return stType;
@@ -280,15 +280,15 @@ Function/Task/Event definition.
 */
 package class GrFunction {
     /// Every variable declared within its scope.
-	GrVariable[dstring] localVariables;
+	GrVariable[string] localVariables;
     /// All the function instructions.
 	GrInstruction[] instructions;
 	uint stackSize, index, offset;
 
     /// Unmangled function name.
-	dstring name;
+	string name;
     /// Mangled function name.
-	dstring mangledName;
+	string mangledName;
     /// Function parameters' type.
 	GrType[] inSignature, outSignature;
 	bool isTask, isAnonymous;
@@ -312,7 +312,7 @@ package class GrFunction {
 }
 
 package class GrFunctionCall {
-	dstring name;
+	string name;
     GrType[] signature;
 	uint position;
 	GrFunction caller, functionToCall;

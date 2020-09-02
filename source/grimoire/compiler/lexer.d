@@ -97,14 +97,14 @@ struct GrLexeme {
 	bool bvalue;
 
     /// Can either describe a literal value like `"myString"` or an identifier.
-	dstring svalue;
+	string svalue;
 
     /// Returns the entire _line from where the token is located.
-	dstring getLine() {
+	string getLine() {
 		return lexer.getLine(this);
 	}
 
-	dstring getFile() {
+	string getFile() {
 		return lexer.getFile(this);
 	}
 }
@@ -114,9 +114,9 @@ The lexer scans the entire file and all the imported files it references.
 */
 package final class GrLexer {
 	private {
-		dstring[] _filesToImport, _filesImported;
-		dstring[] _lines;
-		dstring _file, _text;
+		string[] _filesToImport, _filesImported;
+		string[] _lines;
+		string _file, _text;
 		uint _line, _current, _positionOfLine, _fileId;
 		GrLexeme[] _lexemes;
 	}
@@ -127,19 +127,19 @@ package final class GrLexer {
 	}
 
 	/// Start scanning the root file and all its dependencies.
-	void scanFile(dstring fileName) {
+	void scanFile(string fileName) {
 		import std.path: buildNormalizedPath, absolutePath;
 		string filePath = to!string(fileName);
 		filePath = buildNormalizedPath(convertPathToImport(filePath));
 		filePath = absolutePath(filePath);
-		fileName = to!dstring(filePath);
+		fileName = to!string(filePath);
 
 		_filesToImport ~= fileName;
 
 		while(_filesToImport.length) {
 			_file = _filesToImport[$-1];
 			_filesImported ~= _file;
-			_text = to!dstring(readText(to!string(_file)));
+			_text = to!string(readText(to!string(_file)));
 			_filesToImport.length --;
 
 			_line = 0u;
@@ -166,10 +166,10 @@ package final class GrLexer {
 	/**
 	Fetch the entire line where a lexeme is.
 	*/
-	package dstring getLine(GrLexeme lex) {
+	package string getLine(GrLexeme lex) {
 		if(lex._fileId >= _filesImported.length)
 			raiseError("Lexeme file id out of bounds");
-		auto _text = to!dstring(readText(to!string(_filesImported[lex._fileId])));
+		auto _text = to!string(readText(to!string(_filesImported[lex._fileId])));
 		_lines = split(_text, "\n");
 		if(lex._line >= _lines.length)
 			raiseError("Lexeme line count out of bounds");
@@ -179,7 +179,7 @@ package final class GrLexer {
 	/**
 	Fetch the file where a lexeme is.
 	*/
-	package dstring getFile(GrLexeme lex) {
+	package string getFile(GrLexeme lex) {
 		if(lex._fileId >= _filesImported.length)
 			raiseError("Lexeme file id out of bounds");
 		return _filesImported[lex._fileId];
@@ -319,7 +319,7 @@ package final class GrLexer {
 		lex.isLiteral = true;
 
 		bool isFloat;
-		dstring buffer;
+		string buffer;
 		for(;;) {
 			dchar symbol = get();
 
@@ -375,7 +375,7 @@ package final class GrLexer {
 			raiseError("Expected \'\"\' at the beginning of the string.");
 		_current ++;
 
-		dstring buffer;
+		string buffer;
 		for(;;) {
 			if(_current >= _text.length)
 				raiseError("Missing \'\"\' character.");
@@ -596,7 +596,7 @@ package final class GrLexer {
 		GrLexeme lex = GrLexeme(this);
 		lex.isKeyword = true;
 
-		dstring buffer;
+		string buffer;
 		for(;;) {
 			if(_current >= _text.length)
 				break;
@@ -816,7 +816,7 @@ package final class GrLexer {
 			raiseError("Expected \'\"\' at the beginning of the import.");
 		_current ++;
 
-		dstring buffer;
+		string buffer;
 		for(;;) {
 			if(_current >= _text.length)
 				raiseError("Missing \'\"\' character.");
@@ -834,7 +834,7 @@ package final class GrLexer {
 		string filePath = to!string(buffer);
 		filePath = buildNormalizedPath(dirName(to!string(_file)), convertPathToImport(filePath));
 		filePath = absolutePath(filePath);
-		buffer = to!dstring(filePath);
+		buffer = to!string(filePath);
 		if(_filesImported.canFind(buffer) || _filesToImport.canFind(buffer))
 			return;
 		_filesToImport ~= buffer;
@@ -906,8 +906,8 @@ package final class GrLexer {
 }
 
 /// Returns a displayable version of a token type.
-dstring grGetPrettyLexemeType(GrLexemeType operator) {
-    dstring[] lexemeTypeStrTable = [
+string grGetPrettyLexemeType(GrLexemeType operator) {
+    string[] lexemeTypeStrTable = [
         "[", "]", "(", ")", "{", "}",
         ".", ";", ":", "::", ",", "@", "&", "as", "is", "try", "catch", "raise", "defer",
         "=",

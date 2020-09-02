@@ -158,8 +158,8 @@ private void _castArrayToColor(GrCall call) {
 private void _castColorToString(GrCall call) {
     import std.conv: to;
     auto self = call.getObject("c");
-    call.setString("Color(" ~ to!dstring(self.getFloat("r"))
-        ~ ", " ~ to!dstring(self.getFloat("g"))
-        ~ ", " ~ to!dstring(self.getFloat("b"))
-        ~ ", " ~ to!dstring(self.getFloat("a")) ~ ")");
+    call.setString("Color(" ~ to!string(self.getFloat("r"))
+        ~ ", " ~ to!string(self.getFloat("g"))
+        ~ ", " ~ to!string(self.getFloat("b"))
+        ~ ", " ~ to!string(self.getFloat("a")) ~ ")");
 }

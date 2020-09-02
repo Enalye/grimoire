@@ -17,7 +17,7 @@ package final class GrField {
     union {
         int ivalue;
         float fvalue;
-        dstring svalue;
+        string svalue;
         void* ovalue;
     }
 }
@@ -42,18 +42,18 @@ final class GrObject {
     alias getInt = getField!int;
     alias getBool = getField!bool;
     alias getFloat = getField!float;
-    alias getString = getField!dstring;
+    alias getString = getField!string;
     alias getObject = getUserData!GrObject;
     alias getIntArray = getUserData!GrIntArray;
     alias getFloatArray = getUserData!GrFloatArray;
     alias getStringArray = getUserData!GrStringArray;
     alias getObjectArray = getUserData!GrObjectArray;
 
-    T getUserData(T)(dstring fieldName) {
+    T getUserData(T)(string fieldName) {
         return cast(T)getField!(void*)(fieldName);
     }
 
-    private T getField(T)(dstring fieldName) {
+    private T getField(T)(string fieldName) {
         for(size_t index; index < _fields.length; ++ index) {
             if(_type.fields[index] == fieldName) {
                 static if(is(T == int))
@@ -62,7 +62,7 @@ final class GrObject {
                     return cast(T) _fields[index].ivalue;
                 else static if(is(T == float))
                     return _fields[index].fvalue;
-                else static if(is(T == dstring))
+                else static if(is(T == string))
                     return _fields[index].svalue;
                 else static if(is(T == void*))
                     return _fields[index].ovalue;
@@ -76,18 +76,18 @@ final class GrObject {
     alias setInt = setField!int;
     alias setBool = setField!bool;
     alias setFloat = setField!float;
-    alias setString = setField!dstring;
+    alias setString = setField!string;
     alias setObject = setUserData!GrObject;
     alias setIntArray = setUserData!GrIntArray;
     alias setFloatArray = setUserData!GrFloatArray;
     alias setStringArray = setUserData!GrStringArray;
     alias setObjectArray = setUserData!GrObjectArray;
     
-    void setUserData(T)(dstring fieldName, T value) {
+    void setUserData(T)(string fieldName, T value) {
         setField!(void*)(fieldName, cast(void*)value);
     }
 
-    private T setField(T)(dstring fieldName, T value) {
+    private T setField(T)(string fieldName, T value) {
         for(size_t index; index < _fields.length; ++ index) {
             if(_type.fields[index] == fieldName) {
                 static if(is(T == int))
@@ -96,7 +96,7 @@ final class GrObject {
                     return _fields[index].ivalue = value;
                 else static if(is(T == float))
                     return _fields[index].fvalue = value;
-                else static if(is(T == dstring))
+                else static if(is(T == string))
                     return _fields[index].svalue = value;
                 else static if(is(T == void*))
                     return _fields[index].ovalue = value;

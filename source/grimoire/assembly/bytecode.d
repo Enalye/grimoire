@@ -98,7 +98,7 @@ struct GrBytecode {
 	float[] fconsts;
 
     /// String constants.
-	dstring[] sconsts;
+	string[] sconsts;
 
     /// Number of int based global variables declared.
     uint iglobalsCount,
@@ -111,7 +111,7 @@ struct GrBytecode {
 
     /// global event functions.
     /// Their name are in a mangled state.
-    uint[dstring] events;
+    uint[string] events;
 
     /// Serialize the content.
 	void toOutBuffer(ref OutBuffer buffer) {
@@ -125,11 +125,11 @@ struct GrBytecode {
 			buffer.write(i);
 		foreach(float i; fconsts)
 			buffer.write(i);
-		foreach(dstring i; sconsts)
+		foreach(string i; sconsts)
 			buffer.write(cast(ubyte[])i);
 		foreach(uint i; opcodes)
 			buffer.write(i);
-        foreach(dstring ev, uint pos; events) {
+        foreach(string ev, uint pos; events) {
 			buffer.write(cast(ubyte[])ev);
 			buffer.write(pos);
         }

@@ -191,12 +191,12 @@ private void _popback_f(GrCall call) {
 
 private void _pushfront_s(GrCall call) {
     GrStringArray array = call.getStringArray("array");
-    array.data = call.getString!dstring("v") ~ array.data;
+    array.data = call.getString("v") ~ array.data;
 }
 
 private void _pushback_s(GrCall call) {
     GrStringArray array = call.getStringArray("array");
-    array.data ~= call.getString!dstring("v");
+    array.data ~= call.getString("v");
 }
 
 private void _popfront_s(GrCall call) {

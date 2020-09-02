@@ -32,7 +32,7 @@ void grLoadStdLibPrint(GrData data) {
 
 // print
 private void _prints(GrCall call) {
-	write(call.getString!dstring("value"));
+	write(call.getString("value"));
 }
 
 private void _printb(GrCall call) {
@@ -64,7 +64,7 @@ private void _printns(GrCall call) {
 
 // printl
 private void _printls(GrCall call) {
-	writeln(call.getString!dstring("value"));
+	writeln(call.getString("value"));
 }
 
 private void _printlb(GrCall call) {

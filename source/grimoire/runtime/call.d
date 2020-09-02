@@ -21,7 +21,7 @@ class GrCall {
         GrPrimitive _primitive;
         GrCallback _callback;
 
-        dstring[] _ilocals, _flocals, _slocals, _vlocals, _olocals;
+        string[] _ilocals, _flocals, _slocals, _vlocals, _olocals;
         int _iparams, _fparams, _sparams, _oparams;
         int _iresults, _fresults, _sresults, _vresults, _oresults;
         bool _isInitialized;
@@ -32,7 +32,7 @@ class GrCall {
         GrContext context() { return _context; }
 
         /// Extra type compiler information.
-        dstring meta() const { return _context.engine.meta; }
+        string meta() const { return _context.engine.meta; }
     }
 
     package(grimoire) this(GrData data, GrPrimitive primitive) {
@@ -58,7 +58,7 @@ class GrCall {
         setupLocals("", _primitive.parameters, inSignature);
     }
 
-    private void setupLocals(dstring prefix, dstring[] parameters, GrType[] inSignature) {
+    private void setupLocals(string prefix, string[] parameters, GrType[] inSignature) {
         if(inSignature.length != parameters.length) {
             writeln("Err: ", inSignature, ", ", parameters);
             throw new Exception("Setup locals error");
@@ -66,7 +66,7 @@ class GrCall {
 
         for(int i; i < inSignature.length; i ++) {
             const GrType type = inSignature[i];
-            dstring name = prefix ~ parameters[i];
+            string name = prefix ~ parameters[i];
             final switch(type.baseType) with(GrBaseType) {
             case bool_:
             case int_:
@@ -122,31 +122,22 @@ class GrCall {
     alias getBool = getParameter!bool;
     alias getInt = getParameter!int;
     alias getFloat = getParameter!float;
+    alias getString = getParameter!string;
     alias getObject = getUserData!GrObject;
     alias getIntArray = getUserData!GrIntArray;
     alias getFloatArray = getUserData!GrFloatArray;
     alias getStringArray = getUserData!GrStringArray;
     alias getObjectArray = getUserData!GrObjectArray;
 
-    T getString(T : dstring)(dstring parameter) {
-        return getParameter!dstring(parameter);
-    }
-
-    T getString(T)(dstring parameter) {
-        import std.traits: isSomeString;
-        static assert(isSomeString!T, "Not a string type");
-        return to!T(getParameter!dstring(parameter));
-    }
-
-    T getEnum(T)(dstring parameter) {
+    T getEnum(T)(string parameter) {
         return cast(T) getInt(parameter);
     }
 
-    T getUserData(T)(dstring parameter) {
+    T getUserData(T)(string parameter) {
         return cast(T) getParameter!(void*)(parameter);
     }
 
-    private T getParameter(T)(dstring parameter) {
+    private T getParameter(T)(string parameter) {
         static if(is(T == int)) {
             int index;
             for(; index < _ilocals.length; index ++) {
@@ -155,7 +146,7 @@ class GrCall {
             }
             if(index == _ilocals.length)
                 throw new Exception("Primitive \'" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
-                    ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
+                    ~ "\' do not have a parameter called \'" ~ parameter ~ "\'");
             return _context.istack[(_context.istackPos - _iparams) + index + 1];
         }
         else static if(is(T == bool)) {
@@ -166,7 +157,7 @@ class GrCall {
             }
             if(index == _ilocals.length)
                 throw new Exception("Primitive \'" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
-                    ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
+                    ~ "\' do not have a parameter called \'" ~ parameter ~ "\'");
             return _context.istack[(_context.istackPos - _iparams) + index + 1] > 0;
         }
         else static if(is(T == float)) {
@@ -177,10 +168,10 @@ class GrCall {
             }
             if(index == _flocals.length)
                 throw new Exception("Primitive \'" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
-                    ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
+                    ~ "\' do not have a parameter called \'" ~ parameter ~ "\'");
             return _context.fstack[(_context.fstackPos - _fparams) + index + 1];
         }
-        else static if(is(T == dstring)) {
+        else static if(is(T == string)) {
             int index;
             for(; index < _slocals.length; index ++) {
                 if(parameter == _slocals[index])
@@ -188,7 +179,7 @@ class GrCall {
             }
             if(index == _slocals.length)
                 throw new Exception("Primitive \'" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
-                    ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
+                    ~ "\' do not have a parameter called \'" ~ parameter ~ "\'");
             return _context.sstack[(_context.sstackPos - _sparams) + index + 1];
         }
         else static if(is(T == void*)) {
@@ -199,7 +190,7 @@ class GrCall {
             }
             if(index == _olocals.length)
                 throw new Exception("Primitive \'" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
-                    ~ "\' do not have a parameter called \'" ~ to!string(parameter) ~ "\'");
+                    ~ "\' do not have a parameter called \'" ~ parameter ~ "\'");
             return _context.ostack[(_context.ostackPos - _oparams) + index + 1];
         }
     }
@@ -207,21 +198,12 @@ class GrCall {
     alias setBool = setResult!bool;
     alias setInt = setResult!int;
     alias setFloat = setResult!float;
+    alias setString = setResult!string;
     alias setObject = setUserData!GrObject;
     alias setIntArray = setUserData!GrIntArray;
     alias setFloatArray = setUserData!GrFloatArray;
     alias setStringArray = setUserData!GrStringArray;
     alias setObjectArray = setUserData!GrObjectArray;
-
-    void setString(T : dstring)(T value) {
-        setResult!dstring(value);
-    }
-
-    void setString(T)(T value) {
-        import std.traits: isSomeString;
-        static assert(isSomeString!T, "Not a string type");
-        setResult!dstring(to!dstring(value));
-    }
 
     void setEnum(T)(T value) {
         setInt(cast(int) value);
@@ -253,7 +235,7 @@ class GrCall {
                 _context.fstack.length *= 2;
             _context.fstack[idx] = value;
         }
-        else static if(is(T == dstring)) {
+        else static if(is(T == string)) {
             _sresults ++;
             const size_t idx = (_context.sstackPos - _sparams) + _sresults;
             if(idx >= _context.sstack.length)
@@ -270,14 +252,14 @@ class GrCall {
     }
 
     private {
-        dstring _message;
+        string _message;
         bool _hasError;
     }
 
     /// Does not actually send the error to the context.
     /// Because the stacks would be in an undefined state.
     /// So we wait until the primitive is finished before calling dispatchError().
-    void raise(dstring message) {
+    void raise(string message) {
         _message = message;
         _hasError = true;
     }
@@ -291,7 +273,7 @@ class GrCall {
     }
 
     /// Create a new object of type `typeName`.
-    GrObject createObject(dstring typeName) {
+    GrObject createObject(string typeName) {
         int index;
         for(; index < _data._classTypes.length; index ++) {
             if(typeName == _data._classTypes[index].name)

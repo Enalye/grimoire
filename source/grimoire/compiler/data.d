@@ -37,14 +37,14 @@ class GrData {
 
     /// Primitive global constants, call registerIntConstant at the start of the parser. \
     /// Not used for now.
-    GrType addIntConstant(dstring name, int value) {
+    GrType addIntConstant(string name, int value) {
         if(value + 1 > value)
             assert(false, "TODO: Implement later");
         return grVoid;
     }
 
     /// Is a type already declared in this file
-    package bool isTypeDeclared(dstring name, uint fileId, bool isPublic) {
+    package bool isTypeDeclared(string name, uint fileId, bool isPublic) {
         if(isEnum(name, fileId, isPublic))
             return true;
         if(isClass(name, fileId, isPublic))
@@ -57,7 +57,7 @@ class GrData {
     }
 
     /// Is a type already declared in this file
-    private bool isTypeDeclared(dstring name) {
+    private bool isTypeDeclared(string name) {
         if(isEnum(name))
             return true;
         if(isClass(name))
@@ -70,7 +70,7 @@ class GrData {
     }
 
     /// Define an enum type.
-    package GrType addEnum(dstring name, dstring[] fields, uint fileId, bool isPublic) {
+    package GrType addEnum(string name, string[] fields, uint fileId, bool isPublic) {
         GrEnumDefinition enumDef = new GrEnumDefinition;
         enumDef.name = name;
         enumDef.fields = fields;
@@ -85,8 +85,8 @@ class GrData {
     }
 
     /// Ditto
-    GrType addEnum(dstring name, dstring[] fields) {
-        assert(!isTypeDeclared(name), to!string(name) ~ "is already declared");
+    GrType addEnum(string name, string[] fields) {
+        assert(!isTypeDeclared(name), "\'" ~ name ~ "\' is already declared");
         GrEnumDefinition enumDef = new GrEnumDefinition;
         enumDef.name = name;
         enumDef.fields = fields;
@@ -100,8 +100,8 @@ class GrData {
     }
 
     /// Define a class type.
-    package GrType addClass(dstring name, dstring parent,
-            dstring[] fields, GrType[] signature, bool[] scopes,
+    package GrType addClass(string name, string parent,
+            string[] fields, GrType[] signature, bool[] scopes,
             uint fileId, bool isPublic,
             uint position, uint[] fieldsPosition) {
         GrClassDefinition class_ = new GrClassDefinition;
@@ -128,9 +128,9 @@ class GrData {
     }
 
     /// Ditto
-    GrType addClass(dstring name, dstring[] fields, GrType[] signature, dstring parent = "") {
+    GrType addClass(string name, string[] fields, GrType[] signature, string parent = "") {
         assert(fields.length == signature.length, "Class signature mismatch");
-        assert(!isTypeDeclared(name), to!string(name) ~ "is already declared");
+        assert(!isTypeDeclared(name), "\'" ~ name ~ "\' is already declared");
         GrClassDefinition class_ = new GrClassDefinition;
         class_.name = name;
         class_.parent = parent;
@@ -153,7 +153,7 @@ class GrData {
     }
 
     /// Define an alias of another type.
-    package GrType addTypeAlias(dstring name, GrType type, uint fileId, bool isPublic) {
+    package GrType addTypeAlias(string name, GrType type, uint fileId, bool isPublic) {
         GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
         typeAlias.name = name;
         typeAlias.type = type;
@@ -164,8 +164,8 @@ class GrData {
     }
 
     /// Ditto
-    GrType addTypeAlias(dstring name, GrType type) {
-        assert(!isTypeDeclared(name), to!string(name) ~ "is already declared");
+    GrType addTypeAlias(string name, GrType type) {
+        assert(!isTypeDeclared(name), "\'" ~ name ~ "\' is already declared");
         GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
         typeAlias.name = name;
         typeAlias.type = type;
@@ -175,9 +175,9 @@ class GrData {
     }
 
     /// Define an opaque pointer type.
-    GrType addForeign(dstring name, dstring parent = "") {
-        assert(!isTypeDeclared(name), to!string(name) ~ "is already declared");
-        assert(name != parent, to!string(name) ~ ", you can't be your own parent");
+    GrType addForeign(string name, string parent = "") {
+        assert(!isTypeDeclared(name), "\'" ~ name ~ "\' is already declared");
+        assert(name != parent, "\'" ~ name ~ "\' can't be its own parent");
         GrForeignDefinition foreign = new GrForeignDefinition;
         foreign.name = name;
         foreign.parent = parent;
@@ -188,7 +188,7 @@ class GrData {
     }
 
     /// Is the enum defined ?
-    package bool isEnum(dstring name, uint fileId, bool isPublic) {
+    package bool isEnum(string name, uint fileId, bool isPublic) {
         foreach(enumType; _enumTypes) {
             if(enumType.name == name && (enumType.fileId == fileId || enumType.isPublic || isPublic))
                 return true;
@@ -197,7 +197,7 @@ class GrData {
     }
 
     /// Ditto
-    private bool isEnum(dstring name) {
+    private bool isEnum(string name) {
         foreach(enumType; _enumTypes) {
             if(enumType.name == name)
                 return true;
@@ -206,7 +206,7 @@ class GrData {
     }
 
     /// Is the class defined ?
-    package bool isClass(dstring name, uint fileId, bool isPublic) {
+    package bool isClass(string name, uint fileId, bool isPublic) {
         foreach(class_; _classTypes) {
             if(class_.name == name && (class_.fileId == fileId || class_.isPublic || isPublic))
                 return true;
@@ -215,7 +215,7 @@ class GrData {
     }
 
     /// Ditto
-    private bool isClass(dstring name) {
+    private bool isClass(string name) {
         foreach(class_; _classTypes) {
             if(class_.name == name)
                 return true;
@@ -224,7 +224,7 @@ class GrData {
     }
 
     /// Is the type alias defined ?
-    package bool isTypeAlias(dstring name, uint fileId, bool isPublic) {
+    package bool isTypeAlias(string name, uint fileId, bool isPublic) {
         foreach(typeAlias; _typeAliases) {
             if(typeAlias.name == name && (typeAlias.fileId == fileId || typeAlias.isPublic || isPublic))
                 return true;
@@ -233,7 +233,7 @@ class GrData {
     }
 
     /// Ditto
-    private bool isTypeAlias(dstring name) {
+    private bool isTypeAlias(string name) {
         foreach(typeAlias; _typeAliases) {
             if(typeAlias.name == name)
                 return true;
@@ -242,7 +242,7 @@ class GrData {
     }
 
     /// Is the user-type defined ?
-    package bool isForeign(dstring name) {
+    package bool isForeign(string name) {
         foreach(foreign; _foreigns) {
             if(foreign.name == name)
                 return true;
@@ -251,26 +251,26 @@ class GrData {
     }
 
     /// Return the user-type definition.
-    GrForeignDefinition getForeign(dstring name) {
+    GrForeignDefinition getForeign(string name) {
         foreach(foreign; _foreigns) {
             if(foreign.name == name)
                 return foreign;
         }
-        assert(false, "Undefined foreign \'" ~ to!string(name) ~ "\'");
+        assert(false, "Undefined foreign \'" ~ name ~ "\'");
     }
 
     /// Return the enum definition.
-    GrEnumDefinition getEnum(dstring name, uint fileId) {
+    GrEnumDefinition getEnum(string name, uint fileId) {
         import std.conv: to;
         foreach(enumType; _enumTypes) {
             if(enumType.name == name && (enumType.fileId == fileId || enumType.isPublic))
                 return enumType;
         }
-        assert(false, "Undefined enum \'" ~ to!string(name) ~ "\'");
+        assert(false, "Undefined enum \'" ~ name ~ "\'");
     }
 
     /// Return the class definition.
-    package GrClassDefinition getClass(dstring name, uint fileId, bool isPublic = false) {
+    package GrClassDefinition getClass(string name, uint fileId, bool isPublic = false) {
         import std.conv: to;
         foreach(class_; _classTypes) {
             if(class_.name == name && (class_.fileId == fileId || class_.isPublic || isPublic))
@@ -280,20 +280,20 @@ class GrData {
     }
 
     /// Return the type alias definition.
-    GrTypeAliasDefinition getTypeAlias(dstring name, uint fileId) {
+    GrTypeAliasDefinition getTypeAlias(string name, uint fileId) {
         import std.conv: to;
         foreach(typeAlias; _typeAliases) {
             if(typeAlias.name == name && (typeAlias.fileId == fileId || typeAlias.isPublic))
                 return typeAlias;
         }
-        assert(false, "Undefined  \'" ~ to!string(name) ~ "\'");
+        assert(false, "Undefined  \'" ~ name ~ "\'");
     }
 
     /**
     Define a new primitive.
     */
-    GrPrimitive addPrimitive(GrCallback callback, dstring name,
-        dstring[] parameters, GrType[] inSignature, GrType[] outSignature = []) {
+    GrPrimitive addPrimitive(GrCallback callback, string name,
+        string[] parameters, GrType[] inSignature, GrType[] outSignature = []) {
         GrPrimitive primitive = new GrPrimitive;
         primitive.callback = callback;
         primitive.inSignature = inSignature;
@@ -313,13 +313,13 @@ class GrData {
     An operator is a function that replace a binary or unary grimoire operator such as `+`, `==`, etc
     The name of the function must be that of the operator like "+", "-", "or", etc.
     */
-    GrPrimitive addOperator(GrCallback callback, dstring name,
-        dstring[] parameters, GrType[] inSignature, GrType outType) {
+    GrPrimitive addOperator(GrCallback callback, string name,
+        string[] parameters, GrType[] inSignature, GrType outType) {
         import std.conv: to;
         assert(inSignature.length <= 2uL,
-            "The operator \'" ~ to!string(name) ~
+            "The operator \'" ~ name ~
             "\' cannot take more than 2 parameters: " ~
-            to!string(to!dstring(parameters)));
+            to!string(parameters));
         return addPrimitive(callback, "@op_" ~ name, parameters, inSignature, [outType]);
     }
 
@@ -327,7 +327,7 @@ class GrData {
     A cast operator allows to convert from one type to another.
     It have to have only one parameter and return the casted value.
     */
-    GrPrimitive addCast(GrCallback callback, dstring parameter,
+    GrPrimitive addCast(GrCallback callback, string parameter,
         GrType srcType, GrType dstType, bool isExplicit = false) {
         auto primitive = addPrimitive(callback, "@as", [parameter], [srcType, dstType], [dstType]);
         primitive.isExplicit = isExplicit;
@@ -337,7 +337,7 @@ class GrData {
     /**
     Is the primitive already declared ?
     */
-    bool isPrimitiveDeclared(dstring mangledName) {
+    bool isPrimitiveDeclared(string mangledName) {
         foreach(primitive; _primitives) {
             if(primitive.mangledName == mangledName)
                 return true;
@@ -348,18 +348,18 @@ class GrData {
     /**
     Returns the declared primitive definition.
     */
-    GrPrimitive getPrimitive(dstring mangledName) {
+    GrPrimitive getPrimitive(string mangledName) {
         import std.conv: to;
         foreach(primitive; _primitives) {
             if(primitive.mangledName == mangledName)
                 return primitive;
         }
-        assert(false, "Undeclared primitive " ~ to!string(mangledName));
+        assert(false, "Undeclared primitive " ~ mangledName);
     }
 
     /// Ditto
-    package GrPrimitive getPrimitive(dstring name, GrType[] signature) {
-        const dstring mangledName = grMangleNamedFunction(name, signature);
+    package GrPrimitive getPrimitive(string name, GrType[] signature) {
+        const string mangledName = grMangleNamedFunction(name, signature);
         foreach(GrPrimitive primitive; _primitives) {
             if(primitive.name == name) {
                 if(primitive.mangledName == mangledName)
@@ -417,7 +417,7 @@ class GrData {
 
     private string getPrettyPrimitive(GrPrimitive primitive, bool showParameters = false) {
         import std.conv: to;
-        string result = to!string(primitive.name);
+        string result = primitive.name;
         auto nbParameters = primitive.inSignature.length;
         if(primitive.name == "@as")
             nbParameters = 1;
@@ -425,7 +425,7 @@ class GrData {
         for(int i; i < nbParameters; i ++) {
             result ~= grGetPrettyType(primitive.inSignature[i]);
             if(showParameters)
-                result ~= " " ~ to!string(primitive.parameters[i]);
+                result ~= " " ~ primitive.parameters[i];
             if((i + 2) <= nbParameters)
                 result ~= ", ";
         }

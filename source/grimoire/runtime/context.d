@@ -68,7 +68,7 @@ final class GrContext {
     /// Ditto
     float[] flocals;
     /// Ditto
-    dstring[] slocals;
+    string[] slocals;
     /// Ditto
     void*[] olocals;
 
@@ -80,7 +80,7 @@ final class GrContext {
     /// Ditto
     float[] fstack;
     /// Ditto
-    dstring[] sstack;
+    string[] sstack;
     /// Ditto
     void*[] ostack;
 
@@ -136,7 +136,7 @@ final class GrContext {
     void setupStack(uint size) {
         istack = new int[size];
         fstack = new float[size];
-        sstack = new dstring[size];
+        sstack = new string[size];
         ostack = new void*[size];
     }
 
@@ -148,7 +148,7 @@ final class GrContext {
         olocalsLimit = osize;
         ilocals = new int[ilocalsLimit];
         flocals = new float[flocalsLimit];
-        slocals = new dstring[slocalsLimit];
+        slocals = new string[slocalsLimit];
         olocals = new void*[olocalsLimit];
     }
 
@@ -186,7 +186,7 @@ final class GrContext {
         olocals.length = olocalsLimit;
     }
 
-    alias setString = setValue!dstring;
+    alias setString = setValue!string;
     alias setBool = setValue!bool;
     alias setInt = setValue!int;
     alias setFloat = setValue!float;
@@ -208,7 +208,7 @@ final class GrContext {
             fstackPos ++;
             fstack[fstackPos] = value;
         }
-        else static if(is(T == dstring)) {
+        else static if(is(T == string)) {
             sstackPos ++;
             sstack[sstackPos] = value;
         }
@@ -257,13 +257,13 @@ final class GrContext {
     }
 
     /// Dump stacks info
-    dstring dump() {
+    string dump() {
         import std.conv: to;
-        dstring result = "Context Dump:";
-        result ~= "\nfstack: " ~ to!dstring(fstack[0.. (fstackPos + 1)]);
-        result ~= "\nistack: " ~ to!dstring(istack[0.. (istackPos + 1)]);
-        result ~= "\nsstack: " ~ to!dstring(sstack[0.. (sstackPos + 1)]);
-        result ~= "\nostack: " ~ to!dstring(ostack[0.. (ostackPos + 1)]);
+        string result = "Context Dump:";
+        result ~= "\nfstack: " ~ to!string(fstack[0.. (fstackPos + 1)]);
+        result ~= "\nistack: " ~ to!string(istack[0.. (istackPos + 1)]);
+        result ~= "\nsstack: " ~ to!string(sstack[0.. (sstackPos + 1)]);
+        result ~= "\nostack: " ~ to!string(ostack[0.. (ostackPos + 1)]);
         return result;
     }
 }

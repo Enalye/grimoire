@@ -31,16 +31,16 @@ class GrEngine {
         /// Floating point constants.
         immutable(float)[] _fconsts;
         /// String constants.
-        immutable(dstring)[] _sconsts;
+        immutable(string)[] _sconsts;
         /// Events
-        uint[dstring] _events;
+        uint[string] _events;
 
         /// Global integral variables.
         int[] _iglobals;
         /// Global floating point variables.
         float[] _fglobals;
         /// Global string variables.
-        dstring[] _sglobals;
+        string[] _sglobals;
         void*[] _oglobals;
 
         /// Global integral stack.
@@ -48,7 +48,7 @@ class GrEngine {
         /// Global floating point stack.
         float[] _fglobalStackIn, _fglobalStackOut;
         /// Global string stack.
-        dstring[] _sglobalStackIn, _sglobalStackOut;
+        string[] _sglobalStackIn, _sglobalStackOut;
         /// Global object stack.
         void*[] _oglobalStackIn, _oglobalStackOut;
 
@@ -59,10 +59,10 @@ class GrEngine {
         /// It means that the throwing context didn't handle the exception.
         bool _isPanicking;
         /// Unhandled panic message.
-        dstring _panicMessage;
+        string _panicMessage;
 
         /// Extra type compiler information.
-        dstring _meta;
+        string _meta;
 
         /// Primitives and types database.
         GrData _data;
@@ -79,12 +79,12 @@ class GrEngine {
         bool isPanicking() const { return _isPanicking; }
 
         /// The unhandled error message.
-        dstring panicMessage() const { return _panicMessage; }
+        string panicMessage() const { return _panicMessage; }
 
         /// Extra type compiler information.
-        dstring meta() const { return _meta; }
+        string meta() const { return _meta; }
 		/// Ditto
-        dstring meta(dstring newMeta) { return _meta = newMeta; }
+        string meta(string newMeta) { return _meta = newMeta; }
     }
 
     /// Default.
@@ -110,7 +110,7 @@ class GrEngine {
 		_opcodes = bytecode.opcodes.idup;
 		_iglobals = new int[bytecode.iglobalsCount];
         _fglobals = new float[bytecode.fglobalsCount];
-        _sglobals = new dstring[bytecode.sglobalsCount];
+        _sglobals = new string[bytecode.sglobalsCount];
         _oglobals = new void*[bytecode.oglobalsCount];
         _events = bytecode.events;
 	}
@@ -132,7 +132,7 @@ class GrEngine {
 	Checks whether an event exists. \
 	`eventName` must be the mangled name of the event.
 	*/
-    bool hasEvent(dstring eventName) {
+    bool hasEvent(string eventName) {
         return (eventName in _events) !is null;
     }
 
@@ -145,10 +145,10 @@ class GrEngine {
 	}
 	---
 	*/
-    GrContext spawnEvent(dstring eventName) {
+    GrContext spawnEvent(string eventName) {
         const auto event = eventName in _events;
         if(event is null)
-            throw new Exception("No event \'" ~ to!string(eventName) ~ "\' in script");
+            throw new Exception("No event \'" ~ eventName ~ "\' in script");
         GrContext context = new GrContext(this);
         context.pc = *event;
         _contextsToSpawn.push(context);
@@ -177,7 +177,7 @@ class GrEngine {
 	If nothing catches the error inside the coroutine, the VM enters in a panic state. \
 	Every coroutines will then execute their `defer` statements and be killed.
 	*/
-    void raise(GrContext context, dstring message) {
+    void raise(GrContext context, string message) {
         if(context.isPanicking)
             return;
         //Error message.
@@ -847,7 +847,7 @@ class GrEngine {
                     context.pc ++;
                     break;
                 case refStore_string:
-                    *(cast(dstring*)context.ostack[context.ostackPos]) = context.sstack[context.sstackPos];
+                    *(cast(string*)context.ostack[context.ostackPos]) = context.sstack[context.sstackPos];
                     context.ostackPos --;
                     context.sstackPos --;
                     context.pc ++;
@@ -868,7 +868,7 @@ class GrEngine {
                     context.pc ++;
                     break;
                 case refStore2_string:
-                    *(cast(dstring*)context.ostack[context.ostackPos]) = context.sstack[context.sstackPos];
+                    *(cast(string*)context.ostack[context.ostackPos]) = context.sstack[context.sstackPos];
                     context.ostackPos --;
                     context.pc ++;
                     break;
@@ -1970,7 +1970,7 @@ class GrEngine {
 			Duration average = func.count ? (func.total / func.count) : Duration.zero;
 			report ~=
 				"| " ~
-				leftJustify(to!string(func.name), functionNameLength) ~ " | " ~
+				leftJustify(func.name, functionNameLength) ~ " | " ~
 				leftJustify(to!string(func.count), countLength) ~ " | " ~
 				leftJustify(to!string(func.total.total!"msecs"), totalLength) ~ " | " ~
 				leftJustify(to!string(average.total!"msecs"), averageLength) ~ " |\n";
@@ -1986,7 +1986,7 @@ class GrEngine {
 			Duration _total;
 			ulong _count;
 			int _pc;
-			dstring _name;
+			string _name;
 		}
 
 		@property {
@@ -1995,7 +1995,7 @@ class GrEngine {
 			/// Total times the function was called
 			ulong count() const { return _count; }
 			/// Prettified name of the function
-			dstring name() const { return _name; }
+			string name() const { return _name; }
 		}
 	}
 

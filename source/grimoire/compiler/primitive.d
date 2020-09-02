@@ -27,9 +27,9 @@ class GrPrimitive {
     /// Return values.
 	GrType[] outSignature;
     /// Function parameters' name.
-    dstring[] parameters;
+    string[] parameters;
     /// The base name of the function to call.
-	dstring name,
+	string name,
     /// Name mangled with its parameters' type.
         mangledName;
     /// Function ID.

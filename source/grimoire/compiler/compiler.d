@@ -42,7 +42,7 @@ final class GrCompiler {
 		_error = null;
 		try {
 			GrLexer lexer = new GrLexer;
-			lexer.scanFile(to!dstring(fileName));
+			lexer.scanFile(fileName);
 
 			GrParser parser = new GrParser;
 			if(flags & Flags.profile)
@@ -89,23 +89,23 @@ private {
         nbOpcodes ++;
 
 		//Without "main", we put a kill instruction instead.
-		if(parser.getFunction("main"d) is null)
+		if(parser.getFunction("main") is null)
 			nbOpcodes ++;
 
 		//Opcodes
 		uint[] opcodes = new uint[nbOpcodes];
 
         //Start with the global initializations
-        auto globalScope = parser.getFunction("@global"d);
+        auto globalScope = parser.getFunction("@global");
         if(globalScope) {
             foreach(size_t i, instruction; globalScope.instructions)
                 opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint)instruction.opcode, instruction.value);
             lastOpcodeCount += cast(uint)globalScope.instructions.length;
-            parser.removeFunction("@global"d);
+            parser.removeFunction("@global");
         }
 
 		//Then write the main function (not callable).
-		auto mainFunc = parser.getFunction("main"d);
+		auto mainFunc = parser.getFunction("main");
 		if(mainFunc) {
 			mainFunc.position = lastOpcodeCount;
 			foreach(size_t i, instruction; mainFunc.instructions)
@@ -113,7 +113,7 @@ private {
 			foreach(call; mainFunc.functionCalls)
 				call.position += lastOpcodeCount;
 			lastOpcodeCount += cast(uint)mainFunc.instructions.length;
-			parser.removeFunction("main"d);
+			parser.removeFunction("main");
 		}
 		else {
 			opcodes[lastOpcodeCount] = makeOpcode(cast(uint) GrOpcode.kill_, 0u);
@@ -121,7 +121,7 @@ private {
 		}
 
 		//Every other functions.
-        uint[dstring] events;
+        uint[string] events;
         foreach(GrFunction func; parser.events) {
 			foreach(size_t i, instruction; func.instructions)
 				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint)instruction.opcode, instruction.value);
