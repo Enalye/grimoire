@@ -94,6 +94,7 @@ class GrCall {
             case void_:
             case internalTuple:
             case reference:
+            case null_:
                 throw new Exception("Call object: invalid type during setup");
             }
         }

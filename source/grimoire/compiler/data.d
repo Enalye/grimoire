@@ -380,6 +380,9 @@ class GrData {
         if (first.length != second.length)
             return false;
         __signatureLoop: for (int i; i < first.length; ++ i) {
+            if(first[i].baseType == GrBaseType.null_ &&
+                (second[i].baseType == GrBaseType.foreign || second[i].baseType == GrBaseType.class_))
+                continue;
             if(first[i].baseType == GrBaseType.foreign && second[i].baseType == GrBaseType.foreign) {
                 for(;;) {
                     if(first[i] == second[i])

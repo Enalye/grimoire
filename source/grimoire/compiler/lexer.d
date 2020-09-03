@@ -27,7 +27,7 @@ enum GrLexemeType {
 	equal, notEqual, greaterOrEqual, greater, lesserOrEqual, lesser,
 	and, or, xor, not,
 	increment, decrement,
-	identifier, integer, float_, boolean, string_,
+	identifier, integer, float_, boolean, string_, null_,
 	public_, main_, type_, event_, class_, enum_, new_, copy, send, receive,
 	voidType, intType, floatType, boolType, stringType, arrayType, functionType, taskType, chanType, autoType,
 	if_, unless, else_, switch_, select, case_, while_, do_, until, for_, loop, return_, self,
@@ -770,6 +770,11 @@ package final class GrLexer {
 				lex.isKeyword = false;
 				lex.isLiteral = true;
 				lex.bvalue = false;
+				break;
+			case "null":
+				lex.type = GrLexemeType.null_;
+				lex.isKeyword = false;
+				lex.isLiteral = true;
 				break;
 			case "not":
 				lex.type = GrLexemeType.not;

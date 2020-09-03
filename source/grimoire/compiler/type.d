@@ -19,7 +19,7 @@ Complex types use mangledType and mangledReturnType
 to represent them.
 */
 enum GrBaseType {
-    void_, int_, float_, bool_, string_,
+    void_, null_, int_, float_, bool_, string_,
     array_, function_, task,
     class_, foreign, chan, enum_,
     internalTuple,

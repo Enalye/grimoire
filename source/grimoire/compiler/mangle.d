@@ -28,6 +28,9 @@ string grMangleFunction(GrType[] signature) {
 		case void_:
 			mangledName ~= "*";
 			break;
+        case null_:
+			mangledName ~= "0";
+            break;
 		case int_:
 			mangledName ~= "i";
 			break;
@@ -424,6 +427,8 @@ string grGetPrettyType(GrType variableType) {
     final switch(variableType.baseType) with(GrBaseType) {
     case void_:
         return "void";
+    case null_:
+        return "null";
     case int_:
         return "int";
     case float_:

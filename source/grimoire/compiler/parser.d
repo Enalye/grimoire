@@ -267,6 +267,7 @@ final class GrParser {
             break;
         case internalTuple:
         case reference:
+        case null_:
         case void_:
             logError("Invalid type", "Cannot declare a variable of type " ~ grGetPrettyType(variable.type));
             break;
@@ -380,6 +381,7 @@ final class GrParser {
 		void fetchParameter(string name, GrType type) {
             final switch(type.baseType) with(GrBaseType) {
             case void_:
+            case null_:
                 logError("Invalid type", "Void is not a valid parameter type");
                 break;
             case int_:
@@ -1183,6 +1185,7 @@ final class GrParser {
 				addInstruction(isExpectingValue ? GrOpcode.refStore2_object : GrOpcode.refStore_object);
 				break;
 			case void_:
+            case null_:
 			case internalTuple:
 			case reference:
 				logError("Invalid type", "Cannot assign to a \'" ~ grGetPrettyType(variable.type) ~ "\' type");
@@ -1230,6 +1233,7 @@ final class GrParser {
 				addInstruction(GrOpcode.fieldStore_object, isExpectingValue ? 0 : -1, true);
 				break;
             case void_:
+            case null_:
             case internalTuple:
 				logError("Invalid type", "Cannot assign to a \'" ~ grGetPrettyType(variable.type) ~ "\' type");
 			} 
@@ -1256,6 +1260,7 @@ final class GrParser {
 				addInstruction(isExpectingValue ? GrOpcode.globalStore2_object : GrOpcode.globalStore_object, variable.register);
 				break;
 			case void_:
+            case null_:
 			case internalTuple:
 			case reference:
 				logError("Invalid type", "Cannot assign to a \'" ~ grGetPrettyType(variable.type) ~ "\' type");
@@ -1285,6 +1290,7 @@ final class GrParser {
 				addInstruction(isExpectingValue ? GrOpcode.localStore2_object : GrOpcode.localStore_object, variable.register);
 				break;
 			case void_:
+            case null_:
 			case internalTuple:
 			case reference:
 				logError("Invalid type", "Cannot assign to a \'" ~ grGetPrettyType(variable.type) ~ "\' type");
@@ -1369,6 +1375,7 @@ final class GrParser {
                     addInstruction(GrOpcode.globalLoad_object, variable.register);
 				break;
 			case void_:
+            case null_:
 			case internalTuple:
 			case reference:
 				logError("Invalid type", "Cannot fetch from a \'" ~ grGetPrettyType(variable.type) ~ "\' type");
@@ -1431,6 +1438,7 @@ final class GrParser {
                     addInstruction(GrOpcode.localLoad_object, variable.register);
 				break;
 			case void_:
+            case null_:
 			case internalTuple:
 			case reference:
 				logError("Invalid type", "Cannot fetch from a \'" ~ grGetPrettyType(variable.type) ~ "\' type");
@@ -1717,6 +1725,8 @@ final class GrParser {
             uint fileId = class_.fileId;
             string parent = class_.parent;
             GrClassDefinition lastClass = class_;
+            string[] usedClasses = [class_.name];
+
             while(parent.length) {
                 GrClassDefinition parentClass = _data.getClass(parent, fileId);
                 if(!parentClass) {
@@ -1728,11 +1738,44 @@ final class GrParser {
                         parent ~
                         "\'");
                 }
+                for(int i; i < usedClasses.length; ++ i) {
+                    if(parent == usedClasses[i]) {
+                        set(lastClass.position + 2u);
+                        logError("Recursive declaration",
+                            "\'" ~
+                            parent ~
+                            "\' is included recursively");
+                    }
+                }
+                usedClasses ~= parent;
                 class_.fields = parentClass.fields ~ class_.fields;
                 class_.signature = parentClass.signature ~ class_.signature;
+                class_.fieldsInfo = parentClass.fieldsInfo ~ class_.fieldsInfo;
                 fileId = parentClass.fileId;
                 parent = parentClass.parent;
                 lastClass = parentClass;
+            }
+            for(int i; i < class_.signature.length; ++ i) {
+                for(int y; y < class_.fields.length; ++ y) {
+                    if(i != y && class_.fields[i] == class_.fields[y]) {
+                        set(class_.fieldsInfo[i].position);
+                        logError("Multiple declaration",
+                            "\'" ~
+                            class_.fields[i] ~ 
+                            "\' is already declared");
+                    }
+                }
+                if(class_.signature[i].baseType != GrBaseType.class_) {
+                    for(int y; y < usedClasses.length; ++ y) {
+                        if(class_.signature[i].mangledType == usedClasses[y]) {
+                            set(class_.fieldsInfo[i].position);
+                            logError("Recursive declaration",
+                                "\'" ~
+                                class_.signature[i].mangledType ~ 
+                                "\' is included recursively");
+                        }
+                    }
+                }
             }
         }
 
@@ -2117,6 +2160,7 @@ final class GrParser {
             addInstruction(GrOpcode.globalPop_object, 0u);
             break;
         case internalTuple:
+        case null_:
             throw new Exception("Tuples should not exist here.");
         }
     }
@@ -2149,6 +2193,7 @@ final class GrParser {
             addInstruction(GrOpcode.globalPush_object, nbPush);
             break;
         case internalTuple:
+        case null_:
             throw new Exception("Tuples should not exist here.");
         }
     }
@@ -2183,6 +2228,7 @@ final class GrParser {
                 typeCounter.nbObjectParams ++;
                 break;
             case internalTuple:
+            case null_:
                 throw new Exception("Tuples should not exist here.");
             }
         }
@@ -3198,6 +3244,7 @@ final class GrParser {
             addInstruction(GrOpcode.channel_object, channelSize);
             break;
         case void_:
+        case null_:
         case internalTuple:
             logError("Invalid channel type", "invalid channel type");
         }
@@ -3545,6 +3592,7 @@ final class GrParser {
             addInstruction(GrOpcode.length_object);
             break;
         case void_:
+        case null_:
         case internalTuple:
             logError("Invalid array type", "Cannot have an array of this type");
             break;
@@ -3602,6 +3650,7 @@ final class GrParser {
             addInstruction(GrOpcode.index2_object);
             break;
         case void_:
+        case null_:
         case internalTuple:
             logError("Invalid array type", "Cannot have an array of this type");
             break;
@@ -3997,6 +4046,8 @@ final class GrParser {
                 if(src.mangledType == dst.mangledType)
                     return dst;
                 break;
+            case null_:
+                break;
             case void_:
             case bool_:
             case int_:
@@ -4026,6 +4077,10 @@ final class GrParser {
             }
         }
 
+        if(src.baseType == GrBaseType.null_ &&
+            (dst.baseType == GrBaseType.class_ || dst.baseType == GrBaseType.foreign))
+            return dst;
+
         if(src.baseType == GrBaseType.internalTuple || dst.baseType == GrBaseType.internalTuple)
             logError("Convertion error", "Cannot convert multiple values from an expression list");
 
@@ -4046,6 +4101,7 @@ final class GrParser {
             case foreign:
             case chan:
             case reference:
+            case null_:
                 addInstruction(GrOpcode.isNonNull_object);
                 return dst;
             }
@@ -4245,6 +4301,7 @@ final class GrParser {
             addInstruction(GrOpcode.array_object, arraySize);
             break;
         case void_:
+        case null_:
         case internalTuple:
             logError("Array Error", "Cannot build an array of this type");
             break;
@@ -4292,6 +4349,7 @@ final class GrParser {
                         addInstruction(GrOpcode.index_object);
                         break;
                     case void_:
+                    case null_:
                     case internalTuple:
                         logError("Array Error", "Cannot index an array of this type");
                         break;
@@ -4334,6 +4392,7 @@ final class GrParser {
                     addInstruction(GrOpcode.index_object);
                     break;
                 case void_:
+                case null_:
                 case internalTuple:
                     logError("Array Error", "Cannot index an array of this type");
                     break;
@@ -4600,26 +4659,14 @@ final class GrParser {
                 addInstruction(GrOpcode.array_object, 0);
                 break;
             case void_:
+            case null_:
             case internalTuple:
                 logError("Array Error", "Cannot build an array of this type");
                 break;
             }
             break;
         case class_:
-            GrClassDefinition class_ = _data.getClass(type.mangledType, fileId);
-            if(!class_)
-                logError("Unknown class", "\'" ~ type.mangledType ~ "\' is not declared");
-            addInstruction(GrOpcode.new_, cast(uint) class_.index);
-            for(int i; i < class_.fields.length; ++ i) {
-                GrVariable fieldLValue = new GrVariable;
-                fieldLValue.isInitialized = false;
-                fieldLValue.isField = true;
-                fieldLValue.type = class_.signature[i];
-                fieldLValue.register = i;
-                addInstruction(GrOpcode.fieldLoad2, fieldLValue.register);
-                addDefaultValue(fieldLValue.type, fileId);
-                addSetInstruction(fieldLValue, fieldLValue.type);
-            }
+            addInstruction(GrOpcode.const_null);
             break;
         case foreign:
             addInstruction(GrOpcode.const_null);
@@ -4650,12 +4697,14 @@ final class GrParser {
                 addInstruction(GrOpcode.channel_object, 1);
                 break;
             case void_:
+            case null_:
             case internalTuple:
                 logError("Invalid channel type", "invalid channel type");
             }
             break;
         case reference:
         case void_:
+        case null_:
         case internalTuple:
             logError("Missing initialization", "Cannot infer the type for initialization");
         }
@@ -4692,6 +4741,7 @@ final class GrParser {
                 counter.oCount ++;
                 break;
             case void_:
+            case null_:
                 throw new Exception("Cannot change the stack for a struct type");
             case internalTuple:
                 throw new Exception("Tuples should not exist here.");
@@ -4947,6 +4997,7 @@ final class GrParser {
                                     cast(int) currentFunction.instructions.length - 1);
                                 break;
                             case void_:
+                            case null_:
                             case internalTuple:
                                 logError("Array Error", "Cannot index an array of this type");
                                 break;
@@ -4984,6 +5035,7 @@ final class GrParser {
                                 cast(int) currentFunction.instructions.length - 1);
                             break;
                         case void_:
+                        case null_:
                         case internalTuple:
                             logError("Array Error", "Cannot index an array of this type");
                             break;
@@ -5027,6 +5079,13 @@ final class GrParser {
                 typeStack ~= currentType;
 				checkAdvance();
 				break;
+            case null_:
+				currentType = GrType(GrBaseType.null_);
+				hasValue = true;
+                typeStack ~= currentType;
+                addInstruction(GrOpcode.const_null);
+				checkAdvance();
+                break;
             case new_:
                 currentType = parseObjectBuilder();
                 hasValue = true;
@@ -5101,6 +5160,7 @@ final class GrParser {
                                 addInstruction(asCopy ? GrOpcode.fieldLoad2_object : GrOpcode.fieldLoad_object, index);
                                 break;
                             case internalTuple:
+                            case null_:
                             case void_:
                                 logError("Invalid field type", "Cannot access this field");
                                 break;
