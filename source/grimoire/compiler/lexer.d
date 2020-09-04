@@ -914,7 +914,7 @@ package final class GrLexer {
 string grGetPrettyLexemeType(GrLexemeType operator) {
     string[] lexemeTypeStrTable = [
         "[", "]", "(", ")", "{", "}",
-        ".", ";", ":", "::", ",", "@", "&", "as", "is", "try", "catch", "raise", "defer",
+        ".", ";", ":", ",", "@", "&", "as", "is", "try", "catch", "raise", "defer",
         "=",
         "+=", "-=", "*=", "/=", "~=", "%=", "**=",
         "+", "-",
@@ -922,9 +922,9 @@ string grGetPrettyLexemeType(GrLexemeType operator) {
         "==", "!=", ">=", ">", "<=", "<",
         "and", "or", "xor", "not",
         "++", "--",
-        "identifier", "const_int", "const_float", "const_bool", "const_str",
-        "main", "type", "event", "class", "enum", "new", "copy", "send", "receive",
-        "void", "int", "float", "bool", "string", "array", "var", "func", "task", "chan", "let",
+        "identifier", "const_int", "const_float", "const_bool", "const_str", "null",
+        "pub", "main", "type", "event", "class", "enum", "new", "copy", "send", "receive",
+        "void", "int", "float", "bool", "string", "array", "func", "task", "chan", "let",
         "if", "unless", "else", "switch", "select", "case", "while", "do", "until", "for", "loop", "return", "self",
 		"kill", "killall", "yield", "break", "continue"
     ];

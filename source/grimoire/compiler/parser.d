@@ -810,9 +810,9 @@ final class GrParser {
             }
         }
         if(resultType.baseType == GrBaseType.void_)
-            logError("Operator Undefined", "There is no "
+            logError("Operator Undefined", "There is no \'"
                 ~ grGetPrettyLexemeType(lexType)
-                ~ " operator defined for \'"
+                ~ "\' operator defined for \'"
                 ~ grGetPrettyType(leftType)
                 ~ "\' and \'"
                 ~ grGetPrettyType(rightType)
@@ -831,9 +831,9 @@ final class GrParser {
         }
     
         if(resultType.baseType == GrBaseType.void_)
-            logError("Operator Undefined", "There is no "
+            logError("Operator Undefined", "There is no \'"
                 ~ grGetPrettyLexemeType(lexType)
-                ~ " operator defined for \'"
+                ~ "\' operator defined for \'"
                 ~ grGetPrettyType(type)
                 ~ "\'");
         return resultType;
@@ -855,6 +855,17 @@ final class GrParser {
 
     private GrType addInternalOperator(GrLexemeType lexType, GrType varType, bool isSwapped = false) {
         switch(varType.baseType) with(GrBaseType) {
+        case class_:
+        case foreign:
+            switch(lexType) with(GrLexemeType) {
+			case not:
+                addInstruction(GrOpcode.isNonNull_object);
+				addInstruction(GrOpcode.not_int);
+                return GrType(GrBaseType.bool_);
+            default:
+                break;
+            }
+            break;
         case enum_:
 			switch(lexType) with(GrLexemeType) {
 			case equal:
