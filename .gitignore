@@ -13,4 +13,4 @@ __dummy.html
 *.exe
 *.sublime-workspace
 
-test/script/*.gr
+test/script/*
