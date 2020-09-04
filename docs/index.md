@@ -6,30 +6,35 @@ You can easily define custom functions and types from D.
 ## Sommaire
 
 - Basics:
-  - Basic syntax
-  - First program
-  - What's a variable ?
-  - Control flow
+  - [Basic syntax](#syntax)
+  - [First program](#first-program)
+  - [Main](#main)
+  - [Importing files](#importing-files)
+  - [What's a variable ?](#variables?)
+  - [Control flow](#control-flow)
 
 - Functions:
-  - Creating a function
-  - Task, Grimoire's coroutine
-  - Anonymous function/task
-  - Event function, or how to call a function from D
+  - [Creating a function](#functions)
+  - [Task, Grimoire's coroutine](#tasks)
+  - [Anonymous function/task](#anonymous-functions/tasks)
+  - [Event function, or how to call a function from D](#event-functions)
+  - [Type casting](#type-casting)
+  - [Operators](#operators)
 
 - Compound types:
-  - Arrays
-  - Enumerations
-  - Classes
-  - Channels
-  - Type aliases
+  - [Arrays](#arrays)
+  - [Enumerations](#enumerations)
+  - [Classes](#classes)
+  - [Channels](#channels)
+  - [Type aliases](#type-aliases)
+  - [Foreign types](#foreign-types)
 
 - Errors:
-  - Error Handling
-  - Deferring code
+  - [Error handling](#error-handling)
+  - [Deferring code](#deferring-code)
 
 - Implementation:
-  - Custom Primitives
+  - [Custom Primitives](#custom-primitives)
 
 * * *
 
@@ -51,15 +56,14 @@ Exemple of valid identifiers:
 ## Reserved words
 
 The following are keyword used by the language, they cannot be used as identifier (variables, functions, etc):
-
-`use`, `main`, `event`, `func`, `task`, `event`, `do`, `while`, `until`, `if`, `unless`, `else`, `switch`, `select`, `case`, `loop`, `for`, `true`, `false`, `let`, `bool`, `int`, `float`, `string`, `array`, `object`, `tuple`, `chan`, `break`, `continue`, `return`, `self`, `kill`, `killall`, `yield`, `as`, `is`, `try`, `catch`, `raise`, `new`, `defer`, `void`, `not`, `and`, `or`, `xor`.
+`use`, `pub`, `main`, `type`, `event`, `class`, `enum`, `if`, `unless`, `else`, `switch`, `select`, `case`, `while`, `do`, `until`, `for`, `loop`, `return`, `self`, `kill`, `killall`, `yield`, `break`, `continue`, `as`, `is`, `try`, `catch`, `raise`, `defer`, `void`, `task`, `func`, `int`, `float`, `bool`, `string`, `array`, `chan`, `new`, `let`, `true`, `false`, `null`, `not`, `and`, `or`, `xor`.
 
 ## Comments
 
 Comments are text that are entierly ignored by the compiler, they serve as note for you.
 
 ```cpp
-// Everything after those 2 slashes is ignore until the end of the line.
+// Everything after those 2 slashes is ignored until the end of the line.
 
 /*
 Everything between / * and * / are ignored
@@ -106,7 +110,7 @@ vm.spawn(); // Call the "main" function
 ```
 
 Note: the `main {}` won't be specified during this tutorial even when needed to avoid repetitions.
-All operations (except type definitions and global variables) must exist inside a local scope.
+All operations (except type definitions and global variables) must exist within a local scope.
 
 # Importing files
 
@@ -137,21 +141,21 @@ Here we created a variable **a** of type **int** initialized with the value **0*
 
 If we print the content of a with 'print(a)'. The prompt will display **0**.
 
-A variable must be initialized before accessing its content, else it will raise an error !
+All variables are initialized, if you don't assign anything, it'll have its default value.
 
 ## Basic Types
 They're only a handful of basic type recognised by grimoire.
-* Void type
-* Integer declared with **int** ex: 2
-* Floating number declared with **float** ex: 2.35f
-* Boolean declared with **bool** ex: true, false
-* String declared with **string** ex: "Hello"
-* Array (See Array section)
-* Function/Task (See Anonymous Functions section)
-* Channel (See Channel section)
-* Object type (See Class section)
-* Foreign type (User defined type in D)
-* Enum (See Enumeration section)
+* Integer declared with **int** ex: 2 (Default value: 0)
+* Floating number declared with **float** ex: 2.35f (Default value: 0f)
+* Boolean declared with **bool** ex: true, false (Default value: false)
+* String declared with **string** ex: "Hello" (Default value: "")
+* [Array](#arrays) (Default value: [])
+* [Function](#functions) (Default value: empty function)
+* [Task](#tasks) (Default value: empty task)
+* [Channel](#channels) (Default value: size 1 channel)
+* [Class](#classes) (Default value: null)
+* [Foreign](#foreign-types) (Default value: null)
+* [Enumerations](#enumerations) (Default value: the first value)
 
 ### Auto Type
 **let** is a special keyword that let the compiler automatically infer the type of a declared variable.
@@ -163,6 +167,8 @@ main {
 }
 ```
 let can only be used on variable declaration and cannot be part of a function signature because it's not a type !
+
+Variables declared this way **must** be initialized.
 
 ## Scope
 A variable can either be local or global.
@@ -176,6 +182,18 @@ int globalVar; //Declared outside of any scope, accessible everywhere.
 main {
   int localVar; //Declared inside the main, only accessible within the main.
 }
+```
+
+### Public or private
+A global variable is only visible from its own file by default.
+To access it from another file, you have to declare it as public with the keyword "pub".
+```cpp
+pub int globalVar; //Now you can use it from another file.
+```
+
+The same is true for declared types.
+```cpp
+pub class A {} //The class is visible globally.
 ```
 
 ## Declaration List
@@ -208,78 +226,6 @@ Here:
 * *b = 2.3* and is of type **float**,
 * *c = "Hi!"* and is of type **string**,
 * *d = "Hi!"* and is of type **string**.
-
-# Type casting
-
-You can explicitly cast a value to any type with the keyword `as`, it must be followed by the desired type like this: `float a = 5 as float;`.
-
-## Custom casting
-
-You can define your own cast by naming a function with `as`.
-It must only have one input and one output.
-
-```cpp
-object Obj {}
-
-main {
-    let obj = new Obj;
-    printl(obj as string); // Prints "Hello"
-}
-
-func as(Obj a) string {
-    return "Hello";
-}
-```
-
-Note that if a default convertion exist, it'll call that instead,
-so overloading a `+` operator between 2 ints is useless.
-
-## In D
-
-To define a new cast, add it to the GrData.
-```d
-data.addCast(&myCast, "myObj", myObjType, grString);
-```
-
-Then, define the function itself:
-```d
-void myCast(GrCall call) {
-    auto myObj = call.getObject("myObj");
-    call.setString("Hello");
-}
-```
-
-# Operators
-
-Much like custom convertions, you can define your own operators.
-The name of the function must be `operator` followed by the operation.
-You also have to respect the number of input the operator uses (1 or 2).
-
-```cpp
-main {
-    printl(3.5 + 2);
-}
-
-func operator+(float a, int b) float {
-    return a + b as float;
-}
-```
-
-## In D
-
-Like addCast, but using addOperator instead.
-```d
-data.addOperator(&myOperator, "+", ["a", "b"], [grFloat, grInt], grFloat);
-```
-
-Then writing the function itself.
-```d
-void myOperator(GrCall call) {
-    call.setFloat(call.getFloat("a") + cast(int) call.getInt("b"));
-}
-```
-
-* * *
 
 # Control flow
 
@@ -463,7 +409,7 @@ The variable type must be convertible from the array's values, or it will raise 
 
 * * *
 
-# Function
+# Functions
 
 Like any other language, functions behave the same. They are declared like this:
 ```cpp
@@ -498,7 +444,7 @@ func foo() int, string, bool {
 
 * * *
 
-# Task
+# Tasks
 
 Task are Grimoire's implementation of coroutines. They are syntaxically similar to function except from a few points:
 * A task have no return type and can't return anything (You'll be able to do so with channels).
@@ -625,7 +571,81 @@ If the event has parameters, you absolutely ***must*** push those values to the 
 
 * * *
 
-# Array
+# Type casting
+
+You can explicitly cast a value to any type with the keyword `as`, it must be followed by the desired type like this: `float a = 5 as float;`.
+
+## Custom casting
+
+You can define your own cast by naming a function with `as`.
+It must only have one input and one output.
+
+```cpp
+class MyClass {}
+
+main {
+    let obj = new MyClass;
+    printl(obj as string); // Prints "Hello"
+}
+
+func as(MyClass a) string {
+    return "Hello";
+}
+```
+
+Note that if a default convertion exists, it'll call this one instead.
+
+## In D
+
+To define a new cast, add it to the GrData.
+```d
+data.addCast(&myCast, "myObj", myObjType, grString);
+```
+
+Then, define the function itself:
+```d
+void myCast(GrCall call) {
+    auto myObj = call.getObject("myObj");
+    call.setString("Hello");
+}
+```
+
+# Operators
+
+Much like custom convertions, you can define your own operators.
+The name of the function must be `operator` followed by the operation.
+You also have to respect the number of input the operator uses (1 or 2).
+
+```cpp
+main {
+    printl(3.5 + 2);
+}
+
+func operator+(float a, int b) float {
+    return a + b as float;
+}
+```
+
+## In D
+
+Like addCast, but using addOperator instead.
+```d
+data.addOperator(&myOperator, "+", ["a", "b"], [grFloat, grInt], grFloat);
+```
+
+Then writing the function itself.
+```d
+void myOperator(GrCall call) {
+    call.setFloat(call.getFloat("a") + cast(int) call.getInt("b"));
+}
+```
+
+Note that if a default operation exists, it'll call this one instead,
+so overloading a `+` operator between 2 integers is useless.
+
+* * *
+
+# Arrays
 
 Array are a collection of a single type of value.
 
@@ -737,6 +757,17 @@ To create an instance of that class (i.e. an object), you use the `new` keyword 
 MyClass obj = new MyClass;
 ```
 
+By default, all fields will be initialized with its default value, to change that, you need to use the constructor notation.
+
+```cpp
+MyClass obj = new MyClass {
+	foo = 5;
+	bar = "Hello";
+};
+```
+
+Unspecified fields in the constructor will still be initialized by default.
+
 You can create an object in D by using the `createObject()` method of GrCall.
 Here's a little example:
 
@@ -786,6 +817,43 @@ void _prim(GrCall call) {
     writeln(obj.getInt("foo"));
     obj.setInt("bar", 5);
 }
+```
+
+By default, all fields are only visible to the file that declared it.
+To make them visible to all files, you need to specify them as public with the "pub" keyword:
+```cpp
+class A {
+	pub int a; // Visible globally
+	int b; // Visible only to the current file
+}
+```
+
+## Null
+
+An uninitialized class variable will be initialized to null.
+
+Like foreign types, you can assign "null" to a class type variable.
+
+```cpp
+MyClass obj = null;
+if(!obj)
+	"Obj is null":printl;
+```
+
+Trying to access a null object's field will raise an error.
+
+## Inheritance
+
+You can inherit fields from another class:
+```cpp
+class MyClass : ParentClass {
+
+}
+```
+
+In D, its indicated by an optional parameter:
+```d
+data.addClass("MyClass", [], [], "ParentClass");
 ```
 
 * * *
@@ -845,6 +913,21 @@ main {
 You can also declare aliases in D by calling `addTypeAlias` on your `GrData`:
 ```d
 data.addTypeAlias("MyInt", grInt);
+```
+
+* * *
+
+# Foreign types
+
+Foreign types are opaque pointers used by D, grimoire doesn't have access to their content.
+As such, they can only be declared from D.
+```d
+data.addForeign("MyType");
+```
+
+Like classes, they can inherit from another foreign type.
+```d
+data.addForeign("MyType", "ParentType");
 ```
 
 * * *
