@@ -1624,62 +1624,11 @@ final class GrParser {
 
 	package void parseScript(GrData data, GrLexer lexer) {
         _data = data;
-		preParseScript(lexer);
-		reset();
-
-		lexemes = lexer.lexemes;
-
-        bool isPublic = false;
-		while(!isEnd()) {
-			GrLexeme lex = get();
-            isPublic = false;
-            if(lex.type == GrLexemeType.public_) {
-                isPublic = true;
-                checkAdvance();
-                lex = get();
-            }
-			switch(lex.type) with(GrLexemeType) {
-            case semicolon:
-                checkAdvance();
-                break;
-            case enum_:
-            case class_:
-                skipDeclaration();
-                break;
-			case main_:
-				parseMainDeclaration();
-				break;
-            case event_:
-                parseEventDeclaration();
-                break;
-			case taskType:
-                if(get(1).type != GrLexemeType.identifier)
-                    goto case voidType;
-				parseTaskDeclaration();
-				break;
-			case functionType:
-                if(get(1).type != GrLexemeType.identifier &&
-                    get(1).type != GrLexemeType.as)
-                    goto case voidType;
-				parseFunctionDeclaration();
-				break;
-            case voidType: .. case arrayType:
-            case autoType:
-            case identifier:
-            case type_:
-                skipExpression();
-                break;
-			default:
-				logError("Invalid type", "The type should be either main, func or task");
-			}
-		}
-	}
-
-	private void preParseScript(GrLexer lexer) {
+		
         bool isPublic;
 		lexemes = lexer.lexemes;
 
-        //Tuple definitions
+        //Type definitions
         while(!isEnd()) {
 			GrLexeme lex = get();
             isPublic = false;
@@ -1698,6 +1647,33 @@ final class GrParser {
             case enum_:
                 parseEnumDeclaration(isPublic);
                 break;
+			case main_:
+            case event_:
+			case taskType:
+			case functionType:
+				skipDeclaration();
+				break;
+            case type_:
+			default:
+				skipExpression();
+                break;
+			}
+		}
+
+        //Type aliases
+        reset();
+        while(!isEnd()) {
+			GrLexeme lex = get();
+            isPublic = false;
+            if(lex.type == GrLexemeType.public_) {
+                isPublic = true;
+                checkAdvance();
+                lex = get();
+            }
+			switch(lex.type) with(GrLexemeType) {
+            case semicolon:
+                checkAdvance();
+                break;
             case type_:
                 parseTypeAliasDeclaration(isPublic);
                 break;
@@ -1705,6 +1681,8 @@ final class GrParser {
             case event_:
 			case taskType:
 			case functionType:
+            case class_:
+            case enum_:
 				skipDeclaration();
 				break;
 			default:
@@ -1891,6 +1869,51 @@ final class GrParser {
 			}
 		}
         endGlobalScope();
+		reset();
+
+		while(!isEnd()) {
+			GrLexeme lex = get();
+            isPublic = false;
+            if(lex.type == GrLexemeType.public_) {
+                isPublic = true;
+                checkAdvance();
+                lex = get();
+            }
+			switch(lex.type) with(GrLexemeType) {
+            case semicolon:
+                checkAdvance();
+                break;
+            case enum_:
+            case class_:
+                skipDeclaration();
+                break;
+			case main_:
+				parseMainDeclaration();
+				break;
+            case event_:
+                parseEventDeclaration();
+                break;
+			case taskType:
+                if(get(1).type != GrLexemeType.identifier)
+                    goto case voidType;
+				parseTaskDeclaration();
+				break;
+			case functionType:
+                if(get(1).type != GrLexemeType.identifier &&
+                    get(1).type != GrLexemeType.as)
+                    goto case voidType;
+				parseFunctionDeclaration();
+				break;
+            case voidType: .. case arrayType:
+            case autoType:
+            case identifier:
+            case type_:
+                skipExpression();
+                break;
+			default:
+				logError("Invalid type", "The type should be either main, func or task");
+			}
+		}
 	}
 
     /**
@@ -4170,17 +4193,17 @@ final class GrParser {
         if(get().type != GrLexemeType.identifier)
             logError("Missing type", "Missing a type name to instanciate");
         uint fileId = get().fileId;
-        string className = get().svalue;
-        GrType classType = grGetClassType(className);
-        GrClassDefinition class_ = _data.getClass(className, fileId);
+        GrType classType = parseType(true);
+        if(classType.baseType != GrBaseType.class_)
+            logError("Invalid type", "\'" ~ grGetPrettyType(classType) ~ "\' is not a class type", -1);
+        GrClassDefinition class_ = _data.getClass(classType.mangledType, fileId);
         if(!class_)
-            logError("Unknown class", "\'" ~ className ~ "\' is not declared");
+            logError("Unknown class", "\'" ~ classType.mangledType ~ "\' is not declared", -1);
         addInstruction(GrOpcode.new_, cast(uint) class_.index);
-        checkAdvance();
 
         bool[] initFields;
         initFields.length = class_.fields.length;
-
+        
         // Init
         if(get().type == GrLexemeType.leftCurlyBrace) {
             checkAdvance();
