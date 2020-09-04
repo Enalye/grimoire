@@ -10,7 +10,7 @@ You can easily define custom functions and types from D.
   - [First program](#first-program)
   - [Main](#main)
   - [Importing files](#importing-files)
-  - [What's a variable ?](#variables?)
+  - [What's a variable ?](#variables)
   - [Control flow](#control-flow)
 
 - Functions:

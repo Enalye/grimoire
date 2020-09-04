@@ -423,7 +423,7 @@ final class GrParser {
             newVar.name = name;
             func.localVariables[name] = newVar;
             setVariableRegister(newVar);
-            addSetInstruction(newVar);
+            addSetInstruction(newVar, fileId);
         }
         
         foreach_reverse(size_t i, inputVariable; inputVariables) {
@@ -722,7 +722,7 @@ final class GrParser {
         }
         else if(leftType.baseType == GrBaseType.chan) {
             GrType chanType = grUnmangle(leftType.mangledType);
-            convertType(rightType, chanType);
+            convertType(rightType, chanType, fileId);
             resultType = addInternalOperator(lexType, leftType);
             if(resultType.baseType == GrBaseType.void_) {
                 resultType = addCustomBinaryOperator(lexType, leftType, rightType, fileId);
@@ -732,7 +732,7 @@ final class GrParser {
             leftType.baseType == GrBaseType.array_ &&
             leftType != rightType) {
             const GrType subType = grUnmangle(leftType.mangledType);
-            convertType(rightType, subType);
+            convertType(rightType, subType, fileId);
             switch(subType.baseType) with(GrBaseType) {
             case int_:
             case bool_:
@@ -761,7 +761,7 @@ final class GrParser {
             rightType.baseType == GrBaseType.array_ &&
             leftType != rightType) {
             const GrType subType = grUnmangle(rightType.mangledType);
-            convertType(leftType, subType);
+            convertType(leftType, subType, fileId);
             switch(subType.baseType) with(GrBaseType) {
             case int_:
             case bool_:
@@ -788,7 +788,7 @@ final class GrParser {
         }
         else if(leftType.baseType == GrBaseType.int_ && rightType.baseType == GrBaseType.float_) {
             // Special case, we need to convert int to float, then swap the 2 values when needed.
-            convertType(leftType, rightType);
+            convertType(leftType, rightType, fileId);
             resultType = addInternalOperator(lexType, rightType, true);
         }
         else if(leftType != rightType) {
@@ -797,7 +797,7 @@ final class GrParser {
 
             //If there is no custom operator defined, we try to convert and then try again
             if(resultType.baseType == GrBaseType.void_) {
-                resultType = convertType(rightType, leftType, true);
+                resultType = convertType(rightType, leftType, fileId, true);
                 if(resultType.baseType != GrBaseType.void_) {
                     resultType = addBinaryOperator(lexType, resultType, resultType, fileId);
                 }
@@ -1169,10 +1169,10 @@ final class GrParser {
         return GrType(GrBaseType.void_);
     }
 
-	private void addSetInstruction(GrVariable variable, GrType valueType = grVoid, bool isExpectingValue = false) {
+	private void addSetInstruction(GrVariable variable, uint fileId, GrType valueType = grVoid, bool isExpectingValue = false) {
         _lastAssignationScopeLevel = _blockLevel;
         if(variable.type.baseType == GrBaseType.reference) {
-            valueType = convertType(valueType, grUnmangle(variable.type.mangledType));
+            valueType = convertType(valueType, grUnmangle(variable.type.mangledType), fileId);
             final switch(valueType.baseType) with(GrBaseType) {
 			case bool_:
 			case int_:
@@ -1215,7 +1215,7 @@ final class GrParser {
         }
         
         if(valueType.baseType != GrBaseType.void_)
-            convertType(valueType, variable.type);
+            convertType(valueType, variable.type, fileId);
 
         //if(!variable.isInitialized && isExpectingValue)
         //    logError("Uninitialized variable", "The variable is being used without being assigned");
@@ -2877,6 +2877,7 @@ final class GrParser {
 
         parseBlock();
 
+        const uint fileId = get().fileId;
         if(get().type != GrLexemeType.catch_)
             logError("Missing catch", "A try must be followed by a catch statement");
         advance();
@@ -2898,7 +2899,7 @@ final class GrParser {
         addInstruction(GrOpcode.catch_);
 
         addInstruction(GrOpcode.globalPop_string);
-        addSetInstruction(errVariable, grString);
+        addSetInstruction(errVariable, fileId, grString);
 
         parseBlock(true);
 
@@ -3165,7 +3166,7 @@ final class GrParser {
 
 		advance();
 		GrSubExprResult result = parseSubExpression();
-        convertType(result.type, grBool);
+        convertType(result.type, grBool, get().fileId);
 		advance();
 
 		uint jumpPosition = cast(uint)currentFunction.instructions.length;
@@ -3299,9 +3300,10 @@ final class GrParser {
             "Missing symbol", "A switch statement should always start with \'(\'");
 
         advance();
+        const uint fileId = get().fileId;
 		GrType switchType = parseSubExpression().type;
         GrVariable switchVar = registerSpecialVariable("switch" ~ to!string(scopeLevel), switchType);
-        addSetInstruction(switchVar);
+        addSetInstruction(switchVar, fileId);
         advance();
 
         /* A switch is breakable. */
@@ -3328,7 +3330,7 @@ final class GrParser {
                 hasCase = true;
                 addGetInstruction(switchVar);
                 GrType caseType = parseSubExpression().type;
-                addBinaryOperator(GrLexemeType.equal, switchType, caseType, get().fileId);
+                addBinaryOperator(GrLexemeType.equal, switchType, caseType, fileId);
                 advance();
 
                 jumpPosition = cast(uint)currentFunction.instructions.length;
@@ -3577,6 +3579,7 @@ final class GrParser {
     */
 	private void parseForStatement() {
 		advance();
+        const uint fileId = get().fileId;
 		if(get().type != GrLexemeType.leftParenthesis)
 			logError("Missing symbol", "A condition should always start with \'(\'");
 
@@ -3603,7 +3606,7 @@ final class GrParser {
             setVariableRegister(variable);
         }
 
-		addSetInstruction(array, arrayType, true);
+		addSetInstruction(array, fileId, arrayType, true);
         final switch(subType.baseType) with(GrBaseType) {
         case bool_:
         case int_:
@@ -3632,11 +3635,11 @@ final class GrParser {
             break;
         }
 		addInstruction(GrOpcode.setupIterator);		
-		addSetInstruction(iterator);
+		addSetInstruction(iterator, fileId);
 
 		//Set index to -1
 		addIntConstant(-1);
-		addSetInstruction(index);
+		addSetInstruction(index, fileId);
 
 		/* For is breakable and continuable. */
 		openBreakableSection();
@@ -3651,7 +3654,7 @@ final class GrParser {
 
 		addGetInstruction(iterator, GrType(GrBaseType.int_));
 		addInstruction(GrOpcode.decrement_int);
-		addSetInstruction(iterator);
+		addSetInstruction(iterator, fileId);
 
 		addGetInstruction(iterator, GrType(GrBaseType.int_));
 		uint jumpPosition = cast(uint)currentFunction.instructions.length;
@@ -3661,7 +3664,7 @@ final class GrParser {
 		addGetInstruction(array);
 		addGetInstruction(index);
 		addInstruction(GrOpcode.increment_int);
-		addSetInstruction(index, grVoid, true);
+		addSetInstruction(index, fileId, grVoid, true);
         final switch(subType.baseType) with(GrBaseType) {
         case bool_:
         case int_:
@@ -3689,13 +3692,13 @@ final class GrParser {
             logError("Invalid array type", "Cannot have an array of this type");
             break;
         }
-		convertType(subType, variable.type);
-		addSetInstruction(variable);
+		convertType(subType, variable.type, fileId);
+		addSetInstruction(variable, fileId);
 
 		parseBlock(true);
 
-		addInstruction(GrOpcode.jump, cast(int)(blockPosition - currentFunction.instructions.length), true);
-		setInstruction(GrOpcode.jumpEqual, jumpPosition, cast(int)(currentFunction.instructions.length - jumpPosition), true);
+		addInstruction(GrOpcode.jump, cast(int) (blockPosition - currentFunction.instructions.length), true);
+		setInstruction(GrOpcode.jumpEqual, jumpPosition, cast(int) (currentFunction.instructions.length - jumpPosition), true);
 
 		/* For is breakable and continuable. */
 		closeBreakableSection();
@@ -3853,6 +3856,7 @@ final class GrParser {
         bool isInfinite, hasCustomIterator;
         GrVariable iterator, customIterator;
         
+        const uint fileId = get().fileId;
 		advance();
 		if(get().type == GrLexemeType.leftParenthesis) {
             const int arity = checkArity();
@@ -3871,7 +3875,7 @@ final class GrParser {
                 }
 
                 addIntConstant(0);
-                addSetInstruction(customIterator);
+                addSetInstruction(customIterator, fileId);
 
                 if(get().type != GrLexemeType.comma)
                     logError("Missing symbol", "Did you forget the \',\' ?");
@@ -3885,9 +3889,9 @@ final class GrParser {
             GrType type = parseSubExpression().type;
             advance();
 
-            convertType(type, grInt);
+            convertType(type, grInt, fileId);
             addInstruction(GrOpcode.setupIterator);
-            addSetInstruction(iterator);
+            addSetInstruction(iterator, fileId);
         }
         else
             isInfinite = true;
@@ -3906,7 +3910,7 @@ final class GrParser {
         if(!isInfinite) {
             addGetInstruction(iterator, grInt, false);
             addInstruction(GrOpcode.decrement_int);
-            addSetInstruction(iterator);
+            addSetInstruction(iterator, fileId);
 
             addGetInstruction(iterator, grInt);
             jumpPosition = cast(uint)currentFunction.instructions.length;
@@ -3918,7 +3922,7 @@ final class GrParser {
         if(!isInfinite && hasCustomIterator) {
             addGetInstruction(customIterator, grInt, false);
             addInstruction(GrOpcode.increment_int);
-            addSetInstruction(customIterator);
+            addSetInstruction(customIterator, fileId);
         }
 
 		addInstruction(GrOpcode.jump, cast(int)(blockPosition - currentFunction.instructions.length), true);
@@ -4069,7 +4073,7 @@ final class GrParser {
 	}
 
     /// Attempt to convert `src` type to the `dst` type.
-	private GrType convertType(GrType src, GrType dst, bool noFail = false, bool isExplicit = false) {
+	private GrType convertType(GrType src, GrType dst, uint fileId = 0, bool noFail = false, bool isExplicit = false) {
         if(src.baseType == dst.baseType) {
             final switch(src.baseType) with(GrBaseType) {
             case function_:
@@ -4089,8 +4093,18 @@ final class GrParser {
             case string_:
             case enum_:
                 return dst;
-            case array_:
             case class_:
+                string className = src.mangledType;
+                for(;;) {
+                    if(className == dst.mangledType)
+                        return dst;
+                    const GrClassDefinition classType = _data.getClass(className, fileId);
+                    if(!classType.parent.length)
+                        break;
+                    className = classType.parent;
+                }
+                break;
+            case array_:
             case chan:
             case reference:
             case internalTuple:
@@ -4254,7 +4268,7 @@ final class GrParser {
             fieldLValue.register = i;
             addInstruction(GrOpcode.fieldLoad2, fieldLValue.register);
             addDefaultValue(fieldLValue.type, fileId);
-            addSetInstruction(fieldLValue, fieldLValue.type);
+            addSetInstruction(fieldLValue, fileId, fieldLValue.type);
         }
 
         return classType;
@@ -4273,6 +4287,7 @@ final class GrParser {
     private GrType parseArrayBuilder() {
         GrType arrayType = GrType(GrBaseType.array_);
         GrType subType = grVoid;
+        const uint fileId = get().fileId;
 
         //Explicit type like: array(int)[1, 2, 3]
         if(get().type == GrLexemeType.arrayType) {
@@ -4302,7 +4317,7 @@ final class GrParser {
             else {
                 convertType(
                     parseSubExpression(GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA).type,
-                    subType);
+                    subType, fileId);
             }
             arraySize ++;
 
@@ -4345,6 +4360,7 @@ final class GrParser {
     }
 
     private GrType parseArrayIndex(GrType arrayType) {
+        const uint fileId = get().fileId;
         if(get().type != GrLexemeType.leftBracket)
             logError("Missing [", "Missing [");
         advance();
@@ -4355,7 +4371,7 @@ final class GrParser {
             auto index = parseSubExpression(GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA).type;
             if(index.baseType == GrBaseType.void_)
                 logError("Syntax Error", "right there");
-            convertType(index, grInt);
+            convertType(index, grInt, fileId);
 
             if(get().type == GrLexemeType.rightBracket) {
                 switch(arrayType.baseType) with(GrBaseType) {
@@ -4448,17 +4464,19 @@ final class GrParser {
     ---
     */
     private GrType parseConversionOperator(GrType[] typeStack) {
+        const uint fileId = get().fileId;
         if(!typeStack.length)
             logError("Conversion Error", "You can only convert a value");
         advance();
         auto asType = parseType();
-        convertType(typeStack[$ - 1], asType, false, true);
+        convertType(typeStack[$ - 1], asType, fileId, false, true);
         typeStack[$ - 1] = asType;
         return asType;
     }
 
     /// Parse an assignable (named) element.
     private GrVariable parseLValue() {
+        const uint fileId = get().fileId;
         if(get().type != GrLexemeType.identifier)
             logError("Missing lvalue", "Missing lvalue");
 
@@ -4470,7 +4488,7 @@ final class GrParser {
         if(localLValue !is null)
             return *localLValue;
 
-        GrVariable globalLValue = getGlobalVariable(identifierName, get().fileId);
+        GrVariable globalLValue = getGlobalVariable(identifierName, fileId);
         if(globalLValue !is null)
             return globalLValue;
         
@@ -4562,6 +4580,7 @@ final class GrParser {
 
     /// Parse the right side of a multiple assignment and associate them with the `lvalues`.
     private void parseAssignList(GrVariable[] lvalues, bool isInitialization = false) {
+        const uint fileId = get().fileId;
         switch(get().type) with(GrLexemeType) {
         case assign:
             advance();
@@ -4575,7 +4594,7 @@ final class GrParser {
             bool passThrough;
             GrVariable[] skippedLvalues;
             while(variableIndex > expressionIndex) {
-                addSetInstruction(lvalues[variableIndex], expressionTypes[expressionIndex], true);
+                addSetInstruction(lvalues[variableIndex], fileId, expressionTypes[expressionIndex], true);
                 variableIndex --;
                 passThrough = true;
             }
@@ -4584,7 +4603,7 @@ final class GrParser {
                     skippedLvalues ~= lvalues[variableIndex];
                 }
                 else {
-                    addSetInstruction(lvalues[variableIndex], lvalues[variableIndex + 1].type, false);
+                    addSetInstruction(lvalues[variableIndex], fileId, lvalues[variableIndex + 1].type, false);
                 }
                 variableIndex --;
                 expressionIndex --;
@@ -4595,10 +4614,10 @@ final class GrParser {
                 }
                 else {
                     while(skippedLvalues.length) {
-                        addSetInstruction(skippedLvalues[$ - 1], expressionTypes[expressionIndex], true);
+                        addSetInstruction(skippedLvalues[$ - 1], fileId, expressionTypes[expressionIndex], true);
                         skippedLvalues.length --;
                     }
-                    addSetInstruction(lvalues[variableIndex], expressionTypes[expressionIndex], false);
+                    addSetInstruction(lvalues[variableIndex], fileId, expressionTypes[expressionIndex], false);
                 }
                 variableIndex --;
                 expressionIndex --;
@@ -4613,8 +4632,8 @@ final class GrParser {
                 foreach(lvalue; lvalues) {
                     if(lvalue.isAuto)
                         logError("Missing initialization", "Cannot infer the type for initialization");
-                    addDefaultValue(lvalue.type, get().fileId);
-                    addSetInstruction(lvalue, lvalue.type);
+                    addDefaultValue(lvalue.type, fileId);
+                    addSetInstruction(lvalue, fileId, lvalue.type);
                 }
             }
             break;
@@ -4816,6 +4835,7 @@ final class GrParser {
     Converts a public function/task into an anonymous one.
     */
     private GrType parseFunctionPointer(GrType currentType) {
+        const uint fileId = get().fileId;
         checkAdvance();
         if(get().type == GrLexemeType.leftParenthesis) {
             checkAdvance();
@@ -4826,7 +4846,7 @@ final class GrParser {
             if(currentType.baseType == GrBaseType.void_)
                 currentType = refType;
             else
-                currentType = convertType(refType, currentType);
+                currentType = convertType(refType, currentType, fileId);
         }
         if(get().type != GrLexemeType.identifier)
             logError("GrFunction name expected", "The name of the func or task is required after \'&\'");
@@ -4834,7 +4854,7 @@ final class GrParser {
             logError("GrFunction ref error", "Cannot infer the type of \'" ~ get().svalue ~ "\'");
 
         GrType funcType = addFunctionAddress(get().svalue, grUnmangleSignature(currentType.mangledType), get().fileId);
-        convertType(funcType, currentType);
+        convertType(funcType, currentType, fileId);
         checkAdvance();
         return currentType;
     }
@@ -5301,17 +5321,17 @@ final class GrParser {
 	
 					switch(operator) with(GrLexemeType) {
 					case assign:
-						addSetInstruction(lvalues[$ - 1], currentType, true);
+						addSetInstruction(lvalues[$ - 1], fileId, currentType, true);
 						lvalues.length --;
 						break;
 					case addAssign: .. case powerAssign:
 						currentType = addOperator(operator - (GrLexemeType.addAssign - GrLexemeType.add), typeStack, fileId);
-						addSetInstruction(lvalues[$ - 1], currentType, true);
+						addSetInstruction(lvalues[$ - 1], fileId, currentType, true);
 						lvalues.length --;
 						break;
 					case increment: .. case decrement:
 						currentType = addOperator(operator, typeStack, fileId);
-						addSetInstruction(lvalues[$ - 1], currentType, true);
+						addSetInstruction(lvalues[$ - 1], fileId, currentType, true);
 						lvalues.length --;
 						break;
 					default:
@@ -5386,7 +5406,7 @@ final class GrParser {
 	
 			switch(operator) with(GrLexemeType) {
 			case assign:
-				addSetInstruction(lvalues[$ - 1], currentType, isExpectingValue || operatorsStack.length > 1uL);
+				addSetInstruction(lvalues[$ - 1], fileId, currentType, isExpectingValue || operatorsStack.length > 1uL);
 				lvalues.length --;
 
                 if(operatorsStack.length <= 1uL)
@@ -5394,7 +5414,7 @@ final class GrParser {
 				break;
 			case addAssign: .. case powerAssign:
 				currentType = addOperator(operator - (GrLexemeType.addAssign - GrLexemeType.add), typeStack, fileId);
-				addSetInstruction(lvalues[$ - 1], currentType, isExpectingValue || operatorsStack.length > 1uL);			
+				addSetInstruction(lvalues[$ - 1], fileId, currentType, isExpectingValue || operatorsStack.length > 1uL);			
 				lvalues.length --;
 
                 if(operatorsStack.length <= 1uL)
@@ -5402,7 +5422,7 @@ final class GrParser {
 				break;
 			case increment: .. case decrement:
 				currentType = addOperator(operator, typeStack, fileId);
-				addSetInstruction(lvalues[$ - 1], currentType, isExpectingValue || operatorsStack.length > 1uL);
+				addSetInstruction(lvalues[$ - 1], fileId, currentType, isExpectingValue || operatorsStack.length > 1uL);
 				lvalues.length --;
 
                 if(operatorsStack.length <= 1uL)
@@ -5431,10 +5451,11 @@ final class GrParser {
 
     /// Parse a function call from a runtime value.
     private GrType parseAnonymousCall(GrType type) {
+        const uint fileId = get().fileId;
         GrVariable functionId;
         if(type.baseType == GrBaseType.function_) {
             functionId = registerSpecialVariable("anon", GrType(GrBaseType.int_));
-            addSetInstruction(functionId, GrType(GrBaseType.int_));
+            addSetInstruction(functionId, fileId, GrType(GrBaseType.int_));
         }
 
         checkAdvance();
@@ -5450,7 +5471,7 @@ final class GrParser {
                     GR_SUBEXPR_TERMINATE_COMMA |
                     GR_SUBEXPR_TERMINATE_PARENTHESIS |
                     GR_SUBEXPR_EXPECTING_VALUE).type;
-                signature ~= convertType(subType, anonSignature[i]);
+                signature ~= convertType(subType, anonSignature[i], fileId);
                 if(get().type == GrLexemeType.rightParenthesis)
                     break;
                 advance();
@@ -5488,6 +5509,7 @@ final class GrParser {
 		const GrLexeme identifier = get();		
 		bool isFunctionCall = false, isMethodCall = false, hasParenthesis = false;
         string identifierName = identifier.svalue;
+        const uint fileId = identifier.fileId;
 
 		advance();
 
@@ -5512,13 +5534,13 @@ final class GrParser {
             if(localVar !is null)
                 var = *localVar;
             else
-                var = getGlobalVariable(identifierName, get().fileId);
+                var = getGlobalVariable(identifierName, fileId);
 			if(var !is null) {
                 //Signature parsing with type conversion
                 GrType[] anonSignature = grUnmangleSignature(var.type.mangledType);
                 int i;
                 if(isMethodCall) {
-                    signature ~= convertType(selfValue, anonSignature[i]);                    
+                    signature ~= convertType(selfValue, anonSignature[i], fileId);                    
                     i ++;
                 }
                 if(hasParenthesis && get().type != GrLexemeType.rightParenthesis) {
@@ -5533,14 +5555,14 @@ final class GrParser {
                             auto types = grUnpackTuple(subType);
                             if(types.length) {
                                 for(int y; y < types.length; y ++, i ++) {
-                                    signature ~= convertType(types[y], anonSignature[i]);
+                                    signature ~= convertType(types[y], anonSignature[i], fileId);
                                 }
                             }
                             else
                                 logError("Cannot use a void function", "Cannot use a void function as a parameter");
                         }
                         else {
-                            signature ~= convertType(subType, anonSignature[i]);
+                            signature ~= convertType(subType, anonSignature[i], fileId);
                             i ++;
                         }
                         if(get().type == GrLexemeType.rightParenthesis) {
@@ -5616,11 +5638,11 @@ final class GrParser {
 					returnType = grPackTuple(primitive.outSignature);
 				}
 				else //GrFunction/Task call.
-					returnType = grPackTuple(addFunctionCall(identifierName, signature, get().fileId));
+					returnType = grPackTuple(addFunctionCall(identifierName, signature, fileId));
 			}
 		}
-        else if(_data.isEnum(identifier.svalue, get().fileId, false)) {
-            const GrEnumDefinition definition = _data.getEnum(identifier.svalue, identifier.fileId);
+        else if(_data.isEnum(identifier.svalue, fileId, false)) {
+            const GrEnumDefinition definition = _data.getEnum(identifier.svalue, fileId);
             if(get().type != GrLexemeType.period)
                 logError("Missing enum field", "Must be of the form Foo.bar");
             checkAdvance();
@@ -5637,7 +5659,7 @@ final class GrParser {
         }
 		else {
 			//Declared variable.
-			variable = getVariable(identifierName, get().fileId);
+			variable = getVariable(identifierName, fileId);
 			returnType = variable.type;
             //If it's an assignement, we want the GET instruction to be after the assignement, not there.
             const auto nextLexeme = get();
