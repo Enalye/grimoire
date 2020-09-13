@@ -1945,6 +1945,16 @@ class GrEngine {
 		_contexts.sweepMarkedData();
     }
 
+	/// Create a new object of type `typeName`.
+    GrObject createObject(string typeName) {
+        int index;
+        for(; index < _data._classTypes.length; index ++) {
+            if(typeName == _data._classTypes[index].name)
+                return new GrObject(_data._classTypes[index]);
+        }
+        return null;
+    }
+
 	import core.time: MonoTime, Duration;
 	private {
 		bool _isDebug;
