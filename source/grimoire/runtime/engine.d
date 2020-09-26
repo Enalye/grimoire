@@ -253,7 +253,7 @@ class GrEngine {
 			GrContext context = _contexts.data[index];
 			while(isRunning) {
 				const uint opcode = _opcodes[context.pc];
-				switch (grGetInstructionOpcode(opcode)) with(GrOpcode) {
+				final switch (opcode & 0xFF) with(GrOpcode) {
                 case nop:
                     context.pc ++;
                     break;
@@ -1935,10 +1935,10 @@ class GrEngine {
 					_debugProfileEnd();
 					context.pc ++;
 					break;
-				default:
+				/*default:
 					throw new Exception("Invalid instruction at (" ~
 						to!string(context.pc) ~ "): " ~
-						to!string(grGetInstructionOpcode(opcode)));
+						to!string(grGetInstructionOpcode(opcode)));*/
                 }
 			}
 		}
