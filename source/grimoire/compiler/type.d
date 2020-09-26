@@ -96,6 +96,11 @@ const GrType grFloatArray = GrType(GrBaseType.array_, grMangleFunction([grFloat]
 /// String array
 const GrType grStringArray = GrType(GrBaseType.array_, grMangleFunction([grString]));
 
+/// Returns an array GrType of `subType` subtype.
+GrType grArray(GrType subType) {
+    return GrType(GrBaseType.array_, grMangleFunction([subType]));
+}
+
 /// Pack multiple types as a single one.
 package GrType grPackTuple(GrType[] types) {
     const string mangledName = grMangleFunction(types);

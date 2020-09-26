@@ -186,13 +186,18 @@ final class GrContext {
         olocals.length = olocalsLimit;
     }
 
-    alias setString = setValue!string;
     alias setBool = setValue!bool;
     alias setInt = setValue!int;
     alias setFloat = setValue!float;
+    alias setString = setValue!string;
+    alias setObject = setUserData!GrObject;
+    alias setIntArray = setUserData!GrIntArray;
+    alias setFloatArray = setUserData!GrFloatArray;
+    alias setStringArray = setUserData!GrStringArray;
+    alias setObjectArray = setUserData!GrObjectArray;
 
     void setUserData(T)(T value) {
-        setValue!(void*)(cast(void*)value);
+        setValue!(void*)(cast(void*) value);
     }
 
     private void setValue(T)(T value) {

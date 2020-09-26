@@ -951,6 +951,9 @@ final class GrParser {
 			case lesserOrEqual:
 				addInstruction(GrOpcode.lesserOrEqual_int);
                 return GrType(GrBaseType.bool_);
+			case not:
+				addInstruction(GrOpcode.not_int);
+                return GrType(GrBaseType.bool_);
 			default:
 				break;
 			}
