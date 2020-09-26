@@ -2987,6 +2987,7 @@ final class GrParser {
 	//Break
 	private void openBreakableSection() {
 		breaksJumps ~= [null];
+        _blockLevel ++;
 	}
 
 	private void closeBreakableSection() {
@@ -2998,6 +2999,7 @@ final class GrParser {
 
 		foreach(position; breaks)
 			setInstruction(GrOpcode.jump, position, cast(int)(currentFunction.instructions.length - position), true);
+        _blockLevel --;
 	}
 
 	private void parseBreak() {
@@ -3013,6 +3015,7 @@ final class GrParser {
 	//Continue
 	private void openContinuableSection() {
 		continuesJumps ~= [null];
+        _blockLevel ++;
 	}
 
 	private void closeContinuableSection() {
@@ -3026,6 +3029,7 @@ final class GrParser {
 
 		foreach(position; continues)
 			setInstruction(GrOpcode.jump, position, cast(int)(position - destination), true);
+        _blockLevel --;
 	}
 
 	private void setContinuableSectionDestination() {

@@ -18,7 +18,7 @@ void main() {
 
         GrBytecode bytecode;
         GrCompiler compiler = new GrCompiler(data);
-        if(!compiler.compileFile(bytecode, "script/test.gr", GrCompiler.Flags.profile)) {
+        if(!compiler.compileFile(bytecode, "script/test.gr", GrCompiler.Flags.none)) {
             writeln(compiler.getError().prettify());
             return;
         }
