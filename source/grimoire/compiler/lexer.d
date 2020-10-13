@@ -192,7 +192,7 @@ package final class GrLexer {
 		return _text[position];
 	}
 
-	/// Advance the _current character pointer and skips whitespaces and comments.
+	/// Advance the current character pointer and skips whitespaces and comments.
 	private bool advance(bool startFromCurrent = false) {
         if(!startFromCurrent)
 			_current ++;
@@ -214,7 +214,7 @@ package final class GrLexer {
 			}
             else if(symbol == '#') {
                 do {
-                    if((_current + 1) >= _text.length)
+                    if(_current >= _text.length)
                         return false;
                     _current ++;
                 }
@@ -229,18 +229,20 @@ package final class GrLexer {
 				switch(_text[_current + 1]) {
 					case '/':
 						do {
-							if((_current + 1) >= _text.length)
+							if(_current >= _text.length)
 								return false;
 							_current ++;
 						}
-						while(_text[_current] != '\n');
+						while(_current < _text.length && _text[_current] != '\n');
 						_positionOfLine = _current;
 						_line ++;
 						break;
 					case '*':
 						for(;;) {
-							if((_current + 2) >= _text.length)
+							if((_current + 1) >= _text.length) {
+								_current ++;
 								return false;
+							}
 
 							if(_text[_current] == '\n') {
 								_positionOfLine = _current;
