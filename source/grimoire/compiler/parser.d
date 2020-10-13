@@ -4804,7 +4804,14 @@ final class GrParser {
             case null_:
                 throw new Exception("Cannot change the stack for a struct type");
             case internalTuple:
-                throw new Exception("Tuples should not exist here.");
+                auto types = grUnpackTuple(type);
+                if(!types.length)
+                    logError("Empty rvalue", "unpacked tuple is empty");
+                else {
+                    foreach(subType; types)
+                        countSubTypes(subType, counter);
+                }
+                break;
             }
         }
         countSubTypes(type, counter);
