@@ -60,8 +60,11 @@ class GrCall {
 
     private void setupLocals(string prefix, string[] parameters, GrType[] inSignature) {
         if(inSignature.length != parameters.length) {
-            writeln("Err: ", inSignature, ", ", parameters);
-            throw new Exception("Setup locals error");
+            throw new Exception(
+                "Locals mismatch in " ~
+                grGetPrettyFunctionCall(_primitive.name, inSignature) ~
+                "\nThe signature does not match " ~
+                to!string(parameters));
         }
 
         for(int i; i < inSignature.length; i ++) {
@@ -95,7 +98,11 @@ class GrCall {
             case internalTuple:
             case reference:
             case null_:
-                throw new Exception("Call object: invalid type during setup");
+                throw new Exception(
+                    "Invalid parameter type in " ~
+                    grGetPrettyFunctionCall(_primitive.name, inSignature) ~
+                    "\nThe type cannot be " ~
+                    grGetPrettyType(type));
             }
         }
     }
