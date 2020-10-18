@@ -93,8 +93,18 @@ const GrType grString = GrType(GrBaseType.string_);
 const GrType grIntArray = GrType(GrBaseType.array_, grMangleFunction([grInt]));
 /// Float array
 const GrType grFloatArray = GrType(GrBaseType.array_, grMangleFunction([grFloat]));
+/// Bool array
+const GrType grBoolArray = GrType(GrBaseType.array_, grMangleFunction([grBool]));
 /// String array
 const GrType grStringArray = GrType(GrBaseType.array_, grMangleFunction([grString]));
+/// Int channel
+const GrType grIntChannel = GrType(GrBaseType.chan, grMangleFunction([grInt]));
+/// Float channel
+const GrType grFloatChannel = GrType(GrBaseType.chan, grMangleFunction([grFloat]));
+/// Bool channel
+const GrType grBoolChannel = GrType(GrBaseType.chan, grMangleFunction([grBool]));
+/// String channel
+const GrType grStringChannel = GrType(GrBaseType.chan, grMangleFunction([grString]));
 
 /// Returns an array GrType of `subType` subtype.
 GrType grArray(GrType subType) {

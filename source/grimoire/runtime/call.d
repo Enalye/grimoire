@@ -136,6 +136,10 @@ class GrCall {
     alias getFloatArray = getUserData!GrFloatArray;
     alias getStringArray = getUserData!GrStringArray;
     alias getObjectArray = getUserData!GrObjectArray;
+    alias getIntChannel = getUserData!GrIntChannel;
+    alias getFloatChannel = getUserData!GrFloatChannel;
+    alias getStringChannel = getUserData!GrStringChannel;
+    alias getObjectChannel = getUserData!GrObjectChannel;
 
     T getEnum(T)(string parameter) {
         return cast(T) getInt(parameter);
@@ -212,6 +216,10 @@ class GrCall {
     alias setFloatArray = setUserData!GrFloatArray;
     alias setStringArray = setUserData!GrStringArray;
     alias setObjectArray = setUserData!GrObjectArray;
+    alias setIntChannel = setUserData!GrIntChannel;
+    alias setFloatChannel = setUserData!GrFloatChannel;
+    alias setStringChannel = setUserData!GrStringChannel;
+    alias setObjectChannel = setUserData!GrObjectChannel;
 
     void setEnum(T)(T value) {
         setInt(cast(int) value);
