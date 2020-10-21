@@ -5466,10 +5466,14 @@ final class GrParser {
     /// Parse a function call from a runtime value.
     private GrType parseAnonymousCall(GrType type) {
         const uint fileId = get().fileId;
+
         GrVariable functionId;
         if(type.baseType == GrBaseType.function_) {
             functionId = registerSpecialVariable("anon", GrType(GrBaseType.int_));
             addSetInstruction(functionId, fileId, GrType(GrBaseType.int_));
+        }
+        else if(type.baseType != GrBaseType.task) {
+            logError("Invalid call", "Cannot call a function on " ~ grGetPrettyType(type));
         }
 
         checkAdvance();
