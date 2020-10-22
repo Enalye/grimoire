@@ -1818,7 +1818,7 @@ final class GrParser {
                 skipExpression();
                 break;
 			default:
-				logError("Invalid type", "The type should be either main, func, task or struct");
+				logError("Syntax error", "Global declaration expected");
 			}
 		}
 
@@ -1868,7 +1868,7 @@ final class GrParser {
                 skipExpression();
                 break;
 			default:
-				logError("Invalid type", "The type should be either main, func, task or struct");
+				logError("Syntax error", "Global declaration expected");
 			}
 		}
         endGlobalScope();
@@ -1914,7 +1914,7 @@ final class GrParser {
                 skipExpression();
                 break;
 			default:
-				logError("Invalid type", "The type should be either main, func or task");
+				logError("Syntax error", "Global declaration expected");
 			}
 		}
 	}
@@ -2341,16 +2341,23 @@ final class GrParser {
 
     private GrType[] parseOutSignature() {
 		GrType[] outSignature;
+		if(get().type != GrLexemeType.leftParenthesis)
+			return outSignature;
+		checkAdvance();
+        if(get().type == GrLexemeType.rightParenthesis) {
+            checkAdvance();
+            return outSignature;
+        }
 		for(;;) {
-			GrLexeme lex = get();
-            
-            auto type = parseType(false);
-            if(type.baseType != GrBaseType.void_)
-                outSignature ~= type;
+            outSignature ~= parseType();
 
-            lex = get();
-            if(lex.type != GrLexemeType.comma)
+            GrLexeme lex = get();
+            if(lex.type == GrLexemeType.rightParenthesis) {
+                checkAdvance();
                 break;
+            }
+            else if(lex.type != GrLexemeType.comma)
+                logError("Missing comma", "Types should be separated by a comma");
             checkAdvance();
 		}
 		return outSignature;
