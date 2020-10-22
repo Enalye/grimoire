@@ -419,12 +419,12 @@ Here, the function myFunction takes no parameter, returns nothing and do nothing
 
 Here is a function that takes 2 int, and returns the sum of them
 ```cpp
-func add(int a, int b) int {
+func add(int a, int b) (int) {
   return a + b;
 }
 ```
-The return type is always put after the parenthesis, if there is no return value, you can put void or leave it blank.
-If there is no return type, you can use return alone to exit the function anywhere.
+The return type is always put after the parenthesis inside another pair of parenthesis. If there is no return type, you can put empty parenthesis `()` or nothing.
+If there is no return value, you can use return alone to exit the function anywhere.
 ```cpp
 func foo(int n) {
   if(n == 0) {
@@ -437,7 +437,7 @@ func foo(int n) {
 
 A function can have multiple return values, the types returned must correspond to the signature of the function.
 ```cpp
-func foo() int, string, bool {
+func foo() (int, string, bool) {
 	return 5, "Hello", false;
 }
 ```
@@ -496,7 +496,7 @@ You can also decide to just run it immediately:
 ```cpp
 main {
 	int a = 7;
-	int b = func(int c) int {
+	int b = func(int c) (int) {
 		return c * 2;
 	}(a);
 	printl(b); //Prints 14
@@ -506,7 +506,7 @@ main {
 The type of a function/task is the same as its declaration without the parameters' name:
 ```cpp
 main {
-	func(int, float) string, int myFunction = func(int a, float b) string, int { return "Hey", 2; };
+	func(int, float) (string, int) myFunction = func(int a, float b) (string, int) { return "Hey", 2; };
 }
 ```
 
@@ -515,16 +515,16 @@ You can do so by using the & operator.
 The operator & does not require the function type, except when it has no way to know it at compilation time, like when declaring with let.
 
 ```cpp
-func square(int i) int {
+func square(int i) (int) {
 	return i * i;
 };
 
 main {
 	let f1 = &square; //Error, & has no way to know the type at during compilation (square could be overloaded).
-	let f2 = &(func(int) int)square; //Valid, an explicit type prevent this problem.
+	let f2 = &(func(int) (int))square; //Valid, an explicit type prevent this problem.
 	f2 = &square; //Now valid, because it's now typed by the previous assignment.
 
-	func(int) int f3 = &square; //Error, can't know the type of f3 since f3 doesn't exist at the time of declaration.
+	func(int) (int) f3 = &square; //Error, can't know the type of f3 since f3 doesn't exist at the time of declaration.
 	f3 = &square; //Valid, since f3 is already declared with a type.
 }
 ```
@@ -537,7 +537,7 @@ Except `self`. Self is used to refers to the current function/task/etc even anon
 
 It allows you to do things like this anonymous recursive fibonacci:
 ```cpp
-func(int n) int {
+func(int n) (int) {
     if(n < 2) return n;
     return self(n - 1) + self(n - 2);
 }(10):printl;
@@ -588,7 +588,7 @@ main {
     printl(obj as string); // Prints "Hello"
 }
 
-func as(MyClass a) string {
+func as(MyClass a) (string) {
     return "Hello";
 }
 ```
@@ -621,7 +621,7 @@ main {
     printl(3.5 + 2);
 }
 
-func operator+(float a, int b) float {
+func operator+(float a, int b) (float) {
     return a + b as float;
 }
 ```
@@ -898,11 +898,11 @@ Here, foo will be blocked until something is written on the channel, then it'll 
 A type alias allow types to be named differently, making long signatures shorter.
 
 ```cpp
-func square(int i) int {
+func square(int i) (int) {
 	return i * i;
 };
 
-type MyFunc = func(int) int;
+type MyFunc = func(int) (int);
 
 main {
     MyFunc myFunc = &(MyFunc) square;

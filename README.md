@@ -20,7 +20,7 @@ main {
     assert("Hello World !":invert == "! dlroW olleH");
 }
 
-func invert(string str) string {
+func invert(string str) (string) {
     let result = str as array(string);
     loop(i, result:size / 2)
         result[i], result[-(i + 1)] = result[-(i + 1)], result[i];
@@ -31,7 +31,7 @@ func invert(string str) string {
 //Fibonacci
 main {
     assert(
-        func(int n) int {
+        func(int n) (int) {
             if(n < 2) return n;
             return self(n - 1) + self(n - 2);
         }(10) == 55);
