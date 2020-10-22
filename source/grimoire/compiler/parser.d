@@ -2322,7 +2322,7 @@ final class GrParser {
                 if(!asType) {
                     lex = get();
                     if(get().type != GrLexemeType.identifier)
-                        logError("Missing identifier", "Expected a name such as \'foo\'");
+                        logError("Missing identifier", "An identifier is expected");
                     inputVariables ~= lex.svalue;
                     checkAdvance();
                 }
@@ -2390,7 +2390,7 @@ final class GrParser {
     private void parseEventDeclaration() {
         checkAdvance();
 		if(get().type != GrLexemeType.identifier)
-			logError("Missing identifier", "Expected a name such as \'foo\'");
+			logError("Missing identifier", "An identifier is expected");
 		string name = get().svalue;
 		string[] inputs;
 		GrType[] signature = parseInSignature(inputs);
@@ -2412,7 +2412,7 @@ final class GrParser {
             logError("Unexpected modifier", "An event is always public");
         checkAdvance();
 		if(get().type != GrLexemeType.identifier)
-			logError("Missing identifier", "Expected a name such as \'foo\'");
+			logError("Missing identifier", "An identifier is expected");
 		string name = get().svalue;
 		string[] inputs;
 		GrType[] signature = parseInSignature(inputs);
@@ -2424,7 +2424,7 @@ final class GrParser {
 	private void parseTaskDeclaration() {
 		checkAdvance();
 		if(get().type != GrLexemeType.identifier)
-			logError("Missing identifier", "Expected a name such as \'foo\'");
+			logError("Missing identifier", "An identifier is expected");
 		string name = get().svalue;
 		string[] inputs;
 		GrType[] signature = parseInSignature(inputs);
@@ -2444,7 +2444,7 @@ final class GrParser {
 	private void preParseTaskDeclaration(bool isPublic) {
 		checkAdvance();
 		if(get().type != GrLexemeType.identifier)
-			logError("Missing identifier", "Expected a name such as \'foo\'");
+			logError("Missing identifier", "An identifier is expected");
 		string name = get().svalue;
 		string[] inputs;
 		GrType[] signature = parseInSignature(inputs);
@@ -2463,7 +2463,7 @@ final class GrParser {
         }
         else {
             if(get().type != GrLexemeType.identifier)
-                logError("Missing identifier", "Expected a name such as \'foo\'");
+                logError("Missing identifier", "An identifier is expected");
             name = get().svalue;
 
             if(name == "operator") {
@@ -2519,7 +2519,7 @@ final class GrParser {
         }
         else {
             if(get().type != GrLexemeType.identifier)
-                logError("Missing identifier", "Expected a name such as \'foo\'");
+                logError("Missing identifier", "An identifier is expected");
             name = get().svalue;
             if(name == "operator") {
                 checkAdvance();
@@ -3071,7 +3071,7 @@ final class GrParser {
                 checkAdvance();
             //Identifier
             if(get().type != GrLexemeType.identifier)
-                logError("Missing identifier", "Expected a name such as \'foo\'");
+                logError("Missing identifier", "An identifier is expected");
 
             string identifier = get().svalue;
 
@@ -3104,7 +3104,7 @@ final class GrParser {
                 checkAdvance();
             //Identifier
             if(get().type != GrLexemeType.identifier)
-                logError("Missing identifier", "Expected a name such as \'foo\'");
+                logError("Missing identifier", "An identifier is expected");
 
             string identifier = get().svalue;
 
@@ -4514,7 +4514,6 @@ final class GrParser {
 	private void parseExpression() {
         bool isAssignmentList;
         const auto tempPos = current;
-        checkAdvance();
         __skipLoop: while(!isEnd()) {
             switch(get().type) with(GrLexemeType) {
             case leftBracket:
@@ -4547,7 +4546,7 @@ final class GrParser {
                     checkAdvance();
                 //Identifier
                 if(get().type != GrLexemeType.identifier)
-                    logError("Missing identifier", "Expected a name such as \'foo\'");
+                    logError("Missing identifier", "An identifier is expected");
                 lvalues ~= parseSubExpression(
                     GR_SUBEXPR_TERMINATE_COMMA |
                     GR_SUBEXPR_TERMINATE_ASSIGN |
