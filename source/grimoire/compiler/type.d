@@ -304,9 +304,11 @@ package class GrFunction {
 	string name;
     /// Mangled function name.
 	string mangledName;
+    /// Function input parameters' name.
+    string[] inputVariables;
     /// Function parameters' type.
 	GrType[] inSignature, outSignature;
-	bool isTask, isAnonymous;
+	bool isTask, isAnonymous, isEvent, isMain;
 
     /// Function calls made from within its scope.
 	GrFunctionCall[] functionCalls;
@@ -324,6 +326,39 @@ package class GrFunction {
     bool isPublic;
     /// The file where the function is declared.
     uint fileId;
+
+    uint lexPosition;
+}
+
+package class GrTemplateFunction {
+    /// Unmangled function name.
+	string name;
+    /// Function input parameters' name.
+    string[] inputVariables;
+    /// Function parameters' type.
+	GrType[] inSignature, outSignature;
+	bool isTask;
+    /// Is the function visible from other files ?
+    bool isPublic;
+    /// The file where the template is declared.
+    uint fileId;
+
+    string[] templateVariables;
+
+    uint lexPosition;
+
+    GrFunction generate(GrType[] templateList) {
+        GrFunction func = new GrFunction;
+        func.isTask = isTask;
+        func.name = name;
+        func.inputVariables = inputVariables;
+        func.inSignature = inSignature;
+        func.outSignature = outSignature;
+        func.fileId = fileId;
+        func.isPublic = isPublic;
+        func.lexPosition = lexPosition;
+        return func;
+    }
 }
 
 package class GrFunctionCall {

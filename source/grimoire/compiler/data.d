@@ -25,7 +25,7 @@ class GrData {
         /// Can only be used with primitives.
         GrForeignDefinition[] _foreigns;
         /// Type aliases
-        GrTypeAliasDefinition[] _typeAliases;
+        GrTypeAliasDefinition[] _typeAliases, _templateAliases;
         /// Enum types.
         GrEnumDefinition[] _enumTypes;
         /// Object types.
@@ -174,6 +174,21 @@ class GrData {
         return type;
     }
 
+    /// Define an alias of another type.
+    package GrType addTemplateAlias(string name, GrType type, uint fileId, bool isPublic) {
+        GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
+        typeAlias.name = name;
+        typeAlias.type = type;
+        typeAlias.fileId = fileId;
+        typeAlias.isPublic = isPublic;
+        _templateAliases ~= typeAlias;
+        return type;
+    }
+
+    package void clearTemplateAliases() {
+        _templateAliases.length = 0;
+    }
+
     /// Define an opaque pointer type.
     GrType addForeign(string name, string parent = "") {
         assert(!isTypeDeclared(name), "\'" ~ name ~ "\' is already declared");
@@ -225,6 +240,10 @@ class GrData {
 
     /// Is the type alias defined ?
     package bool isTypeAlias(string name, uint fileId, bool isPublic) {
+        foreach(typeAlias; _templateAliases) {
+            if(typeAlias.name == name && (typeAlias.fileId == fileId || typeAlias.isPublic || isPublic))
+                return true;
+        }
         foreach(typeAlias; _typeAliases) {
             if(typeAlias.name == name && (typeAlias.fileId == fileId || typeAlias.isPublic || isPublic))
                 return true;
@@ -271,7 +290,6 @@ class GrData {
 
     /// Return the class definition.
     package GrClassDefinition getClass(string name, uint fileId, bool isPublic = false) {
-        import std.conv: to;
         foreach(class_; _classTypes) {
             if(class_.name == name && (class_.fileId == fileId || class_.isPublic || isPublic))
                 return class_;
@@ -281,7 +299,10 @@ class GrData {
 
     /// Return the type alias definition.
     GrTypeAliasDefinition getTypeAlias(string name, uint fileId) {
-        import std.conv: to;
+        foreach(typeAlias; _templateAliases) {
+            if(typeAlias.name == name && (typeAlias.fileId == fileId || typeAlias.isPublic))
+                return typeAlias;
+        }
         foreach(typeAlias; _typeAliases) {
             if(typeAlias.name == name && (typeAlias.fileId == fileId || typeAlias.isPublic))
                 return typeAlias;

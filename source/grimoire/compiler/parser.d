@@ -35,8 +35,9 @@ final class GrParser {
         uint scopeLevel;
 
         GrVariable[] globalVariables;
-        GrFunction[] functions, events;
+        GrFunction[] functionsQueue, functions, events;
         GrFunction[] anonymousFunctions;
+        GrTemplateFunction[] templatedFunctions;
 
         uint current;
         GrFunction currentFunction;
@@ -346,12 +347,13 @@ final class GrParser {
         bool isAnonymous = false, bool isEvent = false, bool isPublic = false) {
 		GrFunction func = new GrFunction;
 		func.isTask = isTask;
+        func.inputVariables = inputVariables;
 		func.inSignature = signature;
 		func.outSignature = outSignature;
 		func.fileId = fileId;
 
 		if(isAnonymous) {
-			func.index = cast(uint) anonymousFunctions.length;
+			//func.index = cast(uint) anonymousFunctions.length;
 			func.anonParent = currentFunction;
 			func.anonReference = cast(uint)currentFunction.instructions.length;
 			func.name = currentFunction.name ~ "@anon" ~ to!string(func.index);
@@ -362,73 +364,19 @@ final class GrParser {
 			addInstruction(GrOpcode.const_int, 0u);
 		}
 		else {
-			func.index = cast(uint) functions.length;
+			//func.index = cast(uint) functions.length;
 			func.name = name;
             func.isPublic = isPublic;
 
 			func.mangledName = grMangleNamedFunction(name, signature);
             assertNoGlobalDeclaration(func.mangledName, fileId, isPublic);
 		
-            if(isEvent)
-                events ~= func;
-            else
-                functions ~= func;
+            func.isEvent = isEvent;
+            func.lexPosition = current;
+            functionsQueue ~= func;
 		}
-
-		functionStack ~= currentFunction;
-		currentFunction = func;
-
-		void fetchParameter(string name, GrType type) {
-            final switch(type.baseType) with(GrBaseType) {
-            case void_:
-            case null_:
-                logError("Invalid type", "Void is not a valid parameter type");
-                break;
-            case int_:
-            case bool_:
-            case function_:
-            case task:
-            case enum_:
-                func.nbIntegerParameters ++;
-                if(func.isTask)
-                    addInstruction(GrOpcode.globalPop_int, 0u);
-                break;
-            case float_:
-                func.nbFloatParameters ++;
-                if(func.isTask)
-                    addInstruction(GrOpcode.globalPop_float, 0u);
-                break;
-            case string_:
-                func.nbStringParameters ++;
-                if(func.isTask)
-                    addInstruction(GrOpcode.globalPop_string, 0u);
-                break;
-            case class_:
-            case array_:
-            case foreign:
-            case chan:
-            case reference:
-                func.nbObjectParameters ++;
-                if(func.isTask)
-                    addInstruction(GrOpcode.globalPop_object, 0u);
-                break;
-            case internalTuple:
-                throw new Exception("Tuples should not exist here.");
-            }
-
-            GrVariable newVar = new GrVariable;
-            newVar.type = type;
-            newVar.isInitialized = true;
-            newVar.isGlobal = false;
-            newVar.name = name;
-            func.localVariables[name] = newVar;
-            setVariableRegister(newVar);
-            addSetInstruction(newVar, fileId);
-        }
-        
-        foreach_reverse(size_t i, inputVariable; inputVariables) {
-            fetchParameter(inputVariables[i], signature[i]);
-        }
+        functionStack ~= currentFunction;
+        currentFunction = func;
 	}
 
 	private void endFunction() {
@@ -478,6 +426,60 @@ final class GrParser {
         functionStack.length --;
 	}
 
+    void generateFunctionInputs() {
+		void fetchParameter(string name, GrType type) {
+            final switch(type.baseType) with(GrBaseType) {
+            case void_:
+            case null_:
+                logError("Invalid type", "Void is not a valid parameter type");
+                break;
+            case int_:
+            case bool_:
+            case function_:
+            case task:
+            case enum_:
+                currentFunction.nbIntegerParameters ++;
+                if(currentFunction.isTask)
+                    addInstruction(GrOpcode.globalPop_int, 0u);
+                break;
+            case float_:
+                currentFunction.nbFloatParameters ++;
+                if(currentFunction.isTask)
+                    addInstruction(GrOpcode.globalPop_float, 0u);
+                break;
+            case string_:
+                currentFunction.nbStringParameters ++;
+                if(currentFunction.isTask)
+                    addInstruction(GrOpcode.globalPop_string, 0u);
+                break;
+            case class_:
+            case array_:
+            case foreign:
+            case chan:
+            case reference:
+                currentFunction.nbObjectParameters ++;
+                if(currentFunction.isTask)
+                    addInstruction(GrOpcode.globalPop_object, 0u);
+                break;
+            case internalTuple:
+                throw new Exception("Tuples should not exist here.");
+            }
+
+            GrVariable newVar = new GrVariable;
+            newVar.type = type;
+            newVar.isInitialized = true;
+            newVar.isGlobal = false;
+            newVar.name = name;
+            currentFunction.localVariables[name] = newVar;
+            setVariableRegister(newVar);
+            addSetInstruction(newVar, currentFunction.fileId);
+        }
+        
+        foreach_reverse(size_t i, inputVariable; currentFunction.inputVariables) {
+            fetchParameter(currentFunction.inputVariables[i], currentFunction.inSignature[i]);
+        }
+    }
+
     GrFunction getFunction(string mangledName, uint fileId = 0, bool isPublic = false) {
         foreach(GrFunction func; functions) {
             if(func.mangledName == mangledName && (func.fileId == fileId || func.isPublic || isPublic)) {
@@ -498,6 +500,34 @@ final class GrParser {
             if(func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
                 if(_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic))
                     return func;
+            }
+        }
+        foreach(GrFunction func; functionsQueue) {
+            if(func.mangledName == mangledName && (func.fileId == fileId || func.isPublic || isPublic)) {
+                return func;
+            }
+        }
+        foreach(GrFunction func; functionsQueue) {
+            if(func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
+                if(_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic))
+                    return func;
+            }
+        }
+        foreach(GrTemplateFunction temp; templatedFunctions) {
+            const string templateMangledName = grMangleNamedFunction(temp.name, temp.inSignature);
+            if(templateMangledName == mangledName && (temp.fileId == fileId || temp.isPublic || isPublic)) {
+                GrFunction func = temp.generate([]);
+                functionsQueue ~= func;
+                return func;
+            }
+        }
+        foreach(GrTemplateFunction temp; templatedFunctions) {
+            if(temp.name == name && (temp.fileId == fileId || temp.isPublic || isPublic)) {
+                if(_data.isSignatureCompatible(signature, temp.inSignature, fileId, isPublic)) {
+                    GrFunction func = temp.generate([]);
+                    functionsQueue ~= func;
+                    return func;
+                }
             }
         }
         return null;
@@ -1872,52 +1902,53 @@ final class GrParser {
 			}
 		}
         endGlobalScope();
-		reset();
 
-		while(!isEnd()) {
-			GrLexeme lex = get();
-            isPublic = false;
-            if(lex.type == GrLexemeType.public_) {
-                isPublic = true;
-                checkAdvance();
-                lex = get();
-            }
-			switch(lex.type) with(GrLexemeType) {
-            case semicolon:
-                checkAdvance();
-                break;
-            case enum_:
-            case class_:
-                skipDeclaration();
-                break;
-			case main_:
-				parseMainDeclaration();
-				break;
-            case event_:
-                parseEventDeclaration();
-                break;
-			case taskType:
-                if(get(1).type != GrLexemeType.identifier)
-                    goto case voidType;
-				parseTaskDeclaration();
-				break;
-			case functionType:
-                if(get(1).type != GrLexemeType.identifier &&
-                    get(1).type != GrLexemeType.as)
-                    goto case voidType;
-				parseFunctionDeclaration();
-				break;
-            case voidType: .. case arrayType:
-            case autoType:
-            case identifier:
-            case type_:
-                skipExpression();
-                break;
-			default:
-				logError("Syntax error", "Global declaration expected");
-			}
-		}
+        while(functionsQueue.length) {
+            GrFunction func = functionsQueue[$-1];
+            functionsQueue.length --;
+            parseFunction(func);
+        }
 	}
+
+    void parseFunction(GrFunction func) {
+        if(func.isEvent) {
+            func.index = cast(uint) events.length;
+            events ~= func;
+        }
+        else {
+            func.index = cast(uint) functions.length;
+            functions ~= func;
+        }
+        
+        functionStack ~= currentFunction;
+        currentFunction = func;
+
+        generateFunctionInputs();
+        openDeferrableSection();
+        current = func.lexPosition;
+        parseBlock();
+        if(func.isTask) {
+            if(!currentFunction.instructions.length
+                || currentFunction.instructions[$ - 1].opcode != GrOpcode.kill_)
+                addKill();
+        }
+        else {
+            if(!currentFunction.outSignature.length) {
+                if(!currentFunction.instructions.length
+                    || currentFunction.instructions[$ - 1].opcode != GrOpcode.return_)
+                    addReturn();
+            }
+            else {
+                if(!currentFunction.instructions.length
+                    || currentFunction.instructions[$ - 1].opcode != GrOpcode.return_)
+                    logError("Missing return", "The function is missing a return at the end of the scope");
+            }
+        }
+        closeDeferrableSection();
+        registerDeferBlocks();
+
+        endFunction();
+    }
 
     /**
     Declare a new alias of a type.
@@ -2363,49 +2394,14 @@ final class GrParser {
 		return outSignature;
 	}
 
-	private void parseMainDeclaration() {
-		checkAdvance();
-		beginFunction("main", get().fileId, []);
-        
-        openDeferrableSection();
-		parseBlock();
-		if(!currentFunction.instructions.length
-            || currentFunction.instructions[$ - 1].opcode != GrOpcode.kill_)
-            addKill();
-        closeDeferrableSection();
-        registerDeferBlocks();
-
-		endFunction();
-	}
-
 	private void preParseMainDeclaration(bool isPublic) {
         if(isPublic)
             logError("Unexpected modifier", "main is already public");
 		checkAdvance();
-		preBeginFunction("main", get().fileId, [], [], false, [], false, false, true);
+		preBeginFunction("main", get().fileId, [], [], true, [], false, false, true);
 		skipBlock();
 		preEndFunction();
 	}
-
-    private void parseEventDeclaration() {
-        checkAdvance();
-		if(get().type != GrLexemeType.identifier)
-			logError("Missing identifier", "An identifier is expected");
-		string name = get().svalue;
-		string[] inputs;
-		GrType[] signature = parseInSignature(inputs);
-		beginFunction(name, get().fileId, signature, true);
-        
-        openDeferrableSection();
-		parseBlock();
-		if(!currentFunction.instructions.length
-            || currentFunction.instructions[$ - 1].opcode != GrOpcode.kill_)
-            addKill();
-        closeDeferrableSection();
-        registerDeferBlocks();
-
-		endFunction();
-    }
 
     private void preParseEventDeclaration(bool isPublic) {
         if(isPublic)
@@ -2416,30 +2412,10 @@ final class GrParser {
 		string name = get().svalue;
 		string[] inputs;
 		GrType[] signature = parseInSignature(inputs);
-		preBeginFunction(name, get().fileId, signature, inputs, false, [], false, true, true);
+		preBeginFunction(name, get().fileId, signature, inputs, true, [], false, true, true);
 		skipBlock();
 		preEndFunction();
     }
-
-	private void parseTaskDeclaration() {
-		checkAdvance();
-		if(get().type != GrLexemeType.identifier)
-			logError("Missing identifier", "An identifier is expected");
-		string name = get().svalue;
-		string[] inputs;
-		GrType[] signature = parseInSignature(inputs);
-		beginFunction(name, get().fileId, signature);
-
-        openDeferrableSection();
-		parseBlock();
-		if(!currentFunction.instructions.length
-            || currentFunction.instructions[$ - 1].opcode != GrOpcode.kill_)
-            addKill();
-        closeDeferrableSection();
-        registerDeferBlocks();
-
-		endFunction();
-	}
 
 	private void preParseTaskDeclaration(bool isPublic) {
 		checkAdvance();
@@ -2448,65 +2424,17 @@ final class GrParser {
 		string name = get().svalue;
 		string[] inputs;
 		GrType[] signature = parseInSignature(inputs);
-		preBeginFunction(name, get().fileId, signature, inputs, true, [], false, false, isPublic);
+
+        GrTemplateFunction temp = new GrTemplateFunction;
+        temp.isTask = true;
+        temp.name = name;
+        temp.inputVariables = inputs;
+        temp.inSignature = signature;
+        temp.fileId = get().fileId;
+        temp.isPublic = isPublic;
+        temp.lexPosition = current;
+        templatedFunctions ~= temp;
 		skipBlock();
-		preEndFunction();
-	}
-
-	private void parseFunctionDeclaration() {
-		checkAdvance();
-        string name;
-        bool isConversion;
-        if(get().type == GrLexemeType.as) {
-            name = "@as";
-            isConversion = true;
-        }
-        else {
-            if(get().type != GrLexemeType.identifier)
-                logError("Missing identifier", "An identifier is expected");
-            name = get().svalue;
-
-            if(name == "operator") {
-                checkAdvance();
-                if(get().type >= GrLexemeType.add && get().type <= GrLexemeType.not) {
-                    name = "@op_" ~ grGetPrettyLexemeType(get().type);
-                }
-                else
-                    logError("Invalid Operator", "The specified operator must be valid");
-            }
-        }
-		string[] inputs;
-		GrType[] signature = parseInSignature(inputs);
-
-        if(isConversion) {
-            if(signature.length != 1uL)
-                logError("Invalid format", "A conversion function has to take only 1 parameter and be non-void");
-            GrType[] outSignature = parseOutSignature();
-            if(outSignature.length != 1uL)
-                logError("Invalid format", "A conversion function has to take only 1 parameter and be non-void");
-
-            signature ~= outSignature[0];
-        }
-        else
-            parseOutSignature();
-
-		beginFunction(name, get().fileId, signature);
-        openDeferrableSection();
-		parseBlock();
-        if(!currentFunction.outSignature.length) {
-            if(!currentFunction.instructions.length
-                || currentFunction.instructions[$ - 1].opcode != GrOpcode.return_)
-                addReturn();
-        }
-        else {
-            if(!currentFunction.instructions.length
-                || currentFunction.instructions[$ - 1].opcode != GrOpcode.return_)
-                logError("Missing return", "The function is missing a return at the end of the scope");
-        }
-        closeDeferrableSection();
-        registerDeferBlocks();
-
-		endFunction();
 	}
 
 	private void preParseFunctionDeclaration(bool isPublic) {
@@ -2547,9 +2475,17 @@ final class GrParser {
         else
             outSignature = parseOutSignature();
 
-		preBeginFunction(name, get().fileId, inSignature, inputs, false, outSignature, false, false, isPublic);
+        GrTemplateFunction temp = new GrTemplateFunction;
+        temp.isTask = false;
+        temp.name = name;
+        temp.inputVariables = inputs;
+        temp.inSignature = inSignature;
+        temp.outSignature = outSignature;
+        temp.fileId = get().fileId;
+        temp.isPublic = isPublic;
+        temp.lexPosition = current;
+        templatedFunctions ~= temp;
 		skipBlock();
-		preEndFunction();
 	}
 
 	private GrType parseAnonymousFunction(bool isTask) {
@@ -2562,7 +2498,7 @@ final class GrParser {
             outSignature = parseOutSignature();
 		}
 		preBeginFunction("$anon", get().fileId, inSignature, inputs, isTask, outSignature, true);
-
+        generateFunctionInputs();
         openDeferrableSection();
 		parseBlock();
 
@@ -3952,11 +3888,10 @@ final class GrParser {
 	}
 
     /**
-    The type of the return must be that of the signature of the function. \
-    Doesn't need a `;` if there a no return value.
+    The type of the return must be that of the signature of the function.
     ---
     return "Hello"; // Returns a string.
-    return // No ';' because there is no expression.
+    return; // Returns nothing but still end the function.
     ---
     */
 	private void parseReturnStatement() {
@@ -3966,25 +3901,21 @@ final class GrParser {
                 currentFunction.instructions[$ - 1].opcode != GrOpcode.kill_)
                 addKill();
         }
-        else if(!currentFunction.outSignature.length) {
-            if(!currentFunction.instructions.length ||
-                currentFunction.instructions[$ - 1].opcode != GrOpcode.return_)
-                addReturn();
-        }
         else {
             auto types = parseExpressionList();
+            writeln(types);
             
             addReturn();
             if(types.length != currentFunction.outSignature.length)
-                logError("Invalid return type", "");
+                logError("Invalid return type", "The number of return values does not match the signature", -1);
             for(int i; i < types.length; i ++) {
                 if(types[i] != currentFunction.outSignature[i])
                     logError("Invalid return type",
                         "The returned type \'"
                         ~ grGetPrettyType(types[i])
-                        ~ "\' does not match the function definition \'"
+                        ~ "\' does not match the signature \'"
                         ~ grGetPrettyType(currentFunction.outSignature[i])
-                        ~ "\'");
+                        ~ "\'", -1);
             }
         }
 	}
