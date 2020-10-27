@@ -305,7 +305,7 @@ package class GrFunction {
     /// Mangled function name.
 	string mangledName;
     /// Function input parameters' name.
-    string[] inputVariables;
+    string[] inputVariables, templateVariables;
     /// Function parameters' type.
 	GrType[] inSignature, outSignature, templateSignature;
 	bool isTask, isAnonymous, isEvent, isMain;

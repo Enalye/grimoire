@@ -1830,16 +1830,16 @@ final class GrParser {
                 break;
             case taskType:
                 if(get(1).type != GrLexemeType.identifier)
-                    goto case voidType;
+                    goto case intType;
                 parseTaskDeclaration(isPublic);
                 break;
             case functionType:
                 if(get(1).type != GrLexemeType.identifier &&
                     get(1).type != GrLexemeType.as)
-                    goto case voidType;
+                    goto case intType;
                 parseFunctionDeclaration(isPublic);
                 break;
-            case voidType: .. case arrayType:
+            case intType: .. case arrayType:
             case autoType:
             case identifier:
             case type_:
@@ -1873,16 +1873,16 @@ final class GrParser {
                 break;
             case taskType:
                 if(get(1).type != GrLexemeType.identifier)
-                    goto case voidType;
+                    goto case intType;
                 skipDeclaration();
                 break;
             case functionType:
                 if(get(1).type != GrLexemeType.identifier &&
                     get(1).type != GrLexemeType.as)
-                    goto case voidType;
+                    goto case intType;
                 skipDeclaration();
                 break;
-            case voidType: .. case arrayType:
+            case intType: .. case arrayType:
             case autoType:
                 parseGlobalDeclaration(isPublic);
                 break;
@@ -1924,6 +1924,10 @@ final class GrParser {
         functionStack ~= currentFunction;
         currentFunction = func;
 
+        for(int i; i < func.templateVariables.length; ++ i) {
+            _data.addTemplateAlias(func.templateVariables[i], func.templateSignature[i], func.fileId, func.isPublic);
+        }
+
         generateFunctionInputs();
         openDeferrableSection();
         current = func.lexPosition;
@@ -1949,6 +1953,7 @@ final class GrParser {
         registerDeferBlocks();
 
         endFunction();
+        _data.clearTemplateAliases();
     }
 
     /**
@@ -2031,9 +2036,7 @@ final class GrParser {
         GrType[] signature;
         bool[] fieldScopes;
         while(!isEnd()) {
-            if(get().type == GrLexemeType.voidType)
-                logError("Field type error", "unknown field type");
-            else if(get().type == GrLexemeType.rightCurlyBrace) {
+            if(get().type == GrLexemeType.rightCurlyBrace) {
                 checkAdvance();
                 break;
             }
@@ -2149,10 +2152,6 @@ final class GrParser {
         }
 
         switch(lex.type) with(GrLexemeType) {
-        case voidType:
-            currentType.baseType = GrBaseType.void_;
-            checkAdvance();
-            break;
         case intType:
             currentType.baseType = GrBaseType.int_;
             checkAdvance();
@@ -2573,6 +2572,7 @@ final class GrParser {
         func.fileId = temp.fileId;
         func.isPublic = temp.isPublic;
         func.lexPosition = current;
+        func.templateVariables = temp.templateVariables;
         func.templateSignature = templateList;
 
         _data.clearTemplateAliases();
@@ -2696,7 +2696,7 @@ final class GrParser {
             case break_:
                 parseBreak();
                 break;
-            case voidType: .. case autoType:
+            case intType: .. case autoType:
                 if(isDeclaration())
                     parseLocalDeclaration();
                 else
@@ -3581,7 +3581,7 @@ final class GrParser {
             isAuto = true;
             checkAdvance();
             break;
-        case voidType: .. case chanType:
+        case intType: .. case chanType:
             type = parseType();
             break;
         case identifier:
