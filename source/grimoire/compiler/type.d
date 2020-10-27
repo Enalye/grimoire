@@ -307,7 +307,7 @@ package class GrFunction {
     /// Function input parameters' name.
     string[] inputVariables;
     /// Function parameters' type.
-	GrType[] inSignature, outSignature;
+	GrType[] inSignature, outSignature, templateSignature;
 	bool isTask, isAnonymous, isEvent, isMain;
 
     /// Function calls made from within its scope.
@@ -338,6 +338,7 @@ package class GrTemplateFunction {
     /// Function parameters' type.
 	GrType[] inSignature, outSignature;
 	bool isTask;
+    bool isConversion;
     /// Is the function visible from other files ?
     bool isPublic;
     /// The file where the template is declared.
@@ -346,19 +347,6 @@ package class GrTemplateFunction {
     string[] templateVariables;
 
     uint lexPosition;
-
-    GrFunction generate(GrType[] templateList) {
-        GrFunction func = new GrFunction;
-        func.isTask = isTask;
-        func.name = name;
-        func.inputVariables = inputVariables;
-        func.inSignature = inSignature;
-        func.outSignature = outSignature;
-        func.fileId = fileId;
-        func.isPublic = isPublic;
-        func.lexPosition = lexPosition;
-        return func;
-    }
 }
 
 package class GrFunctionCall {

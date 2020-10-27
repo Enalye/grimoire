@@ -18,7 +18,8 @@ import grimoire.compiler.error;
 Kinds of valid token.
 */
 enum GrLexemeType {
-	leftBracket, rightBracket, leftParenthesis, rightParenthesis, leftCurlyBrace, rightCurlyBrace,
+	leftBracket, rightBracket, leftParenthesis, rightParenthesis,
+	leftCurlyBrace, rightCurlyBrace, leftAngleBracket, rightAngleBracket,
 	period, semicolon, colon, comma, at, pointer, as, is_, try_, catch_, raise_, defer,
 	assign,
 	addAssign, substractAssign, multiplyAssign, divideAssign, concatenateAssign, remainderAssign, powerAssign,
@@ -563,6 +564,11 @@ package final class GrLexer {
 					lex._textLength = 2;
 					_current ++;
 				}
+				else if(get(1) == '<') {
+					lex.type = GrLexemeType.leftAngleBracket;
+					lex._textLength = 2;
+					_current ++;
+				}
 				break;
 			case '>':
 				lex.type = GrLexemeType.greater;
@@ -570,6 +576,11 @@ package final class GrLexer {
 					break;
 				if(get(1) == '=') {
 					lex.type = GrLexemeType.greaterOrEqual;
+					lex._textLength = 2;
+					_current ++;
+				}
+				else if(get(1) == '>') {
+					lex.type = GrLexemeType.rightAngleBracket;
 					lex._textLength = 2;
 					_current ++;
 				}
@@ -915,7 +926,7 @@ package final class GrLexer {
 /// Returns a displayable version of a token type.
 string grGetPrettyLexemeType(GrLexemeType operator) {
     string[] lexemeTypeStrTable = [
-        "[", "]", "(", ")", "{", "}",
+        "[", "]", "(", ")", "{", "}", "<<", ">>",
         ".", ";", ":", ",", "@", "&", "as", "is", "try", "catch", "raise", "defer",
         "=",
         "+=", "-=", "*=", "/=", "~=", "%=", "**=",
