@@ -4605,7 +4605,7 @@ final class GrParser {
                         expressionTypes ~= subType;
                 }
             }
-            else
+            else if(type.baseType != GrBaseType.void_)
                 expressionTypes ~= type;
             if(get().type != GrLexemeType.comma)
                 break;
