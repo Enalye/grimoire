@@ -373,10 +373,12 @@ final class GrParser {
         
             func.isEvent = isEvent;
             func.lexPosition = current;
-            functionsQueue ~= func;
+            functionsQueue ~= func; 
         }
+
         functionStack ~= currentFunction;
         currentFunction = func;
+        generateFunctionInputs();
     }
 
     private void endFunction() {
@@ -524,6 +526,13 @@ final class GrParser {
                 GrFunction func = parseTemplatedFunctionDeclaration(temp, templateList);
                 if(_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic)) {
                     functionsQueue ~= func;
+
+                    functionStack ~= currentFunction;
+                    currentFunction = func;
+                    generateFunctionInputs();
+                    currentFunction = functionStack[$ - 1];
+                    functionStack.length --;
+
                     return func;
                 }
             }
@@ -1928,7 +1937,6 @@ final class GrParser {
             _data.addTemplateAlias(func.templateVariables[i], func.templateSignature[i], func.fileId, func.isPublic);
         }
 
-        generateFunctionInputs();
         openDeferrableSection();
         current = func.lexPosition;
         parseBlock();
@@ -2591,7 +2599,6 @@ final class GrParser {
             outSignature = parseOutSignature();
         }
         preBeginFunction("$anon", get().fileId, inSignature, inputs, isTask, outSignature, true);
-        generateFunctionInputs();
         openDeferrableSection();
         parseBlock();
 
