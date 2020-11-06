@@ -370,6 +370,9 @@ final class GrParser {
 
             func.mangledName = grMangleNamedFunction(name, signature);
             assertNoGlobalDeclaration(func.mangledName, fileId, isPublic);
+
+            if(name == "main")
+                func.isMain = true;
         
             func.isEvent = isEvent;
             func.lexPosition = current;
@@ -1940,7 +1943,7 @@ final class GrParser {
         openDeferrableSection();
         current = func.lexPosition;
         parseBlock();
-        if(func.isTask) {
+        if(func.isTask || func.isMain || func.isEvent) {
             if(!currentFunction.instructions.length
                 || currentFunction.instructions[$ - 1].opcode != GrOpcode.kill_)
                 addKill();
@@ -2460,7 +2463,7 @@ final class GrParser {
         if(isPublic)
             logError("Unexpected modifier", "main is already public");
         checkAdvance();
-        preBeginFunction("main", get().fileId, [], [], true, [], false, false, true);
+        preBeginFunction("main", get().fileId, [], [], false, [], false, false, true);
         skipBlock();
         preEndFunction();
     }
@@ -2475,7 +2478,7 @@ final class GrParser {
         string[] inputs;
         checkAdvance();
         GrType[] signature = parseInSignature(inputs);
-        preBeginFunction(name, get().fileId, signature, inputs, true, [], false, true, true);
+        preBeginFunction(name, get().fileId, signature, inputs, false, [], false, true, true);
         skipBlock();
         preEndFunction();
     }
