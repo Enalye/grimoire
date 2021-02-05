@@ -1154,11 +1154,12 @@ final class GrParser {
             switch(lexType) with(GrLexemeType) {
             case send:
                 GrType chanType = grUnmangle(varType.mangledType);
-                switch(chanType.baseType) with(GrBaseType) {
+                final switch(chanType.baseType) with(GrBaseType) {
                 case int_:
                 case bool_:
                 case function_:
                 case task:
+                case enum_:
                     addInstruction(GrOpcode.send_int);
                     return chanType;
                 case float_:
@@ -1173,17 +1174,21 @@ final class GrParser {
                 case chan:
                     addInstruction(GrOpcode.send_object);
                     return chanType;
-                default:
+                case void_:
+                case null_:
+                case internalTuple:
+                case reference:
                     break;
                 }
                 break;
             case receive:
                 GrType chanType = grUnmangle(varType.mangledType);
-                switch(chanType.baseType) with(GrBaseType) {
+                final switch(chanType.baseType) with(GrBaseType) {
                 case int_:
                 case bool_:
                 case function_:
                 case task:
+                case enum_:
                     addInstruction(GrOpcode.receive_int);
                     return chanType;
                 case float_:
@@ -1198,7 +1203,10 @@ final class GrParser {
                 case chan:
                     addInstruction(GrOpcode.receive_object);
                     return chanType;
-                default:
+                case void_:
+                case null_:
+                case internalTuple:
+                case reference:
                     break;
                 }
                 break;
