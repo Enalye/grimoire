@@ -3453,9 +3453,9 @@ final class GrParser {
             advance();
 
             if(get().type == GrLexemeType.rightParenthesis) {
-                assertError(hasDefaultCase,
+                assertError(!hasDefaultCase,
                     "Multiple default cases",
-                    "There must be only one default case per switch statement");
+                    "There must be only one default case per select statement");
                 advance();
                 hasDefaultCase = true;
                 defaultCasePosition = current;
