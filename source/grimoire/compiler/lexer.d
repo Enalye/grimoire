@@ -481,7 +481,7 @@ package final class GrLexer {
             }
             else if (symbol == '\"' && (!wasEscape))
                 break;
-            else if (symbol == '\\') {
+            else if (symbol == '\\' && (!wasEscape)) {
                 escape = true;
             }
 
@@ -492,6 +492,8 @@ package final class GrLexer {
                 else {
                     if (symbol == 'n')
                         buffer ~= '\n';
+                    else
+                        buffer ~= symbol;
                 }
             }
             wasEscape = escape;
