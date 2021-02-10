@@ -5297,6 +5297,28 @@ final class GrParser {
                         case addAssign: .. case powerAssign:
                             addLoadFieldInstruction(currentType, fieldLValue.register, true);
                             break;
+                        case leftParenthesis:
+                            lvalues.length --;
+                            addLoadFieldInstruction(currentType, fieldLValue.register, false);
+                            currentType = parseAnonymousCall(typeStack[$ - 1]);
+                            //Unpack function value for 1 or less return values
+                            //Multiples values are left as a tuple for parseExpressionList()
+                            if(currentType.baseType == GrBaseType.internalTuple) {
+                                auto types = grUnpackTuple(currentType);
+                                if(!types.length)
+                                    currentType = grVoid;
+                                else if(types.length == 1uL)
+                                    currentType = types[0];
+                            }
+                            if(currentType.baseType == GrBaseType.void_) {
+                                typeStack.length --;
+                            }
+                            else {
+                                hadValue = false;
+                                hasValue = true;
+                                typeStack[$ - 1] = currentType;
+                            }
+                            break;
                         case comma:
                             if(isExpectingLValue)
                                 goto case assign;
