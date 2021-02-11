@@ -99,35 +99,22 @@ class GrData {
         return stType;
     }
 
-    /// Define a class type.
-    package GrType addClass(string name, string parent,
-            string[] fields, GrType[] signature, bool[] scopes,
-            uint fileId, bool isPublic,
-            uint position, uint[] fieldsPosition) {
+    package void registerClass(string name, uint fileId, bool isPublic, uint position) {
         GrClassDefinition class_ = new GrClassDefinition;
         class_.name = name;
-        class_.parent = parent;
-        class_.signature = signature;
-        class_.fields = fields;
-        class_.index = _classTypes.length;
+        class_.position = position;
         class_.fileId = fileId;
         class_.isPublic = isPublic;
-        class_.position = position;
+        class_.index = _classTypes.length;
+        class_.isParsed = false;
         _classTypes ~= class_;
-
-        class_.fieldsInfo.length = fields.length;
-        for(int i; i < class_.fieldsInfo.length; ++ i) {
-            class_.fieldsInfo[i].fileId = fileId;
-            class_.fieldsInfo[i].isPublic = scopes[i];
-            class_.fieldsInfo[i].position = fieldsPosition[i];
-        }
-
-        GrType stType = GrBaseType.class_;
-        stType.mangledType = name;
-        return stType;
     }
 
-    /// Ditto
+    package GrClassDefinition[] getAllClasses() {
+        return _classTypes;
+    }
+
+    /// Define a class type.
     GrType addClass(string name, string[] fields, GrType[] signature, string parent = "") {
         assert(fields.length == signature.length, "Class signature mismatch");
         assert(!isTypeDeclared(name), "\'" ~ name ~ "\' is already declared");
@@ -138,6 +125,7 @@ class GrData {
         class_.fields = fields;
         class_.index = _classTypes.length;
         class_.isPublic = true;
+        class_.isParsed = true;
         _classTypes ~= class_;
 
         class_.fieldsInfo.length = fields.length;

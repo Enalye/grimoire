@@ -29,6 +29,7 @@ enum GrLexemeType {
     period,
     semicolon,
     colon,
+    doubleColon,
     comma,
     at,
     pointer,
@@ -541,6 +542,13 @@ package final class GrLexer {
             break;
         case ':':
             lex.type = GrLexemeType.colon;
+            if (_current + 1 >= _text.length)
+                break;
+            if (get(1) == ':') {
+                lex.type = GrLexemeType.doubleColon;
+                lex._textLength = 2;
+                _current++;
+            }
             break;
         case ',':
             lex.type = GrLexemeType.comma;
@@ -1028,17 +1036,17 @@ package final class GrLexer {
 
 /// Returns a displayable version of a token type.
 string grGetPrettyLexemeType(GrLexemeType operator) {
-    string[] lexemeTypeStrTable = [
-        "[", "]", "(", ")", "{", "}", "<<", ">>", ".", ";", ":", ",", "@", "&",
-        "as", "is", "try", "catch", "raise", "defer", "=", "+=", "-=", "*=",
-        "/=", "~=", "%=", "**=", "+", "-", "+", "-", "*", "/", "~", "%", "**",
-        "==", "!=", ">=", ">", "<=", "<", "and", "or", "xor", "not", "++",
-        "--", "identifier", "const_int", "const_float", "const_bool", "const_str",
-        "null", "pub", "main", "type", "event", "class", "enum", "new",
-        "copy", "send", "receive", "int", "float", "bool", "string", "array",
-        "func", "task", "chan", "let", "if", "unless", "else", "switch",
-        "select", "case", "while", "do", "until", "for", "loop", "return",
-        "self", "kill", "killall", "yield", "break", "continue"
+    immutable string[] lexemeTypeStrTable = [
+        "[", "]", "(", ")", "{", "}", "<<", ">>", ".", ";", ":", "::", ",",
+        "@", "&", "as", "is", "try", "catch", "raise", "defer", "=", "+=",
+        "-=", "*=", "/=", "~=", "%=", "**=", "+", "-", "+", "-", "*", "/", "~",
+        "%", "**", "==", "!=", ">=", ">", "<=", "<", "and", "or", "xor",
+        "not", "++", "--", "identifier", "const_int", "const_float", "const_bool",
+        "const_str", "null", "pub", "main", "type", "event", "class", "enum",
+        "new", "copy", "send", "receive", "int", "float", "bool", "string",
+        "array", "func", "task", "chan", "let", "if", "unless", "else",
+        "switch", "select", "case", "while", "do", "until", "for", "loop",
+        "return", "self", "kill", "killall", "yield", "break", "continue"
     ];
     return lexemeTypeStrTable[operator];
 }

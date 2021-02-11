@@ -62,6 +62,7 @@ private string[] instructions = [
     "inc.i", "inc.f",
     "dec.i", "dec.f",
     
+    "copy.i", "copy.f", "copy.s", "copy.o",
     "swap.i", "swap.f", "swap.s", "swap.o",
 
     "setup_it",

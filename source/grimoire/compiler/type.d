@@ -273,6 +273,8 @@ final class GrClassDefinition {
     bool isPublic;
     /// The file where the type is declared.
     uint fileId;
+    /// Is the declaration of the class already parsed ?
+    bool isParsed;
 }
 
 /// Create a GrType of class for the type system.

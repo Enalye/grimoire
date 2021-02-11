@@ -61,6 +61,7 @@ enum GrOpcode {
     increment_int, increment_float,
     decrement_int, decrement_float,
 
+    copy_int, copy_float, copy_string, copy_object,
     swap_int, swap_float, swap_string, swap_object,
 
     setupIterator,
