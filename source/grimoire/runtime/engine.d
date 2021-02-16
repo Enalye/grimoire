@@ -432,7 +432,7 @@ class GrEngine {
                         else {
                             context.istackPos--;
                             context.ostackPos--;
-                            raise(context, "Channel not owned");
+                            raise(context, "ChannelError");
                         }
                     }
                     else if (chan.canSend) {
@@ -464,7 +464,7 @@ class GrEngine {
                         else {
                             context.fstackPos--;
                             context.ostackPos--;
-                            raise(context, "Channel not owned");
+                            raise(context, "ChannelError");
                         }
                     }
                     else if (chan.canSend) {
@@ -496,7 +496,7 @@ class GrEngine {
                         else {
                             context.sstackPos--;
                             context.ostackPos--;
-                            raise(context, "Channel not owned");
+                            raise(context, "ChannelError");
                         }
                     }
                     else if (chan.canSend) {
@@ -528,7 +528,7 @@ class GrEngine {
                         }
                         else {
                             context.ostackPos -= 2;
-                            raise(context, "Channel not owned");
+                            raise(context, "ChannelError");
                         }
                     }
                     else if (chan.canSend) {
@@ -560,7 +560,7 @@ class GrEngine {
                         }
                         else {
                             context.ostackPos--;
-                            raise(context, "Channel not owned");
+                            raise(context, "ChannelError");
                         }
                     }
                     else if (chan.canReceive) {
@@ -595,7 +595,7 @@ class GrEngine {
                         }
                         else {
                             context.ostackPos--;
-                            raise(context, "Channel not owned");
+                            raise(context, "ChannelError");
                         }
                     }
                     else if (chan.canReceive) {
@@ -630,7 +630,7 @@ class GrEngine {
                         }
                         else {
                             context.ostackPos--;
-                            raise(context, "Channel not owned");
+                            raise(context, "ChannelError");
                         }
                     }
                     else if (chan.canReceive) {
@@ -665,7 +665,7 @@ class GrEngine {
                         }
                         else {
                             context.ostackPos--;
-                            raise(context, "Channel not owned");
+                            raise(context, "ChannelError");
                         }
                     }
                     else if (chan.canReceive) {
@@ -962,7 +962,7 @@ class GrEngine {
                     break;
                 case fieldLoad:
                     if (!context.ostack[context.ostackPos]) {
-                        raise(context, "null object");
+                        raise(context, "NullError");
                         break;
                     }
                     context.ostack[context.ostackPos] = cast(void*)((cast(GrObject) context.ostack[context.ostackPos])
@@ -980,7 +980,7 @@ class GrEngine {
                     break;
                 case fieldLoad_int:
                     if (!context.ostack[context.ostackPos]) {
-                        raise(context, "null object");
+                        raise(context, "NullError");
                         break;
                     }
                     context.istackPos++;
@@ -993,7 +993,7 @@ class GrEngine {
                     break;
                 case fieldLoad_float:
                     if (!context.ostack[context.ostackPos]) {
-                        raise(context, "null object");
+                        raise(context, "NullError");
                         break;
                     }
                     context.fstackPos++;
@@ -1006,7 +1006,7 @@ class GrEngine {
                     break;
                 case fieldLoad_string:
                     if (!context.ostack[context.ostackPos]) {
-                        raise(context, "null object");
+                        raise(context, "NullError");
                         break;
                     }
                     context.sstackPos++;
@@ -1019,7 +1019,7 @@ class GrEngine {
                     break;
                 case fieldLoad_object:
                     if (!context.ostack[context.ostackPos]) {
-                        raise(context, "null object");
+                        raise(context, "NullError");
                         break;
                     }
                     context.ostack[context.ostackPos] = (cast(GrObject) context.ostack[context.ostackPos])
@@ -1334,21 +1334,37 @@ class GrEngine {
                     context.pc++;
                     break;
                 case divide_int:
+                    if(context.istack[context.istackPos] == 0) {
+                        raise(context, "ZeroDivisionError");
+                        break;
+                    }
                     context.istackPos--;
                     context.istack[context.istackPos] /= context.istack[context.istackPos + 1];
                     context.pc++;
                     break;
                 case divide_float:
+                    if(context.fstack[context.fstackPos] == 0f) {
+                        raise(context, "ZeroDivisionError");
+                        break;
+                    }
                     context.fstackPos--;
                     context.fstack[context.fstackPos] /= context.fstack[context.fstackPos + 1];
                     context.pc++;
                     break;
                 case remainder_int:
+                    if(context.istack[context.istackPos] == 0) {
+                        raise(context, "ZeroDivisionError");
+                        break;
+                    }
                     context.istackPos--;
                     context.istack[context.istackPos] %= context.istack[context.istackPos + 1];
                     context.pc++;
                     break;
                 case remainder_float:
+                    if(context.fstack[context.fstackPos] == 0f) {
+                        raise(context, "ZeroDivisionError");
+                        break;
+                    }
                     context.fstackPos--;
                     context.fstack[context.fstackPos] %= context.fstack[context.fstackPos + 1];
                     context.pc++;
@@ -1673,7 +1689,7 @@ class GrEngine {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "Array overflow");
+                        raise(context, "IndexError");
                         break;
                     }
                     context.ostack[context.ostackPos] = &ary.data[idx];
@@ -1687,7 +1703,7 @@ class GrEngine {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "Array overflow");
+                        raise(context, "IndexError");
                         break;
                     }
                     context.ostack[context.ostackPos] = &ary.data[idx];
@@ -1701,7 +1717,7 @@ class GrEngine {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "Array overflow");
+                        raise(context, "IndexError");
                         break;
                     }
                     context.ostack[context.ostackPos] = &ary.data[idx];
@@ -1715,7 +1731,7 @@ class GrEngine {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "Array overflow");
+                        raise(context, "IndexError");
                         break;
                     }
                     context.ostack[context.ostackPos] = &ary.data[idx];
@@ -1729,7 +1745,7 @@ class GrEngine {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "Array overflow");
+                        raise(context, "IndexError");
                         break;
                     }
                     context.istack[context.istackPos] = ary.data[idx];
@@ -1743,7 +1759,7 @@ class GrEngine {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "Array overflow");
+                        raise(context, "IndexError");
                         break;
                     }
                     context.fstackPos++;
@@ -1761,7 +1777,7 @@ class GrEngine {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "Array overflow");
+                        raise(context, "IndexError");
                         break;
                     }
                     context.sstackPos++;
@@ -1779,7 +1795,7 @@ class GrEngine {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "Array overflow");
+                        raise(context, "IndexError");
                         break;
                     }
                     context.istackPos--;
@@ -1793,7 +1809,7 @@ class GrEngine {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "Array overflow");
+                        raise(context, "IndexError");
                         break;
                     }
                     context.istack[context.istackPos] = ary.data[idx];
@@ -1807,7 +1823,7 @@ class GrEngine {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "Array overflow");
+                        raise(context, "IndexError");
                         break;
                     }
                     context.istackPos--;
@@ -1823,7 +1839,7 @@ class GrEngine {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "Array overflow");
+                        raise(context, "IndexError");
                         break;
                     }
                     context.istackPos--;
@@ -1839,7 +1855,7 @@ class GrEngine {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "Array overflow");
+                        raise(context, "IndexError");
                         break;
                     }
                     context.istackPos--;
