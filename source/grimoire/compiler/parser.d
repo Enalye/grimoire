@@ -5085,20 +5085,20 @@ final class GrParser {
                     typeStack ~= currentType;
                 }
                 break;
-            case colon:
+            case doubleColon:
                 advance();
                 if (!hadValue)
                     logError("Empty method call", "Cannot call a function on nothing");
                 if (get().type != GrLexemeType.identifier)
                     logError("Missing identifier", "Expecting a function name");
 
-                GrType selfValue = grVoid;
-                selfValue = typeStack[$ - 1];
+                GrType selfType = grVoid;
+                selfType = typeStack[$ - 1];
                 typeStack.length--;
                 hadValue = false;
 
                 GrVariable lvalue;
-                currentType = parseIdentifier(lvalue, lastType, selfValue, isExpectingLValue);
+                currentType = parseIdentifier(lvalue, lastType, selfType, isExpectingLValue);
                 //Unpack function value for 1 or less return values
                 //Multiples values are left as a tuple for parseExpressionList()
                 if (currentType.baseType == GrBaseType.internalTuple) {
@@ -5352,73 +5352,81 @@ final class GrParser {
                 if (!hasField)
                     logError("Unknown field", "\'" ~ identifier ~ "\' is not declared", -1);
                 break;
-            case doubleColon:
-                if (currentType.baseType != GrBaseType.class_)
-                    logError("Field operator error", "It's not a class type");
+            case colon:
+                const size_t methodCallPos = current;
                 checkAdvance();
+                if (!hadValue)
+                    logError("Empty method call", "Cannot call a function on nothing");
                 GrType selfType = currentType;
                 if (get().type != GrLexemeType.identifier)
                     logError("Missing identifier", "Missing field name after the \'.\'");
                 const string identifier = get().svalue;
                 checkAdvance();
-                GrClassDefinition class_ = _data.getClass(currentType.mangledType, get().fileId);
-                if (!class_)
-                    logError("Unknown class", "\'" ~ currentType.mangledType ~ "\' is not declared");
-                const auto nbFields = class_.signature.length;
                 bool hasField;
-                for (int i; i < nbFields; i++) {
-                    if (identifier == class_.fields[i]) {
-                        if ((class_.fieldsInfo[i].fileId != fileId)
-                                && !class_.fieldsInfo[i].isPublic)
-                            logError("Cannot access field", "\'" ~ identifier ~ "\' is private",
-                                    -1);
-                        hasField = true;
-                        currentType = class_.signature[i];
-                        currentType.isField = true;
-                        GrVariable fieldLValue = new GrVariable;
-                        fieldLValue.isInitialized = true;
-                        fieldLValue.isField = true;
-                        fieldLValue.type = currentType;
-                        fieldLValue.register = i;
 
-                        if (hadLValue)
-                            lvalues.length--;
+                if (currentType.baseType == GrBaseType.class_) {
+                    GrClassDefinition class_ = _data.getClass(currentType.mangledType,
+                            get().fileId);
+                    if (!class_)
+                        logError("Unknown class",
+                                "\'" ~ currentType.mangledType ~ "\' is not declared");
+                    const auto nbFields = class_.signature.length;
+                    for (int i; i < nbFields; i++) {
+                        if (identifier == class_.fields[i]) {
+                            if ((class_.fieldsInfo[i].fileId != fileId)
+                                    && !class_.fieldsInfo[i].isPublic)
+                                logError("Cannot access field",
+                                        "\'" ~ identifier ~ "\' is private", -1);
+                            hasField = true;
+                            currentType = class_.signature[i];
+                            currentType.isField = true;
+                            GrVariable fieldLValue = new GrVariable;
+                            fieldLValue.isInitialized = true;
+                            fieldLValue.isField = true;
+                            fieldLValue.type = currentType;
+                            fieldLValue.register = i;
 
-                        if (hadValue)
-                            typeStack[$ - 1] = currentType;
-                        else
-                            typeStack ~= currentType;
+                            if (hadLValue)
+                                lvalues.length--;
 
-                        hasValue = true;
-                        hadValue = false;
-                        hasLValue = true;
-                        hadLValue = false;
+                            if (hadValue)
+                                typeStack[$ - 1] = currentType;
+                            else
+                                typeStack ~= currentType;
 
-                        addInstruction(GrOpcode.copy_object);
-                        addLoadFieldInstruction(currentType, fieldLValue.register, false);
-                        currentType = parseAnonymousCall(typeStack[$ - 1], selfType);
-                        //Unpack function value for 1 or less return values
-                        //Multiples values are left as a tuple for parseExpressionList()
-                        if (currentType.baseType == GrBaseType.internalTuple) {
-                            auto types = grUnpackTuple(currentType);
-                            if (!types.length)
-                                currentType = grVoid;
-                            else if (types.length == 1uL)
-                                currentType = types[0];
-                        }
-                        if (currentType.baseType == GrBaseType.void_) {
-                            typeStack.length--;
-                        }
-                        else {
-                            hadValue = false;
                             hasValue = true;
-                            typeStack[$ - 1] = currentType;
+                            hadValue = false;
+                            hasLValue = true;
+                            hadLValue = false;
+
+                            addInstruction(GrOpcode.copy_object);
+                            addLoadFieldInstruction(currentType, fieldLValue.register, false);
+                            currentType = parseAnonymousCall(typeStack[$ - 1], selfType);
+                            //Unpack function value for 1 or less return values
+                            //Multiples values are left as a tuple for parseExpressionList()
+                            if (currentType.baseType == GrBaseType.internalTuple) {
+                                auto types = grUnpackTuple(currentType);
+                                if (!types.length)
+                                    currentType = grVoid;
+                                else if (types.length == 1uL)
+                                    currentType = types[0];
+                            }
+                            if (currentType.baseType == GrBaseType.void_) {
+                                typeStack.length--;
+                            }
+                            else {
+                                hadValue = false;
+                                hasValue = true;
+                                typeStack[$ - 1] = currentType;
+                            }
+                            break;
                         }
-                        break;
                     }
                 }
-                if (!hasField)
-                    logError("Unknown field", "\'" ~ identifier ~ "\' is not declared", -1);
+                if (!hasField) {
+                    current = methodCallPos;
+                    goto case doubleColon;
+                }
                 break;
             case pointer:
                 currentType = parseFunctionPointer(currentType);
@@ -5689,16 +5697,22 @@ final class GrParser {
                             GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_PARENTHESIS
                             | GR_SUBEXPR_EXPECTING_VALUE).type;
                     signature ~= convertType(subType, anonSignature[i], fileId);
-                    if (get().type == GrLexemeType.rightParenthesis)
+                    if (get().type == GrLexemeType.rightParenthesis) {
+                        checkAdvance();
                         break;
+                    }
                     advance();
                     i++;
                 }
             }
+            else {
+                checkAdvance();
+            }
         }
         if (signature.length != anonSignature.length)
-            logError("Invalid function call", "The signature does not match");
-        checkAdvance();
+            logError("Invalid function call", "Cannot call function \'" ~ grGetPrettyFunctionCall("",
+                    anonSignature) ~ "\' with parameters \'" ~ grGetPrettyFunctionCall("",
+                    signature) ~ "\'");
 
         //Push the values on the global stack for task spawning.
         if (type.baseType == GrBaseType.task)
@@ -5722,7 +5736,7 @@ final class GrParser {
 
     /// Parse an identifier or function call and return the deduced return type and lvalue.
     private GrType parseIdentifier(ref GrVariable variable, GrType expectedType,
-            GrType selfValue = grVoid, bool isAssignment = false) {
+            GrType selfType = grVoid, bool isAssignment = false) {
         GrType returnType = GrBaseType.void_;
         const GrLexeme identifier = get();
         bool isFunctionCall = false, isMethodCall = false, hasParenthesis = false;
@@ -5732,7 +5746,7 @@ final class GrParser {
 
         advance();
 
-        if (selfValue.baseType != GrBaseType.void_) {
+        if (selfType.baseType != GrBaseType.void_) {
             isMethodCall = true;
             isFunctionCall = true;
         }
@@ -5766,7 +5780,7 @@ final class GrParser {
                 GrType[] anonSignature = grUnmangleSignature(var.type.mangledType);
                 int i;
                 if (isMethodCall) {
-                    signature ~= convertType(selfValue, anonSignature[i], fileId);
+                    signature ~= convertType(selfType, anonSignature[i], fileId);
                     i++;
                 }
                 if (hasParenthesis && get().type != GrLexemeType.rightParenthesis) {
@@ -5830,10 +5844,10 @@ final class GrParser {
             }
             else {
                 if (isMethodCall) {
-                    if (selfValue.baseType == GrBaseType.internalTuple)
-                        signature ~= grUnpackTuple(selfValue);
+                    if (selfType.baseType == GrBaseType.internalTuple)
+                        signature ~= grUnpackTuple(selfType);
                     else
-                        signature ~= selfValue;
+                        signature ~= selfType;
                 }
                 //Signature parsing, no coercion is made
                 if (hasParenthesis && get().type != GrLexemeType.rightParenthesis) {
