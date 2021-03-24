@@ -111,6 +111,11 @@ GrType grArray(GrType subType) {
     return GrType(GrBaseType.array_, grMangleFunction([subType]));
 }
 
+/// Returns a channel GrType of `subType` subtype.
+GrType grChannel(GrType subType) {
+    return GrType(GrBaseType.chan, grMangleFunction([subType]));
+}
+
 /// Pack multiple types as a single one.
 package GrType grPackTuple(GrType[] types) {
     const string mangledName = grMangleFunction(types);
@@ -150,6 +155,8 @@ package class GrVariable {
     bool isPublic;
     /// The file where the variable is declared.
     uint fileId;
+    /// Position information in case of errors.
+    uint lexPosition;
 }
 
 /// Define an arbitrary D pointer.

@@ -511,6 +511,16 @@ string grGetPrettyType(GrType variableType) {
     case foreign:
         return to!string(variableType.mangledType);
     case internalTuple:
-        throw new Exception("Trying to display a tuple. Tuples should not exist here.");
+        string result = "(";
+        int i;
+        auto parameters = grUnmangleSignature(variableType.mangledType);
+        foreach(parameter; parameters) {
+            result ~= grGetPrettyType(parameter);
+            if((i + 2) <= parameters.length)
+                result ~= ", ";
+            i ++;
+        }
+        result ~= ")";
+        return result;
     }
 }

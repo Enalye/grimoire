@@ -129,7 +129,7 @@ struct GrLexeme {
         /// Parent lexer.
         GrLexer lexer;
 
-        /// Id of the _file the token is in.
+        /// Id of the file the token is in.
         uint _fileId;
 
         /// Position information in case of errors.
@@ -273,6 +273,12 @@ package final class GrLexer {
         if (lex._fileId >= _filesImported.length)
             raiseError("Lexeme file id out of bounds");
         return _filesImported[lex._fileId];
+    }
+    /// Ditto
+    package string getFile(size_t fileId) {
+        if (fileId >= _filesImported.length)
+            raiseError("file id out of bounds");
+        return _filesImported[fileId];
     }
 
     private dchar get(int offset = 0) {
