@@ -36,7 +36,7 @@ final class GrParser {
         uint scopeLevel;
 
         GrVariable[] globalVariables;
-        GrFunction[] functionsQueue, functions, events;
+        GrFunction[] instanciatedFunctions, functionsQueue, functions, events;
         GrFunction[] anonymousFunctions;
         GrTemplateFunction[] templatedFunctions;
 
@@ -123,7 +123,7 @@ final class GrParser {
     private GrLexeme get(int offset = 0) {
         const uint position = current + offset;
         if (position < 0 || position >= cast(uint) lexemes.length) {
-            logError("unexpected end of file", "unexpected end of file");
+            logError("reached the end of the file", "unexpected end of file");
         }
         return lexemes[position];
     }
@@ -271,7 +271,7 @@ final class GrParser {
         case reference:
         case null_:
         case void_:
-            logError("cannot define a variable of type " ~ grGetPrettyType(variable.type),
+            logError("can't define a variable of type " ~ grGetPrettyType(variable.type),
                     "invalid type");
             break;
         }
@@ -325,7 +325,7 @@ final class GrParser {
 
     private void endGlobalScope() {
         if (!functionStack.length)
-            logError("Global Scope", "Global scope mismatch");
+            throw new Exception("global scope mismatch");
 
         currentFunction = functionStack[$ - 1];
         functionStack.length--;
@@ -424,7 +424,7 @@ final class GrParser {
         currentFunction.offset += prependInstructionCount;
 
         if (!functionStack.length)
-            logError("Missing symbol", "A `}` is missing, causing a mismatch");
+            throw new Exception("attempting to close a non-existing function");
 
         currentFunction = functionStack[$ - 1];
         functionStack.length--;
@@ -432,7 +432,7 @@ final class GrParser {
 
     private void preEndFunction() {
         if (!functionStack.length)
-            logError("Missing symbol", "A `}` is missing, causing a mismatch");
+            throw new Exception("attempting to close a non-existing function");
         currentFunction = functionStack[$ - 1];
         functionStack.length--;
     }
@@ -442,7 +442,7 @@ final class GrParser {
             final switch (type.baseType) with (GrBaseType) {
             case void_:
             case null_:
-                logError("cannot use `" ~ grGetPrettyType(type) ~ "` as a parameter type",
+                logError("can't use `" ~ grGetPrettyType(type) ~ "` as a parameter type",
                         "invalid parameter type");
                 break;
             case int_:
@@ -474,7 +474,7 @@ final class GrParser {
                     addInstruction(GrOpcode.globalPop_object, 0u);
                 break;
             case internalTuple:
-                throw new Exception("Tuples should not exist here.");
+                throw new Exception("tuples are not allowed here");
             }
 
             GrVariable newVar = new GrVariable;
@@ -504,43 +504,48 @@ final class GrParser {
         return null;
     }
 
-    GrFunction getFunction(string name, GrType[] signature, uint fileId = 0,
-            bool isPublic = false, GrType[] templateList = []) {
+    GrFunction getFunction(string name, GrType[] signature, uint fileId = 0, bool isPublic = false) {
         const string mangledName = grMangleNamedFunction(name, signature);
         foreach (GrFunction func; functions) {
             if (func.mangledName == mangledName && (func.fileId == fileId
                     || func.isPublic || isPublic)) {
-                if (func.templateSignature == templateList)
-                    return func;
+                return func;
             }
         }
         foreach (GrFunction func; functions) {
             if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
-                if (func.templateSignature == templateList
-                        && _data.isSignatureCompatible(signature,
-                            func.inSignature, fileId, isPublic))
+                if (_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic))
                     return func;
             }
         }
         foreach (GrFunction func; functionsQueue) {
             if (func.mangledName == mangledName && (func.fileId == fileId
                     || func.isPublic || isPublic)) {
-                if (func.templateSignature == templateList)
-                    return func;
+                return func;
             }
         }
         foreach (GrFunction func; functionsQueue) {
             if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
-                if (func.templateSignature == templateList
-                        && _data.isSignatureCompatible(signature,
-                            func.inSignature, fileId, isPublic))
+                if (_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic))
                     return func;
             }
         }
-        foreach (GrTemplateFunction temp; templatedFunctions) {
-            if (temp.name == name && (temp.fileId == fileId || temp.isPublic
-                    || isPublic) && temp.templateVariables.length == templateList.length) {
-                GrFunction func = parseTemplatedFunctionDeclaration(temp, templateList);
+        foreach (GrFunction func; instanciatedFunctions) {
+            if (func.mangledName == mangledName && (func.fileId == fileId
+                    || func.isPublic || isPublic)) {
+                functionsQueue ~= func;
+
+                functionStack ~= currentFunction;
+                currentFunction = func;
+                generateFunctionInputs();
+                currentFunction = functionStack[$ - 1];
+                functionStack.length--;
+
+                return func;
+            }
+        }
+        foreach (GrFunction func; instanciatedFunctions) {
+            if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
                 if (_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic)) {
                     functionsQueue ~= func;
 
@@ -606,16 +611,16 @@ final class GrParser {
 
         GrVariable* localVar = (name in currentFunction.localVariables);
         if (localVar is null)
-            logError("Undeclared variable", "`" ~ name ~ "` is not declared", "", -1);
+            logError("`" ~ name ~ "` is not declared", "unknown variable", "", -1);
         return *localVar;
     }
 
     private bool hasVariable(string name, uint fileId) {
-        GrVariable globalVar = getGlobalVariable(name, fileId);
+        const GrVariable globalVar = getGlobalVariable(name, fileId);
         if (globalVar !is null)
             return true;
 
-        GrVariable* localVar = (name in currentFunction.localVariables);
+        const GrVariable* localVar = (name in currentFunction.localVariables);
         if (localVar !is null)
             return true;
         return false;
@@ -643,14 +648,14 @@ final class GrParser {
 
     private void addInstruction(GrOpcode opcode, int value = 0, bool isSigned = false) {
         if (currentFunction is null)
-            logError("Not in function",
-                    "The expression is located outside of a function or task, which is forbidden");
+            throw new Exception(
+                    "the expression is located outside of a function or task, which is forbidden");
 
         GrInstruction instruction;
         instruction.opcode = opcode;
         if (isSigned) {
             if ((value >= 0x800000) || (-value >= 0x800000))
-                logError("Internal failure", "An opcode`s signed value is exceeding limits");
+                throw new Exception("an opcode's signed value is exceeding limits");
             instruction.value = value + 0x800000;
         }
         else
@@ -660,14 +665,14 @@ final class GrParser {
 
     private void addInstructionInFront(GrOpcode opcode, int value = 0, bool isSigned = false) {
         if (currentFunction is null)
-            logError("Not in function",
-                    "The expression is located outside of a function or task, which is forbidden");
+            throw new Exception(
+                    "the expression is located outside of a function or task, which is forbidden");
 
         GrInstruction instruction;
         instruction.opcode = opcode;
         if (isSigned) {
             if ((value >= 0x800000) || (-value >= 0x800000))
-                logError("Internal failure", "An opcode`s signed value is exceeding limits");
+                throw new Exception("an opcode's signed value is exceeding limits");
             instruction.value = value + 0x800000;
         }
         else
@@ -677,17 +682,17 @@ final class GrParser {
 
     private void setInstruction(GrOpcode opcode, uint index, int value = 0u, bool isSigned = false) {
         if (currentFunction is null)
-            logError("Not in function",
-                    "The expression is located outside of a function or task, which is forbidden");
+            throw new Exception(
+                    "the expression is located outside of a function or task, which is forbidden");
 
         if (index >= currentFunction.instructions.length)
-            logError("Internal failure", "An instruction's index is exeeding the function size");
+            throw new Exception("an instruction's index is exeeding the function size");
 
         GrInstruction instruction;
         instruction.opcode = opcode;
         if (isSigned) {
             if ((value >= 0x800000) || (-value >= 0x800000))
-                logError("Internal failure", "An opcode`s signed value is exceeding limits");
+                throw new Exception("an opcode's signed value is exceeding limits");
             instruction.value = value + 0x800000;
         }
         else
@@ -726,8 +731,12 @@ final class GrParser {
         const GrPrimitive primitive = _data.getPrimitive(name, signature);
         if (primitive) {
             addInstruction(GrOpcode.primitiveCall, primitive.index);
-            if (primitive.outSignature.length != 1uL)
-                logError("Return signature error", "An operator can only have one return value");
+            if (primitive.outSignature.length != 1uL) {
+                const string argStr = to!string(primitive.outSignature.length) ~ (
+                        primitive.outSignature.length > 1 ? " return values" : " return value");
+                logError("an operator must have only one return value",
+                        "expected 1 return value, found " ~ argStr);
+            }
             return primitive.outSignature[0];
         }
 
@@ -735,8 +744,12 @@ final class GrParser {
         GrFunction func = getFunction(name, signature, fileId);
         if (func) {
             auto outSignature = addFunctionCall(func, fileId);
-            if (outSignature.length != 1uL)
-                logError("Return signature error", "An operator can only have one return value");
+            if (outSignature.length != 1uL) {
+                const string argStr = to!string(outSignature.length) ~ (outSignature.length > 1
+                        ? " return values" : " return value");
+                logError("an operator must have only one return value",
+                        "expected 1 return value, found " ~ argStr);
+            }
             return outSignature[0];
         }
 
@@ -751,8 +764,12 @@ final class GrParser {
         const GrPrimitive primitive = _data.getPrimitive(name, signature);
         if (primitive) {
             addInstruction(GrOpcode.primitiveCall, primitive.index);
-            if (primitive.outSignature.length != 1uL)
-                logError("Return signature error", "An operator can only have one return value");
+            if (primitive.outSignature.length != 1uL) {
+                const string argStr = to!string(primitive.outSignature.length) ~ (
+                        primitive.outSignature.length > 1 ? " return values" : " return value");
+                logError("an operator must have only one return value",
+                        "expected 1 return value, found " ~ argStr);
+            }
             return primitive.outSignature[0];
         }
 
@@ -760,8 +777,12 @@ final class GrParser {
         GrFunction func = getFunction(name, signature, fileId);
         if (func) {
             auto outSignature = addFunctionCall(func, fileId);
-            if (outSignature.length != 1uL)
-                logError("Return signature error", "An operator can only have one return value");
+            if (outSignature.length != 1uL) {
+                const string argStr = to!string(outSignature.length) ~ (outSignature.length > 1
+                        ? " return values" : " return value");
+                logError("an operator must have only one return value",
+                        "expected 1 return value, found " ~ argStr);
+            }
             return outSignature[0];
         }
 
@@ -772,7 +793,8 @@ final class GrParser {
             const GrType rightType, uint fileId) {
         if (leftType.baseType == GrBaseType.internalTuple
                 || rightType.baseType == GrBaseType.internalTuple)
-            logError("Multiple values operation", "Cannot use an operator on an expression list");
+            logError("can't use an operator on multiple values",
+                    "the expression yields multiple values");
         GrType resultType = GrBaseType.void_;
 
         if (leftType.baseType == GrBaseType.enum_ && rightType.baseType == GrBaseType.enum_
@@ -867,15 +889,17 @@ final class GrParser {
             }
         }
         if (resultType.baseType == GrBaseType.void_)
-            logError("Operator Undefined", "There is no `" ~ grGetPrettyLexemeType(
-                    lexType) ~ "` operator defined for `" ~ grGetPrettyType(
-                    leftType) ~ "` and `" ~ grGetPrettyType(rightType) ~ "`", "", -1);
+            logError("there is no `" ~ grGetPrettyLexemeType(
+                    lexType) ~ "` binary operator defined for `" ~ grGetPrettyType(
+                    leftType) ~ "` and `" ~ grGetPrettyType(rightType) ~ "`",
+                    "unknown operator", "", -1);
         return resultType;
     }
 
     private GrType addUnaryOperator(GrLexemeType lexType, const GrType type, uint fileId) {
         if (type.baseType == GrBaseType.internalTuple)
-            logError("Multiple values operation", "Cannot use an operator on an expression list");
+            logError("can't use an operator on multiple values",
+                    "the expression yields multiple values");
         GrType resultType = GrBaseType.void_;
 
         resultType = addInternalOperator(lexType, type);
@@ -884,8 +908,9 @@ final class GrParser {
         }
 
         if (resultType.baseType == GrBaseType.void_)
-            logError("Operator Undefined", "There is no `" ~ grGetPrettyLexemeType(
-                    lexType) ~ "` operator defined for `" ~ grGetPrettyType(type) ~ "`");
+            logError("there is no `" ~ grGetPrettyLexemeType(
+                    lexType) ~ "` unary operator defined for `" ~ grGetPrettyType(type) ~ "`",
+                    "unknown operator");
         return resultType;
     }
 
@@ -1266,8 +1291,8 @@ final class GrParser {
             case null_:
             case internalTuple:
             case reference:
-                logError("Invalid type",
-                        "Cannot assign to a `" ~ grGetPrettyType(variable.type) ~ "` type");
+                logError("can't assign to a `" ~ grGetPrettyType(variable.type) ~ "` variable",
+                        "the value is not assignable");
             }
             return;
         }
@@ -1277,7 +1302,8 @@ final class GrParser {
             variable.isAuto = false;
             variable.type = valueType;
             if (valueType.baseType == GrBaseType.void_)
-                logError("Variable type error", "Cannot infer the type of variable");
+                logError("can't infer the type of variable",
+                        "the variable has not been initialized");
             else
                 setVariableRegister(variable);
         }
@@ -1314,8 +1340,8 @@ final class GrParser {
             case void_:
             case null_:
             case internalTuple:
-                logError("Invalid type",
-                        "Cannot assign to a `" ~ grGetPrettyType(variable.type) ~ "` type");
+                logError("can't assign to a `" ~ grGetPrettyType(variable.type) ~ "` variable",
+                        "the value is not assignable");
             }
         }
         else if (variable.isGlobal) {
@@ -1347,8 +1373,8 @@ final class GrParser {
             case null_:
             case internalTuple:
             case reference:
-                logError("Invalid type",
-                        "Cannot assign to a `" ~ grGetPrettyType(variable.type) ~ "` type");
+                logError("can't assign to a `" ~ grGetPrettyType(variable.type) ~ "` variable",
+                        "the value is not assignable");
             }
         }
         else {
@@ -1383,8 +1409,8 @@ final class GrParser {
             case null_:
             case internalTuple:
             case reference:
-                logError("Invalid type",
-                        "Cannot assign to a `" ~ grGetPrettyType(variable.type) ~ "` type");
+                logError("can't assign to a `" ~ grGetPrettyType(variable.type) ~ "` variable",
+                        "the value is not assignable");
             }
         }
     }
@@ -1409,7 +1435,7 @@ final class GrParser {
         }
 
         if (variable.isField) {
-            logError("Internal error", "Attempt to get field value");
+            throw new Exception("attempt to get field value");
         }
         else if (variable.isGlobal) {
             final switch (variable.type.baseType) with (GrBaseType) {
@@ -1463,14 +1489,14 @@ final class GrParser {
             case null_:
             case internalTuple:
             case reference:
-                logError("Invalid type",
-                        "Cannot fetch from a `" ~ grGetPrettyType(variable.type) ~ "` type");
+                logError("can't get the value of `" ~ grGetPrettyType(variable.type) ~ "`",
+                        "the value is not fetchable");
             }
         }
         else {
             if (!variable.isInitialized)
-                logError("Uninitialized variable",
-                        "The local variable is being used without being assigned");
+                logError("the local variable is being used without being assigned",
+                        "uninitialized variable");
 
             final switch (variable.type.baseType) with (GrBaseType) {
             case bool_:
@@ -1523,8 +1549,8 @@ final class GrParser {
             case null_:
             case internalTuple:
             case reference:
-                logError("Invalid type",
-                        "Cannot fetch from a `" ~ grGetPrettyType(variable.type) ~ "` type");
+                logError("can't get the value of `" ~ grGetPrettyType(variable.type) ~ "`",
+                        "the value is not fetchable");
             }
         }
     }
@@ -1566,8 +1592,7 @@ final class GrParser {
         return grGetFunctionAsType(func);
     }
 
-    private GrType[] addFunctionCall(string name, GrType[] signature, uint fileId,
-            GrType[] templateList = []) {
+    private GrType[] addFunctionCall(string name, GrType[] signature, uint fileId) {
         GrFunctionCall call = new GrFunctionCall;
         call.name = name;
         call.signature = signature;
@@ -1577,7 +1602,7 @@ final class GrParser {
         call.isAddress = false;
         call.fileId = fileId;
 
-        GrFunction func = getFunction(name, signature, call.fileId, false, templateList);
+        GrFunction func = getFunction(name, signature, call.fileId, false);
         if (func) {
             call.functionToCall = func;
             if (func.isTask) {
@@ -1597,8 +1622,8 @@ final class GrParser {
             return func.outSignature;
         }
         else
-            logError("Undeclared function", "`" ~ grGetPrettyFunctionCall(name,
-                    signature) ~ "` is not declared", "", -1);
+            logError("`" ~ grGetPrettyFunctionCall(name,
+                    signature) ~ "` is not declared", "unknown function", "", -1);
 
         return [];
     }
@@ -1637,7 +1662,7 @@ final class GrParser {
         instruction.opcode = opcode;
         if (isSigned) {
             if ((value >= 0x800000) || (-value >= 0x800000))
-                logError("Internal failure", "An opcode`s signed value is exceeding limits");
+                throw new Exception("an opcode's signed value is exceeding limits");
             instruction.value = value + 0x800000;
         }
         else
@@ -1667,8 +1692,8 @@ final class GrParser {
                     setOpcode(opcodes, call.position, GrOpcode.call, func.position);
             }
             else
-                logError("Undeclared function", "`" ~ grGetPrettyFunctionCall(call.name,
-                        call.signature) ~ "` is not declared");
+                logError("`" ~ grGetPrettyFunctionCall(call.name,
+                        call.signature) ~ "` is not declared", "unknown function");
         }
 
         foreach (func; anonymousFunctions)
@@ -1732,6 +1757,7 @@ final class GrParser {
                 skipDeclaration();
                 break;
             case type_:
+            case template_:
             default:
                 skipExpression();
                 break;
@@ -1765,6 +1791,7 @@ final class GrParser {
             case enum_:
                 skipDeclaration();
                 break;
+            case template_:
             default:
                 skipExpression();
                 break;
@@ -1779,8 +1806,8 @@ final class GrParser {
                 if (class_.signature[i].baseType == GrBaseType.void_) {
                     if (!_data.isClass(class_.signature[i].mangledType, class_.fileId, false)) {
                         set(class_.fieldsInfo[i].position);
-                        logError("Unknown type",
-                                "`" ~ class_.signature[i].mangledType ~ "` is not defined");
+                        logError("`" ~ class_.signature[i].mangledType ~ "` is not defined",
+                                "unknown type");
                     }
                     class_.signature[i].baseType = GrBaseType.class_;
                 }
@@ -1798,13 +1825,14 @@ final class GrParser {
                 GrClassDefinition parentClass = _data.getClass(parent, fileId);
                 if (!parentClass) {
                     set(lastClass.position + 2u);
-                    logError("Unknown class",
-                            "`" ~ class_.name ~ "` cannot inherit from `" ~ parent ~ "`");
+                    logError("`" ~ class_.name ~ "` can't inherit from `" ~ parent ~ "`",
+                            "unknown class");
                 }
                 for (int i; i < usedClasses.length; ++i) {
                     if (parent == usedClasses[i]) {
                         set(lastClass.position + 2u);
-                        logError("Recursive declaration", "`" ~ parent ~ "` is included recursively");
+                        logError("`" ~ parent ~ "` is included recursively",
+                                "recursive inheritence");
                     }
                 }
                 usedClasses ~= parent;
@@ -1818,18 +1846,29 @@ final class GrParser {
             for (int i; i < class_.signature.length; ++i) {
                 for (int y; y < class_.fields.length; ++y) {
                     if (i != y && class_.fields[i] == class_.fields[y]) {
-                        set(class_.fieldsInfo[i].position);
-                        logError("Multiple declaration",
-                                "`" ~ class_.fields[i] ~ "` is already declared");
+                        int first;
+                        int second;
+                        if (class_.fieldsInfo[i].position < class_.fieldsInfo[y].position) {
+                            first = i;
+                            second = y;
+                        }
+                        else {
+                            first = y;
+                            second = i;
+                        }
+                        set(class_.fieldsInfo[second].position);
+                        logError("the field `" ~ class_.fields[second] ~ "` is declared multiple times",
+                                "`" ~ class_.fields[second] ~ "` is redefined here",
+                                "", 0, "previous definition of `" ~ class_.fields[first] ~ "`",
+                                class_.fieldsInfo[first].position);
                     }
                 }
                 if (class_.signature[i].baseType != GrBaseType.class_) {
                     for (int y; y < usedClasses.length; ++y) {
                         if (class_.signature[i].mangledType == usedClasses[y]) {
                             set(class_.fieldsInfo[i].position);
-                            logError("Recursive declaration",
-                                    "`" ~ class_.signature[i].mangledType
-                                    ~ "` is included recursively");
+                            logError("`" ~ class_.signature[i].mangledType ~ "` is included recursively",
+                                    "recursive declaration");
                         }
                     }
                 }
@@ -1879,10 +1918,13 @@ final class GrParser {
             case autoType:
             case identifier:
             case type_:
+            case template_:
                 skipExpression();
                 break;
             default:
-                logError("Syntax error", "Global declaration expected");
+                logError("a global declaration is expected",
+                        "a global declaration is expected, found `" ~ grGetPrettyLexemeType(get()
+                            .type) ~ "`");
             }
         }
 
@@ -1906,6 +1948,9 @@ final class GrParser {
             case class_:
             case main_:
                 skipDeclaration();
+                break;
+            case template_:
+                parseTemplateDeclaration(isPublic);
                 break;
             case taskType:
                 if (get(1).type != GrLexemeType.identifier)
@@ -1931,7 +1976,9 @@ final class GrParser {
                 skipExpression();
                 break;
             default:
-                logError("Syntax error", "Global declaration expected");
+                logError("a global declaration is expected",
+                        "a global declaration is expected, found `" ~ grGetPrettyLexemeType(get()
+                            .type) ~ "`");
             }
         }
         endGlobalScope();
@@ -1981,8 +2028,8 @@ final class GrParser {
             else {
                 if (!currentFunction.instructions.length
                         || currentFunction.instructions[$ - 1].opcode != GrOpcode.return_)
-                    logError("Missing return",
-                            "The function is missing a return at the end of the scope");
+                    logError("the function is missing a return at the end of the scope",
+                            "missing `return`");
             }
         }
         closeDeferrableSection();
@@ -1998,29 +2045,35 @@ final class GrParser {
     private void parseTypeAliasDeclaration(bool isPublic) {
         checkAdvance();
         if (get().type != GrLexemeType.identifier)
-            logError("Missing Identifier", "A type alias must be named");
+            logError("expected type alias name, found `" ~ grGetPrettyLexemeType(get()
+                    .type) ~ "`", "missing identifier");
         const string typeAliasName = get().svalue;
         checkAdvance();
         if (get().type != GrLexemeType.assign)
-            logError("Missing =", "This should be an assignment");
+            logError("missing assignment in `type`",
+                    "expected `=`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
         checkAdvance();
         GrType type = parseType(true);
         if (get().type != GrLexemeType.semicolon)
-            logError("Missing ;", "The definition must end with a semicolon");
+            logError("missing semicolon after `type`",
+                    "expected `;`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
 
         if (_data.isTypeDeclared(typeAliasName, get().fileId, isPublic))
-            logError("Multiple type declaration", "`" ~ typeAliasName ~ "` is already declared");
+            logError("the name `" ~ typeAliasName ~ "` is defined multiple times",
+                    "`" ~ typeAliasName ~ "` is already declared");
         _data.addTypeAlias(typeAliasName, type, get().fileId, isPublic);
     }
 
     private void parseEnumDeclaration(bool isPublic) {
         checkAdvance();
         if (get().type != GrLexemeType.identifier)
-            logError("Missing Identifier", "An enum must be named");
+            logError("expected enum name, found `" ~ grGetPrettyLexemeType(get()
+                    .type) ~ "`", "missing identifier");
         const string enumName = get().svalue;
         checkAdvance();
         if (get().type != GrLexemeType.leftCurlyBrace)
-            logError("Missing {", "The enum definition does not have a body");
+            logError("the enum definition does not have a body",
+                    "expected `{`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
         checkAdvance();
 
         string[] fields;
@@ -2030,18 +2083,21 @@ final class GrParser {
                 break;
             }
             if (get().type != GrLexemeType.identifier)
-                logError("Missing Identifier", "An enum field must be named");
+                logError("expected enum field, found `" ~ grGetPrettyLexemeType(get()
+                        .type) ~ "`", "missing identifier");
 
             auto fieldName = get().svalue;
             checkAdvance();
             fields ~= fieldName;
 
             if (get().type != GrLexemeType.semicolon)
-                logError("Missing semicolon", "An enum field must end with a semicolon");
+                logError("missing semicolon after type enum field",
+                        "expected `;`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
             checkAdvance();
         }
         if (_data.isTypeDeclared(enumName, get().fileId, isPublic))
-            logError("Multiple type declaration", "`" ~ enumName ~ "` is already declared");
+            logError("the name `" ~ enumName ~ "` is defined multiple times",
+                    "`" ~ enumName ~ "` is already declared");
         _data.addEnum(enumName, fields, get().fileId, isPublic);
     }
 
@@ -2050,10 +2106,12 @@ final class GrParser {
         const uint fileId = get().fileId;
         const uint declPosition = current;
         if (get().type != GrLexemeType.identifier)
-            logError("Missing Identifier", "struct must have a name");
+            logError("expected class name, found `" ~ grGetPrettyLexemeType(get()
+                    .type) ~ "`", "missing identifier");
         const string className = get().svalue;
         if (_data.isTypeDeclared(className, fileId, isPublic))
-            logError("Multiple type declaration", "`" ~ className ~ "` is already declared");
+            logError("the name `" ~ className ~ "` is defined multiple times",
+                    "`" ~ className ~ "` is already declared");
         _data.registerClass(className, fileId, isPublic, declPosition);
         skipDeclaration();
     }
@@ -2067,7 +2125,8 @@ final class GrParser {
 
             uint[] fieldPositions;
             if (get().type != GrLexemeType.identifier)
-                logError("Missing Identifier", "struct must have a name");
+                logError("expected class name, found `" ~ grGetPrettyLexemeType(get()
+                        .type) ~ "`", "missing identifier");
             const string className = get().svalue;
             string parentClassName;
             checkAdvance();
@@ -2076,12 +2135,14 @@ final class GrParser {
             if (get().type == GrLexemeType.colon) {
                 checkAdvance();
                 if (get().type != GrLexemeType.identifier)
-                    logError("Missing identifier", "the parent class name is missing");
+                    logError("the parent class name is missing",
+                            "expected class name, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
                 parentClassName = get().svalue;
                 checkAdvance();
             }
             if (get().type != GrLexemeType.leftCurlyBrace)
-                logError("Missing {", "the class does not have a body");
+                logError("the class does not have a body",
+                        "expected `{`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
             checkAdvance();
 
             string[] fields;
@@ -2112,7 +2173,8 @@ final class GrParser {
                     }
 
                     if (get().type != GrLexemeType.identifier)
-                        logError("Missing Identifier", "class field must have a name");
+                        logError("expected class field name, found `" ~ grGetPrettyLexemeType(get()
+                                .type) ~ "`", "missing identifier");
 
                     const string fieldName = get().svalue;
                     signature ~= fieldType;
@@ -2124,8 +2186,8 @@ final class GrParser {
                 while (get().type == GrLexemeType.comma);
 
                 if (get().type != GrLexemeType.semicolon)
-                    logError("Missing semicolon",
-                            "A class field declaration must end with a semicolon");
+                    logError("missing semicolon after class field declaration",
+                            "expected `;`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
                 checkAdvance();
 
                 if (get().type == GrLexemeType.rightCurlyBrace) {
@@ -2240,7 +2302,7 @@ final class GrParser {
             string[] temp;
             auto signature = parseInSignature(temp, true);
             if (signature.length > 1)
-                logError("conflicting array signature", "an array can only contain one type of value",
+                logError("an array can only contain one type of value", "conflicting array signature",
                         "try using `" ~ grGetPrettyType(grArray(signature[0])) ~ "` instead", -1);
             currentType.mangledType = grMangleFunction(signature);
             break;
@@ -2263,7 +2325,7 @@ final class GrParser {
             string[] temp;
             GrType[] signature = parseInSignature(temp, true);
             if (signature.length != 1)
-                logError("conflicting channel signature", "a channel can only contain one type of value",
+                logError("a channel can only contain one type of value", "conflicting channel signature",
                         "try using `" ~ grGetPrettyType(grChannel(signature[0])) ~ "` instead", -1);
             currentType.mangledType = grMangleFunction(signature);
             break;
@@ -2389,26 +2451,27 @@ final class GrParser {
 
     private string[] parseTemplateVariables() {
         string[] variables;
-        if (get().type != GrLexemeType.leftAngleBracket)
+        if (get().type != GrLexemeType.lesser)
             return variables;
         checkAdvance();
-        if (get().type == GrLexemeType.rightAngleBracket) {
+        if (get().type == GrLexemeType.greater) {
             checkAdvance();
             return variables;
         }
         for (;;) {
             if (get().type != GrLexemeType.identifier)
-                logError("Missing template name", "An identifier is expected");
+                logError("an identifier is expected", "missing template value");
             variables ~= get().svalue;
             checkAdvance();
 
             const GrLexeme lex = get();
-            if (lex.type == GrLexemeType.rightAngleBracket) {
+            if (lex.type == GrLexemeType.greater) {
                 checkAdvance();
                 break;
             }
             else if (lex.type != GrLexemeType.comma)
-                logError("Missing comma", "Templates should be separated by a comma");
+                logError("template values should be separated by a comma",
+                        "expected `,`, found `" ~ grGetPrettyLexemeType(lex.type) ~ "`");
             checkAdvance();
         }
         return variables;
@@ -2416,23 +2479,24 @@ final class GrParser {
 
     private GrType[] parseTemplateSignature() {
         GrType[] signature;
-        if (get().type != GrLexemeType.leftAngleBracket)
+        if (get().type != GrLexemeType.lesser)
             return signature;
         checkAdvance();
-        if (get().type == GrLexemeType.rightAngleBracket) {
+        if (get().type == GrLexemeType.greater) {
             checkAdvance();
             return signature;
         }
         for (;;) {
             signature ~= parseType();
 
-            GrLexeme lex = get();
-            if (lex.type == GrLexemeType.rightAngleBracket) {
+            const GrLexeme lex = get();
+            if (lex.type == GrLexemeType.greater) {
                 checkAdvance();
                 break;
             }
             else if (lex.type != GrLexemeType.comma)
-                logError("Missing comma", "Types should be separated by a comma");
+                logError("template types should be separated by a comma",
+                        "expected `,`, found `" ~ grGetPrettyLexemeType(lex.type) ~ "`");
             checkAdvance();
         }
         return signature;
@@ -2442,7 +2506,8 @@ final class GrParser {
         GrType[] inSignature;
 
         if (get().type != GrLexemeType.leftParenthesis)
-            logError("Missing symbol", "A signature should always start with `(`");
+            logError("missing parentheses",
+                    "expected `(`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
 
         bool startLoop = true;
         for (;;) {
@@ -2467,14 +2532,16 @@ final class GrParser {
                 if (lex.type == GrLexemeType.rightParenthesis)
                     break;
                 else if (lex.type != GrLexemeType.comma)
-                    logError("Missing symbol", "Either a `,` or a `)` is expected");
+                    logError("parameters should be separated by a comma",
+                            "expected `,`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
             }
             else {
                 //Is it a function type or a function declaration ?
                 if (!asType) {
                     lex = get();
                     if (get().type != GrLexemeType.identifier)
-                        logError("Missing identifier", "An identifier is expected");
+                        logError("expected identifier, found `" ~ grGetPrettyLexemeType(get()
+                                .type) ~ "`", "missing identifier");
                     inputVariables ~= lex.svalue;
                     checkAdvance();
                 }
@@ -2483,7 +2550,8 @@ final class GrParser {
                 if (lex.type == GrLexemeType.rightParenthesis)
                     break;
                 else if (lex.type != GrLexemeType.comma)
-                    logError("Missing symbol", "Either a `,` or a `)` is expected");
+                    logError("parameters should be separated by a comma",
+                            "expected `,`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
             }
         }
         checkAdvance();
@@ -2503,13 +2571,14 @@ final class GrParser {
         for (;;) {
             outSignature ~= parseType();
 
-            GrLexeme lex = get();
+            const GrLexeme lex = get();
             if (lex.type == GrLexemeType.rightParenthesis) {
                 checkAdvance();
                 break;
             }
             else if (lex.type != GrLexemeType.comma)
-                logError("Missing comma", "Types should be separated by a comma");
+                logError("types should be separated by a comma",
+                        "expected `,`, found `" ~ grGetPrettyLexemeType(lex.type) ~ "`");
             checkAdvance();
         }
         return outSignature;
@@ -2517,7 +2586,7 @@ final class GrParser {
 
     private void parseMainDeclaration(bool isPublic) {
         if (isPublic)
-            logError("Unexpected modifier", "main is already public");
+            logError("adding `pub` before `main` is redundant", "main is already public");
         checkAdvance();
         preBeginFunction("main", get().fileId, [], [], false, [], false, false, true);
         skipBlock();
@@ -2526,10 +2595,11 @@ final class GrParser {
 
     private void parseEventDeclaration(bool isPublic) {
         if (isPublic)
-            logError("Unexpected modifier", "An event is always public");
+            logError("adding `pub` before `event` is redundant", "event is already public");
         checkAdvance();
         if (get().type != GrLexemeType.identifier)
-            logError("Missing identifier", "An identifier is expected");
+            logError("expected identifier, found `" ~ grGetPrettyLexemeType(get()
+                    .type) ~ "`", "missing identifier");
         string name = get().svalue;
         string[] inputs;
         checkAdvance();
@@ -2542,7 +2612,8 @@ final class GrParser {
     private void parseTaskDeclaration(bool isPublic) {
         checkAdvance();
         if (get().type != GrLexemeType.identifier)
-            logError("Missing identifier", "An identifier is expected");
+            logError("expected identifier, found `" ~ grGetPrettyLexemeType(get()
+                    .type) ~ "`", "missing identifier");
 
         string name = get().svalue;
         checkAdvance();
@@ -2555,7 +2626,11 @@ final class GrParser {
         temp.fileId = get().fileId;
         temp.isPublic = isPublic;
         temp.lexPosition = current;
-        templatedFunctions ~= temp;
+
+        if (templateVariables.length)
+            templatedFunctions ~= temp;
+        else
+            instanciatedFunctions ~= parseTemplatedFunctionDeclaration(temp, []);
 
         if (get().type == GrLexemeType.leftParenthesis)
             skipParenthesis();
@@ -2572,7 +2647,8 @@ final class GrParser {
         }
         else {
             if (get().type != GrLexemeType.identifier)
-                logError("Missing identifier", "An identifier is expected");
+                logError("expected identifier, found `" ~ grGetPrettyLexemeType(get()
+                        .type) ~ "`", "missing identifier");
             name = get().svalue;
             if (name == "operator") {
                 checkAdvance();
@@ -2580,7 +2656,8 @@ final class GrParser {
                     name = "@op_" ~ grGetPrettyLexemeType(get().type);
                 }
                 else
-                    logError("Invalid Operator", "The specified operator must be valid");
+                    logError("can't override `" ~ grGetPrettyLexemeType(get()
+                            .type) ~ "` operator", "this operator can't be overriden");
             }
         }
         checkAdvance();
@@ -2594,7 +2671,11 @@ final class GrParser {
         temp.fileId = get().fileId;
         temp.isPublic = isPublic;
         temp.lexPosition = current;
-        templatedFunctions ~= temp;
+
+        if (templateVariables.length)
+            templatedFunctions ~= temp;
+        else
+            instanciatedFunctions ~= parseTemplatedFunctionDeclaration(temp, []);
 
         if (get().type == GrLexemeType.leftParenthesis)
             skipParenthesis();
@@ -2603,12 +2684,47 @@ final class GrParser {
         skipBlock();
     }
 
+    private void parseTemplateDeclaration(bool isPublic) {
+        checkAdvance();
+        if (get().type != GrLexemeType.identifier)
+            logError("missing function or task",
+                    "expected a function or task name, found `" ~ grGetPrettyLexemeType(get()
+                        .type) ~ "`");
+        const string name = get().svalue;
+        const uint fileId = get().fileId;
+        checkAdvance();
+
+        if (get().type != GrLexemeType.lesser)
+            logError("missing template signature",
+                    "expected `<`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
+
+        GrType[] templateList = parseTemplateSignature();
+
+        if (!templateList.length)
+            logError("empty template signature", "the template signature can't be empty", "", -1);
+
+        if (get().type != GrLexemeType.semicolon)
+            logError("missing semicolon after template declaration",
+                    "expected `;`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
+        checkAdvance();
+
+        foreach (GrTemplateFunction temp; templatedFunctions) {
+            if (temp.name == name && (temp.fileId == fileId || temp.isPublic)
+                    && temp.templateVariables.length == templateList.length) {
+                GrFunction func = parseTemplatedFunctionDeclaration(temp, templateList);
+                func.isPublic = isPublic;
+                instanciatedFunctions ~= func;
+            }
+        }
+    }
+
     private GrFunction parseTemplatedFunctionDeclaration(GrTemplateFunction temp,
             GrType[] templateList) {
         const auto lastPosition = current;
         current = temp.lexPosition;
 
         for (int i; i < temp.templateVariables.length; ++i) {
+            writeln(grGetPrettyType(templateList[i]), " ", temp.templateVariables[i]);
             _data.addTemplateAlias(temp.templateVariables[i], templateList[i],
                     temp.fileId, temp.isPublic);
         }
@@ -2620,11 +2736,19 @@ final class GrParser {
         if (!temp.isTask) {
             //Return Type.
             if (temp.isConversion) {
-                if (inSignature.length != 1uL)
-                    logError("Invalid format", "A conversion function has to take only 1 parameter");
+                if (inSignature.length != 1uL) {
+                    const string argStr = to!string(inSignature.length) ~ (inSignature.length > 1
+                            ? " parameters" : " parameter");
+                    logError("a conversion must have only one parameter",
+                            "expected 1 parameter, found " ~ argStr);
+                }
                 outSignature = parseOutSignature();
-                if (outSignature.length != 1uL)
-                    logError("Invalid format", "A conversion function can only have 1 return type");
+                if (outSignature.length != 1uL) {
+                    const string argStr = to!string(outSignature.length) ~ (outSignature.length > 1
+                            ? " return values" : " return value");
+                    logError("a conversion must have only one return value",
+                            "expected 1 return value, found " ~ argStr);
+                }
 
                 inSignature ~= outSignature[0];
             }
@@ -2677,8 +2801,8 @@ final class GrParser {
             else {
                 if (!currentFunction.instructions.length
                         || currentFunction.instructions[$ - 1].opcode != GrOpcode.return_)
-                    logError("Missing return",
-                            "The function is missing a return at the end of the scope");
+                    logError("the function is missing a return at the end of the scope",
+                            "missing `return`");
             }
         }
 
@@ -2704,7 +2828,8 @@ final class GrParser {
         if (get().type == GrLexemeType.leftCurlyBrace) {
             isMultiline = true;
             if (!checkAdvance())
-                logError("Unexpected end of file", "Missing }");
+                logError("unexpected end of file",
+                        "expected `}`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
         }
         openBlock();
 
@@ -2796,7 +2921,8 @@ final class GrParser {
 
         if (isMultiline) {
             if (get().type != GrLexemeType.rightCurlyBrace)
-                logError("Missing symbol", "A block should always end with `}`");
+                logError("missing curly braces",
+                        "expected `}`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
             checkAdvance();
         }
         closeBlock();
@@ -2824,7 +2950,8 @@ final class GrParser {
         if (get().type == GrLexemeType.leftCurlyBrace) {
             isMultiline = true;
             if (!checkAdvance())
-                logError("Unexpected end of file", "Missing }");
+                logError("unexpected end of file",
+                        "expected `}`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
         }
         openBlock();
 
@@ -2937,7 +3064,8 @@ final class GrParser {
             }
 
             if (get().type != GrLexemeType.rightCurlyBrace)
-                logError("Missing symbol", "A block should always end with `}`");
+                logError("missing curly braces",
+                        "expected `}`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
             checkAdvance();
         }
         else {
@@ -3033,7 +3161,7 @@ final class GrParser {
 
     private void closeDeferrableSection() {
         if (!currentFunction.deferrableSections.length)
-            logError("missmatched brackets", "missmatched brackets");
+            throw new Exception("attempting to close a non-existing function");
 
         foreach (deferBlock; currentFunction.deferrableSections[$ - 1].deferredBlocks) {
             currentFunction.registeredDeferBlocks ~= deferBlock;
@@ -3045,7 +3173,7 @@ final class GrParser {
 
     private void parseDeferStatement() {
         if (currentFunction.isDeferrableSectionLocked[$ - 1])
-            logError("`defer` inside another `defer`", "cannot `defer` inside another `defer`");
+            logError("`defer` inside another `defer`", "can't `defer` inside another `defer`");
         advance();
 
         //Register the position of the block for a late parsing.
@@ -3065,7 +3193,7 @@ final class GrParser {
         if (currentFunction.isDeferrableSectionLocked[$ - 1]) {
             GrLexemeType type = get().type;
             logError("'" ~ grGetPrettyLexemeType(type) ~ "' inside a defer",
-                    "cannot '" ~ grGetPrettyLexemeType(type) ~ "' inside a defer");
+                    "can't '" ~ grGetPrettyLexemeType(type) ~ "' inside a defer");
         }
     }
 
@@ -3102,7 +3230,7 @@ final class GrParser {
 
     private void closeBreakableSection() {
         if (!breaksJumps.length)
-            logError("missmatched brackets", "missmatched brackets");
+            throw new Exception("attempting to close a non-existing function");
 
         uint[] breaks = breaksJumps[$ - 1];
         breaksJumps.length--;
@@ -3115,7 +3243,7 @@ final class GrParser {
 
     private void parseBreak() {
         if (!breaksJumps.length)
-            logError("`break` outside of a loop", "cannot `break` outside of a loop");
+            logError("`break` outside of a loop", "can't `break` outside of a loop");
 
         checkDeferStatement();
         breaksJumps[$ - 1] ~= cast(uint) currentFunction.instructions.length;
@@ -3131,7 +3259,7 @@ final class GrParser {
 
     private void closeContinuableSection() {
         if (!continuesJumps.length)
-            logError("missmatched brackets", "missmatched brackets");
+            throw new Exception("attempting to close a non-existing function");
 
         uint[] continues = continuesJumps[$ - 1];
         const uint destination = continuesDestinations[$ - 1];
@@ -3149,7 +3277,7 @@ final class GrParser {
 
     private void parseContinue() {
         if (!continuesJumps.length)
-            logError("`continue` outside of a loop", "cannot `continue` outside of a loop");
+            logError("`continue` outside of a loop", "can't `continue` outside of a loop");
 
         checkDeferStatement();
         continuesJumps[$ - 1] ~= cast(uint) currentFunction.instructions.length;
@@ -3175,7 +3303,8 @@ final class GrParser {
                 checkAdvance();
             //Identifier
             if (get().type != GrLexemeType.identifier)
-                logError("Missing identifier", "An identifier is expected");
+                logError("expected identifier, found `" ~ grGetPrettyLexemeType(get()
+                        .type) ~ "`", "missing identifier");
 
             string identifier = get().svalue;
 
@@ -3208,7 +3337,8 @@ final class GrParser {
                 checkAdvance();
             //Identifier
             if (get().type != GrLexemeType.identifier)
-                logError("Missing identifier", "An identifier is expected");
+                logError("expected identifier, found `" ~ grGetPrettyLexemeType(get()
+                        .type) ~ "`", "missing identifier");
 
             string identifier = get().svalue;
 
@@ -3409,7 +3539,7 @@ final class GrParser {
         case void_:
         case null_:
         case internalTuple:
-            logError("a channel cannot be of type `" ~ grGetPrettyType(grChannel(subType)) ~ "`",
+            logError("a channel can't be of type `" ~ grGetPrettyType(grChannel(subType)) ~ "`",
                     "invalid channel type");
         }
         return chanType;
@@ -3775,7 +3905,7 @@ final class GrParser {
         case void_:
         case null_:
         case internalTuple:
-            logError("an array cannot be of type `" ~ grGetPrettyType(grArray(subType)) ~ "`",
+            logError("an array can't be of type `" ~ grGetPrettyType(grArray(subType)) ~ "`",
                     "invalid array type");
             break;
         }
@@ -3833,7 +3963,7 @@ final class GrParser {
         case void_:
         case null_:
         case internalTuple:
-            logError("an array cannot be of type `" ~ grGetPrettyType(grArray(subType)) ~ "`",
+            logError("an array can't be of type `" ~ grGetPrettyType(grArray(subType)) ~ "`",
                     "invalid array type");
             break;
         }
@@ -3941,7 +4071,7 @@ final class GrParser {
                 arity++;
             break;
         default:
-            logError("cannot evaluate the arity of an unknown compound", "arity evaluation error");
+            logError("can't evaluate the arity of an unknown compound", "arity evaluation error");
             break;
         }
 
@@ -4281,8 +4411,8 @@ final class GrParser {
             return dst;
 
         if (src.baseType == GrBaseType.internalTuple || dst.baseType == GrBaseType.internalTuple)
-            logError("mismatched types", "expected `" ~ grGetPrettyType(
-                    dst) ~ "`, found `" ~ grGetPrettyType(src) ~ "`", "", -1);
+            logError("expected `" ~ grGetPrettyType(dst) ~ "`, found `" ~ grGetPrettyType(src) ~ "`",
+                    "mismatched types", "", -1);
 
         if (dst.baseType == GrBaseType.bool_) {
             final switch (src.baseType) with (GrBaseType) {
@@ -4312,8 +4442,8 @@ final class GrParser {
             return dst;
 
         if (!noFail)
-            logError("mismatched types", "expected `" ~ grGetPrettyType(
-                    dst) ~ "`, found `" ~ grGetPrettyType(src) ~ "`", "", -1);
+            logError("expected `" ~ grGetPrettyType(dst) ~ "`, found `" ~ grGetPrettyType(src) ~ "`",
+                    "mismatched types", "", -1);
         return GrType(GrBaseType.void_);
     }
 
@@ -4334,8 +4464,12 @@ final class GrParser {
             if (primitive.isExplicit && !isExplicit)
                 return resultType;
             addInstruction(GrOpcode.primitiveCall, primitive.index);
-            if (primitive.outSignature.length != 1uL)
-                logError("Return signature error", "An operator can only have one return value");
+            if (primitive.outSignature.length != 1uL) {
+                const string argStr = to!string(primitive.outSignature.length) ~ (
+                        primitive.outSignature.length > 1 ? " return values" : " return value");
+                logError("an operator must have only one return value",
+                        "expected 1 return value, found " ~ argStr);
+            }
             resultType = rightType;
         }
 
@@ -4344,33 +4478,40 @@ final class GrParser {
             GrFunction func = getFunction(name, signature, fileId);
             if (func) {
                 const GrType[] outSignature = addFunctionCall(func, fileId);
-                if (outSignature.length != 1uL)
-                    logError("Return signature error", "An operator can only have one return value");
+                if (outSignature.length != 1uL) {
+                    const string argStr = to!string(primitive.outSignature.length) ~ (primitive.outSignature.length > 1
+                            ? " return values" : " return value");
+                    logError("an operator must have only one return value",
+                            "expected 1 return value, found " ~ argStr);
+                }
                 resultType = rightType;
             }
         }
-
         return resultType;
     }
 
     private GrType parseObjectBuilder() {
         if (get().type != GrLexemeType.new_)
-            logError("Missing new", "An object is created with a `new`");
+            logError("expected `new`, found `" ~ grGetPrettyLexemeType(get()
+                    .type) ~ "`", "missing `new`");
         checkAdvance();
         if (get().type != GrLexemeType.identifier)
-            logError("Missing type", "Missing a type name to instanciate");
+            logError("expected class name, found `" ~ grGetPrettyLexemeType(get()
+                    .type) ~ "`", "missing identifier");
         uint fileId = get().fileId;
         GrType classType = parseType(true);
         if (classType.baseType != GrBaseType.class_)
-            logError("Invalid type",
-                    "`" ~ grGetPrettyType(classType) ~ "` is not a class type", "", -1);
+            logError("`" ~ grGetPrettyType(classType) ~ "` is not a class type",
+                    "invalid type", "", -1);
         GrClassDefinition class_ = _data.getClass(classType.mangledType, fileId);
         if (!class_)
-            logError("Unknown class", "`" ~ classType.mangledType ~ "` is not declared", "", -1);
+            logError("`" ~ classType.mangledType ~ "` is not declared", "unknown class", "", -1);
         addInstruction(GrOpcode.new_, cast(uint) class_.index);
 
         bool[] initFields;
+        uint[] lexPositions;
         initFields.length = class_.fields.length;
+        lexPositions.length = class_.fields.length;
 
         // Init
         if (get().type == GrLexemeType.leftCurlyBrace) {
@@ -4389,9 +4530,12 @@ final class GrParser {
                             hasField = true;
 
                             if (initFields[i])
-                                logError("Initialization error",
-                                        "This field is already initialized");
+                                logError("the field `" ~ fieldName ~ "` is initialized multiple times",
+                                        "`" ~ fieldName ~ "` is already initialized",
+                                        "", -1, "previous initialization", lexPositions[i] - 1);
+
                             initFields[i] = true;
+                            lexPositions[i] = current;
 
                             GrVariable fieldLValue = new GrVariable;
                             fieldLValue.isInitialized = false;
@@ -4407,10 +4551,11 @@ final class GrParser {
                         }
                     }
                     if (!hasField)
-                        logError("Initialization error", "This field does not exists");
+                        logError("the field `" ~ fieldName ~ "` doesn't exist", "unknown field");
                 }
                 else {
-                    logError("Initialization error", "Expecting an object's field name here");
+                    logError("expected field name, found `" ~ grGetPrettyLexemeType(get()
+                            .type) ~ "`", "missing field");
                 }
             }
         }
@@ -4454,15 +4599,18 @@ final class GrParser {
             string[] temp;
             auto signature = parseInSignature(temp, true);
             if (signature.length > 1)
-                logError("Array type error", "Arrays can only have one type");
+                logError("an array can only contain one type of value", "conflicting array signature",
+                        "try using `" ~ grGetPrettyType(grArray(signature[0])) ~ "` instead", -1);
             subType = signature[0];
             arrayType.mangledType = grMangleFunction(signature);
             if (subType.baseType == GrBaseType.void_)
-                logError("Array type error", "Array can not be of type void");
+                logError("an array can't be of type `" ~ grGetPrettyType(arrayType) ~ "`",
+                        "invalid array type");
         }
 
         if (get().type != GrLexemeType.leftBracket)
-            logError("Missing [", "Missing [");
+            logError("missing brackets after `" ~ grGetPrettyType(arrayType) ~ "`",
+                    "expected `[`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
         advance();
 
         int arraySize;
@@ -4473,7 +4621,8 @@ final class GrParser {
                         GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA).type;
                 arrayType.mangledType = grMangleFunction([subType]);
                 if (subType.baseType == GrBaseType.void_)
-                    logError("Array type error", "Array can not be of type void");
+                    logError("an array can't be of type `" ~ grGetPrettyType(arrayType) ~ "`",
+                            "invalid array type");
             }
             else {
                 convertType(parseSubExpression(GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA)
@@ -4484,7 +4633,8 @@ final class GrParser {
             if (get().type == GrLexemeType.rightBracket)
                 break;
             if (get().type != GrLexemeType.comma)
-                logError("Missing comma or ]", "bottom text");
+                logError("indexes should be separated by a comma",
+                        "expected `,`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
             checkAdvance();
         }
 
@@ -4512,7 +4662,8 @@ final class GrParser {
         case void_:
         case null_:
         case internalTuple:
-            logError("Array Error", "Cannot build an array of this type");
+            logError("an array can't be of type `" ~ grGetPrettyType(grArray(subType)) ~ "`",
+                    "invalid array type");
             break;
         }
         advance();
@@ -4521,17 +4672,15 @@ final class GrParser {
 
     private GrType parseArrayIndex(GrType arrayType) {
         const uint fileId = get().fileId;
-        if (get().type != GrLexemeType.leftBracket)
-            logError("Missing [", "Missing [");
         advance();
 
         for (;;) {
             if (get().type == GrLexemeType.comma)
-                logError("Missing value", "bottom text");
+                logError("an index is expected, found `,`", "missing value");
             auto index = parseSubExpression(
                     GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA).type;
             if (index.baseType == GrBaseType.void_)
-                logError("Syntax Error", "right there");
+                logError("expected `int`, found nothing", "missing value");
             convertType(index, grInt, fileId);
 
             if (get().type == GrLexemeType.rightBracket) {
@@ -4562,21 +4711,25 @@ final class GrParser {
                     case void_:
                     case null_:
                     case internalTuple:
-                        logError("Array Error", "Cannot index an array of this type");
+                        logError("an array can't be of type `" ~ grGetPrettyType(grArray(subType)) ~ "`",
+                                "invalid array type");
                         break;
                     }
                     arrayType = subType;
                     break;
                 default:
-                    logError("Invalid array type", "Can only index array or variant value");
+                    logError("invalid array type",
+                            "expected `array`, found `" ~ grGetPrettyType(arrayType) ~ "`");
                 }
                 break;
             }
             if (get().type != GrLexemeType.comma)
-                logError("Missing comma or ]", "bottom text");
+                logError("indexes should be separated by a comma",
+                        "expected `,`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
             checkAdvance();
             if (get().type == GrLexemeType.rightBracket)
-                logError("Missing comma or ]", "bottom text");
+                logError("indexes should be separated by a comma",
+                        "expected `,`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
 
             switch (arrayType.baseType) with (GrBaseType) {
             case array_:
@@ -4605,13 +4758,15 @@ final class GrParser {
                 case void_:
                 case null_:
                 case internalTuple:
-                    logError("Array Error", "Cannot index an array of this type");
+                    logError("an array can't be of type `" ~ grGetPrettyType(arrayType) ~ "`",
+                            "invalid array type");
                     break;
                 }
                 arrayType = subType;
                 break;
             default:
-                logError("Invalid array type", "Can only index array or variant value");
+                logError("invalid array type",
+                        "expected `array`, found `" ~ grGetPrettyType(arrayType) ~ "`");
             }
         }
         advance();
@@ -4627,7 +4782,7 @@ final class GrParser {
     private GrType parseConversionOperator(GrType[] typeStack) {
         const uint fileId = get().fileId;
         if (!typeStack.length)
-            logError("Conversion Error", "You can only convert a value");
+            logError("no value to convert", "missing value");
         advance();
         auto asType = parseType();
         convertType(typeStack[$ - 1], asType, fileId, false, true);
@@ -4639,7 +4794,8 @@ final class GrParser {
     private GrVariable parseLValue() {
         const uint fileId = get().fileId;
         if (get().type != GrLexemeType.identifier)
-            logError("Missing lvalue", "Missing lvalue");
+            logError("expected variable, found `" ~ grGetPrettyLexemeType(get()
+                    .type) ~ "`", "missing variable");
 
         const string identifierName = get().svalue;
 
@@ -4653,7 +4809,8 @@ final class GrParser {
         if (globalLValue !is null)
             return globalLValue;
 
-        logError("Missing lvalue", "Missing lvalue");
+        logError("expected variable, found `" ~ grGetPrettyLexemeType(get()
+                .type) ~ "`", "missing variable");
         return null;
     }
 
@@ -4693,7 +4850,8 @@ final class GrParser {
                     checkAdvance();
                 //Identifier
                 if (get().type != GrLexemeType.identifier)
-                    logError("Missing identifier", "An identifier is expected");
+                    logError("expected identifier, found `" ~ grGetPrettyLexemeType(get()
+                            .type) ~ "`", "missing identifier");
                 lvalues ~= parseSubExpression(
                         GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_ASSIGN
                         | GR_SUBEXPR_EXPECTING_LVALUE).lvalue;
@@ -4718,7 +4876,7 @@ final class GrParser {
             if (type.baseType == GrBaseType.internalTuple) {
                 auto types = grUnpackTuple(type);
                 if (!types.length)
-                    logError("Empty return value", "Cannot return a void value");
+                    logError("the expression yields no value", "expected value, found nothing");
                 else {
                     foreach (subType; types)
                         expressionTypes ~= subType;
@@ -4731,7 +4889,8 @@ final class GrParser {
             checkAdvance();
         }
         if (get().type != GrLexemeType.semicolon)
-            logError("Missing semicolon", "An expression list must be finished with a ;");
+            logError("missing semicolon after expression list",
+                    "expected `;`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
         checkAdvance();
         return expressionTypes;
     }
@@ -4744,9 +4903,12 @@ final class GrParser {
             advance();
             GrType[] expressionTypes = parseExpressionList();
 
-            if (expressionTypes.length > lvalues.length)
-                logError("Exceeding number of expressions",
-                        "Cannot assign more values than identifiers");
+            if (expressionTypes.length > lvalues.length) {
+                const string argStr = to!string(lvalues.length) ~ (lvalues.length > 1
+                        ? " variables" : " variable");
+                logError("trying to assign `" ~ to!string(expressionTypes.length) ~ "` values to " ~ argStr,
+                        "there are more values than variable to assign to");
+            }
 
             int variableIndex = to!int(lvalues.length) - 1;
             int expressionIndex = to!int(expressionTypes.length) - 1;
@@ -4786,7 +4948,7 @@ final class GrParser {
                 expressionIndex--;
             }
             if (skippedLvalues.length)
-                logError("Assignment List", "First element cannot be empty");
+                logError("first value of an assignment list can't be empty", "missing value");
             break;
         case semicolon:
             advance();
@@ -4794,16 +4956,16 @@ final class GrParser {
             if (isInitialization) {
                 foreach (lvalue; lvalues) {
                     if (lvalue.isAuto)
-                        logError("Missing initialization",
-                                "Cannot infer the type for initialization");
+                        logError("can't infer the type without assignment",
+                                "missing type information or initial value");
                     addDefaultValue(lvalue.type, fileId);
                     addSetInstruction(lvalue, fileId, lvalue.type);
                 }
             }
             break;
         default:
-            logError("Invalid symbol",
-                    "A declaration must either be terminated by a ; or assigned with =");
+            logError("missing semicolon after assignment list",
+                    "expected `;`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
         }
     }
 
@@ -4852,10 +5014,11 @@ final class GrParser {
             endFunction();
             break;
         case array_:
-            GrType[] subArrayTypes = grUnmangleSignature(type.mangledType);
-            if (subArrayTypes.length != 1)
-                logError("Array type error", "Arrays can only have one type");
-            final switch (subArrayTypes[0].baseType) with (GrBaseType) {
+            GrType[] subTypes = grUnmangleSignature(type.mangledType);
+            if (subTypes.length != 1)
+                logError("an array can only contain one type of value", "conflicting array signature",
+                        "try using `" ~ grGetPrettyType(grArray(subTypes[0])) ~ "` instead");
+            final switch (subTypes[0].baseType) with (GrBaseType) {
             case bool_:
             case int_:
             case function_:
@@ -4879,7 +5042,8 @@ final class GrParser {
             case void_:
             case null_:
             case internalTuple:
-                logError("Array Error", "Cannot build an array of this type");
+                logError("an array can't be of type `" ~ grGetPrettyType(grArray(subTypes[0])) ~ "`",
+                        "invalid array type");
                 break;
             }
             break;
@@ -4890,10 +5054,11 @@ final class GrParser {
             addInstruction(GrOpcode.const_null);
             break;
         case chan:
-            GrType[] subType = grUnmangleSignature(type.mangledType);
-            if (subType.length != 1)
-                logError("Invalid channel type", "invalid channel signature");
-            final switch (subType[0].baseType) with (GrBaseType) {
+            GrType[] subTypes = grUnmangleSignature(type.mangledType);
+            if (subTypes.length != 1)
+                logError("a channel can only contain one type of value", "conflicting channel signature",
+                        "try using `" ~ grGetPrettyType(grChannel(subTypes[0])) ~ "` instead");
+            final switch (subTypes[0].baseType) with (GrBaseType) {
             case int_:
             case bool_:
             case function_:
@@ -4917,14 +5082,16 @@ final class GrParser {
             case void_:
             case null_:
             case internalTuple:
-                logError("Invalid channel type", "invalid channel type");
+                logError("a channel can't be of type `" ~ grGetPrettyType(grChannel(subTypes[0])) ~ "`",
+                        "invalid channel type");
             }
             break;
         case reference:
         case void_:
         case null_:
         case internalTuple:
-            logError("Missing initialization", "Cannot infer the type for initialization");
+            logError("the type `" ~ grGetPrettyType(type) ~ "` has no default value",
+                    "can't initialize this type");
         }
     }
 
@@ -4961,11 +5128,11 @@ final class GrParser {
                 break;
             case void_:
             case null_:
-                throw new Exception("Cannot change the stack for a struct type");
+                throw new Exception("the type can't be counted as a subtype");
             case internalTuple:
                 auto types = grUnpackTuple(type);
                 if (!types.length)
-                    logError("Empty rvalue", "unpacked tuple is empty");
+                    logError("the expression yields no value", "expected value, found nothing");
                 else {
                     foreach (subType; types)
                         countSubTypes(subType, counter);
@@ -5015,7 +5182,8 @@ final class GrParser {
             checkAdvance();
             GrType refType = parseType();
             if (get().type != GrLexemeType.rightParenthesis)
-                logError("Missing symbol", "Expected a `)` after the type");
+                logError("missing parenthesis after the type",
+                        "expected `)`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
             checkAdvance();
             if (currentType.baseType == GrBaseType.void_)
                 currentType = refType;
@@ -5023,10 +5191,11 @@ final class GrParser {
                 currentType = convertType(refType, currentType, fileId);
         }
         if (get().type != GrLexemeType.identifier)
-            logError("GrFunction name expected",
-                    "The name of the func or task is required after `&`");
+            logError("expected function name, found `" ~ grGetPrettyLexemeType(get()
+                    .type) ~ "`", "missing function name");
         if (currentType.baseType != GrBaseType.function_ && currentType.baseType != GrBaseType.task)
-            logError("GrFunction ref error", "Cannot infer the type of `" ~ get().svalue ~ "`");
+            logError("can't infer the type of `" ~ get().svalue ~ "`",
+                    "the function type can't be inferred");
 
         GrType funcType = addFunctionAddress(get().svalue,
                 grUnmangleSignature(currentType.mangledType), get().fileId);
@@ -5099,25 +5268,29 @@ final class GrParser {
                 if (useSemicolon)
                     isEndOfExpression = true;
                 else
-                    logError("Unexpected symbol", "A `;` cannot exist inside this expression");
+                    logError("unexpected semicolon found in expression",
+                            "a `;` can't exist inside this expression");
                 break;
             case comma:
                 if (useComma)
                     isEndOfExpression = true;
                 else
-                    logError("Unexpected symbol", "A `,` cannot exist inside this expression");
+                    logError("unexpected comma found in expression",
+                            "a `,` can't exist inside this expression");
                 break;
             case rightParenthesis:
                 if (useParenthesis)
                     isEndOfExpression = true;
                 else
-                    logError("Unexpected symbol", "A `)` cannot exist inside this expression");
+                    logError("unexpected parenthesis found in expression",
+                            "a `)` can't exist inside this expression");
                 break;
             case rightBracket:
                 if (useBracket)
                     isEndOfExpression = true;
                 else
-                    logError("Unexpected symbol", "A `]` cannot exist inside this expression");
+                    logError("unexpected bracket found in expression",
+                            "a `]` can't exist inside this expression");
                 break;
             case leftParenthesis:
                 if (hadValue) {
@@ -5151,18 +5324,15 @@ final class GrParser {
             case doubleColon:
                 advance();
                 if (!hadValue)
-                    logError("Empty method call", "Cannot call a function on nothing");
+                    logError("a method call must be placed after a value", "missing value");
                 if (get().type != GrLexemeType.identifier)
-                    logError("Missing identifier", "Expecting a function name");
+                    logError("expected function name, found `" ~ grGetPrettyLexemeType(get()
+                            .type) ~ "`", "missing function name");
 
                 GrType selfType = grVoid;
                 selfType = typeStack[$ - 1];
                 typeStack.length--;
                 hadValue = false;
-
-                import std.stdio;
-
-                writeln(grGetPrettyType(lastType));
 
                 GrVariable lvalue;
                 currentType = parseIdentifier(lvalue, lastType, selfType, isExpectingLValue);
@@ -5230,7 +5400,8 @@ final class GrParser {
                             case void_:
                             case null_:
                             case internalTuple:
-                                logError("Array Error", "Cannot index an array of this type");
+                                logError("an array can't be indexed by a `" ~ grGetPrettyType(currentType) ~ "`",
+                                        "invalid array index type");
                                 break;
                             }
                         }
@@ -5269,7 +5440,8 @@ final class GrParser {
                         case void_:
                         case null_:
                         case internalTuple:
-                            logError("Array Error", "Cannot index an array of this type");
+                            logError("an array can't be indexed by a `" ~ grGetPrettyType(currentType) ~ "`",
+                                    "invalid array index type");
                             break;
                         }
                     }
@@ -5330,11 +5502,12 @@ final class GrParser {
                 break;
             case period:
                 if (currentType.baseType != GrBaseType.class_)
-                    logError("cannot access a field on type `" ~ grGetPrettyType(currentType) ~ "`",
+                    logError("can't access a field on type `" ~ grGetPrettyType(currentType) ~ "`",
                             "expected a class, found `" ~ grGetPrettyType(currentType) ~ "`");
                 checkAdvance();
                 if (get().type != GrLexemeType.identifier)
-                    logError("missing field", "you must provide a field name");
+                    logError("expected field name, found `" ~ grGetPrettyLexemeType(get()
+                            .type) ~ "`", "missing field");
                 const string identifier = get().svalue;
                 checkAdvance();
                 GrClassDefinition class_ = _data.getClass(currentType.mangledType, get().fileId);
@@ -5443,7 +5616,8 @@ final class GrParser {
                 checkAdvance();
                 GrType selfType = currentType;
                 if (get().type != GrLexemeType.identifier)
-                    logError("missing function", "you must provide a fonction name");
+                    logError("expected function name, found `" ~ grGetPrettyLexemeType(get()
+                            .type) ~ "`", "missing function name");
                 const string identifier = get().svalue;
                 checkAdvance();
                 bool hasField;
@@ -5452,7 +5626,7 @@ final class GrParser {
                     GrClassDefinition class_ = _data.getClass(currentType.mangledType,
                             get().fileId);
                     if (!class_)
-                        logError("the type `" ~ currentType.mangledType ~ "` is not declared", "");
+                        logError("`" ~ class_.name ~ "` is not declared", "unknown class", "", -1);
                     const auto nbFields = class_.signature.length;
                     for (int i; i < nbFields; i++) {
                         if (identifier == class_.fields[i]) {
@@ -5520,7 +5694,7 @@ final class GrParser {
                 break;
             case as:
                 if (!hadValue)
-                    logError("missing value", "`as` must be placed after a value");
+                    logError("`as` must be placed after a value", "missing value");
                 currentType = parseConversionOperator(typeStack);
                 hasValue = true;
                 hadValue = false;
@@ -5554,7 +5728,7 @@ final class GrParser {
             case addAssign: .. case powerAssign:
                 if (!hadLValue)
                     logError("the value before assignation is not referenceable",
-                            "missing lvalue before assignation");
+                            "missing reference before assignation");
                 hadLValue = false;
                 goto case multiply;
             case add:
@@ -5574,12 +5748,13 @@ final class GrParser {
                 goto case multiply;
             case multiply: .. case not:
                 if (isExpectingLValue)
-                    logError("Unexpected operation",
-                            "Cannot do this kind of operation on the left side of an assignment");
+                    logError(
+                            "can't do this kind of operation on the left side of an assignment",
+                            "unexpected operation");
                 if (!hadValue && lex.type != GrLexemeType.plus
                         && lex.type != GrLexemeType.minus && lex.type != GrLexemeType.not
                         && lex.type != GrLexemeType.receive)
-                    logError("Expected value", "A value is missing");
+                    logError("a binary operation must have 2 operands", "missing value");
 
                 while (operatorsStack.length
                         && getLeftOperatorPriority(operatorsStack[$ - 1]) > getRightOperatorPriority(
@@ -5652,12 +5827,13 @@ final class GrParser {
                 }
                 break;
             default:
-                logError("Unexpected symbol",
-                        "Invalid `" ~ to!string(lex.type) ~ "` symbol in the expression");
+                logError("unexpected `" ~ grGetPrettyLexemeType(lex.type) ~ "` symbol in the expression",
+                        "unexpected symbol");
             }
 
             if (hasValue && hadValue)
-                logError("Missing symbol", "The expression is not terminated by a `;`");
+                logError("missing semicolon at the end of the expression",
+                        "expected `;`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
         }
         while (!isEndOfExpression);
 
@@ -5666,7 +5842,7 @@ final class GrParser {
                 /*if(!isRightUnaryOperator)
                     logError("Expected value", "A value is missing");
                 else*/
-                logError("Expected value", "A value is missing");
+                logError("a binary operation must have 2 operands", "missing value");
             }
         }
 
@@ -5712,7 +5888,7 @@ final class GrParser {
         if (isExpectingLValue) {
             if (!hadLValue)
                 logError("the value before assignation is not referenceable",
-                        "missing lvalue before assignation");
+                        "missing reference before assignation");
             result.lvalue = lvalues[$ - 1];
         }
 
@@ -5748,8 +5924,8 @@ final class GrParser {
         case internalTuple:
         case null_:
         case void_:
-            logError("cannot load a field of type `" ~ grGetPrettyType(type) ~ "`",
-                    "error while accessing this field");
+            logError("can't load a field of type `" ~ grGetPrettyType(type) ~ "`",
+                    "the field type is invalid");
             break;
         }
     }
@@ -5764,8 +5940,8 @@ final class GrParser {
             addSetInstruction(functionId, fileId, GrType(GrBaseType.int_));
         }
         else if (type.baseType != GrBaseType.task) {
-            logError("`" ~ grGetPrettyType(type) ~ "` is not a function nor a task",
-                    "cannot call a `" ~ grGetPrettyType(type) ~ "`");
+            logError("can't call a `" ~ grGetPrettyType(type) ~ "`",
+                    "`" ~ grGetPrettyType(type) ~ "` is not a function nor a task");
         }
 
         //Signature parsing with type conversion
@@ -5838,7 +6014,6 @@ final class GrParser {
         bool isFunctionCall = false, isMethodCall = false, hasParenthesis = false;
         string identifierName = identifier.svalue;
         const uint fileId = identifier.fileId;
-        GrType[] templateList;
 
         advance();
 
@@ -5847,18 +6022,10 @@ final class GrParser {
             isFunctionCall = true;
         }
 
-        if (get().type == GrLexemeType.leftAngleBracket) {
-            templateList = parseTemplateSignature();
-        }
-
         if (get().type == GrLexemeType.leftParenthesis) {
             isFunctionCall = true;
             hasParenthesis = true;
         }
-
-        if (!isFunctionCall && templateList.length)
-            logError("cannot use a template list here", "unexpected template list",
-                    "maybe you meant to call the function or get the function's address?", -1);
 
         if (isFunctionCall) {
             GrType[] signature;
@@ -6001,8 +6168,7 @@ final class GrParser {
                     returnType = grPackTuple(primitive.outSignature);
                 }
                 else //GrFunction/Task call.
-                    returnType = grPackTuple(addFunctionCall(identifierName,
-                            signature, fileId, templateList));
+                    returnType = grPackTuple(addFunctionCall(identifierName, signature, fileId));
             }
         }
         else if (_data.isEnum(identifier.svalue, fileId, false)) {

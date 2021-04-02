@@ -80,6 +80,7 @@ enum GrLexemeType {
     event_,
     class_,
     enum_,
+    template_,
     new_,
     copy,
     send,
@@ -776,6 +777,9 @@ package final class GrLexer {
         case "enum":
             lex.type = GrLexemeType.enum_;
             break;
+        case "template":
+            lex.type = GrLexemeType.template_;
+            break;
         case "if":
             lex.type = GrLexemeType.if_;
             break;
@@ -1049,9 +1053,9 @@ string grGetPrettyLexemeType(GrLexemeType operator) {
         "%", "**", "==", "!=", ">=", ">", "<=", "<", "and", "or", "xor",
         "not", "++", "--", "identifier", "const_int", "const_float", "const_bool",
         "const_str", "null", "pub", "main", "type", "event", "class", "enum",
-        "new", "copy", "send", "receive", "int", "float", "bool", "string",
-        "array", "func", "task", "chan", "let", "if", "unless", "else",
-        "switch", "select", "case", "while", "do", "until", "for", "loop",
+        "template", "new", "copy", "send", "receive", "int", "float", "bool",
+        "string", "array", "func", "task", "chan", "let", "if", "unless",
+        "else", "switch", "select", "case", "while", "do", "until", "for", "loop",
         "return", "self", "kill", "killall", "yield", "break", "continue"
     ];
     return lexemeTypeStrTable[operator];
