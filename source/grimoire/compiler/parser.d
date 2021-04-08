@@ -1905,12 +1905,13 @@ final class GrParser {
                 parseEventDeclaration(isPublic);
                 break;
             case taskType:
-                if (get(1).type != GrLexemeType.identifier)
+                if (get(1).type != GrLexemeType.identifier && get(1).type != GrLexemeType.lesser)
                     goto case intType;
                 parseTaskDeclaration(isPublic);
                 break;
             case functionType:
-                if (get(1).type != GrLexemeType.identifier && get(1).type != GrLexemeType.as)
+                if (get(1).type != GrLexemeType.identifier && get(1)
+                        .type != GrLexemeType.as && get(1).type != GrLexemeType.lesser)
                     goto case intType;
                 parseFunctionDeclaration(isPublic);
                 break;
@@ -1953,12 +1954,13 @@ final class GrParser {
                 parseTemplateDeclaration(isPublic);
                 break;
             case taskType:
-                if (get(1).type != GrLexemeType.identifier)
+                if (get(1).type != GrLexemeType.identifier && get(1).type != GrLexemeType.lesser)
                     goto case intType;
                 skipDeclaration();
                 break;
             case functionType:
-                if (get(1).type != GrLexemeType.identifier && get(1).type != GrLexemeType.as)
+                if (get(1).type != GrLexemeType.identifier && get(1)
+                        .type != GrLexemeType.as && get(1).type != GrLexemeType.lesser)
                     goto case intType;
                 skipDeclaration();
                 break;
@@ -2611,13 +2613,13 @@ final class GrParser {
 
     private void parseTaskDeclaration(bool isPublic) {
         checkAdvance();
+        string[] templateVariables = parseTemplateVariables();
         if (get().type != GrLexemeType.identifier)
             logError("expected identifier, found `" ~ grGetPrettyLexemeType(get()
                     .type) ~ "`", "missing identifier");
 
         string name = get().svalue;
         checkAdvance();
-        string[] templateVariables = parseTemplateVariables();
 
         GrTemplateFunction temp = new GrTemplateFunction;
         temp.isTask = true;
@@ -2639,6 +2641,7 @@ final class GrParser {
 
     private void parseFunctionDeclaration(bool isPublic) {
         checkAdvance();
+        string[] templateVariables = parseTemplateVariables();
         string name;
         bool isConversion;
         if (get().type == GrLexemeType.as) {
@@ -2661,7 +2664,6 @@ final class GrParser {
             }
         }
         checkAdvance();
-        string[] templateVariables = parseTemplateVariables();
 
         GrTemplateFunction temp = new GrTemplateFunction;
         temp.isTask = false;
@@ -2686,19 +2688,30 @@ final class GrParser {
 
     private void parseTemplateDeclaration(bool isPublic) {
         checkAdvance();
-        if (get().type != GrLexemeType.identifier)
-            logError("missing function or task",
-                    "expected a function or task name, found `" ~ grGetPrettyLexemeType(get()
-                        .type) ~ "`");
-        const string name = get().svalue;
-        const uint fileId = get().fileId;
-        checkAdvance();
-
         if (get().type != GrLexemeType.lesser)
             logError("missing template signature",
                     "expected `<`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
 
         GrType[] templateList = parseTemplateSignature();
+
+        if (get().type != GrLexemeType.identifier)
+            logError("missing function or task",
+                    "expected a function or task name, found `" ~ grGetPrettyLexemeType(get()
+                        .type) ~ "`");
+        string name = get().svalue;
+
+        if (name == "operator") {
+            checkAdvance();
+            if (get().type >= GrLexemeType.add && get().type <= GrLexemeType.not) {
+                name = "@op_" ~ grGetPrettyLexemeType(get().type);
+            }
+            else
+                logError("can't override `" ~ grGetPrettyLexemeType(get()
+                        .type) ~ "` operator", "this operator can't be overriden");
+        }
+
+        const uint fileId = get().fileId;
+        checkAdvance();
 
         if (!templateList.length)
             logError("empty template signature", "the template signature can't be empty", "", -1);
@@ -4951,17 +4964,16 @@ final class GrParser {
                 logError("first value of an assignment list can't be empty", "missing value");
             break;
         case semicolon:
-            advance();
-
             if (isInitialization) {
                 foreach (lvalue; lvalues) {
                     if (lvalue.isAuto)
                         logError("can't infer the type without assignment",
-                                "missing type information or initial value");
+                                "missing type information or initial value", "", -1);
                     addDefaultValue(lvalue.type, fileId);
                     addSetInstruction(lvalue, fileId, lvalue.type);
                 }
             }
+            advance();
             break;
         default:
             logError("missing semicolon after assignment list",

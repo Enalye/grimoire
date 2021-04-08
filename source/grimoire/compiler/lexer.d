@@ -24,8 +24,6 @@ enum GrLexemeType {
     rightParenthesis,
     leftCurlyBrace,
     rightCurlyBrace,
-    leftAngleBracket,
-    rightAngleBracket,
     period,
     semicolon,
     colon,
@@ -34,7 +32,6 @@ enum GrLexemeType {
     at,
     pointer,
     as,
-    is_,
     try_,
     catch_,
     raise_,
@@ -57,11 +54,15 @@ enum GrLexemeType {
     remainder,
     power,
     equal,
+    doubleEqual,
+    threeWayComparison,
     notEqual,
     greaterOrEqual,
     greater,
     lesserOrEqual,
     lesser,
+    leftShift,
+    rightShift,
     and,
     or,
     xor,
@@ -561,7 +562,14 @@ package final class GrLexer {
             lex.type = GrLexemeType.comma;
             break;
         case '^':
-            lex.type = GrLexemeType.copy;
+            lex.type = GrLexemeType.power;
+            if (_current + 1 >= _text.length)
+                break;
+            if (get(1) == '=') {
+                lex.type = GrLexemeType.powerAssign;
+                lex._textLength = 2;
+                _current++;
+            }
             break;
         case '@':
             lex.type = GrLexemeType.at;
@@ -621,26 +629,10 @@ package final class GrLexer {
             lex.type = GrLexemeType.multiply;
             if (_current + 1 >= _text.length)
                 break;
-            switch (get(1)) {
-            case '=':
+            if (get(1) == '=') {
                 lex.type = GrLexemeType.multiplyAssign;
                 lex._textLength = 2;
                 _current++;
-                break;
-            case '*':
-                lex.type = GrLexemeType.power;
-                lex._textLength = 2;
-                _current++;
-                if (_current + 1 >= _text.length)
-                    break;
-                if (get(1) == '=') {
-                    lex.type = GrLexemeType.powerAssign;
-                    lex._textLength = 3;
-                    _current++;
-                }
-                break;
-            default:
-                break;
             }
             break;
         case '/':
@@ -671,6 +663,13 @@ package final class GrLexer {
                 lex.type = GrLexemeType.equal;
                 lex._textLength = 2;
                 _current++;
+                if (_current + 1 >= _text.length)
+                    break;
+                if (get(1) == '=') {
+                    lex.type = GrLexemeType.doubleEqual;
+                    lex._textLength = 3;
+                    _current++;
+                }
             }
             break;
         case '<':
@@ -681,6 +680,13 @@ package final class GrLexer {
                 lex.type = GrLexemeType.lesserOrEqual;
                 lex._textLength = 2;
                 _current++;
+                if (_current + 1 >= _text.length)
+                    break;
+                if (get(1) == '>') {
+                    lex.type = GrLexemeType.threeWayComparison;
+                    lex._textLength = 3;
+                    _current++;
+                }
             }
             else if (get(1) == '-') {
                 lex.type = GrLexemeType.send;
@@ -688,7 +694,7 @@ package final class GrLexer {
                 _current++;
             }
             else if (get(1) == '<') {
-                lex.type = GrLexemeType.leftAngleBracket;
+                lex.type = GrLexemeType.leftShift;
                 lex._textLength = 2;
                 _current++;
             }
@@ -703,7 +709,7 @@ package final class GrLexer {
                 _current++;
             }
             else if (get(1) == '>') {
-                lex.type = GrLexemeType.rightAngleBracket;
+                lex.type = GrLexemeType.rightShift;
                 lex._textLength = 2;
                 _current++;
             }
@@ -836,9 +842,6 @@ package final class GrLexer {
             break;
         case "as":
             lex.type = GrLexemeType.as;
-            break;
-        case "is":
-            lex.type = GrLexemeType.is_;
             break;
         case "try":
             lex.type = GrLexemeType.try_;
@@ -1047,11 +1050,11 @@ package final class GrLexer {
 /// Returns a displayable version of a token type.
 string grGetPrettyLexemeType(GrLexemeType operator) {
     immutable string[] lexemeTypeStrTable = [
-        "[", "]", "(", ")", "{", "}", "<<", ">>", ".", ";", ":", "::", ",",
-        "@", "&", "as", "is", "try", "catch", "raise", "defer", "=", "+=",
-        "-=", "*=", "/=", "~=", "%=", "**=", "+", "-", "+", "-", "*", "/", "~",
-        "%", "**", "==", "!=", ">=", ">", "<=", "<", "and", "or", "xor",
-        "not", "++", "--", "identifier", "const_int", "const_float", "const_bool",
+        "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&", "as",
+        "try", "catch", "raise", "defer", "=", "+=", "-=", "*=", "/=", "~=",
+        "%=", "^=", "+", "-", "+", "-", "*", "/", "~", "%", "^", "==", "===",
+        "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "and", "or", "xor", "not", "++",
+        "--", "identifier", "const_int", "const_float", "const_bool",
         "const_str", "null", "pub", "main", "type", "event", "class", "enum",
         "template", "new", "copy", "send", "receive", "int", "float", "bool",
         "string", "array", "func", "task", "chan", "let", "if", "unless",
