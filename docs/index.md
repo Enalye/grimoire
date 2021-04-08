@@ -16,6 +16,7 @@ You can easily define custom functions and types from D.
 - Functions:
   - [Creating a function](#functions)
   - [Task, Grimoire's coroutine](#tasks)
+  - [Template functions/tasks](#template-functions/tasks)
   - [Anonymous function/task](#anonymous-functions/tasks)
   - [Event function, or how to call a function from D](#event-functions)
   - [Type casting](#type-casting)
@@ -56,7 +57,7 @@ Exemple of valid identifiers:
 ## Reserved words
 
 The following are keyword used by the language, they cannot be used as identifier (variables, functions, etc):
-`use`, `pub`, `main`, `type`, `event`, `class`, `enum`, `if`, `unless`, `else`, `switch`, `select`, `case`, `while`, `do`, `until`, `for`, `loop`, `return`, `self`, `kill`, `killall`, `yield`, `break`, `continue`, `as`, `is`, `try`, `catch`, `raise`, `defer`, `void`, `task`, `func`, `int`, `float`, `bool`, `string`, `array`, `chan`, `new`, `let`, `true`, `false`, `null`, `not`, `and`, `or`, `xor`.
+`use`, `pub`, `main`, `type`, `event`, `class`, `enum`, `template`, `if`, `unless`, `else`, `switch`, `select`, `case`, `while`, `do`, `until`, `for`, `loop`, `return`, `self`, `kill`, `killall`, `yield`, `break`, `continue`, `as`, `try`, `catch`, `raise`, `defer`, `void`, `task`, `func`, `int`, `float`, `bool`, `string`, `array`, `chan`, `new`, `let`, `true`, `false`, `null`, `not`, `and`, `or`, `xor`.
 
 ## Comments
 
@@ -477,6 +478,46 @@ You can also delete the task with the keyword **kill**. Also be aware that insid
 There is also **killall** which simply kills all running tasks.
 
 *Note: The main is a special case of a task.*
+
+* * *
+
+# Template functions/tasks
+
+Global functions and tasks can be defined with generic types:
+```cpp
+func<T> add(T a, T b)(T) {
+    return a + b;
+}
+```
+Here, `T` is a generic type that will be replaced with the actual type when generating the function.
+
+To generate the function, you need to instanciate it with the `template` statement:
+```cpp
+template<int> add;
+template<float> add;
+```
+Now, `add(int, int)(int)` and `add(float, float)(float)` have been generated and can now be called.
+
+You can also have multiple template variables:
+```cpp
+pub template<int, float> add;
+pub func<A, B> add(A a, B b)(B) {
+    return a as B + b;
+}
+```
+
+Operators can also be templated:
+```cpp
+template<int> operator<=>;
+template<float> operator<=>;
+func<T> operator<=>(T a, T b)(int) {
+	if(a < b)
+		return -1;
+	else if(a > b)
+		return 1;
+    return 0;
+}
+```
 
 * * *
 
