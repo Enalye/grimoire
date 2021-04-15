@@ -3205,8 +3205,8 @@ final class GrParser {
     private void checkDeferStatement() {
         if (currentFunction.isDeferrableSectionLocked[$ - 1]) {
             GrLexemeType type = get().type;
-            logError("'" ~ grGetPrettyLexemeType(type) ~ "' inside a defer",
-                    "can't '" ~ grGetPrettyLexemeType(type) ~ "' inside a defer");
+            logError("`" ~ grGetPrettyLexemeType(type) ~ "` inside a defer",
+                    "can't `" ~ grGetPrettyLexemeType(type) ~ "` inside a defer");
         }
     }
 
@@ -3258,7 +3258,6 @@ final class GrParser {
         if (!breaksJumps.length)
             logError("`break` outside of a loop", "can't `break` outside of a loop");
 
-        checkDeferStatement();
         breaksJumps[$ - 1] ~= cast(uint) currentFunction.instructions.length;
         addInstruction(GrOpcode.jump);
         advance();
@@ -3292,7 +3291,6 @@ final class GrParser {
         if (!continuesJumps.length)
             logError("`continue` outside of a loop", "can't `continue` outside of a loop");
 
-        checkDeferStatement();
         continuesJumps[$ - 1] ~= cast(uint) currentFunction.instructions.length;
         addInstruction(GrOpcode.jump);
         advance();
@@ -4235,6 +4233,7 @@ final class GrParser {
     ---
     */
     private void parseReturnStatement() {
+        checkDeferStatement();
         checkAdvance();
         if (currentFunction.name == "main" || currentFunction.isTask) {
             if (!currentFunction.instructions.length
@@ -4267,7 +4266,6 @@ final class GrParser {
 
     /// Add a `return` instruction that pop the callstack.
     private void addReturn() {
-        checkDeferStatement();
         if (_isProfiling) {
             addInstruction(GrOpcode.debugProfileEnd);
         }
