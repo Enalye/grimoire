@@ -32,7 +32,7 @@ final class GrChannel(T) {
         until the buffer is full.
         */
         bool canSend() const {
-            if(_capacity == 1u)
+            if (_capacity == 1u)
                 return _isReceiverReady && _size < 1u;
             else
                 return _size < _capacity;
@@ -42,7 +42,29 @@ final class GrChannel(T) {
         You can receive whenever there is a value stored
         without being blocked.
         */
-        bool canReceive() const { return _size > 0u; }
+        bool canReceive() const {
+            return _size > 0u;
+        }
+
+        /// Number of values the channel is currently storing
+        uint size() const {
+            return _size;
+        }
+
+        /// Maximum number of values the channel can store
+        uint capacity() const {
+            return _capacity;
+        }
+
+        /// Is the channel empty ?
+        bool isEmpty() const {
+            return _size == 0u;
+        }
+
+        /// Is the channel full ?
+        bool isFull() const {
+            return _size == _capacity;
+        }
     }
 
     /// Buffer of size 1.
@@ -57,19 +79,19 @@ final class GrChannel(T) {
 
     /// Always check canSend() before.
     void send()(auto ref T value) {
-        if(_size == _capacity || (_capacity == 1u && !_isReceiverReady))
+        if (_size == _capacity || (_capacity == 1u && !_isReceiverReady))
             throw new Exception("Attempt to write on a full channel");
         _buffer ~= value;
-        _size ++;
+        _size++;
     }
-    
+
     /// Always check canReceive() before.
     T receive() {
-        if(_size == 0)
+        if (_size == 0)
             throw new Exception("Attempt to read an empty channel");
         T value = _buffer[0];
-        _buffer = _buffer[1.. $];
-        _size --;
+        _buffer = _buffer[1 .. $];
+        _size--;
         _isReceiverReady = false;
         return value;
     }

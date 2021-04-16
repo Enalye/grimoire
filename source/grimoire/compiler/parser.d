@@ -1875,11 +1875,6 @@ final class GrParser {
             }
         }
 
-        //Initialize every primitives.
-        foreach (primitive; _data._primitives) {
-            primitive.callObject.setup();
-        }
-
         //Function definitions
         reset();
         while (!isEnd()) {
@@ -1989,6 +1984,11 @@ final class GrParser {
             GrFunction func = functionsQueue[$ - 1];
             functionsQueue.length--;
             parseFunction(func);
+        }
+
+        //Initialize every primitives.
+        foreach (primitive; _data._primitives) {
+            primitive.callObject.setup();
         }
     }
 

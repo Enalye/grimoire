@@ -131,6 +131,7 @@ class GrCall {
     alias getInt = getParameter!int;
     alias getFloat = getParameter!float;
     alias getString = getParameter!string;
+    alias getPtr = getParameter!(void*);
     alias getObject = getUserData!GrObject;
     alias getIntArray = getUserData!GrIntArray;
     alias getFloatArray = getUserData!GrFloatArray;
@@ -157,8 +158,8 @@ class GrCall {
                     break;
             }
             if(index == _ilocals.length)
-                throw new Exception("Primitive \'" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
-                    ~ "\' do not have a parameter called \'" ~ parameter ~ "\'");
+                throw new Exception("primitive `" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
+                    ~ "` do not have a int parameter called `" ~ parameter ~ "`");
             return _context.istack[(_context.istackPos - _iparams) + index + 1];
         }
         else static if(is(T == bool)) {
@@ -168,8 +169,8 @@ class GrCall {
                     break;
             }
             if(index == _ilocals.length)
-                throw new Exception("Primitive \'" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
-                    ~ "\' do not have a parameter called \'" ~ parameter ~ "\'");
+                throw new Exception("primitive `" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
+                    ~ "` do not have a bool parameter called `" ~ parameter ~ "`");
             return _context.istack[(_context.istackPos - _iparams) + index + 1] > 0;
         }
         else static if(is(T == float)) {
@@ -179,8 +180,8 @@ class GrCall {
                     break;
             }
             if(index == _flocals.length)
-                throw new Exception("Primitive \'" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
-                    ~ "\' do not have a parameter called \'" ~ parameter ~ "\'");
+                throw new Exception("primitive `" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
+                    ~ "` do not have a float parameter called `" ~ parameter ~ "`");
             return _context.fstack[(_context.fstackPos - _fparams) + index + 1];
         }
         else static if(is(T == string)) {
@@ -190,8 +191,8 @@ class GrCall {
                     break;
             }
             if(index == _slocals.length)
-                throw new Exception("Primitive \'" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
-                    ~ "\' do not have a parameter called \'" ~ parameter ~ "\'");
+                throw new Exception("primitive `" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
+                    ~ "` do not have a string parameter called `" ~ parameter ~ "`");
             return _context.sstack[(_context.sstackPos - _sparams) + index + 1];
         }
         else static if(is(T == void*)) {
@@ -201,8 +202,8 @@ class GrCall {
                     break;
             }
             if(index == _olocals.length)
-                throw new Exception("Primitive \'" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
-                    ~ "\' do not have a parameter called \'" ~ parameter ~ "\'");
+                throw new Exception("primitive `" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
+                    ~ "` do not have an object parameter called `" ~ parameter ~ "`");
             return _context.ostack[(_context.ostackPos - _oparams) + index + 1];
         }
     }
@@ -211,6 +212,7 @@ class GrCall {
     alias setInt = setResult!int;
     alias setFloat = setResult!float;
     alias setString = setResult!string;
+    alias setPtr = setResult!(void*);
     alias setObject = setUserData!GrObject;
     alias setIntArray = setUserData!GrIntArray;
     alias setFloatArray = setUserData!GrFloatArray;

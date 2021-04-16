@@ -36,8 +36,24 @@ class GrPrimitive {
 	uint index;
     /// For convertions: Can this convertion be used without "as" ?
     bool isExplicit;
+    /// If the primitive has a generic parameter type, it becomes abstract
+    bool isAbstract;
     /// Runtime parameter for D functions. Contain all runtime information needed.
     GrCall callObject;
 
-    //alias call = callObject.call;
+    /// Ctor
+    this() {}
+
+    /// Ditto
+    this(GrPrimitive primitive) {
+        callback = primitive.callback;
+        inSignature = primitive.inSignature;
+        outSignature = primitive.outSignature;
+        parameters = primitive.parameters;
+        name = primitive.name;
+        mangledName = primitive.mangledName;
+        index = primitive.index;
+        isExplicit = primitive.isExplicit;
+        callObject = primitive.callObject;
+    }
 }
