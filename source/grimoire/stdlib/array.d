@@ -16,317 +16,48 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrData data) {
             grFloatArray
             ]);
 
-    data.addPrimitive(&_size_i, "size", ["array"], [
-            grAny("A", (type, data) {
+    static foreach (t; ["Int", "Float", "String", "Object"]) {
+        mixin("GrType any" ~ t ~ "Array = grAny(\"A\", (type, data) {
                 if (type.baseType != GrBaseType.array_)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfInt(subType.baseType);
-            })
-            ], [grInt]);
-    data.addPrimitive(&_size_f, "size", ["array"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfFloat(subType.baseType);
-            })
-            ], [grInt]);
-    data.addPrimitive(&_size_s, "size", ["array"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfString(subType.baseType);
-            })
-            ], [grInt]);
-    data.addPrimitive(&_size_o, "size", ["array"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfObject(subType.baseType);
-            })
-            ], [grInt]);
-
-    data.addPrimitive(&_resize_i, "resize", ["array", "size"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfInt(subType.baseType);
-            }), grInt
-            ], [grAny("A")]);
-    data.addPrimitive(&_resize_f, "resize", ["array", "size"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfFloat(subType.baseType);
-            }), grInt
-            ], [grAny("A")]);
-    data.addPrimitive(&_resize_s, "resize", ["array", "size"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfString(subType.baseType);
-            }), grInt
-            ], [grAny("A")]);
-    data.addPrimitive(&_resize_o, "resize", ["array", "size"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfObject(subType.baseType);
-            }), grInt
-            ], [grAny("A")]);
-
-    data.addPrimitive(&_empty_i, "empty?", ["array"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfInt(subType.baseType);
-            })
+                data.set(\"T\", subType);
+                return grIsKindOf" ~ t ~ "(subType.baseType);
+            });
+            data.addPrimitive(&_size_!\""
+                ~ t ~ "\", \"size\", [\"array\"], [any" ~ t ~ "Array], [grInt]);
+            data.addPrimitive(&_resize_!\"" ~ t
+                ~ "\", \"resize\", [\"array\", \"size\"], [
+                any" ~ t ~ "Array, grInt
+            ], [grAny(\" A\")]);
+            data.addPrimitive(&_empty_!\"" ~ t ~ "\", \"empty?\", [\"array\"], [
+                any" ~ t
+                ~ "Array
             ], [grBool]);
-    data.addPrimitive(&_empty_f, "empty?", ["array"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfFloat(subType.baseType);
-            })
-            ], [grBool]);
-    data.addPrimitive(&_empty_s, "empty?", ["array"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfString(subType.baseType);
-            })
-            ], [grBool]);
-    data.addPrimitive(&_empty_o, "empty?", ["array"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfObject(subType.baseType);
-            })
-            ], [grBool]);
-
-    data.addPrimitive(&_pushfront_i, "push_front", ["array", "v"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set("T", subType);
-                return grIsKindOfInt(subType.baseType);
-            }), grAny("T")
-            ]);
-    data.addPrimitive(&_pushback_i, "push_back", ["array", "v"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set("T", subType);
-                return grIsKindOfInt(subType.baseType);
-            }), grAny("T")
-            ]);
-    data.addPrimitive(&_popfront_i, "pop_front", ["array", "sz"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfInt(subType.baseType);
-            }), grInt
-            ]);
-    data.addPrimitive(&_popback_i, "pop_back", ["array", "sz"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfInt(subType.baseType);
-            }), grInt
-            ]);
-
-    data.addPrimitive(&_pushfront_f, "push_front", ["array", "v"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set("T", subType);
-                return grIsKindOfFloat(subType.baseType);
-            }), grAny("T")
-            ]);
-    data.addPrimitive(&_pushback_f, "push_back", ["array", "v"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set("T", subType);
-                return grIsKindOfFloat(subType.baseType);
-            }), grAny("T")
-            ]);
-    data.addPrimitive(&_popfront_f, "pop_front", ["array", "sz"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfFloat(subType.baseType);
-            }), grInt
-            ]);
-    data.addPrimitive(&_popback_f, "pop_back", ["array", "sz"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfFloat(subType.baseType);
-            }), grInt
-            ]);
-
-    data.addPrimitive(&_pushfront_s, "push_front", ["array", "v"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set("T", subType);
-                return grIsKindOfString(subType.baseType);
-            }), grAny("T")
-            ]);
-    data.addPrimitive(&_pushback_s, "push_back", ["array", "v"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set("T", subType);
-                return grIsKindOfString(subType.baseType);
-            }), grAny("T")
-            ]);
-    data.addPrimitive(&_popfront_s, "pop_front", ["array", "sz"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfString(subType.baseType);
-            }), grInt
-            ]);
-    data.addPrimitive(&_popback_s, "pop_back", ["array", "sz"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfString(subType.baseType);
-            }), grInt
-            ]);
-
-    data.addPrimitive(&_pushfront_o, "push_front", ["array", "v"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set("T", subType);
-                return grIsKindOfObject(subType.baseType);
-            }), grAny("T")
-            ]);
-    data.addPrimitive(&_pushback_o, "push_back", ["array", "v"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set("T", subType);
-                return grIsKindOfObject(subType.baseType);
-            }), grAny("T")
-            ]);
-    data.addPrimitive(&_popfront_o, "pop_front", ["array", "sz"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfObject(subType.baseType);
-            }), grInt
-            ]);
-    data.addPrimitive(&_popback_o, "pop_back", ["array", "sz"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOfObject(subType.baseType);
-            }), grInt
-            ]);
-
-    data.addPrimitive(&_front_i, "front", ["array"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set("T", subType);
-                return grIsKindOfInt(subType.baseType);
-            })
-            ], [grAny("T")]);
-    data.addPrimitive(&_back_i, "back", ["array"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set("T", subType);
-                return grIsKindOfInt(subType.baseType);
-            })
-            ], [grAny("T")]);
-    data.addPrimitive(&_front_f, "front", ["array"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set("T", subType);
-                return grIsKindOfFloat(subType.baseType);
-            })
-            ], [grAny("T")]);
-    data.addPrimitive(&_back_f, "back", ["array"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set("T", subType);
-                return grIsKindOfFloat(subType.baseType);
-            })
-            ], [grAny("T")]);
-    data.addPrimitive(&_front_s, "front", ["array"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set("T", subType);
-                return grIsKindOfString(subType.baseType);
-            })
-            ], [grAny("T")]);
-    data.addPrimitive(&_back_s, "back", ["array"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set("T", subType);
-                return grIsKindOfString(subType.baseType);
-            })
-            ], [grAny("T")]);
-    data.addPrimitive(&_front_o, "front", ["array"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set("T", subType);
-                return grIsKindOfObject(subType.baseType);
-            })
-            ], [grAny("T")]);
-    data.addPrimitive(&_back_o, "back", ["array"], [
-            grAny("A", (type, data) {
-                if (type.baseType != GrBaseType.array_)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set("T", subType);
-                return grIsKindOfObject(subType.baseType);
-            })
-            ], [grAny("T")]);
+            data.addPrimitive(&_pushfront_!\"" ~ t ~ "\", \"push_front\", [\"array\", \"v\"], [
+                    any" ~ t
+                ~ "Array, grAny(\"T\")
+                ]);
+            data.addPrimitive(&_pushback_!\"" ~ t ~ "\", \"push_back\", [\"array\", \"v\"], [
+                    any"
+                ~ t ~ "Array, grAny(\"T\")
+                ]);
+            data.addPrimitive(&_popfront_!\"" ~ t ~ "\", \"pop_front\", [\"array\", \"size\"], [
+                    any" ~ t ~ "Array, grInt
+                ]);
+            data.addPrimitive(&_popback_!\"" ~ t
+                ~ "\", \"pop_back\", [\"array\", \"size\"], [
+                    any" ~ t ~ "Array, grInt
+                ]);
+            data.addPrimitive(&_front_!\""
+                ~ t ~ "\", \"front\", [\"array\"], [
+                any" ~ t ~ "Array
+            ], [grAny(\"T\")]);
+            data.addPrimitive(&_back_!\"" ~ t
+                ~ "\", \"back\", [\"array\"], [
+                    any" ~ t ~ "Array
+                ], [grAny(\"T\")]);");
+    }
 }
 
 private void _range_i(GrCall call) {
@@ -363,270 +94,89 @@ private void _range_f(GrCall call) {
     call.setFloatArray(array);
 }
 
-private void _size_i(GrCall call) {
-    call.setInt(cast(int) call.getIntArray("array").data.length);
+private void _size_(string t)(GrCall call) {
+    mixin("call.setInt(cast(int) call.get" ~ t ~ "Array(\"array\").data.length);");
 }
 
-private void _size_f(GrCall call) {
-    call.setInt(cast(int) call.getFloatArray("array").data.length);
+private void _resize_(string t)(GrCall call) {
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");
+    array.data.length = call.getInt(\"size\");
+    call.set" ~ t ~ "Array(array);");
 }
 
-private void _size_s(GrCall call) {
-    call.setInt(cast(int) call.getStringArray("array").data.length);
+private void _empty_(string t)(GrCall call) {
+    mixin("const Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");
+    call.setBool(array.data.empty);");
 }
 
-private void _size_o(GrCall call) {
-    call.setInt(cast(int) call.getObjectArray("array").data.length);
+private void _pushfront_(string t)(GrCall call) {
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
+    static if (t == "Object") {
+        mixin("array.data = call.getPtr(\"v\") ~ array.data;");
+    }
+    else {
+        mixin("array.data = call.get" ~ t ~ "(\"v\") ~ array.data;");
+    }
 }
 
-private void _resize_i(GrCall call) {
-    GrIntArray array = call.getIntArray("array");
-    array.data.length = call.getInt("size");
-    call.setIntArray(array);
+private void _pushback_(string t)(GrCall call) {
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
+    static if (t == "Object") {
+        mixin("array.data ~= call.getPtr(\"v\");");
+    }
+    else {
+        mixin("array.data ~= call.get" ~ t ~ "(\"v\");");
+    }
 }
 
-private void _resize_f(GrCall call) {
-    GrFloatArray array = call.getFloatArray("array");
-    array.data.length = call.getInt("size");
-    call.setFloatArray(array);
-}
-
-private void _resize_s(GrCall call) {
-    GrStringArray array = call.getStringArray("array");
-    array.data.length = call.getInt("size");
-    call.setStringArray(array);
-}
-
-private void _resize_o(GrCall call) {
-    GrObjectArray array = call.getObjectArray("array");
-    array.data.length = call.getInt("size");
-    call.setObjectArray(array);
-}
-
-private void _empty_i(GrCall call) {
-    const GrIntArray array = call.getIntArray("array");
-    call.setBool(array.data.empty);
-}
-
-private void _empty_f(GrCall call) {
-    const GrFloatArray array = call.getFloatArray("array");
-    call.setBool(array.data.empty);
-}
-
-private void _empty_s(GrCall call) {
-    const GrStringArray array = call.getStringArray("array");
-    call.setBool(array.data.empty);
-}
-
-private void _empty_o(GrCall call) {
-    const GrObjectArray array = call.getObjectArray("array");
-    call.setBool(array.data.empty);
-}
-
-private void _pushfront_i(GrCall call) {
-    GrIntArray array = call.getIntArray("array");
-    array.data = call.getInt("v") ~ array.data;
-}
-
-private void _pushback_i(GrCall call) {
-    GrIntArray array = call.getIntArray("array");
-    array.data ~= call.getInt("v");
-}
-
-private void _popfront_i(GrCall call) {
-    GrIntArray array = call.getIntArray("array");
-    int sz = call.getInt("sz");
+private void _popfront_(string t)(GrCall call) {
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");
+    int sz = call.getInt(\"size\");
     if (array.data.length < sz) {
         sz = cast(int) array.data.length;
     }
     else if (sz < 0) {
         sz = 0;
     }
-    array.data = array.data[sz .. $];
+    array.data = array.data[sz .. $];");
 }
 
-private void _popback_i(GrCall call) {
-    GrIntArray array = call.getIntArray("array");
-    int sz = call.getInt("sz");
+private void _popback_(string t)(GrCall call) {
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");
+    int sz = call.getInt(\"size\");
     if (array.data.length < sz) {
         sz = cast(int) array.data.length;
     }
     else if (sz < 0) {
         sz = 0;
     }
-    array.data.length -= sz;
+    array.data.length -= sz;");
 }
 
-private void _pushfront_f(GrCall call) {
-    GrFloatArray array = call.getFloatArray("array");
-    array.data = call.getFloat("v") ~ array.data;
-}
-
-private void _pushback_f(GrCall call) {
-    GrFloatArray array = call.getFloatArray("array");
-    array.data ~= call.getFloat("v");
-}
-
-private void _popfront_f(GrCall call) {
-    GrFloatArray array = call.getFloatArray("array");
-    int sz = call.getInt("sz");
-    if (array.data.length < sz) {
-        sz = cast(int) array.data.length;
-    }
-    else if (sz < 0) {
-        sz = 0;
-    }
-    array.data = array.data[sz .. $];
-}
-
-private void _popback_f(GrCall call) {
-    GrFloatArray array = call.getFloatArray("array");
-    int sz = call.getInt("sz");
-    if (array.data.length < sz) {
-        sz = cast(int) array.data.length;
-    }
-    else if (sz < 0) {
-        sz = 0;
-    }
-    array.data.length -= sz;
-}
-
-private void _pushfront_s(GrCall call) {
-    GrStringArray array = call.getStringArray("array");
-    array.data = call.getString("v") ~ array.data;
-}
-
-private void _pushback_s(GrCall call) {
-    GrStringArray array = call.getStringArray("array");
-    array.data ~= call.getString("v");
-}
-
-private void _popfront_s(GrCall call) {
-    GrStringArray array = call.getStringArray("array");
-    int sz = call.getInt("sz");
-    if (array.data.length < sz) {
-        sz = cast(int) array.data.length;
-    }
-    else if (sz < 0) {
-        sz = 0;
-    }
-    array.data = array.data[sz .. $];
-}
-
-private void _popback_s(GrCall call) {
-    GrStringArray array = call.getStringArray("array");
-    int sz = call.getInt("sz");
-    if (array.data.length < sz) {
-        sz = cast(int) array.data.length;
-    }
-    else if (sz < 0) {
-        sz = 0;
-    }
-    array.data.length -= sz;
-}
-
-private void _pushfront_o(GrCall call) {
-    GrObjectArray array = call.getObjectArray("array");
-    array.data = call.getPtr("v") ~ array.data;
-}
-
-private void _pushback_o(GrCall call) {
-    GrObjectArray array = call.getObjectArray("array");
-    array.data ~= call.getPtr("v");
-}
-
-private void _popfront_o(GrCall call) {
-    GrObjectArray array = call.getObjectArray("array");
-    int sz = call.getInt("sz");
-    if (array.data.length < sz) {
-        sz = cast(int) array.data.length;
-    }
-    else if (sz < 0) {
-        sz = 0;
-    }
-    array.data = array.data[sz .. $];
-}
-
-private void _popback_o(GrCall call) {
-    GrObjectArray array = call.getObjectArray("array");
-    int sz = call.getInt("sz");
-    if (array.data.length < sz) {
-        sz = cast(int) array.data.length;
-    }
-    else if (sz < 0) {
-        sz = 0;
-    }
-    array.data.length -= sz;
-}
-
-private void _front_i(GrCall call) {
-    GrIntArray array = call.getIntArray("array");
+private void _front_(string t)(GrCall call) {
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");
     if (!array.data.length) {
-        call.raise("EmptyArray");
+        call.raise(\"IndexError\");
         return;
+    }");
+    static if (t == "Object") {
+        mixin("call.setPtr(array.data[0]);");
     }
-    call.setInt(array.data[0]);
+    else {
+        mixin("call.set" ~ t ~ "(array.data[0]);");
+    }
 }
 
-private void _back_i(GrCall call) {
-    GrIntArray array = call.getIntArray("array");
+private void _back_(string t)(GrCall call) {
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");
     if (!array.data.length) {
-        call.raise("EmptyArray");
+        call.raise(\"IndexError\");
         return;
+    }");
+    static if (t == "Object") {
+        mixin("call.setPtr(array.data[$ - 1]);");
     }
-    call.setInt(array.data[$ - 1]);
-}
-
-private void _front_f(GrCall call) {
-    GrFloatArray array = call.getFloatArray("array");
-    if (!array.data.length) {
-        call.raise("EmptyArray");
-        return;
+    else {
+        mixin("call.set" ~ t ~ "(array.data[$ - 1]);");
     }
-    call.setFloat(array.data[0]);
-}
-
-private void _back_f(GrCall call) {
-    GrFloatArray array = call.getFloatArray("array");
-    if (!array.data.length) {
-        call.raise("EmptyArray");
-        return;
-    }
-    call.setFloat(array.data[$ - 1]);
-}
-
-private void _front_s(GrCall call) {
-    GrStringArray array = call.getStringArray("array");
-    if (!array.data.length) {
-        call.raise("EmptyArray");
-        return;
-    }
-    call.setString(array.data[0]);
-}
-
-private void _back_s(GrCall call) {
-    GrStringArray array = call.getStringArray("array");
-    if (!array.data.length) {
-        call.raise("EmptyArray");
-        return;
-    }
-    call.setString(array.data[$ - 1]);
-}
-
-private void _front_o(GrCall call) {
-    GrObjectArray array = call.getObjectArray("array");
-    if (!array.data.length) {
-        call.raise("EmptyArray");
-        return;
-    }
-    call.setPtr(array.data[0]);
-}
-
-private void _back_o(GrCall call) {
-    GrObjectArray array = call.getObjectArray("array");
-    if (!array.data.length) {
-        call.raise("EmptyArray");
-        return;
-    }
-    call.setPtr(array.data[$ - 1]);
 }
