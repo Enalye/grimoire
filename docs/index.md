@@ -16,8 +16,8 @@ You can easily define custom functions and types from D.
 - Functions:
   - [Creating a function](#functions)
   - [Task, Grimoire's coroutine](#tasks)
-  - [Template functions/tasks](#template-functions/tasks)
-  - [Anonymous function/task](#anonymous-functions/tasks)
+  - [Template functions/tasks](#template-functions)
+  - [Anonymous function/task](#anonymous-functions)
   - [Event function, or how to call a function from D](#event-functions)
   - [Type casting](#type-casting)
   - [Operators](#operators)
@@ -481,7 +481,7 @@ There is also **killall** which simply kills all running tasks.
 
 * * *
 
-# Template functions/tasks
+# Template functions
 
 Global functions and tasks can be defined with generic types:
 ```cpp
@@ -521,7 +521,7 @@ func<T> operator<=>(T a, T b)(int) {
 
 * * *
 
-# Anonymous functions/tasks
+# Anonymous functions
 
 You can declare a function or a task inside another function (or task).
 Like this:
@@ -1068,3 +1068,33 @@ setXXX methods returns a value on the stack, beware of the order in which you ca
 
 
 * * *
+
+## Generic type
+
+Grimoire provide a way to declare a primitive with generic types with `grAny`.
+*grAny* takes two arguments:
+	* The name of the generic type,
+	* A predicate that checks if the provided type is correct.
+
+The predicate takes 2 parameters:
+	* A `GrType` of the provided value,
+	* The context of the checker containing the defined generic types.
+
+Exemple of a primitive that can define a `push` function for every type of array that uses integers.
+It takes an array and a value that matches the type held by the array, and returns the array itself.
+```d
+data.addPrimitive(&_push, "push", ["array"], [
+    grAny("A",   // We declare a generic type called "A"
+	(type, data) {
+		if (type.baseType != GrBaseType.array_) // This type must be an array
+			return false;
+		const GrType subType = grUnmangle(type.mangledType); // The subType is mangled
+		data.set("T", subType);  // We define the other generic type (called "T") with the subtype of the array
+		return grIsKindOfInt(subType.baseType); // We check is the baseType is good for us.
+	}), grAny("T")], // "T" is already defined above, so the types must match.
+	[grAny("A")]   // "A" is already defined above, it must be of the same type. Putting any predicate here is useless.
+);
+```
+
+If no predicate is given to a *grAny*, the type is always validated.
+The predicate of return types won't be checked, only the input signature is validated.
