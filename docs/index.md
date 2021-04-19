@@ -1073,12 +1073,12 @@ setXXX methods returns a value on the stack, beware of the order in which you ca
 
 Grimoire provide a way to declare a primitive with generic types with `grAny`.
 *grAny* takes two arguments:
-	* The name of the generic type,
-	* A predicate that checks if the provided type is correct.
+- The name of the generic type,
+- A predicate that checks if the provided type is correct.
 
 The predicate takes 2 parameters:
-	* A `GrType` of the provided value,
-	* The context of the checker containing the defined generic types.
+- A `GrType` of the provided value,
+- The context of the checker containing the defined generic types.
 
 Exemple of a primitive that can define a `push` function for every type of array that uses integers.
 It takes an array and a value that matches the type held by the array, and returns the array itself.
