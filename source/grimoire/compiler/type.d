@@ -331,6 +331,10 @@ final class GrClassDefinition {
     GrType[] signature;
     /// List of field names.
     string[] fields;
+    /// List of template variables.
+    string[] templateVariables;
+    /// List of template types.
+    GrType[] templateTypes;
 
     package {
         struct FieldInfo {

@@ -30,6 +30,8 @@ class GrData {
         GrEnumDefinition[] _enumTypes;
         /// Object types.
         GrClassDefinition[] _classTypes;
+        /// Abstract object types.
+        GrClassDefinition[] _classTemplates;
 
         /// All primitives, used for both the compiler and the runtime.
         GrPrimitive[] _primitives, _abstractPrimitives;
@@ -102,15 +104,15 @@ class GrData {
         return stType;
     }
 
-    package void registerClass(string name, uint fileId, bool isPublic, uint position) {
+    package void registerClass(string name, uint fileId, bool isPublic,
+            string[] templateVariables, uint position) {
         GrClassDefinition class_ = new GrClassDefinition;
         class_.name = name;
         class_.position = position;
         class_.fileId = fileId;
         class_.isPublic = isPublic;
-        class_.index = _classTypes.length;
-        class_.isParsed = false;
-        _classTypes ~= class_;
+        class_.templateVariables = templateVariables;
+        _classTemplates ~= class_;
     }
 
     package GrClassDefinition[] getAllClasses() {
@@ -118,7 +120,7 @@ class GrData {
     }
 
     /// Define a class type.
-    GrType addClass(string name, string[] fields, GrType[] signature, string parent = "") {
+    GrType addClass(string name, string[] fields, GrType[] signature, string parent = "", string[] templateVariables = []) {
         assert(fields.length == signature.length, "Class signature mismatch");
         assert(!isTypeDeclared(name), "`" ~ name ~ "` is already declared");
         GrClassDefinition class_ = new GrClassDefinition;
@@ -126,10 +128,10 @@ class GrData {
         class_.parent = parent;
         class_.signature = signature;
         class_.fields = fields;
-        class_.index = _classTypes.length;
+        class_.templateVariables = templateVariables;
         class_.isPublic = true;
         class_.isParsed = true;
-        _classTypes ~= class_;
+        _classTemplates ~= class_;
 
         class_.fieldsInfo.length = fields.length;
         for (int i; i < class_.fieldsInfo.length; ++i) {
@@ -213,7 +215,7 @@ class GrData {
 
     /// Is the class defined ?
     package bool isClass(string name, uint fileId, bool isPublic) {
-        foreach (class_; _classTypes) {
+        foreach (class_; _classTemplates) {
             if (class_.name == name && (class_.fileId == fileId || class_.isPublic || isPublic))
                 return true;
         }
@@ -222,7 +224,7 @@ class GrData {
 
     /// Ditto
     private bool isClass(string name) {
-        foreach (class_; _classTypes) {
+        foreach (class_; _classTemplates) {
             if (class_.name == name)
                 return true;
         }
@@ -283,10 +285,35 @@ class GrData {
     }
 
     /// Return the class definition.
-    package GrClassDefinition getClass(string name, uint fileId, bool isPublic = false) {
+    package GrClassDefinition getClass(string mangledName, uint fileId, bool isPublic = false) {
+        import std.algorithm.searching : findSplitBefore;
         foreach (class_; _classTypes) {
-            if (class_.name == name && (class_.fileId == fileId || class_.isPublic || isPublic))
+            if (class_.name == mangledName && (class_.fileId == fileId || class_.isPublic || isPublic))
                 return class_;
+        }
+        const mangledTuple = findSplitBefore(mangledName, "$");
+        string name = mangledTuple[0];
+        GrType[] templateTypes = grUnmangleSignature(mangledTuple[1]);
+        foreach (class_; _classTemplates) {
+            if (class_.name == name && class_.templateVariables.length == templateTypes.length
+                    && (class_.fileId == fileId || class_.isPublic || isPublic)) {
+                GrClassDefinition generatedClass = new GrClassDefinition;
+                generatedClass.name = mangledName;
+                generatedClass.parent = class_.parent;
+                generatedClass.signature = class_.signature;
+                generatedClass.fields = class_.fields;
+                generatedClass.templateVariables = class_.templateVariables;
+                generatedClass.templateTypes = templateTypes;
+                generatedClass.position = class_.position;
+                generatedClass.isParsed = class_.isParsed;
+                generatedClass.isPublic = class_.isPublic;
+                generatedClass.fileId = class_.fileId;
+                generatedClass.fieldsInfo = class_.fieldsInfo;
+                generatedClass.index = _classTypes.length;
+                _classTypes ~= generatedClass;
+
+                return generatedClass;
+            }
         }
         return null;
     }

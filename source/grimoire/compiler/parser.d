@@ -1764,8 +1764,6 @@ final class GrParser {
             }
         }
 
-        parseClassDeclarations();
-
         //Type aliases
         reset();
         while (!isEnd()) {
@@ -1795,83 +1793,6 @@ final class GrParser {
             default:
                 skipExpression();
                 break;
-            }
-        }
-
-        // Finish definitions and signatures.
-
-        //Resolve class fields that couldn't be defined beforehand.
-        foreach (class_; _data._classTypes) {
-            for (int i; i < class_.signature.length; i++) {
-                if (class_.signature[i].baseType == GrBaseType.void_) {
-                    if (!_data.isClass(class_.signature[i].mangledType, class_.fileId, false)) {
-                        set(class_.fieldsInfo[i].position);
-                        logError("`" ~ class_.signature[i].mangledType ~ "` is not defined",
-                                "unknown type");
-                    }
-                    class_.signature[i].baseType = GrBaseType.class_;
-                }
-            }
-        }
-
-        //Fetch fields and signatures of parent classes
-        foreach (class_; _data._classTypes) {
-            uint fileId = class_.fileId;
-            string parent = class_.parent;
-            GrClassDefinition lastClass = class_;
-            string[] usedClasses = [class_.name];
-
-            while (parent.length) {
-                GrClassDefinition parentClass = _data.getClass(parent, fileId);
-                if (!parentClass) {
-                    set(lastClass.position + 2u);
-                    logError("`" ~ class_.name ~ "` can't inherit from `" ~ parent ~ "`",
-                            "unknown class");
-                }
-                for (int i; i < usedClasses.length; ++i) {
-                    if (parent == usedClasses[i]) {
-                        set(lastClass.position + 2u);
-                        logError("`" ~ parent ~ "` is included recursively",
-                                "recursive inheritence");
-                    }
-                }
-                usedClasses ~= parent;
-                class_.fields = parentClass.fields ~ class_.fields;
-                class_.signature = parentClass.signature ~ class_.signature;
-                class_.fieldsInfo = parentClass.fieldsInfo ~ class_.fieldsInfo;
-                fileId = parentClass.fileId;
-                parent = parentClass.parent;
-                lastClass = parentClass;
-            }
-            for (int i; i < class_.signature.length; ++i) {
-                for (int y; y < class_.fields.length; ++y) {
-                    if (i != y && class_.fields[i] == class_.fields[y]) {
-                        int first;
-                        int second;
-                        if (class_.fieldsInfo[i].position < class_.fieldsInfo[y].position) {
-                            first = i;
-                            second = y;
-                        }
-                        else {
-                            first = y;
-                            second = i;
-                        }
-                        set(class_.fieldsInfo[second].position);
-                        logError("the field `" ~ class_.fields[second] ~ "` is declared multiple times",
-                                "`" ~ class_.fields[second] ~ "` is redefined here",
-                                "", 0, "previous definition of `" ~ class_.fields[first] ~ "`",
-                                class_.fieldsInfo[first].position);
-                    }
-                }
-                if (class_.signature[i].baseType != GrBaseType.class_) {
-                    for (int y; y < usedClasses.length; ++y) {
-                        if (class_.signature[i].mangledType == usedClasses[y]) {
-                            set(class_.fieldsInfo[i].position);
-                            logError("`" ~ class_.signature[i].mangledType ~ "` is included recursively",
-                                    "recursive declaration");
-                        }
-                    }
-                }
             }
         }
 
@@ -2105,6 +2026,7 @@ final class GrParser {
 
     private void registerClassDeclaration(bool isPublic) {
         checkAdvance();
+        string[] templateVariables = parseTemplateVariables();
         const uint fileId = get().fileId;
         const uint declPosition = current;
         if (get().type != GrLexemeType.identifier)
@@ -2114,99 +2036,164 @@ final class GrParser {
         if (_data.isTypeDeclared(className, fileId, isPublic))
             logError("the name `" ~ className ~ "` is defined multiple times",
                     "`" ~ className ~ "` is already declared");
-        _data.registerClass(className, fileId, isPublic, declPosition);
+        _data.registerClass(className, fileId, isPublic, templateVariables, declPosition);
         skipDeclaration();
     }
 
-    private void parseClassDeclarations() {
-        foreach (GrClassDefinition class_; _data.getAllClasses()) {
-            if (class_.isParsed)
-                continue;
-            class_.isParsed = true;
-            current = class_.position;
+    private GrClassDefinition getClass(string mangledType, uint fileId) {
+        GrClassDefinition class_ = _data.getClass(mangledType, fileId);
+        if (!class_)
+            return null;
+        parseClassDeclaration(class_);
+        return class_;
+    }
 
-            uint[] fieldPositions;
+    private void parseClassDeclaration(GrClassDefinition class_) {
+        if (class_.isParsed)
+            return;
+        class_.isParsed = true;
+        uint tempPos = current;
+        current = class_.position;
+
+        for (int i; i < class_.templateVariables.length; ++i) {
+            _data.addTemplateAlias(class_.templateVariables[i],
+                    class_.templateTypes[i], class_.fileId, class_.isPublic);
+        }
+
+        uint[] fieldPositions;
+        if (get().type != GrLexemeType.identifier)
+            logError("expected class name, found `" ~ grGetPrettyLexemeType(get()
+                    .type) ~ "`", "missing identifier");
+        const string className = get().svalue;
+        string parentClassName;
+        checkAdvance();
+
+        //Inheritance
+        if (get().type == GrLexemeType.colon) {
+            checkAdvance();
             if (get().type != GrLexemeType.identifier)
-                logError("expected class name, found `" ~ grGetPrettyLexemeType(get()
-                        .type) ~ "`", "missing identifier");
-            const string className = get().svalue;
-            string parentClassName;
+                logError("the parent class name is missing",
+                        "expected class name, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
+            parentClassName = get().svalue;
             checkAdvance();
+            parentClassName = grMangleNamedFunction(parentClassName, parseTemplateSignature());
+        }
+        if (get().type != GrLexemeType.leftCurlyBrace)
+            logError("the class does not have a body",
+                    "expected `{`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
+        checkAdvance();
 
-            //Inheritance
-            if (get().type == GrLexemeType.colon) {
+        string[] fields;
+        GrType[] signature;
+        bool[] fieldScopes;
+        while (!isEnd()) {
+            if (get().type == GrLexemeType.rightCurlyBrace) {
                 checkAdvance();
-                if (get().type != GrLexemeType.identifier)
-                    logError("the parent class name is missing",
-                            "expected class name, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
-                parentClassName = get().svalue;
+                break;
+            }
+
+            bool isFieldPublic = false;
+            if (get().type == GrLexemeType.public_) {
+                isFieldPublic = true;
                 checkAdvance();
             }
-            if (get().type != GrLexemeType.leftCurlyBrace)
-                logError("the class does not have a body",
-                        "expected `{`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
+
+            GrType fieldType = parseType();
+            do {
+                if (get().type == GrLexemeType.comma)
+                    checkAdvance();
+
+                const string fieldName = get().svalue;
+                signature ~= fieldType;
+                fields ~= fieldName;
+                fieldScopes ~= isFieldPublic;
+                fieldPositions ~= current;
+                checkAdvance();
+            }
+            while (get().type == GrLexemeType.comma);
+
+            if (get().type != GrLexemeType.semicolon)
+                logError("missing semicolon after class field declaration",
+                        "expected `;`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
             checkAdvance();
 
-            string[] fields;
-            GrType[] signature;
-            bool[] fieldScopes;
-            while (!isEnd()) {
-                if (get().type == GrLexemeType.rightCurlyBrace) {
-                    checkAdvance();
-                    break;
+            if (get().type == GrLexemeType.rightCurlyBrace) {
+                checkAdvance();
+                break;
+            }
+        }
+
+        class_.parent = parentClassName;
+        class_.signature = signature;
+        class_.fields = fields;
+
+        class_.fieldsInfo.length = fields.length;
+        for (int i; i < class_.fieldsInfo.length; ++i) {
+            class_.fieldsInfo[i].fileId = class_.fileId;
+            class_.fieldsInfo[i].isPublic = fieldScopes[i];
+            class_.fieldsInfo[i].position = fieldPositions[i];
+        }
+        current = tempPos;
+        _data.clearTemplateAliases();
+        resolveClassInheritence(class_);
+    }
+
+    /// Fetch fields and signature of parent classes
+    private void resolveClassInheritence(GrClassDefinition class_) {
+        uint fileId = class_.fileId;
+        string parent = class_.parent;
+        GrClassDefinition lastClass = class_;
+        string[] usedClasses = [class_.name];
+
+        while (parent.length) {
+            GrClassDefinition parentClass = getClass(parent, fileId);
+            if (!parentClass) {
+                set(lastClass.position + 2u);
+                logError("`" ~ grGetPrettyType(grGetClassType(class_.name)) ~ "` can't inherit from `" ~ parent ~ "`",
+                        "unknown class");
+            }
+            for (int i; i < usedClasses.length; ++i) {
+                if (parent == usedClasses[i]) {
+                    set(lastClass.position + 2u);
+                    logError("`" ~ grGetPrettyType(grGetClassType(parent)) ~ "` is included recursively", "recursive inheritence");
                 }
-
-                bool isFieldPublic = false;
-                if (get().type == GrLexemeType.public_) {
-                    isFieldPublic = true;
-                    checkAdvance();
-                }
-
-                //Lazy check because we can't know about other classes
-                auto fieldType = parseType(false);
-                do {
-                    if (get().type == GrLexemeType.comma)
-                        checkAdvance();
-
-                    //Unresolved type
-                    if (fieldType.baseType == GrBaseType.void_) {
-                        fieldType.mangledType = get().svalue;
-                        checkAdvance();
+            }
+            usedClasses ~= parent;
+            class_.fields = parentClass.fields ~ class_.fields;
+            class_.signature = parentClass.signature ~ class_.signature;
+            class_.fieldsInfo = parentClass.fieldsInfo ~ class_.fieldsInfo;
+            fileId = parentClass.fileId;
+            parent = parentClass.parent;
+            lastClass = parentClass;
+        }
+        for (int i; i < class_.signature.length; ++i) {
+            for (int y; y < class_.fields.length; ++y) {
+                if (i != y && class_.fields[i] == class_.fields[y]) {
+                    int first;
+                    int second;
+                    if (class_.fieldsInfo[i].position < class_.fieldsInfo[y].position) {
+                        first = i;
+                        second = y;
                     }
-
-                    if (get().type != GrLexemeType.identifier)
-                        logError("expected class field name, found `" ~ grGetPrettyLexemeType(get()
-                                .type) ~ "`", "missing identifier");
-
-                    const string fieldName = get().svalue;
-                    signature ~= fieldType;
-                    fields ~= fieldName;
-                    fieldScopes ~= isFieldPublic;
-                    fieldPositions ~= current;
-                    checkAdvance();
-                }
-                while (get().type == GrLexemeType.comma);
-
-                if (get().type != GrLexemeType.semicolon)
-                    logError("missing semicolon after class field declaration",
-                            "expected `;`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
-                checkAdvance();
-
-                if (get().type == GrLexemeType.rightCurlyBrace) {
-                    checkAdvance();
-                    break;
+                    else {
+                        first = y;
+                        second = i;
+                    }
+                    set(class_.fieldsInfo[second].position);
+                    logError("the field `" ~ class_.fields[second] ~ "` is declared multiple times",
+                            "`" ~ class_.fields[second] ~ "` is redefined here",
+                            "", 0, "previous definition of `" ~ class_.fields[first] ~ "`",
+                            class_.fieldsInfo[first].position);
                 }
             }
-
-            class_.parent = parentClassName;
-            class_.signature = signature;
-            class_.fields = fields;
-
-            class_.fieldsInfo.length = fields.length;
-            for (int i; i < class_.fieldsInfo.length; ++i) {
-                class_.fieldsInfo[i].fileId = class_.fileId;
-                class_.fieldsInfo[i].isPublic = fieldScopes[i];
-                class_.fieldsInfo[i].position = fieldPositions[i];
+            if (class_.signature[i].baseType != GrBaseType.class_) {
+                for (int y; y < usedClasses.length; ++y) {
+                    if (class_.signature[i].mangledType == usedClasses[y]) {
+                        set(class_.fieldsInfo[i].position);
+                        logError("`" ~ class_.signature[i].mangledType ~ "` is included recursively",
+                                "recursive declaration");
+                    }
+                }
             }
         }
     }
@@ -2255,8 +2242,9 @@ final class GrParser {
             else if (lex.type == GrLexemeType.identifier
                     && _data.isClass(lex.svalue, lex.fileId, false)) {
                 currentType.baseType = GrBaseType.class_;
-                currentType.mangledType = lex.svalue;
                 checkAdvance();
+                currentType.mangledType = grMangleNamedFunction(lex.svalue,
+                        parseTemplateSignature());
                 return currentType;
             }
             else if (lex.type == GrLexemeType.identifier
@@ -2737,7 +2725,6 @@ final class GrParser {
         current = temp.lexPosition;
 
         for (int i; i < temp.templateVariables.length; ++i) {
-            writeln(grGetPrettyType(templateList[i]), " ", temp.templateVariables[i]);
             _data.addTemplateAlias(temp.templateVariables[i], templateList[i],
                     temp.fileId, temp.isPublic);
         }
@@ -4390,7 +4377,7 @@ final class GrParser {
                 for (;;) {
                     if (className == dst.mangledType)
                         return dst;
-                    const GrClassDefinition classType = _data.getClass(className, fileId);
+                    const GrClassDefinition classType = getClass(className, fileId);
                     if (!classType.parent.length)
                         break;
                     className = classType.parent;
@@ -4514,9 +4501,10 @@ final class GrParser {
         if (classType.baseType != GrBaseType.class_)
             logError("`" ~ grGetPrettyType(classType) ~ "` is not a class type",
                     "invalid type", "", -1);
-        GrClassDefinition class_ = _data.getClass(classType.mangledType, fileId);
+        GrClassDefinition class_ = getClass(classType.mangledType, fileId);
         if (!class_)
-            logError("`" ~ classType.mangledType ~ "` is not declared", "unknown class", "", -1);
+            logError("`" ~ grGetPrettyType(classType) ~ "` is not declared",
+                    "unknown class", "", -1);
         addInstruction(GrOpcode.new_, cast(uint) class_.index);
 
         bool[] initFields;
@@ -5520,9 +5508,10 @@ final class GrParser {
                             .type) ~ "`", "missing field");
                 const string identifier = get().svalue;
                 checkAdvance();
-                GrClassDefinition class_ = _data.getClass(currentType.mangledType, get().fileId);
+                GrClassDefinition class_ = getClass(currentType.mangledType, get().fileId);
                 if (!class_)
-                    logError("the type `" ~ currentType.mangledType ~ "` is not declared", "");
+                    logError("the type `" ~ grGetPrettyType(currentType) ~ "` is not declared",
+                            "unknown type");
                 const auto nbFields = class_.signature.length;
                 bool hasField;
                 for (int i; i < nbFields; i++) {
@@ -5633,10 +5622,10 @@ final class GrParser {
                 bool hasField;
 
                 if (currentType.baseType == GrBaseType.class_) {
-                    GrClassDefinition class_ = _data.getClass(currentType.mangledType,
-                            get().fileId);
+                    GrClassDefinition class_ = getClass(currentType.mangledType, get().fileId);
                     if (!class_)
-                        logError("`" ~ class_.name ~ "` is not declared", "unknown class", "", -1);
+                        logError("`" ~ grGetPrettyType(currentType) ~ "` is not declared",
+                                "unknown class", "", -1);
                     const auto nbFields = class_.signature.length;
                     for (int i; i < nbFields; i++) {
                         if (identifier == class_.fields[i]) {
