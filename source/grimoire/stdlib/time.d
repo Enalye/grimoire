@@ -11,8 +11,8 @@ import std.conv: to;
 import grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib)
-void grLoadStdLibTime(GrData data) {
-	data.addPrimitive(&_clock, "clock", [], [], [grInt]);
+void grLoadStdLibTime(GrLibrary library) {
+	library.addPrimitive(&_clock, "clock", [], [], [grInt]);
 }
 
 private void _clock(GrCall call) {

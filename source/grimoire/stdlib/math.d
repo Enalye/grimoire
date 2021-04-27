@@ -10,16 +10,16 @@ import std.algorithm.comparison: clamp;
 import grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib)
-void grLoadStdLibMath(GrData data) {
-    data.addPrimitive(&_clamp, "clamp", ["v", "min", "max"], [grFloat, grFloat, grFloat], [grFloat]);
-    data.addPrimitive(&_random01, "rand", [], [], [grFloat]);
-    data.addPrimitive(&_randomf, "rand", ["v1", "v2"], [grFloat, grFloat], [grFloat]);
-    data.addPrimitive(&_randomi, "rand", ["v1", "v2"], [grInt, grInt], [grInt]);
-    data.addPrimitive(&_cos, "cos", ["v"], [grFloat], [grFloat]);
-    data.addPrimitive(&_sin, "sin", ["v"], [grFloat], [grFloat]);
-    data.addPrimitive(&_sqrt, "sqrt", ["v"], [grFloat], [grFloat]);
-    data.addPrimitive(&_lerp, "lerp", ["a", "b", "t"], [grFloat, grFloat, grFloat], [grFloat]);
-    data.addPrimitive(&_rlerp, "rlerp", ["a", "b", "v"], [grFloat, grFloat, grFloat], [grFloat]);  
+void grLoadStdLibMath(GrLibrary library) {
+    library.addPrimitive(&_clamp, "clamp", ["v", "min", "max"], [grFloat, grFloat, grFloat], [grFloat]);
+    library.addPrimitive(&_random01, "rand", [], [], [grFloat]);
+    library.addPrimitive(&_randomf, "rand", ["v1", "v2"], [grFloat, grFloat], [grFloat]);
+    library.addPrimitive(&_randomi, "rand", ["v1", "v2"], [grInt, grInt], [grInt]);
+    library.addPrimitive(&_cos, "cos", ["v"], [grFloat], [grFloat]);
+    library.addPrimitive(&_sin, "sin", ["v"], [grFloat], [grFloat]);
+    library.addPrimitive(&_sqrt, "sqrt", ["v"], [grFloat], [grFloat]);
+    library.addPrimitive(&_lerp, "lerp", ["a", "b", "t"], [grFloat, grFloat, grFloat], [grFloat]);
+    library.addPrimitive(&_rlerp, "rlerp", ["a", "b", "v"], [grFloat, grFloat, grFloat], [grFloat]);  
 }
 
 private void _clamp(GrCall call) {

@@ -8,7 +8,7 @@ module grimoire.stdlib.channel;
 import std.range;
 import grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibChannel(GrData data) {
+package(grimoire.stdlib) void grLoadStdLibChannel(GrLibrary library) {
     static foreach (t; ["Int", "Float", "String", "Object"]) {
         mixin("GrType any" ~ t ~ "Channel = grAny(\"C\", (type, data) {
                 if (type.baseType != GrBaseType.chan)
@@ -17,19 +17,18 @@ package(grimoire.stdlib) void grLoadStdLibChannel(GrData data) {
                 return grIsKindOf" ~ t
                 ~ "(subType.baseType);
             });
-            data.addPrimitive(&_size_!\"" ~ t ~ "\", \"size\", [\"chan\"], [
+            library.addPrimitive(&_size_!\"" ~ t ~ "\", \"size\", [\"chan\"], [
                     any" ~ t ~ "Channel
                     ], [grInt]);
-            data.addPrimitive(&_capacity_!\""
+            library.addPrimitive(&_capacity_!\""
                 ~ t ~ "\", \"capacity\", [\"chan\"], [
                     any" ~ t ~ "Channel
                     ], [grInt]);
-            data.addPrimitive(&_empty_!\"" ~ t ~ "\", \"empty?\", [\"chan\"], [
+            library.addPrimitive(&_empty_!\"" ~ t ~ "\", \"empty?\", [\"chan\"], [
                     any"
                 ~ t ~ "Channel
                     ], [grBool]);
-
-            data.addPrimitive(&_full_!\"" ~ t
+            library.addPrimitive(&_full_!\"" ~ t
                 ~ "\", \"full?\", [\"chan\"], [
                     any" ~ t ~ "Channel
                     ], [grBool]);

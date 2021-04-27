@@ -13,9 +13,10 @@ import grimoire;
 void main() {
     try {
         auto startTime = MonoTime.currTime();
-        GrData data = new GrData;
-        grLoadStdLibrary(data);
+        GrLibrary stdlib = grLoadStdLibrary();
 
+        GrData data = new GrData;
+        data.addLibrary(stdlib);
         GrBytecode bytecode;
         GrCompiler compiler = new GrCompiler(data);
         if (!compiler.compileFile(bytecode, "script/test.gr", GrCompiler.Flags.none)) {

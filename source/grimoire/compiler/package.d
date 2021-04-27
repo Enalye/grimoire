@@ -13,5 +13,6 @@ public {
 	import grimoire.compiler.primitive;
 	import grimoire.compiler.mangle;
 	import grimoire.compiler.data;
+	import grimoire.compiler.library;
 	import grimoire.compiler.error;
 }

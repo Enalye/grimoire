@@ -9,32 +9,32 @@ import std.string;
 import std.conv : to;
 import grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibString(GrData data) {
-    data.addPrimitive(&_empty, "empty?", ["str"], [grString], [grBool]);
-    data.addPrimitive(&_unshift, "unshift", ["str", "value"], [grString, grString], [
+package(grimoire.stdlib) void grLoadStdLibString(GrLibrary library) {
+    library.addPrimitive(&_empty, "empty?", ["str"], [grString], [grBool]);
+    library.addPrimitive(&_unshift, "unshift", ["str", "value"], [grString, grString], [
             grString
             ]);
-    data.addPrimitive(&_push, "push", ["str", "value"], [grString, grString], [
+    library.addPrimitive(&_push, "push", ["str", "value"], [grString, grString], [
             grString
             ]);
-    data.addPrimitive(&_shift, "shift", ["str"], [grString], [grString]);
-    data.addPrimitive(&_pop, "pop", ["str"], [grString], [grString]);
-    data.addPrimitive(&_shift1, "shift", ["str", "size"], [grString, grInt], [
+    library.addPrimitive(&_shift, "shift", ["str"], [grString], [grString]);
+    library.addPrimitive(&_pop, "pop", ["str"], [grString], [grString]);
+    library.addPrimitive(&_shift1, "shift", ["str", "size"], [grString, grInt], [
             grString
             ]);
-    data.addPrimitive(&_pop1, "pop", ["str", "size"], [grString, grInt], [
+    library.addPrimitive(&_pop1, "pop", ["str", "size"], [grString, grInt], [
             grString
             ]);
-    data.addPrimitive(&_first, "first", ["str"], [grString], [grString]);
-    data.addPrimitive(&_last, "last", ["str"], [grString], [grString]);
-    data.addPrimitive(&_remove, "remove", ["str", "index"], [grString, grInt], [grString]);
-    data.addPrimitive(&_remove2, "remove", ["str", "index1", "index2"], [grString, grInt, grInt], [grString]);
-    data.addPrimitive(&_slice, "slice", ["str", "index1", "index2"], [grString, grInt, grInt], [grString]);
-    data.addPrimitive(&_reverse, "reverse", ["str"], [grString], [grString]);
-    data.addPrimitive(&_insert, "insert", ["str", "index", "value"], [grString, grInt, grString], [grString]);
-    data.addPrimitive(&_findFirst, "findFirst", ["str", "value"], [grString, grString], [grInt]);
-    data.addPrimitive(&_findLast, "findLast", ["str", "value"], [grString, grString], [grInt]);
-    data.addPrimitive(&_has, "has?", ["str", "value"], [grString, grString], [grBool]);
+    library.addPrimitive(&_first, "first", ["str"], [grString], [grString]);
+    library.addPrimitive(&_last, "last", ["str"], [grString], [grString]);
+    library.addPrimitive(&_remove, "remove", ["str", "index"], [grString, grInt], [grString]);
+    library.addPrimitive(&_remove2, "remove", ["str", "index1", "index2"], [grString, grInt, grInt], [grString]);
+    library.addPrimitive(&_slice, "slice", ["str", "index1", "index2"], [grString, grInt, grInt], [grString]);
+    library.addPrimitive(&_reverse, "reverse", ["str"], [grString], [grString]);
+    library.addPrimitive(&_insert, "insert", ["str", "index", "value"], [grString, grInt, grString], [grString]);
+    library.addPrimitive(&_findFirst, "findFirst", ["str", "value"], [grString, grString], [grInt]);
+    library.addPrimitive(&_findLast, "findLast", ["str", "value"], [grString, grString], [grInt]);
+    library.addPrimitive(&_has, "has?", ["str", "value"], [grString, grString], [grBool]);
 }
 
 private void _empty(GrCall call) {

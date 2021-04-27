@@ -8,11 +8,11 @@ module grimoire.stdlib.array;
 import std.range;
 import grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibArray(GrData data) {
-    data.addPrimitive(&_range_i, "range", ["min", "max"], [grInt, grInt], [
+package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
+    library.addPrimitive(&_range_i, "range", ["min", "max"], [grInt, grInt], [
             grIntArray
             ]);
-    data.addPrimitive(&_range_f, "range", ["min", "max"], [grFloat, grFloat], [
+    library.addPrimitive(&_range_f, "range", ["min", "max"], [grFloat, grFloat], [
             grFloatArray
             ]);
 
@@ -24,76 +24,76 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrData data) {
                 data.set(\"T\", subType);
                 return grIsKindOf" ~ t ~ "(subType.baseType);
             });
-            data.addPrimitive(&_copy_!\"" ~ t
+            library.addPrimitive(&_copy_!\"" ~ t
                 ~ "\", \"copy\", [\"array\"], [any" ~ t ~ "Array], [grAny(\"A\")]);
-            data.addPrimitive(&_size_!\"" ~ t
+            library.addPrimitive(&_size_!\"" ~ t
                 ~ "\", \"size\", [\"array\"], [any" ~ t ~ "Array], [grInt]);
-            data.addPrimitive(&_resize_!\"" ~ t
+            library.addPrimitive(&_resize_!\"" ~ t
                 ~ "\", \"resize\", [\"array\", \"size\"], [
                 any" ~ t ~ "Array, grInt
             ], [grAny(\"A\")]);
-            data.addPrimitive(&_empty_!\""
+            library.addPrimitive(&_empty_!\""
                 ~ t ~ "\", \"empty?\", [\"array\"], [
                 any" ~ t ~ "Array
             ], [grBool]);
-            data.addPrimitive(&_fill_!\"" ~ t ~ "\", \"fill\", [\"array\", \"value\"], [
+            library.addPrimitive(&_fill_!\"" ~ t ~ "\", \"fill\", [\"array\", \"value\"], [
                 any"
                 ~ t ~ "Array, grAny(\"T\")
             ], [grAny(\"A\")]);
-            data.addPrimitive(&_clear_!\"" ~ t ~ "\", \"clear\", [\"array\"], [
+            library.addPrimitive(&_clear_!\"" ~ t ~ "\", \"clear\", [\"array\"], [
                 any"
                 ~ t ~ "Array
             ], [grAny(\"A\")]);
-            data.addPrimitive(&_unshift_!\"" ~ t ~ "\", \"unshift\", [\"array\", \"v\"], [
+            library.addPrimitive(&_unshift_!\"" ~ t ~ "\", \"unshift\", [\"array\", \"v\"], [
                     any" ~ t
                 ~ "Array, grAny(\"T\")
                 ], [grAny(\"A\")]);
-            data.addPrimitive(&_push_!\"" ~ t ~ "\", \"push\", [\"array\", \"v\"], [
+            library.addPrimitive(&_push_!\"" ~ t ~ "\", \"push\", [\"array\", \"v\"], [
                     any" ~ t
                 ~ "Array, grAny(\"T\")
                 ], [grAny(\"A\")]);
-            data.addPrimitive(&_shift_!\"" ~ t ~ "\", \"shift\", [\"array\"], [
+            library.addPrimitive(&_shift_!\"" ~ t ~ "\", \"shift\", [\"array\"], [
                     any" ~ t ~ "Array
                 ], [grAny(\"T\")]);
-            data.addPrimitive(&_pop_!\"" ~ t
+            library.addPrimitive(&_pop_!\"" ~ t
                 ~ "\", \"pop\", [\"array\"], [
                     any" ~ t ~ "Array
                 ], [grAny(\"T\")]);
-            data.addPrimitive(&_shift1_!\"" ~ t ~ "\", \"shift\", [\"array\", \"size\"], [
+            library.addPrimitive(&_shift1_!\"" ~ t ~ "\", \"shift\", [\"array\", \"size\"], [
                     any" ~ t ~ "Array, grInt
                 ], [grAny(\"A\")]);
-            data.addPrimitive(&_pop1_!\"" ~ t
+            library.addPrimitive(&_pop1_!\"" ~ t
                 ~ "\", \"pop\", [\"array\", \"size\"], [
                     any" ~ t ~ "Array, grInt
                 ], [grAny(\"A\")]);
-            data.addPrimitive(&_first_!\""
+            library.addPrimitive(&_first_!\""
                 ~ t ~ "\", \"first\", [\"array\"], [
                 any" ~ t ~ "Array
             ], [grAny(\"T\")]);
-            data.addPrimitive(&_last_!\"" ~ t ~ "\", \"last\", [\"array\"], [
+            library.addPrimitive(&_last_!\"" ~ t ~ "\", \"last\", [\"array\"], [
                     any" ~ t ~ "Array
                 ], [grAny(\"T\")]);
-            data.addPrimitive(&_remove_!\"" ~ t
+            library.addPrimitive(&_remove_!\"" ~ t
                 ~ "\", \"remove\", [\"array\", \"index\"], [
                     any" ~ t ~ "Array, grInt
                 ], [grAny(\"A\")]);
-            data.addPrimitive(&_remove2_!\""
+            library.addPrimitive(&_remove2_!\""
                 ~ t ~ "\", \"remove\", [\"array\", \"index1\", \"index2\"], [
                     any" ~ t ~ "Array, grInt, grInt
                 ], [grAny(\"A\")]);
-            data.addPrimitive(&_slice_!\"" ~ t
+            library.addPrimitive(&_slice_!\"" ~ t
                 ~ "\", \"slice!\", [\"array\", \"index1\", \"index2\"], [
                     any" ~ t
                 ~ "Array, grInt, grInt
                 ], [grAny(\"A\")]);
-            data.addPrimitive(&_slice_copy_!\"" ~ t ~ "\", \"slice\", [\"array\", \"index1\", \"index2\"], [
+            library.addPrimitive(&_slice_copy_!\"" ~ t ~ "\", \"slice\", [\"array\", \"index1\", \"index2\"], [
                     any"
                 ~ t ~ "Array, grInt, grInt
                 ], [grAny(\"A\")]);
-            data.addPrimitive(&_reverse_!\"" ~ t ~ "\", \"reverse\", [\"array\"], [
+            library.addPrimitive(&_reverse_!\"" ~ t ~ "\", \"reverse\", [\"array\"], [
                     any" ~ t ~ "Array
                 ], [grAny(\"A\")]);
-            data.addPrimitive(&_insert_!\"" ~ t
+            library.addPrimitive(&_insert_!\"" ~ t
                 ~ "\", \"insert\", [\"array\", \"index\", \"value\"], [
                     any" ~ t ~ "Array, grInt, grAny(\"T\")
                 ], [grAny(\"A\")]);
@@ -101,22 +101,22 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrData data) {
 
         static if (t != "Object") {
             mixin("
-            data.addPrimitive(&_sort_!\"" ~ t ~ "\", \"sort\", [\"array\"], [
+            library.addPrimitive(&_sort_!\"" ~ t ~ "\", \"sort\", [\"array\"], [
                     any" ~ t ~ "Array
                 ], [grAny(\"A\")]);
-            data.addPrimitive(&_findFirst_!\"" ~ t ~ "\", \"findFirst\", [\"array\", \"value\"], [
+            library.addPrimitive(&_findFirst_!\"" ~ t ~ "\", \"findFirst\", [\"array\", \"value\"], [
                     any"
                     ~ t ~ "Array, grAny(\"T\")
                 ], [grInt]);
-            data.addPrimitive(&_findLast_!\"" ~ t ~ "\", \"findLast\", [\"array\", \"value\"], [
+            library.addPrimitive(&_findLast_!\"" ~ t ~ "\", \"findLast\", [\"array\", \"value\"], [
                     any"
                     ~ t ~ "Array, grAny(\"T\")
                 ], [grInt]);
-            data.addPrimitive(&_findLast_!\"" ~ t ~ "\", \"findLast\", [\"array\", \"value\"], [
+            library.addPrimitive(&_findLast_!\"" ~ t ~ "\", \"findLast\", [\"array\", \"value\"], [
                     any" ~ t
                     ~ "Array, grAny(\"T\")
                 ], [grInt]);
-            data.addPrimitive(&_has_!\"" ~ t
+            library.addPrimitive(&_has_!\"" ~ t
                     ~ "\", \"has?\", [\"array\", \"value\"], [
                     any" ~ t ~ "Array, grAny(\"T\")
                 ], [grBool]);

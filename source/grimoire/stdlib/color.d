@@ -8,25 +8,25 @@ module grimoire.stdlib.color;
 import std.algorithm.comparison: clamp;
 import grimoire.compiler, grimoire.runtime;
 
-package void grLoadStdLibColor(GrData data) {
-    auto defColor = data.addClass("Color", ["r", "g", "b"], [grFloat, grFloat, grFloat]);
+package void grLoadStdLibColor(GrLibrary library) {
+    auto defColor = library.addClass("Color", ["r", "g", "b"], [grFloat, grFloat, grFloat]);
 
-	data.addPrimitive(&_makeColor, "Color", [], [], [defColor]);
-	data.addPrimitive(&_makeColor3, "Color", ["r", "g", "b"], [grFloat, grFloat, grFloat], [defColor]);
+	library.addPrimitive(&_makeColor, "Color", [], [], [defColor]);
+	library.addPrimitive(&_makeColor3, "Color", ["r", "g", "b"], [grFloat, grFloat, grFloat], [defColor]);
 
-    data.addPrimitive(&_makeColor3i, "Color", ["r", "g", "b"], [grInt, grInt, grInt], [defColor]);
+    library.addPrimitive(&_makeColor3i, "Color", ["r", "g", "b"], [grInt, grInt, grInt], [defColor]);
 
     static foreach(op; ["+", "-", "*", "/", "%"]) {
-        data.addOperator(&_opBinaryColor!op, op, ["c1", "c2"], [defColor, defColor], defColor);
-        data.addOperator(&_opBinaryScalarColor!op, op, ["c", "s"], [defColor, grFloat], defColor);
-        data.addOperator(&_opBinaryScalarRightColor!op, op, ["s", "c"], [grFloat, defColor], defColor);
+        library.addOperator(&_opBinaryColor!op, op, ["c1", "c2"], [defColor, defColor], defColor);
+        library.addOperator(&_opBinaryScalarColor!op, op, ["c", "s"], [defColor, grFloat], defColor);
+        library.addOperator(&_opBinaryScalarRightColor!op, op, ["s", "c"], [grFloat, defColor], defColor);
     }
 
-	data.addPrimitive(&_mixColor, "mix", ["c1", "c2"], [defColor, defColor], [defColor]);
-	data.addPrimitive(&_lerpColor, "lerp", ["c1", "c2", "t"], [defColor, defColor, grFloat], [defColor]);
+	library.addPrimitive(&_mixColor, "mix", ["c1", "c2"], [defColor, defColor], [defColor]);
+	library.addPrimitive(&_lerpColor, "lerp", ["c1", "c2", "t"], [defColor, defColor, grFloat], [defColor]);
 
-    data.addCast(&_castArrayToColor, "ary", grIntArray, defColor);
-    data.addCast(&_castColorToString, "c", defColor, grString);
+    library.addCast(&_castArrayToColor, "ary", grIntArray, defColor);
+    library.addCast(&_castColorToString, "c", defColor, grString);
 }
 
 private void _makeColor(GrCall call) {

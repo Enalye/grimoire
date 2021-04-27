@@ -7,20 +7,20 @@ module grimoire.stdlib.vector;
 
 import grimoire.compiler, grimoire.runtime;
 
-package void grLoadStdLibVector(GrData data) {
-    auto defVec2 = data.addClass("Vec2", ["x", "y"], [grFloat, grFloat]);
+package void grLoadStdLibVector(GrLibrary library) {
+    auto defVec2 = library.addClass("Vec2", ["x", "y"], [grFloat, grFloat]);
 
-	data.addPrimitive(&_makeVec2, "Vec2", [], [], [defVec2]);
-	data.addPrimitive(&_makeVec2_2f, "Vec2", ["x", "y"], [grFloat, grFloat], [defVec2]);
+	library.addPrimitive(&_makeVec2, "Vec2", [], [], [defVec2]);
+	library.addPrimitive(&_makeVec2_2f, "Vec2", ["x", "y"], [grFloat, grFloat], [defVec2]);
 
     static foreach(op; ["+", "-", "*", "/", "%"]) {
-        data.addOperator(&_opBinaryVec2!op, op, ["v1", "v2"], [defVec2, defVec2], defVec2);
-        data.addOperator(&_opBinaryScalarVec2!op, op, ["v", "s"], [defVec2, grFloat], defVec2);
-        data.addOperator(&_opBinaryScalarRightVec2!op, op, ["s", "v"], [grFloat, defVec2], defVec2);
+        library.addOperator(&_opBinaryVec2!op, op, ["v1", "v2"], [defVec2, defVec2], defVec2);
+        library.addOperator(&_opBinaryScalarVec2!op, op, ["v", "s"], [defVec2, grFloat], defVec2);
+        library.addOperator(&_opBinaryScalarRightVec2!op, op, ["s", "v"], [grFloat, defVec2], defVec2);
     }
 
     static foreach(op; ["==", "!=", ">=", "<=", ">", "<"]) {
-        data.addOperator(&_opBinaryVec2!op, op, ["v1", "v2"], [defVec2, defVec2], grBool);
+        library.addOperator(&_opBinaryVec2!op, op, ["v1", "v2"], [defVec2, defVec2], grBool);
     }
 }
 

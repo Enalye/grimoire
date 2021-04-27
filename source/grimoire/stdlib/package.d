@@ -20,16 +20,18 @@ import grimoire.stdlib.typecast;
 import grimoire.stdlib.pair;
 
 /// Load the standard library
-void grLoadStdLibrary(GrData data) {
-    grLoadStdLibArray(data);
-    grLoadStdLibString(data);
-    grLoadStdLibChannel(data);
-    grLoadStdLibPrint(data);
-    grLoadStdLibMath(data);
-    grLoadStdLibVector(data);
-    grLoadStdLibColor(data);
-    grLoadStdLibTest(data);
-    grLoadStdLibTime(data);
-    grLoadStdLibTypecast(data);
-    grLoadStdLibPair(data);
+GrLibrary grLoadStdLibrary() {
+    GrLibrary library = new GrLibrary;
+    grLoadStdLibArray(library);
+    grLoadStdLibString(library);
+    grLoadStdLibChannel(library);
+    grLoadStdLibPrint(library);
+    grLoadStdLibMath(library);
+    grLoadStdLibVector(library);
+    grLoadStdLibColor(library);
+    grLoadStdLibTest(library);
+    grLoadStdLibTime(library);
+    grLoadStdLibTypecast(library);
+    grLoadStdLibPair(library);
+    return library;
 }

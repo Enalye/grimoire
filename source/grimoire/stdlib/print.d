@@ -10,26 +10,26 @@ import std.conv: to;
 import grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib)
-void grLoadStdLibPrint(GrData data) {
+void grLoadStdLibPrint(GrLibrary library) {
     //print
-	data.addPrimitive(&_printi, "print", ["value"], [grInt]);
-	data.addPrimitive(&_printb, "print", ["value"], [grBool]);
-	data.addPrimitive(&_printf, "print", ["value"], [grFloat]);
-	data.addPrimitive(&_prints, "print", ["value"], [grString]);
-	data.addPrimitive(&_printni, "print", ["value"], [grIntArray]);
-	data.addPrimitive(&_printnb, "print", ["value"], [grBoolArray]);
-	data.addPrimitive(&_printnf, "print", ["value"], [grFloatArray]);
-	data.addPrimitive(&_printns, "print", ["value"], [grStringArray]);
+	library.addPrimitive(&_printi, "print", ["value"], [grInt]);
+	library.addPrimitive(&_printb, "print", ["value"], [grBool]);
+	library.addPrimitive(&_printf, "print", ["value"], [grFloat]);
+	library.addPrimitive(&_prints, "print", ["value"], [grString]);
+	library.addPrimitive(&_printni, "print", ["value"], [grIntArray]);
+	library.addPrimitive(&_printnb, "print", ["value"], [grBoolArray]);
+	library.addPrimitive(&_printnf, "print", ["value"], [grFloatArray]);
+	library.addPrimitive(&_printns, "print", ["value"], [grStringArray]);
 
     //printl
-	data.addPrimitive(&_printli, "printl", ["value"], [grInt]);
-	data.addPrimitive(&_printlb, "printl", ["value"], [grBool]);
-	data.addPrimitive(&_printlf, "printl", ["value"], [grFloat]);
-    data.addPrimitive(&_printls, "printl", ["value"], [grString]);
-	data.addPrimitive(&_printlni, "printl", ["value"], [grIntArray]);
-	data.addPrimitive(&_printlnb, "printl", ["value"], [grBoolArray]);
-	data.addPrimitive(&_printlnf, "printl", ["value"], [grFloatArray]);
-	data.addPrimitive(&_printlns, "printl", ["value"], [grStringArray]);
+	library.addPrimitive(&_printli, "printl", ["value"], [grInt]);
+	library.addPrimitive(&_printlb, "printl", ["value"], [grBool]);
+	library.addPrimitive(&_printlf, "printl", ["value"], [grFloat]);
+    library.addPrimitive(&_printls, "printl", ["value"], [grString]);
+	library.addPrimitive(&_printlni, "printl", ["value"], [grIntArray]);
+	library.addPrimitive(&_printlnb, "printl", ["value"], [grBoolArray]);
+	library.addPrimitive(&_printlnf, "printl", ["value"], [grFloatArray]);
+	library.addPrimitive(&_printlns, "printl", ["value"], [grStringArray]);
 }
 
 // print

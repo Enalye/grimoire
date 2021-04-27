@@ -10,6 +10,7 @@ import grimoire.runtime;
 import grimoire.compiler.primitive;
 import grimoire.compiler.type;
 import grimoire.compiler.mangle;
+import grimoire.compiler.library;
 
 /**
 Contains type information and D linked functions. \
@@ -40,6 +41,23 @@ class GrData {
 
         /// Used to validate special primitives.
         GrAnyData _anyData;
+    }
+
+    /// Add types and primitives defined in the library
+    void addLibrary(GrLibrary library) {
+        _abstractForeignDefinitions ~= library._abstractForeignDefinitions;
+        _aliasDefinitions ~= library._aliasDefinitions;
+        _abstractClassDefinitions ~= library._abstractClassDefinitions;
+        _abstractPrimitives ~= library._abstractPrimitives;
+        foreach (GrEnumDefinition enum_; library._enumDefinitions) {
+            enum_.index = _enumDefinitions.length;
+            _enumDefinitions ~= enum_;
+        }
+        foreach (GrPrimitive primitive; library._primitives) {
+            primitive.index = cast(uint) _primitives.length;
+            primitive.callObject = new GrCall(this, primitive);
+            _primitives ~= primitive;
+        }
     }
 
     /// Primitive global constants, call registerIntConstant at the start of the parser. \
@@ -91,21 +109,6 @@ class GrData {
         return stType;
     }
 
-    /// Ditto
-    GrType addEnum(string name, string[] fields) {
-        assert(!isTypeDeclared(name), "`" ~ name ~ "` is already declared");
-        GrEnumDefinition enumDef = new GrEnumDefinition;
-        enumDef.name = name;
-        enumDef.fields = fields;
-        enumDef.index = _enumDefinitions.length;
-        enumDef.isPublic = true;
-        _enumDefinitions ~= enumDef;
-
-        GrType stType = GrBaseType.enum_;
-        stType.mangledType = name;
-        return stType;
-    }
-
     package void registerClass(string name, uint fileId, bool isPublic,
             string[] templateVariables, uint position) {
         GrClassDefinition class_ = new GrClassDefinition;
@@ -117,39 +120,6 @@ class GrData {
         _abstractClassDefinitions ~= class_;
     }
 
-    package GrClassDefinition[] getAllClasses() {
-        return _classDefinitions;
-    }
-
-    /// Define a class type.
-    GrType addClass(string name, string[] fields, GrType[] signature,
-            string[] templateVariables = [], string parent = "",
-            GrType[] parentTemplateSignature = []) {
-        assert(fields.length == signature.length, "Class signature mismatch");
-        assert(!isTypeDeclared(name), "`" ~ name ~ "` is already declared");
-        GrClassDefinition class_ = new GrClassDefinition;
-        class_.name = name;
-        class_.parent = parent;
-        class_.signature = signature;
-        class_.fields = fields;
-        class_.templateVariables = templateVariables;
-        class_.parentTemplateSignature = parentTemplateSignature;
-        class_.isPublic = true;
-        class_.isParsed = true;
-        _abstractClassDefinitions ~= class_;
-
-        class_.fieldsInfo.length = fields.length;
-        for (int i; i < class_.fieldsInfo.length; ++i) {
-            class_.fieldsInfo[i].fileId = 0;
-            class_.fieldsInfo[i].isPublic = true;
-            class_.fieldsInfo[i].position = 0;
-        }
-
-        GrType stType = GrBaseType.class_;
-        stType.mangledType = name;
-        return stType;
-    }
-
     /// Define an alias of another type.
     package GrType addTypeAlias(string name, GrType type, uint fileId, bool isPublic) {
         GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
@@ -157,17 +127,6 @@ class GrData {
         typeAlias.type = type;
         typeAlias.fileId = fileId;
         typeAlias.isPublic = isPublic;
-        _aliasDefinitions ~= typeAlias;
-        return type;
-    }
-
-    /// Ditto
-    GrType addTypeAlias(string name, GrType type) {
-        assert(!isTypeDeclared(name), "`" ~ name ~ "` is already declared");
-        GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
-        typeAlias.name = name;
-        typeAlias.type = type;
-        typeAlias.isPublic = true;
         _aliasDefinitions ~= typeAlias;
         return type;
     }
@@ -185,22 +144,6 @@ class GrData {
 
     package void clearTemplateAliases() {
         _templateAliasDefinitions.length = 0;
-    }
-
-    /// Define an opaque pointer type.
-    GrType addForeign(string name, string[] templateVariables = [],
-            string parent = "", GrType[] parentTemplateSignature = []) {
-        assert(!isTypeDeclared(name), "`" ~ name ~ "` is already declared");
-        assert(name != parent, "`" ~ name ~ "` can't be its own parent");
-        GrAbstractForeignDefinition foreign = new GrAbstractForeignDefinition;
-        foreign.name = name;
-        foreign.templateVariables = templateVariables;
-        foreign.parent = parent;
-        foreign.parentTemplateSignature = parentTemplateSignature;
-        _abstractForeignDefinitions ~= foreign;
-        GrType type = GrBaseType.foreign;
-        type.mangledType = name;
-        return type;
     }
 
     /// Is the enum defined ?
@@ -320,7 +263,7 @@ class GrData {
             if (enumType.name == name && (enumType.fileId == fileId || enumType.isPublic))
                 return enumType;
         }
-        assert(false, "Undefined enum `" ~ name ~ "`");
+        return null;
     }
 
     /// Return the class definition.
@@ -394,78 +337,7 @@ class GrData {
             if (typeAlias.name == name && (typeAlias.fileId == fileId || typeAlias.isPublic))
                 return typeAlias;
         }
-        assert(false, "Undefined  `" ~ name ~ "`");
-    }
-
-    /**
-    Define a new primitive.
-    */
-    GrPrimitive addPrimitive(GrCallback callback, string name,
-            string[] parameters, GrType[] inSignature, GrType[] outSignature = [
-            ]) {
-        bool isAbstract;
-        foreach (GrType type; inSignature) {
-            if (type.isAny) {
-                isAbstract = true;
-                break;
-            }
-        }
-
-        GrPrimitive primitive = new GrPrimitive;
-        primitive.callback = callback;
-        primitive.inSignature = inSignature;
-        primitive.parameters = parameters;
-        primitive.outSignature = outSignature;
-        primitive.name = name;
-
-        if (isAbstract) {
-            _abstractPrimitives ~= primitive;
-        }
-        else {
-            foreach (GrType type; outSignature) {
-                if (type.isAny)
-                    throw new Exception("`" ~ getPrettyPrimitive(primitive,
-                            true) ~ "` is not abstract but its return types are");
-            }
-            primitive.mangledName = grMangleNamedFunction(name, inSignature);
-            primitive.index = cast(uint) _primitives.length;
-            primitive.callObject = new GrCall(this, primitive);
-            if (isPrimitiveDeclared(primitive.mangledName))
-                throw new Exception("`" ~ getPrettyPrimitive(primitive,
-                        true) ~ "` is already declared");
-
-            _primitives ~= primitive;
-        }
-        return primitive;
-    }
-
-    /**
-    An operator is a function that replace a binary or unary grimoire operator such as `+`, `==`, etc
-    The name of the function must be that of the operator like "+", "-", "or", etc.
-    */
-    GrPrimitive addOperator(GrCallback callback, string name, string[] parameters,
-            GrType[] inSignature, GrType outType) {
-        import std.conv : to;
-
-        assert(inSignature.length <= 2uL,
-                "The operator `" ~ name ~ "` cannot take more than 2 parameters: " ~ to!string(
-                    parameters));
-        return addPrimitive(callback, "@op_" ~ name, parameters, inSignature, [
-                outType
-                ]);
-    }
-
-    /**
-    A cast operator allows to convert from one type to another.
-    It have to have only one parameter and return the casted value.
-    */
-    GrPrimitive addCast(GrCallback callback, string parameter, GrType srcType,
-            GrType dstType, bool isExplicit = false) {
-        auto primitive = addPrimitive(callback, "@as", [parameter], [
-                srcType, dstType
-                ], [dstType]);
-        primitive.isExplicit = isExplicit;
-        return primitive;
+        return null;
     }
 
     /**
@@ -489,7 +361,7 @@ class GrData {
             if (primitive.mangledName == mangledName)
                 return primitive;
         }
-        assert(false, "Undeclared primitive " ~ mangledName);
+        return null;
     }
 
     /// Ditto
@@ -605,7 +477,8 @@ class GrData {
     Prettify a primitive signature.
     */
     string getPrimitiveDisplayById(uint id, bool showParameters = false) {
-        assert(id < _primitives.length, "Invalid primitive id");
+        if(id >= _primitives.length)
+            throw new Exception("Invalid primitive id");
         return getPrettyPrimitive(_primitives[id], showParameters);
     }
 
