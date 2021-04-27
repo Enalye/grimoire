@@ -293,9 +293,9 @@ class GrCall {
     /// Create a new object of type `typeName`.
     GrObject createObject(string typeName) {
         int index;
-        for(; index < _data._classTypes.length; index ++) {
-            if(typeName == _data._classTypes[index].name)
-                return new GrObject(_data._classTypes[index]);
+        for(; index < _data._classDefinitions.length; index ++) {
+            if(typeName == _data._classDefinitions[index].name)
+                return new GrObject(_data._classDefinitions[index]);
         }
         return null;
     }

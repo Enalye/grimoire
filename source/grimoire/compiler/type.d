@@ -236,6 +236,16 @@ final class GrForeignDefinition {
     string parent;
 }
 
+/// Ditto
+final class GrAbstractForeignDefinition {
+    /// Identifier.
+    string name;
+    /// Mother class it inherit from.
+    string parent;
+    string[] templateVariables;
+    GrType[] parentTemplateSignature;
+}
+
 /// Create a foreign GrType for the type system.
 GrType grGetForeignType(string name) {
     GrType type = GrBaseType.foreign;
@@ -334,7 +344,7 @@ final class GrClassDefinition {
     /// List of template variables.
     string[] templateVariables;
     /// List of template types.
-    GrType[] templateTypes;
+    GrType[] templateTypes, parentTemplateSignature;
 
     package {
         struct FieldInfo {

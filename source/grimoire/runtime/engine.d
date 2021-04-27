@@ -385,7 +385,7 @@ class GrEngine {
                     if (context.ostackPos == context.ostack.length)
                         context.ostack.length *= 2;
                     context.ostack[context.ostackPos] = cast(void*) new GrObject(
-                            _data._classTypes[grGetInstructionUnsignedValue(opcode)]);
+                            _data._classDefinitions[grGetInstructionUnsignedValue(opcode)]);
                     context.pc++;
                     break;
                 case channel_int:
@@ -2071,9 +2071,9 @@ class GrEngine {
     /// Create a new object of type `typeName`.
     GrObject createObject(string typeName) {
         int index;
-        for (; index < _data._classTypes.length; index++) {
-            if (typeName == _data._classTypes[index].name)
-                return new GrObject(_data._classTypes[index]);
+        for (; index < _data._classDefinitions.length; index++) {
+            if (typeName == _data._classDefinitions[index].name)
+                return new GrObject(_data._classDefinitions[index]);
         }
         return null;
     }

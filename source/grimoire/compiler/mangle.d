@@ -509,8 +509,8 @@ string grGetPrettyType(GrType variableType) {
         result ~= ")";
         return result;
     case enum_:
-    case foreign:
         return to!string(variableType.mangledType);
+    case foreign:
     case class_:
         import std.algorithm.searching : findSplitBefore;
 

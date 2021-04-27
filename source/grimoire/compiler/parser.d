@@ -2155,7 +2155,8 @@ final class GrParser {
             for (int i; i < usedClasses.length; ++i) {
                 if (parent == usedClasses[i]) {
                     set(lastClass.position + 2u);
-                    logError("`" ~ grGetPrettyType(grGetClassType(parent)) ~ "` is included recursively", "recursive inheritence");
+                    logError("`" ~ grGetPrettyType(grGetClassType(parent)) ~ "` is included recursively",
+                            "recursive inheritence");
                 }
             }
             usedClasses ~= parent;
@@ -2245,6 +2246,12 @@ final class GrParser {
                 checkAdvance();
                 currentType.mangledType = grMangleNamedFunction(lex.svalue,
                         parseTemplateSignature());
+                if (mustBeType) {
+                    GrClassDefinition class_ = getClass(currentType.mangledType, lex.fileId);
+                    if (!class_)
+                        logError("`" ~ grGetPrettyType(currentType) ~ "` is not declared",
+                                "unknown class", "", -1);
+                }
                 return currentType;
             }
             else if (lex.type == GrLexemeType.identifier
@@ -2258,6 +2265,8 @@ final class GrParser {
                 currentType.baseType = GrBaseType.foreign;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
+                currentType.mangledType = grMangleNamedFunction(lex.svalue,
+                        parseTemplateSignature());
                 return currentType;
             }
             else if (mustBeType) {

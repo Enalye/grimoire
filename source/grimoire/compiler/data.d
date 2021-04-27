@@ -23,15 +23,17 @@ class GrData {
         /// Opaque pointer types. \
         /// They're pointer only defined by a name. \
         /// Can only be used with primitives.
-        GrForeignDefinition[] _foreigns;
+        GrForeignDefinition[] _foreignDefinitions;
+        /// Abstract foreign types.
+        GrAbstractForeignDefinition[] _abstractForeignDefinitions;
         /// Type aliases
-        GrTypeAliasDefinition[] _typeAliases, _templateAliases;
+        GrTypeAliasDefinition[] _aliasDefinitions, _templateAliasDefinitions;
         /// Enum types.
-        GrEnumDefinition[] _enumTypes;
+        GrEnumDefinition[] _enumDefinitions;
         /// Object types.
-        GrClassDefinition[] _classTypes;
+        GrClassDefinition[] _classDefinitions;
         /// Abstract object types.
-        GrClassDefinition[] _classTemplates;
+        GrClassDefinition[] _abstractClassDefinitions;
 
         /// All primitives, used for both the compiler and the runtime.
         GrPrimitive[] _primitives, _abstractPrimitives;
@@ -79,10 +81,10 @@ class GrData {
         GrEnumDefinition enumDef = new GrEnumDefinition;
         enumDef.name = name;
         enumDef.fields = fields;
-        enumDef.index = _enumTypes.length;
+        enumDef.index = _enumDefinitions.length;
         enumDef.fileId = fileId;
         enumDef.isPublic = isPublic;
-        _enumTypes ~= enumDef;
+        _enumDefinitions ~= enumDef;
 
         GrType stType = GrBaseType.enum_;
         stType.mangledType = name;
@@ -95,9 +97,9 @@ class GrData {
         GrEnumDefinition enumDef = new GrEnumDefinition;
         enumDef.name = name;
         enumDef.fields = fields;
-        enumDef.index = _enumTypes.length;
+        enumDef.index = _enumDefinitions.length;
         enumDef.isPublic = true;
-        _enumTypes ~= enumDef;
+        _enumDefinitions ~= enumDef;
 
         GrType stType = GrBaseType.enum_;
         stType.mangledType = name;
@@ -112,15 +114,17 @@ class GrData {
         class_.fileId = fileId;
         class_.isPublic = isPublic;
         class_.templateVariables = templateVariables;
-        _classTemplates ~= class_;
+        _abstractClassDefinitions ~= class_;
     }
 
     package GrClassDefinition[] getAllClasses() {
-        return _classTypes;
+        return _classDefinitions;
     }
 
     /// Define a class type.
-    GrType addClass(string name, string[] fields, GrType[] signature, string parent = "", string[] templateVariables = []) {
+    GrType addClass(string name, string[] fields, GrType[] signature,
+            string[] templateVariables = [], string parent = "",
+            GrType[] parentTemplateSignature = []) {
         assert(fields.length == signature.length, "Class signature mismatch");
         assert(!isTypeDeclared(name), "`" ~ name ~ "` is already declared");
         GrClassDefinition class_ = new GrClassDefinition;
@@ -129,9 +133,10 @@ class GrData {
         class_.signature = signature;
         class_.fields = fields;
         class_.templateVariables = templateVariables;
+        class_.parentTemplateSignature = parentTemplateSignature;
         class_.isPublic = true;
         class_.isParsed = true;
-        _classTemplates ~= class_;
+        _abstractClassDefinitions ~= class_;
 
         class_.fieldsInfo.length = fields.length;
         for (int i; i < class_.fieldsInfo.length; ++i) {
@@ -152,7 +157,7 @@ class GrData {
         typeAlias.type = type;
         typeAlias.fileId = fileId;
         typeAlias.isPublic = isPublic;
-        _typeAliases ~= typeAlias;
+        _aliasDefinitions ~= typeAlias;
         return type;
     }
 
@@ -163,7 +168,7 @@ class GrData {
         typeAlias.name = name;
         typeAlias.type = type;
         typeAlias.isPublic = true;
-        _typeAliases ~= typeAlias;
+        _aliasDefinitions ~= typeAlias;
         return type;
     }
 
@@ -174,22 +179,25 @@ class GrData {
         typeAlias.type = type;
         typeAlias.fileId = fileId;
         typeAlias.isPublic = isPublic;
-        _templateAliases ~= typeAlias;
+        _templateAliasDefinitions ~= typeAlias;
         return type;
     }
 
     package void clearTemplateAliases() {
-        _templateAliases.length = 0;
+        _templateAliasDefinitions.length = 0;
     }
 
     /// Define an opaque pointer type.
-    GrType addForeign(string name, string parent = "") {
+    GrType addForeign(string name, string[] templateVariables = [],
+            string parent = "", GrType[] parentTemplateSignature = []) {
         assert(!isTypeDeclared(name), "`" ~ name ~ "` is already declared");
         assert(name != parent, "`" ~ name ~ "` can't be its own parent");
-        GrForeignDefinition foreign = new GrForeignDefinition;
+        GrAbstractForeignDefinition foreign = new GrAbstractForeignDefinition;
         foreign.name = name;
+        foreign.templateVariables = templateVariables;
         foreign.parent = parent;
-        _foreigns ~= foreign;
+        foreign.parentTemplateSignature = parentTemplateSignature;
+        _abstractForeignDefinitions ~= foreign;
         GrType type = GrBaseType.foreign;
         type.mangledType = name;
         return type;
@@ -197,7 +205,7 @@ class GrData {
 
     /// Is the enum defined ?
     package bool isEnum(string name, uint fileId, bool isPublic) {
-        foreach (enumType; _enumTypes) {
+        foreach (enumType; _enumDefinitions) {
             if (enumType.name == name && (enumType.fileId == fileId || enumType.isPublic || isPublic))
                 return true;
         }
@@ -206,7 +214,7 @@ class GrData {
 
     /// Ditto
     private bool isEnum(string name) {
-        foreach (enumType; _enumTypes) {
+        foreach (enumType; _enumDefinitions) {
             if (enumType.name == name)
                 return true;
         }
@@ -215,7 +223,7 @@ class GrData {
 
     /// Is the class defined ?
     package bool isClass(string name, uint fileId, bool isPublic) {
-        foreach (class_; _classTemplates) {
+        foreach (class_; _abstractClassDefinitions) {
             if (class_.name == name && (class_.fileId == fileId || class_.isPublic || isPublic))
                 return true;
         }
@@ -224,7 +232,7 @@ class GrData {
 
     /// Ditto
     private bool isClass(string name) {
-        foreach (class_; _classTemplates) {
+        foreach (class_; _abstractClassDefinitions) {
             if (class_.name == name)
                 return true;
         }
@@ -233,12 +241,12 @@ class GrData {
 
     /// Is the type alias defined ?
     package bool isTypeAlias(string name, uint fileId, bool isPublic) {
-        foreach (typeAlias; _templateAliases) {
+        foreach (typeAlias; _templateAliasDefinitions) {
             if (typeAlias.name == name && (typeAlias.fileId == fileId
                     || typeAlias.isPublic || isPublic))
                 return true;
         }
-        foreach (typeAlias; _typeAliases) {
+        foreach (typeAlias; _aliasDefinitions) {
             if (typeAlias.name == name && (typeAlias.fileId == fileId
                     || typeAlias.isPublic || isPublic))
                 return true;
@@ -248,7 +256,7 @@ class GrData {
 
     /// Ditto
     private bool isTypeAlias(string name) {
-        foreach (typeAlias; _typeAliases) {
+        foreach (typeAlias; _aliasDefinitions) {
             if (typeAlias.name == name)
                 return true;
         }
@@ -257,7 +265,7 @@ class GrData {
 
     /// Is the user-type defined ?
     package bool isForeign(string name) {
-        foreach (foreign; _foreigns) {
+        foreach (foreign; _abstractForeignDefinitions) {
             if (foreign.name == name)
                 return true;
         }
@@ -265,19 +273,50 @@ class GrData {
     }
 
     /// Return the user-type definition.
-    GrForeignDefinition getForeign(string name) {
-        foreach (foreign; _foreigns) {
-            if (foreign.name == name)
+    GrForeignDefinition getForeign(string mangledName) {
+        import std.algorithm.searching : findSplitBefore;
+
+        foreach (foreign; _foreignDefinitions) {
+            if (foreign.name == mangledName)
                 return foreign;
         }
-        assert(false, "Undefined foreign `" ~ name ~ "`");
+
+        const mangledTuple = findSplitBefore(mangledName, "$");
+        string name = mangledTuple[0];
+        GrType[] templateTypes = grUnmangleSignature(mangledTuple[1]);
+        foreach (foreign; _abstractForeignDefinitions) {
+            if (foreign.name == name && foreign.templateVariables.length == templateTypes.length) {
+                GrForeignDefinition generatedForeign = new GrForeignDefinition;
+                generatedForeign.name = mangledName;
+                generatedForeign.parent = foreign.parent;
+
+                _anyData = new GrAnyData;
+                for (int i; i < foreign.templateVariables.length; ++i) {
+                    _anyData.set(foreign.templateVariables[i], templateTypes[i]);
+                }
+
+                GrType[] parentTemplateSignature = foreign.parentTemplateSignature;
+                for (int i; i < parentTemplateSignature.length; ++i) {
+                    if (parentTemplateSignature[i].isAny) {
+                        parentTemplateSignature[i] = _anyData.get(
+                                parentTemplateSignature[i].mangledType);
+                    }
+                }
+                generatedForeign.parent = grMangleNamedFunction(generatedForeign.parent,
+                        parentTemplateSignature);
+
+                _foreignDefinitions ~= generatedForeign;
+                return generatedForeign;
+            }
+        }
+        return null;
     }
 
     /// Return the enum definition.
     GrEnumDefinition getEnum(string name, uint fileId) {
         import std.conv : to;
 
-        foreach (enumType; _enumTypes) {
+        foreach (enumType; _enumDefinitions) {
             if (enumType.name == name && (enumType.fileId == fileId || enumType.isPublic))
                 return enumType;
         }
@@ -287,14 +326,16 @@ class GrData {
     /// Return the class definition.
     package GrClassDefinition getClass(string mangledName, uint fileId, bool isPublic = false) {
         import std.algorithm.searching : findSplitBefore;
-        foreach (class_; _classTypes) {
-            if (class_.name == mangledName && (class_.fileId == fileId || class_.isPublic || isPublic))
+
+        foreach (class_; _classDefinitions) {
+            if (class_.name == mangledName && (class_.fileId == fileId || class_.isPublic
+                    || isPublic))
                 return class_;
         }
         const mangledTuple = findSplitBefore(mangledName, "$");
         string name = mangledTuple[0];
         GrType[] templateTypes = grUnmangleSignature(mangledTuple[1]);
-        foreach (class_; _classTemplates) {
+        foreach (class_; _abstractClassDefinitions) {
             if (class_.name == name && class_.templateVariables.length == templateTypes.length
                     && (class_.fileId == fileId || class_.isPublic || isPublic)) {
                 GrClassDefinition generatedClass = new GrClassDefinition;
@@ -309,9 +350,34 @@ class GrData {
                 generatedClass.isPublic = class_.isPublic;
                 generatedClass.fileId = class_.fileId;
                 generatedClass.fieldsInfo = class_.fieldsInfo;
-                generatedClass.index = _classTypes.length;
-                _classTypes ~= generatedClass;
+                generatedClass.index = _classDefinitions.length;
 
+                _anyData = new GrAnyData;
+                for (int i; i < generatedClass.templateVariables.length; ++i) {
+                    _anyData.set(generatedClass.templateVariables[i],
+                            generatedClass.templateTypes[i]);
+                }
+
+                for (int i; i < generatedClass.signature.length; ++i) {
+                    if (generatedClass.signature[i].isAny) {
+                        generatedClass.signature[i] = _anyData.get(
+                                generatedClass.signature[i].mangledType);
+                        if (generatedClass.signature[i].baseType == GrBaseType.void_)
+                            return null;
+                    }
+                }
+
+                GrType[] parentTemplateSignature = class_.parentTemplateSignature;
+                for (int i; i < parentTemplateSignature.length; ++i) {
+                    if (parentTemplateSignature[i].isAny) {
+                        parentTemplateSignature[i] = _anyData.get(
+                                parentTemplateSignature[i].mangledType);
+                    }
+                }
+                generatedClass.parent = grMangleNamedFunction(generatedClass.parent,
+                        parentTemplateSignature);
+
+                _classDefinitions ~= generatedClass;
                 return generatedClass;
             }
         }
@@ -320,11 +386,11 @@ class GrData {
 
     /// Return the type alias definition.
     GrTypeAliasDefinition getTypeAlias(string name, uint fileId) {
-        foreach (typeAlias; _templateAliases) {
+        foreach (typeAlias; _templateAliasDefinitions) {
             if (typeAlias.name == name && (typeAlias.fileId == fileId || typeAlias.isPublic))
                 return typeAlias;
         }
-        foreach (typeAlias; _typeAliases) {
+        foreach (typeAlias; _aliasDefinitions) {
             if (typeAlias.name == name && (typeAlias.fileId == fileId || typeAlias.isPublic))
                 return typeAlias;
         }

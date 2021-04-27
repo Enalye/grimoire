@@ -17,6 +17,7 @@ import grimoire.stdlib.color;
 import grimoire.stdlib.test;
 import grimoire.stdlib.time;
 import grimoire.stdlib.typecast;
+import grimoire.stdlib.pair;
 
 /// Load the standard library
 void grLoadStdLibrary(GrData data) {
@@ -30,4 +31,5 @@ void grLoadStdLibrary(GrData data) {
     grLoadStdLibTest(data);
     grLoadStdLibTime(data);
     grLoadStdLibTypecast(data);
+    grLoadStdLibPair(data);
 }
