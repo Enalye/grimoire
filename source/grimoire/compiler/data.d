@@ -41,6 +41,8 @@ class GrData {
 
         /// Used to validate special primitives.
         GrAnyData _anyData;
+
+        GrCallback[] _callbacks;
     }
 
     /// Add types and primitives defined in the library
@@ -53,11 +55,7 @@ class GrData {
             enum_.index = _enumDefinitions.length;
             _enumDefinitions ~= enum_;
         }
-        foreach (GrPrimitive primitive; library._primitives) {
-            primitive.index = cast(uint) _primitives.length;
-            primitive.callObject = new GrCall(this, primitive);
-            _primitives ~= primitive;
-        }
+        _callbacks ~= library._callbacks;
     }
 
     /// Primitive global constants, call registerIntConstant at the start of the parser. \
@@ -412,7 +410,6 @@ class GrData {
         }
         primitive.mangledName = grMangleNamedFunction(primitive.name, primitive.inSignature);
         primitive.index = cast(uint) _primitives.length;
-        primitive.callObject = new GrCall(this, primitive);
         if (isPrimitiveDeclared(primitive.mangledName))
             throw new Exception("`" ~ getPrettyPrimitive(primitive, true) ~ "` is already declared");
         _primitives ~= primitive;
@@ -476,7 +473,7 @@ class GrData {
     /**
     Prettify a primitive signature.
     */
-    string getPrimitiveDisplayById(uint id, bool showParameters = false) {
+    private string getPrimitiveDisplayById(uint id, bool showParameters = false) {
         if(id >= _primitives.length)
             throw new Exception("Invalid primitive id");
         return getPrettyPrimitive(_primitives[id], showParameters);

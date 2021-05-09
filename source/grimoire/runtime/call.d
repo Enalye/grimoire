@@ -5,10 +5,12 @@
  */
 module grimoire.runtime.call;
 
-import std.stdio: writeln;
-import std.conv: to;
+import std.stdio : writeln;
+import std.conv : to;
+import grimoire.assembly;
 import grimoire.compiler;
-import grimoire.runtime.context, grimoire.runtime.array, grimoire.runtime.object, grimoire.runtime.channel;
+import grimoire.runtime.context, grimoire.runtime.array,
+    grimoire.runtime.object, grimoire.runtime.channel;
 
 /// Primitive type.
 alias GrCallback = void function(GrCall);
@@ -16,95 +18,39 @@ alias GrCallback = void function(GrCall);
 /// Primitive context.
 class GrCall {
     private {
-        GrData _data;
         GrContext _context;
-        GrPrimitive _primitive;
         GrCallback _callback;
 
-        string[] _ilocals, _flocals, _slocals, _vlocals, _olocals;
+        const string[] _ilocals, _flocals, _slocals, _olocals;
         int _iparams, _fparams, _sparams, _oparams;
-        int _iresults, _fresults, _sresults, _vresults, _oresults;
+        int _iresults, _fresults, _sresults, _oresults;
         bool _isInitialized;
     }
 
     @property {
         /// Current task running the primitive.
-        GrContext context() { return _context; }
+        GrContext context() {
+            return _context;
+        }
 
         /// Extra type compiler information.
-        string meta() const { return _context.engine.meta; }
-    }
-
-    package(grimoire) this(GrData data, GrPrimitive primitive) {
-        _data = data;
-        _primitive = primitive;
-        _callback = _primitive.callback;
-    }
-
-    package(grimoire) void setup() {
-        if(_isInitialized)
-            return;
-        _isInitialized = true;
-
-        _iparams = 0;
-        _fparams = 0;
-        _sparams = 0;
-        _oparams = 0;
-
-        auto inSignature =  _primitive.inSignature;
-        if(_primitive.name == "@as")
-            inSignature.length = 1;
-        
-        setupLocals("", _primitive.parameters, inSignature);
-    }
-
-    private void setupLocals(string prefix, string[] parameters, GrType[] inSignature) {
-        if(inSignature.length != parameters.length) {
-            throw new Exception(
-                "Locals mismatch in " ~
-                grGetPrettyFunctionCall(_primitive.name, inSignature) ~
-                "\nThe signature does not match " ~
-                to!string(parameters));
+        string meta() const {
+            return _context.engine.meta;
         }
+    }
 
-        for(int i; i < inSignature.length; i ++) {
-            const GrType type = inSignature[i];
-            string name = prefix ~ parameters[i];
-            final switch(type.baseType) with(GrBaseType) {
-            case bool_:
-            case int_:
-            case function_:
-            case task:
-            case enum_:
-            case chan:
-                _iparams ++;
-                _ilocals ~= name;
-                break;
-            case float_:
-                _fparams ++;
-                _flocals ~= name;
-                break;
-            case string_:
-                _sparams ++;
-                _slocals ~= name;
-                break;
-            case array_:
-            case class_:
-            case foreign:
-                _oparams ++;
-                _olocals ~= name;
-                break;
-            case void_:
-            case internalTuple:
-            case reference:
-            case null_:
-                throw new Exception(
-                    "Invalid parameter type in " ~
-                    grGetPrettyFunctionCall(_primitive.name, inSignature) ~
-                    "\nThe type cannot be " ~
-                    grGetPrettyType(type));
-            }
-        }
+    package(grimoire) this(GrCallback callback, const ref GrBytecode.PrimitiveReference primRef) {
+        _callback = callback;
+
+        _iparams = cast(int) primRef.ilocals.length;
+        _fparams = cast(int) primRef.flocals.length;
+        _sparams = cast(int) primRef.slocals.length;
+        _oparams = cast(int) primRef.olocals.length;
+
+        _ilocals = primRef.ilocals;
+        _flocals = primRef.flocals;
+        _slocals = primRef.slocals;
+        _olocals = primRef.olocals;
     }
 
     /// The actual runtime call to the primitive.
@@ -117,13 +63,13 @@ class GrCall {
         _context = context;
 
         _callback(this);
-        
+
         _context.istackPos -= (_iparams - _iresults);
         _context.fstackPos -= (_fparams - _fresults);
         _context.sstackPos -= (_sparams - _sresults);
         _context.ostackPos -= (_oparams - _oresults);
 
-        if(_hasError)
+        if (_hasError)
             dispatchError();
     }
 
@@ -151,59 +97,59 @@ class GrCall {
     }
 
     private T getParameter(T)(string parameter) {
-        static if(is(T == int)) {
+        static if (is(T == int)) {
             int index;
-            for(; index < _ilocals.length; index ++) {
-                if(parameter == _ilocals[index])
+            for (; index < _ilocals.length; index++) {
+                if (parameter == _ilocals[index])
                     break;
             }
-            if(index == _ilocals.length)
-                throw new Exception("primitive `" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
-                    ~ "` do not have a int parameter called `" ~ parameter ~ "`");
+            if (index == _ilocals.length)
+                throw new Exception(
+                        "the primitive doesn't have a int parameter called `" ~ parameter ~ "`");
             return _context.istack[(_context.istackPos - _iparams) + index + 1];
         }
-        else static if(is(T == bool)) {
+        else static if (is(T == bool)) {
             int index;
-            for(; index < _ilocals.length; index ++) {
-                if(parameter == _ilocals[index])
+            for (; index < _ilocals.length; index++) {
+                if (parameter == _ilocals[index])
                     break;
             }
-            if(index == _ilocals.length)
-                throw new Exception("primitive `" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
-                    ~ "` do not have a bool parameter called `" ~ parameter ~ "`");
+            if (index == _ilocals.length)
+                throw new Exception(
+                        "the primitive doesn't have a bool parameter called `" ~ parameter ~ "`");
             return _context.istack[(_context.istackPos - _iparams) + index + 1] > 0;
         }
-        else static if(is(T == float)) {
+        else static if (is(T == float)) {
             int index;
-            for(; index < _flocals.length; index ++) {
-                if(parameter == _flocals[index])
+            for (; index < _flocals.length; index++) {
+                if (parameter == _flocals[index])
                     break;
             }
-            if(index == _flocals.length)
-                throw new Exception("primitive `" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
-                    ~ "` do not have a float parameter called `" ~ parameter ~ "`");
+            if (index == _flocals.length)
+                throw new Exception(
+                        "the primitive doesn't have a float parameter called `" ~ parameter ~ "`");
             return _context.fstack[(_context.fstackPos - _fparams) + index + 1];
         }
-        else static if(is(T == string)) {
+        else static if (is(T == string)) {
             int index;
-            for(; index < _slocals.length; index ++) {
-                if(parameter == _slocals[index])
+            for (; index < _slocals.length; index++) {
+                if (parameter == _slocals[index])
                     break;
             }
-            if(index == _slocals.length)
-                throw new Exception("primitive `" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
-                    ~ "` do not have a string parameter called `" ~ parameter ~ "`");
+            if (index == _slocals.length)
+                throw new Exception(
+                        "the primitive doesn't have a string parameter called `" ~ parameter ~ "`");
             return _context.sstack[(_context.sstackPos - _sparams) + index + 1];
         }
-        else static if(is(T == void*)) {
+        else static if (is(T == void*)) {
             int index;
-            for(; index < _olocals.length; index ++) {
-                if(parameter == _olocals[index])
+            for (; index < _olocals.length; index++) {
+                if (parameter == _olocals[index])
                     break;
             }
-            if(index == _olocals.length)
-                throw new Exception("primitive `" ~ _data.getPrimitiveDisplayById(_primitive.index, true)
-                    ~ "` do not have an object parameter called `" ~ parameter ~ "`");
+            if (index == _olocals.length)
+                throw new Exception(
+                        "the primitive doesn't have an object parameter called `" ~ parameter ~ "`");
             return _context.ostack[(_context.ostackPos - _oparams) + index + 1];
         }
     }
@@ -226,44 +172,44 @@ class GrCall {
     void setEnum(T)(T value) {
         setInt(cast(int) value);
     }
-    
+
     void setUserData(T)(T value) {
         setResult!(void*)(cast(void*) value);
     }
 
     private void setResult(T)(T value) {
-        static if(is(T == int)) {
-            _iresults ++;
+        static if (is(T == int)) {
+            _iresults++;
             const size_t idx = (_context.istackPos - _iparams) + _iresults;
-            if(idx >= _context.istack.length)
+            if (idx >= _context.istack.length)
                 _context.istack.length *= 2;
             _context.istack[idx] = value;
         }
-        else static if(is(T == bool)) {
-            _iresults ++;
+        else static if (is(T == bool)) {
+            _iresults++;
             const size_t idx = (_context.istackPos - _iparams) + _iresults;
-            if(idx >= _context.istack.length)
+            if (idx >= _context.istack.length)
                 _context.istack.length *= 2;
             _context.istack[idx] = value ? 1 : 0;
         }
-        else static if(is(T == float)) {
-            _fresults ++;
+        else static if (is(T == float)) {
+            _fresults++;
             const size_t idx = (_context.fstackPos - _fparams) + _fresults;
-            if(idx >= _context.fstack.length)
+            if (idx >= _context.fstack.length)
                 _context.fstack.length *= 2;
             _context.fstack[idx] = value;
         }
-        else static if(is(T == string)) {
-            _sresults ++;
+        else static if (is(T == string)) {
+            _sresults++;
             const size_t idx = (_context.sstackPos - _sparams) + _sresults;
-            if(idx >= _context.sstack.length)
+            if (idx >= _context.sstack.length)
                 _context.sstack.length *= 2;
             _context.sstack[idx] = value;
         }
-        else static if(is(T == void*)) {
-            _oresults ++;
+        else static if (is(T == void*)) {
+            _oresults++;
             const size_t idx = (_context.ostackPos - _oparams) + _oresults;
-            if(idx >= _context.ostack.length)
+            if (idx >= _context.ostack.length)
                 _context.ostack.length *= 2;
             _context.ostack[idx] = value;
         }
@@ -287,16 +233,11 @@ class GrCall {
 
         //The context is still in a primitive call
         //and will increment the pc, so we prevent that.
-        _context.pc --;
+        _context.pc--;
     }
 
     /// Create a new object of type `typeName`.
-    GrObject createObject(string typeName) {
-        int index;
-        for(; index < _data._classDefinitions.length; index ++) {
-            if(typeName == _data._classDefinitions[index].name)
-                return new GrObject(_data._classDefinitions[index]);
-        }
-        return null;
+    GrObject createObject(string name) {
+        return _context.engine.createObject(name);
     }
 }

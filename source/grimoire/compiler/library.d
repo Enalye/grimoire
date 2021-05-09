@@ -28,7 +28,10 @@ class GrLibrary {
         GrClassDefinition[] _abstractClassDefinitions;
 
         /// All primitives, used for both the compiler and the runtime.
-        GrPrimitive[] _primitives, _abstractPrimitives;
+        GrPrimitive[] _abstractPrimitives;
+
+        /// All the primitive callbacks.
+        GrCallback[] _callbacks;
     }
 
     /// Define an enumeration
@@ -112,24 +115,15 @@ class GrLibrary {
         }
 
         GrPrimitive primitive = new GrPrimitive;
-        primitive.callback = callback;
         primitive.inSignature = inSignature;
         primitive.parameters = parameters;
         primitive.outSignature = outSignature;
         primitive.name = name;
+        primitive.callbackId = cast(int) _callbacks.length;
 
-        if (isAbstract) {
-            _abstractPrimitives ~= primitive;
-        }
-        else {
-            foreach (GrType type; outSignature) {
-                if (type.isAny)
-                    throw new Exception("`" ~ getPrettyPrimitive(primitive,
-                            true) ~ "` is not abstract but its return types are");
-            }
-            primitive.mangledName = grMangleNamedFunction(name, inSignature);
-            _primitives ~= primitive;
-        }
+        _callbacks ~= callback;
+
+        _abstractPrimitives ~= primitive;
         return primitive;
     }
 

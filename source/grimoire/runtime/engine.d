@@ -18,34 +18,28 @@ import grimoire.runtime.array;
 import grimoire.runtime.object;
 import grimoire.runtime.channel;
 import grimoire.runtime.indexedarray;
+import grimoire.runtime.call;
 
 /**
 Grimoire's virtual machine.
 */
 class GrEngine {
     private {
-        /// Opcodes.
-        immutable(uint)[] _opcodes;
-        /// Integral constants.
-        immutable(int)[] _iconsts;
-        /// Floating point constants.
-        immutable(float)[] _fconsts;
-        /// String constants.
-        immutable(string)[] _sconsts;
-        /// Events
-        uint[string] _events;
+        /// Bytecode.
+        GrBytecode _bytecode;
 
         /// Global integral variables.
         int[] _iglobals;
-        /// Global floating point variables.
+        /// Global float variables.
         float[] _fglobals;
         /// Global string variables.
         string[] _sglobals;
+        /// Global object variables.
         void*[] _oglobals;
 
         /// Global integral stack.
         int[] _iglobalStackIn, _iglobalStackOut;
-        /// Global floating point stack.
+        /// Global float stack.
         float[] _fglobalStackIn, _fglobalStackOut;
         /// Global string stack.
         string[] _sglobalStackIn, _sglobalStackOut;
@@ -64,8 +58,10 @@ class GrEngine {
         /// Extra type compiler information.
         string _meta;
 
-        /// Primitives and types database.
-        GrData _data;
+        /// Primitives.
+        GrCallback[] _callbacks;
+        /// Ditto
+        GrCall[] _calls;
     }
 
     /// External way of stopping the VM.
@@ -101,29 +97,35 @@ class GrEngine {
     this() {
     }
 
-    /// Load the bytecode.
-    this(GrData data, GrBytecode bytecode) {
-        load(data, bytecode);
-    }
-
     private void initialize() {
         _contexts = new DynamicIndexedArray!GrContext;
         _contextsToSpawn = new DynamicIndexedArray!GrContext;
     }
 
+    /// Add a new library to the runtime.
+    /// ___
+    /// It must be called before loading the bytecode.
+    /// It should be loading the same library as the compiler
+    /// and in the same order.
+    final void addLibrary(GrLibrary library) {
+        _callbacks ~= library._callbacks;
+    }
+
     /// Load the bytecode.
-    final void load(GrData data, GrBytecode bytecode) {
+    final void load(GrBytecode bytecode) {
         initialize();
-        _data = data;
-        _iconsts = bytecode.iconsts.idup;
-        _fconsts = bytecode.fconsts.idup;
-        _sconsts = bytecode.sconsts.idup;
-        _opcodes = bytecode.opcodes.idup;
+        _bytecode = bytecode;
         _iglobals = new int[bytecode.iglobalsCount];
         _fglobals = new float[bytecode.fglobalsCount];
         _sglobals = new string[bytecode.sglobalsCount];
         _oglobals = new void*[bytecode.oglobalsCount];
-        _events = bytecode.events;
+
+        // Setup the primitives
+        for (int i; i < bytecode.primitives.length; ++i) {
+            if (bytecode.primitives[i].index > _callbacks.length)
+                throw new Exception("callback index out of bounds");
+            _calls ~= new GrCall(_callbacks[bytecode.primitives[i].index], bytecode.primitives[i]);
+        }
     }
 
     /**
@@ -144,7 +146,7 @@ class GrEngine {
 	`eventName` must be the mangled name of the event.
 	*/
     bool hasEvent(string eventName) {
-        return (eventName in _events) !is null;
+        return (eventName in _bytecode.events) !is null;
     }
 
     /**
@@ -157,7 +159,7 @@ class GrEngine {
 	---
 	*/
     GrContext spawnEvent(string eventName) {
-        const auto event = eventName in _events;
+        const auto event = eventName in _bytecode.events;
         if (event is null)
             throw new Exception("No event \'" ~ eventName ~ "\' in script");
         GrContext context = new GrContext(this);
@@ -225,7 +227,7 @@ class GrEngine {
         else {
             //Kill the others.
             foreach (coroutine; _contexts) {
-                coroutine.pc = cast(uint)(cast(int) _opcodes.length - 1);
+                coroutine.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
                 coroutine.isKilled = true;
             }
             _contextsToSpawn.reset();
@@ -242,7 +244,7 @@ class GrEngine {
 	*/
     private void killAll() {
         foreach (coroutine; _contexts) {
-            coroutine.pc = cast(uint)(cast(int) _opcodes.length - 1);
+            coroutine.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
             coroutine.isKilled = true;
         }
         _contextsToSpawn.reset();
@@ -264,7 +266,7 @@ class GrEngine {
         contextsLabel: for (uint index = 0u; index < _contexts.length; index++) {
             GrContext context = _contexts.data[index];
             while (isRunning) {
-                const uint opcode = _opcodes[context.pc];
+                const uint opcode = _bytecode.opcodes[context.pc];
                 final switch (opcode & 0xFF) with (GrOpcode) {
                 case nop:
                     context.pc++;
@@ -385,7 +387,7 @@ class GrEngine {
                     if (context.ostackPos == context.ostack.length)
                         context.ostack.length *= 2;
                     context.ostack[context.ostackPos] = cast(void*) new GrObject(
-                            _data._classDefinitions[grGetInstructionUnsignedValue(opcode)]);
+                            _bytecode.classes[grGetInstructionUnsignedValue(opcode)]);
                     context.pc++;
                     break;
                 case channel_int:
@@ -1070,7 +1072,7 @@ class GrEngine {
                     context.istackPos++;
                     if (context.istackPos == context.istack.length)
                         context.istack.length *= 2;
-                    context.istack[context.istackPos] = _iconsts[grGetInstructionUnsignedValue(
+                    context.istack[context.istackPos] = _bytecode.iconsts[grGetInstructionUnsignedValue(
                                 opcode)];
                     context.pc++;
                     break;
@@ -1078,7 +1080,7 @@ class GrEngine {
                     context.fstackPos++;
                     if (context.fstackPos == context.fstack.length)
                         context.fstack.length *= 2;
-                    context.fstack[context.fstackPos] = _fconsts[grGetInstructionUnsignedValue(
+                    context.fstack[context.fstackPos] = _bytecode.fconsts[grGetInstructionUnsignedValue(
                                 opcode)];
                     context.pc++;
                     break;
@@ -1093,12 +1095,12 @@ class GrEngine {
                     context.sstackPos++;
                     if (context.sstackPos == context.sstack.length)
                         context.sstack.length *= 2;
-                    context.sstack[context.sstackPos] = _sconsts[grGetInstructionUnsignedValue(
+                    context.sstack[context.sstackPos] = _bytecode.sconsts[grGetInstructionUnsignedValue(
                                 opcode)];
                     context.pc++;
                     break;
                 case const_meta:
-                    _meta = _sconsts[grGetInstructionUnsignedValue(opcode)];
+                    _meta = _bytecode.sconsts[grGetInstructionUnsignedValue(opcode)];
                     context.pc++;
                     break;
                 case const_null:
@@ -1334,7 +1336,7 @@ class GrEngine {
                     context.pc++;
                     break;
                 case divide_int:
-                    if(context.istack[context.istackPos] == 0) {
+                    if (context.istack[context.istackPos] == 0) {
                         raise(context, "ZeroDivisionError");
                         break;
                     }
@@ -1343,7 +1345,7 @@ class GrEngine {
                     context.pc++;
                     break;
                 case divide_float:
-                    if(context.fstack[context.fstackPos] == 0f) {
+                    if (context.fstack[context.fstackPos] == 0f) {
                         raise(context, "ZeroDivisionError");
                         break;
                     }
@@ -1352,7 +1354,7 @@ class GrEngine {
                     context.pc++;
                     break;
                 case remainder_int:
-                    if(context.istack[context.istackPos] == 0) {
+                    if (context.istack[context.istackPos] == 0) {
                         raise(context, "ZeroDivisionError");
                         break;
                     }
@@ -1361,7 +1363,7 @@ class GrEngine {
                     context.pc++;
                     break;
                 case remainder_float:
-                    if(context.fstack[context.fstackPos] == 0f) {
+                    if (context.fstack[context.fstackPos] == 0f) {
                         raise(context, "ZeroDivisionError");
                         break;
                     }
@@ -1528,7 +1530,7 @@ class GrEngine {
                         else {
                             //Kill the others.
                             foreach (coroutine; _contexts) {
-                                coroutine.pc = cast(uint)(cast(int) _opcodes.length - 1);
+                                coroutine.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
                                 coroutine.isKilled = true;
                             }
                             _contextsToSpawn.reset();
@@ -1613,8 +1615,7 @@ class GrEngine {
                     context.istackPos--;
                     break;
                 case primitiveCall:
-                    _data._primitives[grGetInstructionUnsignedValue(
-                                opcode)].callObject.call(context);
+                    _calls[grGetInstructionUnsignedValue(opcode)].call(context);
                     context.pc++;
                     break;
                 case jump:
@@ -2058,22 +2059,18 @@ class GrEngine {
                     _debugProfileEnd();
                     context.pc++;
                     break;
-                    /*default:
-					throw new Exception("Invalid instruction at (" ~
-						to!string(context.pc) ~ "): " ~
-						to!string(grGetInstructionOpcode(opcode)));*/
                 }
             }
         }
         _contexts.sweepMarkedData();
     }
 
-    /// Create a new object of type `typeName`.
-    GrObject createObject(string typeName) {
+    /// Create a new object.
+    GrObject createObject(string name) {
         int index;
-        for (; index < _data._classDefinitions.length; index++) {
-            if (typeName == _data._classDefinitions[index].name)
-                return new GrObject(_data._classDefinitions[index]);
+        for (; index < _bytecode.classes.length; index++) {
+            if (name == _bytecode.classes[index].name)
+                return new GrObject(_bytecode.classes[index]);
         }
         return null;
     }
@@ -2172,7 +2169,7 @@ class GrEngine {
         else {
             auto debugFunc = new DebugFunction;
             debugFunc._pc = pc;
-            debugFunc._name = _sconsts[grGetInstructionUnsignedValue(opcode)];
+            debugFunc._name = _bytecode.sconsts[grGetInstructionUnsignedValue(opcode)];
             debugFunc._start = MonoTime.currTime();
             _debugFunctions[pc] = debugFunc;
             _debugFunctionsStack ~= debugFunc;

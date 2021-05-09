@@ -1906,11 +1906,6 @@ final class GrParser {
             functionsQueue.length--;
             parseFunction(func);
         }
-
-        //Initialize every primitives.
-        foreach (primitive; _data._primitives) {
-            primitive.callObject.setup();
-        }
     }
 
     /**

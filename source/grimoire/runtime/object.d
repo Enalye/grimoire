@@ -5,7 +5,7 @@
  */
 module grimoire.runtime.object;
 
-import grimoire.compiler;
+import grimoire.compiler, grimoire.assembly;
 import grimoire.runtime.array;
 
 /**
@@ -25,14 +25,14 @@ package final class GrField {
 /// Object value in Grimoire runtime.
 final class GrObject {
     package {
-        GrClassDefinition _type;
+        GrClassBuilder _class;
         /// Inner fields, indexes are known at compile time.
         GrField[] _fields;
 
         /// Ctor
-        this(GrClassDefinition type) {
-            _type = type;
-            _fields.length = type.fields.length;
+        this(GrClassBuilder class_) {
+            _class = class_;
+            _fields.length = _class.fields.length;
             for(size_t index; index < _fields.length; ++ index) {
                 _fields[index] = new GrField;
             }
@@ -55,7 +55,7 @@ final class GrObject {
 
     private T getField(T)(string fieldName) {
         for(size_t index; index < _fields.length; ++ index) {
-            if(_type.fields[index] == fieldName) {
+            if(_class.fields[index] == fieldName) {
                 static if(is(T == int))
                     return _fields[index].ivalue;
                 else static if(is(T == bool))
@@ -89,7 +89,7 @@ final class GrObject {
 
     private T setField(T)(string fieldName, T value) {
         for(size_t index; index < _fields.length; ++ index) {
-            if(_type.fields[index] == fieldName) {
+            if(_class.fields[index] == fieldName) {
                 static if(is(T == int))
                     return _fields[index].ivalue = cast(int) value;
                 else static if(is(T == bool))

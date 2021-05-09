@@ -20,8 +20,8 @@ A single primitive. \
 Primitives are hard-coded grimoire's functions, they are used the same way as other functions.
 */
 class GrPrimitive {
-    /// The D function.
-	GrCallback callback;
+    /// The callback id.
+	int callbackId;
     /// Function parameters' type.
 	GrType[] inSignature;
     /// Return values.
@@ -46,7 +46,7 @@ class GrPrimitive {
 
     /// Ditto
     this(GrPrimitive primitive) {
-        callback = primitive.callback;
+        callbackId = primitive.callbackId;
         inSignature = primitive.inSignature;
         outSignature = primitive.outSignature;
         parameters = primitive.parameters;

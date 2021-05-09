@@ -15,21 +15,25 @@ void main() {
         auto startTime = MonoTime.currTime();
         GrLibrary stdlib = grLoadStdLibrary();
 
-        GrData data = new GrData;
-        data.addLibrary(stdlib);
-        GrBytecode bytecode;
-        GrCompiler compiler = new GrCompiler(data);
-        if (!compiler.compileFile(bytecode, "script/test.gr", GrCompiler.Flags.none)) {
+        GrCompiler compiler = new GrCompiler;
+        compiler.addLibrary(stdlib);
+        GrBytecode bytecode = compiler.compileFile("script/test.gr", GrCompiler.Flags.none);
+        if (!bytecode) {
             writeln(compiler.getError().prettify());
             return;
         }
+        bytecode.save("test.grb");
+        bytecode = null;
 
         auto compilationTime = MonoTime.currTime() - startTime;
 
-        writeln(grDump(data, bytecode));
+        bytecode = new GrBytecode;
+        bytecode.load("test.grb");
+        writeln(grDump(bytecode));
 
         GrEngine engine = new GrEngine;
-        engine.load(data, bytecode);
+        engine.addLibrary(stdlib);
+        engine.load(bytecode);
         engine.spawn();
 
         write("> ");
