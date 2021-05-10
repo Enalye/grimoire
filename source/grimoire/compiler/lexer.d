@@ -236,6 +236,7 @@ package final class GrLexer {
 
             _line = 0u;
             _current = 0u;
+            _positionOfLine = 0u;
             _lines = split(_text, "\n");
 
             scanScript();

@@ -50,10 +50,15 @@ class GrData {
         _abstractForeignDefinitions ~= library._abstractForeignDefinitions;
         _aliasDefinitions ~= library._aliasDefinitions;
         _abstractClassDefinitions ~= library._abstractClassDefinitions;
-        _abstractPrimitives ~= library._abstractPrimitives;
         foreach (GrEnumDefinition enum_; library._enumDefinitions) {
             enum_.index = _enumDefinitions.length;
             _enumDefinitions ~= enum_;
+        }
+        const uint libStartIndex = cast(uint) _callbacks.length;
+        foreach (GrPrimitive primitive; library._abstractPrimitives) {
+            GrPrimitive prim = new GrPrimitive(primitive);
+            prim.callbackId += libStartIndex;
+            _abstractPrimitives ~= prim;
         }
         _callbacks ~= library._callbacks;
     }

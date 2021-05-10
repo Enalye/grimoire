@@ -169,6 +169,7 @@ final class GrError {
     /// Format the error and prints it.
     string prettify() {
         import std.conv : to;
+        import std.algorithm.comparison : clamp;
 
         string report, lineNumber;
 
@@ -241,7 +242,7 @@ final class GrError {
         foreach (x; 1 .. lineNumber.length)
             report ~= " ";
         report ~= "\033[1;34m|";
-        foreach (x; 0 .. _column)
+        foreach (x; 0 .. clamp(_column, 0, _lineText.length))
             report ~= " ";
 
         report ~= "\033[1;31m"; //Red color

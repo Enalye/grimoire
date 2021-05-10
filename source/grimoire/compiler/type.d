@@ -240,9 +240,11 @@ final class GrForeignDefinition {
 final class GrAbstractForeignDefinition {
     /// Identifier.
     string name;
-    /// Mother class it inherit from.
+    /// Mother class it inherits from.
     string parent;
+    /// Template values
     string[] templateVariables;
+    /// Template signature
     GrType[] parentTemplateSignature;
 }
 

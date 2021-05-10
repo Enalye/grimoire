@@ -38,8 +38,6 @@ class GrPrimitive {
     bool isExplicit;
     /// If the primitive has a generic parameter type, it becomes abstract
     bool isAbstract;
-    /// Runtime parameter for D functions. Contain all runtime information needed.
-    GrCall callObject;
 
     /// Ctor
     this() {}
@@ -54,6 +52,6 @@ class GrPrimitive {
         mangledName = primitive.mangledName;
         index = primitive.index;
         isExplicit = primitive.isExplicit;
-        callObject = primitive.callObject;
+        isAbstract = primitive.isAbstract;
     }
 }
