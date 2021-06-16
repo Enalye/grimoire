@@ -93,7 +93,8 @@ class GrCall {
     }
 
     T getUserData(T)(string parameter) {
-        return cast(T) getParameter!(void*)(parameter);
+        // We cast to object first to avoid a crash when casting to a parent class
+        return cast(T) cast(Object) getParameter!(void*)(parameter);
     }
 
     private T getParameter(T)(string parameter) {
