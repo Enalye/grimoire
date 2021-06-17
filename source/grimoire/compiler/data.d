@@ -405,6 +405,10 @@ class GrData {
                 if (primitive.inSignature[i].baseType == GrBaseType.void_)
                     return null;
             }
+            if (primitive.inSignature[i].baseType == GrBaseType.class_) {
+                // Forcing the class to be reified if it isn't already
+                getClass(primitive.inSignature[i].mangledType, 0, true);
+            }
         }
         for (int i; i < primitive.outSignature.length; ++i) {
             if (primitive.outSignature[i].isAny) {
@@ -412,11 +416,15 @@ class GrData {
                 if (primitive.outSignature[i].baseType == GrBaseType.void_)
                     return null;
             }
+            if (primitive.outSignature[i].baseType == GrBaseType.class_) {
+                // Forcing the class to be reified if it isn't already
+                getClass(primitive.outSignature[i].mangledType, 0, true);
+            }
         }
         primitive.mangledName = grMangleNamedFunction(primitive.name, primitive.inSignature);
         primitive.index = cast(uint) _primitives.length;
         if (isPrimitiveDeclared(primitive.mangledName))
-            throw new Exception("`" ~ getPrettyPrimitive(primitive, true) ~ "` is already declared");
+            throw new Exception("`" ~ getPrettyPrimitive(primitive) ~ "` is already declared");
         _primitives ~= primitive;
         return primitive;
     }
@@ -478,13 +486,13 @@ class GrData {
     /**
     Prettify a primitive signature.
     */
-    private string getPrimitiveDisplayById(uint id, bool showParameters = false) {
-        if(id >= _primitives.length)
+    private string getPrimitiveDisplayById(uint id) {
+        if (id >= _primitives.length)
             throw new Exception("Invalid primitive id");
-        return getPrettyPrimitive(_primitives[id], showParameters);
+        return getPrettyPrimitive(_primitives[id]);
     }
 
-    private string getPrettyPrimitive(GrPrimitive primitive, bool showParameters = false) {
+    private string getPrettyPrimitive(GrPrimitive primitive) {
         import std.conv : to;
 
         string result = primitive.name;
@@ -494,8 +502,6 @@ class GrData {
         result ~= "(";
         for (int i; i < nbParameters; i++) {
             result ~= grGetPrettyType(primitive.inSignature[i]);
-            if (showParameters)
-                result ~= " " ~ primitive.parameters[i];
             if ((i + 2) <= nbParameters)
                 result ~= ", ";
         }

@@ -10,51 +10,47 @@ import std.conv : to;
 import grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibString(GrLibrary library) {
-    library.addPrimitive(&_empty, "empty?", ["str"], [grString], [grBool]);
-    library.addPrimitive(&_unshift, "unshift", ["str", "value"], [grString, grString], [
+    library.addPrimitive(&_empty, "empty?", [grString], [grBool]);
+    library.addPrimitive(&_unshift, "unshift", [grString, grString], [grString]);
+    library.addPrimitive(&_push, "push", [grString, grString], [grString]);
+    library.addPrimitive(&_shift, "shift", [grString], [grString]);
+    library.addPrimitive(&_pop, "pop", [grString], [grString]);
+    library.addPrimitive(&_shift1, "shift", [grString, grInt], [grString]);
+    library.addPrimitive(&_pop1, "pop", [grString, grInt], [grString]);
+    library.addPrimitive(&_first, "first", [grString], [grString]);
+    library.addPrimitive(&_last, "last", [grString], [grString]);
+    library.addPrimitive(&_remove, "remove", [grString, grInt], [grString]);
+    library.addPrimitive(&_remove2, "remove", [grString, grInt, grInt], [
             grString
             ]);
-    library.addPrimitive(&_push, "push", ["str", "value"], [grString, grString], [
+    library.addPrimitive(&_slice, "slice", [grString, grInt, grInt], [grString]);
+    library.addPrimitive(&_reverse, "reverse", [grString], [grString]);
+    library.addPrimitive(&_insert, "insert", [grString, grInt, grString], [
             grString
             ]);
-    library.addPrimitive(&_shift, "shift", ["str"], [grString], [grString]);
-    library.addPrimitive(&_pop, "pop", ["str"], [grString], [grString]);
-    library.addPrimitive(&_shift1, "shift", ["str", "size"], [grString, grInt], [
-            grString
-            ]);
-    library.addPrimitive(&_pop1, "pop", ["str", "size"], [grString, grInt], [
-            grString
-            ]);
-    library.addPrimitive(&_first, "first", ["str"], [grString], [grString]);
-    library.addPrimitive(&_last, "last", ["str"], [grString], [grString]);
-    library.addPrimitive(&_remove, "remove", ["str", "index"], [grString, grInt], [grString]);
-    library.addPrimitive(&_remove2, "remove", ["str", "index1", "index2"], [grString, grInt, grInt], [grString]);
-    library.addPrimitive(&_slice, "slice", ["str", "index1", "index2"], [grString, grInt, grInt], [grString]);
-    library.addPrimitive(&_reverse, "reverse", ["str"], [grString], [grString]);
-    library.addPrimitive(&_insert, "insert", ["str", "index", "value"], [grString, grInt, grString], [grString]);
-    library.addPrimitive(&_findFirst, "findFirst", ["str", "value"], [grString, grString], [grInt]);
-    library.addPrimitive(&_findLast, "findLast", ["str", "value"], [grString, grString], [grInt]);
-    library.addPrimitive(&_has, "has?", ["str", "value"], [grString, grString], [grBool]);
+    library.addPrimitive(&_findFirst, "findFirst", [grString, grString], [grInt]);
+    library.addPrimitive(&_findLast, "findLast", [grString, grString], [grInt]);
+    library.addPrimitive(&_has, "has?", [grString, grString], [grBool]);
 }
 
 private void _empty(GrCall call) {
-    call.setBool(call.getString("str").length == 0);
+    call.setBool(call.getString(0).length == 0);
 }
 
 private void _unshift(GrCall call) {
-    string str = call.getString("str");
-    str = call.getString("value") ~ str;
+    string str = call.getString(0);
+    str = call.getString(1) ~ str;
     call.setString(str);
 }
 
 private void _push(GrCall call) {
-    string str = call.getString("str");
-    str ~= call.getString("value");
+    string str = call.getString(0);
+    str ~= call.getString(1);
     call.setString(str);
 }
 
 private void _shift(GrCall call) {
-    string str = call.getString("str");
+    string str = call.getString(0);
     if (!str.length) {
         call.setString(str);
         return;
@@ -63,7 +59,7 @@ private void _shift(GrCall call) {
 }
 
 private void _pop(GrCall call) {
-    string str = call.getString("str");
+    string str = call.getString(0);
     if (!str.length) {
         call.setString(str);
         return;
@@ -73,8 +69,8 @@ private void _pop(GrCall call) {
 }
 
 private void _shift1(GrCall call) {
-    string str = call.getString("str");
-    int size = call.getInt("size");
+    string str = call.getString(0);
+    int size = call.getInt(1);
     if (size < 0) {
         call.raise("IndexError");
         return;
@@ -92,8 +88,8 @@ private void _shift1(GrCall call) {
 }
 
 private void _pop1(GrCall call) {
-    string str = call.getString("str");
-    int size = call.getInt("size");
+    string str = call.getString(0);
+    int size = call.getInt(1);
     if (size < 0) {
         call.raise("IndexError");
         return;
@@ -112,7 +108,7 @@ private void _pop1(GrCall call) {
 }
 
 private void _first(GrCall call) {
-    string str = call.getString("str");
+    string str = call.getString(0);
     if (!str.length) {
         call.raise("IndexError");
         return;
@@ -121,7 +117,7 @@ private void _first(GrCall call) {
 }
 
 private void _last(GrCall call) {
-    string str = call.getString("str");
+    string str = call.getString(0);
     if (!str.length) {
         call.raise("IndexError");
         return;
@@ -130,8 +126,8 @@ private void _last(GrCall call) {
 }
 
 private void _remove(GrCall call) {
-    string str = call.getString("str");
-    int index = call.getInt("index");
+    string str = call.getString(0);
+    int index = call.getInt(1);
     if (index < 0)
         index = (cast(int) str.length) + index;
     if (!str.length || index >= str.length || index < 0) {
@@ -151,9 +147,9 @@ private void _remove(GrCall call) {
 }
 
 private void _remove2(GrCall call) {
-    string str = call.getString("str");
-    int index1 = call.getInt("index1");
-    int index2 = call.getInt("index2");
+    string str = call.getString(0);
+    int index1 = call.getInt(1);
+    int index2 = call.getInt(2);
     if (index1 < 0)
         index1 = (cast(int) str.length) + index1;
     if (index2 < 0)
@@ -191,9 +187,9 @@ private void _remove2(GrCall call) {
 }
 
 private void _slice(GrCall call) {
-    string str = call.getString("str");
-    int index1 = call.getInt("index1");
-    int index2 = call.getInt("index2");
+    string str = call.getString(0);
+    int index1 = call.getInt(1);
+    int index2 = call.getInt(2);
     if (index1 < 0)
         index1 = (cast(int) str.length) + index1;
     if (index2 < 0)
@@ -224,13 +220,14 @@ private void _slice(GrCall call) {
 
 private void _reverse(GrCall call) {
     import std.algorithm.mutation : reverse;
-    call.setString(call.getString("str").dup.reverse);
+
+    call.setString(call.getString(0).dup.reverse);
 }
 
 private void _insert(GrCall call) {
-    string str = call.getString("str");
-    int index = call.getInt("index");
-    string value = call.getString("value");
+    string str = call.getString(0);
+    int index = call.getInt(1);
+    string value = call.getString(2);
     if (index < 0)
         index = (cast(int) str.length) + index;
     if (!str.length || index >= str.length || index < 0) {
@@ -249,19 +246,19 @@ private void _insert(GrCall call) {
 }
 
 private void _findFirst(GrCall call) {
-    string str = call.getString("str");
-    string value = call.getString("value");
+    string str = call.getString(0);
+    string value = call.getString(1);
     call.setInt(cast(int) str.indexOf(value));
 }
 
 private void _findLast(GrCall call) {
-    string str = call.getString("str");
-    string value = call.getString("value");
+    string str = call.getString(0);
+    string value = call.getString(1);
     call.setInt(cast(int) str.lastIndexOf(value));
 }
 
 private void _has(GrCall call) {
-    string str = call.getString("str");
-    string value = call.getString("value");
+    string str = call.getString(0);
+    string value = call.getString(1);
     call.setBool(str.indexOf(value) != -1);
 }

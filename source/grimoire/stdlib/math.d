@@ -6,24 +6,27 @@
 module grimoire.stdlib.math;
 
 import std.random, std.math;
-import std.algorithm.comparison: clamp;
+import std.algorithm.comparison : clamp;
 import grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib)
-void grLoadStdLibMath(GrLibrary library) {
-    library.addPrimitive(&_clamp, "clamp", ["v", "min", "max"], [grFloat, grFloat, grFloat], [grFloat]);
-    library.addPrimitive(&_random01, "rand", [], [], [grFloat]);
-    library.addPrimitive(&_randomf, "rand", ["v1", "v2"], [grFloat, grFloat], [grFloat]);
-    library.addPrimitive(&_randomi, "rand", ["v1", "v2"], [grInt, grInt], [grInt]);
-    library.addPrimitive(&_cos, "cos", ["v"], [grFloat], [grFloat]);
-    library.addPrimitive(&_sin, "sin", ["v"], [grFloat], [grFloat]);
-    library.addPrimitive(&_sqrt, "sqrt", ["v"], [grFloat], [grFloat]);
-    library.addPrimitive(&_lerp, "lerp", ["a", "b", "t"], [grFloat, grFloat, grFloat], [grFloat]);
-    library.addPrimitive(&_rlerp, "rlerp", ["a", "b", "v"], [grFloat, grFloat, grFloat], [grFloat]);  
+package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
+    library.addPrimitive(&_clamp, "clamp", [grFloat, grFloat, grFloat], [
+            grFloat
+            ]);
+    library.addPrimitive(&_random01, "rand", [], [grFloat]);
+    library.addPrimitive(&_randomf, "rand", [grFloat, grFloat], [grFloat]);
+    library.addPrimitive(&_randomi, "rand", [grInt, grInt], [grInt]);
+    library.addPrimitive(&_cos, "cos", [grFloat], [grFloat]);
+    library.addPrimitive(&_sin, "sin", [grFloat], [grFloat]);
+    library.addPrimitive(&_sqrt, "sqrt", [grFloat], [grFloat]);
+    library.addPrimitive(&_lerp, "lerp", [grFloat, grFloat, grFloat], [grFloat]);
+    library.addPrimitive(&_rlerp, "rlerp", [grFloat, grFloat, grFloat], [
+            grFloat
+            ]);
 }
 
 private void _clamp(GrCall call) {
-    call.setFloat(clamp(call.getFloat("v"), call.getFloat("min"), call.getFloat("max")));
+    call.setFloat(clamp(call.getFloat(0), call.getFloat(1), call.getFloat(2)));
 }
 
 private void _random01(GrCall call) {
@@ -31,37 +34,37 @@ private void _random01(GrCall call) {
 }
 
 private void _randomf(GrCall call) {
-    call.setFloat(uniform!"[]"(call.getFloat("v1"), call.getFloat("v2")));
+    call.setFloat(uniform!"[]"(call.getFloat(0), call.getFloat(1)));
 }
 
 private void _randomi(GrCall call) {
-    call.setInt(uniform!"[]"(call.getInt("v1"), call.getInt("v2")));
+    call.setInt(uniform!"[]"(call.getInt(0), call.getInt(1)));
 }
 
 private void _cos(GrCall call) {
-    call.setFloat(cos(call.getFloat("v")));
+    call.setFloat(cos(call.getFloat(0)));
 }
 
 private void _sin(GrCall call) {
-    call.setFloat(sin(call.getFloat("v")));
+    call.setFloat(sin(call.getFloat(0)));
 }
 
 private void _sqrt(GrCall call) {
-    call.setFloat(sqrt(call.getFloat("v")));
+    call.setFloat(sqrt(call.getFloat(0)));
 }
 
 private void _lerp(GrCall call) {
-    const float a = call.getFloat("a");
-    const float b = call.getFloat("b");
-    const float t = call.getFloat("t");
+    const float a = call.getFloat(0);
+    const float b = call.getFloat(1);
+    const float t = call.getFloat(2);
     call.setFloat(t * b + (1f - t) * a);
 }
 
 private void _rlerp(GrCall call) {
-    const float a = call.getFloat("a");
-    const float b = call.getFloat("b");
-    const float v = call.getFloat("v");
-    if((b - a) == 0f) {
+    const float a = call.getFloat(0);
+    const float b = call.getFloat(1);
+    const float v = call.getFloat(2);
+    if ((b - a) == 0f) {
         call.setFloat(0f);
         return;
     }

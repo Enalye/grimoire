@@ -9,12 +9,8 @@ import std.range;
 import grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
-    library.addPrimitive(&_range_i, "range", ["min", "max"], [grInt, grInt], [
-            grIntArray
-            ]);
-    library.addPrimitive(&_range_f, "range", ["min", "max"], [grFloat, grFloat], [
-            grFloatArray
-            ]);
+    library.addPrimitive(&_range_i, "range", [grInt, grInt], [grIntArray]);
+    library.addPrimitive(&_range_f, "range", [grFloat, grFloat], [grFloatArray]);
 
     static foreach (t; ["Int", "Float", "String", "Object"]) {
         mixin("GrType any" ~ t ~ "Array = grAny(\"A\", (type, data) {
@@ -22,102 +18,97 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
                 data.set(\"T\", subType);
-                return grIsKindOf" ~ t ~ "(subType.baseType);
+                return grIsKindOf" ~ t
+                ~ "(subType.baseType);
             });
-            library.addPrimitive(&_copy_!\"" ~ t
-                ~ "\", \"copy\", [\"array\"], [any" ~ t ~ "Array], [grAny(\"A\")]);
-            library.addPrimitive(&_size_!\"" ~ t
-                ~ "\", \"size\", [\"array\"], [any" ~ t ~ "Array], [grInt]);
-            library.addPrimitive(&_resize_!\"" ~ t
-                ~ "\", \"resize\", [\"array\", \"size\"], [
+            library.addPrimitive(&_copy_!\"" ~ t ~ "\", \"copy\", [any" ~ t ~ "Array], [grAny(\"A\")]);
+            library.addPrimitive(&_size_!\""
+                ~ t ~ "\", \"size\", [any" ~ t ~ "Array], [grInt]);
+            library.addPrimitive(&_resize_!\"" ~ t ~ "\", \"resize\", [
                 any" ~ t ~ "Array, grInt
             ], [grAny(\"A\")]);
-            library.addPrimitive(&_empty_!\""
-                ~ t ~ "\", \"empty?\", [\"array\"], [
+            library.addPrimitive(&_empty_!\"" ~ t
+                ~ "\", \"empty?\", [
                 any" ~ t ~ "Array
             ], [grBool]);
-            library.addPrimitive(&_fill_!\"" ~ t ~ "\", \"fill\", [\"array\", \"value\"], [
-                any"
-                ~ t ~ "Array, grAny(\"T\")
-            ], [grAny(\"A\")]);
-            library.addPrimitive(&_clear_!\"" ~ t ~ "\", \"clear\", [\"array\"], [
-                any"
-                ~ t ~ "Array
-            ], [grAny(\"A\")]);
-            library.addPrimitive(&_unshift_!\"" ~ t ~ "\", \"unshift\", [\"array\", \"v\"], [
-                    any" ~ t
+            library.addPrimitive(&_fill_!\"" ~ t ~ "\", \"fill\", [
+                any" ~ t
                 ~ "Array, grAny(\"T\")
-                ], [grAny(\"A\")]);
-            library.addPrimitive(&_push_!\"" ~ t ~ "\", \"push\", [\"array\", \"v\"], [
-                    any" ~ t
-                ~ "Array, grAny(\"T\")
-                ], [grAny(\"A\")]);
-            library.addPrimitive(&_shift_!\"" ~ t ~ "\", \"shift\", [\"array\"], [
-                    any" ~ t ~ "Array
-                ], [grAny(\"T\")]);
-            library.addPrimitive(&_pop_!\"" ~ t
-                ~ "\", \"pop\", [\"array\"], [
-                    any" ~ t ~ "Array
-                ], [grAny(\"T\")]);
-            library.addPrimitive(&_shift1_!\"" ~ t ~ "\", \"shift\", [\"array\", \"size\"], [
-                    any" ~ t ~ "Array, grInt
-                ], [grAny(\"A\")]);
-            library.addPrimitive(&_pop1_!\"" ~ t
-                ~ "\", \"pop\", [\"array\", \"size\"], [
-                    any" ~ t ~ "Array, grInt
-                ], [grAny(\"A\")]);
-            library.addPrimitive(&_first_!\""
-                ~ t ~ "\", \"first\", [\"array\"], [
+            ], [grAny(\"A\")]);
+            library.addPrimitive(&_clear_!\"" ~ t ~ "\", \"clear\", [
                 any" ~ t ~ "Array
+            ], [grAny(\"A\")]);
+            library.addPrimitive(&_unshift_!\"" ~ t
+                ~ "\", \"unshift\", [
+                    any" ~ t ~ "Array, grAny(\"T\")
+                ], [grAny(\"A\")]);
+            library.addPrimitive(&_push_!\"" ~ t ~ "\", \"push\", [
+                    any" ~ t ~ "Array, grAny(\"T\")
+                ], [grAny(\"A\")]);
+            library.addPrimitive(&_shift_!\""
+                ~ t ~ "\", \"shift\", [
+                    any" ~ t ~ "Array
+                ], [grAny(\"T\")]);
+            library.addPrimitive(&_pop_!\"" ~ t ~ "\", \"pop\", [
+                    any" ~ t ~ "Array
+                ], [grAny(\"T\")]);
+            library.addPrimitive(&_shift1_!\"" ~ t ~ "\", \"shift\", [
+                    any"
+                ~ t ~ "Array, grInt
+                ], [grAny(\"A\")]);
+            library.addPrimitive(&_pop1_!\"" ~ t ~ "\", \"pop\", [
+                    any" ~ t ~ "Array, grInt
+                ], [grAny(\"A\")]);
+            library.addPrimitive(&_first_!\"" ~ t ~ "\", \"first\", [
+                any" ~ t
+                ~ "Array
             ], [grAny(\"T\")]);
-            library.addPrimitive(&_last_!\"" ~ t ~ "\", \"last\", [\"array\"], [
+            library.addPrimitive(&_last_!\"" ~ t ~ "\", \"last\", [
                     any" ~ t ~ "Array
                 ], [grAny(\"T\")]);
             library.addPrimitive(&_remove_!\"" ~ t
-                ~ "\", \"remove\", [\"array\", \"index\"], [
+                ~ "\", \"remove\", [
                     any" ~ t ~ "Array, grInt
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_remove2_!\""
-                ~ t ~ "\", \"remove\", [\"array\", \"index1\", \"index2\"], [
-                    any" ~ t ~ "Array, grInt, grInt
-                ], [grAny(\"A\")]);
-            library.addPrimitive(&_slice_!\"" ~ t
-                ~ "\", \"slice!\", [\"array\", \"index1\", \"index2\"], [
-                    any" ~ t
-                ~ "Array, grInt, grInt
-                ], [grAny(\"A\")]);
-            library.addPrimitive(&_slice_copy_!\"" ~ t ~ "\", \"slice\", [\"array\", \"index1\", \"index2\"], [
+            library.addPrimitive(&_remove2_!\"" ~ t ~ "\", \"remove\", [
                     any"
                 ~ t ~ "Array, grInt, grInt
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_reverse_!\"" ~ t ~ "\", \"reverse\", [\"array\"], [
-                    any" ~ t ~ "Array
+            library.addPrimitive(&_slice_!\"" ~ t ~ "\", \"slice!\", [
+                    any" ~ t ~ "Array, grInt, grInt
+                ], [grAny(\"A\")]);
+            library.addPrimitive(&_slice_copy_!\"" ~ t ~ "\", \"slice\", [
+                    any" ~ t
+                ~ "Array, grInt, grInt
+                ], [grAny(\"A\")]);
+            library.addPrimitive(&_reverse_!\"" ~ t ~ "\", \"reverse\", [
+                    any" ~ t
+                ~ "Array
                 ], [grAny(\"A\")]);
             library.addPrimitive(&_insert_!\"" ~ t
-                ~ "\", \"insert\", [\"array\", \"index\", \"value\"], [
+                ~ "\", \"insert\", [
                     any" ~ t ~ "Array, grInt, grAny(\"T\")
                 ], [grAny(\"A\")]);
             ");
 
         static if (t != "Object") {
             mixin("
-            library.addPrimitive(&_sort_!\"" ~ t ~ "\", \"sort\", [\"array\"], [
+            library.addPrimitive(&_sort_!\"" ~ t ~ "\", \"sort\", [
                     any" ~ t ~ "Array
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_findFirst_!\"" ~ t ~ "\", \"findFirst\", [\"array\", \"value\"], [
-                    any"
-                    ~ t ~ "Array, grAny(\"T\")
+            library.addPrimitive(&_findFirst_!\"" ~ t ~ "\", \"findFirst\", [
+                    any" ~ t ~ "Array, grAny(\"T\")
                 ], [grInt]);
-            library.addPrimitive(&_findLast_!\"" ~ t ~ "\", \"findLast\", [\"array\", \"value\"], [
-                    any"
-                    ~ t ~ "Array, grAny(\"T\")
+            library.addPrimitive(&_findLast_!\"" ~ t
+                    ~ "\", \"findLast\", [
+                    any" ~ t ~ "Array, grAny(\"T\")
                 ], [grInt]);
-            library.addPrimitive(&_findLast_!\"" ~ t ~ "\", \"findLast\", [\"array\", \"value\"], [
+            library.addPrimitive(&_findLast_!\"" ~ t ~ "\", \"findLast\", [
                     any" ~ t
                     ~ "Array, grAny(\"T\")
                 ], [grInt]);
             library.addPrimitive(&_has_!\"" ~ t
-                    ~ "\", \"has?\", [\"array\", \"value\"], [
+                    ~ "\", \"has?\", [
                     any" ~ t ~ "Array, grAny(\"T\")
                 ], [grBool]);
                 ");
@@ -126,8 +117,8 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
 }
 
 private void _range_i(GrCall call) {
-    int min = call.getInt("min");
-    const int max = call.getInt("max");
+    int min = call.getInt(0);
+    const int max = call.getInt(1);
     int step = 1;
 
     if (max < min)
@@ -143,8 +134,8 @@ private void _range_i(GrCall call) {
 }
 
 private void _range_f(GrCall call) {
-    float min = call.getInt("min");
-    const float max = call.getInt("max");
+    float min = call.getInt(0);
+    const float max = call.getInt(1);
     float step = 1f;
 
     if (max < min)
@@ -160,20 +151,19 @@ private void _range_f(GrCall call) {
 }
 
 private void _copy_(string t)(GrCall call) {
-    mixin(
-            "Gr" ~ t ~ "Array copy = new Gr" ~ t ~ "Array;
-        copy.data = call.get" ~ t
-            ~ "Array(\"array\").data;
+    mixin("Gr" ~ t ~ "Array copy = new Gr" ~ t ~ "Array;
+        copy.data = call.get"
+            ~ t ~ "Array(0).data;
         call.set" ~ t ~ "Array(copy);");
 }
 
 private void _size_(string t)(GrCall call) {
-    mixin("call.setInt(cast(int) call.get" ~ t ~ "Array(\"array\").data.length);");
+    mixin("call.setInt(cast(int) call.get" ~ t ~ "Array(0).data.length);");
 }
 
 private void _resize_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
-    const int size = call.getInt("size");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
+    const int size = call.getInt(1);
     if (size < 0) {
         call.raise("ArgumentError");
         return;
@@ -196,17 +186,17 @@ private void _resize_(string t)(GrCall call) {
 }
 
 private void _empty_(string t)(GrCall call) {
-    mixin("const Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
+    mixin("const Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     call.setBool(array.data.empty);
 }
 
 private void _fill_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     static if (t == "Object") {
-        void* value = call.getPtr("value");
+        void* value = call.getPtr(1);
     }
     else {
-        mixin("auto value = call.get" ~ t ~ "(\"value\");");
+        mixin("auto value = call.get" ~ t ~ "(1);");
     }
     for (int index; index < array.data.length; ++index)
         array.data[index] = value;
@@ -214,35 +204,35 @@ private void _fill_(string t)(GrCall call) {
 }
 
 private void _clear_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     array.data.length = 0;
     mixin("call.set" ~ t ~ "Array(array);");
 }
 
 private void _unshift_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     static if (t == "Object") {
-        array.data = call.getPtr("v") ~ array.data;
+        array.data = call.getPtr(1) ~ array.data;
     }
     else {
-        mixin("array.data = call.get" ~ t ~ "(\"v\") ~ array.data;");
+        mixin("array.data = call.get" ~ t ~ "(1) ~ array.data;");
     }
     mixin("call.set" ~ t ~ "Array(array);");
 }
 
 private void _push_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     static if (t == "Object") {
-        array.data ~= call.getPtr("v");
+        array.data ~= call.getPtr(1);
     }
     else {
-        mixin("array.data ~= call.get" ~ t ~ "(\"v\");");
+        mixin("array.data ~= call.get" ~ t ~ "(1);");
     }
     mixin("call.set" ~ t ~ "Array(array);");
 }
 
 private void _shift_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     if (!array.data.length) {
         call.raise("IndexError");
         return;
@@ -257,7 +247,7 @@ private void _shift_(string t)(GrCall call) {
 }
 
 private void _pop_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     if (!array.data.length) {
         call.raise("IndexError");
         return;
@@ -272,8 +262,8 @@ private void _pop_(string t)(GrCall call) {
 }
 
 private void _shift1_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
-    int size = call.getInt("size");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
+    int size = call.getInt(1);
     if (size < 0) {
         call.raise("IndexError");
         return;
@@ -288,8 +278,8 @@ private void _shift1_(string t)(GrCall call) {
 }
 
 private void _pop1_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
-    int size = call.getInt("size");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
+    int size = call.getInt(1);
     if (size < 0) {
         call.raise("IndexError");
         return;
@@ -304,7 +294,7 @@ private void _pop1_(string t)(GrCall call) {
 }
 
 private void _first_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     if (!array.data.length) {
         call.raise("IndexError");
         return;
@@ -318,7 +308,7 @@ private void _first_(string t)(GrCall call) {
 }
 
 private void _last_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     if (!array.data.length) {
         call.raise("IndexError");
         return;
@@ -332,8 +322,8 @@ private void _last_(string t)(GrCall call) {
 }
 
 private void _remove_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
-    int index = call.getInt("index");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
+    int index = call.getInt(1);
     if (index < 0)
         index = (cast(int) array.data.length) + index;
     if (!array.data.length || index >= array.data.length || index < 0) {
@@ -355,9 +345,9 @@ private void _remove_(string t)(GrCall call) {
 }
 
 private void _remove2_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
-    int index1 = call.getInt("index1");
-    int index2 = call.getInt("index2");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
+    int index1 = call.getInt(1);
+    int index2 = call.getInt(2);
     if (index1 < 0)
         index1 = (cast(int) array.data.length) + index1;
     if (index2 < 0)
@@ -399,9 +389,9 @@ private void _remove2_(string t)(GrCall call) {
 }
 
 private void _slice_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
-    int index1 = call.getInt("index1");
-    int index2 = call.getInt("index2");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
+    int index1 = call.getInt(1);
+    int index2 = call.getInt(2);
     if (index1 < 0)
         index1 = (cast(int) array.data.length) + index1;
     if (index2 < 0)
@@ -433,10 +423,10 @@ private void _slice_(string t)(GrCall call) {
 }
 
 private void _slice_copy_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     mixin("Gr" ~ t ~ "Array copy = new Gr" ~ t ~ "Array;");
-    int index1 = call.getInt("index1");
-    int index2 = call.getInt("index2");
+    int index1 = call.getInt(1);
+    int index2 = call.getInt(2);
     if (index1 < 0)
         index1 = (cast(int) array.data.length) + index1;
     if (index2 < 0)
@@ -470,19 +460,19 @@ private void _slice_copy_(string t)(GrCall call) {
 private void _reverse_(string t)(GrCall call) {
     import std.algorithm.mutation : reverse;
 
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     array.data = array.data.reverse;
     mixin("call.set" ~ t ~ "Array(array);");
 }
 
 private void _insert_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
-    int index = call.getInt("index");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
+    int index = call.getInt(1);
     static if (t == "Object") {
-        void* value = call.getPtr("value");
+        void* value = call.getPtr(2);
     }
     else {
-        mixin("auto value = call.get" ~ t ~ "(\"value\");");
+        mixin("auto value = call.get" ~ t ~ "(2);");
     }
     if (index < 0)
         index = (cast(int) array.data.length) + index;
@@ -507,14 +497,14 @@ private void _insert_(string t)(GrCall call) {
 private void _sort_(string t)(GrCall call) {
     import std.algorithm.sorting : sort;
 
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     array.data.sort();
     mixin("call.set" ~ t ~ "Array(array);");
 }
 
 private void _findFirst_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
-    mixin("auto value = call.get" ~ t ~ "(\"value\");");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
+    mixin("auto value = call.get" ~ t ~ "(1);");
     for (int index; index < array.data.length; ++index) {
         if (array.data[index] == value) {
             call.setInt(index);
@@ -525,8 +515,8 @@ private void _findFirst_(string t)(GrCall call) {
 }
 
 private void _findLast_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
-    mixin("auto value = call.get" ~ t ~ "(\"value\");");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
+    mixin("auto value = call.get" ~ t ~ "(1);");
     for (int index = (cast(int) array.data.length) - 1; index > 0; --index) {
         if (array.data[index] == value) {
             call.setInt(index);
@@ -537,8 +527,8 @@ private void _findLast_(string t)(GrCall call) {
 }
 
 private void _has_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(\"array\");");
-    mixin("auto value = call.get" ~ t ~ "(\"value\");");
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
+    mixin("auto value = call.get" ~ t ~ "(1);");
     for (int index; index < array.data.length; ++index) {
         if (array.data[index] == value) {
             call.setBool(true);

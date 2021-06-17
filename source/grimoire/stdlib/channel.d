@@ -14,22 +14,21 @@ package(grimoire.stdlib) void grLoadStdLibChannel(GrLibrary library) {
                 if (type.baseType != GrBaseType.chan)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOf" ~ t
-                ~ "(subType.baseType);
+                return grIsKindOf" ~ t ~ "(subType.baseType);
             });
-            library.addPrimitive(&_size_!\"" ~ t ~ "\", \"size\", [\"chan\"], [
-                    any" ~ t ~ "Channel
-                    ], [grInt]);
-            library.addPrimitive(&_capacity_!\""
-                ~ t ~ "\", \"capacity\", [\"chan\"], [
-                    any" ~ t ~ "Channel
-                    ], [grInt]);
-            library.addPrimitive(&_empty_!\"" ~ t ~ "\", \"empty?\", [\"chan\"], [
+            library.addPrimitive(&_size_!\"" ~ t ~ "\", \"size\", [
                     any"
                 ~ t ~ "Channel
+                    ], [grInt]);
+            library.addPrimitive(&_capacity_!\"" ~ t ~ "\", \"capacity\", [
+                    any" ~ t ~ "Channel
+                    ], [grInt]);
+            library.addPrimitive(&_empty_!\"" ~ t
+                ~ "\", \"empty?\", [
+                    any" ~ t ~ "Channel
                     ], [grBool]);
-            library.addPrimitive(&_full_!\"" ~ t
-                ~ "\", \"full?\", [\"chan\"], [
+            library.addPrimitive(&_full_!\""
+                ~ t ~ "\", \"full?\", [
                     any" ~ t ~ "Channel
                     ], [grBool]);
                     ");
@@ -37,19 +36,19 @@ package(grimoire.stdlib) void grLoadStdLibChannel(GrLibrary library) {
 }
 
 private void _size_(string t)(GrCall call) {
-    mixin("call.setInt(cast(int) call.get" ~ t ~ "Channel(\"chan\").size);");
+    mixin("call.setInt(cast(int) call.get" ~ t ~ "Channel(0).size);");
 }
 
 private void _capacity_(string t)(GrCall call) {
-    mixin("call.setInt(cast(int) call.get" ~ t ~ "Channel(\"chan\").capacity);");
+    mixin("call.setInt(cast(int) call.get" ~ t ~ "Channel(0).capacity);");
 }
 
 private void _empty_(string t)(GrCall call) {
-    mixin("const Gr" ~ t ~ "Channel chan = call.get" ~ t ~ "Channel(\"chan\");
+    mixin("const Gr" ~ t ~ "Channel chan = call.get" ~ t ~ "Channel(0);
     call.setBool(chan.isEmpty);");
 }
 
 private void _full_(string t)(GrCall call) {
-    mixin("const Gr" ~ t ~ "Channel chan = call.get" ~ t ~ "Channel(\"chan\");
+    mixin("const Gr" ~ t ~ "Channel chan = call.get" ~ t ~ "Channel(0);
     call.setBool(chan.isFull);");
 }

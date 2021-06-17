@@ -104,8 +104,7 @@ class GrLibrary {
 
     /// Define a new primitive.
     GrPrimitive addPrimitive(GrCallback callback, string name,
-            string[] parameters, GrType[] inSignature, GrType[] outSignature = [
-            ]) {
+            GrType[] inSignature, GrType[] outSignature = []) {
         bool isAbstract;
         foreach (GrType type; inSignature) {
             if (type.isAny) {
@@ -116,7 +115,6 @@ class GrLibrary {
 
         GrPrimitive primitive = new GrPrimitive;
         primitive.inSignature = inSignature;
-        primitive.parameters = parameters;
         primitive.outSignature = outSignature;
         primitive.name = name;
         primitive.callbackId = cast(int) _callbacks.length;
@@ -131,33 +129,29 @@ class GrLibrary {
     An operator is a function that replace a binary or unary grimoire operator such as `+`, `==`, etc
     The name of the function must be that of the operator like "+", "-", "or", etc.
     */
-    GrPrimitive addOperator(GrCallback callback, string name, string[] parameters,
-            GrType[] inSignature, GrType outType) {
+    GrPrimitive addOperator(GrCallback callback, string name, GrType[] inSignature, GrType outType) {
         import std.conv : to;
 
         if (inSignature.length > 2uL)
             throw new Exception(
-                    "The operator `" ~ name ~ "` cannot take more than 2 parameters: " ~ to!string(
-                    parameters));
-        return addPrimitive(callback, "@op_" ~ name, parameters, inSignature, [
-                outType
-                ]);
+                    "The operator `" ~ name ~ "` cannot take more than 2 parameters: " ~ grGetPrettyFunctionCall("",
+                    inSignature));
+        return addPrimitive(callback, "@op_" ~ name, inSignature, [outType]);
     }
 
     /**
     A cast operator allows to convert from one type to another.
     It have to have only one parameter and return the casted value.
     */
-    GrPrimitive addCast(GrCallback callback, string parameter, GrType srcType,
-            GrType dstType, bool isExplicit = false) {
-        auto primitive = addPrimitive(callback, "@as", [parameter], [
-                srcType, dstType
-                ], [dstType]);
+    GrPrimitive addCast(GrCallback callback, GrType srcType, GrType dstType, bool isExplicit = false) {
+        auto primitive = addPrimitive(callback, "@as", [srcType, dstType], [
+                dstType
+                ]);
         primitive.isExplicit = isExplicit;
         return primitive;
     }
 
-    private string getPrettyPrimitive(GrPrimitive primitive, bool showParameters = false) {
+    private string getPrettyPrimitive(GrPrimitive primitive) {
         import std.conv : to;
 
         string result = primitive.name;
@@ -167,8 +161,6 @@ class GrLibrary {
         result ~= "(";
         for (int i; i < nbParameters; i++) {
             result ~= grGetPrettyType(primitive.inSignature[i]);
-            if (showParameters)
-                result ~= " " ~ primitive.parameters[i];
             if ((i + 2) <= nbParameters)
                 result ~= ", ";
         }

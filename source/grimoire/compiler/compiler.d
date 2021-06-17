@@ -186,8 +186,6 @@ final class GrCompiler {
 			GrType[] inSignature = _data._primitives[id].inSignature;
 			if (_data._primitives[id].name == "@as")
 				inSignature.length = 1;
-			if (_data._primitives[id].parameters.length != inSignature.length)
-				throw new Exception("signature size mismatch");
 			for (int i; i < inSignature.length; ++i) {
 				const GrType type = inSignature[i];
 				final switch (type.baseType) with (GrBaseType) {
@@ -197,18 +195,22 @@ final class GrCompiler {
 				case task:
 				case enum_:
 				case chan:
-					bytecode.primitives[id].ilocals ~= _data._primitives[id].parameters[i];
+					bytecode.primitives[id].parameters ~= 0x10000 | (bytecode.primitives[id].iparams & 0xFFFF);
+					bytecode.primitives[id].iparams++;
 					break;
 				case float_:
-					bytecode.primitives[id].flocals ~= _data._primitives[id].parameters[i];
+					bytecode.primitives[id].parameters ~= 0x20000 | (bytecode.primitives[id].fparams & 0xFFFF);
+					bytecode.primitives[id].fparams++;
 					break;
 				case string_:
-					bytecode.primitives[id].slocals ~= _data._primitives[id].parameters[i];
+					bytecode.primitives[id].parameters ~= 0x40000 | (bytecode.primitives[id].sparams & 0xFFFF);
+					bytecode.primitives[id].sparams++;
 					break;
 				case array_:
 				case class_:
 				case foreign:
-					bytecode.primitives[id].olocals ~= _data._primitives[id].parameters[i];
+					bytecode.primitives[id].parameters ~= 0x80000 | (bytecode.primitives[id].oparams & 0xFFFF);
+					bytecode.primitives[id].oparams++;
 					break;
 				case void_:
 				case internalTuple:

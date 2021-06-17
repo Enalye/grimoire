@@ -231,7 +231,9 @@ final class GrBytecode {
             /// Callback index
             int index;
             /// Parameters
-            string[] ilocals, flocals, slocals, olocals;
+            uint iparams, fparams, sparams, oparams;
+            /// Ditto
+            uint[] parameters;
         }
 
         /// All the instructions.
@@ -267,7 +269,8 @@ final class GrBytecode {
     }
 
     /// Default ctor
-    this() {}
+    this() {
+    }
 
     /// Copy ctor
     this(GrBytecode bytecode) {
@@ -339,23 +342,14 @@ final class GrBytecode {
 
         foreach (primitive; primitives) {
             buffer.append!uint(cast(uint) primitive.index);
-            buffer.append!uint(cast(uint) primitive.ilocals.length);
-            buffer.append!uint(cast(uint) primitive.flocals.length);
-            buffer.append!uint(cast(uint) primitive.slocals.length);
-            buffer.append!uint(cast(uint) primitive.olocals.length);
+            buffer.append!uint(primitive.iparams);
+            buffer.append!uint(primitive.fparams);
+            buffer.append!uint(primitive.sparams);
+            buffer.append!uint(primitive.oparams);
 
-            foreach (string i; primitive.ilocals) {
-                writeStr(buffer, i);
-            }
-            foreach (string i; primitive.flocals) {
-                writeStr(buffer, i);
-            }
-            foreach (string i; primitive.slocals) {
-                writeStr(buffer, i);
-            }
-            foreach (string i; primitive.olocals) {
-                writeStr(buffer, i);
-            }
+            buffer.append!uint(cast(uint) primitive.parameters.length);
+            foreach (int i; primitive.parameters)
+                buffer.append!uint(i);
         }
 
         foreach (class_; classes) {
@@ -430,25 +424,14 @@ final class GrBytecode {
 
         for (int i; i < primitives.length; ++i) {
             primitives[i].index = buffer.read!uint();
-            primitives[i].ilocals.length = buffer.read!uint();
-            primitives[i].flocals.length = buffer.read!uint();
-            primitives[i].slocals.length = buffer.read!uint();
-            primitives[i].olocals.length = buffer.read!uint();
+            primitives[i].iparams = buffer.read!uint();
+            primitives[i].fparams = buffer.read!uint();
+            primitives[i].sparams = buffer.read!uint();
+            primitives[i].oparams = buffer.read!uint();
 
-            for (int y; y < primitives[i].ilocals.length; ++y) {
-                primitives[i].ilocals[y] = readStr(buffer);
-            }
-
-            for (int y; y < primitives[i].flocals.length; ++y) {
-                primitives[i].flocals[y] = readStr(buffer);
-            }
-
-            for (int y; y < primitives[i].slocals.length; ++y) {
-                primitives[i].slocals[y] = readStr(buffer);
-            }
-
-            for (int y; y < primitives[i].olocals.length; ++y) {
-                primitives[i].olocals[y] = readStr(buffer);
+            primitives[i].parameters.length = buffer.read!uint();
+            for (int y; y < primitives[i].parameters.length; ++y) {
+                primitives[i].parameters[y] = buffer.read!uint();
             }
         }
 

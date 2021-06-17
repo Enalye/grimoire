@@ -26,8 +26,6 @@ class GrPrimitive {
 	GrType[] inSignature;
     /// Return values.
 	GrType[] outSignature;
-    /// Function parameters' name.
-    string[] parameters;
     /// The base name of the function to call.
 	string name,
     /// Name mangled with its parameters' type.
@@ -47,7 +45,6 @@ class GrPrimitive {
         callbackId = primitive.callbackId;
         inSignature = primitive.inSignature;
         outSignature = primitive.outSignature;
-        parameters = primitive.parameters;
         name = primitive.name;
         mangledName = primitive.mangledName;
         index = primitive.index;

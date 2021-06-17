@@ -16,12 +16,12 @@ import grimoire.runtime.context, grimoire.runtime.array,
 alias GrCallback = void function(GrCall);
 
 /// Primitive context.
-class GrCall {
+final class GrCall {
     private {
         GrContext _context;
         GrCallback _callback;
 
-        const string[] _ilocals, _flocals, _slocals, _olocals;
+        uint[] _parameters;
         int _iparams, _fparams, _sparams, _oparams;
         int _iresults, _fresults, _sresults, _oresults;
         bool _isInitialized;
@@ -42,15 +42,12 @@ class GrCall {
     package(grimoire) this(GrCallback callback, const ref GrBytecode.PrimitiveReference primRef) {
         _callback = callback;
 
-        _iparams = cast(int) primRef.ilocals.length;
-        _fparams = cast(int) primRef.flocals.length;
-        _sparams = cast(int) primRef.slocals.length;
-        _oparams = cast(int) primRef.olocals.length;
+        _parameters = primRef.parameters.dup;
 
-        _ilocals = primRef.ilocals;
-        _flocals = primRef.flocals;
-        _slocals = primRef.slocals;
-        _olocals = primRef.olocals;
+        _iparams = cast(int) primRef.iparams;
+        _fparams = cast(int) primRef.fparams;
+        _sparams = cast(int) primRef.sparams;
+        _oparams = cast(int) primRef.oparams;
     }
 
     /// The actual runtime call to the primitive.
@@ -78,80 +75,86 @@ class GrCall {
     alias getFloat = getParameter!float;
     alias getString = getParameter!string;
     alias getPtr = getParameter!(void*);
-    alias getObject = getUserData!GrObject;
-    alias getIntArray = getUserData!GrIntArray;
-    alias getFloatArray = getUserData!GrFloatArray;
-    alias getStringArray = getUserData!GrStringArray;
-    alias getObjectArray = getUserData!GrObjectArray;
-    alias getIntChannel = getUserData!GrIntChannel;
-    alias getFloatChannel = getUserData!GrFloatChannel;
-    alias getStringChannel = getUserData!GrStringChannel;
-    alias getObjectChannel = getUserData!GrObjectChannel;
 
-    T getEnum(T)(string parameter) {
+    GrObject getObject(uint index) {
+        return cast(GrObject) getParameter!(void*)(index);
+    }
+
+    GrIntArray getIntArray(uint index) {
+        return cast(GrIntArray) getParameter!(void*)(index);
+    }
+
+    GrFloatArray getFloatArray(uint index) {
+        return cast(GrFloatArray) getParameter!(void*)(index);
+    }
+
+    GrStringArray getStringArray(uint index) {
+        return cast(GrStringArray) getParameter!(void*)(index);
+    }
+
+    GrObjectArray getObjectArray(uint index) {
+        return cast(GrObjectArray) getParameter!(void*)(index);
+    }
+
+    GrIntChannel getIntChannel(uint index) {
+        return cast(GrIntChannel) getParameter!(void*)(index);
+    }
+
+    GrFloatChannel getFloatChannel(uint index) {
+        return cast(GrFloatChannel) getParameter!(void*)(index);
+    }
+
+    GrStringChannel getStringChannel(uint index) {
+        return cast(GrStringChannel) getParameter!(void*)(index);
+    }
+
+    GrObjectChannel getObjectChannel(uint index) {
+        return cast(GrObjectChannel) getParameter!(void*)(index);
+    }
+
+    T getEnum(T)(immutable string parameter) {
         return cast(T) getInt(parameter);
     }
 
-    T getUserData(T)(string parameter) {
+    T getForeign(T)(uint parameter) {
         // We cast to object first to avoid a crash when casting to a parent class
         return cast(T) cast(Object) getParameter!(void*)(parameter);
     }
 
-    private T getParameter(T)(string parameter) {
+    private T getParameter(T)(uint index) {
+        if (index >= _parameters.length)
+            throw new Exception("parameter index `" ~ to!string(
+                    index) ~ "` exceeds the number of parameters");
+
         static if (is(T == int)) {
-            int index;
-            for (; index < _ilocals.length; index++) {
-                if (parameter == _ilocals[index])
-                    break;
-            }
-            if (index == _ilocals.length)
-                throw new Exception(
-                        "the primitive doesn't have a int parameter called `" ~ parameter ~ "`");
-            return _context.istack[(_context.istackPos - _iparams) + index + 1];
+            if ((_parameters[index] & 0x10000) == 0)
+                throw new Exception("parameter " ~ to!string(index) ~ " is not an int");
+            return _context.istack[(_context.istackPos - _iparams) + (_parameters[index] & 0xFFFF)
+                + 1];
         }
         else static if (is(T == bool)) {
-            int index;
-            for (; index < _ilocals.length; index++) {
-                if (parameter == _ilocals[index])
-                    break;
-            }
-            if (index == _ilocals.length)
-                throw new Exception(
-                        "the primitive doesn't have a bool parameter called `" ~ parameter ~ "`");
-            return _context.istack[(_context.istackPos - _iparams) + index + 1] > 0;
+            if ((_parameters[index] & 0x10000) == 0)
+                throw new Exception("parameter " ~ to!string(index) ~ " is not a bool");
+            return _context.istack[(_context.istackPos - _iparams) + (
+                        _parameters[index] & 0xFFFF) + 1] > 0;
         }
         else static if (is(T == float)) {
-            int index;
-            for (; index < _flocals.length; index++) {
-                if (parameter == _flocals[index])
-                    break;
-            }
-            if (index == _flocals.length)
-                throw new Exception(
-                        "the primitive doesn't have a float parameter called `" ~ parameter ~ "`");
-            return _context.fstack[(_context.fstackPos - _fparams) + index + 1];
+            if ((_parameters[index] & 0x20000) == 0)
+                throw new Exception("parameter " ~ to!string(index) ~ " is not a float");
+            return _context.fstack[(_context.fstackPos - _fparams) + (_parameters[index] & 0xFFFF)
+                + 1];
         }
         else static if (is(T == string)) {
-            int index;
-            for (; index < _slocals.length; index++) {
-                if (parameter == _slocals[index])
-                    break;
-            }
-            if (index == _slocals.length)
-                throw new Exception(
-                        "the primitive doesn't have a string parameter called `" ~ parameter ~ "`");
-            return _context.sstack[(_context.sstackPos - _sparams) + index + 1];
+            if ((_parameters[index] & 0x40000) == 0)
+                throw new Exception("parameter " ~ to!string(index) ~ " is not a string");
+            return _context.sstack[(_context.sstackPos - _sparams) + (_parameters[index] & 0xFFFF)
+                + 1];
         }
         else static if (is(T == void*)) {
-            int index;
-            for (; index < _olocals.length; index++) {
-                if (parameter == _olocals[index])
-                    break;
-            }
-            if (index == _olocals.length)
-                throw new Exception(
-                        "the primitive doesn't have an object parameter called `" ~ parameter ~ "`");
-            return _context.ostack[(_context.ostackPos - _oparams) + index + 1];
+            if ((_parameters[index] & 0x80000) == 0)
+                throw new Exception("parameter " ~ to!string(index) ~ " is not an object");
+            return _context.ostack[(_context.ostackPos - _oparams) + (_parameters[index] & 0xFFFF)
+                + 1];
         }
     }
 
@@ -160,21 +163,48 @@ class GrCall {
     alias setFloat = setResult!float;
     alias setString = setResult!string;
     alias setPtr = setResult!(void*);
-    alias setObject = setUserData!GrObject;
-    alias setIntArray = setUserData!GrIntArray;
-    alias setFloatArray = setUserData!GrFloatArray;
-    alias setStringArray = setUserData!GrStringArray;
-    alias setObjectArray = setUserData!GrObjectArray;
-    alias setIntChannel = setUserData!GrIntChannel;
-    alias setFloatChannel = setUserData!GrFloatChannel;
-    alias setStringChannel = setUserData!GrStringChannel;
-    alias setObjectChannel = setUserData!GrObjectChannel;
+
+    void setObject(GrObject value) {
+        setResult!(void*)(cast(void*) value);
+    }
+
+    void setIntArray(GrIntArray value) {
+        setResult!(void*)(cast(void*) value);
+    }
+
+    void setFloatArray(GrFloatArray value) {
+        setResult!(void*)(cast(void*) value);
+    }
+
+    void setStringArray(GrStringArray value) {
+        setResult!(void*)(cast(void*) value);
+    }
+
+    void setObjectArray(GrObjectArray value) {
+        setResult!(void*)(cast(void*) value);
+    }
+
+    void setIntChannel(GrIntChannel value) {
+        setResult!(void*)(cast(void*) value);
+    }
+
+    void setFloatChannel(GrFloatChannel value) {
+        setResult!(void*)(cast(void*) value);
+    }
+
+    void setStringChannel(GrStringChannel value) {
+        setResult!(void*)(cast(void*) value);
+    }
+
+    void setObjectChannel(GrObjectChannel value) {
+        setResult!(void*)(cast(void*) value);
+    }
 
     void setEnum(T)(T value) {
         setInt(cast(int) value);
     }
 
-    void setUserData(T)(T value) {
+    void setForeign(T)(T value) {
         setResult!(void*)(cast(void*) value);
     }
 
