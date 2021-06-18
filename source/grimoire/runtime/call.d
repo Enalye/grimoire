@@ -112,8 +112,8 @@ final class GrCall {
         return cast(GrObjectChannel) getParameter!(void*)(index);
     }
 
-    T getEnum(T)(immutable string parameter) {
-        return cast(T) getInt(parameter);
+    T getEnum(T)(uint index) {
+        return cast(T) getParameter!int(index);
     }
 
     T getForeign(T)(uint parameter) {
@@ -201,7 +201,7 @@ final class GrCall {
     }
 
     void setEnum(T)(T value) {
-        setInt(cast(int) value);
+        setResult!int(cast(int) value);
     }
 
     void setForeign(T)(T value) {
