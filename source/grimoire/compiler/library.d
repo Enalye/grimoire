@@ -104,7 +104,7 @@ class GrLibrary {
 
     /// Define a new primitive.
     GrPrimitive addPrimitive(GrCallback callback, string name,
-            GrType[] inSignature, GrType[] outSignature = []) {
+            GrType[] inSignature = [], GrType[] outSignature = []) {
         bool isAbstract;
         foreach (GrType type; inSignature) {
             if (type.isAny) {
