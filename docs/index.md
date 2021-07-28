@@ -640,13 +640,13 @@ Note that if a default convertion exists, it'll call this one instead.
 
 To define a new cast, add it to the GrData.
 ```d
-data.addCast(&myCast, "myObj", myObjType, grString);
+data.addCast(&myCast, myObjType, grString);
 ```
 
 Then, define the function itself:
 ```d
 void myCast(GrCall call) {
-    auto myObj = call.getObject("myObj");
+    auto myObj = call.getObject(0);
     call.setString("Hello");
 }
 ```
@@ -815,7 +815,7 @@ Here's a little example:
 * Declaration:
 ```d
 auto messageType = data.addClass("Message", ["greetings"], [grString]);
-data.addPrimitive(&createMessage, "createMessage", [], [], [messageType]);
+data.addPrimitive(&createMessage, "createMessage", [], [messageType]);
 ```
 
 * Primitive:
@@ -894,7 +894,23 @@ class MyClass : ParentClass {
 
 In D, its indicated by an optional parameter:
 ```d
-data.addClass("MyClass", [], [], "ParentClass");
+data.addClass("MyClass", [], "ParentClass", []);
+```
+
+The second and fourth parameters are the template variable of the defined and the parent class.
+```d
+data.addClass("MyClass", ["T"], "ParentClass", [grAny("T")]);
+```
+Roughly means that MyClass<T> inherits from ParentClass<T>
+
+## Template
+
+In grimoire, you can define generic types for classes like this:
+```cpp
+class MyClass<T, A> : ParentClass<T, int> {
+	T myValue;
+	A myOtherValue;
+}
 ```
 
 * * *
@@ -968,8 +984,14 @@ data.addForeign("MyType");
 
 Like classes, they can inherit from another foreign type.
 ```d
-data.addForeign("MyType", "ParentType");
+data.addForeign("MyType", [], "ParentType", []);
 ```
+
+The second and fourth parameters are the template variable of the defined and the parent class.
+```d
+data.addForeign("MyType", ["T"], "ParentType", [grAny("T")]);
+```
+Roughly means that MyType<T> inherits from ParentType<T>
 
 * * *
 
@@ -1027,26 +1049,26 @@ They must be declared before the compilation anb remain unchanged in the VM.
 ## Primitive declaration
 
 To declare your primitive use `addPrimitive`.
-This function takes a callback to your primitive, the name which your primitive will be known as in scripts,
-an array of parameters' name, the parameters' type and, optionally, an array of return value types.
+This function takes a callback to your primitive, the name which your primitive will be known as inside scripts,
+the parameters and, optionally, the return types.
 Exemple:
 ```d
 //A function print that takes a string and returns nothing
-data.addPrimitive(&print_a_string, "print", ["value"], [grString]);
+data.addPrimitive(&print_a_string, "print", [grString]);
 //Function mul() that takes 2 floats and returns one.
-data.addPrimitive(&multiply, "mul", ["a", "b"], [grFloat, grFloat], [grFloat]);
+data.addPrimitive(&multiply, "mul", [grFloat, grFloat], [grFloat]);
 ```
 
 If you want to multiply 2 things, a better idea is to declare an operator (if it doesn't already exists for your types):
 
 ```d
-data.addOperator(&multiply, "*", ["a", "b"], [grFloat, grFloat], grFloat);
+data.addOperator(&multiply, "*", [grFloat, grFloat], grFloat);
 ```
 An operator declaration only take the name of the operator it surcharges, 1 or 2 parameters, and a single return type.
 
 But if you want to convert from one type to another using a primitive, you can do so with this function:
 ```d
-data.addCast(&cast_float_to_int, "value", grFloat, grInt);
+data.addCast(&cast_float_to_int, grFloat, grInt);
 ```
 Much simpler, it takes a single parameter and return value.
 
@@ -1058,12 +1080,12 @@ The GrCall object contains everything you need about the current running context
 It looks like this:
 ```d
 void myPrimitive(GrCall call) {
-	writeln(call.getFloat("value"));
+	writeln(call.getFloat(0));
     call.setInt(99);
 }
 ```
-Here, the primitive takes a float parameter called `"value"`, and prints it, then returns the int value 99.
-getXXX methods fetch the parameters, they have the same name/type as declared, else it will throw an exception.
+Here, the primitive takes a float parameter at index 0 (first parameter), and prints it, then returns the int value 99.
+getXXX methods fetch the parameters, the type must match the declaration, else they'll throw an exception.
 setXXX methods returns a value on the stack, beware of the order in which you call setXXX functions.
 
 
@@ -1083,7 +1105,7 @@ The predicate takes 2 parameters:
 Exemple of a primitive that can define a `push` function for every type of array that uses integers.
 It takes an array and a value that matches the type held by the array, and returns the array itself.
 ```d
-data.addPrimitive(&_push, "push", ["array"], [
+data.addPrimitive(&_push, "push", [
     grAny("A",   // We declare a generic type called "A"
 	(type, data) {
 		if (type.baseType != GrBaseType.array_) // This type must be an array
