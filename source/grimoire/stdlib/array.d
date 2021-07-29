@@ -9,9 +9,6 @@ import std.range;
 import grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
-    library.addPrimitive(&_range_i, "range", [grInt, grInt], [grIntArray]);
-    library.addPrimitive(&_range_f, "range", [grFloat, grFloat], [grFloatArray]);
-
     static foreach (t; ["Int", "Float", "String", "Object"]) {
         mixin("GrType any" ~ t ~ "Array = grAny(\"A\", (type, data) {
                 if (type.baseType != GrBaseType.array_)
@@ -114,40 +111,6 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
                 ");
         }
     }
-}
-
-private void _range_i(GrCall call) {
-    int min = call.getInt(0);
-    const int max = call.getInt(1);
-    int step = 1;
-
-    if (max < min)
-        step = -1;
-
-    GrIntArray array = new GrIntArray;
-    while (min != max) {
-        array.data ~= min;
-        min += step;
-    }
-    array.data ~= max;
-    call.setIntArray(array);
-}
-
-private void _range_f(GrCall call) {
-    float min = call.getInt(0);
-    const float max = call.getInt(1);
-    float step = 1f;
-
-    if (max < min)
-        step = -1f;
-
-    GrFloatArray array = new GrFloatArray;
-    while (min != max) {
-        array.data ~= min;
-        min += step;
-    }
-    array.data ~= max;
-    call.setFloatArray(array);
 }
 
 private void _copy_(string t)(GrCall call) {

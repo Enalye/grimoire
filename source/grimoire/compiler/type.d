@@ -249,9 +249,9 @@ final class GrAbstractForeignDefinition {
 }
 
 /// Create a foreign GrType for the type system.
-GrType grGetForeignType(string name) {
+GrType grGetForeignType(string name, GrType[] signature = []) {
     GrType type = GrBaseType.foreign;
-    type.mangledType = name;
+    type.mangledType = grMangleNamedFunction(name, signature);
     return type;
 }
 
@@ -371,9 +371,9 @@ final class GrClassDefinition {
 }
 
 /// Create a GrType of class for the type system.
-GrType grGetClassType(string name) {
+GrType grGetClassType(string name, GrType[] signature = []) {
     GrType stType = GrBaseType.class_;
-    stType.mangledType = name;
+    stType.mangledType = grMangleNamedFunction(name, signature);
     return stType;
 }
 

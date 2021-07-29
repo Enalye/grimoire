@@ -268,6 +268,8 @@ final class GrBytecode {
         uint[string] events;
     }
 
+    private immutable magicWord = "grb";
+
     /// Default ctor
     this() {
     }
@@ -310,7 +312,7 @@ final class GrBytecode {
         }
 
         Appender!(ubyte[]) buffer = appender!(ubyte[]);
-        buffer.put(cast(ubyte[]) "grb");
+        buffer.put(cast(ubyte[]) magicWord);
 
         buffer.append!uint(cast(uint) iconsts.length);
         buffer.append!uint(cast(uint) fconsts.length);
@@ -380,11 +382,11 @@ final class GrBytecode {
             return s;
         }
 
-        if (buffer.length < 3)
+        if (buffer.length < magicWord.length)
             throw new Exception("invalid bytecode");
-        if (buffer[0 .. 3] != "grb")
+        if (buffer[0 .. magicWord.length] != magicWord)
             throw new Exception("invalid bytecode");
-        buffer = buffer[8 .. $];
+        buffer = buffer[magicWord.length .. $];
 
         iconsts.length = buffer.read!uint();
         fconsts.length = buffer.read!uint();

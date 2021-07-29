@@ -3868,120 +3868,204 @@ final class GrParser {
         advance();
 
         //From length to 0
-        GrType arrayType = parseSubExpression().type;
+        GrType containerType = parseSubExpression().type;
 
-        /* Init */
-        GrType subType = grUnmangle(arrayType.mangledType);
-        GrVariable iterator = registerSpecialVariable("iterator" ~ to!string(scopeLevel), grInt);
-        GrVariable index = registerSpecialVariable("index" ~ to!string(scopeLevel), grInt);
-        GrVariable array = registerSpecialVariable("array" ~ to!string(scopeLevel), arrayType);
+        switch (containerType.baseType) with (GrBaseType) {
+        case array_: {
+                /* Init */
+                GrType subType = grUnmangle(containerType.mangledType);
+                GrVariable iterator = registerSpecialVariable("iterator" ~ to!string(scopeLevel),
+                        grInt);
+                GrVariable index = registerSpecialVariable("index" ~ to!string(scopeLevel), grInt);
+                GrVariable array = registerSpecialVariable("array" ~ to!string(scopeLevel),
+                        containerType);
 
-        if (variable.isAuto && subType.baseType != GrBaseType.void_) {
-            variable.isAuto = false;
-            variable.type = subType;
-            setVariableRegister(variable);
-        }
+                if (variable.isAuto && subType.baseType != GrBaseType.void_) {
+                    variable.isAuto = false;
+                    variable.type = subType;
+                    setVariableRegister(variable);
+                }
 
-        addSetInstruction(array, fileId, arrayType, true);
-        final switch (subType.baseType) with (GrBaseType) {
-        case bool_:
-        case int_:
-        case function_:
-        case task:
-        case enum_:
-            addInstruction(GrOpcode.length_int);
+                addSetInstruction(array, fileId, containerType, true);
+                final switch (subType.baseType) with (GrBaseType) {
+                case bool_:
+                case int_:
+                case function_:
+                case task:
+                case enum_:
+                    addInstruction(GrOpcode.length_int);
+                    break;
+                case float_:
+                    addInstruction(GrOpcode.length_float);
+                    break;
+                case string_:
+                    addInstruction(GrOpcode.length_string);
+                    break;
+                case array_:
+                case class_:
+                case foreign:
+                case chan:
+                case reference:
+                    addInstruction(GrOpcode.length_object);
+                    break;
+                case void_:
+                case null_:
+                case internalTuple:
+                    logError("an array can't be of type `" ~ grGetPrettyType(grArray(subType)) ~ "`",
+                            "invalid array type");
+                    break;
+                }
+                addInstruction(GrOpcode.setupIterator);
+                addSetInstruction(iterator, fileId);
+
+                //Set index to -1
+                addIntConstant(-1);
+                addSetInstruction(index, fileId);
+
+                /* For is breakable and continuable. */
+                openBreakableSection();
+                openContinuableSection();
+
+                /* Continue jump. */
+                setContinuableSectionDestination();
+
+                advance();
+                uint blockPosition = cast(uint) currentFunction.instructions.length;
+
+                addGetInstruction(iterator, GrType(GrBaseType.int_));
+                addInstruction(GrOpcode.decrement_int);
+                addSetInstruction(iterator, fileId);
+
+                addGetInstruction(iterator, GrType(GrBaseType.int_));
+                uint jumpPosition = cast(uint) currentFunction.instructions.length;
+                addInstruction(GrOpcode.jumpEqual);
+
+                //Set Index
+                addGetInstruction(array);
+                addGetInstruction(index);
+                addInstruction(GrOpcode.increment_int);
+                addSetInstruction(index, fileId, grVoid, true);
+                final switch (subType.baseType) with (GrBaseType) {
+                case bool_:
+                case int_:
+                case function_:
+                case task:
+                case enum_:
+                    addInstruction(GrOpcode.index2_int);
+                    break;
+                case float_:
+                    addInstruction(GrOpcode.index2_float);
+                    break;
+                case string_:
+                    addInstruction(GrOpcode.index2_string);
+                    break;
+                case array_:
+                case class_:
+                case foreign:
+                case chan:
+                case reference:
+                    addInstruction(GrOpcode.index2_object);
+                    break;
+                case void_:
+                case null_:
+                case internalTuple:
+                    logError("an array can't be of type `" ~ grGetPrettyType(grArray(subType)) ~ "`",
+                            "invalid array type");
+                    break;
+                }
+                convertType(subType, variable.type, fileId);
+                addSetInstruction(variable, fileId);
+
+                parseBlock(true);
+
+                addInstruction(GrOpcode.jump,
+                        cast(int)(blockPosition - currentFunction.instructions.length), true);
+                setInstruction(GrOpcode.jumpEqual, jumpPosition,
+                        cast(int)(currentFunction.instructions.length - jumpPosition), true);
+
+                /* For is breakable and continuable. */
+                closeBreakableSection();
+                closeContinuableSection();
+            }
             break;
-        case float_:
-            addInstruction(GrOpcode.length_float);
-            break;
-        case string_:
-            addInstruction(GrOpcode.length_string);
-            break;
-        case array_:
-        case class_:
         case foreign:
-        case chan:
-        case reference:
-            addInstruction(GrOpcode.length_object);
+        case class_: {
+                GrVariable iterator = registerSpecialVariable("iterator" ~ to!string(scopeLevel),
+                        containerType);
+
+                GrType subType;
+                GrFunction nextFunc;
+                GrPrimitive nextPrim = _data.getPrimitive("next", [
+                        containerType
+                        ]);
+                if (nextPrim) {
+                    if (nextPrim.outSignature.length != 2 || (nextPrim.outSignature.length >= 1
+                            && nextPrim.outSignature[0].baseType != grBool)) {
+                        logError("the primitive `" ~ grGetPrettyFunctionCall("next",
+                                [containerType]) ~ "` must return a bool and a value",
+                                "signature mismatch");
+                    }
+                    subType = nextPrim.outSignature[1];
+                }
+                else {
+                    nextFunc = getFunction("next", [containerType], fileId);
+                    if (!nextFunc) {
+                        logError("there is no `" ~ grGetPrettyFunctionCall("next",
+                                [containerType]) ~ "` defined", "not iterable");
+                    }
+
+                    if (nextFunc.outSignature.length != 2 || (nextFunc.outSignature.length >= 1
+                            && nextFunc.outSignature[0].baseType != grBool)) {
+                        logError("the function `" ~ grGetPrettyFunction(nextFunc) ~ "` must return a bool and a value",
+                                "signature mismatch");
+                    }
+                    subType = nextFunc.outSignature[1];
+                }
+
+                if (variable.isAuto && subType.baseType != GrBaseType.void_) {
+                    variable.isAuto = false;
+                    variable.type = subType;
+                    setVariableRegister(variable);
+                }
+                addSetInstruction(iterator, fileId, containerType, true);
+
+                /* For is breakable and continuable. */
+                openBreakableSection();
+                openContinuableSection();
+
+                /* Continue jump. */
+                setContinuableSectionDestination();
+
+                advance();
+                uint blockPosition = cast(uint) currentFunction.instructions.length;
+
+                addGetInstruction(iterator, containerType);
+                if (nextPrim)
+                    addInstruction(GrOpcode.primitiveCall, nextPrim.index);
+                else
+                    addFunctionCall(nextFunc, fileId);
+                addSetInstruction(variable, fileId);
+
+                uint jumpPosition = cast(uint) currentFunction.instructions.length;
+                addInstruction(GrOpcode.jumpEqual);
+
+                parseBlock(true);
+
+                addInstruction(GrOpcode.jump,
+                        cast(int)(blockPosition - currentFunction.instructions.length), true);
+                setInstruction(GrOpcode.jumpEqual, jumpPosition,
+                        cast(int)(currentFunction.instructions.length - jumpPosition), true);
+
+                /* For is breakable and continuable. */
+                closeBreakableSection();
+                closeContinuableSection();
+            }
             break;
-        case void_:
-        case null_:
-        case internalTuple:
-            logError("an array can't be of type `" ~ grGetPrettyType(grArray(subType)) ~ "`",
-                    "invalid array type");
+        default:
+            logError("for can't iterate over a `" ~ grGetPrettyType(containerType) ~ "`",
+                    "not iterable");
             break;
         }
-        addInstruction(GrOpcode.setupIterator);
-        addSetInstruction(iterator, fileId);
-
-        //Set index to -1
-        addIntConstant(-1);
-        addSetInstruction(index, fileId);
-
-        /* For is breakable and continuable. */
-        openBreakableSection();
-        openContinuableSection();
-
-        /* Continue jump. */
-        setContinuableSectionDestination();
-
-        advance();
-        uint blockPosition = cast(uint) currentFunction.instructions.length;
-
-        addGetInstruction(iterator, GrType(GrBaseType.int_));
-        addInstruction(GrOpcode.decrement_int);
-        addSetInstruction(iterator, fileId);
-
-        addGetInstruction(iterator, GrType(GrBaseType.int_));
-        uint jumpPosition = cast(uint) currentFunction.instructions.length;
-        addInstruction(GrOpcode.jumpEqual);
-
-        //Set Index
-        addGetInstruction(array);
-        addGetInstruction(index);
-        addInstruction(GrOpcode.increment_int);
-        addSetInstruction(index, fileId, grVoid, true);
-        final switch (subType.baseType) with (GrBaseType) {
-        case bool_:
-        case int_:
-        case function_:
-        case task:
-        case enum_:
-            addInstruction(GrOpcode.index2_int);
-            break;
-        case float_:
-            addInstruction(GrOpcode.index2_float);
-            break;
-        case string_:
-            addInstruction(GrOpcode.index2_string);
-            break;
-        case array_:
-        case class_:
-        case foreign:
-        case chan:
-        case reference:
-            addInstruction(GrOpcode.index2_object);
-            break;
-        case void_:
-        case null_:
-        case internalTuple:
-            logError("an array can't be of type `" ~ grGetPrettyType(grArray(subType)) ~ "`",
-                    "invalid array type");
-            break;
-        }
-        convertType(subType, variable.type, fileId);
-        addSetInstruction(variable, fileId);
-
-        parseBlock(true);
-
-        addInstruction(GrOpcode.jump,
-                cast(int)(blockPosition - currentFunction.instructions.length), true);
-        setInstruction(GrOpcode.jumpEqual, jumpPosition,
-                cast(int)(currentFunction.instructions.length - jumpPosition), true);
-
-        /* For is breakable and continuable. */
-        closeBreakableSection();
-        closeContinuableSection();
     }
 
     /// Skips everything from a `(` to its matching `)`.

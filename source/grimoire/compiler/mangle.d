@@ -287,31 +287,34 @@ string grGetPrettyFunctionCall(string name, GrType[] signature) {
     return result;
 }
 
-/// Prettify a function class.
+/// Prettify a function.
 string grGetPrettyFunction(GrFunction func) {
-    string result = to!string(func.name) ~ "(";
+    return grGetPrettyFunction(func.name, func.inSignature, func.outSignature);
+}
+
+/// Ditto
+string grGetPrettyFunction(string name, GrType[] inSignature, GrType[] outSignature) {
+    string result = to!string(name) ~ "(";
     int i;
-    foreach (type; func.inSignature) {
+    foreach (type; inSignature) {
         result ~= grGetPrettyType(type);
-        if ((i + 2) <= func.inSignature.length)
+        if ((i + 2) <= inSignature.length)
             result ~= ", ";
         i++;
     }
     result ~= ")";
-    if (func.outSignature.length)
+    if (outSignature.length)
         result ~= " ";
-    foreach (type; func.outSignature) {
+    foreach (type; outSignature) {
         result ~= grGetPrettyType(type);
-        if ((i + 2) <= func.outSignature.length)
+        if ((i + 2) <= outSignature.length)
             result ~= ", ";
         i++;
     }
     return result;
 }
 
-/**
-    Reverse the mangling operation for a function signature (not named).
-*/
+/// Reverse the mangling operation for a function signature (not named).
 GrType[] grUnmangleSignature(string mangledSignature) {
     GrType[] unmangledSignature;
 
