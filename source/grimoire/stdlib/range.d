@@ -43,7 +43,7 @@ private void _range_next_i(GrCall call) {
     }
     if ((iter.step < 0 && iter.value < iter.end) || (iter.step > 0 && iter.value > iter.end)) {
         call.setBool(false);
-        call.setInt(iter.value);
+        call.setInt(0);
         return;
     }
     call.setBool(true);
@@ -78,7 +78,7 @@ private void _range_next_f(GrCall call) {
     }
     if ((iter.step < 0f && iter.value < iter.end) || (iter.step > 0f && iter.value > iter.end)) {
         call.setBool(false);
-        call.setFloat(iter.value);
+        call.setFloat(0f);
         return;
     }
     call.setBool(true);

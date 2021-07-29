@@ -31,6 +31,10 @@ package(grimoire.stdlib) void grLoadStdLibString(GrLibrary library) {
     library.addPrimitive(&_findFirst, "findFirst", [grString, grString], [grInt]);
     library.addPrimitive(&_findLast, "findLast", [grString, grString], [grInt]);
     library.addPrimitive(&_has, "has?", [grString, grString], [grBool]);
+
+    GrType stringIterType = library.addForeign("StringIter");
+    library.addPrimitive(&_each, "each", [grString], [stringIterType]);
+    library.addPrimitive(&_next, "next", [stringIterType], [grBool, grString]);
 }
 
 private void _empty(GrCall call) {
@@ -261,4 +265,31 @@ private void _has(GrCall call) {
     string str = call.getString(0);
     string value = call.getString(1);
     call.setBool(str.indexOf(value) != -1);
+}
+
+private final class StringIter {
+    string value;
+    int index;
+}
+
+private void _each(GrCall call) {
+    StringIter iter = new StringIter;
+    iter.value = call.getString(0);
+    call.setForeign(iter);
+}
+
+private void _next(GrCall call) {
+    StringIter iter = call.getForeign!(StringIter)(0);
+    if (!iter) {
+        call.raise("NullError");
+        return;
+    }
+    if (iter.index >= iter.value.length) {
+        call.setBool(false);
+        call.setString("");
+        return;
+    }
+    call.setBool(true);
+    call.setString(to!string(iter.value[iter.index]));
+    iter.index++;
 }

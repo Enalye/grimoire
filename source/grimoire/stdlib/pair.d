@@ -8,5 +8,5 @@ module grimoire.stdlib.pair;
 import grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibPair(GrLibrary library) {
-    //library.addClass("Pair", ["A", "B"], "", []);
+    library.addClass("Pair", ["first", "second"], [grAny("A"), grAny("B")], ["A", "B"]);
 }
