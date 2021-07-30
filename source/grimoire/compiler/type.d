@@ -384,15 +384,19 @@ GrType grGetClassType(string name, GrType[] signature = []) {
     return stType;
 }
 
+/// Define a variable defined from a library
 final class GrVariableDefinition {
     /// Identifier.
     string name;
-
+    /// Its type
     GrType type;
-
+    /// Does the variable use a custom initialization value ?
     bool isInitialized;
+    /// Integral init value
     int ivalue;
+    /// Floating init value
     float fvalue;
+    /// String init value
     string svalue;
 }
 
