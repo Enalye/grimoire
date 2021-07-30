@@ -6,6 +6,7 @@
 module grimoire.compiler.mangle;
 
 import std.conv : to;
+import std.string : indexOf;
 import grimoire.compiler.type;
 
 /**
@@ -311,6 +312,21 @@ string grGetPrettyFunction(string name, GrType[] inSignature, GrType[] outSignat
             result ~= ", ";
         i++;
     }
+    return result;
+}
+
+struct UnmangledNameResult {
+    string name;
+    GrType[] signature;
+}
+
+UnmangledNameResult grUnmangleNamedFunction(string mangledSignature) {
+    UnmangledNameResult result;
+    size_t index = mangledSignature.indexOf('$');
+    if( index == -1)
+        throw new Exception("invalid mangling format");
+    result.name = mangledSignature[0..index];
+    result.signature = grUnmangleSignature(mangledSignature[index..$]);
     return result;
 }
 

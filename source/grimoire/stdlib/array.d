@@ -9,6 +9,8 @@ import std.range;
 import grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
+    library.addForeign("ArrayIter", ["T"]);
+
     static foreach (t; ["Int", "Float", "String", "Object"]) {
         mixin("GrType any" ~ t ~ "Array = grAny(\"A\", (type, data) {
                 if (type.baseType != GrBaseType.array_)
@@ -79,13 +81,34 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
                 ~ "Array, grInt, grInt
                 ], [grAny(\"A\")]);
             library.addPrimitive(&_reverse_!\"" ~ t ~ "\", \"reverse\", [
-                    any" ~ t
-                ~ "Array
+                    any" ~ t ~ "Array
                 ], [grAny(\"A\")]);
             library.addPrimitive(&_insert_!\"" ~ t
                 ~ "\", \"insert\", [
                     any" ~ t ~ "Array, grInt, grAny(\"T\")
                 ], [grAny(\"A\")]);
+            library.addPrimitive(&_each_!\"" ~ t ~ "\", \"each\", [
+                    grAny(\"A\", (type, data) {
+                if (type.baseType != GrBaseType.array_)
+                    return false;
+                const GrType subType = grUnmangle(type.mangledType);
+                data.set(\"R\", grGetForeignType(\"ArrayIter\", [subType]));
+                return grIsKindOf"
+                ~ t ~ "(subType.baseType);
+            })
+                ], [grAny(\"R\")]);
+            library.addPrimitive(&_next_!\"" ~ t ~ "\", \"next\", [
+                    grAny(\"R\", (type, data) {
+                if (type.baseType != GrBaseType.foreign)
+                    return false;
+                auto result = grUnmangleNamedFunction(type.mangledType);
+                if(result.signature.length != 1 || result.name != \"ArrayIter\")
+                    return false;
+                data.set(\"T\", result.signature[0]);
+                return grIsKindOf" ~ t
+                ~ "(result.signature[0].baseType);
+                    })
+                ], [grBool, grAny(\"T\")]);
             ");
 
         static if (t != "Object") {
@@ -499,4 +522,76 @@ private void _has_(string t)(GrCall call) {
         }
     }
     call.setBool(false);
+}
+
+private class ArrayIter(T) {
+    T array;
+    size_t index;
+}
+
+private void _each_(string t)(GrCall call) {
+    mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
+    static if (t == "Int") {
+        ArrayIter!(int[]) iter = new ArrayIter!(int[]);
+    }
+    else static if (t == "Float") {
+        ArrayIter!(float[]) iter = new ArrayIter!(float[]);
+    }
+    else static if (t == "String") {
+        ArrayIter!(string[]) iter = new ArrayIter!(string[]);
+    }
+    else static if (t == "Object") {
+        ArrayIter!(void*[]) iter = new ArrayIter!(void*[]);
+    }
+    iter.array = array.data.dup;
+    call.setForeign(iter);
+}
+
+private void _next_(string t)(GrCall call) {
+    static if (t == "Int") {
+        ArrayIter!(int[]) iter = call.getForeign!(ArrayIter!(int[]))(0);
+    }
+    else static if (t == "Float") {
+        ArrayIter!(float[]) iter = call.getForeign!(ArrayIter!(float[]))(0);
+    }
+    else static if (t == "String") {
+        ArrayIter!(string[]) iter = call.getForeign!(ArrayIter!(string[]))(0);
+    }
+    else static if (t == "Object") {
+        ArrayIter!(void*[]) iter = call.getForeign!(ArrayIter!(void*[]))(0);
+    }
+    if (!iter) {
+        call.raise("NullError");
+        return;
+    }
+    if (iter.index >= iter.array.length) {
+        call.setBool(false);
+        static if (t == "Int") {
+            call.setInt(0);
+        }
+        else static if (t == "Float") {
+            call.setFloat(0f);
+        }
+        else static if (t == "String") {
+            call.setString("");
+        }
+        else static if (t == "Object") {
+            call.setPtr(null);
+        }
+        return;
+    }
+    call.setBool(true);
+    static if (t == "Int") {
+        call.setInt(iter.array[iter.index]);
+    }
+    else static if (t == "Float") {
+        call.setFloat(iter.array[iter.index]);
+    }
+    else static if (t == "String") {
+        call.setString(iter.array[iter.index]);
+    }
+    else static if (t == "Object") {
+        call.setPtr(iter.array[iter.index]);
+    }
+    iter.index++;
 }
