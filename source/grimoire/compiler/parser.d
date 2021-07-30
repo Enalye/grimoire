@@ -1746,6 +1746,45 @@ final class GrParser {
         bool isPublic;
         lexemes = lexer.lexemes;
 
+        beginGlobalScope();
+        foreach (GrVariableDefinition variableDef; _data._variableDefinitions) {
+            GrVariable variable = registerGlobalVariable(variableDef.name,
+                    variableDef.type, false, true);
+            if (variableDef.isInitialized) {
+                final switch (variableDef.type.baseType) with (GrBaseType) {
+                case bool_:
+                case int_:
+                case enum_:
+                    addIntConstant(variableDef.ivalue);
+                    break;
+                case float_:
+                    addFloatConstant(variableDef.fvalue);
+                    break;
+                case string_:
+                    addStringConstant(variableDef.svalue);
+                    break;
+                case class_:
+                case chan:
+                case function_:
+                case task:
+                case array_:
+                case foreign:
+                case void_:
+                case null_:
+                case internalTuple:
+                case reference:
+                    throw new Exception(
+                            "can't initialize library variable of type `" ~ grGetPrettyType(
+                            variable.type) ~ "`");
+                }
+            }
+            else {
+                addDefaultValue(variable.type, 0);
+            }
+            addSetInstruction(variable, 0, variable.type);
+        }
+        endGlobalScope();
+
         //Type definitions
         while (!isEnd()) {
             GrLexeme lex = get();
@@ -2254,8 +2293,7 @@ final class GrParser {
                     && _data.isClass(lex.svalue, lex.fileId, false)) {
                 currentType.baseType = GrBaseType.class_;
                 checkAdvance();
-                currentType.mangledType = grMangleComposite(lex.svalue,
-                        parseTemplateSignature());
+                currentType.mangledType = grMangleComposite(lex.svalue, parseTemplateSignature());
                 if (mustBeType) {
                     GrClassDefinition class_ = getClass(currentType.mangledType, lex.fileId);
                     if (!class_)
@@ -2275,8 +2313,7 @@ final class GrParser {
                 currentType.baseType = GrBaseType.foreign;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
-                currentType.mangledType = grMangleComposite(lex.svalue,
-                        parseTemplateSignature());
+                currentType.mangledType = grMangleComposite(lex.svalue, parseTemplateSignature());
                 return currentType;
             }
             else if (mustBeType) {

@@ -10,6 +10,8 @@ import std.algorithm.comparison : clamp;
 import grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
+    library.addVariable("pi", grFloat, PI);
+
     library.addPrimitive(&_clamp, "clamp", [grFloat, grFloat, grFloat], [
             grFloat
             ]);

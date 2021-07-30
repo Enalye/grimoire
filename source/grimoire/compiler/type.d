@@ -384,6 +384,18 @@ GrType grGetClassType(string name, GrType[] signature = []) {
     return stType;
 }
 
+final class GrVariableDefinition {
+    /// Identifier.
+    string name;
+
+    GrType type;
+
+    bool isInitialized;
+    int ivalue;
+    float fvalue;
+    string svalue;
+}
+
 /// A single instruction used by the VM.
 struct GrInstruction {
     /// What needs to be done.

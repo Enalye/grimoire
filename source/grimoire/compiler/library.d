@@ -5,6 +5,7 @@
  */
 module grimoire.compiler.library;
 
+import std.traits;
 import std.conv : to;
 import grimoire.runtime;
 import grimoire.compiler.primitive;
@@ -27,12 +28,80 @@ class GrLibrary {
         GrEnumDefinition[] _enumDefinitions;
         /// Object types.
         GrClassDefinition[] _abstractClassDefinitions;
+        /// Variable types
+        GrVariableDefinition[] _variableDefinitions;
 
         /// All primitives, used for both the compiler and the runtime.
         GrPrimitive[] _abstractPrimitives;
 
         /// All the primitive callbacks.
         GrCallback[] _callbacks;
+    }
+
+    /// Define a variable
+    void addVariable(string name, GrType type) {
+        GrVariableDefinition variable = new GrVariableDefinition;
+        variable.name = name;
+        variable.type = type;
+        _variableDefinitions ~= variable;
+    }
+
+    /// Define a variable with a default value
+    void addVariable(T)(string name, GrType type, T defaultValue) {
+        GrVariableDefinition variable = new GrVariableDefinition;
+        variable.name = name;
+        variable.type = type;
+
+        final switch (type.baseType) with (GrBaseType) {
+        case bool_:
+        case int_:
+        case enum_:
+        case float_:
+        case string_:
+            break;
+        case class_:
+        case chan:
+        case function_:
+        case task:
+        case array_:
+        case foreign:
+        case void_:
+        case null_:
+        case internalTuple:
+        case reference:
+            throw new Exception(
+                    "can't initialize library variable of type `" ~ grGetPrettyType(type) ~ "`");
+        }
+        static if (isIntegral!T) {
+            if (type.baseType != GrBaseType.int_ && type.baseType != GrBaseType.enum_)
+                throw new Exception(
+                        "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
+                        type) ~ "`");
+            variable.ivalue = cast(int) defaultValue;
+        }
+        else static if (is(T == bool)) {
+            if (type.baseType != GrBaseType.bool_)
+                throw new Exception(
+                        "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
+                        type) ~ "`");
+            variable.ivalue = defaultValue ? 1 : 0;
+        }
+        else static if (isFloatingPoint!T) {
+            if (type.baseType != GrBaseType.float_)
+                throw new Exception(
+                        "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
+                        type) ~ "`");
+            variable.fvalue = cast(float) defaultValue;
+        }
+        static if (is(T == string)) {
+            if (type.baseType != GrBaseType.string_)
+                throw new Exception(
+                        "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
+                        type) ~ "`");
+            variable.svalue = defaultValue;
+        }
+        variable.isInitialized = true;
+        _variableDefinitions ~= variable;
     }
 
     /// Define an enumeration

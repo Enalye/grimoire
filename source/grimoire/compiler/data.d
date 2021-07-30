@@ -36,6 +36,8 @@ class GrData {
         GrClassDefinition[] _classDefinitions;
         /// Abstract object types.
         GrClassDefinition[] _abstractClassDefinitions;
+        /// Variable types
+        GrVariableDefinition[] _variableDefinitions;
 
         /// All primitives, used for both the compiler and the runtime.
         GrPrimitive[] _primitives, _abstractPrimitives;
@@ -51,6 +53,7 @@ class GrData {
         _abstractForeignDefinitions ~= library._abstractForeignDefinitions;
         _aliasDefinitions ~= library._aliasDefinitions;
         _abstractClassDefinitions ~= library._abstractClassDefinitions;
+        _variableDefinitions ~= library._variableDefinitions;
         foreach (GrEnumDefinition enum_; library._enumDefinitions) {
             enum_.index = _enumDefinitions.length;
             _enumDefinitions ~= enum_;
