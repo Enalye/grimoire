@@ -1274,6 +1274,9 @@ final class GrParser {
     private void addSetInstruction(GrVariable variable, uint fileId,
             GrType valueType = grVoid, bool isExpectingValue = false) {
         _lastAssignationScopeLevel = _blockLevel;
+        if (variable.isConstant)
+            logError("`" ~ variable.name ~ "` is const and can't be modified",
+                    "can't modify a const `" ~ grGetPrettyType(variable.type) ~ "`");
         if (variable.type.baseType == GrBaseType.reference) {
             valueType = convertType(valueType, grUnmangle(variable.type.mangledType), fileId);
             final switch (valueType.baseType) with (GrBaseType) {
@@ -1782,6 +1785,7 @@ final class GrParser {
                 addDefaultValue(variable.type, 0);
             }
             addSetInstruction(variable, 0, variable.type);
+            variable.isConstant = variableDef.isConstant;
         }
         endGlobalScope();
 

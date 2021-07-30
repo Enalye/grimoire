@@ -398,6 +398,8 @@ final class GrVariableDefinition {
     float fvalue;
     /// String init value
     string svalue;
+    /// Can the variable be mutated in script ?
+    bool isConstant;
 }
 
 /// A single instruction used by the VM.

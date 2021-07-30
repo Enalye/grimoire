@@ -39,18 +39,20 @@ class GrLibrary {
     }
 
     /// Define a variable
-    void addVariable(string name, GrType type) {
+    void addVariable(string name, GrType type, bool isConstant) {
         GrVariableDefinition variable = new GrVariableDefinition;
         variable.name = name;
         variable.type = type;
+        variable.isConstant = isConstant;
         _variableDefinitions ~= variable;
     }
 
     /// Define a variable with a default value
-    void addVariable(T)(string name, GrType type, T defaultValue) {
+    void addVariable(T)(string name, GrType type, T defaultValue, bool isConstant) {
         GrVariableDefinition variable = new GrVariableDefinition;
         variable.name = name;
         variable.type = type;
+        variable.isConstant = isConstant;
 
         final switch (type.baseType) with (GrBaseType) {
         case bool_:
