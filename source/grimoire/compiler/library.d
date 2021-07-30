@@ -10,6 +10,7 @@ import grimoire.runtime;
 import grimoire.compiler.primitive;
 import grimoire.compiler.type;
 import grimoire.compiler.mangle;
+import grimoire.compiler.pretty;
 
 /**
 Contains type information and D linked functions.

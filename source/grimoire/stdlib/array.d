@@ -101,7 +101,7 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
                     grAny(\"R\", (type, data) {
                 if (type.baseType != GrBaseType.foreign)
                     return false;
-                auto result = grUnmangleNamedFunction(type.mangledType);
+                auto result = grUnmangleComposite(type.mangledType);
                 if(result.signature.length != 1 || result.name != \"ArrayIter\")
                     return false;
                 data.set(\"T\", result.signature[0]);

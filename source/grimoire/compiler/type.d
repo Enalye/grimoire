@@ -104,34 +104,34 @@ const GrType grBool = GrType(GrBaseType.bool_);
 /// String
 const GrType grString = GrType(GrBaseType.string_);
 /// Int array
-const GrType grIntArray = GrType(GrBaseType.array_, grMangleFunction([grInt]));
+const GrType grIntArray = GrType(GrBaseType.array_, grMangleSignature([grInt]));
 /// Float array
-const GrType grFloatArray = GrType(GrBaseType.array_, grMangleFunction([grFloat]));
+const GrType grFloatArray = GrType(GrBaseType.array_, grMangleSignature([grFloat]));
 /// Bool array
-const GrType grBoolArray = GrType(GrBaseType.array_, grMangleFunction([grBool]));
+const GrType grBoolArray = GrType(GrBaseType.array_, grMangleSignature([grBool]));
 /// String array
-const GrType grStringArray = GrType(GrBaseType.array_, grMangleFunction([
+const GrType grStringArray = GrType(GrBaseType.array_, grMangleSignature([
             grString
         ]));
 /// Int channel
-const GrType grIntChannel = GrType(GrBaseType.chan, grMangleFunction([grInt]));
+const GrType grIntChannel = GrType(GrBaseType.chan, grMangleSignature([grInt]));
 /// Float channel
-const GrType grFloatChannel = GrType(GrBaseType.chan, grMangleFunction([grFloat]));
+const GrType grFloatChannel = GrType(GrBaseType.chan, grMangleSignature([grFloat]));
 /// Bool channel
-const GrType grBoolChannel = GrType(GrBaseType.chan, grMangleFunction([grBool]));
+const GrType grBoolChannel = GrType(GrBaseType.chan, grMangleSignature([grBool]));
 /// String channel
-const GrType grStringChannel = GrType(GrBaseType.chan, grMangleFunction([
+const GrType grStringChannel = GrType(GrBaseType.chan, grMangleSignature([
             grString
         ]));
 
 /// Returns an array GrType of `subType` subtype.
 GrType grArray(GrType subType) {
-    return GrType(GrBaseType.array_, grMangleFunction([subType]));
+    return GrType(GrBaseType.array_, grMangleSignature([subType]));
 }
 
 /// Returns a channel GrType of `subType` subtype.
 GrType grChannel(GrType subType) {
-    return GrType(GrBaseType.chan, grMangleFunction([subType]));
+    return GrType(GrBaseType.chan, grMangleSignature([subType]));
 }
 
 /// Special type the matches another type with a predicate.
@@ -167,19 +167,22 @@ bool grIsKindOfObject(GrBaseType type) {
 }
 
 /// Context for any validation
-class GrAnyData {
+final class GrAnyData {
     private {
         GrType[string] _types;
     }
 
-    void init() {
+    /// Clear any stored type definition
+    void clear() {
         _types.clear;
     }
 
+    /// Define a new type
     void set(string key, GrType type) {
         _types[key] = type;
     }
 
+    /// Fetch an already defined type
     GrType get(string key) {
         return _types.get(key, grVoid);
     }
@@ -187,7 +190,7 @@ class GrAnyData {
 
 /// Pack multiple types as a single one.
 package GrType grPackTuple(GrType[] types) {
-    const string mangledName = grMangleFunction(types);
+    const string mangledName = grMangleSignature(types);
     GrType type = GrBaseType.internalTuple;
     type.mangledType = mangledName;
     return type;
@@ -251,7 +254,7 @@ final class GrAbstractForeignDefinition {
 /// Create a foreign GrType for the type system.
 GrType grGetForeignType(string name, GrType[] signature = []) {
     GrType type = GrBaseType.foreign;
-    type.mangledType = grMangleNamedFunction(name, signature);
+    type.mangledType = grMangleNameAndSignature(name, signature);
     return type;
 }
 
@@ -373,7 +376,7 @@ final class GrClassDefinition {
 /// Create a GrType of class for the type system.
 GrType grGetClassType(string name, GrType[] signature = []) {
     GrType stType = GrBaseType.class_;
-    stType.mangledType = grMangleNamedFunction(name, signature);
+    stType.mangledType = grMangleNameAndSignature(name, signature);
     return stType;
 }
 
@@ -423,6 +426,14 @@ package class GrFunction {
     uint fileId;
 
     uint lexPosition;
+}
+
+/// Get the type of the function.
+GrType grGetFunctionAsType(GrFunction func) {
+    GrType type = func.isTask ? GrBaseType.task : GrBaseType.function_;
+    type.mangledType = grMangleSignature(func.inSignature);
+    type.mangledReturnType = grMangleSignature(func.outSignature);
+    return type;
 }
 
 package class GrTemplateFunction {

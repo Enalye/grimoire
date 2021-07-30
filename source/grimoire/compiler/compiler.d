@@ -9,7 +9,7 @@ import std.stdio, std.string, std.array, std.conv, std.math, std.file;
 import grimoire.runtime, grimoire.assembly;
 import grimoire.compiler.lexer, grimoire.compiler.parser, grimoire.compiler.primitive;
 import grimoire.compiler.type, grimoire.compiler.data, grimoire.compiler.error,
-	grimoire.compiler.mangle, grimoire.compiler.library;
+	grimoire.compiler.mangle, grimoire.compiler.library, grimoire.compiler.pretty;
 
 /// Compiler class, generate bytecode and hold errors.
 final class GrCompiler {

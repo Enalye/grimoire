@@ -21,6 +21,7 @@ import grimoire.compiler.mangle;
 import grimoire.compiler.type;
 import grimoire.compiler.primitive;
 import grimoire.compiler.data;
+import grimoire.compiler.pretty;
 import grimoire.compiler.error;
 
 /**
@@ -332,7 +333,7 @@ final class GrParser {
     }
 
     private void beginFunction(string name, uint fileId, GrType[] signature, bool isEvent = false) {
-        const string mangledName = grMangleNamedFunction(name, signature);
+        const string mangledName = grMangleComposite(name, signature);
 
         GrFunction func;
         if (isEvent)
@@ -362,7 +363,7 @@ final class GrParser {
             func.anonParent = currentFunction;
             func.anonReference = cast(uint) currentFunction.instructions.length;
             func.name = currentFunction.name ~ "@anon" ~ to!string(func.index);
-            func.mangledName = grMangleNamedFunction(func.name, func.inSignature);
+            func.mangledName = grMangleComposite(func.name, func.inSignature);
             anonymousFunctions ~= func;
             func.lexPosition = current;
 
@@ -374,7 +375,7 @@ final class GrParser {
             func.name = name;
             func.isPublic = isPublic;
 
-            func.mangledName = grMangleNamedFunction(name, signature);
+            func.mangledName = grMangleComposite(name, signature);
             assertNoGlobalDeclaration(func.mangledName, fileId, isPublic);
 
             if (name == "main")
@@ -437,6 +438,7 @@ final class GrParser {
         functionStack.length--;
     }
 
+    /// Generate opcodes to fetch the function or the task's parameters
     void generateFunctionInputs() {
         void fetchParameter(string name, GrType type) {
             final switch (type.baseType) with (GrBaseType) {
@@ -505,7 +507,7 @@ final class GrParser {
     }
 
     GrFunction getFunction(string name, GrType[] signature, uint fileId = 0, bool isPublic = false) {
-        const string mangledName = grMangleNamedFunction(name, signature);
+        const string mangledName = grMangleComposite(name, signature);
         foreach (GrFunction func; functions) {
             if (func.mangledName == mangledName && (func.fileId == fileId
                     || func.isPublic || isPublic)) {
@@ -562,6 +564,7 @@ final class GrParser {
         return null;
     }
 
+    /// Remove a declared function
     void removeFunction(string name) {
         import std.algorithm : remove;
 
@@ -865,12 +868,12 @@ final class GrParser {
             }
             resultType = rightType;
         }
-        else if(lexType == GrLexemeType.concatenate
+        else if (lexType == GrLexemeType.concatenate
                 && leftType.baseType == GrBaseType.string_ && leftType != rightType) {
             convertType(rightType, leftType, fileId);
             resultType = addInternalOperator(lexType, leftType);
         }
-        else if(lexType == GrLexemeType.concatenate
+        else if (lexType == GrLexemeType.concatenate
                 && rightType.baseType == GrBaseType.string_ && leftType != rightType) {
             convertType(leftType, rightType, fileId);
             resultType = addInternalOperator(lexType, rightType, true);
@@ -2083,7 +2086,7 @@ final class GrParser {
                         "expected class name, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
             parentClassName = get().svalue;
             checkAdvance();
-            parentClassName = grMangleNamedFunction(parentClassName, parseTemplateSignature());
+            parentClassName = grMangleComposite(parentClassName, parseTemplateSignature());
         }
         if (get().type != GrLexemeType.leftCurlyBrace)
             logError("the class does not have a body",
@@ -2251,7 +2254,7 @@ final class GrParser {
                     && _data.isClass(lex.svalue, lex.fileId, false)) {
                 currentType.baseType = GrBaseType.class_;
                 checkAdvance();
-                currentType.mangledType = grMangleNamedFunction(lex.svalue,
+                currentType.mangledType = grMangleComposite(lex.svalue,
                         parseTemplateSignature());
                 if (mustBeType) {
                     GrClassDefinition class_ = getClass(currentType.mangledType, lex.fileId);
@@ -2272,7 +2275,7 @@ final class GrParser {
                 currentType.baseType = GrBaseType.foreign;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
-                currentType.mangledType = grMangleNamedFunction(lex.svalue,
+                currentType.mangledType = grMangleComposite(lex.svalue,
                         parseTemplateSignature());
                 return currentType;
             }
@@ -2310,20 +2313,20 @@ final class GrParser {
             if (signature.length > 1)
                 logError("an array can only contain one type of value", "conflicting array signature",
                         "try using `" ~ grGetPrettyType(grArray(signature[0])) ~ "` instead", -1);
-            currentType.mangledType = grMangleFunction(signature);
+            currentType.mangledType = grMangleSignature(signature);
             break;
         case functionType:
             currentType.baseType = GrBaseType.function_;
             checkAdvance();
             string[] temp;
-            currentType.mangledType = grMangleFunction(parseInSignature(temp, true));
-            currentType.mangledReturnType = grMangleFunction(parseOutSignature());
+            currentType.mangledType = grMangleSignature(parseInSignature(temp, true));
+            currentType.mangledReturnType = grMangleSignature(parseOutSignature());
             break;
         case taskType:
             currentType.baseType = GrBaseType.task;
             checkAdvance();
             string[] temp;
-            currentType.mangledType = grMangleFunction(parseInSignature(temp, true));
+            currentType.mangledType = grMangleSignature(parseInSignature(temp, true));
             break;
         case chanType:
             currentType.baseType = GrBaseType.chan;
@@ -2333,7 +2336,7 @@ final class GrParser {
             if (signature.length != 1)
                 logError("a channel can only contain one type of value", "conflicting channel signature",
                         "try using `" ~ grGetPrettyType(grChannel(signature[0])) ~ "` instead", -1);
-            currentType.mangledType = grMangleFunction(signature);
+            currentType.mangledType = grMangleSignature(signature);
             break;
         default:
             logError("`" ~ grGetPrettyLexemeType(lex.type) ~ "` is not a valid type",
@@ -2828,8 +2831,8 @@ final class GrParser {
         endFunction();
 
         GrType functionType = isTask ? GrBaseType.task : GrBaseType.function_;
-        functionType.mangledType = grMangleNamedFunction("", inSignature);
-        functionType.mangledReturnType = grMangleNamedFunction("", outSignature);
+        functionType.mangledType = grMangleSignature(inSignature);
+        functionType.mangledReturnType = grMangleSignature(outSignature);
 
         return functionType;
     }
@@ -3395,14 +3398,14 @@ final class GrParser {
                 GrType type = GrBaseType.function_;
                 checkAdvance();
                 string[] temp;
-                type.mangledType = grMangleNamedFunction("", parseInSignature(temp, true));
+                type.mangledType = grMangleSignature(parseInSignature(temp, true));
                 returnType = type;
                 break;
             case taskType:
                 GrType type = GrBaseType.task;
                 checkAdvance();
                 string[] temp;
-                type.mangledType = grMangleNamedFunction("", parseInSignature(temp, true));
+                type.mangledType = grMangleSignature(parseInSignature(temp, true));
                 returnType = type;
                 break;
             default:
@@ -3527,7 +3530,7 @@ final class GrParser {
             logError("missing parentheses after the channel signature",
                     "expected `)`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
         checkAdvance();
-        chanType.mangledType = grMangleFunction([subType]);
+        chanType.mangledType = grMangleSignature([subType]);
 
         final switch (subType.baseType) with (GrBaseType) {
         case int_:
@@ -4701,7 +4704,7 @@ final class GrParser {
                 logError("an array can only contain one type of value", "conflicting array signature",
                         "try using `" ~ grGetPrettyType(grArray(signature[0])) ~ "` instead", -1);
             subType = signature[0];
-            arrayType.mangledType = grMangleFunction(signature);
+            arrayType.mangledType = grMangleSignature(signature);
             if (subType.baseType == GrBaseType.void_)
                 logError("an array can't be of type `" ~ grGetPrettyType(arrayType) ~ "`",
                         "invalid array type");
@@ -4718,7 +4721,7 @@ final class GrParser {
                 //Implicit type specified by the type of the first element.
                 subType = parseSubExpression(
                         GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA).type;
-                arrayType.mangledType = grMangleFunction([subType]);
+                arrayType.mangledType = grMangleSignature([subType]);
                 if (subType.baseType == GrBaseType.void_)
                     logError("an array can't be of type `" ~ grGetPrettyType(arrayType) ~ "`",
                             "invalid array type");
@@ -5506,7 +5509,9 @@ final class GrParser {
                         hasLValue = true;
                         GrVariable refVar = new GrVariable;
                         refVar.type.baseType = GrBaseType.reference;
-                        refVar.type.mangledType = grMangleFunction([currentType]);
+                        refVar.type.mangledType = grMangleSignature([
+                                currentType
+                                ]);
                         lvalues ~= refVar;
                     }
                     else {
@@ -5730,9 +5735,11 @@ final class GrParser {
                     for (int i; i < nbFields; i++) {
                         if (identifier == class_.fields[i]) {
                             if ((class_.fieldsInfo[i].fileId != fileId)
-                                    && !class_.fieldsInfo[i].isPublic)
-                                logError("`" ~ identifier ~ "` on type `" ~ grGetPrettyType(currentType) ~ "` is private",
-                                        "private field", "", -1);
+                                    && !class_.fieldsInfo[i].isPublic) {
+                                const string errMsg = "`" ~ identifier ~ "` of type `" ~ grGetPrettyType(
+                                        currentType) ~ "` is private";
+                                logError(errMsg, "private field", "", -1);
+                            }
                             hasField = true;
                             currentType = class_.signature[i];
                             currentType.isField = true;

@@ -11,6 +11,7 @@ import grimoire.compiler.primitive;
 import grimoire.compiler.type;
 import grimoire.compiler.mangle;
 import grimoire.compiler.library;
+import grimoire.compiler.pretty;
 
 /**
 Contains type information and D linked functions. \
@@ -248,7 +249,7 @@ class GrData {
                                 parentTemplateSignature[i].mangledType);
                     }
                 }
-                generatedForeign.parent = grMangleNamedFunction(generatedForeign.parent,
+                generatedForeign.parent = grMangleNameAndSignature(generatedForeign.parent,
                         parentTemplateSignature);
 
                 _foreignDefinitions ~= generatedForeign;
@@ -320,7 +321,7 @@ class GrData {
                                 parentTemplateSignature[i].mangledType);
                     }
                 }
-                generatedClass.parent = grMangleNamedFunction(generatedClass.parent,
+                generatedClass.parent = grMangleNameAndSignature(generatedClass.parent,
                         parentTemplateSignature);
 
                 _classDefinitions ~= generatedClass;
@@ -369,7 +370,7 @@ class GrData {
 
     /// Ditto
     package GrPrimitive getPrimitive(string name, GrType[] signature) {
-        const string mangledName = grMangleNamedFunction(name, signature);
+        const string mangledName = grMangleNameAndSignature(name, signature);
         foreach (GrPrimitive primitive; _primitives) {
             if (primitive.name == name) {
                 if (primitive.mangledName == mangledName)
@@ -421,7 +422,7 @@ class GrData {
                 getClass(primitive.outSignature[i].mangledType, 0, true);
             }
         }
-        primitive.mangledName = grMangleNamedFunction(primitive.name, primitive.inSignature);
+        primitive.mangledName = grMangleNameAndSignature(primitive.name, primitive.inSignature);
         primitive.index = cast(uint) _primitives.length;
         if (isPrimitiveDeclared(primitive.mangledName))
             throw new Exception("`" ~ getPrettyPrimitive(primitive) ~ "` is already declared");
