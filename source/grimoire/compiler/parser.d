@@ -865,6 +865,16 @@ final class GrParser {
             }
             resultType = rightType;
         }
+        else if(lexType == GrLexemeType.concatenate
+                && leftType.baseType == GrBaseType.string_ && leftType != rightType) {
+            convertType(rightType, leftType, fileId);
+            resultType = addInternalOperator(lexType, leftType);
+        }
+        else if(lexType == GrLexemeType.concatenate
+                && rightType.baseType == GrBaseType.string_ && leftType != rightType) {
+            convertType(leftType, rightType, fileId);
+            resultType = addInternalOperator(lexType, rightType, true);
+        }
         else if (leftType.baseType == GrBaseType.int_ && rightType.baseType == GrBaseType.float_) {
             // Special case, we need to convert int to float, then swap the 2 values when needed.
             convertType(leftType, rightType, fileId);
@@ -1105,6 +1115,8 @@ final class GrParser {
         case string_:
             switch (lexType) with (GrLexemeType) {
             case concatenate:
+                if (isSwapped)
+                    addInstruction(GrOpcode.swap_string);
                 addInstruction(GrOpcode.concatenate_string);
                 return GrType(GrBaseType.string_);
             case equal:

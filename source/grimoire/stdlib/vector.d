@@ -20,7 +20,7 @@ package void grLoadStdLibVector(GrLibrary library) {
     }
 
     static foreach (op; ["==", "!=", ">=", "<=", ">", "<"]) {
-        library.addOperator(&_opBinaryVec2!op, op, [defVec2, defVec2], grBool);
+        library.addOperator(&_opBinaryCompare!op, op, [defVec2, defVec2], grBool);
     }
 }
 

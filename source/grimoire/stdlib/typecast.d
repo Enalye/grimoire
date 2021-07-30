@@ -17,6 +17,7 @@ package(grimoire.stdlib) void grLoadStdLibTypecast(GrLibrary library) {
     library.addCast(&typecast_i2r, grInt, grFloat);
 
     //As string
+    library.addCast(&typecast_b2s, grBool, grString);
     library.addCast(&typecast_i2s, grInt, grString);
     library.addCast(&typecast_r2s, grFloat, grString);
     library.addCast(&typecast_as2s, grStringArray, grString);
@@ -40,6 +41,10 @@ private void typecast_i2r(GrCall call) {
 }
 
 //As string
+private void typecast_b2s(GrCall call) {
+    call.setString(call.getBool(0) ? "true" : "false");
+}
+
 private void typecast_i2s(GrCall call) {
     call.setString(to!string(call.getInt(0)));
 }
