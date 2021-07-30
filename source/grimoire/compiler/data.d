@@ -249,7 +249,7 @@ class GrData {
                                 parentTemplateSignature[i].mangledType);
                     }
                 }
-                generatedForeign.parent = grMangleNameAndSignature(generatedForeign.parent,
+                generatedForeign.parent = grMangleComposite(generatedForeign.parent,
                         parentTemplateSignature);
 
                 _foreignDefinitions ~= generatedForeign;
@@ -321,7 +321,7 @@ class GrData {
                                 parentTemplateSignature[i].mangledType);
                     }
                 }
-                generatedClass.parent = grMangleNameAndSignature(generatedClass.parent,
+                generatedClass.parent = grMangleComposite(generatedClass.parent,
                         parentTemplateSignature);
 
                 _classDefinitions ~= generatedClass;
@@ -370,7 +370,7 @@ class GrData {
 
     /// Ditto
     package GrPrimitive getPrimitive(string name, GrType[] signature) {
-        const string mangledName = grMangleNameAndSignature(name, signature);
+        const string mangledName = grMangleComposite(name, signature);
         foreach (GrPrimitive primitive; _primitives) {
             if (primitive.name == name) {
                 if (primitive.mangledName == mangledName)
@@ -422,7 +422,7 @@ class GrData {
                 getClass(primitive.outSignature[i].mangledType, 0, true);
             }
         }
-        primitive.mangledName = grMangleNameAndSignature(primitive.name, primitive.inSignature);
+        primitive.mangledName = grMangleComposite(primitive.name, primitive.inSignature);
         primitive.index = cast(uint) _primitives.length;
         if (isPrimitiveDeclared(primitive.mangledName))
             throw new Exception("`" ~ getPrettyPrimitive(primitive) ~ "` is already declared");

@@ -106,7 +106,9 @@ const GrType grString = GrType(GrBaseType.string_);
 /// Int array
 const GrType grIntArray = GrType(GrBaseType.array_, grMangleSignature([grInt]));
 /// Float array
-const GrType grFloatArray = GrType(GrBaseType.array_, grMangleSignature([grFloat]));
+const GrType grFloatArray = GrType(GrBaseType.array_, grMangleSignature([
+            grFloat
+        ]));
 /// Bool array
 const GrType grBoolArray = GrType(GrBaseType.array_, grMangleSignature([grBool]));
 /// String array
@@ -116,7 +118,9 @@ const GrType grStringArray = GrType(GrBaseType.array_, grMangleSignature([
 /// Int channel
 const GrType grIntChannel = GrType(GrBaseType.chan, grMangleSignature([grInt]));
 /// Float channel
-const GrType grFloatChannel = GrType(GrBaseType.chan, grMangleSignature([grFloat]));
+const GrType grFloatChannel = GrType(GrBaseType.chan, grMangleSignature([
+            grFloat
+        ]));
 /// Bool channel
 const GrType grBoolChannel = GrType(GrBaseType.chan, grMangleSignature([grBool]));
 /// String channel
@@ -254,7 +258,7 @@ final class GrAbstractForeignDefinition {
 /// Create a foreign GrType for the type system.
 GrType grGetForeignType(string name, GrType[] signature = []) {
     GrType type = GrBaseType.foreign;
-    type.mangledType = grMangleNameAndSignature(name, signature);
+    type.mangledType = grMangleComposite(name, signature);
     return type;
 }
 
@@ -376,7 +380,7 @@ final class GrClassDefinition {
 /// Create a GrType of class for the type system.
 GrType grGetClassType(string name, GrType[] signature = []) {
     GrType stType = GrBaseType.class_;
-    stType.mangledType = grMangleNameAndSignature(name, signature);
+    stType.mangledType = grMangleComposite(name, signature);
     return stType;
 }
 
