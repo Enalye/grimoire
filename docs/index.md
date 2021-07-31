@@ -1,7 +1,5 @@
 # Grimoire
 
-# Introduction
-
 Grimoire is an embedded language for D applications.
 You can easily define custom functions and types from D.
 

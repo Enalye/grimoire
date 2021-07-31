@@ -1890,7 +1890,7 @@ final class GrParser {
                     goto case intType;
                 parseFunctionDeclaration(isPublic);
                 break;
-            case intType: .. case arrayType:
+            case intType: .. case chanType:
             case autoType:
             case identifier:
             case type_:
@@ -1939,7 +1939,7 @@ final class GrParser {
                     goto case intType;
                 skipDeclaration();
                 break;
-            case intType: .. case arrayType:
+            case intType: .. case chanType:
             case autoType:
                 parseGlobalDeclaration(isPublic);
                 break;

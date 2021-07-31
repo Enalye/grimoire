@@ -91,9 +91,9 @@ enum GrLexemeType {
     boolType,
     stringType,
     arrayType,
+    chanType,
     functionType,
     taskType,
-    chanType,
     autoType,
     if_,
     unless,
@@ -1058,7 +1058,7 @@ string grGetPrettyLexemeType(GrLexemeType operator) {
         "--", "identifier", "const_int", "const_float", "const_bool",
         "const_str", "null", "pub", "main", "type", "event", "class", "enum",
         "template", "new", "copy", "send", "receive", "int", "float", "bool",
-        "string", "array", "func", "task", "chan", "let", "if", "unless",
+        "string", "array", "chan", "func", "task", "let", "if", "unless",
         "else", "switch", "select", "case", "while", "do", "until", "for", "loop",
         "return", "self", "kill", "killall", "yield", "break", "continue"
     ];
