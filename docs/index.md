@@ -1087,6 +1087,8 @@ void myCast(GrCall call) {
 
 Like addCast, but using addOperator instead.
 ```d
+library.addOperator(&myOperator, GrLibrary.Operator.add, [grFloat, grInt], grFloat);
+// Or
 library.addOperator(&myOperator, "+", [grFloat, grInt], grFloat);
 ```
 

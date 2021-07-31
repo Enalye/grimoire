@@ -197,13 +197,107 @@ class GrLibrary {
         return primitive;
     }
 
+    /// Type of operator overloading
+    enum Operator {
+        add,
+        substract,
+        multiply,
+        divide,
+        concatenate,
+        remainder,
+        power,
+        equal,
+        doubleEqual,
+        threeWayComparison,
+        notEqual,
+        greaterOrEqual,
+        greater,
+        lesserOrEqual,
+        lesser,
+        leftShift,
+        rightShift,
+        and,
+        or,
+        xor,
+        not,
+    }
+
     /**
     An operator is a function that replace a binary or unary grimoire operator such as `+`, `==`, etc
     The name of the function must be that of the operator like "+", "-", "or", etc.
     */
+    GrPrimitive addOperator(GrCallback callback, Operator operator,
+            GrType[] inSignature, GrType outType) {
+        string name;
+        final switch (operator) with (Operator) {
+        case add:
+            name = "+";
+            break;
+        case substract:
+            name = "-";
+            break;
+        case multiply:
+            name = "*";
+            break;
+        case divide:
+            name = "/";
+            break;
+        case concatenate:
+            name = "~";
+            break;
+        case remainder:
+            name = "%";
+            break;
+        case power:
+            name = "^";
+            break;
+        case equal:
+            name = "==";
+            break;
+        case doubleEqual:
+            name = "===";
+            break;
+        case threeWayComparison:
+            name = "<=>";
+            break;
+        case notEqual:
+            name = "!=";
+            break;
+        case greaterOrEqual:
+            name = ">=";
+            break;
+        case greater:
+            name = ">";
+            break;
+        case lesserOrEqual:
+            name = "<=";
+            break;
+        case lesser:
+            name = "<";
+            break;
+        case leftShift:
+            name = "<<";
+            break;
+        case rightShift:
+            name = ">>";
+            break;
+        case and:
+            name = "and";
+            break;
+        case or:
+            name = "or";
+            break;
+        case xor:
+            name = "xor";
+            break;
+        case not:
+            name = "not";
+            break;
+        }
+        return addOperator(callback, name, inSignature, outType);
+    }
+    /// Ditto
     GrPrimitive addOperator(GrCallback callback, string name, GrType[] inSignature, GrType outType) {
-        import std.conv : to;
-
         if (inSignature.length > 2uL)
             throw new Exception(
                     "The operator `" ~ name ~ "` cannot take more than 2 parameters: " ~ grGetPrettyFunctionCall("",
