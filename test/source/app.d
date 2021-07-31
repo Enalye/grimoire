@@ -22,13 +22,13 @@ void main() {
             writeln(compiler.getError().prettify());
             return;
         }
-        bytecode.save("test.grb");
-        bytecode = null;
+        //bytecode.save("test.grb");
+        //bytecode = null;
 
         auto compilationTime = MonoTime.currTime() - startTime;
 
-        bytecode = new GrBytecode;
-        bytecode.load("test.grb");
+        //bytecode = new GrBytecode;
+        //bytecode.load("test.grb");
         writeln(grDump(bytecode));
 
         GrEngine engine = new GrEngine;

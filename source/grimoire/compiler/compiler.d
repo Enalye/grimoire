@@ -173,6 +173,40 @@ final class GrCompiler {
 		bytecode.sglobalsCount = parser.sglobalsCount;
 		bytecode.oglobalsCount = parser.oglobalsCount;
 
+		foreach (variableDef; _data._variableDefinitions) {
+			GrBytecode.GrGlobalReference globalReference;
+			globalReference.index = variableDef.register;
+			final switch (variableDef.type.baseType) with (GrBaseType) {
+			case bool_:
+			case int_:
+			case function_:
+			case task:
+			case enum_:
+			case chan:
+				globalReference.typeMask = 0x1;
+				break;
+			case float_:
+				globalReference.typeMask = 0x2;
+				break;
+			case string_:
+				globalReference.typeMask = 0x4;
+				break;
+			case array_:
+			case class_:
+			case foreign:
+				globalReference.typeMask = 0x8;
+				break;
+			case void_:
+			case internalTuple:
+			case reference:
+			case null_:
+				throw new Exception(
+						"invalid global variable type, the type cannot be " ~ grGetPrettyType(
+						variableDef.type));
+			}
+			bytecode.globalReferences[variableDef.name] = globalReference;
+		}
+
 		//Instuctions.
 		bytecode.opcodes = opcodes;
 
@@ -195,21 +229,25 @@ final class GrCompiler {
 				case task:
 				case enum_:
 				case chan:
-					bytecode.primitives[id].parameters ~= 0x10000 | (bytecode.primitives[id].iparams & 0xFFFF);
+					bytecode.primitives[id].parameters ~= 0x10000 | (
+							bytecode.primitives[id].iparams & 0xFFFF);
 					bytecode.primitives[id].iparams++;
 					break;
 				case float_:
-					bytecode.primitives[id].parameters ~= 0x20000 | (bytecode.primitives[id].fparams & 0xFFFF);
+					bytecode.primitives[id].parameters ~= 0x20000 | (
+							bytecode.primitives[id].fparams & 0xFFFF);
 					bytecode.primitives[id].fparams++;
 					break;
 				case string_:
-					bytecode.primitives[id].parameters ~= 0x40000 | (bytecode.primitives[id].sparams & 0xFFFF);
+					bytecode.primitives[id].parameters ~= 0x40000 | (
+							bytecode.primitives[id].sparams & 0xFFFF);
 					bytecode.primitives[id].sparams++;
 					break;
 				case array_:
 				case class_:
 				case foreign:
-					bytecode.primitives[id].parameters ~= 0x80000 | (bytecode.primitives[id].oparams & 0xFFFF);
+					bytecode.primitives[id].parameters ~= 0x80000 | (
+							bytecode.primitives[id].oparams & 0xFFFF);
 					bytecode.primitives[id].oparams++;
 					break;
 				case void_:

@@ -246,6 +246,134 @@ final class GrCall {
         }
     }
 
+    bool getBoolVariable(string name) {
+        return _context.engine.getBoolVariable(name);
+    }
+
+    int getIntVariable(string name) {
+        return _context.engine.getIntVariable(name);
+    }
+
+    float getFloatVariable(string name) {
+        return _context.engine.getFloatVariable(name);
+    }
+
+    string getStringVariable(string name) {
+        return _context.engine.getStringVariable(name);
+    }
+
+    void* getPtrVariable(string name) {
+        return _context.engine.getPtrVariable(name);
+    }
+
+    GrObject getObjectVariable(string name) {
+        return _context.engine.getObjectVariable(name);
+    }
+
+    GrIntArray getIntArrayVariable(string name) {
+        return _context.engine.getIntArrayVariable(name);
+    }
+
+    GrFloatArray getFloatArrayVariable(string name) {
+        return _context.engine.getFloatArrayVariable(name);
+    }
+
+    GrStringArray getStringArrayVariable(string name) {
+        return _context.engine.getStringArrayVariable(name);
+    }
+
+    GrObjectArray getObjectArrayVariable(string name) {
+        return _context.engine.getObjectArrayVariable(name);
+    }
+
+    GrIntChannel getIntChannelVariable(string name) {
+        return _context.engine.getIntChannelVariable(name);
+    }
+
+    GrFloatChannel getFloatChannelVariable(string name) {
+        return _context.engine.getFloatChannelVariable(name);
+    }
+
+    GrStringChannel getStringChannelVariable(string name) {
+        return _context.engine.getStringChannelVariable(name);
+    }
+
+    GrObjectChannel getObjectChannelVariable(string name) {
+        return _context.engine.getObjectChannelVariable(name);
+    }
+
+    T getEnumVariable(T)(string name) {
+        return _context.engine.getEnumVariable(T)(name);
+    }
+
+    T getForeignVariable(T)(string name) {
+        return _context.engine.getForeignVariable(T)(name);
+    }
+
+    void setBoolVariable(string name, bool value) {
+        _context.engine.setBoolVariable(name, value);
+    }
+
+    void setIntVariable(string name, int value) {
+        _context.engine.setIntVariable(name, value);
+    }
+
+    void setFloatVariable(string name, float value) {
+        _context.engine.setFloatVariable(name, value);
+    }
+
+    void setStringVariable(string name, string value) {
+        _context.engine.setStringVariable(name, value);
+    }
+
+    void setPtrVariable(string name, void* value) {
+        _context.engine.setPtrVariable(name, value);
+    }
+
+    void setObjectVariable(string name, GrObject value) {
+        _context.engine.setObjectVariable(name, value);
+    }
+
+    void setIntArrayVariable(string name, GrIntArray value) {
+        _context.engine.setIntArrayVariable(name, value);
+    }
+
+    void setFloatArrayVariable(string name, GrFloatArray value) {
+        _context.engine.setFloatArrayVariable(name, value);
+    }
+
+    void setStringArrayVariable(string name, GrStringArray value) {
+        _context.engine.setStringArrayVariable(name, value);
+    }
+
+    void setObjectArrayVariable(string name, GrObjectArray value) {
+        _context.engine.setObjectArrayVariable(name, value);
+    }
+
+    void setIntChannelVariable(string name, GrIntChannel value) {
+        _context.engine.setIntChannelVariable(name, value);
+    }
+
+    void setFloatChannelVariable(string name, GrFloatChannel value) {
+        _context.engine.setFloatChannelVariable(name, value);
+    }
+
+    void setStringChannelVariable(string name, GrStringChannel value) {
+        _context.engine.setStringChannelVariable(name, value);
+    }
+
+    void setObjectChannelVariable(string name, GrObjectChannel value) {
+        _context.engine.setObjectChannelVariable(name, value);
+    }
+
+    void setEnumVariable(T)(string name, T value) {
+        _context.engine.setEnumVariable(name, value);
+    }
+
+    void setForeignVariable(T)(string name, T value) {
+        _context.engine.setForeignVariable(name, value);
+    }
+
     private {
         string _message;
         bool _hasError;

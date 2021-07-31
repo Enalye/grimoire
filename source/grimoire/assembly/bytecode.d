@@ -236,6 +236,14 @@ final class GrBytecode {
             uint[] parameters;
         }
 
+        /// Reference to a global variable.
+        struct GrGlobalReference {
+            /// Register
+            uint index;
+            /// Type of value
+            uint typeMask;
+        }
+
         /// All the instructions.
         uint[] opcodes;
 
@@ -266,6 +274,9 @@ final class GrBytecode {
         /// global event functions.
         /// Their name are in a mangled state.
         uint[string] events;
+
+        /// Global variable references
+        GrGlobalReference[string] globalReferences;
     }
 
     private immutable magicWord = "grb";
@@ -287,6 +298,7 @@ final class GrBytecode {
         sglobalsCount = bytecode.sglobalsCount;
         oglobalsCount = bytecode.oglobalsCount;
         events = bytecode.events;
+        globalReferences = bytecode.globalReferences;
     }
 
     /// Load from a file
@@ -327,6 +339,7 @@ final class GrBytecode {
         buffer.append!uint(cast(uint) events.length);
         buffer.append!uint(cast(uint) primitives.length);
         buffer.append!uint(cast(uint) classes.length);
+        buffer.append!uint(cast(uint) globalReferences.length);
 
         foreach (int i; iconsts)
             buffer.append!int(i);
@@ -360,6 +373,12 @@ final class GrBytecode {
             foreach (field; class_.fields) {
                 writeStr(buffer, field);
             }
+        }
+
+        foreach (string name, ref GrGlobalReference reference; globalReferences) {
+            writeStr(buffer, name);
+            buffer.append!uint(reference.index);
+            buffer.append!uint(reference.typeMask);
         }
 
         return buffer.data;
@@ -401,6 +420,7 @@ final class GrBytecode {
         const uint eventsCount = buffer.read!uint();
         primitives.length = buffer.read!uint();
         classes.length = buffer.read!uint();
+        const uint globalReferencesCount = buffer.read!uint();
 
         for (int i; i < iconsts.length; ++i) {
             iconsts[i] = buffer.read!int();
@@ -447,6 +467,15 @@ final class GrBytecode {
             }
 
             classes[i] = class_;
+        }
+
+        globalReferences.clear();
+        for (int i; i < globalReferencesCount; ++i) {
+            const string name = readStr(buffer);
+            GrGlobalReference reference;
+            reference.index = buffer.read!uint();
+            reference.typeMask = buffer.read!uint();
+            globalReferences[name] = reference;
         }
     }
 }

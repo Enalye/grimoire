@@ -400,6 +400,8 @@ final class GrVariableDefinition {
     string svalue;
     /// Can the variable be mutated in script ?
     bool isConstant;
+    /// Register.
+    uint register;
 }
 
 /// A single instruction used by the VM.

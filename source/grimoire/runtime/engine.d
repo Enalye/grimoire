@@ -250,6 +250,169 @@ class GrEngine {
         _contextsToSpawn.reset();
     }
 
+    alias getBoolVariable = getVariable!bool;
+    alias getIntVariable = getVariable!int;
+    alias getFloatVariable = getVariable!float;
+    alias getStringVariable = getVariable!string;
+    alias getPtrVariable = getVariable!(void*);
+
+    GrObject getObjectVariable(string name) {
+        return cast(GrObject) getVariable!(void*)(name);
+    }
+
+    GrIntArray getIntArrayVariable(string name) {
+        return cast(GrIntArray) getVariable!(void*)(name);
+    }
+
+    GrFloatArray getFloatArrayVariable(string name) {
+        return cast(GrFloatArray) getVariable!(void*)(name);
+    }
+
+    GrStringArray getStringArrayVariable(string name) {
+        return cast(GrStringArray) getVariable!(void*)(name);
+    }
+
+    GrObjectArray getObjectArrayVariable(string name) {
+        return cast(GrObjectArray) getVariable!(void*)(name);
+    }
+
+    GrIntChannel getIntChannelVariable(string name) {
+        return cast(GrIntChannel) getVariable!(void*)(name);
+    }
+
+    GrFloatChannel getFloatChannelVariable(string name) {
+        return cast(GrFloatChannel) getVariable!(void*)(name);
+    }
+
+    GrStringChannel getStringChannelVariable(string name) {
+        return cast(GrStringChannel) getVariable!(void*)(name);
+    }
+
+    GrObjectChannel getObjectChannelVariable(string name) {
+        return cast(GrObjectChannel) getVariable!(void*)(name);
+    }
+
+    T getEnumVariable(T)(string name) {
+        return cast(T) getVariable!int(name);
+    }
+
+    T getForeignVariable(T)(string name) {
+        // We cast to object first to avoid a crash when casting to a parent class
+        return cast(T) cast(Object) getVariable!(void*)(name);
+    }
+
+    private T getVariable(T)(string name) {
+        const auto variable = name in _bytecode.globalReferences;
+        if (variable is null)
+            throw new Exception("no global variable `" ~ name ~ "` defined");
+        static if (is(T == int)) {
+            if ((variable.typeMask & 0x1) == 0)
+                throw new Exception("variable `" ~ name ~ "` is not an int");
+            return _iglobals[variable.index];
+        }
+        else static if (is(T == bool)) {
+            if ((variable.typeMask & 0x1) == 0)
+                throw new Exception("variable `" ~ name ~ "` is not an int");
+            return _iglobals[variable.index] > 0;
+        }
+        else static if (is(T == float)) {
+            if ((variable.typeMask & 0x2) == 0)
+                throw new Exception("variable `" ~ name ~ "` is not a float");
+            return _fglobals[variable.index];
+        }
+        else static if (is(T == string)) {
+            if ((variable.typeMask & 0x4) == 0)
+                throw new Exception("variable `" ~ name ~ "` is not a string");
+            return _sglobals[variable.index];
+        }
+        else static if (is(T == void*)) {
+            if ((variable.typeMask & 0x8) == 0)
+                throw new Exception("variable `" ~ name ~ "` is not an object");
+            return _oglobals[variable.index];
+        }
+    }
+
+    alias setBoolVariable = setVariable!bool;
+    alias setIntVariable = setVariable!int;
+    alias setFloatVariable = setVariable!float;
+    alias setStringVariable = setVariable!string;
+    alias setPtrVariable = setVariable!(void*);
+
+    void setObjectVariable(string name, GrObject value) {
+        setVariable!(void*)(name, cast(void*) value);
+    }
+
+    void setIntArrayVariable(string name, GrIntArray value) {
+        setVariable!(void*)(name, cast(void*) value);
+    }
+
+    void setFloatArrayVariable(string name, GrFloatArray value) {
+        setVariable!(void*)(name, cast(void*) value);
+    }
+
+    void setStringArrayVariable(string name, GrStringArray value) {
+        setVariable!(void*)(name, cast(void*) value);
+    }
+
+    void setObjectArrayVariable(string name, GrObjectArray value) {
+        setVariable!(void*)(name, cast(void*) value);
+    }
+
+    void setIntChannelVariable(string name, GrIntChannel value) {
+        setVariable!(void*)(name, cast(void*) value);
+    }
+
+    void setFloatChannelVariable(string name, GrFloatChannel value) {
+        setVariable!(void*)(name, cast(void*) value);
+    }
+
+    void setStringChannelVariable(string name, GrStringChannel value) {
+        setVariable!(void*)(name, cast(void*) value);
+    }
+
+    void setObjectChannelVariable(string name, GrObjectChannel value) {
+        setVariable!(void*)(name, cast(void*) value);
+    }
+
+    void setEnumVariable(T)(string name, T value) {
+        setVariable!int(name, cast(int) value);
+    }
+
+    void setForeignVariable(T)(string name, T value) {
+        setVariable!(void*)(name, cast(void*) value);
+    }
+
+    private void setVariable(T)(string name, T value) {
+        const auto variable = name in _bytecode.globalReferences;
+        if (variable is null)
+            throw new Exception("no global variable `" ~ name ~ "` defined");
+        static if (is(T == int)) {
+            if ((variable.typeMask & 0x1) == 0)
+                throw new Exception("variable `" ~ name ~ "` is not an int");
+            _iglobals[variable.index] = value;
+        }
+        else static if (is(T == bool)) {
+            if ((variable.typeMask & 0x1) == 0)
+                throw new Exception("variable `" ~ name ~ "` is not an int");
+            _iglobals[variable.index] = value;
+        }
+        else static if (is(T == float)) {
+            if ((variable.typeMask & 0x2) == 0)
+                throw new Exception("variable `" ~ name ~ "` is not a float");
+            _fglobals[variable.index] = value;
+        }
+        else static if (is(T == string)) {
+            if ((variable.typeMask & 0x4) == 0)
+                throw new Exception("variable `" ~ name ~ "` is not a string");
+            _sglobals[variable.index] = value;
+        }
+        else static if (is(T == void*)) {
+            if ((variable.typeMask & 0x8) == 0)
+                throw new Exception("variable `" ~ name ~ "` is not an object");
+            _oglobals[variable.index] = value;
+        }
+    }
+
     /// Run the vm until all the contexts are finished or in yield.
     void process() {
         if (_contextsToSpawn.length) {

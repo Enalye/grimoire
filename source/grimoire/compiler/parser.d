@@ -1786,6 +1786,7 @@ final class GrParser {
             }
             addSetInstruction(variable, 0, variable.type);
             variable.isConstant = variableDef.isConstant;
+            variableDef.register = variable.register;
         }
         endGlobalScope();
 
