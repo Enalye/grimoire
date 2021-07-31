@@ -28,14 +28,20 @@ You can easily define custom functions and types from D.
   - [Classes](#classes)
   - [Channels](#channels)
   - [Type aliases](#type-aliases)
-  - [Foreign types](#foreign-types)
 
 - Errors:
   - [Error handling](#error-handling)
   - [Deferring code](#deferring-code)
 
-- Implementation:
-  - [Custom Primitives](#custom-primitives)
+- API Implementation:
+  - [Variables](#variables-api)
+  - [Enumerations](#enumerations-api)
+  - [Primitives](#primitives-api)
+  - [Casting](#casting-api)
+  - [Operators](#operators-api)
+  - [Classes](#classes-api)
+  - [Type aliases](#type-aliases-api)
+  - [Foreign types](#foreign-types-api)
 
 * * *
 
@@ -660,21 +666,6 @@ func as(MyClass a) (string) {
 
 Note that if a default convertion exists, it'll call this one instead.
 
-## In D
-
-To define a new cast, add it to the GrData.
-```d
-data.addCast(&myCast, myObjType, grString);
-```
-
-Then, define the function itself:
-```d
-void myCast(GrCall call) {
-    auto myObj = call.getObject(0);
-    call.setString("Hello");
-}
-```
-
 # Operators
 
 Much like custom convertions, you can define your own operators.
@@ -690,23 +681,6 @@ func operator+(float a, int b) (float) {
     return a + b as float;
 }
 ```
-
-## In D
-
-Like addCast, but using addOperator instead.
-```d
-data.addOperator(&myOperator, "+", ["a", "b"], [grFloat, grInt], grFloat);
-```
-
-Then writing the function itself.
-```d
-void myOperator(GrCall call) {
-    call.setFloat(call.getFloat("a") + cast(int) call.getInt("b"));
-}
-```
-
-Note that if a default operation exists, it'll call this one instead,
-so overloading a `+` operator between 2 integers is useless.
 
 * * *
 
@@ -773,11 +747,6 @@ enum Color {
 }
 ```
 
-Likely, you can declare it in D by calling `addEnum` on your `GrData`:
-```d
-data.addEnum("Color", ["red", "green", "blue"]);
-```
-
 ## Accessing a field
 
 To access a value, just type the name of the enum with
@@ -809,12 +778,6 @@ class MyClass {
 }
 ```
 
-It is equivalent to :
-```d
-data.addClass("MyClass", ["foo", "bar"], [grInt, grString]);
-```
-In the D side of thing, you declare an object type with `addClass` to the `GrData`.
-
 ## New
 
 To create an instance of that class (i.e. an object), you use the `new` keyword followed by the class type.
@@ -830,41 +793,7 @@ MyClass obj = new MyClass {
 	bar = "Hello";
 };
 ```
-
 Unspecified fields in the constructor will still be initialized by default.
-
-You can create an object in D by using the `createObject()` method of GrCall.
-Here's a little example:
-
-* Declaration:
-```d
-auto messageType = data.addClass("Message", ["greetings"], [grString]);
-data.addPrimitive(&createMessage, "createMessage", [], [messageType]);
-```
-
-* Primitive:
-```d
-void createMessage(GrCall call) {
-    auto obj = call.createObject("Message");
-    if(obj is null) {
-        call.raise("Message not declared");
-        return;
-    }
-    obj.setString("greetings", "Hello World !");
-    call.setObject(obj);
-}
-```
-
-Grimoire code:
-```cpp
-main {
-    let myObj = createMessage();
-    myObj.greetings:printl;
-}
-```
-
-It'll print "Hello World !".
-
 
 ## Accessing a field
 
@@ -873,15 +802,6 @@ To access a field, use the `.` notation.
 obj.foo = 5;
 obj.bar = "Hello";
 printl(obj.bar);
-```
-
-In D, use set and get functions.
-```d
-void _prim(GrCall call) {
-    auto obj = call.getObject("obj");
-    writeln(obj.getInt("foo"));
-    obj.setInt("bar", 5);
-}
 ```
 
 By default, all fields are only visible to the file that declared it.
@@ -915,17 +835,6 @@ class MyClass : ParentClass {
 
 }
 ```
-
-In D, its indicated by an optional parameter:
-```d
-data.addClass("MyClass", [], "ParentClass", []);
-```
-
-The second and fourth parameters are the template variable of the defined and the parent class.
-```d
-data.addClass("MyClass", ["T"], "ParentClass", [grAny("T")]);
-```
-Roughly means that MyClass<T> inherits from ParentClass<T>
 
 ## Template
 
@@ -991,32 +900,6 @@ main {
 }
 ```
 
-You can also declare aliases in D by calling `addTypeAlias` on your `GrData`:
-```d
-data.addTypeAlias("MyInt", grInt);
-```
-
-* * *
-
-# Foreign types
-
-Foreign types are opaque pointers used by D, grimoire doesn't have access to their content.
-As such, they can only be declared from D.
-```d
-data.addForeign("MyType");
-```
-
-Like classes, they can inherit from another foreign type.
-```d
-data.addForeign("MyType", [], "ParentType", []);
-```
-
-The second and fourth parameters are the template variable of the defined and the parent class.
-```d
-data.addForeign("MyType", ["T"], "ParentType", [grAny("T")]);
-```
-Roughly means that MyType<T> inherits from ParentType<T>
-
 * * *
 
 # Error Handling
@@ -1061,16 +944,53 @@ It's useful for handling resources that need to be freed.
 
 * * *
 
-# Custom Primitives
+# API Implementation
 
-## What's a primitive
+Everything you need to declare new types and values is contained in a GrLibrary.
+```d
+GrLibrary library = new GrLibrary;
+//Then add your types inside lib
+```
+
+After creating a GrLibrary and adding your custom types inside it, add it to your compiler before compilation.
+```d
+compiler.addLibrary(library);
+```
+
+Then, add it to your runtime.
+```d
+engine.addLibrary(library);
+```
+
+**Important:** All the libraries must be included in both the compiler **and** the engine and in the **same order**
+
+## Variables API
+
+You can declare global variables from a library using addVariable():
+```d
+library.addVariable("pi", grFloat, 3.141592f, true); 
+```
+
+To access the variable in runtime, you can use the getXVariable() of GrCall or GrEngine:
+```d
+float value = engine.getFloatVariable("pi");
+```
+
+To modify it, use the setXVariable() ones:
+```d
+engine.setFloatVariable("pi", 3f);
+```
+
+* * *
+
+## Primitives API
 
 In this language, a primitive is a function declared in D accessible from a script.
 `print` for instance, is a primitive.
 
 They must be declared before the compilation anb remain unchanged in the VM.
 
-## Primitive declaration
+### Primitive declaration
 
 To declare your primitive use `addPrimitive`.
 This function takes a callback to your primitive, the name which your primitive will be known as inside scripts,
@@ -1096,7 +1016,7 @@ data.addCast(&cast_float_to_int, grFloat, grInt);
 ```
 Much simpler, it takes a single parameter and return value.
 
-## The primitive itself
+### Implementing the primitive
 
 The callback takes a GrCall object and return nothing.
 The GrCall object contains everything you need about the current running context.
@@ -1112,10 +1032,9 @@ Here, the primitive takes a float parameter at index 0 (first parameter), and pr
 getXXX methods fetch the parameters, the type must match the declaration, else they'll throw an exception.
 setXXX methods returns a value on the stack, beware of the order in which you call setXXX functions.
 
-
 * * *
 
-## Generic type
+### Applying genericity to a primitive
 
 Grimoire provide a way to declare a primitive with generic types with `grAny`.
 *grAny* takes two arguments:
@@ -1144,3 +1063,106 @@ data.addPrimitive(&_push, "push", [
 
 If no predicate is given to a *grAny*, the type is always validated.
 The predicate of return types won't be checked, only the input signature is validated.
+
+* * *
+
+## Casting API
+
+You can define a cast function inside a library
+```d
+library.addCast(&myCast, myObjType, grString);
+```
+
+Then, define the function itself:
+```d
+void myCast(GrCall call) {
+    auto myObj = call.getObject(0);
+    call.setString("Hello");
+}
+```
+
+* * *
+
+## Operators API
+
+Like addCast, but using addOperator instead.
+```d
+library.addOperator(&myOperator, "+", [grFloat, grInt], grFloat);
+```
+
+Then writing the function itself.
+```d
+void myOperator(GrCall call) {
+    call.setFloat(call.getFloat(0) + cast(int) call.getInt(1));
+}
+```
+
+Note that if a default operation exists, it'll call this one instead,
+so overloading a `+` operator between 2 integers is useless.
+
+* * *
+
+## Classes API
+
+You declare a class by calling addClass() from the GrLibrary:
+```d
+library.addClass("MyClass", ["foo", "bar"], [grInt, grString]);
+```
+
+There are more optional parameters for inheritance and templating:
+```d
+data.addClass("MyClass", [], [], ["T"], "ParentClass", [grAny("T")]);
+```
+Is equal to MyClass<T> inheriting from ParentClass<T>
+The `grAny("T")` ensures that the template variable "T" from MyClass is used for the parent class.
+
+Instanciating a class is done with `createObject()` from GrCall or GrEngine:
+```d
+GrObject obj = call.createObject("MyClass");
+```
+
+You can then set or get fields from the GrObject with their respective set/get methods:
+```d
+obj.setInt("foo", 5);
+string value = obj.getString("bar");
+```
+
+* * *
+
+## Type Aliases API
+
+Type aliases can be declared by calling `addTypeAlias` from GrLibrary:
+```d
+library.addTypeAlias("MyInt", grInt);
+```
+
+* * *
+
+## Foreign types API
+
+Foreign types are opaque pointers used by D, grimoire doesn't have access to their content.
+As such, they can only be declared from D.
+```d
+data.addForeign("MyType");
+```
+
+Like classes, they can inherit from another foreign type.
+```d
+data.addForeign("MyType", [], "ParentType", []);
+```
+
+The second and fourth parameters are the template variable of the defined and the parent class.
+```d
+data.addForeign("MyType", ["T"], "ParentType", [grAny("T")]);
+```
+Roughly means that MyType<T> inherits from ParentType<T>
+
+* * *
+
+## Enumerations API
+
+Enums can be created by calling `addEnum` from GrLibrary:
+```d
+library.addEnum("Color", ["red", "green", "blue"]);
+```
+
