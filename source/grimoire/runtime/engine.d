@@ -860,14 +860,14 @@ class GrEngine {
                     break;
                 case tryChannel:
                     if (context.isEvaluatingChannel)
-                        raise(context, "Already inside a select");
+                        raise(context, "SelectError");
                     context.isEvaluatingChannel = true;
                     context.selectPositionJump = context.pc + grGetInstructionSignedValue(opcode);
                     context.pc++;
                     break;
                 case checkChannel:
                     if (!context.isEvaluatingChannel)
-                        raise(context, "Not inside a select");
+                        raise(context, "SelectError");
                     context.isEvaluatingChannel = false;
                     context.restoreState();
                     context.pc++;
