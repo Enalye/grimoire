@@ -1,3 +1,5 @@
+# Grimoire
+
 # Introduction
 
 Grimoire is an embedded language for D applications.
@@ -78,8 +80,8 @@ Numbers can either be integers or floating point values.
 
 An integer is defined by digits from 0 to 9.
 A float is similar but must either:
-- Have a decimal part separated by a `.` dot : `5.678`, `.123`
-- Have a `f` at the end of the number : `1f`, `.25f`
+- Have a decimal part separated by a `.` dot : `5.678`, `.123`, `60.`
+- Have a `f` at the end of the number : `1f`, `.25f`, `2.f`
 
 You can also use underscores `_` inside the number (not in front) to make it more readable: `100_000`
 The underscores won't be parsed by the compiler.
@@ -199,29 +201,35 @@ pub class A {} //The class is visible globally.
 
 ## Declaration List
 
-You can also declare multiple variables at once separating each identifier with a comma. `int a, b;`
+You can also declare multiple variables at once separating each identifier with a comma.
+> `int a, b;`
 
 Initialization will be done in the same order:
-`int a, b = 2, 3;` Here *a = 2* and *b = 3*.
+> `int a, b = 2, 3;`
+Here *a = 2* and *b = 3*.
 
-If there is not enough values to assign, the other variable will be assigned the last value: `int a, b, c = 2, 3;` Here *a = 2*, *b = 3*, *c = 3*.
+If there is not enough values to assign, the other variable will be assigned the last value:
+> `int a, b, c = 2, 3;`
+Here *a = 2*, *b = 3*, *c = 3*.
 
 You can skip one or more values by leaving a blank comma, it'll then copy the last value:
 
-`int a, b, c = 12,, 5;`
+> `int a, b, c = 12,, 5;`
 Both *a* and *b* are equal to *12* while *c* is equal to 5.
 
-`int a, b, c, d = 12,,, 5;`
+> `int a, b, c, d = 12,,, 5;`
 Both *a*, *b*, and *c* are equal to *12* while *c* is equal to 5.
 
-The first value cannot be blank, you cannot do this: `int a, b, c = , 5, 2;`
+The first value cannot be blank, you **can't** do this:
+> `int a, b, c = , 5, 2;`
 
 
 Every variable on the same initialization list must be of the same type.
 Ex: `int a, b = 2, "Hi"` will raise an error because *b* is expected to be **int** and you are passing a **string**.
 
 But you can use **let** to initialize automatically different types :
-`let a, b, c, d = 1, 2.3, "Hi!";`
+> `let a, b, c, d = 1, 2.3, "Hi!";`
+
 Here:
 * *a = 1* and is of type **int**,
 * *b = 2.3* and is of type **float**,
@@ -232,7 +240,7 @@ Here:
 
 ## If/Else/Unless
 
-`if` is a keyword that allows you to runs a portion of code only if its condition is true, "unless" do the opposite.
+`if` is a keyword that allows you to runs a portion of code only if its condition is true, `unless` do the opposite.
 You can combine it with optionals `else if` or `else unless` to do the same thing, only if the previous ones aren't run.
 Finally you can add an optional `else` that is run *only* if others are not run.
 
@@ -289,7 +297,8 @@ case("Hello") {
 ```
 
 Contrary to `if` statement, cases can be put in any order, and will check equality between the switch value and each cases value.
-A `case` without value is considered to be a default case like the `else` above, you can only have one maximum per switch statement.
+
+A `case` without value is considered to be a default case like the `else` above, you can only have one default case per switch statement.
 
 ## Select statement
 
@@ -306,7 +315,7 @@ case() {
 ```
 
 Each case contains a potentially blocking operation, the first non-blocking operation case is run.
-The default case is optional, but without one, the select statement is a blocking operation, otherwise the default case will execute if when others are blocked.
+The default case is optional, but without one, the select statement will be a blocking operation, otherwise the default case will execute when others are blocked.
 
 ```cpp
 select
@@ -329,14 +338,14 @@ A loop is a structure that can be executed several time, there are two type of l
 
 ### Infinite loops
 
-An infinite loop is as the title imply, see for yourself:
+Infinite loops are infinite:
 ```cpp
 loop {
 	printl("Hello !");
 }
 ```
-This script will prompt "Hello !" infinitely until the process is killed, be cautious with it.
-You may want to add either a `yield` or an exit condition.
+This script will prompt *"Hello !"* infinitely until the process is killed, be cautious with it.
+You may want to add either a `yield` to interrupt the loop each time or add an exit condition.
 
 ### Finite loops
 
@@ -344,10 +353,10 @@ Finite loops, on the other hand, have a finite number of time they will run.
 Contrary to the infinite one, they take an int as a parameter, which indicate the number of loops:
 ```cpp
 loop(10) {
+	// "I loop 10 times !" will only be printed times.
 	printl("I loop 10 times !");
 }
 ```
-This will only print the message 10 times.
 
 You can also specify an iterator, which must be of type `int`.
 ```cpp
@@ -365,8 +374,8 @@ loop(let i, 10)
 
 ## While/Do While
 
-"while" and "do while" are, akin to loops, statements that can execute their code several time.
-The difference is, they do not have a finite number of loop, instead, they have a condition (like "if" statements).
+`while` and `do while` are, akin to loops, statements that can execute their code several time.
+The difference is, they do not have a finite number of loop, instead, they have a condition (like `if` statements).
 ```cpp
 int i = 0;
 while(i < 10) {
@@ -374,7 +383,7 @@ while(i < 10) {
 	i ++;
 }
 ```
-"do while" is the same as "while" but the condition is checked after having run the code one time.
+`do while` is the same as `while` but the condition is checked after having run the code one time.
 ```cpp
 int i = 11;
 do { //This is garanteed to run at least once, even if the condition is not met.
@@ -385,7 +394,7 @@ while(i < 10)
 
 ## For
 
-"for" loops are yet another kind of loop that will automatically iterate on an array of values.
+`for` loops are yet another kind of loop that will automatically iterate on an array of values.
 For instance:
 ```cpp
 for(i, [1, 2, 3, 4]) {
@@ -407,6 +416,23 @@ for(int i, [1, 2]) {}
 If no type is specified, or declared as let, the variable will be automatically declared as `var`.
 
 The variable type must be convertible from the array's values, or it will raise a runtime error.
+
+### Iterators
+
+`for` can also iterate on special object or foreign called iterators.
+In grimoire, an iterator is defined by the fact that a function that satisfies this signature exists:
+> `func next(Iterator) (bool, VALUE)`
+
+A function `next` must exists that takes the iterator and returns a `bool` and the current value.
+The `bool` must be false when the iterator has finished iterating, true otherwise.
+
+```cpp
+// The each() function takes the string and return
+// an StringIter object that iterate over the string
+for(i, "Hello World":each) {
+	i:printl;
+}
+```
 
 * * *
 
@@ -1059,7 +1085,7 @@ data.addPrimitive(&print_a_string, "print", [grString]);
 data.addPrimitive(&multiply, "mul", [grFloat, grFloat], [grFloat]);
 ```
 
-If you want to multiply 2 things, a better idea is to declare an operator (if it doesn't already exists for your types):
+If you want to multiply 2 values, a better idea is to declare an operator (if it doesn't already exists for your types):
 
 ```d
 data.addOperator(&multiply, "*", [grFloat, grFloat], grFloat);
