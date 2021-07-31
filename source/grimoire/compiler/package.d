@@ -15,4 +15,5 @@ public {
 	import grimoire.compiler.data;
 	import grimoire.compiler.library;
 	import grimoire.compiler.error;
+	import grimoire.compiler.pretty;
 }
