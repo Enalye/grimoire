@@ -816,9 +816,10 @@ final class GrParser {
                 && leftType.baseType == GrBaseType.array_ && leftType != rightType) {
             const GrType subType = grUnmangle(leftType.mangledType);
             convertType(rightType, subType, fileId);
-            switch (subType.baseType) with (GrBaseType) {
+            final switch (subType.baseType) with (GrBaseType) {
             case int_:
             case bool_:
+            case enum_:
             case function_:
             case task:
                 addInstruction(GrOpcode.append_int);
@@ -835,7 +836,10 @@ final class GrParser {
             case chan:
                 addInstruction(GrOpcode.append_object);
                 break;
-            default:
+            case null_:
+            case void_:
+            case reference:
+            case internalTuple:
                 break;
             }
             resultType = leftType;
@@ -844,9 +848,10 @@ final class GrParser {
                 && rightType.baseType == GrBaseType.array_ && leftType != rightType) {
             const GrType subType = grUnmangle(rightType.mangledType);
             convertType(leftType, subType, fileId);
-            switch (subType.baseType) with (GrBaseType) {
+            final switch (subType.baseType) with (GrBaseType) {
             case int_:
             case bool_:
+            case enum_:
             case function_:
             case task:
                 addInstruction(GrOpcode.prepend_int);
@@ -863,7 +868,10 @@ final class GrParser {
             case chan:
                 addInstruction(GrOpcode.prepend_object);
                 break;
-            default:
+            case null_:
+            case void_:
+            case reference:
+            case internalTuple:
                 break;
             }
             resultType = rightType;
@@ -1136,9 +1144,10 @@ final class GrParser {
             switch (lexType) with (GrLexemeType) {
             case equal:
                 const GrType subType = grUnmangle(varType.mangledType);
-                switch (subType.baseType) with (GrBaseType) {
+                final switch (subType.baseType) with (GrBaseType) {
                 case int_:
                 case bool_:
+                case enum_:
                 case function_:
                 case task:
                     addInstruction(GrOpcode.equal_intArray);
@@ -1149,15 +1158,23 @@ final class GrParser {
                 case string_:
                     addInstruction(GrOpcode.equal_stringArray);
                     return grBool;
-                default:
+                case null_:
+                case void_:
+                case reference:
+                case internalTuple:
+                case array_:
+                case class_:
+                case foreign:
+                case chan:
                     break;
                 }
                 break;
             case notEqual:
                 const GrType subType = grUnmangle(varType.mangledType);
-                switch (subType.baseType) with (GrBaseType) {
+                final switch (subType.baseType) with (GrBaseType) {
                 case int_:
                 case bool_:
+                case enum_:
                 case function_:
                 case task:
                     addInstruction(GrOpcode.notEqual_intArray);
@@ -1168,15 +1185,23 @@ final class GrParser {
                 case string_:
                     addInstruction(GrOpcode.notEqual_stringArray);
                     return grBool;
-                default:
+                case null_:
+                case void_:
+                case reference:
+                case internalTuple:
+                case array_:
+                case class_:
+                case foreign:
+                case chan:
                     break;
                 }
                 break;
             case concatenate:
                 const GrType subType = grUnmangle(varType.mangledType);
-                switch (subType.baseType) with (GrBaseType) {
+                final switch (subType.baseType) with (GrBaseType) {
                 case int_:
                 case bool_:
+                case enum_:
                 case function_:
                 case task:
                     addInstruction(GrOpcode.concatenate_intArray);
@@ -1193,7 +1218,10 @@ final class GrParser {
                 case chan:
                     addInstruction(GrOpcode.concatenate_objectArray);
                     return varType;
-                default:
+                case null_:
+                case void_:
+                case reference:
+                case internalTuple:
                     break;
                 }
                 break;
