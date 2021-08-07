@@ -4112,7 +4112,7 @@ final class GrParser {
                     variable.type = subType;
                     setVariableRegister(variable);
                 }
-                addSetInstruction(iterator, fileId, containerType, true);
+                addSetInstruction(iterator, fileId, containerType);
 
                 /* For is breakable and continuable. */
                 openBreakableSection();
