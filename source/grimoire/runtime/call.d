@@ -80,6 +80,10 @@ final class GrCall {
         return cast(GrObject) getParameter!(void*)(index);
     }
 
+    GrArray!T getArray(T)(uint index) {
+        return cast(GrArray!T) getParameter!(void*)(index);
+    }
+
     GrIntArray getIntArray(uint index) {
         return cast(GrIntArray) getParameter!(void*)(index);
     }
@@ -165,6 +169,10 @@ final class GrCall {
     alias setPtr = setResult!(void*);
 
     void setObject(GrObject value) {
+        setResult!(void*)(cast(void*) value);
+    }
+
+    void setArray(T)(GrArray!T value) {
         setResult!(void*)(cast(void*) value);
     }
 
