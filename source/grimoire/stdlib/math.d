@@ -12,6 +12,11 @@ import grimoire.compiler, grimoire.runtime;
 package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
     library.addVariable("pi", grFloat, PI, true);
 
+    library.addPrimitive(&_min_f, "min", [grFloat, grFloat], [grFloat]);
+    library.addPrimitive(&_min_i, "min", [grInt, grInt], [grInt]);
+    library.addPrimitive(&_max_f, "max", [grFloat, grFloat], [grFloat]);
+    library.addPrimitive(&_max_i, "max", [grInt, grInt], [grInt]);
+
     library.addPrimitive(&_clamp, "clamp", [grFloat, grFloat, grFloat], [
             grFloat
             ]);
@@ -52,6 +57,30 @@ package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
     library.addPrimitive(&_nan, "nan?", [grFloat], [grBool]);
     library.addPrimitive(&_even, "even?", [grInt], [grBool]);
     library.addPrimitive(&_odd, "odd?", [grInt], [grBool]);
+}
+
+private void _min_f(GrCall call) {
+    const float a = call.getFloat(0);
+    const float b = call.getFloat(1);
+    call.setFloat(a < b ? a : b);
+}
+
+private void _min_i(GrCall call) {
+    const int a = call.getInt(0);
+    const int b = call.getInt(1);
+    call.setInt(a < b ? a : b);
+}
+
+private void _max_f(GrCall call) {
+    const float a = call.getFloat(0);
+    const float b = call.getFloat(1);
+    call.setFloat(a > b ? a : b);
+}
+
+private void _max_i(GrCall call) {
+    const int a = call.getInt(0);
+    const int b = call.getInt(1);
+    call.setInt(a > b ? a : b);
 }
 
 private void _clamp(GrCall call) {
