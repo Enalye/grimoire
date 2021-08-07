@@ -2048,6 +2048,7 @@ final class GrParser {
     Declare a new alias of a type.
     */
     private void parseTypeAliasDeclaration(bool isPublic) {
+        const uint fileId = get().fileId;
         checkAdvance();
         if (get().type != GrLexemeType.identifier)
             logError("expected type alias name, found `" ~ grGetPrettyLexemeType(get()
@@ -2063,13 +2064,14 @@ final class GrParser {
             logError("missing semicolon after `type`",
                     "expected `;`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
 
-        if (_data.isTypeDeclared(typeAliasName, get().fileId, isPublic))
+        if (_data.isTypeDeclared(typeAliasName, fileId, isPublic))
             logError("the name `" ~ typeAliasName ~ "` is defined multiple times",
                     "`" ~ typeAliasName ~ "` is already declared");
-        _data.addTypeAlias(typeAliasName, type, get().fileId, isPublic);
+        _data.addTypeAlias(typeAliasName, type, fileId, isPublic);
     }
 
     private void parseEnumDeclaration(bool isPublic) {
+        const uint fileId = get().fileId;
         checkAdvance();
         if (get().type != GrLexemeType.identifier)
             logError("expected enum name, found `" ~ grGetPrettyLexemeType(get()
@@ -2100,10 +2102,10 @@ final class GrParser {
                         "expected `;`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
             checkAdvance();
         }
-        if (_data.isTypeDeclared(enumName, get().fileId, isPublic))
+        if (_data.isTypeDeclared(enumName, fileId, isPublic))
             logError("the name `" ~ enumName ~ "` is defined multiple times",
                     "`" ~ enumName ~ "` is already declared");
-        _data.addEnum(enumName, fields, get().fileId, isPublic);
+        _data.addEnum(enumName, fields, fileId, isPublic);
     }
 
     private void registerClassDeclaration(bool isPublic) {
@@ -2350,8 +2352,10 @@ final class GrParser {
                 return currentType;
             }
             else if (mustBeType) {
-                logError("`" ~ grGetPrettyLexemeType(lex.type) ~ "` is not a valid type",
-                        "expected a valid type, found `" ~ grGetPrettyLexemeType(lex.type) ~ "`");
+                const string typeName = lex.type == GrLexemeType.identifier
+                    ? lex.svalue : grGetPrettyLexemeType(lex.type);
+                logError("`" ~ typeName ~ "` is not a valid type",
+                        "expected a valid type, found `" ~ typeName ~ "`");
             }
             else {
                 return currentType;
@@ -3341,7 +3345,7 @@ final class GrParser {
 
     //Continue
     private void openContinuableSection() {
-        continuesJumps ~= [null];
+        continuesJumps.length ++;
         _blockLevel++;
     }
 
@@ -3355,7 +3359,7 @@ final class GrParser {
         continuesDestinations.length--;
 
         foreach (position; continues)
-            setInstruction(GrOpcode.jump, position, cast(int)(position - destination), true);
+            setInstruction(GrOpcode.jump, position, cast(int)(destination - position), true);
         _blockLevel--;
     }
 
@@ -4716,7 +4720,6 @@ final class GrParser {
                             fieldLValue.register = i;
                             fieldLValue.fileId = get().fileId;
                             fieldLValue.lexPosition = current;
-
                             addInstruction(GrOpcode.fieldLoad2, fieldLValue.register);
                             parseAssignList([fieldLValue], true);
                             break;
@@ -5332,7 +5335,6 @@ final class GrParser {
     /// Does this operation require a left-expr ?
     private bool requireLValue(GrLexemeType operatorType) {
         switch (operatorType) with (GrLexemeType) {
-        case period:
         case increment:
         case decrement:
         case assign: .. case powerAssign:
