@@ -49,6 +49,10 @@ final class GrObject {
         return cast(GrObject) getField!(void*)(fieldName);
     }
 
+    GrArray!T getArray(T)(string fieldName) {
+        return cast(GrArray!T) getField!(void*)(fieldName);
+    }
+
     GrIntArray getIntArray(string fieldName) {
         return cast(GrIntArray) getField!(void*)(fieldName);
     }
@@ -117,6 +121,10 @@ final class GrObject {
     alias setPtr = setField!(void*);
 
     void setObject(string fieldName, GrObject value) {
+        setField!(void*)(fieldName, cast(void*) value);
+    }
+
+    void setArray(T)(string fieldName, GrArray!T value) {
         setField!(void*)(fieldName, cast(void*) value);
     }
 
