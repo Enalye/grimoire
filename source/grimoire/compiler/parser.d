@@ -1298,7 +1298,7 @@ final class GrParser {
         }
         return GrType(GrBaseType.void_);
     }
-
+bool sosis;
     private void addSetInstruction(GrVariable variable, uint fileId,
             GrType valueType = grVoid, bool isExpectingValue = false) {
         _lastAssignationScopeLevel = _blockLevel;
@@ -5708,10 +5708,12 @@ final class GrParser {
                         fieldLValue.fileId = get().fileId;
                         fieldLValue.lexPosition = current;
 
-                        if (hadLValue)
-                            lvalues[$ - 1] = fieldLValue;
-                        else
-                            lvalues ~= fieldLValue;
+                        if(requireLValue(get().type)) {
+                            if (hadLValue)
+                                lvalues[$ - 1] = fieldLValue;
+                            else
+                                lvalues ~= fieldLValue;
+                        }
 
                         if (hadValue)
                             typeStack[$ - 1] = currentType;
