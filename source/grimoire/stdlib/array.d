@@ -139,7 +139,7 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
 private void _copy_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array copy = new Gr" ~ t ~ "Array;
         copy.data = call.get"
-            ~ t ~ "Array(0).data;
+            ~ t ~ "Array(0).data.dup;
         call.set" ~ t ~ "Array(copy);");
 }
 
