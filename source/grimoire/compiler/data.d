@@ -409,10 +409,7 @@ class GrData {
                 if (primitive.inSignature[i].baseType == GrBaseType.void_)
                     return null;
             }
-            if (primitive.inSignature[i].baseType == GrBaseType.class_) {
-                // Forcing the class to be reified if it isn't already
-                getClass(primitive.inSignature[i].mangledType, 0, true);
-            }
+            checkUnknownClasses(primitive.inSignature[i]);
         }
         for (int i; i < primitive.outSignature.length; ++i) {
             if (primitive.outSignature[i].isAny) {
@@ -420,9 +417,8 @@ class GrData {
                 if (primitive.outSignature[i].baseType == GrBaseType.void_)
                     return null;
             }
+            checkUnknownClasses(primitive.outSignature[i]);
             if (primitive.outSignature[i].baseType == GrBaseType.class_) {
-                // Forcing the class to be reified if it isn't already
-                getClass(primitive.outSignature[i].mangledType, 0, true);
             }
         }
         primitive.mangledName = grMangleComposite(primitive.name, primitive.inSignature);
@@ -431,6 +427,34 @@ class GrData {
             throw new Exception("`" ~ getPrettyPrimitive(primitive) ~ "` is already declared");
         _primitives ~= primitive;
         return primitive;
+    }
+
+    // Forcing the classes to be reified they aren't already
+    private void checkUnknownClasses(GrType type) {
+        switch(type.baseType) with(GrBaseType) {
+        case class_:
+            GrClassDefinition classDef = getClass(type.mangledType, 0, true);
+            foreach(GrType fieldType; classDef.signature)
+                checkUnknownClasses(fieldType);
+            break;
+        case array_:
+        case chan:
+            GrType subType = grUnmangle(type.mangledType);
+            checkUnknownClasses(subType);
+            break;
+        case function_:
+            foreach(GrType inType; grUnmangleSignature(type.mangledType))
+                checkUnknownClasses(inType);
+            foreach(GrType outType; grUnmangleSignature(type.mangledReturnType))
+                checkUnknownClasses(outType);
+            break;
+        case task:
+            foreach(GrType inType; grUnmangleSignature(type.mangledType))
+                checkUnknownClasses(inType);
+            break;
+        default:
+            return;
+        }
     }
 
     /// Check if the first signature match or can be upgraded (by inheritance) to the second one.
