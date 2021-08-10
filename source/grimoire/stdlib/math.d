@@ -92,11 +92,21 @@ private void _random01(GrCall call) {
 }
 
 private void _random_f(GrCall call) {
-    call.setFloat(uniform!"[]"(call.getFloat(0), call.getFloat(1)));
+    const float a = call.getFloat(0);
+    const float b = call.getFloat(1);
+    if(a < b)
+        call.setFloat(uniform!"[]"(a, b));
+    else
+        call.setFloat(uniform!"[]"(b, a));
 }
 
 private void _random_i(GrCall call) {
-    call.setInt(uniform!"[]"(call.getInt(0), call.getInt(1)));
+    const int a = call.getInt(0);
+    const int b = call.getInt(1);
+    if(a < b)
+        call.setInt(uniform!"[]"(a, b));
+    else
+        call.setInt(uniform!"[]"(b, a));
 }
 
 private void _cos(GrCall call) {
