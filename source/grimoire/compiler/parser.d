@@ -1298,7 +1298,8 @@ final class GrParser {
         }
         return GrType(GrBaseType.void_);
     }
-bool sosis;
+
+    bool sosis;
     private void addSetInstruction(GrVariable variable, uint fileId,
             GrType valueType = grVoid, bool isExpectingValue = false) {
         _lastAssignationScopeLevel = _blockLevel;
@@ -3345,7 +3346,7 @@ bool sosis;
 
     //Continue
     private void openContinuableSection() {
-        continuesJumps.length ++;
+        continuesJumps.length++;
         _blockLevel++;
     }
 
@@ -5082,7 +5083,10 @@ bool sosis;
                 const string argStr = to!string(lvalues.length) ~ (lvalues.length > 1
                         ? " variables" : " variable");
                 logError("trying to assign `" ~ to!string(expressionTypes.length) ~ "` values to " ~ argStr,
-                        "there are more values than variable to assign to");
+                        "there are more values than variable to assign to", "", -1);
+            }
+            else if (!expressionTypes.length) {
+                logError("the assignation is missing a value", "the expression is empty", "", -1);
             }
 
             int variableIndex = to!int(lvalues.length) - 1;
@@ -5708,7 +5712,7 @@ bool sosis;
                         fieldLValue.fileId = get().fileId;
                         fieldLValue.lexPosition = current;
 
-                        if(requireLValue(get().type)) {
+                        if (requireLValue(get().type)) {
                             if (hadLValue)
                                 lvalues[$ - 1] = fieldLValue;
                             else
