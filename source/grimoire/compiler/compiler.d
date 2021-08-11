@@ -10,6 +10,7 @@ import grimoire.runtime, grimoire.assembly;
 import grimoire.compiler.lexer, grimoire.compiler.parser, grimoire.compiler.primitive;
 import grimoire.compiler.type, grimoire.compiler.data, grimoire.compiler.error,
 	grimoire.compiler.mangle, grimoire.compiler.library, grimoire.compiler.pretty;
+import grimoire.assembly.debug_info;
 
 /// Compiler class, generate bytecode and hold errors.
 final class GrCompiler {
@@ -79,6 +80,8 @@ final class GrCompiler {
 	private GrBytecode generate(GrParser parser) {
 		uint nbOpcodes, lastOpcodeCount;
 
+		GrBytecode bytecode = new GrBytecode;
+
 		foreach (func; parser.functions)
 			nbOpcodes += cast(uint) func.instructions.length;
 
@@ -100,6 +103,12 @@ final class GrCompiler {
 
 		//Start with the global initializations
 		auto globalScope = parser.getFunction("@global");
+		{
+			auto debug_info = new GrFunctionInfo();
+			debug_info.bytecodePosition = lastOpcodeCount;
+			debug_info.functionName = "@global";
+			bytecode.debugInfo ~= debug_info;
+		}
 		if (globalScope) {
 			foreach (size_t i, instruction; globalScope.instructions)
 				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
@@ -111,6 +120,13 @@ final class GrCompiler {
 		//Then write the main function (not callable).
 		auto mainFunc = parser.getFunction("main");
 		if (mainFunc) {
+			{
+				auto debug_info = new GrFunctionInfo();
+				debug_info.bytecodePosition = lastOpcodeCount;
+				debug_info.functionName = "main";
+				bytecode.debugInfo ~= debug_info;
+			}
+
 			mainFunc.position = lastOpcodeCount;
 			foreach (size_t i, instruction; mainFunc.instructions)
 				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
@@ -128,6 +144,12 @@ final class GrCompiler {
 		//Every other functions.
 		uint[string] events;
 		foreach (GrFunction func; parser.events) {
+			{
+				auto debug_info = new GrFunctionInfo();
+				debug_info.bytecodePosition = lastOpcodeCount;
+				debug_info.functionName = func.name;
+				bytecode.debugInfo ~= debug_info;
+			}
 			foreach (size_t i, instruction; func.instructions)
 				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
 						instruction.value);
@@ -138,6 +160,12 @@ final class GrCompiler {
 			events[func.mangledName] = func.position;
 		}
 		foreach (func; parser.anonymousFunctions) {
+			{
+				auto debug_info = new GrFunctionInfo();
+				debug_info.bytecodePosition = lastOpcodeCount;
+				debug_info.functionName = func.name;
+				bytecode.debugInfo ~= debug_info;
+			}
 			foreach (size_t i, instruction; func.instructions)
 				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
 						instruction.value);
@@ -147,6 +175,12 @@ final class GrCompiler {
 			lastOpcodeCount += func.instructions.length;
 		}
 		foreach (func; parser.functions) {
+			{
+				auto debug_info = new GrFunctionInfo();
+				debug_info.bytecodePosition = lastOpcodeCount;
+				debug_info.functionName = func.name;
+				bytecode.debugInfo ~= debug_info;
+			}
 			foreach (size_t i, instruction; func.instructions)
 				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
 						instruction.value);
@@ -159,8 +193,6 @@ final class GrCompiler {
 
 		//The contexts will jump here if the VM is panicking.
 		opcodes[$ - 1] = makeOpcode(cast(uint) GrOpcode.unwind, 0);
-
-		GrBytecode bytecode = new GrBytecode;
 
 		//Constants.
 		bytecode.iconsts = parser.iconsts;
