@@ -64,7 +64,7 @@ final class GrParser {
     private GrData _data;
 
     private {
-        uint _lastAssignationScopeLevel, _blockLevel;
+        int _lastAssignationScopeLevel, _blockLevel;
         bool _isProfiling;
     }
 
@@ -1299,7 +1299,16 @@ final class GrParser {
         return GrType(GrBaseType.void_);
     }
 
-    bool sosis;
+    void increaseBlockLevel() {
+        _blockLevel++;
+    }
+
+    void decreaseBlockLevel() {
+        _blockLevel--;
+        if (_blockLevel == _lastAssignationScopeLevel)
+            _lastAssignationScopeLevel--;
+    }
+
     private void addSetInstruction(GrVariable variable, uint fileId,
             GrType valueType = grVoid, bool isExpectingValue = false) {
         _lastAssignationScopeLevel = _blockLevel;
@@ -2917,7 +2926,7 @@ final class GrParser {
     */
     private void parseBlock(bool changeOptimizationBlockLevel = false) {
         if (changeOptimizationBlockLevel)
-            _blockLevel++;
+            increaseBlockLevel();
         bool isMultiline;
         if (get().type == GrLexemeType.leftCurlyBrace) {
             isMultiline = true;
@@ -3021,7 +3030,7 @@ final class GrParser {
         }
         closeBlock();
         if (changeOptimizationBlockLevel)
-            _blockLevel--;
+            decreaseBlockLevel();
     }
 
     private bool isDeclaration() {
@@ -3319,7 +3328,7 @@ final class GrParser {
     //Break
     private void openBreakableSection() {
         breaksJumps ~= [null];
-        _blockLevel++;
+        increaseBlockLevel();
     }
 
     private void closeBreakableSection() {
@@ -3332,7 +3341,7 @@ final class GrParser {
         foreach (position; breaks)
             setInstruction(GrOpcode.jump, position,
                     cast(int)(currentFunction.instructions.length - position), true);
-        _blockLevel--;
+        decreaseBlockLevel();
     }
 
     private void parseBreak() {
@@ -3347,7 +3356,7 @@ final class GrParser {
     //Continue
     private void openContinuableSection() {
         continuesJumps.length++;
-        _blockLevel++;
+        increaseBlockLevel();
     }
 
     private void closeContinuableSection() {
@@ -3361,7 +3370,7 @@ final class GrParser {
 
         foreach (position; continues)
             setInstruction(GrOpcode.jump, position, cast(int)(destination - position), true);
-        _blockLevel--;
+        decreaseBlockLevel();
     }
 
     private void setContinuableSectionDestination() {

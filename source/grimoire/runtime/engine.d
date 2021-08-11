@@ -193,6 +193,7 @@ class GrEngine {
     void raise(GrContext context, string message) {
         if (context.isPanicking)
             return;
+        raiseDump(context);
         //Error message.
         _sglobalStackIn ~= message;
 
@@ -438,6 +439,7 @@ class GrEngine {
                     break;
                 case raise_:
                     if (!context.isPanicking) {
+                        raiseDump(context);
                         //Error message.
                         _sglobalStackIn ~= context.sstack[context.sstackPos];
                         context.sstackPos--;
@@ -2339,5 +2341,14 @@ class GrEngine {
             _debugFunctions[pc] = debugFunc;
             _debugFunctionsStack ~= debugFunc;
         }
+    }
+}
+
+///Temp
+void raiseDump(GrContext context) {
+    import std.stdio: writeln;
+    writeln("error raised at: ", context.pc);
+    for (int i = context.stackPos - 1; i >= 0; i --) {
+        writeln("at: ", context.callStack[i].retPosition);
     }
 }
