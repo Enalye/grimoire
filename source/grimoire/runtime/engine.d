@@ -198,7 +198,9 @@ class GrEngine {
 
         //We indicate that the coroutine is in a panic state until a catch is found.
         context.isPanicking = true;
+        context.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
 
+        /+
         //Exception handler found in the current function, just jump.
         if (context.callStack[context.stackPos].exceptionHandlers.length) {
             context.pc = context.callStack[context.stackPos].exceptionHandlers[$ - 1];
@@ -236,7 +238,7 @@ class GrEngine {
             _isPanicking = true;
             _panicMessage = _sglobalStackIn[$ - 1];
             _sglobalStackIn.length--;
-        }
+        }+/
     }
 
     /**
