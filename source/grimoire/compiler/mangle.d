@@ -212,8 +212,10 @@ auto grUnmangleComposite(string mangledSignature) {
 
     UnmangleCompositeResult result;
     size_t index = mangledSignature.indexOf('$');
-    if( index == -1)
-        throw new Exception("invalid mangling format");
+    if(index == -1) { 
+        result.name = mangledSignature;
+        return result;
+    }
     result.name = mangledSignature[0..index];
     result.signature = grUnmangleSignature(mangledSignature[index..$]);
     return result;
