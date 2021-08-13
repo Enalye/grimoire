@@ -157,18 +157,8 @@ final class GrCall {
         else static if (is(T == void*)) {
             if ((_parameters[index] & 0x80000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not an object");
-            void* a;
-            try {
-                a = _context.ostack[(_context.ostackPos - _oparams) + (
-                            _parameters[index] & 0xFFFF) + 1];
-            }
-            catch (Error e) {
-                writeln("CAUGHT");
-                import grimoire.runtime.engine: raiseDump;
-                raiseDump(_context);
-                throw e;
-            }
-            return a;
+            return _context.ostack[(_context.ostackPos - _oparams) + (_parameters[index] & 0xFFFF)
+                + 1];
         }
     }
 

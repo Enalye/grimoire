@@ -1301,12 +1301,14 @@ final class GrParser {
 
     void increaseBlockLevel() {
         _blockLevel++;
+        if (_blockLevel == _lastAssignationScopeLevel)
+            _lastAssignationScopeLevel = -1;
     }
 
     void decreaseBlockLevel() {
         _blockLevel--;
         if (_blockLevel == _lastAssignationScopeLevel)
-            _lastAssignationScopeLevel--;
+            _lastAssignationScopeLevel = -1;
     }
 
     private void addSetInstruction(GrVariable variable, uint fileId,
