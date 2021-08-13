@@ -246,17 +246,6 @@ package final class GrLexer {
     }
 
     /**
-	Outputs every tokens (lexemes) scanned.
-	*/
-    void debugShowScan() {
-        writeln("Scan:");
-
-        foreach (lexeme; _lexemes) {
-            writeln(lexeme);
-        }
-    }
-
-    /**
 	Fetch the entire line where a lexeme is.
 	*/
     package string getLine(GrLexeme lex) {
@@ -1054,8 +1043,8 @@ string grGetPrettyLexemeType(GrLexemeType operator) {
         "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&", "as",
         "try", "catch", "raise", "defer", "=", "+=", "-=", "*=", "/=", "~=",
         "%=", "^=", "+", "-", "+", "-", "*", "/", "~", "%", "^", "==", "===",
-        "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "and", "or", "xor", "not", "++",
-        "--", "identifier", "const_int", "const_float", "const_bool",
+        "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "and", "or", "xor",
+        "not", "++", "--", "identifier", "const_int", "const_float", "const_bool",
         "const_str", "null", "pub", "main", "type", "event", "class", "enum",
         "template", "new", "copy", "send", "receive", "int", "float", "bool",
         "string", "array", "chan", "func", "task", "let", "if", "unless",

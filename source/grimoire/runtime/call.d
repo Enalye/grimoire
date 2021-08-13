@@ -5,7 +5,6 @@
  */
 module grimoire.runtime.call;
 
-import std.stdio : writeln;
 import std.conv : to;
 import grimoire.assembly;
 import grimoire.compiler;

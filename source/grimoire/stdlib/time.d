@@ -6,7 +6,6 @@
 module grimoire.stdlib.time;
 
 import std.datetime;
-import std.stdio : write, writeln;
 import std.conv : to;
 import grimoire.compiler, grimoire.runtime;
 
