@@ -98,7 +98,7 @@ private void _range_step_f(GrCall call) {
     RangeIter!float iter = new RangeIter!float;
     iter.value = call.getFloat(0);
     iter.end = call.getFloat(1);
-    iter.step = call.getInt(2);
+    iter.step = call.getFloat(2);
     if ((iter.value > iter.end && iter.step > 0f) || (iter.value < iter.end && iter.step < 0f)) {
         iter.step = -iter.step;
     }
