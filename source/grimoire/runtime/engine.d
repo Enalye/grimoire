@@ -10,9 +10,12 @@ import std.array;
 import std.conv;
 import std.math;
 import std.algorithm.mutation : swapAt;
+import std.typecons : Nullable;
 
 import grimoire.compiler;
 import grimoire.assembly;
+import grimoire.assembly.debug_info;
+
 import grimoire.runtime.context;
 import grimoire.runtime.array;
 import grimoire.runtime.object;
@@ -180,6 +183,85 @@ class GrEngine {
     }
 
     /**
+    Generates a developer friendly stacktrace
+    */
+    string[] generateDebugStackTrace(GrContext context) {
+        import std.format : format;
+        string[] trace = [];
+        int frameCounter = 1;
+        foreach (GrStackFrame frame; context.callStack[1..$]) {
+            auto maybeFunc = getFunctionInfo(frame.retPosition);
+            if(maybeFunc.isNull) {
+                trace ~= format!"#%d\tUnknown Function\tinstr %d (??/??)"(
+                    frameCounter,
+                    frame.retPosition
+                );
+            } else {
+                trace ~= format!"#%d\t%s\tinstr %d (%d/%d)"(
+                    frameCounter, 
+                    maybeFunc.get.functionName,
+                    frame.retPosition,
+                    frame.retPosition - maybeFunc.get.bytecodePosition,
+                    maybeFunc.get.length,    
+                );
+            }
+            frameCounter++;
+        }
+
+        
+        auto maybeFunc = getFunctionInfo(context.pc);
+        if(maybeFunc.isNull) {
+            trace ~= format!"#%d\tUnknown Function\tinstr %d (??/??)"(
+                frameCounter,
+                context.pc,
+            );
+        } else {
+            trace ~= format!"#%d\t%s\tinstr %d (%d/%d)"(
+                frameCounter, 
+                maybeFunc.get.functionName,
+                context.pc,
+                context.pc - maybeFunc.get.bytecodePosition,
+                maybeFunc.get.length,    
+            );
+        }
+
+        return trace;
+    }
+
+    /**
+    Immediately prints a stacktrace to standard output
+    */
+    void printDebugStackTrace(GrContext context) {
+        import std.stdio : writeln;
+        foreach(string line; generateDebugStackTrace(context)) {
+            writeln(line);
+        }
+    }
+
+    /**
+    Tries to resolve a function from a position in the bytecode
+    */
+    private Nullable!(GrFunctionInfo) getFunctionInfo(uint position) {
+        Nullable!(GrFunctionInfo) bestInfo;
+        foreach(const GrDebugInfo _info; _bytecode.debugInfo) {
+            if(_info.classinfo == GrFunctionInfo.classinfo) {
+                auto info = cast(GrFunctionInfo) _info;
+                if(info.bytecodePosition <= position && info.bytecodePosition + info.length > position)
+                {
+                    if(bestInfo.isNull) {
+                        bestInfo = info;
+                    } else {
+                        if(bestInfo.get.length > info.length) {
+                            bestInfo = info;
+                        }
+                    }
+                }
+            }
+        }
+        return bestInfo;
+    }
+
+    /**
 	Raise an error message and attempt to recover from it. \
 	The error is raised inside a coroutine. \
 	___
@@ -196,9 +278,13 @@ class GrEngine {
         //Error message.
         _sglobalStackIn ~= message;
 
+        printDebugStackTrace(context);
+
         //We indicate that the coroutine is in a panic state until a catch is found.
         context.isPanicking = true;
+
         context.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
+
 
         /+
         //Exception handler found in the current function, just jump.
