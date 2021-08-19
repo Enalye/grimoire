@@ -1,3 +1,8 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 module grimoire.compiler.pretty;
 
 import std.conv : to;
@@ -178,13 +183,15 @@ string grGetPrettyFunction(string name, GrType[] inSignature, GrType[] outSignat
     }
     result ~= ")";
     if (outSignature.length)
-        result ~= " ";
+        result ~= "(";
     foreach (type; outSignature) {
         result ~= grGetPrettyType(type);
         if ((i + 2) <= outSignature.length)
             result ~= ", ";
         i++;
     }
+    if (outSignature.length)
+        result ~= ")";
     return result;
 }
 

@@ -17,7 +17,7 @@ void main() {
 
         GrCompiler compiler = new GrCompiler;
         compiler.addLibrary(stdlib);
-        GrBytecode bytecode = compiler.compileFile("script/test.gr", GrCompiler.Flag.symbols);
+        GrBytecode bytecode = compiler.compileFile("script/test.gr", GrOption.symbols);
         if (!bytecode) {
             writeln(compiler.getError().prettify());
             return;
@@ -42,19 +42,20 @@ void main() {
         while (engine.hasCoroutines)
             engine.process();
         if (engine.isPanicking) {
-            writeln("unhandled error: " ~ to!string(engine.panicMessage));
-            foreach(trace; engine.stackTraces) {
-                writeln("\tin ", trace.name, " at ", trace.pc);
+            writeln("panic: " ~ to!string(engine.panicMessage));
+            foreach (trace; engine.stackTraces) {
+                writeln("[", trace.pc, "] in ", trace.name, " at ", trace.file,
+                        "(", trace.line, ",", trace.column, ")");
             }
         }
         auto executionTime = MonoTime.currTime() - startTime;
 
         //Benchmark
-        writeln("Compilation took: \t", compilationTime);
-        writeln("Execution took: \t", executionTime);
+        writeln("compilation took: \t", compilationTime);
+        writeln("execution took: \t", executionTime);
         //writeln("Size of engine: ", GrEngine.classinfo.init.length, " Size of context: ", GrContext.classinfo.init.length);
 
-        writeln(engine.prettifyProfiling());
+        //writeln(engine.prettifyProfiling());
     }
     catch (Exception e) {
         writeln(e.msg);

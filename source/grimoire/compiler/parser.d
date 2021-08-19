@@ -65,11 +65,7 @@ final class GrParser {
 
     private {
         int _lastAssignationScopeLevel, _blockLevel;
-        bool _isProfiling;
-    }
-
-    void setProfiling(bool isProfiling) {
-        _isProfiling = true;
+        int _options;
     }
 
     /// Reset to the start of the sequence.
@@ -393,7 +389,7 @@ final class GrParser {
 
     private void endFunction() {
         int prependInstructionCount;
-        if (_isProfiling) {
+        if (_options & GrOption.profile) {
             prependInstructionCount++;
             const uint index = registerStringConstant(grGetPrettyFunction(currentFunction));
             addInstructionInFront(GrOpcode.debugProfileBegin, index);
@@ -664,6 +660,10 @@ final class GrParser {
         else
             instruction.value = value;
         currentFunction.instructions ~= instruction;
+
+        if (_options & GrOption.symbols) {
+            generateInstructionSymbol();
+        }
     }
 
     private void addInstructionInFront(GrOpcode opcode, int value = 0, bool isSigned = false) {
@@ -681,6 +681,25 @@ final class GrParser {
         else
             instruction.value = value;
         currentFunction.instructions = instruction ~ currentFunction.instructions;
+
+        if (_options & GrOption.symbols) {
+            generateInstructionSymbol();
+        }
+    }
+
+    private void generateInstructionSymbol() {
+        GrFunction.DebugPositionSymbol symbol;
+        int lexPos = (cast(int) current) - 2;
+        if (lexPos < 0) {
+            lexPos = 0;
+        }
+        if (lexPos >= cast(uint) lexemes.length) {
+            lexPos = cast(uint)((cast(int) lexemes.length) - 1);
+        }
+        GrLexeme lex = lexemes[lexPos];
+        symbol.line = lex.line + 1;
+        symbol.column = lex.column;
+        currentFunction.debugSymbol ~= symbol;
     }
 
     private void setInstruction(GrOpcode opcode, uint index, int value = 0u, bool isSigned = false) {
@@ -1783,8 +1802,9 @@ final class GrParser {
         }
     }
 
-    package void parseScript(GrData data, GrLexer lexer) {
+    package void parseScript(GrData data, GrLexer lexer, int options) {
         _data = data;
+        _options = options;
 
         bool isPublic;
         lexemes = lexer.lexemes;
@@ -4442,7 +4462,7 @@ final class GrParser {
 
     /// Add a `return` instruction that pop the callstack.
     private void addReturn() {
-        if (_isProfiling) {
+        if (_options & GrOption.profile) {
             addInstruction(GrOpcode.debugProfileEnd);
         }
         addInstruction(GrOpcode.return_);
@@ -4451,7 +4471,7 @@ final class GrParser {
     /// Add a `kill` instruction that stops the current task.
     private void addKill() {
         checkDeferStatement();
-        if (_isProfiling) {
+        if (_options & GrOption.profile) {
             addInstruction(GrOpcode.debugProfileEnd);
         }
         addInstruction(GrOpcode.kill_);
@@ -4460,7 +4480,7 @@ final class GrParser {
     /// Add a `killall` instruction that stops every tasks.
     private void addKillAll() {
         checkDeferStatement();
-        if (_isProfiling) {
+        if (_options & GrOption.profile) {
             addInstruction(GrOpcode.debugProfileEnd);
         }
         addInstruction(GrOpcode.killAll_);

@@ -1,3 +1,8 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 module grimoire.assembly.symbol;
 
 import std.format;
@@ -8,6 +13,12 @@ struct GrStackTrace {
     uint pc;
     /// The name of the function
     string name;
+    /// Source file from where the stack trace was generated
+    string file;
+    /// Position inside the source file where the error happened
+    uint line;
+    /// Ditto
+    uint column;
 }
 
 /**
@@ -37,6 +48,15 @@ final class GrFunctionSymbol : GrDebugSymbol {
         Name of the function
         */
         string name;
+        /// File where the function is defined
+        string file;
+        /// Corresponding position in the source for each bytecode
+        struct Position {
+            /// Source coordinates
+            uint line, column;
+        }
+        /// Ditto
+        Position[] positions;
     }
 
     override string prettify() {

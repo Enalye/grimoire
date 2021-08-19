@@ -450,6 +450,11 @@ package class GrFunction {
     uint fileId;
 
     uint lexPosition;
+
+    struct DebugPositionSymbol {
+        uint line, column;
+    }
+    DebugPositionSymbol[] debugSymbol;
 }
 
 /// Get the type of the function.

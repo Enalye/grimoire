@@ -6,6 +6,7 @@
 module grimoire.compiler;
 
 public {
+	import grimoire.compiler.util;
 	import grimoire.compiler.type;
 	import grimoire.compiler.compiler;
 	import grimoire.compiler.lexer;

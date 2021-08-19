@@ -169,7 +169,7 @@ class GrEngine {
     GrContext spawnEvent(string eventName) {
         const auto event = eventName in _bytecode.events;
         if (event is null)
-            throw new Exception("No event \'" ~ eventName ~ "\' in script");
+            throw new Exception("no event \'" ~ eventName ~ "\' in script");
         GrContext context = new GrContext(this);
         context.pc = *event;
         _contextsToSpawn.push(context);
@@ -190,7 +190,8 @@ class GrEngine {
     /**
     Immediately prints a stacktrace to standard output
     */
-    void generateStackTrace(GrContext context) {
+    import std.stdio;
+    private void generateStackTrace(GrContext context) {
         {
             GrStackTrace trace;
             trace.pc = context.pc;
@@ -200,6 +201,17 @@ class GrEngine {
             }
             else {
                 trace.name = func.get.name;
+                trace.file = func.get.file;
+                uint index = cast(uint) (cast(int) trace.pc - cast(int) func.get.start);
+                if(index < 0 || index >= func.get.positions.length) {
+                    trace.line = 0;
+                    trace.column = 0;
+                }
+                else {
+                    auto position = func.get.positions[index];
+                    trace.line = position.line;
+                    trace.column = position.column;
+                }
             }
             _stackTraces ~= trace;
         }
@@ -213,6 +225,17 @@ class GrEngine {
             }
             else {
                 trace.name = func.get.name;
+                trace.file = func.get.file;
+                uint index = cast(uint) (cast(int) trace.pc - cast(int) func.get.start);
+                if(index < 0 || index >= func.get.positions.length) {
+                    trace.line = 1;
+                    trace.column = 0;
+                }
+                else {
+                    auto position = func.get.positions[index];
+                    trace.line = position.line;
+                    trace.column = position.column;
+                }
             }
             _stackTraces ~= trace;
         }

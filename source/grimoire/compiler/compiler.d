@@ -7,22 +7,13 @@ module grimoire.compiler.compiler;
 
 import std.stdio, std.string, std.array, std.conv, std.math, std.file;
 import grimoire.runtime, grimoire.assembly;
-import grimoire.compiler.lexer, grimoire.compiler.parser, grimoire.compiler.primitive;
-import grimoire.compiler.type, grimoire.compiler.data, grimoire.compiler.error,
-	grimoire.compiler.mangle, grimoire.compiler.library, grimoire.compiler.pretty;
+import grimoire.compiler.util, grimoire.compiler.lexer, grimoire.compiler.parser,
+	grimoire.compiler.primitive, grimoire.compiler.type, grimoire.compiler.data,
+	grimoire.compiler.error, grimoire.compiler.mangle,
+	grimoire.compiler.library, grimoire.compiler.pretty;
 
 /// Compiler class, generate bytecode and hold errors.
 final class GrCompiler {
-	/// Compiler options
-	enum Flag {
-		/// Default
-		none = 0x0,
-		/// Generate debug symbols in the bytecode
-		symbols = 0x1,
-		/// Add profiling commands to bytecode to fill profiling information
-		profile = 0x2
-	}
-
 	private {
 		GrData _data;
 		GrError _error;
@@ -46,18 +37,16 @@ final class GrCompiler {
 	 * Returns:
 	 *  True if compilation was successful, otherwise check `getError()`
 	 */
-	GrBytecode compileFile(string fileName, int flags = Flag.none) {
+	GrBytecode compileFile(string fileName, int options = GrOption.none) {
 		_error = null;
 		try {
 			GrLexer lexer = new GrLexer;
 			lexer.scanFile(fileName);
 
 			GrParser parser = new GrParser;
-			if (flags & Flag.profile)
-				parser.setProfiling(true);
-			parser.parseScript(_data, lexer);
+			parser.parseScript(_data, lexer, options);
 
-			return generate(parser, flags);
+			return generate(lexer, parser, options);
 		}
 		catch (GrLexerException e) {
 			_error = e.error;
@@ -78,7 +67,7 @@ final class GrCompiler {
 		return ((value << 8u) & 0xffffff00) | (instr & 0xff);
 	}
 
-	private GrBytecode generate(GrParser parser, int flags) {
+	private GrBytecode generate(GrLexer lexer, GrParser parser, int options) {
 		uint nbOpcodes, lastOpcodeCount;
 
 		GrBytecode bytecode = new GrBytecode;
@@ -105,11 +94,18 @@ final class GrCompiler {
 		//Start with the global initializations
 		auto globalScope = parser.getFunction("@global");
 		if (globalScope) {
-			if (flags & Flag.symbols) {
+			if (options & GrOption.symbols) {
 				auto debugSymbol = new GrFunctionSymbol;
 				debugSymbol.start = lastOpcodeCount;
 				debugSymbol.name = grGetPrettyFunction(globalScope);
 				debugSymbol.length = cast(uint) globalScope.instructions.length;
+				debugSymbol.file = lexer.getFile(globalScope.fileId);
+				foreach(ref position; globalScope.debugSymbol) {
+					GrFunctionSymbol.Position pos;
+					pos.line = position.line;
+					pos.column = position.column;
+					debugSymbol.positions ~= pos;
+				}
 				bytecode.symbols ~= debugSymbol;
 			}
 
@@ -123,11 +119,18 @@ final class GrCompiler {
 		//Then write the main function (not callable).
 		auto mainFunc = parser.getFunction("main");
 		if (mainFunc) {
-			if (flags & Flag.symbols) {
+			if (options & GrOption.symbols) {
 				auto debugSymbol = new GrFunctionSymbol();
 				debugSymbol.start = lastOpcodeCount;
 				debugSymbol.name = grGetPrettyFunction(mainFunc);
 				debugSymbol.length = cast(uint) mainFunc.instructions.length;
+				debugSymbol.file = lexer.getFile(mainFunc.fileId);
+				foreach(ref position; mainFunc.debugSymbol) {
+					GrFunctionSymbol.Position pos;
+					pos.line = position.line;
+					pos.column = position.column;
+					debugSymbol.positions ~= pos;
+				}
 				bytecode.symbols ~= debugSymbol;
 			}
 
@@ -148,11 +151,18 @@ final class GrCompiler {
 		//Every other functions.
 		uint[string] events;
 		foreach (GrFunction func; parser.events) {
-			if (flags & Flag.symbols) {
+			if (options & GrOption.symbols) {
 				auto debugSymbol = new GrFunctionSymbol();
 				debugSymbol.start = lastOpcodeCount;
 				debugSymbol.name = grGetPrettyFunction(func);
 				debugSymbol.length = cast(uint) func.instructions.length;
+				debugSymbol.file = lexer.getFile(func.fileId);
+				foreach(ref position; func.debugSymbol) {
+					GrFunctionSymbol.Position pos;
+					pos.line = position.line;
+					pos.column = position.column;
+					debugSymbol.positions ~= pos;
+				}
 				bytecode.symbols ~= debugSymbol;
 			}
 
@@ -166,11 +176,18 @@ final class GrCompiler {
 			events[func.mangledName] = func.position;
 		}
 		foreach (func; parser.anonymousFunctions) {
-			if (flags & Flag.symbols) {
+			if (options & GrOption.symbols) {
 				auto debugSymbol = new GrFunctionSymbol();
 				debugSymbol.start = lastOpcodeCount;
 				debugSymbol.name = grGetPrettyFunction(func);
 				debugSymbol.length = cast(uint) func.instructions.length;
+				debugSymbol.file = lexer.getFile(func.fileId);
+				foreach(ref position; func.debugSymbol) {
+					GrFunctionSymbol.Position pos;
+					pos.line = position.line;
+					pos.column = position.column;
+					debugSymbol.positions ~= pos;
+				}
 				bytecode.symbols ~= debugSymbol;
 			}
 			foreach (size_t i, instruction; func.instructions)
@@ -182,11 +199,18 @@ final class GrCompiler {
 			lastOpcodeCount += func.instructions.length;
 		}
 		foreach (func; parser.functions) {
-			if (flags & Flag.symbols) {
+			if (options & GrOption.symbols) {
 				auto debugSymbol = new GrFunctionSymbol();
 				debugSymbol.start = lastOpcodeCount;
 				debugSymbol.name = grGetPrettyFunction(func);
 				debugSymbol.length = cast(uint) func.instructions.length;
+				debugSymbol.file = lexer.getFile(func.fileId);
+				foreach(ref position; func.debugSymbol) {
+					GrFunctionSymbol.Position pos;
+					pos.line = position.line;
+					pos.column = position.column;
+					debugSymbol.positions ~= pos;
+				}
 				bytecode.symbols ~= debugSymbol;
 			}
 			foreach (size_t i, instruction; func.instructions)
