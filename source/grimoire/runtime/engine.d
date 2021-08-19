@@ -12,9 +12,7 @@ import std.math;
 import std.algorithm.mutation : swapAt;
 import std.typecons : Nullable;
 
-import grimoire.compiler;
-import grimoire.assembly;
-import grimoire.assembly.debug_info;
+import grimoire.compiler, grimoire.assembly;
 
 import grimoire.runtime.context;
 import grimoire.runtime.array;
@@ -57,6 +55,8 @@ class GrEngine {
         bool _isPanicking;
         /// Unhandled panic message.
         string _panicMessage;
+        /// Stack traces are generated each time an error is raised.
+        GrStackTrace[] _stackTraces;
 
         /// Extra type compiler information.
         string _meta;
@@ -79,6 +79,11 @@ class GrEngine {
         /// Whether the whole VM has panicked, true if an unhandled error occurred.
         bool isPanicking() const {
             return _isPanicking;
+        }
+
+        /// If the VM has raised an error, stack traces are generated.
+        const(GrStackTrace[]) stackTraces() const {
+            return _stackTraces;
         }
 
         /// The unhandled error message.
@@ -183,75 +188,50 @@ class GrEngine {
     }
 
     /**
-    Generates a developer friendly stacktrace
-    */
-    string[] generateDebugStackTrace(GrContext context) {
-        import std.format : format;
-        string[] trace = [];
-        int frameCounter = 1;
-        foreach (GrStackFrame frame; context.callStack[1..$]) {
-            auto maybeFunc = getFunctionInfo(frame.retPosition);
-            if(maybeFunc.isNull) {
-                trace ~= format!"#%d\tUnknown Function\tinstr %d (??/??)"(
-                    frameCounter,
-                    frame.retPosition
-                );
-            } else {
-                trace ~= format!"#%d\t%s\tinstr %d (%d/%d)"(
-                    frameCounter, 
-                    maybeFunc.get.functionName,
-                    frame.retPosition,
-                    frame.retPosition - maybeFunc.get.bytecodePosition,
-                    maybeFunc.get.length,    
-                );
-            }
-            frameCounter++;
-        }
-
-        
-        auto maybeFunc = getFunctionInfo(context.pc);
-        if(maybeFunc.isNull) {
-            trace ~= format!"#%d\tUnknown Function\tinstr %d (??/??)"(
-                frameCounter,
-                context.pc,
-            );
-        } else {
-            trace ~= format!"#%d\t%s\tinstr %d (%d/%d)"(
-                frameCounter, 
-                maybeFunc.get.functionName,
-                context.pc,
-                context.pc - maybeFunc.get.bytecodePosition,
-                maybeFunc.get.length,    
-            );
-        }
-
-        return trace;
-    }
-
-    /**
     Immediately prints a stacktrace to standard output
     */
-    void printDebugStackTrace(GrContext context) {
-        import std.stdio : writeln;
-        foreach(string line; generateDebugStackTrace(context)) {
-            writeln(line);
+    void generateStackTrace(GrContext context) {
+        {
+            GrStackTrace trace;
+            trace.pc = context.pc;
+            auto func = getFunctionInfo(context.pc);
+            if (func.isNull) {
+                trace.name = "?";
+            }
+            else {
+                trace.name = func.get.name;
+            }
+            _stackTraces ~= trace;
+        }
+
+        for (int i = context.stackPos - 1; i >= 0; i--) {
+            GrStackTrace trace;
+            trace.pc = cast(uint)((cast(int) context.callStack[i].retPosition) - 1);
+            auto func = getFunctionInfo(trace.pc);
+            if (func.isNull) {
+                trace.name = "?";
+            }
+            else {
+                trace.name = func.get.name;
+            }
+            _stackTraces ~= trace;
         }
     }
 
     /**
     Tries to resolve a function from a position in the bytecode
     */
-    private Nullable!(GrFunctionInfo) getFunctionInfo(uint position) {
-        Nullable!(GrFunctionInfo) bestInfo;
-        foreach(const GrDebugInfo _info; _bytecode.debugInfo) {
-            if(_info.classinfo == GrFunctionInfo.classinfo) {
-                auto info = cast(GrFunctionInfo) _info;
-                if(info.bytecodePosition <= position && info.bytecodePosition + info.length > position)
-                {
-                    if(bestInfo.isNull) {
+    private Nullable!(GrFunctionSymbol) getFunctionInfo(uint position) {
+        Nullable!(GrFunctionSymbol) bestInfo;
+        foreach (const GrDebugSymbol symbol; _bytecode.symbols) {
+            if (symbol.classinfo == GrFunctionSymbol.classinfo) {
+                auto info = cast(GrFunctionSymbol) symbol;
+                if (info.start <= position && info.start + info.length > position) {
+                    if (bestInfo.isNull) {
                         bestInfo = info;
-                    } else {
-                        if(bestInfo.get.length > info.length) {
+                    }
+                    else {
+                        if (bestInfo.get.length > info.length) {
                             bestInfo = info;
                         }
                     }
@@ -278,13 +258,12 @@ class GrEngine {
         //Error message.
         _sglobalStackIn ~= message;
 
-        printDebugStackTrace(context);
+        generateStackTrace(context);
 
         //We indicate that the coroutine is in a panic state until a catch is found.
         context.isPanicking = true;
 
         context.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
-
 
         /+
         //Exception handler found in the current function, just jump.
@@ -527,6 +506,7 @@ class GrEngine {
                         //Error message.
                         _sglobalStackIn ~= context.sstack[context.sstackPos];
                         context.sstackPos--;
+                        generateStackTrace(context);
 
                         //We indicate that the coroutine is in a panic state until a catch is found.
                         context.isPanicking = true;
@@ -580,6 +560,7 @@ class GrEngine {
                     context.callStack[context.stackPos].exceptionHandlers.length--;
                     if (context.isPanicking) {
                         context.isPanicking = false;
+                        _stackTraces.length = 0;
                         context.pc++;
                     }
                     else {
@@ -2427,12 +2408,3 @@ class GrEngine {
         }
     }
 }
-
-///Temp
-/*void raiseDump(GrContext context) {
-    import std.stdio: writeln;
-    writeln("error raised at: ", context.pc);
-    for (int i = context.stackPos - 1; i >= 0; i --) {
-        writeln("at: ", context.callStack[i].retPosition);
-    }
-}*/

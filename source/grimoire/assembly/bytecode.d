@@ -6,7 +6,7 @@
 module grimoire.assembly.bytecode;
 
 import std.file, std.bitmanip, std.array, std.outbuffer;
-import grimoire.assembly.debug_info;
+import grimoire.assembly.symbol;
 
 /// Low-level instructions for the VM.
 enum GrOpcode {
@@ -279,7 +279,7 @@ final class GrBytecode {
         /// Global variable references
         GrGlobalReference[string] globalReferences;
 
-        GrDebugInfo[] debugInfo;
+        GrDebugSymbol[] symbols;
     }
 
     private immutable magicWord = "grb";
@@ -302,7 +302,7 @@ final class GrBytecode {
         oglobalsCount = bytecode.oglobalsCount;
         events = bytecode.events;
         globalReferences = bytecode.globalReferences;
-        debugInfo = bytecode.debugInfo.dup;
+        symbols = bytecode.symbols.dup; //@TODO: change the shallow copy
     }
 
     /// Load from a file
@@ -384,6 +384,8 @@ final class GrBytecode {
             buffer.append!uint(reference.index);
             buffer.append!uint(reference.typeMask);
         }
+
+        // @TODO: serialize debug symbols
 
         return buffer.data;
     }
@@ -481,10 +483,13 @@ final class GrBytecode {
             reference.typeMask = buffer.read!uint();
             globalReferences[name] = reference;
         }
+
+        // @TODO: deserialize debug symbols
     }
 
-    public GrDebugInfo[] getDebugInfo() {
-        return debugInfo;
+        // @TODO: remove that
+    public GrDebugSymbol[] getDebugInfo() {
+        return symbols;
     }
 }
 

@@ -17,7 +17,7 @@ void main() {
 
         GrCompiler compiler = new GrCompiler;
         compiler.addLibrary(stdlib);
-        GrBytecode bytecode = compiler.compileFile("script/test.gr", GrCompiler.Flags.none);
+        GrBytecode bytecode = compiler.compileFile("script/test.gr", GrCompiler.Flag.symbols);
         if (!bytecode) {
             writeln(compiler.getError().prettify());
             return;
@@ -41,8 +41,12 @@ void main() {
 
         while (engine.hasCoroutines)
             engine.process();
-        if (engine.isPanicking)
+        if (engine.isPanicking) {
             writeln("unhandled error: " ~ to!string(engine.panicMessage));
+            foreach(trace; engine.stackTraces) {
+                writeln("\tin ", trace.name, " at ", trace.pc);
+            }
+        }
         auto executionTime = MonoTime.currTime() - startTime;
 
         //Benchmark

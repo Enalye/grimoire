@@ -10,16 +10,17 @@ import grimoire.runtime, grimoire.assembly;
 import grimoire.compiler.lexer, grimoire.compiler.parser, grimoire.compiler.primitive;
 import grimoire.compiler.type, grimoire.compiler.data, grimoire.compiler.error,
 	grimoire.compiler.mangle, grimoire.compiler.library, grimoire.compiler.pretty;
-import grimoire.assembly.debug_info;
 
 /// Compiler class, generate bytecode and hold errors.
 final class GrCompiler {
 	/// Compiler options
-	enum Flags {
+	enum Flag {
 		/// Default
 		none = 0x0,
+		/// Generate debug symbols in the bytecode
+		symbols = 0x1,
 		/// Add profiling commands to bytecode to fill profiling information
-		profile = 0x1
+		profile = 0x2
 	}
 
 	private {
@@ -45,18 +46,18 @@ final class GrCompiler {
 	 * Returns:
 	 *  True if compilation was successful, otherwise check `getError()`
 	 */
-	GrBytecode compileFile(string fileName, int flags = Flags.none) {
+	GrBytecode compileFile(string fileName, int flags = Flag.none) {
 		_error = null;
 		try {
 			GrLexer lexer = new GrLexer;
 			lexer.scanFile(fileName);
 
 			GrParser parser = new GrParser;
-			if (flags & Flags.profile)
+			if (flags & Flag.profile)
 				parser.setProfiling(true);
 			parser.parseScript(_data, lexer);
 
-			return generate(parser);
+			return generate(parser, flags);
 		}
 		catch (GrLexerException e) {
 			_error = e.error;
@@ -77,7 +78,7 @@ final class GrCompiler {
 		return ((value << 8u) & 0xffffff00) | (instr & 0xff);
 	}
 
-	private GrBytecode generate(GrParser parser) {
+	private GrBytecode generate(GrParser parser, int flags) {
 		uint nbOpcodes, lastOpcodeCount;
 
 		GrBytecode bytecode = new GrBytecode;
@@ -103,40 +104,41 @@ final class GrCompiler {
 
 		//Start with the global initializations
 		auto globalScope = parser.getFunction("@global");
-		{
-			auto debug_info = new GrFunctionInfo();
-			debug_info.bytecodePosition = lastOpcodeCount;
-			debug_info.functionName = "@global";
-			bytecode.debugInfo ~= debug_info;
-			if (globalScope) {
-				foreach (size_t i, instruction; globalScope.instructions)
-					opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
-							instruction.value);
-				lastOpcodeCount += cast(uint) globalScope.instructions.length;
-				debug_info.length = cast(uint) globalScope.instructions.length;
-				parser.removeFunction("@global");
+		if (globalScope) {
+			if (flags & Flag.symbols) {
+				auto debugSymbol = new GrFunctionSymbol;
+				debugSymbol.start = lastOpcodeCount;
+				debugSymbol.name = grGetPrettyFunction(globalScope);
+				debugSymbol.length = cast(uint) globalScope.instructions.length;
+				bytecode.symbols ~= debugSymbol;
 			}
+
+			foreach (size_t i, instruction; globalScope.instructions)
+				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
+						instruction.value);
+			lastOpcodeCount += cast(uint) globalScope.instructions.length;
+			parser.removeFunction("@global");
 		}
 
 		//Then write the main function (not callable).
 		auto mainFunc = parser.getFunction("main");
 		if (mainFunc) {
-			{
-				auto debug_info = new GrFunctionInfo();
-				debug_info.bytecodePosition = lastOpcodeCount;
-				debug_info.functionName = "main";
-				bytecode.debugInfo ~= debug_info;
-
-				mainFunc.position = lastOpcodeCount;
-				foreach (size_t i, instruction; mainFunc.instructions)
-					opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
-							instruction.value);
-				foreach (call; mainFunc.functionCalls)
-					call.position += lastOpcodeCount;
-				lastOpcodeCount += cast(uint) mainFunc.instructions.length;
-				debug_info.length = cast(uint) mainFunc.instructions.length;
-				parser.removeFunction("main");
+			if (flags & Flag.symbols) {
+				auto debugSymbol = new GrFunctionSymbol();
+				debugSymbol.start = lastOpcodeCount;
+				debugSymbol.name = grGetPrettyFunction(mainFunc);
+				debugSymbol.length = cast(uint) mainFunc.instructions.length;
+				bytecode.symbols ~= debugSymbol;
 			}
+
+			mainFunc.position = lastOpcodeCount;
+			foreach (size_t i, instruction; mainFunc.instructions)
+				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
+						instruction.value);
+			foreach (call; mainFunc.functionCalls)
+				call.position += lastOpcodeCount;
+			lastOpcodeCount += cast(uint) mainFunc.instructions.length;
+			parser.removeFunction("main");
 		}
 		else {
 			opcodes[lastOpcodeCount] = makeOpcode(cast(uint) GrOpcode.kill_, 0u);
@@ -146,55 +148,54 @@ final class GrCompiler {
 		//Every other functions.
 		uint[string] events;
 		foreach (GrFunction func; parser.events) {
-			{
-				auto debug_info = new GrFunctionInfo();
-				debug_info.bytecodePosition = lastOpcodeCount;
-				debug_info.functionName = func.name;
-				bytecode.debugInfo ~= debug_info;
-
-				foreach (size_t i, instruction; func.instructions)
-					opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
-							instruction.value);
-				foreach (call; func.functionCalls)
-					call.position += lastOpcodeCount;
-				func.position = lastOpcodeCount;
-				lastOpcodeCount += cast(uint) func.instructions.length;
-				debug_info.length = cast(uint) func.instructions.length;
-				events[func.mangledName] = func.position;
+			if (flags & Flag.symbols) {
+				auto debugSymbol = new GrFunctionSymbol();
+				debugSymbol.start = lastOpcodeCount;
+				debugSymbol.name = grGetPrettyFunction(func);
+				debugSymbol.length = cast(uint) func.instructions.length;
+				bytecode.symbols ~= debugSymbol;
 			}
+
+			foreach (size_t i, instruction; func.instructions)
+				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
+						instruction.value);
+			foreach (call; func.functionCalls)
+				call.position += lastOpcodeCount;
+			func.position = lastOpcodeCount;
+			lastOpcodeCount += cast(uint) func.instructions.length;
+			events[func.mangledName] = func.position;
 		}
 		foreach (func; parser.anonymousFunctions) {
-			{
-				auto debug_info = new GrFunctionInfo();
-				debug_info.bytecodePosition = lastOpcodeCount;
-				debug_info.functionName = func.name;
-				bytecode.debugInfo ~= debug_info;
-
-				foreach (size_t i, instruction; func.instructions)
-					opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
-							instruction.value);
-				foreach (call; func.functionCalls)
-					call.position += lastOpcodeCount;
-				func.position = lastOpcodeCount;
-				lastOpcodeCount += func.instructions.length;
-				debug_info.length = cast(uint) func.instructions.length;
+			if (flags & Flag.symbols) {
+				auto debugSymbol = new GrFunctionSymbol();
+				debugSymbol.start = lastOpcodeCount;
+				debugSymbol.name = grGetPrettyFunction(func);
+				debugSymbol.length = cast(uint) func.instructions.length;
+				bytecode.symbols ~= debugSymbol;
 			}
+			foreach (size_t i, instruction; func.instructions)
+				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
+						instruction.value);
+			foreach (call; func.functionCalls)
+				call.position += lastOpcodeCount;
+			func.position = lastOpcodeCount;
+			lastOpcodeCount += func.instructions.length;
 		}
 		foreach (func; parser.functions) {
-			{
-				auto debug_info = new GrFunctionInfo();
-				debug_info.bytecodePosition = lastOpcodeCount;
-				debug_info.functionName = func.name;
-				bytecode.debugInfo ~= debug_info;
-				foreach (size_t i, instruction; func.instructions)
-					opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
-							instruction.value);
-				foreach (call; func.functionCalls)
-					call.position += lastOpcodeCount;
-				func.position = lastOpcodeCount;
-				debug_info.length = cast(uint) func.instructions.length;
-				lastOpcodeCount += func.instructions.length;
+			if (flags & Flag.symbols) {
+				auto debugSymbol = new GrFunctionSymbol();
+				debugSymbol.start = lastOpcodeCount;
+				debugSymbol.name = grGetPrettyFunction(func);
+				debugSymbol.length = cast(uint) func.instructions.length;
+				bytecode.symbols ~= debugSymbol;
 			}
+			foreach (size_t i, instruction; func.instructions)
+				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
+						instruction.value);
+			foreach (call; func.functionCalls)
+				call.position += lastOpcodeCount;
+			func.position = lastOpcodeCount;
+			lastOpcodeCount += func.instructions.length;
 		}
 		parser.solveFunctionCalls(opcodes);
 
