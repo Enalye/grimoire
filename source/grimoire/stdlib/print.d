@@ -5,9 +5,9 @@
  */
 module grimoire.stdlib.print;
 
-import std.stdio : write, writeln;
 import std.conv : to;
 import grimoire.compiler, grimoire.runtime;
+import grimoire.stdlib.util;
 
 package(grimoire.stdlib) void grLoadStdLibPrint(GrLibrary library) {
 	//print
@@ -29,25 +29,6 @@ package(grimoire.stdlib) void grLoadStdLibPrint(GrLibrary library) {
 	library.addPrimitive(&_printlnb, "printl", [grBoolArray]);
 	library.addPrimitive(&_printlnf, "printl", [grFloatArray]);
 	library.addPrimitive(&_printlns, "printl", [grStringArray]);
-}
-
-private {
-	void function(string) _stdOut = &_defaultOutput;
-}
-
-/// Sets the output of print and printl primitives
-void grSetOutputFunction(void function(string) callback) {
-	if (!callback) {
-		_stdOut = &_defaultOutput;
-		return;
-	}
-	_stdOut = callback;
-}
-
-private void _defaultOutput(string message) {
-	import std.stdio : write;
-
-	write(message);
 }
 
 // print

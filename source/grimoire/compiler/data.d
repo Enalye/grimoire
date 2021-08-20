@@ -418,8 +418,6 @@ class GrData {
                     return null;
             }
             checkUnknownClasses(primitive.outSignature[i]);
-            if (primitive.outSignature[i].baseType == GrBaseType.class_) {
-            }
         }
         primitive.mangledName = grMangleComposite(primitive.name, primitive.inSignature);
         primitive.index = cast(uint) _primitives.length;
@@ -434,6 +432,8 @@ class GrData {
         switch(type.baseType) with(GrBaseType) {
         case class_:
             GrClassDefinition classDef = getClass(type.mangledType, 0, true);
+            if(!classDef)
+                throw new Exception("undefined class `" ~ type.mangledType ~ "`");
             foreach(GrType fieldType; classDef.signature)
                 checkUnknownClasses(fieldType);
             break;

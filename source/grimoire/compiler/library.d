@@ -114,9 +114,9 @@ class GrLibrary {
         enum_.isPublic = true;
         _enumDefinitions ~= enum_;
 
-        GrType stType = GrBaseType.enum_;
-        stType.mangledType = name;
-        return stType;
+        GrType type = GrBaseType.enum_;
+        type.mangledType = name;
+        return type;
     }
 
     /// Define a class type.
@@ -143,9 +143,10 @@ class GrLibrary {
             class_.fieldsInfo[i].position = 0;
         }
 
-        GrType stType = GrBaseType.class_;
-        stType.mangledType = name;
-        return stType;
+        GrType type = GrBaseType.class_;
+        type.mangledType = name;
+        type.isAbstract = class_.templateVariables.length > 0;
+        return type;
     }
 
     /// Define a type alias
@@ -169,8 +170,10 @@ class GrLibrary {
         foreign.parent = parent;
         foreign.parentTemplateSignature = parentTemplateSignature;
         _abstractForeignDefinitions ~= foreign;
+
         GrType type = GrBaseType.foreign;
         type.mangledType = name;
+        type.isAbstract = foreign.templateVariables.length > 0;
         return type;
     }
 
@@ -179,10 +182,20 @@ class GrLibrary {
             GrType[] inSignature = [], GrType[] outSignature = []) {
         bool isAbstract;
         foreach (GrType type; inSignature) {
+            if (type.isAbstract)
+                throw new Exception("`" ~ grGetPrettyFunction(name, inSignature,
+                        outSignature) ~ "` can't use type `" ~ grGetPrettyType(
+                        type) ~ "` as it is abstract");
             if (type.isAny) {
                 isAbstract = true;
                 break;
             }
+        }
+        foreach (GrType type; outSignature) {
+            if (type.isAbstract)
+                throw new Exception("`" ~ grGetPrettyFunction(name, inSignature,
+                        outSignature) ~ "` can't use type `" ~ grGetPrettyType(
+                        type) ~ "` as it is abstract");
         }
 
         GrPrimitive primitive = new GrPrimitive;

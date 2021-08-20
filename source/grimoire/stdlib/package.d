@@ -13,7 +13,7 @@ import grimoire.stdlib.string;
 import grimoire.stdlib.channel;
 import grimoire.stdlib.print;
 import grimoire.stdlib.math;
-import grimoire.stdlib.vector;
+import grimoire.stdlib.vec2;
 import grimoire.stdlib.color;
 import grimoire.stdlib.test;
 import grimoire.stdlib.time;
@@ -29,7 +29,7 @@ GrLibrary grLoadStdLibrary() {
     grLoadStdLibChannel(library);
     grLoadStdLibPrint(library);
     grLoadStdLibMath(library);
-    grLoadStdLibVector(library);
+    grLoadStdLibVec2(library);
     grLoadStdLibColor(library);
     grLoadStdLibTest(library);
     grLoadStdLibTime(library);

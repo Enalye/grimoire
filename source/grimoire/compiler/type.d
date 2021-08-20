@@ -50,6 +50,9 @@ struct GrType {
     bool isField;
     /// Can this type match with others ?
     bool isAny;
+    /// Is the type abstract ?
+    /// An abstract type cannot be used in signatures.
+    bool isAbstract;
     /// Predicate to validate any type
     bool function(GrType, GrAnyData) predicate;
 
