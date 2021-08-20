@@ -61,10 +61,9 @@ final class GrParser {
             oglobalsCount;
     }
 
-    private GrData _data;
-
     private {
-        int _lastAssignationScopeLevel, _blockLevel;
+        GrData _data;
+        bool _isAssignationOptimizable;
         int _options;
     }
 
@@ -1318,21 +1317,9 @@ final class GrParser {
         return GrType(GrBaseType.void_);
     }
 
-    void increaseBlockLevel() {
-        _blockLevel++;
-        if (_blockLevel == _lastAssignationScopeLevel)
-            _lastAssignationScopeLevel = -1;
-    }
-
-    void decreaseBlockLevel() {
-        _blockLevel--;
-        if (_blockLevel == _lastAssignationScopeLevel)
-            _lastAssignationScopeLevel = -1;
-    }
-
     private void addSetInstruction(GrVariable variable, uint fileId,
             GrType valueType = grVoid, bool isExpectingValue = false) {
-        _lastAssignationScopeLevel = _blockLevel;
+        _isAssignationOptimizable = true;
         if (variable.isConstant)
             logError("`" ~ variable.name ~ "` is const and can't be modified",
                     "can't modify a const `" ~ grGetPrettyType(variable.type) ~ "`");
@@ -1495,7 +1482,7 @@ final class GrParser {
     ///Add a load opcode, or optimize a previous store.
     void addGetInstruction(GrVariable variable, GrType expectedType = grVoid,
             bool allowOptimization = true) {
-        if (_lastAssignationScopeLevel != _blockLevel) {
+        if (!_isAssignationOptimizable) {
             /+--------------------------
                 Optimizing getters should take care of scope levels as jumps will break the VM.
                 This shouldn't be optimized as the stack will be empty on the second pass.
@@ -2948,7 +2935,7 @@ final class GrParser {
     */
     private void parseBlock(bool changeOptimizationBlockLevel = false) {
         if (changeOptimizationBlockLevel)
-            increaseBlockLevel();
+            _isAssignationOptimizable = false;
         bool isMultiline;
         if (get().type == GrLexemeType.leftCurlyBrace) {
             isMultiline = true;
@@ -3052,7 +3039,7 @@ final class GrParser {
         }
         closeBlock();
         if (changeOptimizationBlockLevel)
-            decreaseBlockLevel();
+            _isAssignationOptimizable = false;
     }
 
     private bool isDeclaration() {
@@ -3350,7 +3337,7 @@ final class GrParser {
     //Break
     private void openBreakableSection() {
         breaksJumps ~= [null];
-        increaseBlockLevel();
+        _isAssignationOptimizable = false;
     }
 
     private void closeBreakableSection() {
@@ -3363,7 +3350,7 @@ final class GrParser {
         foreach (position; breaks)
             setInstruction(GrOpcode.jump, position,
                     cast(int)(currentFunction.instructions.length - position), true);
-        decreaseBlockLevel();
+        _isAssignationOptimizable = false;
     }
 
     private void parseBreak() {
@@ -3378,7 +3365,7 @@ final class GrParser {
     //Continue
     private void openContinuableSection() {
         continuesJumps.length++;
-        increaseBlockLevel();
+        _isAssignationOptimizable = false;
     }
 
     private void closeContinuableSection() {
@@ -3392,7 +3379,7 @@ final class GrParser {
 
         foreach (position; continues)
             setInstruction(GrOpcode.jump, position, cast(int)(destination - position), true);
-        decreaseBlockLevel();
+        _isAssignationOptimizable = false;
     }
 
     private void setContinuableSectionDestination() {
