@@ -16,7 +16,7 @@ package(grimoire.stdlib) void grLoadStdLibTest(GrLibrary library) {
 private void _assert(GrCall call) {
     const bool value = call.getBool(0);
     if (!value)
-        call.raise("Assertion Failure");
+        call.raise("AssertError");
 }
 
 private void _assert_msg(GrCall call) {

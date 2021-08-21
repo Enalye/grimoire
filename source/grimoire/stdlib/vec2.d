@@ -36,6 +36,11 @@ package void grLoadStdLibVec2(GrLibrary library) {
     _vec2fTypeName = grMangleComposite("Vec2", [grFloat]);
 
     // Ctors
+    library.addPrimitive(&_vec2i_1, "Vec2", [grInt], [vec2iType]);
+    library.addPrimitive(&_vec2f_1, "Vec2", [grFloat], [vec2fType]);
+    library.addPrimitive(&_vec2i_2, "Vec2", [grInt, grInt], [vec2iType]);
+    library.addPrimitive(&_vec2f_2, "Vec2", [grFloat, grFloat], [vec2fType]);
+
     library.addPrimitive(&_vec2i_0, "Vec2i", [], [vec2iType]);
     library.addPrimitive(&_vec2i_1, "Vec2i", [grInt], [vec2iType]);
     library.addPrimitive(&_vec2i_2, "Vec2i", [grInt, grInt], [vec2iType]);
@@ -43,6 +48,10 @@ package void grLoadStdLibVec2(GrLibrary library) {
     library.addPrimitive(&_vec2f_0, "Vec2f", [], [vec2fType]);
     library.addPrimitive(&_vec2f_1, "Vec2f", [grFloat], [vec2fType]);
     library.addPrimitive(&_vec2f_2, "Vec2f", [grFloat, grFloat], [vec2fType]);
+
+    // Cast
+    library.addCast(&_vec2i_vec2f, vec2iType, vec2fType);
+    library.addCast(&_vec2f_vec2i, vec2fType, vec2iType);
 
     // Prints
     library.addPrimitive(&_printVec2i, "print", [vec2iType]);
@@ -92,7 +101,17 @@ package void grLoadStdLibVec2(GrLibrary library) {
     library.addPrimitive(&_rightVec2i, "Vec2i_right", [], [vec2iType]);
     library.addPrimitive(&_rightVec2f, "Vec2f_right", [], [vec2fType]);
 
+    library.addPrimitive(&_unpackVec2i, "unpack", [vec2fType], [grInt, grInt]);
+    library.addPrimitive(&_unpackVec2f, "unpack", [vec2fType], [
+            grFloat, grFloat
+            ]);
+
+    library.addPrimitive(&_isZeroVec2i, "zero?", [vec2iType], [grBool]);
+    library.addPrimitive(&_isZeroVec2f, "zero?", [vec2fType], [grBool]);
+
     // Operations
+    library.addPrimitive(&_sumVec2i, "sum", [vec2iType], [grInt]);
+    library.addPrimitive(&_sumVec2f, "sum", [vec2fType], [grFloat]);
     library.addPrimitive(&_distanceVec2i, "distance", [vec2iType, vec2iType], [
             grFloat
             ]);
@@ -183,6 +202,31 @@ private void _vec2f_2(GrCall call) {
     self.setFloat("x", call.getFloat(0));
     self.setFloat("y", call.getFloat(1));
     call.setObject(self);
+}
+
+// Cast ------------------------------------------
+private void _vec2i_vec2f(GrCall call) {
+    auto self = call.getObject(0);
+    if (!self) {
+        call.raise("NullError");
+        return;
+    }
+    GrObject v = call.createObject(_vec2fTypeName);
+    v.setFloat("x", cast(float) self.getInt("x"));
+    v.setFloat("y", cast(float) self.getInt("y"));
+    call.setObject(v);
+}
+
+private void _vec2f_vec2i(GrCall call) {
+    auto self = call.getObject(0);
+    if (!self) {
+        call.raise("NullError");
+        return;
+    }
+    GrObject v = call.createObject(_vec2iTypeName);
+    v.setInt("x", cast(int) self.getFloat("x"));
+    v.setInt("y", cast(int) self.getFloat("y"));
+    call.setObject(v);
 }
 
 // Prints ------------------------------------------
@@ -396,7 +440,63 @@ private void _rightVec2f(GrCall call) {
     call.setObject(self);
 }
 
+private void _unpackVec2i(GrCall call) {
+    auto self = call.getObject(0);
+    if (!self) {
+        call.raise("NullError");
+        return;
+    }
+    call.setInt(self.getInt("x"));
+    call.setInt(self.getInt("y"));
+}
+
+private void _unpackVec2f(GrCall call) {
+    auto self = call.getObject(0);
+    if (!self) {
+        call.raise("NullError");
+        return;
+    }
+    call.setFloat(self.getFloat("x"));
+    call.setFloat(self.getFloat("y"));
+}
+
+private void _isZeroVec2i(GrCall call) {
+    auto self = call.getObject(0);
+    if (!self) {
+        call.raise("NullError");
+        return;
+    }
+    call.setBool(self.getInt("x") == 0 && self.getInt("y") == 0);
+}
+
+private void _isZeroVec2f(GrCall call) {
+    auto self = call.getObject(0);
+    if (!self) {
+        call.raise("NullError");
+        return;
+    }
+    call.setBool(self.getFloat("x") == 0f && self.getFloat("y") == 0f);
+}
+
 // Operations ------------------------------------------
+private void _sumVec2i(GrCall call) {
+    GrObject self = call.getObject(0);
+    if (!self) {
+        call.raise("NullError");
+        return;
+    }
+    call.setInt(self.getInt("x") + self.getInt("y"));
+}
+
+private void _sumVec2f(GrCall call) {
+    GrObject self = call.getObject(0);
+    if (!self) {
+        call.raise("NullError");
+        return;
+    }
+    call.setFloat(self.getFloat("x") + self.getFloat("y"));
+}
+
 private void _distanceVec2i(GrCall call) {
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
