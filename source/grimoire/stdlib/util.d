@@ -9,13 +9,18 @@ package {
 	void function(string) _stdOut = &_defaultOutput;
 }
 
-/// Sets the output of print and printl primitives
+/// Sets the output callback of print and printl primitives
 void grSetOutputFunction(void function(string) callback) {
 	if (!callback) {
 		_stdOut = &_defaultOutput;
 		return;
 	}
 	_stdOut = callback;
+}
+
+/// Gets the output callback of print and printl primitives
+void function(string) grGetOutputFunction() {
+	return _stdOut;
 }
 
 private void _defaultOutput(string message) {

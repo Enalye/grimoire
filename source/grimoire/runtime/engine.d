@@ -190,7 +190,6 @@ class GrEngine {
     /**
     Immediately prints a stacktrace to standard output
     */
-    import std.stdio;
     private void generateStackTrace(GrContext context) {
         {
             GrStackTrace trace;
@@ -202,8 +201,8 @@ class GrEngine {
             else {
                 trace.name = func.get.name;
                 trace.file = func.get.file;
-                uint index = cast(uint) (cast(int) trace.pc - cast(int) func.get.start);
-                if(index < 0 || index >= func.get.positions.length) {
+                uint index = cast(uint)(cast(int) trace.pc - cast(int) func.get.start);
+                if (index < 0 || index >= func.get.positions.length) {
                     trace.line = 0;
                     trace.column = 0;
                 }
@@ -226,8 +225,8 @@ class GrEngine {
             else {
                 trace.name = func.get.name;
                 trace.file = func.get.file;
-                uint index = cast(uint) (cast(int) trace.pc - cast(int) func.get.start);
-                if(index < 0 || index >= func.get.positions.length) {
+                uint index = cast(uint)(cast(int) trace.pc - cast(int) func.get.start);
+                if (index < 0 || index >= func.get.positions.length) {
                     trace.line = 1;
                     trace.column = 0;
                 }

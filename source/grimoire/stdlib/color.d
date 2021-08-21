@@ -5,42 +5,55 @@
  */
 module grimoire.stdlib.color;
 
+import std.conv : to;
 import std.algorithm.comparison : clamp;
 import grimoire.compiler, grimoire.runtime;
+import grimoire.stdlib.util;
 
 package void grLoadStdLibColor(GrLibrary library) {
-    auto defColor = library.addClass("Color", ["r", "g", "b"], [
+    auto colorType = library.addClass("Color", ["r", "g", "b"], [
             grFloat, grFloat, grFloat
             ]);
 
-    library.addPrimitive(&_makeColor, "Color", [], [defColor]);
+    library.addPrimitive(&_makeColor, "Color", [], [colorType]);
     library.addPrimitive(&_makeColor3, "Color", [grFloat, grFloat, grFloat], [
-            defColor
+            colorType
             ]);
 
     library.addPrimitive(&_makeColor3i, "Color", [grInt, grInt, grInt], [
-            defColor
+            colorType
             ]);
 
     static foreach (op; ["+", "-", "*", "/", "%"]) {
-        library.addOperator(&_opBinaryColor!op, op, [defColor, defColor], defColor);
-        library.addOperator(&_opBinaryScalarColor!op, op, [defColor, grFloat], defColor);
+        library.addOperator(&_opBinaryColor!op, op, [colorType, colorType], colorType);
+        library.addOperator(&_opBinaryScalarColor!op, op, [colorType, grFloat], colorType);
         library.addOperator(&_opBinaryScalarRightColor!op, op, [
-                grFloat, defColor
-                ], defColor);
+                grFloat, colorType
+                ], colorType);
     }
 
-    library.addPrimitive(&_mixColor, "mix", [defColor, defColor], [defColor]);
-    library.addPrimitive(&_lerpColor, "lerp", [defColor, defColor, grFloat], [
-            defColor
+    library.addPrimitive(&_mixColor, "mix", [colorType, colorType], [colorType]);
+    library.addPrimitive(&_lerpColor, "lerp", [colorType, colorType, grFloat], [
+            colorType
             ]);
 
-    library.addCast(&_castArrayToColor, grIntArray, defColor);
-    library.addCast(&_castColorToString, defColor, grString);
+    library.addCast(&_castArrayToColor, grIntArray, colorType);
+    library.addCast(&_castColorToString, colorType, grString);
+
+    library.addPrimitive(&_unpack, "unpack", [colorType], [
+            grFloat, grFloat, grFloat
+            ]);
+
+    library.addPrimitive(&_print, "print", [colorType]);
+    library.addPrimitive(&_printl, "printl", [colorType]);
 }
 
 private void _makeColor(GrCall call) {
-    auto self = call.createObject("Color");
+    GrObject self = call.createObject("Color");
+    if (!self) {
+        call.raise("UnknownClassError");
+        return;
+    }
     self.setFloat("r", 0f);
     self.setFloat("g", 0f);
     self.setFloat("b", 0f);
@@ -48,7 +61,11 @@ private void _makeColor(GrCall call) {
 }
 
 private void _makeColor3(GrCall call) {
-    auto self = call.createObject("Color");
+    GrObject self = call.createObject("Color");
+    if (!self) {
+        call.raise("UnknownClassError");
+        return;
+    }
     self.setFloat("r", call.getFloat(0));
     self.setFloat("g", call.getFloat(1));
     self.setFloat("b", call.getFloat(2));
@@ -56,7 +73,11 @@ private void _makeColor3(GrCall call) {
 }
 
 private void _makeColor3i(GrCall call) {
-    auto self = call.createObject("Color");
+    GrObject self = call.createObject("Color");
+    if (!self) {
+        call.raise("UnknownClassError");
+        return;
+    }
     self.setFloat("r", clamp(call.getInt(0) / 255f, 0f, 1f));
     self.setFloat("g", clamp(call.getInt(1) / 255f, 0f, 1f));
     self.setFloat("b", clamp(call.getInt(2) / 255f, 0f, 1f));
@@ -64,9 +85,17 @@ private void _makeColor3i(GrCall call) {
 }
 
 private void _opBinaryColor(string op)(GrCall call) {
-    auto self = call.createObject("Color");
-    auto c1 = call.getObject(0);
-    auto c2 = call.getObject(1);
+    GrObject self = call.createObject("Color");
+    if (!self) {
+        call.raise("UnknownClassError");
+        return;
+    }
+    GrObject c1 = call.getObject(0);
+    GrObject c2 = call.getObject(1);
+    if (!c1 || !c2) {
+        call.raise("NullError");
+        return;
+    }
     mixin("self.setFloat(\"r\", c1.getFloat(\"r\")" ~ op ~ "c2.getFloat(\"r\"));");
     mixin("self.setFloat(\"g\", c1.getFloat(\"g\")" ~ op ~ "c2.getFloat(\"g\"));");
     mixin("self.setFloat(\"b\", c1.getFloat(\"b\")" ~ op ~ "c2.getFloat(\"b\"));");
@@ -74,9 +103,17 @@ private void _opBinaryColor(string op)(GrCall call) {
 }
 
 private void _opBinaryScalarColor(string op)(GrCall call) {
-    auto self = call.createObject("Color");
-    auto c = call.getObject(0);
-    const auto s = call.getFloat(1);
+    GrObject self = call.createObject("Color");
+    if (!self) {
+        call.raise("UnknownClassError");
+        return;
+    }
+    GrObject c = call.getObject(0);
+    const float s = call.getFloat(1);
+    if (!c) {
+        call.raise("NullError");
+        return;
+    }
     mixin("self.setFloat(\"r\", c.getFloat(\"r\")" ~ op ~ "s);");
     mixin("self.setFloat(\"g\", c.getFloat(\"g\")" ~ op ~ "s);");
     mixin("self.setFloat(\"b\", c.getFloat(\"b\")" ~ op ~ "s);");
@@ -84,9 +121,17 @@ private void _opBinaryScalarColor(string op)(GrCall call) {
 }
 
 private void _opBinaryScalarRightColor(string op)(GrCall call) {
-    auto self = call.createObject("Color");
-    auto c = call.getObject(0);
-    const auto s = call.getFloat(1);
+    GrObject self = call.createObject("Color");
+    if (!self) {
+        call.raise("UnknownClassError");
+        return;
+    }
+    GrObject c = call.getObject(0);
+    const float s = call.getFloat(1);
+    if (!c) {
+        call.raise("NullError");
+        return;
+    }
     mixin("self.setFloat(\"r\", s" ~ op ~ "c.getFloat(\"r\"));");
     mixin("self.setFloat(\"g\", s" ~ op ~ "c.getFloat(\"g\"));");
     mixin("self.setFloat(\"b\", s" ~ op ~ "c.getFloat(\"b\"));");
@@ -94,9 +139,17 @@ private void _opBinaryScalarRightColor(string op)(GrCall call) {
 }
 
 private void _mixColor(GrCall call) {
-    auto self = call.createObject("Color");
-    auto c1 = call.getObject(0);
-    auto c2 = call.getObject(1);
+    GrObject self = call.createObject("Color");
+    if (!self) {
+        call.raise("UnknownClassError");
+        return;
+    }
+    GrObject c1 = call.getObject(0);
+    GrObject c2 = call.getObject(1);
+    if (!c1 || !c2) {
+        call.raise("NullError");
+        return;
+    }
     self.setFloat("r", (c1.getFloat("r") + c2.getFloat("r")) / 2f);
     self.setFloat("g", (c1.getFloat("g") + c2.getFloat("g")) / 2f);
     self.setFloat("b", (c1.getFloat("b") + c2.getFloat("b")) / 2f);
@@ -104,11 +157,18 @@ private void _mixColor(GrCall call) {
 }
 
 private void _lerpColor(GrCall call) {
-    auto self = call.createObject("Color");
-    auto c1 = call.getObject(0);
-    auto c2 = call.getObject(1);
+    GrObject self = call.createObject("Color");
+    if (!self) {
+        call.raise("UnknownClassError");
+        return;
+    }
+    GrObject c1 = call.getObject(0);
+    GrObject c2 = call.getObject(1);
     const float t = call.getFloat(2);
-
+    if (!c1 || !c2) {
+        call.raise("NullError");
+        return;
+    }
     self.setFloat("r", (t * c2.getFloat("r")) + ((1f - t) * c1.getFloat("r")));
     self.setFloat("g", (t * c2.getFloat("g")) + ((1f - t) * c1.getFloat("g")));
     self.setFloat("b", (t * c2.getFloat("b")) + ((1f - t) * c1.getFloat("b")));
@@ -116,9 +176,13 @@ private void _lerpColor(GrCall call) {
 }
 
 private void _castArrayToColor(GrCall call) {
-    auto array = call.getIntArray(0);
+    GrIntArray array = call.getIntArray(0);
     if (array.data.length == 3) {
-        auto self = call.createObject("Color");
+        GrObject self = call.createObject("Color");
+        if (!self) {
+            call.raise("UnknownClassError");
+            return;
+        }
         self.setFloat("r", array.data[0]);
         self.setFloat("g", array.data[1]);
         self.setFloat("b", array.data[2]);
@@ -129,9 +193,42 @@ private void _castArrayToColor(GrCall call) {
 }
 
 private void _castColorToString(GrCall call) {
-    import std.conv : to;
-
-    auto self = call.getObject(0);
+    GrObject self = call.getObject(0);
+    if (!self) {
+        call.raise("NullError");
+        return;
+    }
     call.setString("Color(" ~ to!string(self.getFloat("r")) ~ ", " ~ to!string(
             self.getFloat("g")) ~ ", " ~ to!string(self.getFloat("b")) ~ ")");
+}
+
+private void _unpack(GrCall call) {
+    GrObject self = call.getObject(0);
+    if (!self) {
+        call.raise("NullError");
+        return;
+    }
+    call.setFloat(self.getFloat("r"));
+    call.setFloat(self.getFloat("g"));
+    call.setFloat(self.getFloat("b"));
+}
+
+private void _print(GrCall call) {
+    GrObject self = call.getObject(0);
+    if (!self) {
+        call.raise("NullError");
+        return;
+    }
+    _stdOut("Color(" ~ to!string(self.getFloat("r")) ~ ", " ~ to!string(
+            self.getFloat("g")) ~ ", " ~ to!string(self.getFloat("b")) ~ ")");
+}
+
+private void _printl(GrCall call) {
+    GrObject self = call.getObject(0);
+    if (!self) {
+        call.raise("NullError");
+        return;
+    }
+    _stdOut("Color(" ~ to!string(self.getFloat("r")) ~ ", " ~ to!string(
+            self.getFloat("g")) ~ ", " ~ to!string(self.getFloat("b")) ~ ")\n");
 }

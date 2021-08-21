@@ -7,6 +7,7 @@ module grimoire.stdlib;
 
 import grimoire.compiler;
 
+import grimoire.stdlib.system;
 import grimoire.stdlib.array;
 import grimoire.stdlib.range;
 import grimoire.stdlib.string;
@@ -23,6 +24,7 @@ import grimoire.stdlib.pair;
 /// Load the standard library
 GrLibrary grLoadStdLibrary() {
     GrLibrary library = new GrLibrary;
+    grLoadStdLibSystem(library);
     grLoadStdLibArray(library);
     grLoadStdLibRange(library);
     grLoadStdLibString(library);
