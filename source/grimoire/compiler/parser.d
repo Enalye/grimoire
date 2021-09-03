@@ -3209,7 +3209,8 @@ final class GrParser {
     //Exception handling
     private void parseRaiseStatement() {
         advance();
-        GrType type = parseSubExpression(GR_SUBEXPR_TERMINATE_SEMICOLON).type;
+        GrType type = parseSubExpression(GR_SUBEXPR_TERMINATE_SEMICOLON | GR_SUBEXPR_EXPECTING_VALUE)
+            .type;
         checkAdvance();
         convertType(type, grString);
         addInstruction(GrOpcode.raise_);
@@ -4812,14 +4813,16 @@ final class GrParser {
             if (subType.baseType == GrBaseType.void_) {
                 //Implicit type specified by the type of the first element.
                 subType = parseSubExpression(
-                        GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA).type;
+                        GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA
+                        | GR_SUBEXPR_EXPECTING_VALUE).type;
                 arrayType.mangledType = grMangleSignature([subType]);
                 if (subType.baseType == GrBaseType.void_)
                     logError("an array can't be of type `" ~ grGetPrettyType(arrayType) ~ "`",
                             "invalid array type");
             }
             else {
-                convertType(parseSubExpression(GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA)
+                convertType(parseSubExpression(
+                        GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_EXPECTING_VALUE)
                         .type, subType, fileId);
             }
             arraySize++;
@@ -4872,7 +4875,8 @@ final class GrParser {
             if (get().type == GrLexemeType.comma)
                 logError("an index is expected, found `,`", "missing value");
             auto index = parseSubExpression(
-                    GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA).type;
+                    GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA
+                    | GR_SUBEXPR_EXPECTING_VALUE).type;
             if (index.baseType == GrBaseType.void_)
                 logError("expected `int`, found nothing", "missing value");
             convertType(index, grInt, fileId);
@@ -5418,7 +5422,8 @@ final class GrParser {
     /**
     Evaluate a single subexpression.
     */
-    private GrSubExprResult parseSubExpression(int flags = GR_SUBEXPR_TERMINATE_PARENTHESIS) {
+    private GrSubExprResult parseSubExpression(
+            int flags = GR_SUBEXPR_TERMINATE_PARENTHESIS | GR_SUBEXPR_EXPECTING_VALUE) {
         const bool useSemicolon = (flags & GR_SUBEXPR_TERMINATE_SEMICOLON) > 0;
         const bool useBracket = (flags & GR_SUBEXPR_TERMINATE_BRACKET) > 0;
         const bool useComma = (flags & GR_SUBEXPR_TERMINATE_COMMA) > 0;
