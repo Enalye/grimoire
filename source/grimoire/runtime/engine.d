@@ -123,16 +123,29 @@ class GrEngine {
     final void load(GrBytecode bytecode) {
         initialize();
         _bytecode = bytecode;
-        _iglobals = new int[bytecode.iglobalsCount];
-        _fglobals = new float[bytecode.fglobalsCount];
-        _sglobals = new string[bytecode.sglobalsCount];
-        _oglobals = new void*[bytecode.oglobalsCount];
+        _iglobals = new int[_bytecode.iglobalsCount];
+        _fglobals = new float[_bytecode.fglobalsCount];
+        _sglobals = new string[_bytecode.sglobalsCount];
+        _oglobals = new void*[_bytecode.oglobalsCount];
 
         // Setup the primitives
-        for (int i; i < bytecode.primitives.length; ++i) {
-            if (bytecode.primitives[i].index > _callbacks.length)
+        for (uint i; i < _bytecode.primitives.length; ++i) {
+            if (_bytecode.primitives[i].index > _callbacks.length)
                 throw new Exception("callback index out of bounds");
-            _calls ~= new GrCall(_callbacks[bytecode.primitives[i].index], bytecode.primitives[i]);
+            _calls ~= new GrCall(_callbacks[_bytecode.primitives[i].index], _bytecode.primitives[i]);
+        }
+
+        foreach (ref globalRef; _bytecode.globalReferences) {
+            const uint typeMask = globalRef.typeMask;
+            const uint index = globalRef.index;
+            if (typeMask & 0x1)
+                _iglobals[index] = globalRef.ivalue;
+            else if (typeMask & 0x2)
+                _fglobals[index] = globalRef.fvalue;
+            else if (typeMask & 0x4)
+                _sglobals[index] = globalRef.svalue;
+            else if (typeMask & 0x8)
+                _oglobals[index] = null;
         }
     }
 

@@ -248,12 +248,15 @@ final class GrCompiler {
 			case enum_:
 			case chan:
 				globalReference.typeMask = 0x1;
+				globalReference.ivalue = variableDef.isInitialized ? variableDef.ivalue : 0;
 				break;
 			case float_:
 				globalReference.typeMask = 0x2;
+				globalReference.fvalue = variableDef.isInitialized ? variableDef.fvalue : 0f;
 				break;
 			case string_:
 				globalReference.typeMask = 0x4;
+				globalReference.svalue = variableDef.isInitialized ? variableDef.svalue : "";
 				break;
 			case array_:
 			case class_:

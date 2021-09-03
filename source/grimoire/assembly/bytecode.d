@@ -243,6 +243,12 @@ final class GrBytecode {
             uint index;
             /// Type of value
             uint typeMask;
+            /// Integral init value
+            int ivalue;
+            /// Floating init value
+            float fvalue;
+            /// String init value
+            string svalue;
         }
 
         /// All the instructions.
@@ -383,6 +389,12 @@ final class GrBytecode {
             writeStr(buffer, name);
             buffer.append!uint(reference.index);
             buffer.append!uint(reference.typeMask);
+            if (reference.typeMask & 0x1)
+                buffer.append!int(reference.ivalue);
+            else if (reference.typeMask & 0x2)
+                buffer.append!float(reference.fvalue);
+            else if (reference.typeMask & 0x4)
+                writeStr(buffer, reference.svalue);
         }
 
         // @TODO: serialize debug symbols
@@ -481,13 +493,19 @@ final class GrBytecode {
             GrGlobalReference reference;
             reference.index = buffer.read!uint();
             reference.typeMask = buffer.read!uint();
+            if (reference.typeMask & 0x1)
+                reference.ivalue = buffer.read!int();
+            else if (reference.typeMask & 0x2)
+                reference.fvalue = buffer.read!float();
+            else if (reference.typeMask & 0x4)
+                reference.svalue = readStr(buffer);
             globalReferences[name] = reference;
         }
 
         // @TODO: deserialize debug symbols
     }
 
-        // @TODO: remove that
+    // @TODO: remove that
     public GrDebugSymbol[] getDebugInfo() {
         return symbols;
     }
