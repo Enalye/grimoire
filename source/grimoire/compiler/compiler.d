@@ -238,8 +238,8 @@ final class GrCompiler {
 		bytecode.oglobalsCount = parser.oglobalsCount;
 
 		foreach (variableDef; _data._variableDefinitions) {
-			GrBytecode.GrGlobalReference globalReference;
-			globalReference.index = variableDef.register;
+			GrBytecode.Variable variable;
+			variable.index = variableDef.register;
 			final switch (variableDef.type.baseType) with (GrBaseType) {
 			case bool_:
 			case int_:
@@ -247,21 +247,21 @@ final class GrCompiler {
 			case task:
 			case enum_:
 			case chan:
-				globalReference.typeMask = 0x1;
-				globalReference.ivalue = variableDef.isInitialized ? variableDef.ivalue : 0;
+				variable.typeMask = 0x1;
+				variable.ivalue = variableDef.isInitialized ? variableDef.ivalue : 0;
 				break;
 			case float_:
-				globalReference.typeMask = 0x2;
-				globalReference.fvalue = variableDef.isInitialized ? variableDef.fvalue : 0f;
+				variable.typeMask = 0x2;
+				variable.fvalue = variableDef.isInitialized ? variableDef.fvalue : 0f;
 				break;
 			case string_:
-				globalReference.typeMask = 0x4;
-				globalReference.svalue = variableDef.isInitialized ? variableDef.svalue : "";
+				variable.typeMask = 0x4;
+				variable.svalue = variableDef.isInitialized ? variableDef.svalue : "";
 				break;
 			case array_:
 			case class_:
 			case foreign:
-				globalReference.typeMask = 0x8;
+				variable.typeMask = 0x8;
 				break;
 			case void_:
 			case internalTuple:
@@ -271,7 +271,7 @@ final class GrCompiler {
 						"invalid global variable type, the type cannot be " ~ grGetPrettyType(
 						variableDef.type));
 			}
-			bytecode.globalReferences[variableDef.name] = globalReference;
+			bytecode.variables[variableDef.name] = variable;
 		}
 
 		//Instuctions.

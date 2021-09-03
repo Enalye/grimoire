@@ -238,7 +238,7 @@ final class GrBytecode {
         }
 
         /// Reference to a global variable.
-        struct GrGlobalReference {
+        struct Variable {
             /// Register
             uint index;
             /// Type of value
@@ -282,8 +282,8 @@ final class GrBytecode {
         /// Their name are in a mangled state.
         uint[string] events;
 
-        /// Global variable references
-        GrGlobalReference[string] globalReferences;
+        /// Global variables
+        Variable[string] variables;
 
         GrDebugSymbol[] symbols;
     }
@@ -307,7 +307,7 @@ final class GrBytecode {
         sglobalsCount = bytecode.sglobalsCount;
         oglobalsCount = bytecode.oglobalsCount;
         events = bytecode.events;
-        globalReferences = bytecode.globalReferences;
+        variables = bytecode.variables;
         symbols = bytecode.symbols.dup; //@TODO: change the shallow copy
     }
 
@@ -349,7 +349,7 @@ final class GrBytecode {
         buffer.append!uint(cast(uint) events.length);
         buffer.append!uint(cast(uint) primitives.length);
         buffer.append!uint(cast(uint) classes.length);
-        buffer.append!uint(cast(uint) globalReferences.length);
+        buffer.append!uint(cast(uint) variables.length);
 
         foreach (int i; iconsts)
             buffer.append!int(i);
@@ -385,7 +385,7 @@ final class GrBytecode {
             }
         }
 
-        foreach (string name, ref GrGlobalReference reference; globalReferences) {
+        foreach (string name, ref Variable reference; variables) {
             writeStr(buffer, name);
             buffer.append!uint(reference.index);
             buffer.append!uint(reference.typeMask);
@@ -487,10 +487,10 @@ final class GrBytecode {
             classes[i] = class_;
         }
 
-        globalReferences.clear();
+        variables.clear();
         for (int i; i < globalReferencesCount; ++i) {
             const string name = readStr(buffer);
-            GrGlobalReference reference;
+            Variable reference;
             reference.index = buffer.read!uint();
             reference.typeMask = buffer.read!uint();
             if (reference.typeMask & 0x1)
@@ -499,15 +499,10 @@ final class GrBytecode {
                 reference.fvalue = buffer.read!float();
             else if (reference.typeMask & 0x4)
                 reference.svalue = readStr(buffer);
-            globalReferences[name] = reference;
+            variables[name] = reference;
         }
 
         // @TODO: deserialize debug symbols
-    }
-
-    // @TODO: remove that
-    public GrDebugSymbol[] getDebugInfo() {
-        return symbols;
     }
 }
 

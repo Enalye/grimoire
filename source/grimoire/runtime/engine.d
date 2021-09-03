@@ -135,7 +135,7 @@ class GrEngine {
             _calls ~= new GrCall(_callbacks[_bytecode.primitives[i].index], _bytecode.primitives[i]);
         }
 
-        foreach (ref globalRef; _bytecode.globalReferences) {
+        foreach (ref globalRef; _bytecode.variables) {
             const uint typeMask = globalRef.typeMask;
             const uint index = globalRef.index;
             if (typeMask & 0x1)
@@ -404,7 +404,7 @@ class GrEngine {
     }
 
     private T getVariable(T)(string name) {
-        const auto variable = name in _bytecode.globalReferences;
+        const auto variable = name in _bytecode.variables;
         if (variable is null)
             throw new Exception("no global variable `" ~ name ~ "` defined");
         static if (is(T == int)) {
@@ -485,7 +485,7 @@ class GrEngine {
     }
 
     private void setVariable(T)(string name, T value) {
-        const auto variable = name in _bytecode.globalReferences;
+        const auto variable = name in _bytecode.variables;
         if (variable is null)
             throw new Exception("no global variable `" ~ name ~ "` defined");
         static if (is(T == int)) {
