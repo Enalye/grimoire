@@ -285,7 +285,7 @@ final class GrBytecode {
         /// Global variables
         Variable[string] variables;
 
-        GrDebugSymbol[] symbols;
+        GrSymbol[] symbols;
     }
 
     private immutable magicWord = "grb";
@@ -350,6 +350,7 @@ final class GrBytecode {
         buffer.append!uint(cast(uint) primitives.length);
         buffer.append!uint(cast(uint) classes.length);
         buffer.append!uint(cast(uint) variables.length);
+        buffer.append!uint(cast(uint) symbols.length);
 
         foreach (int i; iconsts)
             buffer.append!int(i);
@@ -358,6 +359,7 @@ final class GrBytecode {
         foreach (string i; sconsts) {
             writeStr(buffer, i);
         }
+        // Opcodes
         foreach (uint i; opcodes)
             buffer.append!uint(i);
         foreach (string ev, uint pos; events) {
@@ -397,7 +399,11 @@ final class GrBytecode {
                 writeStr(buffer, reference.svalue);
         }
 
-        // @TODO: serialize debug symbols
+        // Serialize symbols
+        foreach (GrSymbol symbol; symbols) {
+            buffer.append!uint(symbol.type);
+            symbol.serialize(buffer);
+        }
 
         return buffer.data;
     }
@@ -438,31 +444,33 @@ final class GrBytecode {
         const uint eventsCount = buffer.read!uint();
         primitives.length = buffer.read!uint();
         classes.length = buffer.read!uint();
-        const uint globalReferencesCount = buffer.read!uint();
+        const uint variableCount = buffer.read!uint();
+        symbols.length = buffer.read!uint();
 
-        for (int i; i < iconsts.length; ++i) {
+        for (uint i; i < iconsts.length; ++i) {
             iconsts[i] = buffer.read!int();
         }
 
-        for (int i; i < fconsts.length; ++i) {
+        for (uint i; i < fconsts.length; ++i) {
             fconsts[i] = buffer.read!float();
         }
 
-        for (int i; i < sconsts.length; ++i) {
+        for (uint i; i < sconsts.length; ++i) {
             sconsts[i] = readStr(buffer);
         }
 
+        // Opcodes
         for (int i; i < opcodes.length; ++i) {
             opcodes[i] = buffer.read!uint();
         }
 
         events.clear();
-        for (int i; i < eventsCount; ++i) {
+        for (uint i; i < eventsCount; ++i) {
             const string ev = readStr(buffer);
             events[ev] = buffer.read!uint();
         }
 
-        for (int i; i < primitives.length; ++i) {
+        for (uint i; i < primitives.length; ++i) {
             primitives[i].index = buffer.read!uint();
             primitives[i].iparams = buffer.read!uint();
             primitives[i].fparams = buffer.read!uint();
@@ -475,7 +483,7 @@ final class GrBytecode {
             }
         }
 
-        for (int i; i < classes.length; ++i) {
+        for (uint i; i < classes.length; ++i) {
             GrClassBuilder class_ = new GrClassBuilder;
             class_.name = readStr(buffer);
             class_.fields.length = buffer.read!uint();
@@ -488,7 +496,7 @@ final class GrBytecode {
         }
 
         variables.clear();
-        for (int i; i < globalReferencesCount; ++i) {
+        for (uint i; i < variableCount; ++i) {
             const string name = readStr(buffer);
             Variable reference;
             reference.index = buffer.read!uint();
@@ -502,7 +510,23 @@ final class GrBytecode {
             variables[name] = reference;
         }
 
-        // @TODO: deserialize debug symbols
+        // Deserialize symbols
+        for (uint i; i < symbols.length; ++i) {
+            GrSymbol symbol;
+            const uint type = buffer.read!uint();
+            if (type > GrSymbol.Type.max)
+                return;
+            final switch (type) with (GrSymbol.Type) {
+            case none:
+                break;
+            case function_:
+                symbol = new GrFunctionSymbol;
+                break;
+            }
+            symbol.type = cast(GrSymbol.Type) type;
+            symbol.deserialize(buffer);
+            symbols[i] = symbol;
+        }
     }
 }
 

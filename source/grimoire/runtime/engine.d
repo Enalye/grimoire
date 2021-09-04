@@ -258,8 +258,8 @@ class GrEngine {
     */
     private Nullable!(GrFunctionSymbol) getFunctionInfo(uint position) {
         Nullable!(GrFunctionSymbol) bestInfo;
-        foreach (const GrDebugSymbol symbol; _bytecode.symbols) {
-            if (symbol.classinfo == GrFunctionSymbol.classinfo) {
+        foreach (const GrSymbol symbol; _bytecode.symbols) {
+            if (symbol.type == GrSymbol.Type.function_) {
                 auto info = cast(GrFunctionSymbol) symbol;
                 if (info.start <= position && info.start + info.length > position) {
                     if (bestInfo.isNull) {

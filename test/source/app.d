@@ -12,6 +12,7 @@ import grimoire;
 
 void main() {
     try {
+        bool testBytecode = true;
         auto startTime = MonoTime.currTime();
         GrLibrary stdlib = grLoadStdLibrary();
 
@@ -22,13 +23,17 @@ void main() {
             writeln(compiler.getError().prettify());
             return;
         }
-        //bytecode.save("test.grb");
-        //bytecode = null;
+        if (testBytecode) {
+            bytecode.save("test.grb");
+            bytecode = null;
+        }
 
         auto compilationTime = MonoTime.currTime() - startTime;
 
-        //bytecode = new GrBytecode;
-        //bytecode.load("test.grb");
+        if (testBytecode) {
+            bytecode = new GrBytecode;
+            bytecode.load("test.grb");
+        }
         writeln(grDump(bytecode));
 
         GrEngine engine = new GrEngine;
