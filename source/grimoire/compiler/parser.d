@@ -2976,7 +2976,8 @@ final class GrParser {
                     goto default;
                 break;
             case identifier:
-                if (_data.isTypeDeclared(get().svalue, get().fileId, false))
+                if (_data.isTypeDeclared(get().svalue, get().fileId, false)
+                        && get(1).type != GrLexemeType.leftParenthesis)
                     parseLocalDeclaration();
                 else
                     goto default;
