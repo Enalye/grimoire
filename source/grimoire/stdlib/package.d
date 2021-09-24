@@ -7,6 +7,8 @@ module grimoire.stdlib;
 
 import grimoire.compiler;
 
+public import grimoire.stdlib.util;
+
 import grimoire.stdlib.system;
 import grimoire.stdlib.array;
 import grimoire.stdlib.map;
