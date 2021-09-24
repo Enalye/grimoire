@@ -10,7 +10,7 @@ import std.typecons : Tuple, tuple;
 import grimoire.compiler, grimoire.runtime;
 
 /// Hashmap
-private final class GrMap(T) {
+private final class Map(T) {
     /// Payload
     T[string] data;
 
@@ -23,14 +23,14 @@ private final class GrMap(T) {
 }
 
 private {
-    alias GrIntMap = GrMap!(int);
-    alias GrFloatMap = GrMap!(float);
-    alias GrStringMap = GrMap!(string);
-    alias GrObjectMap = GrMap!(void*);
+    alias IntMap = Map!(int);
+    alias FloatMap = Map!(float);
+    alias StringMap = Map!(string);
+    alias ObjectMap = Map!(void*);
 }
 
 /// Iterator
-private final class GrMapIter(T) {
+private final class MapIter(T) {
     Tuple!(string, T)[] pairs;
     size_t index;
 }
@@ -114,13 +114,13 @@ package(grimoire.stdlib) void grLoadStdLibMap(GrLibrary library) {
 }
 
 private void _make_(string t)(GrCall call) {
-    mixin("auto map = new Gr" ~ t ~ "Map(call.getStringArray(0).data, call.get"
-            ~ t ~ "Array(1).data);");
+    mixin(t ~ "Map map = new " ~ t ~ "Map(call.getStringArray(0).data, call.get" ~ t
+            ~ "Array(1).data);");
     call.setForeign(map);
 }
 
 private void _set_(string t)(GrCall call) {
-    mixin("auto map = call.getForeign!(Gr" ~ t ~ "Map)(0);");
+    mixin(t ~ "Map map = call.getForeign!(" ~ t ~ "Map)(0);");
     if (!map) {
         call.raise("NullError");
         return;
@@ -134,7 +134,7 @@ private void _set_(string t)(GrCall call) {
 }
 
 private void _get_(string t)(GrCall call) {
-    mixin("auto map = call.getForeign!(Gr" ~ t ~ "Map)(0);");
+    mixin(t ~ "Map map = call.getForeign!(" ~ t ~ "Map)(0);");
     if (!map) {
         call.raise("NullError");
         return;
@@ -148,7 +148,7 @@ private void _get_(string t)(GrCall call) {
 }
 
 private void _has_(string t)(GrCall call) {
-    mixin("auto map = call.getForeign!(Gr" ~ t ~ "Map)(0);");
+    mixin(t ~ "Map map = call.getForeign!(" ~ t ~ "Map)(0);");
     if (!map) {
         call.raise("NullError");
         return;
@@ -157,7 +157,7 @@ private void _has_(string t)(GrCall call) {
 }
 
 private void _remove_(string t)(GrCall call) {
-    mixin("auto map = call.getForeign!(Gr" ~ t ~ "Map)(0);");
+    mixin(t ~ "Map map = call.getForeign!(" ~ t ~ "Map)(0);");
     if (!map) {
         call.raise("NullError");
         return;
@@ -166,7 +166,7 @@ private void _remove_(string t)(GrCall call) {
 }
 
 private void _byKeys_(string t)(GrCall call) {
-    mixin("auto map = call.getForeign!(Gr" ~ t ~ "Map)(0);");
+    mixin(t ~ "Map map = call.getForeign!(" ~ t ~ "Map)(0);");
     if (!map) {
         call.raise("NullError");
         return;
@@ -177,7 +177,7 @@ private void _byKeys_(string t)(GrCall call) {
 }
 
 private void _byValues_(string t)(GrCall call) {
-    mixin("auto map = call.getForeign!(Gr" ~ t ~ "Map)(0);");
+    mixin(t ~ "Map map = call.getForeign!(" ~ t ~ "Map)(0);");
     if (!map) {
         call.raise("NullError");
         return;
@@ -188,22 +188,22 @@ private void _byValues_(string t)(GrCall call) {
 }
 
 private void _each_(string t)(GrCall call) {
-    mixin("Gr" ~ t ~ "Map map = call.getForeign!(Gr" ~ t ~ "Map)(0);");
+    mixin(t ~ "Map map = call.getForeign!(" ~ t ~ "Map)(0);");
     if (!map) {
         call.raise("NullError");
         return;
     }
     static if (t == "Int") {
-        GrMapIter!(int) iter = new GrMapIter!(int);
+        MapIter!(int) iter = new MapIter!(int);
     }
     else static if (t == "Float") {
-        GrMapIter!(float) iter = new GrMapIter!(float);
+        MapIter!(float) iter = new MapIter!(float);
     }
     else static if (t == "String") {
-        GrMapIter!(string) iter = new GrMapIter!(string);
+        MapIter!(string) iter = new MapIter!(string);
     }
     else static if (t == "Object") {
-        GrMapIter!(void*) iter = new GrMapIter!(void*);
+        MapIter!(void*) iter = new MapIter!(void*);
     }
     foreach (pair; map.data.byKeyValue()) {
         iter.pairs ~= tuple(pair.key, pair.value);
@@ -213,16 +213,16 @@ private void _each_(string t)(GrCall call) {
 
 private void _next_(string t)(GrCall call) {
     static if (t == "Int") {
-        GrMapIter!(int) iter = call.getForeign!(GrMapIter!(int))(0);
+        MapIter!(int) iter = call.getForeign!(MapIter!(int))(0);
     }
     else static if (t == "Float") {
-        GrMapIter!(float) iter = call.getForeign!(GrMapIter!(float))(0);
+        MapIter!(float) iter = call.getForeign!(MapIter!(float))(0);
     }
     else static if (t == "String") {
-        GrMapIter!(string) iter = call.getForeign!(GrMapIter!(string))(0);
+        MapIter!(string) iter = call.getForeign!(MapIter!(string))(0);
     }
     else static if (t == "Object") {
-        GrMapIter!(void*) iter = call.getForeign!(GrMapIter!(void*))(0);
+        MapIter!(void*) iter = call.getForeign!(MapIter!(void*))(0);
     }
     if (!iter) {
         call.raise("NullError");
