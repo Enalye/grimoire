@@ -14,6 +14,7 @@ We can't know at runtime the type of a field,
 so you need to check with its type definition.
 */
 package final class GrField {
+    string name;
     union {
         int ivalue;
         float fvalue;
@@ -25,17 +26,25 @@ package final class GrField {
 /// Object value in Grimoire runtime.
 final class GrObject {
     package {
-        GrClassBuilder _class;
         /// Inner fields, indexes are known at compile time.
         GrField[] _fields;
 
-        /// Ctor
+        /// Build from definition
         this(GrClassBuilder class_) {
-            _class = class_;
-            _fields.length = _class.fields.length;
+            _fields.length = class_.fields.length;
             for (size_t index; index < _fields.length; ++index) {
                 _fields[index] = new GrField;
+                _fields[index].name = class_.fields[index];
             }
+        }
+    }
+
+    /// Build from raw fields
+    this(string[] fields_) {
+        _fields.length = fields_.length;
+        for (size_t index; index < _fields.length; ++index) {
+            _fields[index] = new GrField;
+            _fields[index].name = fields_[index];
         }
     }
 
@@ -96,7 +105,7 @@ final class GrObject {
 
     private T getField(T)(string fieldName) {
         for (size_t index; index < _fields.length; ++index) {
-            if (_class.fields[index] == fieldName) {
+            if (_fields[index].name == fieldName) {
                 static if (is(T == int))
                     return _fields[index].ivalue;
                 else static if (is(T == bool))
@@ -170,7 +179,7 @@ final class GrObject {
 
     private T setField(T)(string fieldName, T value) {
         for (size_t index; index < _fields.length; ++index) {
-            if (_class.fields[index] == fieldName) {
+            if (_fields[index].name == fieldName) {
                 static if (is(T == int))
                     return _fields[index].ivalue = cast(int) value;
                 else static if (is(T == bool))

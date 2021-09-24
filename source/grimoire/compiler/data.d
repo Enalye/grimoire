@@ -407,7 +407,7 @@ class GrData {
             if (primitive.inSignature[i].isAny) {
                 primitive.inSignature[i] = _anyData.get(primitive.inSignature[i].mangledType);
                 if (primitive.inSignature[i].baseType == GrBaseType.void_)
-                    return null;
+                    throw new Exception("`" ~ getPrettyPrimitive(primitive) ~ "` can't be reified");
             }
             checkUnknownClasses(primitive.inSignature[i]);
         }
@@ -415,7 +415,7 @@ class GrData {
             if (primitive.outSignature[i].isAny) {
                 primitive.outSignature[i] = _anyData.get(primitive.outSignature[i].mangledType);
                 if (primitive.outSignature[i].baseType == GrBaseType.void_)
-                    return null;
+                    throw new Exception("`" ~ getPrettyPrimitive(primitive) ~ "` can't be reified");
             }
             checkUnknownClasses(primitive.outSignature[i]);
         }
@@ -429,12 +429,12 @@ class GrData {
 
     // Forcing the classes to be reified they aren't already
     private void checkUnknownClasses(GrType type) {
-        switch(type.baseType) with(GrBaseType) {
+        switch (type.baseType) with (GrBaseType) {
         case class_:
             GrClassDefinition classDef = getClass(type.mangledType, 0, true);
-            if(!classDef)
+            if (!classDef)
                 throw new Exception("undefined class `" ~ type.mangledType ~ "`");
-            foreach(GrType fieldType; classDef.signature)
+            foreach (GrType fieldType; classDef.signature)
                 checkUnknownClasses(fieldType);
             break;
         case array_:
@@ -443,13 +443,13 @@ class GrData {
             checkUnknownClasses(subType);
             break;
         case function_:
-            foreach(GrType inType; grUnmangleSignature(type.mangledType))
+            foreach (GrType inType; grUnmangleSignature(type.mangledType))
                 checkUnknownClasses(inType);
-            foreach(GrType outType; grUnmangleSignature(type.mangledReturnType))
+            foreach (GrType outType; grUnmangleSignature(type.mangledReturnType))
                 checkUnknownClasses(outType);
             break;
         case task:
-            foreach(GrType inType; grUnmangleSignature(type.mangledType))
+            foreach (GrType inType; grUnmangleSignature(type.mangledType))
                 checkUnknownClasses(inType);
             break;
         default:
