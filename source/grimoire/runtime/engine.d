@@ -530,6 +530,11 @@ class GrEngine {
         }
         contextsLabel: for (uint index = 0u; index < _contexts.length; index++) {
             GrContext context = _contexts.data[index];
+            if (context.blocker) {
+                if (!context.blocker.run())
+                    continue;
+                context.blocker = null;
+            }
             while (isRunning) {
                 const uint opcode = _bytecode.opcodes[context.pc];
                 final switch (opcode & 0xFF) with (GrOpcode) {
@@ -1884,6 +1889,8 @@ class GrEngine {
                 case primitiveCall:
                     _calls[grGetInstructionUnsignedValue(opcode)].call(context);
                     context.pc++;
+                    if (context.blocker)
+                        continue contextsLabel;
                     break;
                 case jump:
                     context.pc += grGetInstructionSignedValue(opcode);

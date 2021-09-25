@@ -17,17 +17,16 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
                 data.set(\"T\", subType);
-                return grIsKindOf" ~ t
-                ~ "(subType.baseType);
+                return grIsKindOf" ~ t ~ "(subType.baseType);
             });
-            library.addPrimitive(&_copy_!\"" ~ t ~ "\", \"copy\", [any" ~ t ~ "Array], [grAny(\"A\")]);
-            library.addPrimitive(&_size_!\""
-                ~ t ~ "\", \"size\", [any" ~ t ~ "Array], [grInt]);
+            library.addPrimitive(&_copy_!\"" ~ t ~ "\", \"copy\", [any"
+                ~ t ~ "Array], [grAny(\"A\")]);
+            library.addPrimitive(&_size_!\"" ~ t ~ "\", \"size\", [any" ~ t ~ "Array], [grInt]);
             library.addPrimitive(&_resize_!\"" ~ t ~ "\", \"resize\", [
-                any" ~ t ~ "Array, grInt
+                any"
+                ~ t ~ "Array, grInt
             ], [grAny(\"A\")]);
-            library.addPrimitive(&_empty_!\"" ~ t
-                ~ "\", \"empty?\", [
+            library.addPrimitive(&_empty_!\"" ~ t ~ "\", \"empty?\", [
                 any" ~ t ~ "Array
             ], [grBool]);
             library.addPrimitive(&_fill_!\"" ~ t ~ "\", \"fill\", [
@@ -35,69 +34,69 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
                 ~ "Array, grAny(\"T\")
             ], [grAny(\"A\")]);
             library.addPrimitive(&_clear_!\"" ~ t ~ "\", \"clear\", [
-                any" ~ t ~ "Array
+                any" ~ t
+                ~ "Array
             ], [grAny(\"A\")]);
-            library.addPrimitive(&_unshift_!\"" ~ t
-                ~ "\", \"unshift\", [
+            library.addPrimitive(&_unshift_!\"" ~ t ~ "\", \"unshift\", [
                     any" ~ t ~ "Array, grAny(\"T\")
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_push_!\"" ~ t ~ "\", \"push\", [
+            library.addPrimitive(&_push_!\"" ~ t
+                ~ "\", \"push\", [
                     any" ~ t ~ "Array, grAny(\"T\")
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_shift_!\""
-                ~ t ~ "\", \"shift\", [
+            library.addPrimitive(&_shift_!\"" ~ t ~ "\", \"shift\", [
                     any" ~ t ~ "Array
                 ], [grAny(\"T\")]);
-            library.addPrimitive(&_pop_!\"" ~ t ~ "\", \"pop\", [
+            library.addPrimitive(&_pop_!\"" ~ t
+                ~ "\", \"pop\", [
                     any" ~ t ~ "Array
                 ], [grAny(\"T\")]);
             library.addPrimitive(&_shift1_!\"" ~ t ~ "\", \"shift\", [
-                    any"
-                ~ t ~ "Array, grInt
-                ], [grAny(\"A\")]);
-            library.addPrimitive(&_pop1_!\"" ~ t ~ "\", \"pop\", [
                     any" ~ t ~ "Array, grInt
                 ], [grAny(\"A\")]);
+            library.addPrimitive(&_pop1_!\"" ~ t ~ "\", \"pop\", [
+                    any" ~ t
+                ~ "Array, grInt
+                ], [grAny(\"A\")]);
             library.addPrimitive(&_first_!\"" ~ t ~ "\", \"first\", [
-                any" ~ t
-                ~ "Array
+                any" ~ t ~ "Array
             ], [grAny(\"T\")]);
             library.addPrimitive(&_last_!\"" ~ t ~ "\", \"last\", [
-                    any" ~ t ~ "Array
+                    any"
+                ~ t ~ "Array
                 ], [grAny(\"T\")]);
-            library.addPrimitive(&_remove_!\"" ~ t
-                ~ "\", \"remove\", [
+            library.addPrimitive(&_remove_!\"" ~ t ~ "\", \"remove\", [
                     any" ~ t ~ "Array, grInt
                 ], [grAny(\"A\")]);
             library.addPrimitive(&_remove2_!\"" ~ t ~ "\", \"remove\", [
-                    any"
-                ~ t ~ "Array, grInt, grInt
+                    any" ~ t ~ "Array, grInt, grInt
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_slice_!\"" ~ t ~ "\", \"slice!\", [
+            library.addPrimitive(&_slice_!\""
+                ~ t ~ "\", \"slice!\", [
                     any" ~ t ~ "Array, grInt, grInt
                 ], [grAny(\"A\")]);
             library.addPrimitive(&_slice_copy_!\"" ~ t ~ "\", \"slice\", [
-                    any" ~ t
-                ~ "Array, grInt, grInt
+                    any" ~ t ~ "Array, grInt, grInt
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_reverse_!\"" ~ t ~ "\", \"reverse\", [
+            library.addPrimitive(&_reverse_!\"" ~ t
+                ~ "\", \"reverse\", [
                     any" ~ t ~ "Array
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_insert_!\"" ~ t
-                ~ "\", \"insert\", [
+            library.addPrimitive(&_insert_!\"" ~ t ~ "\", \"insert\", [
                     any" ~ t ~ "Array, grInt, grAny(\"T\")
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_each_!\"" ~ t ~ "\", \"each\", [
+            library.addPrimitive(&_each_!\"" ~ t
+                ~ "\", \"each\", [
                     grAny(\"A\", (type, data) {
                 if (type.baseType != GrBaseType.array_)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
                 data.set(\"R\", grGetForeignType(\"ArrayIter\", [subType]));
-                return grIsKindOf"
-                ~ t ~ "(subType.baseType);
+                return grIsKindOf" ~ t ~ "(subType.baseType);
             })
                 ], [grAny(\"R\")]);
-            library.addPrimitive(&_next_!\"" ~ t ~ "\", \"next\", [
+            library.addPrimitive(&_next_!\""
+                ~ t ~ "\", \"next\", [
                     grAny(\"R\", (type, data) {
                 if (type.baseType != GrBaseType.foreign)
                     return false;
@@ -105,8 +104,7 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
                 if(result.signature.length != 1 || result.name != \"ArrayIter\")
                     return false;
                 data.set(\"T\", result.signature[0]);
-                return grIsKindOf" ~ t
-                ~ "(result.signature[0].baseType);
+                return grIsKindOf" ~ t ~ "(result.signature[0].baseType);
                     })
                 ], [grBool, grAny(\"T\")]);
             ");

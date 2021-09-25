@@ -406,4 +406,9 @@ final class GrCall {
     GrObject createObject(string name) {
         return _context.engine.createObject(name);
     }
+
+    /// Pause the current context.
+    void block(GrBlocker blocker) {
+        _context.block(blocker);
+    }
 }

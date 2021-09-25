@@ -29,14 +29,11 @@ Used when we need to restore the context to a previous state.
 */
 struct GrContextState {
     /// Current expression stack top
-    int istackPos,
-    /// Ditto
-        fstackPos,
-    /// Ditto
-        sstackPos,
-    /// Ditto
+    int istackPos, /// Ditto
+        fstackPos, /// Ditto
+        sstackPos, /// Ditto
         ostackPos;
-    
+
     /// Callstack
     GrStackFrame stackFrame;
 
@@ -46,6 +43,14 @@ struct GrContextState {
 
     /// Local variables: Access with Xlocals[XlocalsPos + variableIndex]
     uint ilocalsPos, flocalsPos, slocalsPos, olocalsPos;
+}
+
+/**
+Pause the associated context.
+*/
+abstract class GrBlocker {
+    /// Update the state, returns true if the context is still paused.
+    bool run();
 }
 
 /**
@@ -91,14 +96,11 @@ final class GrContext {
     /// Stack frame pointer for the current function.
     /// Each function takes 2 integer: the return pc, and the local variable size.
     uint stackPos;
-    
+
     /// Current expression stack top
-    int istackPos = -1,
-    /// Ditto
-        fstackPos = -1,
-    /// Ditto
-        sstackPos = -1,
-    /// Ditto
+    int istackPos = -1, /// Ditto
+        fstackPos = -1, /// Ditto
+        sstackPos = -1, /// Ditto
         ostackPos = -1;
 
     /// Kill state, unwind the call stack and call all registered deferred statements.
@@ -118,6 +120,9 @@ final class GrContext {
     /// When evaluating, a blocking jump to this position will occur instead of blocking.
     uint selectPositionJump;
 
+    /// The context will block until the blocker is cleared.
+    GrBlocker blocker;
+
     /// Backup to restore stack state after select evaluation.
     GrContextState[] states;
 
@@ -129,7 +134,7 @@ final class GrContext {
     /// Initialize the call stacks.
     void setupCallStack(uint size) {
         callStackLimit = size;
-        callStack = new GrStackFrame[callStackLimit];   
+        callStack = new GrStackFrame[callStackLimit];
     }
 
     /// Initialize the expression stacks.
@@ -160,28 +165,28 @@ final class GrContext {
 
     /// Double the current integer locals stacks' size.
     void doubleIntLocalsStackSize(uint localsStackSize) {
-        while(localsStackSize >= ilocalsLimit)
+        while (localsStackSize >= ilocalsLimit)
             ilocalsLimit <<= 1;
         ilocals.length = ilocalsLimit;
     }
 
     /// Double the current float locals stacks' size.
     void doubleFloatLocalsStackSize(uint localsStackSize) {
-        while(localsStackSize >= flocalsLimit)
+        while (localsStackSize >= flocalsLimit)
             flocalsLimit <<= 1;
         flocals.length = flocalsLimit;
     }
 
     /// Double the current string locals stacks' size.
     void doubleStringLocalsStackSize(uint localsStackSize) {
-        while(localsStackSize >= slocalsLimit)
+        while (localsStackSize >= slocalsLimit)
             slocalsLimit <<= 1;
         slocals.length = slocalsLimit;
     }
 
     /// Double the current object locals stacks' size.
     void doubleObjectLocalsStackSize(uint localsStackSize) {
-        while(localsStackSize >= olocalsLimit)
+        while (localsStackSize >= olocalsLimit)
             olocalsLimit <<= 1;
         olocals.length = olocalsLimit;
     }
@@ -201,24 +206,24 @@ final class GrContext {
     }
 
     private void setValue(T)(T value) {
-        static if(is(T == int)) {
-            istackPos ++;
-			istack[istackPos] = value;
-        }
-        else static if(is(T == bool)) {
-            istackPos ++;
+        static if (is(T == int)) {
+            istackPos++;
             istack[istackPos] = value;
         }
-        else static if(is(T == float)) {
-            fstackPos ++;
+        else static if (is(T == bool)) {
+            istackPos++;
+            istack[istackPos] = value;
+        }
+        else static if (is(T == float)) {
+            fstackPos++;
             fstack[fstackPos] = value;
         }
-        else static if(is(T == string)) {
-            sstackPos ++;
+        else static if (is(T == string)) {
+            sstackPos++;
             sstack[sstackPos] = value;
         }
-        else static if(is(T == void*)) {
-            ostackPos ++;
+        else static if (is(T == void*)) {
+            ostackPos++;
             ostack[ostackPos] = value;
         }
     }
@@ -241,7 +246,7 @@ final class GrContext {
 
     /// Restore the last state of the context
     void restoreState() {
-        if(!states.length)
+        if (!states.length)
             throw new Exception("Fatal error: pop context state");
         GrContextState state = states[$ - 1];
         istackPos = state.istackPos;
@@ -258,17 +263,28 @@ final class GrContext {
 
     /// Remove last state of the context
     void popState() {
-        states.length --;
+        states.length--;
+    }
+
+    /// Lock the context until the blocker is cleared
+    void block(GrBlocker blocker_) {
+        blocker = blocker_;
+    }
+
+    /// Unlock the context from the blocker
+    void unblock() {
+        blocker = null;
     }
 
     /// Dump stacks info
     string dump() {
-        import std.conv: to;
+        import std.conv : to;
+
         string result = "Context Dump:";
-        result ~= "\nfstack: " ~ to!string(fstack[0.. (fstackPos + 1)]);
-        result ~= "\nistack: " ~ to!string(istack[0.. (istackPos + 1)]);
-        result ~= "\nsstack: " ~ to!string(sstack[0.. (sstackPos + 1)]);
-        result ~= "\nostack: " ~ to!string(ostack[0.. (ostackPos + 1)]);
+        result ~= "\nfstack: " ~ to!string(fstack[0 .. (fstackPos + 1)]);
+        result ~= "\nistack: " ~ to!string(istack[0 .. (istackPos + 1)]);
+        result ~= "\nsstack: " ~ to!string(sstack[0 .. (sstackPos + 1)]);
+        result ~= "\nostack: " ~ to!string(ostack[0 .. (ostackPos + 1)]);
         return result;
     }
 }
