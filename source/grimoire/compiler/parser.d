@@ -2926,6 +2926,9 @@ final class GrParser {
             case rightCurlyBrace:
                 advance();
                 break;
+            case leftCurlyBrace:
+                parseBlock();
+                break;
             case defer:
                 parseDeferStatement();
                 break;
@@ -6012,9 +6015,6 @@ final class GrParser {
 
         if (operatorsStack.length) {
             if (!hadValue) {
-                /*if(!isRightUnaryOperator)
-                    logError("Expected value", "A value is missing");
-                else*/
                 logError("a binary operation must have 2 operands", "missing value");
             }
         }
