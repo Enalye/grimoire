@@ -419,8 +419,16 @@ struct GrInstruction {
 Function/Task/Event definition.
 */
 package class GrFunction {
-    /// Every variable declared within its scope.
-    GrVariable[string] localVariables;
+    /// Local scoping
+    struct Scope {
+        /// Every variable declared within its scope.
+        GrVariable[string] localVariables;
+    }
+    /// Ditto
+    Scope[] scopes;
+
+    uint[] iregisterAvailables, fregisterAvailables, sregisterAvailables, oregisterAvailables;
+
     /// All the function instructions.
     GrInstruction[] instructions;
     uint stackSize, index, offset;
@@ -457,7 +465,70 @@ package class GrFunction {
     struct DebugPositionSymbol {
         uint line, column;
     }
+
     DebugPositionSymbol[] debugSymbol;
+
+    this() {
+        scopes.length = 1;
+    }
+
+    GrVariable getLocal(string name) {
+        foreach_reverse (ref Scope scope_; scopes) {
+            //Check if declared locally.
+            GrVariable* variable = (name in scope_.localVariables);
+            if (variable !is null)
+                return *variable;
+        }
+        return null;
+    }
+
+    void setLocal(GrVariable variable_) {
+        GrVariable* oldVariable = (variable_.name in scopes[$ - 1].localVariables);
+        if (oldVariable !is null) {
+            freeRegister(*oldVariable);
+        }
+        scopes[$ - 1].localVariables[variable_.name] = variable_;
+    }
+
+    void openScope() {
+        scopes.length++;
+    }
+
+    void closeScope() {
+        foreach (GrVariable variable; scopes[$ - 1].localVariables) {
+            freeRegister(variable);
+        }
+        scopes.length--;
+    }
+
+    private void freeRegister(GrVariable variable) {
+        final switch (variable.type.baseType) with (GrBaseType) {
+        case int_:
+        case bool_:
+        case function_:
+        case task:
+        case enum_:
+            iregisterAvailables ~= variable.register;
+            break;
+        case float_:
+            fregisterAvailables ~= variable.register;
+            break;
+        case string_:
+            sregisterAvailables ~= variable.register;
+            break;
+        case array_:
+        case class_:
+        case foreign:
+        case chan:
+            oregisterAvailables ~= variable.register;
+            break;
+        case internalTuple:
+        case reference:
+        case null_:
+        case void_:
+            break;
+        }
+    }
 }
 
 /// Get the type of the function.

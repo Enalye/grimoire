@@ -96,11 +96,15 @@ final class GrParser {
     /// Start of a block with `{`
     private void openBlock() {
         scopeLevel++;
+        if (currentFunction)
+            currentFunction.openScope();
     }
 
     /// End of a block with '}'
     private void closeBlock() {
         scopeLevel--;
+        if (currentFunction)
+            currentFunction.closeScope();
     }
 
     /// Check for the end of the sequence.
@@ -157,12 +161,7 @@ final class GrParser {
     /// Register a special local variable, used for iterators, etc.
     private GrVariable registerSpecialVariable(string name, GrType type) {
         name = "~" ~ name;
-        GrVariable specialVariable;
-        auto previousVariable = (name in currentFunction.localVariables);
-        if (previousVariable is null)
-            specialVariable = registerLocalVariable(name, type);
-        else
-            specialVariable = *previousVariable;
+        GrVariable specialVariable = registerLocalVariable(name, type);
         specialVariable.isAuto = false;
         specialVariable.isInitialized = true; //We shortcut this check
         return specialVariable;
@@ -226,8 +225,14 @@ final class GrParser {
                 iglobalsCount++;
             }
             else {
-                variable.register = currentFunction.ilocalsCount;
-                currentFunction.ilocalsCount++;
+                if (currentFunction.iregisterAvailables.length) {
+                    variable.register = currentFunction.iregisterAvailables[$ - 1];
+                    currentFunction.iregisterAvailables.length--;
+                }
+                else {
+                    variable.register = currentFunction.ilocalsCount;
+                    currentFunction.ilocalsCount++;
+                }
             }
             break;
         case float_:
@@ -236,8 +241,14 @@ final class GrParser {
                 fglobalsCount++;
             }
             else {
-                variable.register = currentFunction.flocalsCount;
-                currentFunction.flocalsCount++;
+                if (currentFunction.fregisterAvailables.length) {
+                    variable.register = currentFunction.fregisterAvailables[$ - 1];
+                    currentFunction.fregisterAvailables.length--;
+                }
+                else {
+                    variable.register = currentFunction.flocalsCount;
+                    currentFunction.flocalsCount++;
+                }
             }
             break;
         case string_:
@@ -246,8 +257,14 @@ final class GrParser {
                 sglobalsCount++;
             }
             else {
-                variable.register = currentFunction.slocalsCount;
-                currentFunction.slocalsCount++;
+                if (currentFunction.sregisterAvailables.length) {
+                    variable.register = currentFunction.sregisterAvailables[$ - 1];
+                    currentFunction.sregisterAvailables.length--;
+                }
+                else {
+                    variable.register = currentFunction.slocalsCount;
+                    currentFunction.slocalsCount++;
+                }
             }
             break;
         case array_:
@@ -259,8 +276,14 @@ final class GrParser {
                 oglobalsCount++;
             }
             else {
-                variable.register = currentFunction.olocalsCount;
-                currentFunction.olocalsCount++;
+                if (currentFunction.oregisterAvailables.length) {
+                    variable.register = currentFunction.oregisterAvailables[$ - 1];
+                    currentFunction.oregisterAvailables.length--;
+                }
+                else {
+                    variable.register = currentFunction.olocalsCount;
+                    currentFunction.olocalsCount++;
+                }
             }
             break;
         case internalTuple:
@@ -278,21 +301,16 @@ final class GrParser {
         //Check if declared globally
         assertNoGlobalDeclaration(name, get().fileId, false);
 
-        //Check if declared locally.
-        const auto previousVariable = (name in currentFunction.localVariables);
-        if (previousVariable !is null)
-            logError("the name `" ~ name ~ "` is defined multiple times", "`" ~ name ~ "` is redefined here", "", 0,
-                    "previous definition of `" ~ name ~ "`", previousVariable.lexPosition);
-
         GrVariable variable = new GrVariable;
         variable.isGlobal = false;
         variable.type = type;
         variable.name = name;
         variable.fileId = get().fileId;
         variable.lexPosition = current;
+
+        currentFunction.setLocal(variable);
         if (variable.type.baseType != GrBaseType.void_)
             setVariableRegister(variable);
-        currentFunction.localVariables[name] = variable;
 
         return variable;
     }
@@ -481,7 +499,7 @@ final class GrParser {
             newVar.name = name;
             newVar.fileId = get().fileId;
             newVar.lexPosition = current;
-            currentFunction.localVariables[name] = newVar;
+            currentFunction.setLocal(newVar);
             setVariableRegister(newVar);
             addSetInstruction(newVar, currentFunction.fileId);
         }
@@ -607,21 +625,10 @@ final class GrParser {
         if (globalVar !is null)
             return globalVar;
 
-        GrVariable* localVar = (name in currentFunction.localVariables);
-        if (localVar is null)
+        GrVariable localVar = currentFunction.getLocal(name);
+        if (!localVar)
             logError("`" ~ name ~ "` is not declared", "unknown variable", "", -1);
-        return *localVar;
-    }
-
-    private bool hasVariable(string name, uint fileId) {
-        const GrVariable globalVar = getGlobalVariable(name, fileId);
-        if (globalVar !is null)
-            return true;
-
-        const GrVariable* localVar = (name in currentFunction.localVariables);
-        if (localVar !is null)
-            return true;
-        return false;
+        return localVar;
     }
 
     private void addIntConstant(int value) {
@@ -3642,7 +3649,7 @@ final class GrParser {
         advance();
         const uint fileId = get().fileId;
         GrType switchType = parseSubExpression().type;
-        GrVariable switchVar = registerSpecialVariable("switch" ~ to!string(scopeLevel), switchType);
+        GrVariable switchVar = registerSpecialVariable("switch", switchType);
         addSetInstruction(switchVar, fileId);
         advance();
 
@@ -3905,18 +3912,8 @@ final class GrParser {
             logError("a variable name is expected",
                     "a variable name is expected, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
 
-        if (isTyped) {
-            lvalue = registerLocalVariable(identifier.svalue, type);
-            lvalue.isAuto = isAuto;
-        }
-        else if (hasVariable(identifier.svalue, identifier.fileId)) {
-            lvalue = getVariable(identifier.svalue, identifier.fileId);
-        }
-        else {
-            /// Automatic, same behaviour with let.
-            lvalue = registerLocalVariable(identifier.svalue, type);
-            lvalue.isAuto = true;
-        }
+        lvalue = registerLocalVariable(identifier.svalue, type);
+        lvalue.isAuto = isTyped ? isAuto : true;
 
         //A composite type does not need to be initialized.
         if (lvalue.type == GrBaseType.class_)
@@ -3937,6 +3934,7 @@ final class GrParser {
                     "expected `(`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
 
         advance();
+        currentFunction.openScope();
 
         GrVariable variable = parseDeclarableArgument();
 
@@ -3952,11 +3950,9 @@ final class GrParser {
         case array_: {
                 /* Init */
                 GrType subType = grUnmangle(containerType.mangledType);
-                GrVariable iterator = registerSpecialVariable("iterator" ~ to!string(scopeLevel),
-                        grInt);
-                GrVariable index = registerSpecialVariable("index" ~ to!string(scopeLevel), grInt);
-                GrVariable array = registerSpecialVariable("array" ~ to!string(scopeLevel),
-                        containerType);
+                GrVariable iterator = registerSpecialVariable("iterator", grInt);
+                GrVariable index = registerSpecialVariable("index", grInt);
+                GrVariable array = registerSpecialVariable("array", containerType);
 
                 if (variable.isAuto && subType.baseType != GrBaseType.void_) {
                     variable.isAuto = false;
@@ -4068,8 +4064,7 @@ final class GrParser {
             break;
         case foreign:
         case class_: {
-                GrVariable iterator = registerSpecialVariable("iterator" ~ to!string(scopeLevel),
-                        containerType);
+                GrVariable iterator = registerSpecialVariable("iterator", containerType);
 
                 GrType subType;
                 GrFunction nextFunc;
@@ -4144,6 +4139,7 @@ final class GrParser {
                     "not iterable");
             break;
         }
+        currentFunction.closeScope();
     }
 
     /// Skips everything from a `(` to its matching `)`.
@@ -4298,6 +4294,7 @@ final class GrParser {
         GrVariable iterator, customIterator;
 
         const uint fileId = get().fileId;
+        currentFunction.openScope();
         advance();
         if (get().type == GrLexemeType.leftParenthesis) {
             const int arity = checkArity();
@@ -4325,8 +4322,7 @@ final class GrParser {
             }
 
             /* Init */
-            iterator = registerSpecialVariable("iterator" ~ to!string(scopeLevel),
-                    GrType(GrBaseType.int_));
+            iterator = registerSpecialVariable("iterator", GrType(GrBaseType.int_));
 
             //Init counter
             GrType type = parseSubExpression().type;
@@ -4376,6 +4372,7 @@ final class GrParser {
         /* For is breakable and continuable. */
         closeBreakableSection();
         closeContinuableSection();
+        currentFunction.closeScope();
     }
 
     /**
@@ -4968,9 +4965,9 @@ final class GrParser {
 
         checkAdvance();
 
-        GrVariable* localLValue = (identifierName in currentFunction.localVariables);
+        GrVariable localLValue = currentFunction.getLocal(identifierName);
         if (localLValue !is null)
-            return *localLValue;
+            return localLValue;
 
         GrVariable globalLValue = getGlobalVariable(identifierName, fileId);
         if (globalLValue !is null)
@@ -6209,13 +6206,10 @@ final class GrParser {
             if (hasParenthesis)
                 advance();
 
-            GrVariable var;
-            GrVariable* localVar = (identifierName in currentFunction.localVariables);
-            if (localVar !is null)
-                var = *localVar;
-            else
+            GrVariable var = currentFunction.getLocal(identifierName);
+            if (!var)
                 var = getGlobalVariable(identifierName, fileId);
-            if (var !is null) {
+            if (var) {
                 if (var.type.baseType != GrBaseType.function_ && var.type.baseType
                         != GrBaseType.task)
                     logError("`" ~ identifierName ~ "` is not callable",
