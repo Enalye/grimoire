@@ -286,7 +286,7 @@ private void _printVec2f(GrCall call) {
         _stdOut("{0;0}");
         return;
     }
-    _stdOut("Vec2(" ~ to!string(self.getFloat("x")) ~ ", " ~ to!string(self.getFloat("y")) ~ ")");
+    _stdOut("Vec2(" ~ to!GrString(self.getFloat("x")) ~ ", " ~ to!GrString(self.getFloat("y")) ~ ")");
 }
 
 private void _printlVec2f(GrCall call) {
@@ -295,7 +295,7 @@ private void _printlVec2f(GrCall call) {
         _stdOut("{0;0}\n");
         return;
     }
-    _stdOut("Vec2(" ~ to!string(self.getFloat("x")) ~ ", " ~ to!string(self.getFloat("y")) ~ ")\n");
+    _stdOut("Vec2(" ~ to!GrString(self.getFloat("x")) ~ ", " ~ to!GrString(self.getFloat("y")) ~ ")\n");
 }
 
 /// Operators ------------------------------------------
