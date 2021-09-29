@@ -116,7 +116,7 @@ final class GrCall {
     }
 
     T getEnum(T)(uint index) {
-        return cast(T) getParameter!int(index);
+        return cast(T) getParameter!GrInt(index);
     }
 
     T getForeign(T)(uint parameter) {
