@@ -7,7 +7,7 @@ module grimoire.stdlib.vec2;
 
 import std.conv : to;
 import std.math;
-import grimoire.compiler, grimoire.runtime;
+import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 private {
@@ -177,7 +177,7 @@ private void _vec2i_1(GrCall call) {
         call.raise("UnknownClassError");
         return;
     }
-    const int value = call.getInt(0);
+    const GrInt value = call.getInt(0);
     self.setInt("x", value);
     self.setInt("y", value);
     call.setObject(self);
@@ -211,7 +211,7 @@ private void _vec2f_1(GrCall call) {
         call.raise("UnknownClassError");
         return;
     }
-    const float value = call.getFloat(0);
+    const GrFloat value = call.getFloat(0);
     self.setFloat("x", value);
     self.setFloat("y", value);
     call.setObject(self);
@@ -240,8 +240,8 @@ private void _vec2i_vec2f(GrCall call) {
         call.raise("UnknownClassError");
         return;
     }
-    v.setFloat("x", cast(float) self.getInt("x"));
-    v.setFloat("y", cast(float) self.getInt("y"));
+    v.setFloat("x", cast(GrFloat) self.getInt("x"));
+    v.setFloat("y", cast(GrFloat) self.getInt("y"));
     call.setObject(v);
 }
 
@@ -256,8 +256,8 @@ private void _vec2f_vec2i(GrCall call) {
         call.raise("UnknownClassError");
         return;
     }
-    v.setInt("x", cast(int) self.getFloat("x"));
-    v.setInt("y", cast(int) self.getFloat("y"));
+    v.setInt("x", cast(GrInt) self.getFloat("x"));
+    v.setInt("y", cast(GrInt) self.getFloat("y"));
     call.setObject(v);
 }
 
@@ -323,7 +323,7 @@ private void _opBinaryScalarVec2i(string op)(GrCall call) {
         return;
     }
     GrObject v = call.getObject(0);
-    const int s = call.getInt(1);
+    const GrInt s = call.getInt(1);
     if (!v) {
         call.raise("NullError");
         return;
@@ -340,7 +340,7 @@ private void _opBinaryScalarRightVec2i(string op)(GrCall call) {
         return;
     }
     GrObject v = call.getObject(0);
-    const int s = call.getInt(1);
+    const GrInt s = call.getInt(1);
     if (!v) {
         call.raise("NullError");
         return;
@@ -386,7 +386,7 @@ private void _opBinaryScalarVec2f(string op)(GrCall call) {
         return;
     }
     GrObject v = call.getObject(0);
-    const float s = call.getFloat(1);
+    const GrFloat s = call.getFloat(1);
     if (!v) {
         call.raise("NullError");
         return;
@@ -403,7 +403,7 @@ private void _opBinaryScalarRightVec2f(string op)(GrCall call) {
         return;
     }
     GrObject v = call.getObject(0);
-    const float s = call.getFloat(1);
+    const GrFloat s = call.getFloat(1);
     if (!v) {
         call.raise("NullError");
         return;
@@ -604,8 +604,8 @@ private void _distanceVec2i(GrCall call) {
         call.raise("NullError");
         return;
     }
-    const float px = v1.getInt("x") - v2.getInt("x");
-    const float py = v1.getInt("y") - v2.getInt("y");
+    const GrFloat px = v1.getInt("x") - v2.getInt("x");
+    const GrFloat py = v1.getInt("y") - v2.getInt("y");
     call.setFloat(std.math.sqrt(px * px + py * py));
 }
 
@@ -616,8 +616,8 @@ private void _distanceVec2f(GrCall call) {
         call.raise("NullError");
         return;
     }
-    const float px = v1.getFloat("x") - v2.getFloat("x");
-    const float py = v1.getFloat("y") - v2.getFloat("y");
+    const GrFloat px = v1.getFloat("x") - v2.getFloat("x");
+    const GrFloat py = v1.getFloat("y") - v2.getFloat("y");
     call.setFloat(std.math.sqrt(px * px + py * py));
 }
 
@@ -628,8 +628,8 @@ private void _distanceSquaredVec2i(GrCall call) {
         call.raise("NullError");
         return;
     }
-    const float px = v1.getInt("x") - v2.getInt("x");
-    const float py = v1.getInt("y") - v2.getInt("y");
+    const GrFloat px = v1.getInt("x") - v2.getInt("x");
+    const GrFloat py = v1.getInt("y") - v2.getInt("y");
     call.setFloat(px * px + py * py);
 }
 
@@ -640,8 +640,8 @@ private void _distanceSquaredVec2f(GrCall call) {
         call.raise("NullError");
         return;
     }
-    const float px = v1.getFloat("x") - v2.getFloat("x");
-    const float py = v1.getFloat("y") - v2.getFloat("y");
+    const GrFloat px = v1.getFloat("x") - v2.getFloat("x");
+    const GrFloat py = v1.getFloat("y") - v2.getFloat("y");
     call.setFloat(px * px + py * py);
 }
 
@@ -723,8 +723,8 @@ private void _angleVec2i(GrCall call) {
         call.raise("NullError");
         return;
     }
-    call.setFloat(std.math.atan2(cast(float) self.getInt("y"),
-            cast(float) self.getInt("x")) * _radToDeg);
+    call.setFloat(std.math.atan2(cast(GrFloat) self.getInt("y"),
+            cast(GrFloat) self.getInt("x")) * _radToDeg);
 }
 
 private void _angleVec2f(GrCall call) {
@@ -742,10 +742,10 @@ private void _rotateVec2f(GrCall call) {
         call.raise("NullError");
         return;
     }
-    const float radians = call.getFloat(1) * _degToRad;
-    const float px = self.getFloat("x"), py = self.getFloat("y");
-    const float c = std.math.cos(radians);
-    const float s = std.math.sin(radians);
+    const GrFloat radians = call.getFloat(1) * _degToRad;
+    const GrFloat px = self.getFloat("x"), py = self.getFloat("y");
+    const GrFloat c = std.math.cos(radians);
+    const GrFloat s = std.math.sin(radians);
     self.setFloat("x", px * c - py * s);
     self.setFloat("y", px * s + py * c);
     call.setObject(self);
@@ -757,10 +757,10 @@ private void _rotatedVec2f(GrCall call) {
         call.raise("NullError");
         return;
     }
-    const float radians = call.getFloat(1) * _degToRad;
-    const float px = self.getFloat("x"), py = self.getFloat("y");
-    const float c = std.math.cos(radians);
-    const float s = std.math.sin(radians);
+    const GrFloat radians = call.getFloat(1) * _degToRad;
+    const GrFloat px = self.getFloat("x"), py = self.getFloat("y");
+    const GrFloat c = std.math.cos(radians);
+    const GrFloat s = std.math.sin(radians);
 
     GrObject v = call.createObject(_vec2fTypeName);
     if(!v) {
@@ -773,7 +773,7 @@ private void _rotatedVec2f(GrCall call) {
 }
 
 private void _angledVec2f(GrCall call) {
-    const float radians = call.getFloat(0) * _degToRad;
+    const GrFloat radians = call.getFloat(0) * _degToRad;
     GrObject v = call.createObject(_vec2fTypeName);
     if(!v) {
         call.raise("UnknownClassError");
@@ -790,9 +790,9 @@ private void _lengthVec2i(GrCall call) {
         call.raise("NullError");
         return;
     }
-    const int x = self.getInt("x");
-    const int y = self.getInt("y");
-    call.setFloat(std.math.sqrt(cast(float)(x * x + y * y)));
+    const GrInt x = self.getInt("x");
+    const GrInt y = self.getInt("y");
+    call.setFloat(std.math.sqrt(cast(GrFloat)(x * x + y * y)));
 }
 
 private void _lengthVec2f(GrCall call) {
@@ -801,8 +801,8 @@ private void _lengthVec2f(GrCall call) {
         call.raise("NullError");
         return;
     }
-    const float x = self.getFloat("x");
-    const float y = self.getFloat("y");
+    const GrFloat x = self.getFloat("x");
+    const GrFloat y = self.getFloat("y");
     call.setFloat(std.math.sqrt(x * x + y * y));
 }
 
@@ -812,8 +812,8 @@ private void _lengthSquaredVec2i(GrCall call) {
         call.raise("NullError");
         return;
     }
-    const int x = self.getInt("x");
-    const int y = self.getInt("y");
+    const GrInt x = self.getInt("x");
+    const GrInt y = self.getInt("y");
     call.setFloat(x * x + y * y);
 }
 
@@ -823,8 +823,8 @@ private void _lengthSquaredVec2f(GrCall call) {
         call.raise("NullError");
         return;
     }
-    const float x = self.getFloat("x");
-    const float y = self.getFloat("y");
+    const GrFloat x = self.getFloat("x");
+    const GrFloat y = self.getFloat("y");
     call.setFloat(x * x + y * y);
 }
 
@@ -834,9 +834,9 @@ private void _normalizeVec2f(GrCall call) {
         call.raise("NullError");
         return;
     }
-    const float x = self.getFloat("x");
-    const float y = self.getFloat("y");
-    const float len = std.math.sqrt(x * x + y * y);
+    const GrFloat x = self.getFloat("x");
+    const GrFloat y = self.getFloat("y");
+    const GrFloat len = std.math.sqrt(x * x + y * y);
     if (len == 0) {
         self.setFloat("x", len);
         self.setFloat("y", len);
@@ -853,9 +853,9 @@ private void _normalizedVec2f(GrCall call) {
         call.raise("NullError");
         return;
     }
-    float x = self.getFloat("x");
-    float y = self.getFloat("y");
-    const float len = std.math.sqrt(x * x + y * y);
+    GrFloat x = self.getFloat("x");
+    GrFloat y = self.getFloat("y");
+    const GrFloat len = std.math.sqrt(x * x + y * y);
 
     if (len == 0) {
         x = len;

@@ -5,6 +5,7 @@
  */
 module grimoire.runtime.context;
 
+import grimoire.assembly;
 import grimoire.runtime.engine;
 import grimoire.runtime.array;
 import grimoire.runtime.object;
@@ -69,9 +70,9 @@ final class GrContext {
     GrEngine engine;
 
     /// Local variables
-    int[] ilocals;
+    GrInt[] ilocals;
     /// Ditto
-    float[] flocals;
+    GrFloat[] flocals;
     /// Ditto
     string[] slocals;
     /// Ditto
@@ -81,9 +82,9 @@ final class GrContext {
     GrStackFrame[] callStack;
 
     /// Expression stack.
-    int[] istack;
+    GrInt[] istack;
     /// Ditto
-    float[] fstack;
+    GrFloat[] fstack;
     /// Ditto
     string[] sstack;
     /// Ditto
@@ -139,8 +140,8 @@ final class GrContext {
 
     /// Initialize the expression stacks.
     void setupStack(uint size) {
-        istack = new int[size];
-        fstack = new float[size];
+        istack = new GrInt[size];
+        fstack = new GrFloat[size];
         sstack = new string[size];
         ostack = new void*[size];
     }
@@ -151,8 +152,8 @@ final class GrContext {
         flocalsLimit = fsize;
         slocalsLimit = ssize;
         olocalsLimit = osize;
-        ilocals = new int[ilocalsLimit];
-        flocals = new float[flocalsLimit];
+        ilocals = new GrInt[ilocalsLimit];
+        flocals = new GrFloat[flocalsLimit];
         slocals = new string[slocalsLimit];
         olocals = new void*[olocalsLimit];
     }
@@ -192,8 +193,8 @@ final class GrContext {
     }
 
     alias setBool = setValue!bool;
-    alias setInt = setValue!int;
-    alias setFloat = setValue!float;
+    alias setInt = setValue!GrInt;
+    alias setFloat = setValue!GrFloat;
     alias setString = setValue!string;
     alias setObject = setUserData!GrObject;
     alias setIntArray = setUserData!GrIntArray;
@@ -206,7 +207,7 @@ final class GrContext {
     }
 
     private void setValue(T)(T value) {
-        static if (is(T == int)) {
+        static if (is(T == GrInt)) {
             istackPos++;
             istack[istackPos] = value;
         }
@@ -214,7 +215,7 @@ final class GrContext {
             istackPos++;
             istack[istackPos] = value;
         }
-        else static if (is(T == float)) {
+        else static if (is(T == GrFloat)) {
             fstackPos++;
             fstack[fstackPos] = value;
         }

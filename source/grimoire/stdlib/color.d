@@ -7,7 +7,7 @@ module grimoire.stdlib.color;
 
 import std.conv : to;
 import std.algorithm.comparison : clamp;
-import grimoire.compiler, grimoire.runtime;
+import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 package void grLoadStdLibColor(GrLibrary library) {
@@ -109,7 +109,7 @@ private void _opBinaryScalarColor(string op)(GrCall call) {
         return;
     }
     GrObject c = call.getObject(0);
-    const float s = call.getFloat(1);
+    const GrFloat s = call.getFloat(1);
     if (!c) {
         call.raise("NullError");
         return;
@@ -127,7 +127,7 @@ private void _opBinaryScalarRightColor(string op)(GrCall call) {
         return;
     }
     GrObject c = call.getObject(0);
-    const float s = call.getFloat(1);
+    const GrFloat s = call.getFloat(1);
     if (!c) {
         call.raise("NullError");
         return;
@@ -164,7 +164,7 @@ private void _lerpColor(GrCall call) {
     }
     GrObject c1 = call.getObject(0);
     GrObject c2 = call.getObject(1);
-    const float t = call.getFloat(2);
+    const GrFloat t = call.getFloat(2);
     if (!c1 || !c2) {
         call.raise("NullError");
         return;

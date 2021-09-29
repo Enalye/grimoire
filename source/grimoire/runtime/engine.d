@@ -30,18 +30,18 @@ class GrEngine {
         GrBytecode _bytecode;
 
         /// Global integral variables.
-        int[] _iglobals;
+        GrInt[] _iglobals;
         /// Global float variables.
-        float[] _fglobals;
+        GrFloat[] _fglobals;
         /// Global string variables.
         string[] _sglobals;
         /// Global object variables.
         void*[] _oglobals;
 
         /// Global integral stack.
-        int[] _iglobalStackIn, _iglobalStackOut;
+        GrInt[] _iglobalStackIn, _iglobalStackOut;
         /// Global float stack.
-        float[] _fglobalStackIn, _fglobalStackOut;
+        GrFloat[] _fglobalStackIn, _fglobalStackOut;
         /// Global string stack.
         string[] _sglobalStackIn, _sglobalStackOut;
         /// Global object stack.
@@ -123,8 +123,8 @@ class GrEngine {
     final void load(GrBytecode bytecode) {
         initialize();
         _bytecode = bytecode;
-        _iglobals = new int[_bytecode.iglobalsCount];
-        _fglobals = new float[_bytecode.fglobalsCount];
+        _iglobals = new GrInt[_bytecode.iglobalsCount];
+        _fglobals = new GrFloat[_bytecode.fglobalsCount];
         _sglobals = new string[_bytecode.sglobalsCount];
         _oglobals = new void*[_bytecode.oglobalsCount];
 
@@ -353,8 +353,8 @@ class GrEngine {
     }
 
     alias getBoolVariable = getVariable!bool;
-    alias getIntVariable = getVariable!int;
-    alias getFloatVariable = getVariable!float;
+    alias getIntVariable = getVariable!GrInt;
+    alias getFloatVariable = getVariable!GrFloat;
     alias getStringVariable = getVariable!string;
     alias getPtrVariable = getVariable!(void*);
 
@@ -407,7 +407,7 @@ class GrEngine {
         const auto variable = name in _bytecode.variables;
         if (variable is null)
             throw new Exception("no global variable `" ~ name ~ "` defined");
-        static if (is(T == int)) {
+        static if (is(T == GrInt)) {
             if ((variable.typeMask & 0x1) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not an int");
             return _iglobals[variable.index];
@@ -417,7 +417,7 @@ class GrEngine {
                 throw new Exception("variable `" ~ name ~ "` is not an int");
             return _iglobals[variable.index] > 0;
         }
-        else static if (is(T == float)) {
+        else static if (is(T == GrFloat)) {
             if ((variable.typeMask & 0x2) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not a float");
             return _fglobals[variable.index];
@@ -435,8 +435,8 @@ class GrEngine {
     }
 
     alias setBoolVariable = setVariable!bool;
-    alias setIntVariable = setVariable!int;
-    alias setFloatVariable = setVariable!float;
+    alias setIntVariable = setVariable!GrInt;
+    alias setFloatVariable = setVariable!GrFloat;
     alias setStringVariable = setVariable!string;
     alias setPtrVariable = setVariable!(void*);
 
@@ -488,7 +488,7 @@ class GrEngine {
         const auto variable = name in _bytecode.variables;
         if (variable is null)
             throw new Exception("no global variable `" ~ name ~ "` defined");
-        static if (is(T == int)) {
+        static if (is(T == GrInt)) {
             if ((variable.typeMask & 0x1) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not an int");
             _iglobals[variable.index] = value;
@@ -498,7 +498,7 @@ class GrEngine {
                 throw new Exception("variable `" ~ name ~ "` is not an int");
             _iglobals[variable.index] = value;
         }
-        else static if (is(T == float)) {
+        else static if (is(T == GrFloat)) {
             if ((variable.typeMask & 0x2) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not a float");
             _fglobals[variable.index] = value;
@@ -615,7 +615,7 @@ class GrEngine {
                     break;
                 case anonymousTask:
                     GrContext newCoro = new GrContext(this);
-                    newCoro.pc = context.istack[context.istackPos];
+                    newCoro.pc = cast(uint) context.istack[context.istackPos];
                     context.istackPos--;
                     _contextsToSpawn.push(newCoro);
                     context.pc++;
@@ -1154,14 +1154,14 @@ class GrEngine {
                     context.pc++;
                     break;
                 case refStore_int:
-                    *(cast(int*) context.ostack[context.ostackPos]) = context
+                    *(cast(GrInt*) context.ostack[context.ostackPos]) = context
                         .istack[context.istackPos];
                     context.ostackPos--;
                     context.istackPos--;
                     context.pc++;
                     break;
                 case refStore_float:
-                    *(cast(float*) context.ostack[context.ostackPos]) = context
+                    *(cast(GrFloat*) context.ostack[context.ostackPos]) = context
                         .fstack[context.fstackPos];
                     context.ostackPos--;
                     context.fstackPos--;
@@ -1181,13 +1181,13 @@ class GrEngine {
                     context.pc++;
                     break;
                 case refStore2_int:
-                    *(cast(int*) context.ostack[context.ostackPos]) = context
+                    *(cast(GrInt*) context.ostack[context.ostackPos]) = context
                         .istack[context.istackPos];
                     context.ostackPos--;
                     context.pc++;
                     break;
                 case refStore2_float:
-                    *(cast(float*) context.ostack[context.ostackPos]) = context
+                    *(cast(GrFloat*) context.ostack[context.ostackPos]) = context
                         .fstack[context.fstackPos];
                     context.ostackPos--;
                     context.pc++;
@@ -1883,7 +1883,7 @@ class GrEngine {
                     context.olocalsPos += context.callStack[context.stackPos].olocalStackSize;
                     context.callStack[context.stackPos].retPosition = context.pc + 1u;
                     context.stackPos++;
-                    context.pc = context.istack[context.istackPos];
+                    context.pc = cast(uint) context.istack[context.istackPos];
                     context.istackPos--;
                     break;
                 case primitiveCall:

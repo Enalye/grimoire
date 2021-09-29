@@ -282,12 +282,12 @@ final class GrCompiler {
 
 		//Initialize every primitives.
 		bytecode.primitives.length = _data._primitives.length;
-		for (int id; id < bytecode.primitives.length; ++id) {
+		for (size_t id; id < bytecode.primitives.length; ++id) {
 			bytecode.primitives[id].index = _data._primitives[id].callbackId;
 			GrType[] inSignature = _data._primitives[id].inSignature;
 			if (_data._primitives[id].name == "@as")
 				inSignature.length = 1;
-			for (int i; i < inSignature.length; ++i) {
+			for (size_t i; i < inSignature.length; ++i) {
 				const GrType type = inSignature[i];
 				final switch (type.baseType) with (GrBaseType) {
 				case bool_:
@@ -329,7 +329,7 @@ final class GrCompiler {
 		}
 
 		/// Fill in class information
-		for (int i; i < _data._classDefinitions.length; ++i) {
+		for (size_t i; i < _data._classDefinitions.length; ++i) {
 			GrClassBuilder class_ = new GrClassBuilder;
 			class_.name = _data._classDefinitions[i].name;
 			class_.fields = _data._classDefinitions[i].fields;

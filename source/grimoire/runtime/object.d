@@ -16,8 +16,8 @@ so you need to check with its type definition.
 package final class GrField {
     string name;
     union {
-        int ivalue;
-        float fvalue;
+        GrInt ivalue;
+        GrFloat fvalue;
         string svalue;
         void* ovalue;
     }
@@ -49,8 +49,8 @@ final class GrObject {
     }
 
     alias getBool = getField!bool;
-    alias getInt = getField!int;
-    alias getFloat = getField!float;
+    alias getInt = getField!GrInt;
+    alias getFloat = getField!GrFloat;
     alias getString = getField!string;
     alias getPtr = getField!(void*);
 
@@ -106,11 +106,11 @@ final class GrObject {
     private T getField(T)(string fieldName) {
         for (size_t index; index < _fields.length; ++index) {
             if (_fields[index].name == fieldName) {
-                static if (is(T == int))
+                static if (is(T == GrInt))
                     return _fields[index].ivalue;
                 else static if (is(T == bool))
                     return cast(T) _fields[index].ivalue;
-                else static if (is(T == float))
+                else static if (is(T == GrFloat))
                     return _fields[index].fvalue;
                 else static if (is(T == string))
                     return _fields[index].svalue;
@@ -124,8 +124,8 @@ final class GrObject {
     }
 
     alias setBool = setField!bool;
-    alias setInt = setField!int;
-    alias setFloat = setField!float;
+    alias setInt = setField!GrInt;
+    alias setFloat = setField!GrFloat;
     alias setString = setField!string;
     alias setPtr = setField!(void*);
 
@@ -180,11 +180,11 @@ final class GrObject {
     private T setField(T)(string fieldName, T value) {
         for (size_t index; index < _fields.length; ++index) {
             if (_fields[index].name == fieldName) {
-                static if (is(T == int))
+                static if (is(T == GrInt))
                     return _fields[index].ivalue = cast(int) value;
                 else static if (is(T == bool))
                     return _fields[index].ivalue = value;
-                else static if (is(T == float))
+                else static if (is(T == GrFloat))
                     return _fields[index].fvalue = value;
                 else static if (is(T == string))
                     return _fields[index].svalue = value;

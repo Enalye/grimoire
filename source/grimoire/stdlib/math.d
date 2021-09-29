@@ -7,7 +7,7 @@ module grimoire.stdlib.math;
 
 import std.random, std.math;
 import std.algorithm.comparison : clamp;
-import grimoire.compiler, grimoire.runtime;
+import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
     library.addVariable("pi", grFloat, PI, true);
@@ -60,26 +60,26 @@ package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
 }
 
 private void _min_f(GrCall call) {
-    const float a = call.getFloat(0);
-    const float b = call.getFloat(1);
+    const GrFloat a = call.getFloat(0);
+    const GrFloat b = call.getFloat(1);
     call.setFloat(a < b ? a : b);
 }
 
 private void _min_i(GrCall call) {
-    const int a = call.getInt(0);
-    const int b = call.getInt(1);
+    const GrInt a = call.getInt(0);
+    const GrInt b = call.getInt(1);
     call.setInt(a < b ? a : b);
 }
 
 private void _max_f(GrCall call) {
-    const float a = call.getFloat(0);
-    const float b = call.getFloat(1);
+    const GrFloat a = call.getFloat(0);
+    const GrFloat b = call.getFloat(1);
     call.setFloat(a > b ? a : b);
 }
 
 private void _max_i(GrCall call) {
-    const int a = call.getInt(0);
-    const int b = call.getInt(1);
+    const GrInt a = call.getInt(0);
+    const GrInt b = call.getInt(1);
     call.setInt(a > b ? a : b);
 }
 
@@ -92,8 +92,8 @@ private void _random01(GrCall call) {
 }
 
 private void _random_f(GrCall call) {
-    const float a = call.getFloat(0);
-    const float b = call.getFloat(1);
+    const GrFloat a = call.getFloat(0);
+    const GrFloat b = call.getFloat(1);
     if(a < b)
         call.setFloat(uniform!"[]"(a, b));
     else
@@ -101,8 +101,8 @@ private void _random_f(GrCall call) {
 }
 
 private void _random_i(GrCall call) {
-    const int a = call.getInt(0);
-    const int b = call.getInt(1);
+    const GrInt a = call.getInt(0);
+    const GrInt b = call.getInt(1);
     if(a < b)
         call.setInt(uniform!"[]"(a, b));
     else
@@ -150,16 +150,16 @@ private void _pow(GrCall call) {
 }
 
 private void _lerp(GrCall call) {
-    const float a = call.getFloat(0);
-    const float b = call.getFloat(1);
-    const float t = call.getFloat(2);
+    const GrFloat a = call.getFloat(0);
+    const GrFloat b = call.getFloat(1);
+    const GrFloat t = call.getFloat(2);
     call.setFloat(t * b + (1f - t) * a);
 }
 
 private void _rlerp(GrCall call) {
-    const float a = call.getFloat(0);
-    const float b = call.getFloat(1);
-    const float v = call.getFloat(2);
+    const GrFloat a = call.getFloat(0);
+    const GrFloat b = call.getFloat(1);
+    const GrFloat v = call.getFloat(2);
     if ((b - a) == 0f) {
         call.setFloat(0f);
         return;

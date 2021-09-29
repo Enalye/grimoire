@@ -6,7 +6,7 @@
 module grimoire.stdlib.channel;
 
 import std.range;
-import grimoire.compiler, grimoire.runtime;
+import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibChannel(GrLibrary library) {
     static foreach (t; ["Int", "Float", "String", "Object"]) {
@@ -36,11 +36,11 @@ package(grimoire.stdlib) void grLoadStdLibChannel(GrLibrary library) {
 }
 
 private void _size_(string t)(GrCall call) {
-    mixin("call.setInt(cast(int) call.get" ~ t ~ "Channel(0).size);");
+    mixin("call.setInt(cast(GrInt) call.get" ~ t ~ "Channel(0).size);");
 }
 
 private void _capacity_(string t)(GrCall call) {
-    mixin("call.setInt(cast(int) call.get" ~ t ~ "Channel(0).capacity);");
+    mixin("call.setInt(cast(GrInt) call.get" ~ t ~ "Channel(0).capacity);");
 }
 
 private void _empty_(string t)(GrCall call) {

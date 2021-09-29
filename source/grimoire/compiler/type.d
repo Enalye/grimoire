@@ -398,7 +398,7 @@ final class GrVariableDefinition {
     /// Integral init value
     int ivalue;
     /// Floating init value
-    float fvalue;
+    GrFloat fvalue;
     /// String init value
     string svalue;
     /// Can the variable be mutated in script ?

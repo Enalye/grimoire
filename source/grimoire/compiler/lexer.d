@@ -12,6 +12,7 @@ import std.conv;
 import std.math;
 import std.file;
 import std.algorithm : canFind;
+import grimoire.assembly;
 import grimoire.compiler.error;
 
 /**
@@ -175,11 +176,11 @@ struct GrLexeme {
 
     /// Integral value of the constant.
     /// isLiteral will be true and type set to integer.
-    int ivalue;
+    GrInt ivalue;
 
     /// Floating point value of the constant.
     /// isLiteral will be true and type set to float_.
-    float fvalue;
+    GrFloat fvalue;
 
     /// boolean value of the constant.
     /// isLiteral will be true and type set to boolean.
@@ -445,11 +446,11 @@ package final class GrLexer {
 
         if (isFloat) {
             lex.type = GrLexemeType.float_;
-            lex.fvalue = to!float(buffer);
+            lex.fvalue = to!GrFloat(buffer);
         }
         else {
             lex.type = GrLexemeType.integer;
-            lex.ivalue = to!int(buffer);
+            lex.ivalue = to!GrInt(buffer);
         }
         _lexemes ~= lex;
     }

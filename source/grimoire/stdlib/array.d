@@ -6,7 +6,7 @@
 module grimoire.stdlib.array;
 
 import std.range;
-import grimoire.compiler, grimoire.runtime;
+import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
     library.addForeign("ArrayIter", ["T"]);
@@ -142,19 +142,19 @@ private void _copy_(string t)(GrCall call) {
 }
 
 private void _size_(string t)(GrCall call) {
-    mixin("call.setInt(cast(int) call.get" ~ t ~ "Array(0).data.length);");
+    mixin("call.setInt(cast(GrInt) call.get" ~ t ~ "Array(0).data.length);");
 }
 
 private void _resize_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
-    const int size = call.getInt(1);
+    const GrInt size = call.getInt(1);
     if (size < 0) {
         call.raise("ArgumentError");
         return;
     }
     static if (t == "Float") {
         if (size > array.data.length) {
-            int index = cast(int) array.data.length;
+            GrInt index = cast(GrInt) array.data.length;
             array.data.length = size;
             for (; index < array.data.length; ++index)
                 array.data[index] = 0f;
@@ -182,7 +182,7 @@ private void _fill_(string t)(GrCall call) {
     else {
         mixin("auto value = call.get" ~ t ~ "(1);");
     }
-    for (int index; index < array.data.length; ++index)
+    for (size_t index; index < array.data.length; ++index)
         array.data[index] = value;
     mixin("call.set" ~ t ~ "Array(array);");
 }
@@ -247,13 +247,13 @@ private void _pop_(string t)(GrCall call) {
 
 private void _shift1_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
-    int size = call.getInt(1);
+    GrInt size = call.getInt(1);
     if (size < 0) {
         call.raise("IndexError");
         return;
     }
     if (array.data.length < size) {
-        size = cast(int) array.data.length;
+        size = cast(GrInt) array.data.length;
     }
     mixin("Gr" ~ t ~ "Array copy = new Gr" ~ t ~ "Array;");
     copy.data = array.data[0 .. size];
@@ -263,13 +263,13 @@ private void _shift1_(string t)(GrCall call) {
 
 private void _pop1_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
-    int size = call.getInt(1);
+    GrInt size = call.getInt(1);
     if (size < 0) {
         call.raise("IndexError");
         return;
     }
     if (array.data.length < size) {
-        size = cast(int) array.data.length;
+        size = cast(GrInt) array.data.length;
     }
     mixin("Gr" ~ t ~ "Array copy = new Gr" ~ t ~ "Array;");
     copy.data = array.data[$ - size .. $];
@@ -307,9 +307,9 @@ private void _last_(string t)(GrCall call) {
 
 private void _remove_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
-    int index = call.getInt(1);
+    GrInt index = call.getInt(1);
     if (index < 0)
-        index = (cast(int) array.data.length) + index;
+        index = (cast(GrInt) array.data.length) + index;
     if (!array.data.length || index >= array.data.length || index < 0) {
         mixin("call.set" ~ t ~ "Array(array);");
         return;
@@ -330,15 +330,15 @@ private void _remove_(string t)(GrCall call) {
 
 private void _remove2_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
-    int index1 = call.getInt(1);
-    int index2 = call.getInt(2);
+    GrInt index1 = call.getInt(1);
+    GrInt index2 = call.getInt(2);
     if (index1 < 0)
-        index1 = (cast(int) array.data.length) + index1;
+        index1 = (cast(GrInt) array.data.length) + index1;
     if (index2 < 0)
-        index2 = (cast(int) array.data.length) + index2;
+        index2 = (cast(GrInt) array.data.length) + index2;
 
     if (index2 < index1) {
-        const int temp = index1;
+        const GrInt temp = index1;
         index1 = index2;
         index2 = temp;
     }
@@ -351,7 +351,7 @@ private void _remove2_(string t)(GrCall call) {
     if (index1 < 0)
         index1 = 0;
     if (index2 >= array.data.length)
-        index2 = (cast(int) array.data.length) - 1;
+        index2 = (cast(GrInt) array.data.length) - 1;
 
     if (index1 == 0 && (index2 + 1) == array.data.length) {
         array.data.length = 0;
@@ -374,15 +374,15 @@ private void _remove2_(string t)(GrCall call) {
 
 private void _slice_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
-    int index1 = call.getInt(1);
-    int index2 = call.getInt(2);
+    GrInt index1 = call.getInt(1);
+    GrInt index2 = call.getInt(2);
     if (index1 < 0)
-        index1 = (cast(int) array.data.length) + index1;
+        index1 = (cast(GrInt) array.data.length) + index1;
     if (index2 < 0)
-        index2 = (cast(int) array.data.length) + index2;
+        index2 = (cast(GrInt) array.data.length) + index2;
 
     if (index2 < index1) {
-        const int temp = index1;
+        const GrInt temp = index1;
         index1 = index2;
         index2 = temp;
     }
@@ -396,7 +396,7 @@ private void _slice_(string t)(GrCall call) {
     if (index1 < 0)
         index1 = 0;
     if (index2 >= array.data.length)
-        index2 = (cast(int) array.data.length - 1);
+        index2 = (cast(GrInt) array.data.length - 1);
 
     if (index1 == 0 && (index2 + 1) == array.data.length) {
         mixin("call.set" ~ t ~ "Array(array);");
@@ -409,15 +409,15 @@ private void _slice_(string t)(GrCall call) {
 private void _slice_copy_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     mixin("Gr" ~ t ~ "Array copy = new Gr" ~ t ~ "Array;");
-    int index1 = call.getInt(1);
-    int index2 = call.getInt(2);
+    GrInt index1 = call.getInt(1);
+    GrInt index2 = call.getInt(2);
     if (index1 < 0)
-        index1 = (cast(int) array.data.length) + index1;
+        index1 = (cast(GrInt) array.data.length) + index1;
     if (index2 < 0)
-        index2 = (cast(int) array.data.length) + index2;
+        index2 = (cast(GrInt) array.data.length) + index2;
 
     if (index2 < index1) {
-        const int temp = index1;
+        const GrInt temp = index1;
         index1 = index2;
         index2 = temp;
     }
@@ -430,7 +430,7 @@ private void _slice_copy_(string t)(GrCall call) {
     if (index1 < 0)
         index1 = 0;
     if (index2 >= array.data.length)
-        index2 = (cast(int) array.data.length - 1);
+        index2 = (cast(GrInt) array.data.length - 1);
 
     if (index1 == 0 && (index2 + 1) == array.data.length) {
         copy.data = array.data;
@@ -451,7 +451,7 @@ private void _reverse_(string t)(GrCall call) {
 
 private void _insert_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
-    int index = call.getInt(1);
+    GrInt index = call.getInt(1);
     static if (t == "Object") {
         void* value = call.getPtr(2);
     }
@@ -459,7 +459,7 @@ private void _insert_(string t)(GrCall call) {
         mixin("auto value = call.get" ~ t ~ "(2);");
     }
     if (index < 0)
-        index = (cast(int) array.data.length) + index;
+        index = (cast(GrInt) array.data.length) + index;
     if (!array.data.length || index >= array.data.length || index < 0) {
         call.raise("IndexError");
         return;
@@ -489,7 +489,7 @@ private void _sort_(string t)(GrCall call) {
 private void _findFirst_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     mixin("auto value = call.get" ~ t ~ "(1);");
-    for (int index; index < array.data.length; ++index) {
+    for (GrInt index; index < array.data.length; ++index) {
         if (array.data[index] == value) {
             call.setInt(index);
             return;
@@ -501,7 +501,7 @@ private void _findFirst_(string t)(GrCall call) {
 private void _findLast_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     mixin("auto value = call.get" ~ t ~ "(1);");
-    for (int index = (cast(int) array.data.length) - 1; index > 0; --index) {
+    for (GrInt index = (cast(GrInt) array.data.length) - 1; index > 0; --index) {
         if (array.data[index] == value) {
             call.setInt(index);
             return;
@@ -513,7 +513,7 @@ private void _findLast_(string t)(GrCall call) {
 private void _has_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     mixin("auto value = call.get" ~ t ~ "(1);");
-    for (int index; index < array.data.length; ++index) {
+    for (GrInt index; index < array.data.length; ++index) {
         if (array.data[index] == value) {
             call.setBool(true);
             return;
@@ -530,10 +530,10 @@ private class ArrayIter(T) {
 private void _each_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     static if (t == "Int") {
-        ArrayIter!(int[]) iter = new ArrayIter!(int[]);
+        ArrayIter!(GrInt[]) iter = new ArrayIter!(GrInt[]);
     }
     else static if (t == "Float") {
-        ArrayIter!(float[]) iter = new ArrayIter!(float[]);
+        ArrayIter!(GrFloat[]) iter = new ArrayIter!(GrFloat[]);
     }
     else static if (t == "String") {
         ArrayIter!(string[]) iter = new ArrayIter!(string[]);
@@ -547,10 +547,10 @@ private void _each_(string t)(GrCall call) {
 
 private void _next_(string t)(GrCall call) {
     static if (t == "Int") {
-        ArrayIter!(int[]) iter = call.getForeign!(ArrayIter!(int[]))(0);
+        ArrayIter!(GrInt[]) iter = call.getForeign!(ArrayIter!(GrInt[]))(0);
     }
     else static if (t == "Float") {
-        ArrayIter!(float[]) iter = call.getForeign!(ArrayIter!(float[]))(0);
+        ArrayIter!(GrFloat[]) iter = call.getForeign!(ArrayIter!(GrFloat[]))(0);
     }
     else static if (t == "String") {
         ArrayIter!(string[]) iter = call.getForeign!(ArrayIter!(string[]))(0);

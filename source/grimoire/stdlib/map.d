@@ -7,7 +7,7 @@ module grimoire.stdlib.map;
 
 import std.typecons : Tuple, tuple;
 
-import grimoire.compiler, grimoire.runtime;
+import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 /// Hashmap
 private final class Map(T) {
@@ -16,15 +16,15 @@ private final class Map(T) {
 
     /// Ctor
     this(string[] keys, T[] values) {
-        for (int i; i < keys.length; ++i) {
+        for (size_t i; i < keys.length; ++i) {
             data[keys[i]] = values[i];
         }
     }
 }
 
 private {
-    alias IntMap = Map!(int);
-    alias FloatMap = Map!(float);
+    alias IntMap = Map!(GrInt);
+    alias FloatMap = Map!(GrFloat);
     alias StringMap = Map!(string);
     alias ObjectMap = Map!(void*);
 }
@@ -194,10 +194,10 @@ private void _each_(string t)(GrCall call) {
         return;
     }
     static if (t == "Int") {
-        MapIter!(int) iter = new MapIter!(int);
+        MapIter!(GrInt) iter = new MapIter!(GrInt);
     }
     else static if (t == "Float") {
-        MapIter!(float) iter = new MapIter!(float);
+        MapIter!(GrFloat) iter = new MapIter!(GrFloat);
     }
     else static if (t == "String") {
         MapIter!(string) iter = new MapIter!(string);
@@ -213,10 +213,10 @@ private void _each_(string t)(GrCall call) {
 
 private void _next_(string t)(GrCall call) {
     static if (t == "Int") {
-        MapIter!(int) iter = call.getForeign!(MapIter!(int))(0);
+        MapIter!(GrInt) iter = call.getForeign!(MapIter!(GrInt))(0);
     }
     else static if (t == "Float") {
-        MapIter!(float) iter = call.getForeign!(MapIter!(float))(0);
+        MapIter!(GrFloat) iter = call.getForeign!(MapIter!(GrFloat))(0);
     }
     else static if (t == "String") {
         MapIter!(string) iter = call.getForeign!(MapIter!(string))(0);

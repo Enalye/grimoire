@@ -5,11 +5,12 @@
  */
 module grimoire.runtime.array;
 
+import grimoire.assembly;
 import grimoire.compiler.primitive;
 import grimoire.runtime.call;
 
-alias GrIntArray = GrArray!int;
-alias GrFloatArray = GrArray!float;
+alias GrIntArray = GrArray!GrInt;
+alias GrFloatArray = GrArray!GrFloat;
 alias GrStringArray = GrArray!string;
 alias GrObjectArray = GrArray!(void*);
 

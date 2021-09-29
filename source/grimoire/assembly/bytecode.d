@@ -244,9 +244,9 @@ final class GrBytecode {
             /// Type of value
             uint typeMask;
             /// Integral init value
-            int ivalue;
+            GrInt ivalue;
             /// Floating init value
-            float fvalue;
+            GrFloat fvalue;
             /// String init value
             string svalue;
         }
@@ -255,10 +255,10 @@ final class GrBytecode {
         uint[] opcodes;
 
         /// Integer constants.
-        int[] iconsts;
+        GrInt[] iconsts;
 
         /// Floating point constants.
-        float[] fconsts;
+        GrFloat[] fconsts;
 
         /// String constants.
         string[] sconsts;
@@ -352,10 +352,10 @@ final class GrBytecode {
         buffer.append!uint(cast(uint) variables.length);
         buffer.append!uint(cast(uint) symbols.length);
 
-        foreach (int i; iconsts)
-            buffer.append!int(i);
-        foreach (float i; fconsts)
-            buffer.append!float(i);
+        foreach (GrInt i; iconsts)
+            buffer.append!GrInt(i);
+        foreach (GrFloat i; fconsts)
+            buffer.append!GrFloat(i);
         foreach (string i; sconsts) {
             writeStr(buffer, i);
         }
@@ -392,9 +392,9 @@ final class GrBytecode {
             buffer.append!uint(reference.index);
             buffer.append!uint(reference.typeMask);
             if (reference.typeMask & 0x1)
-                buffer.append!int(reference.ivalue);
+                buffer.append!GrInt(reference.ivalue);
             else if (reference.typeMask & 0x2)
-                buffer.append!float(reference.fvalue);
+                buffer.append!GrFloat(reference.fvalue);
             else if (reference.typeMask & 0x4)
                 writeStr(buffer, reference.svalue);
         }
@@ -448,11 +448,11 @@ final class GrBytecode {
         symbols.length = buffer.read!uint();
 
         for (uint i; i < iconsts.length; ++i) {
-            iconsts[i] = buffer.read!int();
+            iconsts[i] = buffer.read!GrInt();
         }
 
         for (uint i; i < fconsts.length; ++i) {
-            fconsts[i] = buffer.read!float();
+            fconsts[i] = buffer.read!GrFloat();
         }
 
         for (uint i; i < sconsts.length; ++i) {
@@ -460,7 +460,7 @@ final class GrBytecode {
         }
 
         // Opcodes
-        for (int i; i < opcodes.length; ++i) {
+        for (size_t i; i < opcodes.length; ++i) {
             opcodes[i] = buffer.read!uint();
         }
 
@@ -470,7 +470,7 @@ final class GrBytecode {
             events[ev] = buffer.read!uint();
         }
 
-        for (uint i; i < primitives.length; ++i) {
+        for (size_t i; i < primitives.length; ++i) {
             primitives[i].index = buffer.read!uint();
             primitives[i].iparams = buffer.read!uint();
             primitives[i].fparams = buffer.read!uint();
@@ -478,17 +478,17 @@ final class GrBytecode {
             primitives[i].oparams = buffer.read!uint();
 
             primitives[i].parameters.length = buffer.read!uint();
-            for (int y; y < primitives[i].parameters.length; ++y) {
+            for (size_t y; y < primitives[i].parameters.length; ++y) {
                 primitives[i].parameters[y] = buffer.read!uint();
             }
         }
 
-        for (uint i; i < classes.length; ++i) {
+        for (size_t i; i < classes.length; ++i) {
             GrClassBuilder class_ = new GrClassBuilder;
             class_.name = readStr(buffer);
             class_.fields.length = buffer.read!uint();
 
-            for (int y; y < class_.fields.length; ++y) {
+            for (size_t y; y < class_.fields.length; ++y) {
                 class_.fields[y] = readStr(buffer);
             }
 
@@ -502,9 +502,9 @@ final class GrBytecode {
             reference.index = buffer.read!uint();
             reference.typeMask = buffer.read!uint();
             if (reference.typeMask & 0x1)
-                reference.ivalue = buffer.read!int();
+                reference.ivalue = buffer.read!GrInt();
             else if (reference.typeMask & 0x2)
-                reference.fvalue = buffer.read!float();
+                reference.fvalue = buffer.read!GrFloat();
             else if (reference.typeMask & 0x4)
                 reference.svalue = readStr(buffer);
             variables[name] = reference;

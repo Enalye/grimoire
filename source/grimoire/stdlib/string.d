@@ -7,7 +7,7 @@ module grimoire.stdlib.string;
 
 import std.string;
 import std.conv : to;
-import grimoire.compiler, grimoire.runtime;
+import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibString(GrLibrary library) {
     library.addPrimitive(&_empty, "empty?", [grString], [grBool]);
@@ -74,7 +74,7 @@ private void _pop(GrCall call) {
 
 private void _shift1(GrCall call) {
     string str = call.getString(0);
-    int size = call.getInt(1);
+    GrInt size = call.getInt(1);
     if (size < 0) {
         call.raise("IndexError");
         return;
@@ -93,7 +93,7 @@ private void _shift1(GrCall call) {
 
 private void _pop1(GrCall call) {
     string str = call.getString(0);
-    int size = call.getInt(1);
+    GrInt size = call.getInt(1);
     if (size < 0) {
         call.raise("IndexError");
         return;
@@ -131,9 +131,9 @@ private void _last(GrCall call) {
 
 private void _remove(GrCall call) {
     string str = call.getString(0);
-    int index = call.getInt(1);
+    GrInt index = call.getInt(1);
     if (index < 0)
-        index = (cast(int) str.length) + index;
+        index = (cast(GrInt) str.length) + index;
     if (!str.length || index >= str.length || index < 0) {
         call.setString(str);
         return;
@@ -152,15 +152,15 @@ private void _remove(GrCall call) {
 
 private void _remove2(GrCall call) {
     string str = call.getString(0);
-    int index1 = call.getInt(1);
-    int index2 = call.getInt(2);
+    GrInt index1 = call.getInt(1);
+    GrInt index2 = call.getInt(2);
     if (index1 < 0)
-        index1 = (cast(int) str.length) + index1;
+        index1 = (cast(GrInt) str.length) + index1;
     if (index2 < 0)
-        index2 = (cast(int) str.length) + index2;
+        index2 = (cast(GrInt) str.length) + index2;
 
     if (index2 < index1) {
-        const int temp = index1;
+        const GrInt temp = index1;
         index1 = index2;
         index2 = temp;
     }
@@ -173,7 +173,7 @@ private void _remove2(GrCall call) {
     if (index1 < 0)
         index1 = 0;
     if (index2 >= str.length)
-        index2 = (cast(int) str.length) - 1;
+        index2 = (cast(GrInt) str.length) - 1;
 
     if (index1 == 0 && (index2 + 1) == str.length) {
         call.setString("");
@@ -192,15 +192,15 @@ private void _remove2(GrCall call) {
 
 private void _slice(GrCall call) {
     string str = call.getString(0);
-    int index1 = call.getInt(1);
-    int index2 = call.getInt(2);
+    GrInt index1 = call.getInt(1);
+    GrInt index2 = call.getInt(2);
     if (index1 < 0)
-        index1 = (cast(int) str.length) + index1;
+        index1 = (cast(GrInt) str.length) + index1;
     if (index2 < 0)
-        index2 = (cast(int) str.length) + index2;
+        index2 = (cast(GrInt) str.length) + index2;
 
     if (index2 < index1) {
-        const int temp = index1;
+        const GrInt temp = index1;
         index1 = index2;
         index2 = temp;
     }
@@ -213,7 +213,7 @@ private void _slice(GrCall call) {
     if (index1 < 0)
         index1 = 0;
     if (index2 >= str.length)
-        index2 = (cast(int) str.length - 1);
+        index2 = (cast(GrInt) str.length - 1);
 
     if (index1 == 0 && (index2 + 1) == str.length) {
         call.setString(str);
@@ -230,10 +230,10 @@ private void _reverse(GrCall call) {
 
 private void _insert(GrCall call) {
     string str = call.getString(0);
-    int index = call.getInt(1);
+    GrInt index = call.getInt(1);
     string value = call.getString(2);
     if (index < 0)
-        index = (cast(int) str.length) + index;
+        index = (cast(GrInt) str.length) + index;
     if (!str.length || index >= str.length || index < 0) {
         call.raise("IndexError");
         return;
@@ -252,13 +252,13 @@ private void _insert(GrCall call) {
 private void _findFirst(GrCall call) {
     string str = call.getString(0);
     string value = call.getString(1);
-    call.setInt(cast(int) str.indexOf(value));
+    call.setInt(cast(GrInt) str.indexOf(value));
 }
 
 private void _findLast(GrCall call) {
     string str = call.getString(0);
     string value = call.getString(1);
-    call.setInt(cast(int) str.lastIndexOf(value));
+    call.setInt(cast(GrInt) str.lastIndexOf(value));
 }
 
 private void _has(GrCall call) {
@@ -269,7 +269,7 @@ private void _has(GrCall call) {
 
 private final class StringIter {
     string value;
-    int index;
+    size_t index;
 }
 
 private void _each(GrCall call) {

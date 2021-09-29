@@ -5,8 +5,10 @@
  */
 module grimoire.runtime.channel;
 
-alias GrIntChannel = GrChannel!int;
-alias GrFloatChannel = GrChannel!float;
+import grimoire.assembly;
+
+alias GrIntChannel = GrChannel!GrInt;
+alias GrFloatChannel = GrChannel!GrFloat;
 alias GrStringChannel = GrChannel!string;
 alias GrObjectChannel = GrChannel!(void*);
 

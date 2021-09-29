@@ -7,7 +7,7 @@ module grimoire.stdlib.time;
 
 import std.datetime;
 import std.conv : to;
-import grimoire.compiler, grimoire.runtime;
+import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibTime(GrLibrary library) {
 	library.addPrimitive(&_clock, "clock", [], [grInt]);
@@ -26,16 +26,16 @@ package(grimoire.stdlib) void grLoadStdLibTime(GrLibrary library) {
 }
 
 private void _clock(GrCall call) {
-	call.setInt(cast(int)(Clock.currStdTime / 10_000));
+	call.setInt(cast(GrInt)(Clock.currStdTime / 10_000));
 }
 
 private void _wait(GrCall call) {
 	final class WaitBlocker : GrBlocker {
 		private {
-			int _count;
+			GrInt _count;
 		}
 
-		this(int count) {
+		this(GrInt count) {
 			_count = count < 0 ? 0 : count;
 		}
 
@@ -53,11 +53,11 @@ private void _wait(GrCall call) {
 private void _sleep(GrCall call) {
 	final class SleepBlocker : GrBlocker {
 		private {
-			uint _milliseconds;
+			GrInt _milliseconds;
 			MonoTime _startTime;
 		}
 
-		this(int milliseconds) {
+		this(GrInt milliseconds) {
 			_milliseconds = milliseconds < 0 ? 0 : milliseconds;
 			_startTime = MonoTime.currTime();
 		}
@@ -75,7 +75,7 @@ private void _seconds_i(GrCall call) {
 }
 
 private void _seconds_f(GrCall call) {
-	call.setInt(cast(int)(call.getFloat(0) * 1_000f));
+	call.setInt(cast(GrInt)(call.getFloat(0) * 1_000f));
 }
 
 private void _minutes_i(GrCall call) {
@@ -83,7 +83,7 @@ private void _minutes_i(GrCall call) {
 }
 
 private void _minutes_f(GrCall call) {
-	call.setInt(cast(int)(call.getFloat(0) * 60_000f));
+	call.setInt(cast(GrInt)(call.getFloat(0) * 60_000f));
 }
 
 private void _hours_i(GrCall call) {
@@ -91,5 +91,5 @@ private void _hours_i(GrCall call) {
 }
 
 private void _hours_f(GrCall call) {
-	call.setInt(cast(int)(call.getFloat(0) * 3_600_000f));
+	call.setInt(cast(GrInt)(call.getFloat(0) * 3_600_000f));
 }

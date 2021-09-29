@@ -70,8 +70,8 @@ final class GrCall {
     }
 
     alias getBool = getParameter!bool;
-    alias getInt = getParameter!int;
-    alias getFloat = getParameter!float;
+    alias getInt = getParameter!GrInt;
+    alias getFloat = getParameter!GrFloat;
     alias getString = getParameter!string;
     alias getPtr = getParameter!(void*);
 
@@ -129,7 +129,7 @@ final class GrCall {
             throw new Exception("parameter index `" ~ to!string(
                     index) ~ "` exceeds the number of parameters");
 
-        static if (is(T == int)) {
+        static if (is(T == GrInt)) {
             if ((_parameters[index] & 0x10000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not an int");
             return _context.istack[(_context.istackPos - _iparams) + (_parameters[index] & 0xFFFF)
@@ -141,9 +141,9 @@ final class GrCall {
             return _context.istack[(_context.istackPos - _iparams) + (
                         _parameters[index] & 0xFFFF) + 1] > 0;
         }
-        else static if (is(T == float)) {
+        else static if (is(T == GrFloat)) {
             if ((_parameters[index] & 0x20000) == 0)
-                throw new Exception("parameter " ~ to!string(index) ~ " is not a float");
+                throw new Exception("parameter " ~ to!string(index) ~ " is not a GrFloat");
             return _context.fstack[(_context.fstackPos - _fparams) + (_parameters[index] & 0xFFFF)
                 + 1];
         }
@@ -162,8 +162,8 @@ final class GrCall {
     }
 
     alias setBool = setResult!bool;
-    alias setInt = setResult!int;
-    alias setFloat = setResult!float;
+    alias setInt = setResult!GrInt;
+    alias setFloat = setResult!GrFloat;
     alias setString = setResult!string;
     alias setPtr = setResult!(void*);
 
@@ -208,7 +208,7 @@ final class GrCall {
     }
 
     void setEnum(T)(T value) {
-        setResult!int(cast(int) value);
+        setResult!GrInt(cast(GrInt) value);
     }
 
     void setForeign(T)(T value) {
@@ -216,7 +216,7 @@ final class GrCall {
     }
 
     private void setResult(T)(T value) {
-        static if (is(T == int)) {
+        static if (is(T == GrInt)) {
             _iresults++;
             const size_t idx = (_context.istackPos - _iparams) + _iresults;
             if (idx >= _context.istack.length)
@@ -230,7 +230,7 @@ final class GrCall {
                 _context.istack.length *= 2;
             _context.istack[idx] = value ? 1 : 0;
         }
-        else static if (is(T == float)) {
+        else static if (is(T == GrFloat)) {
             _fresults++;
             const size_t idx = (_context.fstackPos - _fparams) + _fresults;
             if (idx >= _context.fstack.length)
@@ -257,11 +257,11 @@ final class GrCall {
         return _context.engine.getBoolVariable(name);
     }
 
-    int getIntVariable(string name) {
+    GrInt getIntVariable(string name) {
         return _context.engine.getIntVariable(name);
     }
 
-    float getFloatVariable(string name) {
+    GrFloat getFloatVariable(string name) {
         return _context.engine.getFloatVariable(name);
     }
 
@@ -321,11 +321,11 @@ final class GrCall {
         _context.engine.setBoolVariable(name, value);
     }
 
-    void setIntVariable(string name, int value) {
+    void setIntVariable(string name, GrInt value) {
         _context.engine.setIntVariable(name, value);
     }
 
-    void setFloatVariable(string name, float value) {
+    void setFloatVariable(string name, GrFloat value) {
         _context.engine.setFloatVariable(name, value);
     }
 

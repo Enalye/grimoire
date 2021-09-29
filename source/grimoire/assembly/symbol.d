@@ -7,6 +7,9 @@ module grimoire.assembly.symbol;
 
 import std.format, std.file, std.bitmanip, std.array, std.outbuffer;
 
+alias GrInt = long;
+alias GrFloat = double;
+
 /// Stack trace
 struct GrStackTrace {
     /// Where the error was raised inside this function

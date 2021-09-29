@@ -6,7 +6,7 @@
 module grimoire.stdlib.range;
 
 import std.range;
-import grimoire.compiler, grimoire.runtime;
+import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library) {
     library.addForeign("RangeIter", ["T"]);
@@ -36,7 +36,7 @@ private final class RangeIter(T) {
 }
 
 private void _range_next_i(GrCall call) {
-    RangeIter!int iter = call.getForeign!(RangeIter!int)(0);
+    RangeIter!GrInt iter = call.getForeign!(RangeIter!GrInt)(0);
     if (!iter) {
         call.raise("NullError");
         return;
@@ -52,7 +52,7 @@ private void _range_next_i(GrCall call) {
 }
 
 private void _range_i(GrCall call) {
-    RangeIter!int iter = new RangeIter!int;
+    RangeIter!GrInt iter = new RangeIter!GrInt;
     iter.value = call.getInt(0);
     iter.end = call.getInt(1);
     iter.step = iter.value > iter.end ? -1 : 1;
@@ -60,7 +60,7 @@ private void _range_i(GrCall call) {
 }
 
 private void _range_step_i(GrCall call) {
-    RangeIter!int iter = new RangeIter!int;
+    RangeIter!GrInt iter = new RangeIter!GrInt;
     iter.value = call.getInt(0);
     iter.end = call.getInt(1);
     iter.step = call.getInt(2);
@@ -71,7 +71,7 @@ private void _range_step_i(GrCall call) {
 }
 
 private void _range_next_f(GrCall call) {
-    RangeIter!float iter = call.getForeign!(RangeIter!float)(0);
+    RangeIter!GrFloat iter = call.getForeign!(RangeIter!GrFloat)(0);
     if (!iter) {
         call.raise("NullError");
         return;
@@ -87,7 +87,7 @@ private void _range_next_f(GrCall call) {
 }
 
 private void _range_f(GrCall call) {
-    RangeIter!float iter = new RangeIter!float;
+    RangeIter!GrFloat iter = new RangeIter!GrFloat;
     iter.value = call.getFloat(0);
     iter.end = call.getFloat(1);
     iter.step = iter.value > iter.end ? -1f : 1f;
@@ -95,7 +95,7 @@ private void _range_f(GrCall call) {
 }
 
 private void _range_step_f(GrCall call) {
-    RangeIter!float iter = new RangeIter!float;
+    RangeIter!GrFloat iter = new RangeIter!GrFloat;
     iter.value = call.getFloat(0);
     iter.end = call.getFloat(1);
     iter.step = call.getFloat(2);
