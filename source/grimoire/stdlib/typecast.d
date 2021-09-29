@@ -46,15 +46,15 @@ private void typecast_b2s(GrCall call) {
 }
 
 private void typecast_i2s(GrCall call) {
-    call.setString(to!string(call.getInt(0)));
+    call.setString(to!GrString(call.getInt(0)));
 }
 
 private void typecast_r2s(GrCall call) {
-    call.setString(to!string(call.getFloat(0)));
+    call.setString(to!GrString(call.getFloat(0)));
 }
 
 private void typecast_as2s(GrCall call) {
-    string result;
+    GrString result;
     foreach (const sub; call.getStringArray(0).data) {
         result ~= sub;
     }
@@ -65,7 +65,7 @@ private void typecast_as2s(GrCall call) {
 private void typecast_s2as(GrCall call) {
     GrStringArray result = new GrStringArray;
     foreach (const sub; call.getString(0)) {
-        result.data ~= to!string(sub);
+        result.data ~= to!GrString(sub);
     }
     call.setStringArray(result);
 }

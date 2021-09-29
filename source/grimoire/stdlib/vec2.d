@@ -268,7 +268,7 @@ private void _printVec2i(GrCall call) {
         _stdOut("Vec2(0, 0)");
         return;
     }
-    _stdOut("Vec2(" ~ to!string(self.getInt("x")) ~ ", " ~ to!string(self.getInt("y")) ~ ")");
+    _stdOut("Vec2(" ~ to!GrString(self.getInt("x")) ~ ", " ~ to!GrString(self.getInt("y")) ~ ")");
 }
 
 private void _printlVec2i(GrCall call) {
@@ -277,7 +277,7 @@ private void _printlVec2i(GrCall call) {
         _stdOut("{0;0}\n");
         return;
     }
-    _stdOut("Vec2(" ~ to!string(self.getInt("x")) ~ ", " ~ to!string(self.getInt("y")) ~ ")\n");
+    _stdOut("Vec2(" ~ to!GrString(self.getInt("x")) ~ ", " ~ to!GrString(self.getInt("y")) ~ ")\n");
 }
 
 private void _printVec2f(GrCall call) {

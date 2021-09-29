@@ -5,12 +5,14 @@
  */
 module grimoire.stdlib.util;
 
+import grimoire.assembly;
+
 package {
-	void function(string) _stdOut = &_defaultOutput;
+	void function(GrString) _stdOut = &_defaultOutput;
 }
 
 /// Sets the output callback of print and printl primitives
-void grSetOutputFunction(void function(string) callback) {
+void grSetOutputFunction(void function(GrString) callback) {
 	if (!callback) {
 		_stdOut = &_defaultOutput;
 		return;
@@ -19,11 +21,11 @@ void grSetOutputFunction(void function(string) callback) {
 }
 
 /// Gets the output callback of print and printl primitives
-void function(string) grGetOutputFunction() {
+void function(GrString) grGetOutputFunction() {
 	return _stdOut;
 }
 
-private void _defaultOutput(string message) {
+private void _defaultOutput(GrString message) {
 	import std.stdio : write;
 
 	write(message);

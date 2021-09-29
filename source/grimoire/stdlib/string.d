@@ -42,19 +42,19 @@ private void _empty(GrCall call) {
 }
 
 private void _unshift(GrCall call) {
-    string str = call.getString(0);
+    GrString str = call.getString(0);
     str = call.getString(1) ~ str;
     call.setString(str);
 }
 
 private void _push(GrCall call) {
-    string str = call.getString(0);
+    GrString str = call.getString(0);
     str ~= call.getString(1);
     call.setString(str);
 }
 
 private void _shift(GrCall call) {
-    string str = call.getString(0);
+    GrString str = call.getString(0);
     if (!str.length) {
         call.setString(str);
         return;
@@ -63,7 +63,7 @@ private void _shift(GrCall call) {
 }
 
 private void _pop(GrCall call) {
-    string str = call.getString(0);
+    GrString str = call.getString(0);
     if (!str.length) {
         call.setString(str);
         return;
@@ -73,7 +73,7 @@ private void _pop(GrCall call) {
 }
 
 private void _shift1(GrCall call) {
-    string str = call.getString(0);
+    GrString str = call.getString(0);
     GrInt size = call.getInt(1);
     if (size < 0) {
         call.raise("IndexError");
@@ -92,7 +92,7 @@ private void _shift1(GrCall call) {
 }
 
 private void _pop1(GrCall call) {
-    string str = call.getString(0);
+    GrString str = call.getString(0);
     GrInt size = call.getInt(1);
     if (size < 0) {
         call.raise("IndexError");
@@ -112,25 +112,25 @@ private void _pop1(GrCall call) {
 }
 
 private void _first(GrCall call) {
-    string str = call.getString(0);
+    GrString str = call.getString(0);
     if (!str.length) {
         call.raise("IndexError");
         return;
     }
-    call.setString(to!string(str[0]));
+    call.setString(to!GrString(str[0]));
 }
 
 private void _last(GrCall call) {
-    string str = call.getString(0);
+    GrString str = call.getString(0);
     if (!str.length) {
         call.raise("IndexError");
         return;
     }
-    call.setString(to!string(str[$ - 1]));
+    call.setString(to!GrString(str[$ - 1]));
 }
 
 private void _remove(GrCall call) {
-    string str = call.getString(0);
+    GrString str = call.getString(0);
     GrInt index = call.getInt(1);
     if (index < 0)
         index = (cast(GrInt) str.length) + index;
@@ -151,7 +151,7 @@ private void _remove(GrCall call) {
 }
 
 private void _remove2(GrCall call) {
-    string str = call.getString(0);
+    GrString str = call.getString(0);
     GrInt index1 = call.getInt(1);
     GrInt index2 = call.getInt(2);
     if (index1 < 0)
@@ -191,7 +191,7 @@ private void _remove2(GrCall call) {
 }
 
 private void _slice(GrCall call) {
-    string str = call.getString(0);
+    GrString str = call.getString(0);
     GrInt index1 = call.getInt(1);
     GrInt index2 = call.getInt(2);
     if (index1 < 0)
@@ -229,9 +229,9 @@ private void _reverse(GrCall call) {
 }
 
 private void _insert(GrCall call) {
-    string str = call.getString(0);
+    GrString str = call.getString(0);
     GrInt index = call.getInt(1);
-    string value = call.getString(2);
+    GrString value = call.getString(2);
     if (index < 0)
         index = (cast(GrInt) str.length) + index;
     if (!str.length || index >= str.length || index < 0) {
@@ -250,25 +250,25 @@ private void _insert(GrCall call) {
 }
 
 private void _findFirst(GrCall call) {
-    string str = call.getString(0);
-    string value = call.getString(1);
+    GrString str = call.getString(0);
+    GrString value = call.getString(1);
     call.setInt(cast(GrInt) str.indexOf(value));
 }
 
 private void _findLast(GrCall call) {
-    string str = call.getString(0);
-    string value = call.getString(1);
+    GrString str = call.getString(0);
+    GrString value = call.getString(1);
     call.setInt(cast(GrInt) str.lastIndexOf(value));
 }
 
 private void _has(GrCall call) {
-    string str = call.getString(0);
-    string value = call.getString(1);
+    GrString str = call.getString(0);
+    GrString value = call.getString(1);
     call.setBool(str.indexOf(value) != -1);
 }
 
 private final class StringIter {
-    string value;
+    GrString value;
     size_t index;
 }
 
@@ -290,6 +290,6 @@ private void _next(GrCall call) {
         return;
     }
     call.setBool(true);
-    call.setString(to!string(iter.value[iter.index]));
+    call.setString(to!GrString(iter.value[iter.index]));
     iter.index++;
 }

@@ -6,7 +6,7 @@
 module grimoire.stdlib.print;
 
 import std.conv : to;
-import grimoire.compiler, grimoire.runtime;
+import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 package(grimoire.stdlib) void grLoadStdLibPrint(GrLibrary library) {
@@ -55,7 +55,7 @@ private void _printni(GrCall call) {
 
 private void _printnb(GrCall call) {
 	auto ary = call.getIntArray(0);
-	_stdOut(to!string(to!(bool[])(ary.data)));
+	_stdOut(to!string(to!(GrBool[])(ary.data)));
 }
 
 private void _printnf(GrCall call) {
@@ -92,7 +92,7 @@ private void _printlni(GrCall call) {
 
 private void _printlnb(GrCall call) {
 	auto ary = call.getIntArray(0);
-	_stdOut(to!string(to!(bool[])(ary.data)) ~ "\n");
+	_stdOut(to!string(to!(GrBool[])(ary.data)) ~ "\n");
 }
 
 private void _printlnf(GrCall call) {

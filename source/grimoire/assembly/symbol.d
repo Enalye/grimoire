@@ -7,8 +7,11 @@ module grimoire.assembly.symbol;
 
 import std.format, std.file, std.bitmanip, std.array, std.outbuffer;
 
+alias GrBool = bool;
 alias GrInt = long;
 alias GrFloat = double;
+alias GrString = string;
+alias GrPtr = void*;
 
 /// Stack trace
 struct GrStackTrace {

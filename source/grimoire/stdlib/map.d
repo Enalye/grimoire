@@ -12,10 +12,10 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 /// Hashmap
 private final class Map(T) {
     /// Payload
-    T[string] data;
+    T[GrString] data;
 
     /// Ctor
-    this(string[] keys, T[] values) {
+    this(GrString[] keys, T[] values) {
         for (size_t i; i < keys.length; ++i) {
             data[keys[i]] = values[i];
         }
@@ -25,13 +25,13 @@ private final class Map(T) {
 private {
     alias IntMap = Map!(GrInt);
     alias FloatMap = Map!(GrFloat);
-    alias StringMap = Map!(string);
-    alias ObjectMap = Map!(void*);
+    alias StringMap = Map!(GrString);
+    alias ObjectMap = Map!(GrPtr);
 }
 
 /// Iterator
 private final class MapIter(T) {
-    Tuple!(string, T)[] pairs;
+    Tuple!(GrString, T)[] pairs;
     size_t index;
 }
 
@@ -200,10 +200,10 @@ private void _each_(string t)(GrCall call) {
         MapIter!(GrFloat) iter = new MapIter!(GrFloat);
     }
     else static if (t == "String") {
-        MapIter!(string) iter = new MapIter!(string);
+        MapIter!(GrString) iter = new MapIter!(GrString);
     }
     else static if (t == "Object") {
-        MapIter!(void*) iter = new MapIter!(void*);
+        MapIter!(GrPtr) iter = new MapIter!(GrPtr);
     }
     foreach (pair; map.data.byKeyValue()) {
         iter.pairs ~= tuple(pair.key, pair.value);
@@ -219,10 +219,10 @@ private void _next_(string t)(GrCall call) {
         MapIter!(GrFloat) iter = call.getForeign!(MapIter!(GrFloat))(0);
     }
     else static if (t == "String") {
-        MapIter!(string) iter = call.getForeign!(MapIter!(string))(0);
+        MapIter!(GrString) iter = call.getForeign!(MapIter!(GrString))(0);
     }
     else static if (t == "Object") {
-        MapIter!(void*) iter = call.getForeign!(MapIter!(void*))(0);
+        MapIter!(GrPtr) iter = call.getForeign!(MapIter!(GrPtr))(0);
     }
     if (!iter) {
         call.raise("NullError");

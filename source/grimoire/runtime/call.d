@@ -69,50 +69,50 @@ final class GrCall {
             dispatchError();
     }
 
-    alias getBool = getParameter!bool;
+    alias getBool = getParameter!GrBool;
     alias getInt = getParameter!GrInt;
     alias getFloat = getParameter!GrFloat;
-    alias getString = getParameter!string;
-    alias getPtr = getParameter!(void*);
+    alias getString = getParameter!GrString;
+    alias getPtr = getParameter!GrPtr;
 
     GrObject getObject(uint index) {
-        return cast(GrObject) getParameter!(void*)(index);
+        return cast(GrObject) getParameter!(GrPtr)(index);
     }
 
     GrArray!T getArray(T)(uint index) {
-        return cast(GrArray!T) getParameter!(void*)(index);
+        return cast(GrArray!T) getParameter!(GrPtr)(index);
     }
 
     GrIntArray getIntArray(uint index) {
-        return cast(GrIntArray) getParameter!(void*)(index);
+        return cast(GrIntArray) getParameter!(GrPtr)(index);
     }
 
     GrFloatArray getFloatArray(uint index) {
-        return cast(GrFloatArray) getParameter!(void*)(index);
+        return cast(GrFloatArray) getParameter!(GrPtr)(index);
     }
 
     GrStringArray getStringArray(uint index) {
-        return cast(GrStringArray) getParameter!(void*)(index);
+        return cast(GrStringArray) getParameter!(GrPtr)(index);
     }
 
     GrObjectArray getObjectArray(uint index) {
-        return cast(GrObjectArray) getParameter!(void*)(index);
+        return cast(GrObjectArray) getParameter!(GrPtr)(index);
     }
 
     GrIntChannel getIntChannel(uint index) {
-        return cast(GrIntChannel) getParameter!(void*)(index);
+        return cast(GrIntChannel) getParameter!(GrPtr)(index);
     }
 
     GrFloatChannel getFloatChannel(uint index) {
-        return cast(GrFloatChannel) getParameter!(void*)(index);
+        return cast(GrFloatChannel) getParameter!(GrPtr)(index);
     }
 
     GrStringChannel getStringChannel(uint index) {
-        return cast(GrStringChannel) getParameter!(void*)(index);
+        return cast(GrStringChannel) getParameter!(GrPtr)(index);
     }
 
     GrObjectChannel getObjectChannel(uint index) {
-        return cast(GrObjectChannel) getParameter!(void*)(index);
+        return cast(GrObjectChannel) getParameter!(GrPtr)(index);
     }
 
     T getEnum(T)(uint index) {
@@ -121,7 +121,7 @@ final class GrCall {
 
     T getForeign(T)(uint parameter) {
         // We cast to object first to avoid a crash when casting to a parent class
-        return cast(T) cast(Object) getParameter!(void*)(parameter);
+        return cast(T) cast(Object) getParameter!(GrPtr)(parameter);
     }
 
     private T getParameter(T)(uint index) {
@@ -135,7 +135,7 @@ final class GrCall {
             return _context.istack[(_context.istackPos - _iparams) + (_parameters[index] & 0xFFFF)
                 + 1];
         }
-        else static if (is(T == bool)) {
+        else static if (is(T == GrBool)) {
             if ((_parameters[index] & 0x10000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not a bool");
             return _context.istack[(_context.istackPos - _iparams) + (
@@ -147,13 +147,13 @@ final class GrCall {
             return _context.fstack[(_context.fstackPos - _fparams) + (_parameters[index] & 0xFFFF)
                 + 1];
         }
-        else static if (is(T == string)) {
+        else static if (is(T == GrString)) {
             if ((_parameters[index] & 0x40000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not a string");
             return _context.sstack[(_context.sstackPos - _sparams) + (_parameters[index] & 0xFFFF)
                 + 1];
         }
-        else static if (is(T == void*)) {
+        else static if (is(T == GrPtr)) {
             if ((_parameters[index] & 0x80000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not an object");
             return _context.ostack[(_context.ostackPos - _oparams) + (_parameters[index] & 0xFFFF)
@@ -161,50 +161,50 @@ final class GrCall {
         }
     }
 
-    alias setBool = setResult!bool;
+    alias setBool = setResult!GrBool;
     alias setInt = setResult!GrInt;
     alias setFloat = setResult!GrFloat;
-    alias setString = setResult!string;
-    alias setPtr = setResult!(void*);
+    alias setString = setResult!GrString;
+    alias setPtr = setResult!(GrPtr);
 
     void setObject(GrObject value) {
-        setResult!(void*)(cast(void*) value);
+        setResult!(GrPtr)(cast(GrPtr) value);
     }
 
     void setArray(T)(GrArray!T value) {
-        setResult!(void*)(cast(void*) value);
+        setResult!(GrPtr)(cast(GrPtr) value);
     }
 
     void setIntArray(GrIntArray value) {
-        setResult!(void*)(cast(void*) value);
+        setResult!(GrPtr)(cast(GrPtr) value);
     }
 
     void setFloatArray(GrFloatArray value) {
-        setResult!(void*)(cast(void*) value);
+        setResult!(GrPtr)(cast(GrPtr) value);
     }
 
     void setStringArray(GrStringArray value) {
-        setResult!(void*)(cast(void*) value);
+        setResult!(GrPtr)(cast(GrPtr) value);
     }
 
     void setObjectArray(GrObjectArray value) {
-        setResult!(void*)(cast(void*) value);
+        setResult!(GrPtr)(cast(GrPtr) value);
     }
 
     void setIntChannel(GrIntChannel value) {
-        setResult!(void*)(cast(void*) value);
+        setResult!(GrPtr)(cast(GrPtr) value);
     }
 
     void setFloatChannel(GrFloatChannel value) {
-        setResult!(void*)(cast(void*) value);
+        setResult!(GrPtr)(cast(GrPtr) value);
     }
 
     void setStringChannel(GrStringChannel value) {
-        setResult!(void*)(cast(void*) value);
+        setResult!(GrPtr)(cast(GrPtr) value);
     }
 
     void setObjectChannel(GrObjectChannel value) {
-        setResult!(void*)(cast(void*) value);
+        setResult!(GrPtr)(cast(GrPtr) value);
     }
 
     void setEnum(T)(T value) {
@@ -212,7 +212,7 @@ final class GrCall {
     }
 
     void setForeign(T)(T value) {
-        setResult!(void*)(cast(void*) value);
+        setResult!(GrPtr)(cast(GrPtr) value);
     }
 
     private void setResult(T)(T value) {
@@ -223,7 +223,7 @@ final class GrCall {
                 _context.istack.length *= 2;
             _context.istack[idx] = value;
         }
-        else static if (is(T == bool)) {
+        else static if (is(T == GrBool)) {
             _iresults++;
             const size_t idx = (_context.istackPos - _iparams) + _iresults;
             if (idx >= _context.istack.length)
@@ -237,14 +237,14 @@ final class GrCall {
                 _context.fstack.length *= 2;
             _context.fstack[idx] = value;
         }
-        else static if (is(T == string)) {
+        else static if (is(T == GrString)) {
             _sresults++;
             const size_t idx = (_context.sstackPos - _sparams) + _sresults;
             if (idx >= _context.sstack.length)
                 _context.sstack.length *= 2;
             _context.sstack[idx] = value;
         }
-        else static if (is(T == void*)) {
+        else static if (is(T == GrPtr)) {
             _oresults++;
             const size_t idx = (_context.ostackPos - _oparams) + _oresults;
             if (idx >= _context.ostack.length)
@@ -253,7 +253,7 @@ final class GrCall {
         }
     }
 
-    bool getBoolVariable(string name) {
+    GrBool getBoolVariable(string name) {
         return _context.engine.getBoolVariable(name);
     }
 
@@ -265,11 +265,11 @@ final class GrCall {
         return _context.engine.getFloatVariable(name);
     }
 
-    string getStringVariable(string name) {
+    GrString getStringVariable(string name) {
         return _context.engine.getStringVariable(name);
     }
 
-    void* getPtrVariable(string name) {
+    GrPtr getPtrVariable(string name) {
         return _context.engine.getPtrVariable(name);
     }
 
@@ -317,7 +317,7 @@ final class GrCall {
         return _context.engine.getForeignVariable(T)(name);
     }
 
-    void setBoolVariable(string name, bool value) {
+    void setBoolVariable(string name, GrBool value) {
         _context.engine.setBoolVariable(name, value);
     }
 
@@ -329,11 +329,11 @@ final class GrCall {
         _context.engine.setFloatVariable(name, value);
     }
 
-    void setStringVariable(string name, string value) {
+    void setStringVariable(string name, GrString value) {
         _context.engine.setStringVariable(name, value);
     }
 
-    void setPtrVariable(string name, void* value) {
+    void setPtrVariable(string name, GrPtr value) {
         _context.engine.setPtrVariable(name, value);
     }
 

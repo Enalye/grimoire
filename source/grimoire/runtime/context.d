@@ -74,9 +74,9 @@ final class GrContext {
     /// Ditto
     GrFloat[] flocals;
     /// Ditto
-    string[] slocals;
+    GrString[] slocals;
     /// Ditto
-    void*[] olocals;
+    GrPtr[] olocals;
 
     /// Callstack
     GrStackFrame[] callStack;
@@ -86,9 +86,9 @@ final class GrContext {
     /// Ditto
     GrFloat[] fstack;
     /// Ditto
-    string[] sstack;
+    GrString[] sstack;
     /// Ditto
-    void*[] ostack;
+    GrPtr[] ostack;
 
     /// Operation pointer.
     uint pc;
@@ -142,8 +142,8 @@ final class GrContext {
     void setupStack(uint size) {
         istack = new GrInt[size];
         fstack = new GrFloat[size];
-        sstack = new string[size];
-        ostack = new void*[size];
+        sstack = new GrString[size];
+        ostack = new GrPtr[size];
     }
 
     /// Initialize the local variable stacks.
@@ -154,8 +154,8 @@ final class GrContext {
         olocalsLimit = osize;
         ilocals = new GrInt[ilocalsLimit];
         flocals = new GrFloat[flocalsLimit];
-        slocals = new string[slocalsLimit];
-        olocals = new void*[olocalsLimit];
+        slocals = new GrString[slocalsLimit];
+        olocals = new GrPtr[olocalsLimit];
     }
 
     /// Double the current callstack size.
@@ -192,10 +192,10 @@ final class GrContext {
         olocals.length = olocalsLimit;
     }
 
-    alias setBool = setValue!bool;
+    alias setBool = setValue!GrBool;
     alias setInt = setValue!GrInt;
     alias setFloat = setValue!GrFloat;
-    alias setString = setValue!string;
+    alias setString = setValue!GrString;
     alias setObject = setUserData!GrObject;
     alias setIntArray = setUserData!GrIntArray;
     alias setFloatArray = setUserData!GrFloatArray;
@@ -203,7 +203,7 @@ final class GrContext {
     alias setObjectArray = setUserData!GrObjectArray;
 
     void setUserData(T)(T value) {
-        setValue!(void*)(cast(void*) value);
+        setValue!(GrPtr)(cast(GrPtr) value);
     }
 
     private void setValue(T)(T value) {
@@ -211,7 +211,7 @@ final class GrContext {
             istackPos++;
             istack[istackPos] = value;
         }
-        else static if (is(T == bool)) {
+        else static if (is(T == GrBool)) {
             istackPos++;
             istack[istackPos] = value;
         }
@@ -219,11 +219,11 @@ final class GrContext {
             fstackPos++;
             fstack[fstackPos] = value;
         }
-        else static if (is(T == string)) {
+        else static if (is(T == GrString)) {
             sstackPos++;
             sstack[sstackPos] = value;
         }
-        else static if (is(T == void*)) {
+        else static if (is(T == GrPtr)) {
             ostackPos++;
             ostack[ostackPos] = value;
         }

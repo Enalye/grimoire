@@ -11,8 +11,8 @@ import grimoire.runtime.call;
 
 alias GrIntArray = GrArray!GrInt;
 alias GrFloatArray = GrArray!GrFloat;
-alias GrStringArray = GrArray!string;
-alias GrObjectArray = GrArray!(void*);
+alias GrStringArray = GrArray!GrString;
+alias GrObjectArray = GrArray!GrPtr;
 
 /// Runtime array, can only hold one subtype.
 final class GrArray(T) {

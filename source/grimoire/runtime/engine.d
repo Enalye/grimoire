@@ -34,18 +34,18 @@ class GrEngine {
         /// Global float variables.
         GrFloat[] _fglobals;
         /// Global string variables.
-        string[] _sglobals;
+        GrString[] _sglobals;
         /// Global object variables.
-        void*[] _oglobals;
+        GrPtr[] _oglobals;
 
         /// Global integral stack.
         GrInt[] _iglobalStackIn, _iglobalStackOut;
         /// Global float stack.
         GrFloat[] _fglobalStackIn, _fglobalStackOut;
         /// Global string stack.
-        string[] _sglobalStackIn, _sglobalStackOut;
+        GrString[] _sglobalStackIn, _sglobalStackOut;
         /// Global object stack.
-        void*[] _oglobalStackIn, _oglobalStackOut;
+        GrPtr[] _oglobalStackIn, _oglobalStackOut;
 
         /// Context array.
         DynamicIndexedArray!GrContext _contexts, _contextsToSpawn;
@@ -125,8 +125,8 @@ class GrEngine {
         _bytecode = bytecode;
         _iglobals = new GrInt[_bytecode.iglobalsCount];
         _fglobals = new GrFloat[_bytecode.fglobalsCount];
-        _sglobals = new string[_bytecode.sglobalsCount];
-        _oglobals = new void*[_bytecode.oglobalsCount];
+        _sglobals = new GrString[_bytecode.sglobalsCount];
+        _oglobals = new GrPtr[_bytecode.oglobalsCount];
 
         // Setup the primitives
         for (uint i; i < _bytecode.primitives.length; ++i) {
@@ -355,43 +355,43 @@ class GrEngine {
     alias getBoolVariable = getVariable!bool;
     alias getIntVariable = getVariable!GrInt;
     alias getFloatVariable = getVariable!GrFloat;
-    alias getStringVariable = getVariable!string;
-    alias getPtrVariable = getVariable!(void*);
+    alias getStringVariable = getVariable!GrString;
+    alias getPtrVariable = getVariable!GrPtr;
 
     GrObject getObjectVariable(string name) {
-        return cast(GrObject) getVariable!(void*)(name);
+        return cast(GrObject) getVariable!(GrPtr)(name);
     }
 
     GrIntArray getIntArrayVariable(string name) {
-        return cast(GrIntArray) getVariable!(void*)(name);
+        return cast(GrIntArray) getVariable!(GrPtr)(name);
     }
 
     GrFloatArray getFloatArrayVariable(string name) {
-        return cast(GrFloatArray) getVariable!(void*)(name);
+        return cast(GrFloatArray) getVariable!(GrPtr)(name);
     }
 
     GrStringArray getStringArrayVariable(string name) {
-        return cast(GrStringArray) getVariable!(void*)(name);
+        return cast(GrStringArray) getVariable!(GrPtr)(name);
     }
 
     GrObjectArray getObjectArrayVariable(string name) {
-        return cast(GrObjectArray) getVariable!(void*)(name);
+        return cast(GrObjectArray) getVariable!(GrPtr)(name);
     }
 
     GrIntChannel getIntChannelVariable(string name) {
-        return cast(GrIntChannel) getVariable!(void*)(name);
+        return cast(GrIntChannel) getVariable!(GrPtr)(name);
     }
 
     GrFloatChannel getFloatChannelVariable(string name) {
-        return cast(GrFloatChannel) getVariable!(void*)(name);
+        return cast(GrFloatChannel) getVariable!(GrPtr)(name);
     }
 
     GrStringChannel getStringChannelVariable(string name) {
-        return cast(GrStringChannel) getVariable!(void*)(name);
+        return cast(GrStringChannel) getVariable!(GrPtr)(name);
     }
 
     GrObjectChannel getObjectChannelVariable(string name) {
-        return cast(GrObjectChannel) getVariable!(void*)(name);
+        return cast(GrObjectChannel) getVariable!(GrPtr)(name);
     }
 
     T getEnumVariable(T)(string name) {
@@ -400,7 +400,7 @@ class GrEngine {
 
     T getForeignVariable(T)(string name) {
         // We cast to object first to avoid a crash when casting to a parent class
-        return cast(T) cast(Object) getVariable!(void*)(name);
+        return cast(T) cast(Object) getVariable!(GrPtr)(name);
     }
 
     private T getVariable(T)(string name) {
@@ -412,7 +412,7 @@ class GrEngine {
                 throw new Exception("variable `" ~ name ~ "` is not an int");
             return _iglobals[variable.index];
         }
-        else static if (is(T == bool)) {
+        else static if (is(T == GrBool)) {
             if ((variable.typeMask & 0x1) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not an int");
             return _iglobals[variable.index] > 0;
@@ -422,58 +422,58 @@ class GrEngine {
                 throw new Exception("variable `" ~ name ~ "` is not a float");
             return _fglobals[variable.index];
         }
-        else static if (is(T == string)) {
+        else static if (is(T == GrString)) {
             if ((variable.typeMask & 0x4) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not a string");
             return _sglobals[variable.index];
         }
-        else static if (is(T == void*)) {
+        else static if (is(T == GrPtr)) {
             if ((variable.typeMask & 0x8) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not an object");
             return _oglobals[variable.index];
         }
     }
 
-    alias setBoolVariable = setVariable!bool;
+    alias setBoolVariable = setVariable!GrBool;
     alias setIntVariable = setVariable!GrInt;
     alias setFloatVariable = setVariable!GrFloat;
-    alias setStringVariable = setVariable!string;
-    alias setPtrVariable = setVariable!(void*);
+    alias setStringVariable = setVariable!GrString;
+    alias setPtrVariable = setVariable!GrPtr;
 
     void setObjectVariable(string name, GrObject value) {
-        setVariable!(void*)(name, cast(void*) value);
+        setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
     void setIntArrayVariable(string name, GrIntArray value) {
-        setVariable!(void*)(name, cast(void*) value);
+        setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
     void setFloatArrayVariable(string name, GrFloatArray value) {
-        setVariable!(void*)(name, cast(void*) value);
+        setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
     void setStringArrayVariable(string name, GrStringArray value) {
-        setVariable!(void*)(name, cast(void*) value);
+        setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
     void setObjectArrayVariable(string name, GrObjectArray value) {
-        setVariable!(void*)(name, cast(void*) value);
+        setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
     void setIntChannelVariable(string name, GrIntChannel value) {
-        setVariable!(void*)(name, cast(void*) value);
+        setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
     void setFloatChannelVariable(string name, GrFloatChannel value) {
-        setVariable!(void*)(name, cast(void*) value);
+        setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
     void setStringChannelVariable(string name, GrStringChannel value) {
-        setVariable!(void*)(name, cast(void*) value);
+        setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
     void setObjectChannelVariable(string name, GrObjectChannel value) {
-        setVariable!(void*)(name, cast(void*) value);
+        setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
     void setEnumVariable(T)(string name, T value) {
@@ -481,7 +481,7 @@ class GrEngine {
     }
 
     void setForeignVariable(T)(string name, T value) {
-        setVariable!(void*)(name, cast(void*) value);
+        setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
     private void setVariable(T)(string name, T value) {
@@ -493,7 +493,7 @@ class GrEngine {
                 throw new Exception("variable `" ~ name ~ "` is not an int");
             _iglobals[variable.index] = value;
         }
-        else static if (is(T == bool)) {
+        else static if (is(T == GrBool)) {
             if ((variable.typeMask & 0x1) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not an int");
             _iglobals[variable.index] = value;
@@ -503,12 +503,12 @@ class GrEngine {
                 throw new Exception("variable `" ~ name ~ "` is not a float");
             _fglobals[variable.index] = value;
         }
-        else static if (is(T == string)) {
+        else static if (is(T == GrString)) {
             if ((variable.typeMask & 0x4) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not a string");
             _sglobals[variable.index] = value;
         }
-        else static if (is(T == void*)) {
+        else static if (is(T == GrPtr)) {
             if ((variable.typeMask & 0x8) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not an object");
             _oglobals[variable.index] = value;
@@ -658,7 +658,7 @@ class GrEngine {
                     context.ostackPos++;
                     if (context.ostackPos == context.ostack.length)
                         context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(void*) new GrObject(
+                    context.ostack[context.ostackPos] = cast(GrPtr) new GrObject(
                             _bytecode.classes[grGetInstructionUnsignedValue(opcode)]);
                     context.pc++;
                     break;
@@ -666,7 +666,7 @@ class GrEngine {
                     context.ostackPos++;
                     if (context.ostackPos == context.ostack.length)
                         context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(void*) new GrIntChannel(
+                    context.ostack[context.ostackPos] = cast(GrPtr) new GrIntChannel(
                             grGetInstructionUnsignedValue(opcode));
                     context.pc++;
                     break;
@@ -674,7 +674,7 @@ class GrEngine {
                     context.ostackPos++;
                     if (context.ostackPos == context.ostack.length)
                         context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(void*) new GrFloatChannel(
+                    context.ostack[context.ostackPos] = cast(GrPtr) new GrFloatChannel(
                             grGetInstructionUnsignedValue(opcode));
                     context.pc++;
                     break;
@@ -682,7 +682,7 @@ class GrEngine {
                     context.ostackPos++;
                     if (context.ostackPos == context.ostack.length)
                         context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(void*) new GrStringChannel(
+                    context.ostack[context.ostackPos] = cast(GrPtr) new GrStringChannel(
                             grGetInstructionUnsignedValue(opcode));
                     context.pc++;
                     break;
@@ -690,7 +690,7 @@ class GrEngine {
                     context.ostackPos++;
                     if (context.ostackPos == context.ostack.length)
                         context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(void*) new GrObjectChannel(
+                    context.ostack[context.ostackPos] = cast(GrPtr) new GrObjectChannel(
                             grGetInstructionUnsignedValue(opcode));
                     context.pc++;
                     break;
@@ -1168,14 +1168,14 @@ class GrEngine {
                     context.pc++;
                     break;
                 case refStore_string:
-                    *(cast(string*) context.ostack[context.ostackPos]) = context
+                    *(cast(GrString*) context.ostack[context.ostackPos]) = context
                         .sstack[context.sstackPos];
                     context.ostackPos--;
                     context.sstackPos--;
                     context.pc++;
                     break;
                 case refStore_object:
-                    *(cast(void**) context.ostack[context.ostackPos - 1]) = context
+                    *(cast(GrPtr*) context.ostack[context.ostackPos - 1]) = context
                         .ostack[context.ostackPos];
                     context.ostackPos -= 2;
                     context.pc++;
@@ -1193,13 +1193,13 @@ class GrEngine {
                     context.pc++;
                     break;
                 case refStore2_string:
-                    *(cast(string*) context.ostack[context.ostackPos]) = context
+                    *(cast(GrString*) context.ostack[context.ostackPos]) = context
                         .sstack[context.sstackPos];
                     context.ostackPos--;
                     context.pc++;
                     break;
                 case refStore2_object:
-                    *(cast(void**) context.ostack[context.ostackPos - 1]) = context
+                    *(cast(GrPtr*) context.ostack[context.ostackPos - 1]) = context
                         .ostack[context.ostackPos];
                     context.ostack[context.ostackPos - 1] = context.ostack[context.ostackPos];
                     context.ostackPos--;
@@ -1239,7 +1239,7 @@ class GrEngine {
                         raise(context, "NullError");
                         break;
                     }
-                    context.ostack[context.ostackPos] = cast(void*)((cast(GrObject) context.ostack[context.ostackPos])
+                    context.ostack[context.ostackPos] = cast(GrPtr)((cast(GrObject) context.ostack[context.ostackPos])
                             ._fields[grGetInstructionUnsignedValue(opcode)]);
                     context.pc++;
                     break;
@@ -1247,7 +1247,7 @@ class GrEngine {
                     context.ostackPos++;
                     if (context.ostackPos == context.ostack.length)
                         context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(void*)(
+                    context.ostack[context.ostackPos] = cast(GrPtr)(
                             (cast(GrObject) context.ostack[context.ostackPos - 1])
                             ._fields[grGetInstructionUnsignedValue(opcode)]);
                     context.pc++;
@@ -1307,7 +1307,7 @@ class GrEngine {
                     GrField field = (cast(GrObject) context.ostack[context.ostackPos])
                         ._fields[grGetInstructionUnsignedValue(opcode)];
                     context.istack[context.istackPos] = field.ivalue;
-                    context.ostack[context.ostackPos] = cast(void*) field;
+                    context.ostack[context.ostackPos] = cast(GrPtr) field;
                     context.pc++;
                     break;
                 case fieldLoad2_float:
@@ -1317,7 +1317,7 @@ class GrEngine {
                     GrField field = (cast(GrObject) context.ostack[context.ostackPos])
                         ._fields[grGetInstructionUnsignedValue(opcode)];
                     context.fstack[context.fstackPos] = field.fvalue;
-                    context.ostack[context.ostackPos] = cast(void*) field;
+                    context.ostack[context.ostackPos] = cast(GrPtr) field;
                     context.pc++;
                     break;
                 case fieldLoad2_string:
@@ -1327,7 +1327,7 @@ class GrEngine {
                     GrField field = (cast(GrObject) context.ostack[context.ostackPos])
                         ._fields[grGetInstructionUnsignedValue(opcode)];
                     context.sstack[context.sstackPos] = field.svalue;
-                    context.ostack[context.ostackPos] = cast(void*) field;
+                    context.ostack[context.ostackPos] = cast(GrPtr) field;
                     context.pc++;
                     break;
                 case fieldLoad2_object:
@@ -1337,7 +1337,7 @@ class GrEngine {
                     GrField field = (cast(GrObject) context.ostack[context.ostackPos - 1])
                         ._fields[grGetInstructionUnsignedValue(opcode)];
                     context.ostack[context.ostackPos] = field.ovalue;
-                    context.ostack[context.ostackPos - 1] = cast(void*) field;
+                    context.ostack[context.ostackPos - 1] = cast(GrPtr) field;
                     context.pc++;
                     break;
                 case const_int:
@@ -1918,7 +1918,7 @@ class GrEngine {
                     context.ostackPos++;
                     if (context.ostackPos == context.ostack.length)
                         context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(void*) ary;
+                    context.ostack[context.ostackPos] = cast(GrPtr) ary;
                     context.pc++;
                     break;
                 case array_float:
@@ -1930,7 +1930,7 @@ class GrEngine {
                     context.ostackPos++;
                     if (context.ostackPos == context.ostack.length)
                         context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(void*) ary;
+                    context.ostack[context.ostackPos] = cast(GrPtr) ary;
                     context.pc++;
                     break;
                 case array_string:
@@ -1942,7 +1942,7 @@ class GrEngine {
                     context.ostackPos++;
                     if (context.ostackPos == context.ostack.length)
                         context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(void*) ary;
+                    context.ostack[context.ostackPos] = cast(GrPtr) ary;
                     context.pc++;
                     break;
                 case array_object:
@@ -1954,7 +1954,7 @@ class GrEngine {
                     context.ostackPos++;
                     if (context.ostackPos == context.ostack.length)
                         context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(void*) ary;
+                    context.ostack[context.ostackPos] = cast(GrPtr) ary;
                     context.pc++;
                     break;
                 case index_int:
@@ -2180,7 +2180,7 @@ class GrEngine {
                     context.ostackPos--;
                     nArray.data = (cast(GrIntArray) context.ostack[context.ostackPos])
                         .data ~ (cast(GrIntArray) context.ostack[context.ostackPos + 1]).data;
-                    context.ostack[context.ostackPos] = cast(void*) nArray;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.pc++;
                     break;
                 case concatenate_floatArray:
@@ -2188,7 +2188,7 @@ class GrEngine {
                     context.ostackPos--;
                     nArray.data = (cast(GrFloatArray) context.ostack[context.ostackPos])
                         .data ~ (cast(GrFloatArray) context.ostack[context.ostackPos + 1]).data;
-                    context.ostack[context.ostackPos] = cast(void*) nArray;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.pc++;
                     break;
                 case concatenate_stringArray:
@@ -2196,7 +2196,7 @@ class GrEngine {
                     context.ostackPos--;
                     nArray.data = (cast(GrStringArray) context.ostack[context.ostackPos])
                         .data ~ (cast(GrStringArray) context.ostack[context.ostackPos + 1]).data;
-                    context.ostack[context.ostackPos] = cast(void*) nArray;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.pc++;
                     break;
                 case concatenate_objectArray:
@@ -2204,14 +2204,14 @@ class GrEngine {
                     context.ostackPos--;
                     nArray.data = (cast(GrObjectArray) context.ostack[context.ostackPos])
                         .data ~ (cast(GrObjectArray) context.ostack[context.ostackPos + 1]).data;
-                    context.ostack[context.ostackPos] = cast(void*) nArray;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.pc++;
                     break;
                 case append_int:
                     GrIntArray nArray = new GrIntArray;
                     nArray.data = (cast(GrIntArray) context.ostack[context.ostackPos])
                         .data ~ context.istack[context.istackPos];
-                    context.ostack[context.ostackPos] = cast(void*) nArray;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.istackPos--;
                     context.pc++;
                     break;
@@ -2219,7 +2219,7 @@ class GrEngine {
                     GrFloatArray nArray = new GrFloatArray;
                     nArray.data = (cast(GrFloatArray) context.ostack[context.ostackPos])
                         .data ~ context.fstack[context.fstackPos];
-                    context.ostack[context.ostackPos] = cast(void*) nArray;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.fstackPos--;
                     context.pc++;
                     break;
@@ -2227,7 +2227,7 @@ class GrEngine {
                     GrStringArray nArray = new GrStringArray;
                     nArray.data = (cast(GrStringArray) context.ostack[context.ostackPos])
                         .data ~ context.sstack[context.sstackPos];
-                    context.ostack[context.ostackPos] = cast(void*) nArray;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.sstackPos--;
                     context.pc++;
                     break;
@@ -2236,14 +2236,14 @@ class GrEngine {
                     context.ostackPos--;
                     nArray.data = (cast(GrObjectArray) context.ostack[context.ostackPos])
                         .data ~ context.ostack[context.ostackPos + 1];
-                    context.ostack[context.ostackPos] = cast(void*) nArray;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.pc++;
                     break;
                 case prepend_int:
                     GrIntArray nArray = new GrIntArray;
                     nArray.data = context.istack[context.istackPos] ~ (
                             cast(GrIntArray) context.ostack[context.ostackPos]).data;
-                    context.ostack[context.ostackPos] = cast(void*) nArray;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.istackPos--;
                     context.pc++;
                     break;
@@ -2251,7 +2251,7 @@ class GrEngine {
                     GrFloatArray nArray = new GrFloatArray;
                     nArray.data = context.fstack[context.fstackPos] ~ (
                             cast(GrFloatArray) context.ostack[context.ostackPos]).data;
-                    context.ostack[context.ostackPos] = cast(void*) nArray;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.fstackPos--;
                     context.pc++;
                     break;
@@ -2259,7 +2259,7 @@ class GrEngine {
                     GrStringArray nArray = new GrStringArray;
                     nArray.data = context.sstack[context.sstackPos] ~ (
                             cast(GrStringArray) context.ostack[context.ostackPos]).data;
-                    context.ostack[context.ostackPos] = cast(void*) nArray;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.sstackPos--;
                     context.pc++;
                     break;
@@ -2268,7 +2268,7 @@ class GrEngine {
                     context.ostackPos--;
                     nArray.data = context.ostack[context.ostackPos] ~ (cast(
                             GrObjectArray) context.ostack[context.ostackPos + 1]).data;
-                    context.ostack[context.ostackPos] = cast(void*) nArray;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.pc++;
                     break;
                 case equal_intArray:

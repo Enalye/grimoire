@@ -198,8 +198,8 @@ private void _castColorToString(GrCall call) {
         call.raise("NullError");
         return;
     }
-    call.setString("Color(" ~ to!string(self.getFloat("r")) ~ ", " ~ to!string(
-            self.getFloat("g")) ~ ", " ~ to!string(self.getFloat("b")) ~ ")");
+    call.setString("Color(" ~ to!GrString(self.getFloat("r")) ~ ", " ~ to!GrString(
+            self.getFloat("g")) ~ ", " ~ to!GrString(self.getFloat("b")) ~ ")");
 }
 
 private void _unpack(GrCall call) {
@@ -219,8 +219,8 @@ private void _print(GrCall call) {
         call.raise("NullError");
         return;
     }
-    _stdOut("Color(" ~ to!string(self.getFloat("r")) ~ ", " ~ to!string(
-            self.getFloat("g")) ~ ", " ~ to!string(self.getFloat("b")) ~ ")");
+    _stdOut("Color(" ~ to!GrString(self.getFloat("r")) ~ ", " ~ to!GrString(
+            self.getFloat("g")) ~ ", " ~ to!GrString(self.getFloat("b")) ~ ")");
 }
 
 private void _printl(GrCall call) {
@@ -229,6 +229,6 @@ private void _printl(GrCall call) {
         call.raise("NullError");
         return;
     }
-    _stdOut("Color(" ~ to!string(self.getFloat("r")) ~ ", " ~ to!string(
-            self.getFloat("g")) ~ ", " ~ to!string(self.getFloat("b")) ~ ")\n");
+    _stdOut("Color(" ~ to!GrString(self.getFloat("r")) ~ ", " ~ to!GrString(
+            self.getFloat("g")) ~ ", " ~ to!GrString(self.getFloat("b")) ~ ")\n");
 }

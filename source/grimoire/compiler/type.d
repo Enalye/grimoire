@@ -396,11 +396,11 @@ final class GrVariableDefinition {
     /// Does the variable use a custom initialization value ?
     bool isInitialized;
     /// Integral init value
-    int ivalue;
+    GrInt ivalue;
     /// Floating init value
     GrFloat fvalue;
     /// String init value
-    string svalue;
+    GrString svalue;
     /// Can the variable be mutated in script ?
     bool isConstant;
     /// Register.

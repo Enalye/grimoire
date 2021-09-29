@@ -187,7 +187,7 @@ struct GrLexeme {
     bool bvalue;
 
     /// Can either describe a literal value like `"myString"` or an identifier.
-    string svalue;
+    GrString svalue;
 
     /// Returns the entire _line from where the token is located.
     string getLine() {

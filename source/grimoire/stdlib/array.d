@@ -177,7 +177,7 @@ private void _empty_(string t)(GrCall call) {
 private void _fill_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     static if (t == "Object") {
-        void* value = call.getPtr(1);
+        GrPtr value = call.getPtr(1);
     }
     else {
         mixin("auto value = call.get" ~ t ~ "(1);");
@@ -453,7 +453,7 @@ private void _insert_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     GrInt index = call.getInt(1);
     static if (t == "Object") {
-        void* value = call.getPtr(2);
+        GrPtr value = call.getPtr(2);
     }
     else {
         mixin("auto value = call.get" ~ t ~ "(2);");
@@ -522,24 +522,24 @@ private void _has_(string t)(GrCall call) {
     call.setBool(false);
 }
 
-private class ArrayIter(T) {
-    T array;
+private final class ArrayIter(T) {
+    T[] array;
     size_t index;
 }
 
 private void _each_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     static if (t == "Int") {
-        ArrayIter!(GrInt[]) iter = new ArrayIter!(GrInt[]);
+        ArrayIter!(GrInt) iter = new ArrayIter!(GrInt);
     }
     else static if (t == "Float") {
-        ArrayIter!(GrFloat[]) iter = new ArrayIter!(GrFloat[]);
+        ArrayIter!(GrFloat) iter = new ArrayIter!(GrFloat);
     }
     else static if (t == "String") {
-        ArrayIter!(string[]) iter = new ArrayIter!(string[]);
+        ArrayIter!(GrString) iter = new ArrayIter!(GrString);
     }
     else static if (t == "Object") {
-        ArrayIter!(void*[]) iter = new ArrayIter!(void*[]);
+        ArrayIter!(GrPtr) iter = new ArrayIter!(GrPtr);
     }
     iter.array = array.data.dup;
     call.setForeign(iter);
@@ -547,16 +547,16 @@ private void _each_(string t)(GrCall call) {
 
 private void _next_(string t)(GrCall call) {
     static if (t == "Int") {
-        ArrayIter!(GrInt[]) iter = call.getForeign!(ArrayIter!(GrInt[]))(0);
+        ArrayIter!(GrInt) iter = call.getForeign!(ArrayIter!(GrInt))(0);
     }
     else static if (t == "Float") {
-        ArrayIter!(GrFloat[]) iter = call.getForeign!(ArrayIter!(GrFloat[]))(0);
+        ArrayIter!(GrFloat) iter = call.getForeign!(ArrayIter!(GrFloat))(0);
     }
     else static if (t == "String") {
-        ArrayIter!(string[]) iter = call.getForeign!(ArrayIter!(string[]))(0);
+        ArrayIter!(GrString) iter = call.getForeign!(ArrayIter!(GrString))(0);
     }
     else static if (t == "Object") {
-        ArrayIter!(void*[]) iter = call.getForeign!(ArrayIter!(void*[]))(0);
+        ArrayIter!(GrPtr) iter = call.getForeign!(ArrayIter!(GrPtr))(0);
     }
     if (!iter) {
         call.raise("NullError");

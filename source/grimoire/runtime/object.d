@@ -18,8 +18,8 @@ package final class GrField {
     union {
         GrInt ivalue;
         GrFloat fvalue;
-        string svalue;
-        void* ovalue;
+        GrString svalue;
+        GrPtr ovalue;
     }
 }
 
@@ -51,56 +51,56 @@ final class GrObject {
     alias getBool = getField!bool;
     alias getInt = getField!GrInt;
     alias getFloat = getField!GrFloat;
-    alias getString = getField!string;
-    alias getPtr = getField!(void*);
+    alias getString = getField!GrString;
+    alias getPtr = getField!GrPtr;
 
     GrObject getObject(string fieldName) {
-        return cast(GrObject) getField!(void*)(fieldName);
+        return cast(GrObject) getField!(GrPtr)(fieldName);
     }
 
     GrArray!T getArray(T)(string fieldName) {
-        return cast(GrArray!T) getField!(void*)(fieldName);
+        return cast(GrArray!T) getField!(GrPtr)(fieldName);
     }
 
     GrIntArray getIntArray(string fieldName) {
-        return cast(GrIntArray) getField!(void*)(fieldName);
+        return cast(GrIntArray) getField!(GrPtr)(fieldName);
     }
 
     GrFloatArray getFloatArray(string fieldName) {
-        return cast(GrFloatArray) getField!(void*)(fieldName);
+        return cast(GrFloatArray) getField!(GrPtr)(fieldName);
     }
 
     GrStringArray getStringArray(string fieldName) {
-        return cast(GrStringArray) getField!(void*)(fieldName);
+        return cast(GrStringArray) getField!(GrPtr)(fieldName);
     }
 
     GrObjectArray getObjectArray(string fieldName) {
-        return cast(GrObjectArray) getField!(void*)(fieldName);
+        return cast(GrObjectArray) getField!(GrPtr)(fieldName);
     }
 
     GrIntChannel getIntChannel(string fieldName) {
-        return cast(GrIntChannel) getField!(void*)(fieldName);
+        return cast(GrIntChannel) getField!(GrPtr)(fieldName);
     }
 
     GrFloatChannel getFloatChannel(string fieldName) {
-        return cast(GrFloatChannel) getField!(void*)(fieldName);
+        return cast(GrFloatChannel) getField!(GrPtr)(fieldName);
     }
 
     GrStringChannel getStringChannel(string fieldName) {
-        return cast(GrStringChannel) getField!(void*)(fieldName);
+        return cast(GrStringChannel) getField!(GrPtr)(fieldName);
     }
 
     GrObjectChannel getObjectChannel(string fieldName) {
-        return cast(GrObjectChannel) getField!(void*)(fieldName);
+        return cast(GrObjectChannel) getField!(GrPtr)(fieldName);
     }
 
     T getEnum(T)(string fieldName) {
-        return cast(T) getField!int(fieldName);
+        return cast(T) getField!GrInt(fieldName);
     }
 
     T getForeign(T)(string fieldName) {
         // We cast to object first to avoid a crash when casting to a parent class
-        return cast(T) cast(Object) getField!(void*)(fieldName);
+        return cast(T) cast(Object) getField!(GrPtr)(fieldName);
     }
 
     private T getField(T)(string fieldName) {
@@ -108,13 +108,13 @@ final class GrObject {
             if (_fields[index].name == fieldName) {
                 static if (is(T == GrInt))
                     return _fields[index].ivalue;
-                else static if (is(T == bool))
+                else static if (is(T == GrBool))
                     return cast(T) _fields[index].ivalue;
                 else static if (is(T == GrFloat))
                     return _fields[index].fvalue;
-                else static if (is(T == string))
+                else static if (is(T == GrString))
                     return _fields[index].svalue;
-                else static if (is(T == void*))
+                else static if (is(T == GrPtr))
                     return _fields[index].ovalue;
                 else
                     static assert(false, "Invalid field type");
@@ -126,55 +126,55 @@ final class GrObject {
     alias setBool = setField!bool;
     alias setInt = setField!GrInt;
     alias setFloat = setField!GrFloat;
-    alias setString = setField!string;
-    alias setPtr = setField!(void*);
+    alias setString = setField!GrString;
+    alias setPtr = setField!GrPtr;
 
     void setObject(string fieldName, GrObject value) {
-        setField!(void*)(fieldName, cast(void*) value);
+        setField!(GrPtr)(fieldName, cast(GrPtr) value);
     }
 
     void setArray(T)(string fieldName, GrArray!T value) {
-        setField!(void*)(fieldName, cast(void*) value);
+        setField!(GrPtr)(fieldName, cast(GrPtr) value);
     }
 
     void setIntArray(string fieldName, GrIntArray value) {
-        setField!(void*)(fieldName, cast(void*) value);
+        setField!(GrPtr)(fieldName, cast(GrPtr) value);
     }
 
     void setFloatArray(string fieldName, GrFloatArray value) {
-        setField!(void*)(fieldName, cast(void*) value);
+        setField!(GrPtr)(fieldName, cast(GrPtr) value);
     }
 
     void setStringArray(string fieldName, GrStringArray value) {
-        setField!(void*)(fieldName, cast(void*) value);
+        setField!(GrPtr)(fieldName, cast(GrPtr) value);
     }
 
     void setObjectArray(string fieldName, GrObjectArray value) {
-        setField!(void*)(fieldName, cast(void*) value);
+        setField!(GrPtr)(fieldName, cast(GrPtr) value);
     }
 
     void setIntChannel(string fieldName, GrIntChannel value) {
-        setField!(void*)(fieldName, cast(void*) value);
+        setField!(GrPtr)(fieldName, cast(GrPtr) value);
     }
 
     void setFloatChannel(string fieldName, GrFloatChannel value) {
-        setField!(void*)(fieldName, cast(void*) value);
+        setField!(GrPtr)(fieldName, cast(GrPtr) value);
     }
 
     void setStringChannel(string fieldName, GrStringChannel value) {
-        setField!(void*)(fieldName, cast(void*) value);
+        setField!(GrPtr)(fieldName, cast(GrPtr) value);
     }
 
     void setObjectChannel(string fieldName, GrObjectChannel value) {
-        setField!(void*)(fieldName, cast(void*) value);
+        setField!(GrPtr)(fieldName, cast(GrPtr) value);
     }
 
     void setEnum(T)(string fieldName, T value) {
-        setField!int(fieldName, cast(int) value);
+        setField!GrInt(fieldName, cast(GrInt) value);
     }
 
     void setForeign(T)(string fieldName, T value) {
-        setField!(void*)(fieldName, cast(void*) value);
+        setField!(GrPtr)(fieldName, cast(GrPtr) value);
     }
 
     private T setField(T)(string fieldName, T value) {
@@ -182,13 +182,13 @@ final class GrObject {
             if (_fields[index].name == fieldName) {
                 static if (is(T == GrInt))
                     return _fields[index].ivalue = cast(int) value;
-                else static if (is(T == bool))
+                else static if (is(T == GrBool))
                     return _fields[index].ivalue = value;
                 else static if (is(T == GrFloat))
                     return _fields[index].fvalue = value;
-                else static if (is(T == string))
+                else static if (is(T == GrString))
                     return _fields[index].svalue = value;
-                else static if (is(T == void*))
+                else static if (is(T == GrPtr))
                     return _fields[index].ovalue = value;
                 else
                     static assert(false, "Invalid field type");

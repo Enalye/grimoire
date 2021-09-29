@@ -9,8 +9,8 @@ import grimoire.assembly;
 
 alias GrIntChannel = GrChannel!GrInt;
 alias GrFloatChannel = GrChannel!GrFloat;
-alias GrStringChannel = GrChannel!string;
-alias GrObjectChannel = GrChannel!(void*);
+alias GrStringChannel = GrChannel!GrString;
+alias GrObjectChannel = GrChannel!GrPtr;
 
 /**
 A pipe that allow synchronised communication between coroutines.
