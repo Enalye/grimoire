@@ -82,8 +82,9 @@ GrType[] grUnmangleSignature(string mangledSignature) {
     int i;
     while (i < mangledSignature.length) {
         //Type separator
-        if (mangledSignature[i] != '$')
+        if (mangledSignature[i] != '$') {
             throw new Exception("Invalid unmangle signature mangling format, missing $");
+        }
         i++;
 
         //Value
@@ -107,7 +108,7 @@ GrType[] grUnmangleSignature(string mangledSignature) {
         case 'n':
             i++;
             currentType.baseType = GrBaseType.array_;
-            currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
+            currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             break;
         case 'e':
             currentType.baseType = GrBaseType.enum_;
@@ -128,54 +129,34 @@ GrType[] grUnmangleSignature(string mangledSignature) {
             break;
         case 'p':
             currentType.baseType = GrBaseType.class_;
-            string structName;
             if ((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid mangling format");
             i++;
-            if (mangledSignature[i] != '(')
-                throw new Exception("Invalid mangling format");
-            i++;
-            while (mangledSignature[i] != ')') {
-                structName ~= mangledSignature[i];
-                i++;
-                if (i >= mangledSignature.length)
-                    throw new Exception("Invalid mangling format");
-            }
-            currentType.mangledType = structName;
+            currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             break;
         case 'u':
             currentType.baseType = GrBaseType.foreign;
-            string foreignName;
             if ((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid mangling format");
             i++;
-            if (mangledSignature[i] != '(')
-                throw new Exception("Invalid mangling format");
-            i++;
-            while (mangledSignature[i] != ')') {
-                foreignName ~= mangledSignature[i];
-                i++;
-                if (i >= mangledSignature.length)
-                    throw new Exception("Invalid mangling format");
-            }
-            currentType.mangledType = foreignName;
+            currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             break;
         case 'f':
             i++;
             currentType.baseType = GrBaseType.function_;
-            currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
+            currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             i++;
-            currentType.mangledReturnType = grUnmangleSubFunction(mangledSignature, i);
+            currentType.mangledReturnType = grUnmangleBlock(mangledSignature, i);
             break;
         case 't':
             i++;
             currentType.baseType = GrBaseType.task;
-            currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
+            currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             break;
         case 'c':
             i++;
             currentType.baseType = GrBaseType.chan;
-            currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
+            currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             break;
         default:
             break;
@@ -204,7 +185,7 @@ string grMangleComposite(string name, GrType[] signature) {
 
 /// Reverses the grMangleComposite operation.
 /// Returns a struct containing the name and the signature.
-auto grUnmangleComposite(string mangledSignature) { 
+auto grUnmangleComposite(string mangledSignature) {
     struct UnmangleCompositeResult {
         string name;
         GrType[] signature;
@@ -212,20 +193,20 @@ auto grUnmangleComposite(string mangledSignature) {
 
     UnmangleCompositeResult result;
     size_t index = mangledSignature.indexOf('$');
-    if(index == -1) { 
+    if (index == -1) {
         result.name = mangledSignature;
         return result;
     }
-    result.name = mangledSignature[0..index];
-    result.signature = grUnmangleSignature(mangledSignature[index..$]);
+    result.name = mangledSignature[0 .. index];
+    result.signature = grUnmangleSignature(mangledSignature[index .. $]);
     return result;
 }
 
 /// Reverse the mangling operation for a function passed as a parameter.
-string grUnmangleSubFunction(string mangledSignature, ref int i) {
+string grUnmangleBlock(string mangledSignature, ref int i) {
     string subString;
     int blockCount = 1;
-    if (i >= mangledSignature.length && mangledSignature[i] != '(')
+    if (i >= mangledSignature.length || mangledSignature[i] != '(')
         throw new Exception("Invalid subType mangling format, missing (");
     i++;
 
@@ -279,7 +260,7 @@ GrType grUnmangle(string mangledSignature) {
         case 'n':
             i++;
             currentType.baseType = GrBaseType.array_;
-            currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
+            currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             i++;
             break;
         case 'e':
@@ -336,21 +317,21 @@ GrType grUnmangle(string mangledSignature) {
         case 'f':
             i++;
             currentType.baseType = GrBaseType.function_;
-            currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
+            currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             i++;
-            currentType.mangledReturnType = grUnmangleSubFunction(mangledSignature, i);
+            currentType.mangledReturnType = grUnmangleBlock(mangledSignature, i);
             i++;
             break;
         case 't':
             i++;
             currentType.baseType = GrBaseType.task;
-            currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
+            currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             i++;
             break;
         case 'c':
             i++;
             currentType.baseType = GrBaseType.chan;
-            currentType.mangledType = grUnmangleSubFunction(mangledSignature, i);
+            currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             i++;
             break;
         default:

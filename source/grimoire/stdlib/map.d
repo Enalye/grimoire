@@ -6,8 +6,9 @@
 module grimoire.stdlib.map;
 
 import std.typecons : Tuple, tuple;
-
+import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
+import grimoire.stdlib.util;
 
 /// Hashmap
 private final class Map(T) {
@@ -19,6 +20,10 @@ private final class Map(T) {
         for (size_t i; i < keys.length; ++i) {
             data[keys[i]] = values[i];
         }
+    }
+
+    this(Map!T map) {
+        data = map.data.dup;
     }
 }
 
@@ -65,6 +70,20 @@ package(grimoire.stdlib) void grLoadStdLibMap(GrLibrary library) {
             library.addPrimitive(&_make_!\"" ~ t
                 ~ "\", \"Map\", [grStringArray, any" ~ t ~ "Array], [grAny(\"M\")]);
 
+            library.addPrimitive(&_copy_!\"" ~ t
+                ~ "\", \"copy\", [any" ~ t ~ "Map], [grAny(\"M\")]);
+
+            library.addPrimitive(&_size_!\"" ~ t ~ "\", \"size\", [any"
+                ~ t ~ "Map], [grInt]);
+
+            library.addPrimitive(&_empty_!\"" ~ t ~ "\", \"empty?\", [
+                any" ~ t ~ "Map
+            ], [grBool]);
+
+            library.addPrimitive(&_clear_!\"" ~ t ~ "\", \"clear\", [
+                any" ~ t ~ "Map
+            ], [grAny(\"M\")]);
+
             library.addPrimitive(&_set_!\"" ~ t
                 ~ "\", \"set\", [any" ~ t ~ "Map, grString, grAny(\"T\")]);
 
@@ -77,13 +96,13 @@ package(grimoire.stdlib) void grLoadStdLibMap(GrLibrary library) {
             library.addPrimitive(&_remove_!\"" ~ t
                 ~ "\", \"remove\", [any" ~ t ~ "Map, grString]);
 
-            library.addPrimitive(&_byKeys_!\"" ~ t ~ "\", \"byKeys\", [any"
-                ~ t ~ "Map], [grStringArray]);
+            library.addPrimitive(&_byKeys_!\"" ~ t ~ "\", \"byKeys\", [any" ~ t
+                ~ "Map], [grStringArray]);
 
-            library.addPrimitive(&_byValues_!\"" ~ t ~ "\", \"byValues\", [any" ~ t ~ "Map], [any" ~ t ~ "Array]);
+            library.addPrimitive(&_byValues_!\"" ~ t ~ "\", \"byValues\", [any" ~ t ~ "Map], [any"
+                ~ t ~ "Array]);
 
-            library.addPrimitive(&_each_!\""
-                ~ t ~ "\", \"each\", [
+            library.addPrimitive(&_each_!\"" ~ t ~ "\", \"each\", [
                     grAny(\"A\", (type, data) {
                 if (type.baseType != GrBaseType.foreign)
                     return false;
@@ -111,12 +130,65 @@ package(grimoire.stdlib) void grLoadStdLibMap(GrLibrary library) {
                 ], [grBool, grAny(\"T\")]);
             ");
     }
+
+    GrType boolMap = grGetForeignType("Map", [grBool]);
+    library.addPrimitive(&_print_!("bool", false), "print", [boolMap]);
+    library.addPrimitive(&_print_!("bool", true), "printl", [boolMap]);
+
+    GrType intMap = grGetForeignType("Map", [grInt]);
+    library.addPrimitive(&_print_!("int", false), "print", [intMap]);
+    library.addPrimitive(&_print_!("int", true), "printl", [intMap]);
+
+    GrType floatMap = grGetForeignType("Map", [grFloat]);
+    library.addPrimitive(&_print_!("float", false), "print", [floatMap]);
+    library.addPrimitive(&_print_!("float", true), "printl", [floatMap]);
+
+    GrType stringMap = grGetForeignType("Map", [grString]);
+    library.addPrimitive(&_print_!("string", false), "print", [stringMap]);
+    library.addPrimitive(&_print_!("string", true), "printl", [stringMap]);
 }
 
 private void _make_(string t)(GrCall call) {
-    mixin(t ~ "Map map = new " ~ t ~ "Map(call.getStringArray(0).data, call.get" ~ t
-            ~ "Array(1).data);");
+    mixin(t ~ "Map map = new " ~ t ~ "Map(call.getStringArray(0).data, call.get"
+            ~ t ~ "Array(1).data);");
     call.setForeign(map);
+}
+
+private void _copy_(string t)(GrCall call) {
+    mixin(t ~ "Map map = call.getForeign!" ~ t ~ "Map(0);");
+    if (!map) {
+        call.raise("NullError");
+        return;
+    }
+    mixin("call.setForeign!" ~ t ~ "Map(new " ~ t ~ "Map(map));");
+}
+
+private void _size_(string t)(GrCall call) {
+    mixin(t ~ "Map map = call.getForeign!" ~ t ~ "Map(0);");
+    if (!map) {
+        call.raise("NullError");
+        return;
+    }
+    call.setInt(cast(GrInt) map.data.length);
+}
+
+private void _empty_(string t)(GrCall call) {
+    mixin("const " ~ t ~ "Map map = call.getForeign!" ~ t ~ "Map(0);");
+    if (!map) {
+        call.raise("NullError");
+        return;
+    }
+    call.setBool(map.data.length == 0);
+}
+
+private void _clear_(string t)(GrCall call) {
+    mixin(t ~ "Map map = call.getForeign!" ~ t ~ "Map(0);");
+    if (!map) {
+        call.raise("NullError");
+        return;
+    }
+    map.data.clear();
+    mixin("call.setForeign!" ~ t ~ "Map(map);");
 }
 
 private void _set_(string t)(GrCall call) {
@@ -185,6 +257,48 @@ private void _byValues_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array ary = new Gr" ~ t ~ "Array;");
     ary.data = map.data.values;
     mixin("call.set" ~ t ~ "Array(ary);");
+}
+
+private void _printb_(string t)(GrCall call) {
+    Map map = call.getForeign!(IntMap)(0);
+    if (!map) {
+        call.raise("NullError");
+        return;
+    }
+    GrString result = "{";
+    bool isFirst = true;
+    foreach (key, value; map.data) {
+        if (isFirst) {
+            isFirst = false;
+        }
+        else {
+            result ~= ", ";
+        }
+        result ~= "\"" ~ key ~ "\"=>" ~ to!string(cast(GrBool) value);
+    }
+    result ~= "}";
+    _stdOut(result);
+}
+
+private void _printlb_(string t)(GrCall call) {
+    Map map = call.getForeign!(IntMap)(0);
+    if (!map) {
+        call.raise("NullError");
+        return;
+    }
+    GrString result = "{";
+    bool isFirst = true;
+    foreach (key, value; map.data) {
+        if (isFirst) {
+            isFirst = false;
+        }
+        else {
+            result ~= ", ";
+        }
+        result ~= "\"" ~ key ~ "\"=>" ~ to!string(cast(GrBool) value);
+    }
+    result ~= "}\n";
+    _stdOut(result);
 }
 
 private void _each_(string t)(GrCall call) {
@@ -259,4 +373,42 @@ private void _next_(string t)(GrCall call) {
         call.setObject(obj);
     }
     iter.index++;
+}
+
+private void _print_(string t, bool newLine)(GrCall call) {
+    static if (t == "bool" || t == "int") {
+        IntMap map = call.getForeign!(IntMap)(0);
+    }
+    else static if (t == "float") {
+        FloatMap map = call.getForeign!(FloatMap)(0);
+    }
+    else static if (t == "string") {
+        StringMap map = call.getForeign!(StringMap)(0);
+    }
+    if (!map) {
+        call.raise("NullError");
+        return;
+    }
+    GrString result = "{";
+    bool isFirst = true;
+    foreach (key, value; map.data) {
+        if (isFirst) {
+            isFirst = false;
+        }
+        else {
+            result ~= ", ";
+        }
+        result ~= "\"" ~ key ~ "\"=>";
+        static if (t == "string") {
+            result ~= "\"" ~ to!string(value) ~ "\"";
+        }
+        else static if (t == "bool") {
+            result ~= to!string(cast(bool) value);
+        }
+        else {
+            result ~= to!string(value);
+        }
+    }
+    result ~= newLine ? "}\n" : "}";
+    _stdOut(result);
 }
