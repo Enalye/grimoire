@@ -54,44 +54,60 @@ final class GrObject {
     alias getString = getField!GrString;
     alias getPtr = getField!GrPtr;
 
+    int getInt32(string fieldName) {
+        return cast(int) getField!GrInt(fieldName);
+    }
+
+    long getInt64(string fieldName) {
+        return cast(long) getField!GrInt(fieldName);
+    }
+
+    float getFloat32(string fieldName) {
+        return cast(float) getField!GrFloat(fieldName);
+    }
+
+    double getFloat64(string fieldName) {
+        return cast(double) getField!GrFloat(fieldName);
+    }
+
     GrObject getObject(string fieldName) {
-        return cast(GrObject) getField!(GrPtr)(fieldName);
+        return cast(GrObject) getField!GrPtr(fieldName);
     }
 
     GrArray!T getArray(T)(string fieldName) {
-        return cast(GrArray!T) getField!(GrPtr)(fieldName);
+        return cast(GrArray!T) getField!GrPtr(fieldName);
     }
 
     GrIntArray getIntArray(string fieldName) {
-        return cast(GrIntArray) getField!(GrPtr)(fieldName);
+        return cast(GrIntArray) getField!GrPtr(fieldName);
     }
 
     GrFloatArray getFloatArray(string fieldName) {
-        return cast(GrFloatArray) getField!(GrPtr)(fieldName);
+        return cast(GrFloatArray) getField!GrPtr(fieldName);
     }
 
     GrStringArray getStringArray(string fieldName) {
-        return cast(GrStringArray) getField!(GrPtr)(fieldName);
+        return cast(GrStringArray) getField!GrPtr(fieldName);
     }
 
     GrObjectArray getObjectArray(string fieldName) {
-        return cast(GrObjectArray) getField!(GrPtr)(fieldName);
+        return cast(GrObjectArray) getField!GrPtr(fieldName);
     }
 
     GrIntChannel getIntChannel(string fieldName) {
-        return cast(GrIntChannel) getField!(GrPtr)(fieldName);
+        return cast(GrIntChannel) getField!GrPtr(fieldName);
     }
 
     GrFloatChannel getFloatChannel(string fieldName) {
-        return cast(GrFloatChannel) getField!(GrPtr)(fieldName);
+        return cast(GrFloatChannel) getField!GrPtr(fieldName);
     }
 
     GrStringChannel getStringChannel(string fieldName) {
-        return cast(GrStringChannel) getField!(GrPtr)(fieldName);
+        return cast(GrStringChannel) getField!GrPtr(fieldName);
     }
 
     GrObjectChannel getObjectChannel(string fieldName) {
-        return cast(GrObjectChannel) getField!(GrPtr)(fieldName);
+        return cast(GrObjectChannel) getField!GrPtr(fieldName);
     }
 
     T getEnum(T)(string fieldName) {
@@ -100,7 +116,7 @@ final class GrObject {
 
     T getForeign(T)(string fieldName) {
         // We cast to object first to avoid a crash when casting to a parent class
-        return cast(T) cast(Object) getField!(GrPtr)(fieldName);
+        return cast(T) cast(Object) getField!GrPtr(fieldName);
     }
 
     private T getField(T)(string fieldName) {
@@ -129,44 +145,60 @@ final class GrObject {
     alias setString = setField!GrString;
     alias setPtr = setField!GrPtr;
 
+    void setInt32(string fieldName, int value) {
+        setField!GrInt(fieldName, cast(GrInt) value);
+    }
+
+    void setInt64(string fieldName, long value) {
+        setField!GrInt(fieldName, cast(GrInt) value);
+    }
+
+    void setFloat32(string fieldName, float value) {
+        setField!GrFloat(fieldName, cast(GrFloat) value);
+    }
+
+    void setFloat64(string fieldName, double value) {
+        setField!GrFloat(fieldName, cast(GrFloat) value);
+    }
+
     void setObject(string fieldName, GrObject value) {
-        setField!(GrPtr)(fieldName, cast(GrPtr) value);
+        setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
     void setArray(T)(string fieldName, GrArray!T value) {
-        setField!(GrPtr)(fieldName, cast(GrPtr) value);
+        setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
     void setIntArray(string fieldName, GrIntArray value) {
-        setField!(GrPtr)(fieldName, cast(GrPtr) value);
+        setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
     void setFloatArray(string fieldName, GrFloatArray value) {
-        setField!(GrPtr)(fieldName, cast(GrPtr) value);
+        setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
     void setStringArray(string fieldName, GrStringArray value) {
-        setField!(GrPtr)(fieldName, cast(GrPtr) value);
+        setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
     void setObjectArray(string fieldName, GrObjectArray value) {
-        setField!(GrPtr)(fieldName, cast(GrPtr) value);
+        setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
     void setIntChannel(string fieldName, GrIntChannel value) {
-        setField!(GrPtr)(fieldName, cast(GrPtr) value);
+        setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
     void setFloatChannel(string fieldName, GrFloatChannel value) {
-        setField!(GrPtr)(fieldName, cast(GrPtr) value);
+        setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
     void setStringChannel(string fieldName, GrStringChannel value) {
-        setField!(GrPtr)(fieldName, cast(GrPtr) value);
+        setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
     void setObjectChannel(string fieldName, GrObjectChannel value) {
-        setField!(GrPtr)(fieldName, cast(GrPtr) value);
+        setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
     void setEnum(T)(string fieldName, T value) {
@@ -174,7 +206,7 @@ final class GrObject {
     }
 
     void setForeign(T)(string fieldName, T value) {
-        setField!(GrPtr)(fieldName, cast(GrPtr) value);
+        setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
     private T setField(T)(string fieldName, T value) {

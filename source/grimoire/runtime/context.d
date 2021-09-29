@@ -6,9 +6,8 @@
 module grimoire.runtime.context;
 
 import grimoire.assembly;
-import grimoire.runtime.engine;
-import grimoire.runtime.array;
-import grimoire.runtime.object;
+import grimoire.runtime.engine, grimoire.runtime.array,
+    grimoire.runtime.channel, grimoire.runtime.object;
 
 /**
 Represents a single function context in the callStack.
@@ -196,14 +195,70 @@ final class GrContext {
     alias setInt = setValue!GrInt;
     alias setFloat = setValue!GrFloat;
     alias setString = setValue!GrString;
-    alias setObject = setUserData!GrObject;
-    alias setIntArray = setUserData!GrIntArray;
-    alias setFloatArray = setUserData!GrFloatArray;
-    alias setStringArray = setUserData!GrStringArray;
-    alias setObjectArray = setUserData!GrObjectArray;
+    alias setPtr = setValue!GrPtr;
 
-    void setUserData(T)(T value) {
-        setValue!(GrPtr)(cast(GrPtr) value);
+    void setInt32(int value) {
+        setValue!GrInt(cast(GrInt) value);
+    }
+
+    void setInt64(long value) {
+        setValue!GrInt(cast(GrInt) value);
+    }
+
+    void setFloat32(float value) {
+        setValue!GrFloat(cast(GrFloat) value);
+    }
+
+    void setFloat64(double value) {
+        setValue!GrFloat(cast(GrFloat) value);
+    }
+
+    void setObject(GrObject value) {
+        setValue!GrPtr(cast(GrPtr) value);
+    }
+
+    void setArray(T)(GrArray!T value) {
+        setValue!GrPtr(cast(GrPtr) value);
+    }
+
+    void setIntArray(GrIntArray value) {
+        setValue!GrPtr(cast(GrPtr) value);
+    }
+
+    void setFloatArray(GrFloatArray value) {
+        setValue!GrPtr(cast(GrPtr) value);
+    }
+
+    void setStringArray(GrStringArray value) {
+        setValue!GrPtr(cast(GrPtr) value);
+    }
+
+    void setObjectArray(GrObjectArray value) {
+        setValue!GrPtr(cast(GrPtr) value);
+    }
+
+    void setIntChannel(GrIntChannel value) {
+        setValue!GrPtr(cast(GrPtr) value);
+    }
+
+    void setFloatChannel(GrFloatChannel value) {
+        setValue!GrPtr(cast(GrPtr) value);
+    }
+
+    void setStringChannel(GrStringChannel value) {
+        setValue!GrPtr(cast(GrPtr) value);
+    }
+
+    void setObjectChannel(GrObjectChannel value) {
+        setValue!GrPtr(cast(GrPtr) value);
+    }
+
+    void setEnum(T)(T value) {
+        setValue!GrInt(cast(GrInt) value);
+    }
+
+    void setForeign(T)(T value) {
+        setValue!GrPtr(cast(GrPtr) value);
     }
 
     private void setValue(T)(T value) {

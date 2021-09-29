@@ -76,59 +76,59 @@ final class GrCall {
     alias getPtr = getParameter!GrPtr;
 
     int getInt32(uint index) {
-        return cast(int) getParameter!(GrInt)(index);
+        return cast(int) getParameter!GrInt(index);
     }
 
     long getInt64(uint index) {
-        return cast(long) getParameter!(GrInt)(index);
+        return cast(long) getParameter!GrInt(index);
     }
 
     float getFloat32(uint index) {
-        return cast(float) getParameter!(GrFloat)(index);
+        return cast(float) getParameter!GrFloat(index);
     }
 
     double getFloat64(uint index) {
-        return cast(double) getParameter!(GrFloat)(index);
+        return cast(double) getParameter!GrFloat(index);
     }
 
     GrObject getObject(uint index) {
-        return cast(GrObject) getParameter!(GrPtr)(index);
+        return cast(GrObject) getParameter!GrPtr(index);
     }
 
     GrArray!T getArray(T)(uint index) {
-        return cast(GrArray!T) getParameter!(GrPtr)(index);
+        return cast(GrArray!T) getParameter!GrPtr(index);
     }
 
     GrIntArray getIntArray(uint index) {
-        return cast(GrIntArray) getParameter!(GrPtr)(index);
+        return cast(GrIntArray) getParameter!GrPtr(index);
     }
 
     GrFloatArray getFloatArray(uint index) {
-        return cast(GrFloatArray) getParameter!(GrPtr)(index);
+        return cast(GrFloatArray) getParameter!GrPtr(index);
     }
 
     GrStringArray getStringArray(uint index) {
-        return cast(GrStringArray) getParameter!(GrPtr)(index);
+        return cast(GrStringArray) getParameter!GrPtr(index);
     }
 
     GrObjectArray getObjectArray(uint index) {
-        return cast(GrObjectArray) getParameter!(GrPtr)(index);
+        return cast(GrObjectArray) getParameter!GrPtr(index);
     }
 
     GrIntChannel getIntChannel(uint index) {
-        return cast(GrIntChannel) getParameter!(GrPtr)(index);
+        return cast(GrIntChannel) getParameter!GrPtr(index);
     }
 
     GrFloatChannel getFloatChannel(uint index) {
-        return cast(GrFloatChannel) getParameter!(GrPtr)(index);
+        return cast(GrFloatChannel) getParameter!GrPtr(index);
     }
 
     GrStringChannel getStringChannel(uint index) {
-        return cast(GrStringChannel) getParameter!(GrPtr)(index);
+        return cast(GrStringChannel) getParameter!GrPtr(index);
     }
 
     GrObjectChannel getObjectChannel(uint index) {
-        return cast(GrObjectChannel) getParameter!(GrPtr)(index);
+        return cast(GrObjectChannel) getParameter!GrPtr(index);
     }
 
     T getEnum(T)(uint index) {
@@ -137,7 +137,7 @@ final class GrCall {
 
     T getForeign(T)(uint parameter) {
         // We cast to object first to avoid a crash when casting to a parent class
-        return cast(T) cast(Object) getParameter!(GrPtr)(parameter);
+        return cast(T) cast(Object) getParameter!GrPtr(parameter);
     }
 
     private T getParameter(T)(uint index) {
@@ -181,62 +181,62 @@ final class GrCall {
     alias setInt = setResult!GrInt;
     alias setFloat = setResult!GrFloat;
     alias setString = setResult!GrString;
-    alias setPtr = setResult!(GrPtr);
+    alias setPtr = setResult!GrPtr;
 
     void setInt32(int value) {
-        setResult!(GrInt)(cast(GrInt) value);
+        setResult!GrInt(cast(GrInt) value);
     }
 
     void setInt64(long value) {
-        setResult!(GrInt)(cast(GrInt) value);
+        setResult!GrInt(cast(GrInt) value);
     }
 
     void setFloat32(float value) {
-        setResult!(GrInt)(cast(GrInt) value);
+        setResult!GrFloat(cast(GrFloat) value);
     }
 
     void setFloat64(double value) {
-        setResult!(GrInt)(cast(GrInt) value);
+        setResult!GrFloat(cast(GrFloat) value);
     }
 
     void setObject(GrObject value) {
-        setResult!(GrPtr)(cast(GrPtr) value);
+        setResult!GrPtr(cast(GrPtr) value);
     }
 
     void setArray(T)(GrArray!T value) {
-        setResult!(GrPtr)(cast(GrPtr) value);
+        setResult!GrPtr(cast(GrPtr) value);
     }
 
     void setIntArray(GrIntArray value) {
-        setResult!(GrPtr)(cast(GrPtr) value);
+        setResult!GrPtr(cast(GrPtr) value);
     }
 
     void setFloatArray(GrFloatArray value) {
-        setResult!(GrPtr)(cast(GrPtr) value);
+        setResult!GrPtr(cast(GrPtr) value);
     }
 
     void setStringArray(GrStringArray value) {
-        setResult!(GrPtr)(cast(GrPtr) value);
+        setResult!GrPtr(cast(GrPtr) value);
     }
 
     void setObjectArray(GrObjectArray value) {
-        setResult!(GrPtr)(cast(GrPtr) value);
+        setResult!GrPtr(cast(GrPtr) value);
     }
 
     void setIntChannel(GrIntChannel value) {
-        setResult!(GrPtr)(cast(GrPtr) value);
+        setResult!GrPtr(cast(GrPtr) value);
     }
 
     void setFloatChannel(GrFloatChannel value) {
-        setResult!(GrPtr)(cast(GrPtr) value);
+        setResult!GrPtr(cast(GrPtr) value);
     }
 
     void setStringChannel(GrStringChannel value) {
-        setResult!(GrPtr)(cast(GrPtr) value);
+        setResult!GrPtr(cast(GrPtr) value);
     }
 
     void setObjectChannel(GrObjectChannel value) {
-        setResult!(GrPtr)(cast(GrPtr) value);
+        setResult!GrPtr(cast(GrPtr) value);
     }
 
     void setEnum(T)(T value) {
@@ -244,7 +244,7 @@ final class GrCall {
     }
 
     void setForeign(T)(T value) {
-        setResult!(GrPtr)(cast(GrPtr) value);
+        setResult!GrPtr(cast(GrPtr) value);
     }
 
     private void setResult(T)(T value) {
