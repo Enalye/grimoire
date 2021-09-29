@@ -75,6 +75,22 @@ final class GrCall {
     alias getString = getParameter!GrString;
     alias getPtr = getParameter!GrPtr;
 
+    int getInt32(uint index) {
+        return cast(int) getParameter!(GrInt)(index);
+    }
+
+    long getInt64(uint index) {
+        return cast(long) getParameter!(GrInt)(index);
+    }
+
+    float getFloat32(uint index) {
+        return cast(float) getParameter!(GrFloat)(index);
+    }
+
+    double getFloat64(uint index) {
+        return cast(double) getParameter!(GrFloat)(index);
+    }
+
     GrObject getObject(uint index) {
         return cast(GrObject) getParameter!(GrPtr)(index);
     }
@@ -166,6 +182,22 @@ final class GrCall {
     alias setFloat = setResult!GrFloat;
     alias setString = setResult!GrString;
     alias setPtr = setResult!(GrPtr);
+
+    void setInt32(int value) {
+        setResult!(GrInt)(cast(GrInt) value);
+    }
+
+    void setInt64(long value) {
+        setResult!(GrInt)(cast(GrInt) value);
+    }
+
+    void setFloat32(float value) {
+        setResult!(GrInt)(cast(GrInt) value);
+    }
+
+    void setFloat64(double value) {
+        setResult!(GrInt)(cast(GrInt) value);
+    }
 
     void setObject(GrObject value) {
         setResult!(GrPtr)(cast(GrPtr) value);
