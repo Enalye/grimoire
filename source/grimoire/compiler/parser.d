@@ -1907,8 +1907,9 @@ final class GrParser {
                 parseTaskDeclaration(isPublic);
                 break;
             case functionType:
-                if (get(1).type != GrLexemeType.identifier && get(1)
-                        .type != GrLexemeType.as && get(1).type != GrLexemeType.lesser)
+                if (get(1).type != GrLexemeType.identifier && !get(1)
+                        .isOperator && get(1).type != GrLexemeType.as && get(1)
+                        .type != GrLexemeType.lesser)
                     goto case intType;
                 parseFunctionDeclaration(isPublic);
                 break;
@@ -1956,8 +1957,9 @@ final class GrParser {
                 skipDeclaration();
                 break;
             case functionType:
-                if (get(1).type != GrLexemeType.identifier && get(1)
-                        .type != GrLexemeType.as && get(1).type != GrLexemeType.lesser)
+                if (get(1).type != GrLexemeType.identifier && !get(1)
+                        .isOperator && get(1).type != GrLexemeType.as && get(1)
+                        .type != GrLexemeType.lesser)
                     goto case intType;
                 skipDeclaration();
                 break;
@@ -2723,21 +2725,21 @@ final class GrParser {
             name = "@as";
             isConversion = true;
         }
-        else {
-            if (get().type != GrLexemeType.identifier)
-                logError("expected identifier, found `" ~ grGetPrettyLexemeType(get()
-                        .type) ~ "`", "missing identifier");
+        else if (get().type == GrLexemeType.identifier) {
             name = get().svalue;
-            if (name == "operator") {
-                checkAdvance();
-                if (get().type >= GrLexemeType.add && get().type <= GrLexemeType.not) {
-                    name = "@op_" ~ grGetPrettyLexemeType(get().type);
-                }
-                else
-                    logError("can't override `" ~ grGetPrettyLexemeType(get()
-                            .type) ~ "` operator", "this operator can't be overriden");
-            }
         }
+        else if (get().isOverridableOperator()) {
+            name = "@op_" ~ grGetPrettyLexemeType(get().type);
+        }
+        else if (get().isOperator) {
+            logError("can't override `" ~ grGetPrettyLexemeType(get()
+                    .type) ~ "` operator", "this operator can't be overriden");
+        }
+        else {
+            logError("expected identifier, found `" ~ grGetPrettyLexemeType(get()
+                    .type) ~ "`", "missing identifier");
+        }
+
         checkAdvance();
 
         GrTemplateFunction temp = new GrTemplateFunction;
@@ -2769,20 +2771,20 @@ final class GrParser {
 
         GrType[] templateList = parseTemplateSignature();
 
-        if (get().type != GrLexemeType.identifier)
-            logError("missing function or task",
-                    "expected a function or task name, found `" ~ grGetPrettyLexemeType(get()
-                        .type) ~ "`");
-        string name = get().svalue;
-
-        if (name == "operator") {
-            checkAdvance();
-            if (get().type >= GrLexemeType.add && get().type <= GrLexemeType.not) {
-                name = "@op_" ~ grGetPrettyLexemeType(get().type);
-            }
-            else
-                logError("can't override `" ~ grGetPrettyLexemeType(get()
-                        .type) ~ "` operator", "this operator can't be overriden");
+        string name;
+        if (get().type == GrLexemeType.identifier) {
+            name = get().svalue;
+        }
+        else if (get().isOverridableOperator()) {
+            name = "@op_" ~ grGetPrettyLexemeType(get().type);
+        }
+        else if (get().isOperator) {
+            logError("can't override `" ~ grGetPrettyLexemeType(get()
+                    .type) ~ "` operator", "this operator can't be overriden");
+        }
+        else {
+            logError("expected identifier, found `" ~ grGetPrettyLexemeType(get()
+                    .type) ~ "`", "missing identifier");
         }
 
         const uint fileId = get().fileId;

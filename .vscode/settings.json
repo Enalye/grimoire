@@ -11,8 +11,7 @@
         "**/dub*": true,        
         "**/*.sublime-*": true,
         "**/doc": true,     
-        "**/License*": true,        
-        "**/README*": true,        
+        "**/License*": true,      
         "**/data": true,        
     }
 }

@@ -583,9 +583,9 @@ pub func<A, B> add(A a, B b)(B) {
 
 Operators can also be templated:
 ```cpp
-template<int> operator<=>;
-template<float> operator<=>;
-func<T> operator<=>(T a, T b)(int) {
+template<int> <=>;
+template<float> <=>;
+func<T> <=>(T a, T b)(int) {
 	if(a < b)
 		return -1;
 	else if(a > b)
@@ -713,19 +713,43 @@ Note that if a default convertion exists, it'll call this one instead.
 
 # Operators
 
-Much like custom convertions, you can define your own operators.
-The name of the function must be `operator` followed by the operation.
-You also have to respect the number of input the operator uses (1 or 2).
+Much like custom convertions, you can define your own operators by naming it accordingly.
+You also have to respect the number of inputs the operator uses (1 or 2).
 
 ```cpp
 main {
     printl(3.5 + 2);
 }
 
-func operator+(float a, int b) (float) {
+func +(float a, int b) (float) {
     return a + b as float;
 }
 ```
+
+Overridable operators are:
+| Operator | Symbol |
+| --- | --- |
+| Add | + |
+| Substract | - |
+| Multiply | * |
+| Divide | / |
+| Concatenate | ~ |
+| Remainder | % |
+| Power | ^ |
+| Equal | == |
+| Double Equal | === |
+| Three Way Comparison | <=> |
+| Not Equal | != |
+| Greater or Equal | >= |
+| Greater | > |
+| Lesser or Equal | <= |
+| Lesser | < |
+| Left Shift | << |
+| Right Shift | >> |
+| And | and |
+| Or | or |
+| Xor | xor |
+| Not | ! |
 
 * * *
 

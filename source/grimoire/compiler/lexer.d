@@ -197,6 +197,11 @@ struct GrLexeme {
     string getFile() {
         return lexer.getFile(this);
     }
+
+    /// Can we define a custom function with this operator
+    bool isOverridableOperator() const {
+        return type >= GrLexemeType.add && type <= GrLexemeType.not;
+    }
 }
 
 /**
