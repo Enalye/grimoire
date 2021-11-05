@@ -38,6 +38,11 @@ enum GrLexemeType {
     raise_,
     defer,
     assign,
+    bitwiseAndAssign,
+    bitwiseOrAssign,
+    bitwiseXorAssign,
+    andAssign,
+    orAssign,
     addAssign,
     substractAssign,
     multiplyAssign,
@@ -47,6 +52,11 @@ enum GrLexemeType {
     powerAssign,
     plus,
     minus,
+    bitwiseAnd,
+    bitwiseOr,
+    bitwiseXor,
+    and,
+    or,
     add,
     substract,
     multiply,
@@ -64,9 +74,9 @@ enum GrLexemeType {
     lesser,
     leftShift,
     rightShift,
-    and,
-    or,
-    xor,
+    interval,
+    arrow,
+    bitwiseNot,
     not,
     increment,
     decrement,
@@ -540,6 +550,13 @@ package final class GrLexer {
             break;
         case '.':
             lex.type = GrLexemeType.period;
+            if (_current + 1 >= _text.length)
+                break;
+            if (get(1) == '.') {
+                lex.type = GrLexemeType.interval;
+                lex._textLength = 2;
+                _current++;
+            }
             break;
         case ';':
             lex.type = GrLexemeType.semicolon;
@@ -557,21 +574,70 @@ package final class GrLexer {
         case ',':
             lex.type = GrLexemeType.comma;
             break;
+        case '@':
+            lex.type = GrLexemeType.pointer;
+            break;
+        case '&':
+            lex.type = GrLexemeType.bitwiseAnd;
+            if (_current + 1 >= _text.length)
+                break;
+            switch (get(1)) {
+            case '=':
+                lex.type = GrLexemeType.bitwiseAndAssign;
+                lex._textLength = 2;
+                _current++;
+                break;
+            case '&':
+                lex.type = GrLexemeType.and;
+                lex._textLength = 2;
+                _current++;
+                if (_current + 1 >= _text.length)
+                    break;
+                if (get(1) == '&') {
+                    lex.type = GrLexemeType.andAssign;
+                    lex._textLength = 3;
+                    _current++;
+                }
+                break;
+            default:
+                break;
+            }
+            break;
+        case '|':
+            lex.type = GrLexemeType.bitwiseOr;
+            if (_current + 1 >= _text.length)
+                break;
+            switch (get(1)) {
+            case '=':
+                lex.type = GrLexemeType.bitwiseOrAssign;
+                lex._textLength = 2;
+                _current++;
+                break;
+            case '|':
+                lex.type = GrLexemeType.or;
+                lex._textLength = 2;
+                _current++;
+                if (_current + 1 >= _text.length)
+                    break;
+                if (get(1) == '|') {
+                    lex.type = GrLexemeType.orAssign;
+                    lex._textLength = 3;
+                    _current++;
+                }
+                break;
+            default:
+                break;
+            }
+            break;
         case '^':
-            lex.type = GrLexemeType.power;
+            lex.type = GrLexemeType.bitwiseXor;
             if (_current + 1 >= _text.length)
                 break;
             if (get(1) == '=') {
-                lex.type = GrLexemeType.powerAssign;
+                lex.type = GrLexemeType.bitwiseXorAssign;
                 lex._textLength = 2;
                 _current++;
             }
-            break;
-        case '@':
-            lex.type = GrLexemeType.at;
-            break;
-        case '&':
-            lex.type = GrLexemeType.pointer;
             break;
         case '~':
             lex.type = GrLexemeType.concatenate;
@@ -630,6 +696,18 @@ package final class GrLexer {
                 lex._textLength = 2;
                 _current++;
             }
+            else if (get(1) == '*') {
+                lex.type = GrLexemeType.power;
+                lex._textLength = 2;
+                _current++;
+                if (_current + 1 >= _text.length)
+                    break;
+                if (get(1) == '=') {
+                    lex.type = GrLexemeType.powerAssign;
+                    lex._textLength = 3;
+                    _current++;
+                }
+            }
             break;
         case '/':
             lex.type = GrLexemeType.divide;
@@ -655,7 +733,8 @@ package final class GrLexer {
             lex.type = GrLexemeType.assign;
             if (_current + 1 >= _text.length)
                 break;
-            if (get(1) == '=') {
+            switch (get(1)) {
+            case '=':
                 lex.type = GrLexemeType.equal;
                 lex._textLength = 2;
                 _current++;
@@ -666,6 +745,14 @@ package final class GrLexer {
                     lex._textLength = 3;
                     _current++;
                 }
+                break;
+            case '>':
+                lex.type = GrLexemeType.arrow;
+                lex._textLength = 2;
+                _current++;
+                break;
+            default:
+                break;
             }
             break;
         case '<':
@@ -923,11 +1010,6 @@ package final class GrLexer {
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
-        case "xor":
-            lex.type = GrLexemeType.xor;
-            lex.isKeyword = false;
-            lex.isOperator = true;
-            break;
         default:
             lex.isKeyword = false;
             lex.type = GrLexemeType.identifier;
@@ -1047,10 +1129,11 @@ package final class GrLexer {
 string grGetPrettyLexemeType(GrLexemeType operator) {
     immutable string[] lexemeTypeStrTable = [
         "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&", "as",
-        "try", "catch", "raise", "defer", "=", "+=", "-=", "*=", "/=", "~=",
-        "%=", "^=", "+", "-", "+", "-", "*", "/", "~", "%", "^", "==", "===",
-        "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "and", "or", "xor",
-        "not", "++", "--", "identifier", "const_int", "const_float", "const_bool",
+        "try", "catch", "raise", "defer", "=", "&=", "|=", "^=", "&&=",
+        "||=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+", "-", "&", "|",
+        "^", "&&", "||", "+", "-", "*", "/", "~", "%", "**", "==", "===",
+        "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "..", "=>", "~", "!",
+        "++", "--", "identifier", "const_int", "const_float", "const_bool",
         "const_str", "null", "pub", "main", "type", "event", "class", "enum",
         "template", "new", "copy", "send", "receive", "int", "float", "bool",
         "string", "array", "chan", "func", "task", "let", "if", "unless",

@@ -727,29 +727,38 @@ func +(float a, int b) (float) {
 ```
 
 Overridable operators are:
-| Operator | Symbol |
-| --- | --- |
-| Add | + |
-| Substract | - |
-| Multiply | * |
-| Divide | / |
-| Concatenate | ~ |
-| Remainder | % |
-| Power | ^ |
-| Equal | == |
-| Double Equal | === |
-| Three Way Comparison | <=> |
-| Not Equal | != |
-| Greater or Equal | >= |
-| Greater | > |
-| Lesser or Equal | <= |
-| Lesser | < |
-| Left Shift | << |
-| Right Shift | >> |
-| And | and |
-| Or | or |
-| Xor | xor |
-| Not | ! |
+| Operator | Symbol | Note |
+| --- | --- | --- |
+| `+` | Plus | Prefix unary operator |
+| `-` | Minus | Prefix unary operator |
+| `+` | Add | Binary operator |
+| `-` | Substract | Binary operator |
+| `*` | Multiply | Binary operator |
+| `/` | Divide | Binary operator |
+| `~` | Concatenate | Binary operator |
+| `%` | Remainder | Binary operator |
+| `\*\*` | Power | Binary operator |
+| `==` | Equal | Binary operator |
+| `===` | Double Equal | Binary operator |
+| `<=>` | Three Way Comparison | Binary operator |
+| `!=` | Not Equal | Binary operator |
+| `>=` | Greater or Equal | Binary operator |
+| `>` | Greater | Binary operator |
+| `<=` | Lesser or Equal | Binary operator |
+| `<` | Lesser | Binary operator |
+| `<<` | Left Shift | Binary operator |
+| `>>` | Right Shift | Binary operator |
+| `..` | Interval | Binary operator |
+| `=>` | Arrow | Binary operator |
+| `<-` | Receive | Prefix unary operator |
+| `<-` | Send | Binary operator |
+| `&`, `bit_and` | And | Binary operator |
+| `|`, `bit_or` | Or | Binary operator |
+| `^`, `bit_xor` | Xor | Binary operator |
+| `~`, `bit_not` | Not | Prefix unary operator |
+| `&&`, `and` | And | Binary operator |
+| `||`, `or` | Or | Binary operator |
+| `!`, `not` | Not | Prefix unary operator |
 
 * * *
 

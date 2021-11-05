@@ -212,6 +212,8 @@ class GrLibrary {
 
     /// Type of operator overloading
     enum Operator {
+        plus,
+        minus,
         add,
         substract,
         multiply,
@@ -229,9 +231,13 @@ class GrLibrary {
         lesser,
         leftShift,
         rightShift,
+        interval,
+        bitwiseAnd,
+        bitwiseOr,
+        bitwiseXor,
+        bitwiseNot,
         and,
         or,
-        xor,
         not,
     }
 
@@ -242,7 +248,16 @@ class GrLibrary {
     GrPrimitive addOperator(GrCallback callback, Operator operator,
             GrType[] inSignature, GrType outType) {
         string name;
+        uint signatureSize = 2;
         final switch (operator) with (Operator) {
+        case plus:
+            name = "+";
+            signatureSize = 1;
+            break;
+        case minus:
+            name = "-";
+            signatureSize = 1;
+            break;
         case add:
             name = "+";
             break;
@@ -294,19 +309,37 @@ class GrLibrary {
         case rightShift:
             name = ">>";
             break;
+        case interval:
+            name = "..";
+            break;
+        case bitwiseAnd:
+            name = "&";
+            break;
+        case bitwiseOr:
+            name = "|";
+            break;
+        case bitwiseXor:
+            name = "^";
+            break;
+        case bitwiseNot:
+            name = "~";
+            signatureSize = 1;
+            break;
         case and:
-            name = "and";
+            name = "&&";
             break;
         case or:
-            name = "or";
-            break;
-        case xor:
-            name = "xor";
+            name = "||";
             break;
         case not:
-            name = "not";
+            name = "!";
+            signatureSize = 1;
             break;
         }
+        if (inSignature.length != signatureSize)
+            throw new Exception("The operator `" ~ name ~ "` must take " ~ to!string(
+                    signatureSize) ~ " parameter" ~ (signatureSize > 1
+                    ? "s" : "") ~ ": " ~ grGetPrettyFunctionCall("", inSignature));
         return addOperator(callback, name, inSignature, outType);
     }
     /// Ditto

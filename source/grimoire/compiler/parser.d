@@ -729,7 +729,7 @@ final class GrParser {
     }
 
     private bool isBinaryOperator(GrLexemeType lexType) {
-        if (lexType >= GrLexemeType.add && lexType <= GrLexemeType.xor)
+        if (lexType >= GrLexemeType.bitwiseAnd && lexType <= GrLexemeType.arrow)
             return true;
         else if (lexType == GrLexemeType.send)
             return true;
@@ -742,7 +742,7 @@ final class GrParser {
             return true;
         else if (lexType >= GrLexemeType.increment && lexType <= GrLexemeType.decrement)
             return true;
-        else if (lexType == GrLexemeType.not)
+        else if (lexType == GrLexemeType.not || lexType == GrLexemeType.bitwiseNot)
             return true;
         else if (lexType == GrLexemeType.receive)
             return true;
@@ -4449,31 +4449,53 @@ final class GrParser {
     private uint getLeftOperatorPriority(GrLexemeType type) {
         switch (type) with (GrLexemeType) {
         case assign: .. case powerAssign:
-            return 6;
-        case or:
+            return 0;
+        case arrow:
             return 1;
-        case xor:
+        case or:
             return 2;
         case and:
             return 3;
-        case equal: .. case notEqual:
-            return 14;
-        case greaterOrEqual: .. case lesser:
-            return 15;
-        case add: .. case substract:
-            return 16;
-        case multiply: .. case remainder:
-            return 17;
+        case equal:
+        case doubleEqual:
+        case threeWayComparison:
+        case notEqual:
+        case greaterOrEqual:
+        case greater:
+        case lesserOrEqual:
+        case lesser:
+            return 4;
+        case interval:
+            return 5;
+        case bitwiseOr:
+        case bitwiseAnd:
+        case bitwiseXor:
+            return 6;
+        case leftShift:
+        case rightShift:
+            return 7;
+        case add:
+        case substract:
+            return 8;
+        case multiply:
+        case divide:
+            return 9;
+        case remainder:
+            return 10;
         case power:
-            return 18;
+            return 11;
+        case send:
+            return 12;
         case not:
         case plus:
         case minus:
+        case receive:
+            return 13;
+        case bitwiseNot:
+            return 14;
         case increment:
         case decrement:
-        case send:
-        case receive:
-            return 19;
+            return 15;
         default:
             logError("the operator is not listed in the operator priority table",
                     "unknown operator priority");
@@ -4486,30 +4508,52 @@ final class GrParser {
         switch (type) with (GrLexemeType) {
         case assign: .. case powerAssign:
             return 20;
-        case or:
+        case arrow:
             return 1;
-        case xor:
+        case or:
             return 2;
         case and:
             return 3;
-        case equal: .. case notEqual:
+        case equal:
+        case doubleEqual:
+        case threeWayComparison:
+        case notEqual:
+        case greaterOrEqual:
+        case greater:
+        case lesserOrEqual:
+        case lesser:
             return 4;
-        case greaterOrEqual: .. case lesser:
+        case interval:
             return 5;
-        case add: .. case substract:
-            return 16;
-        case multiply: .. case remainder:
-            return 17;
+        case bitwiseOr:
+        case bitwiseAnd:
+        case bitwiseXor:
+            return 6;
+        case leftShift:
+        case rightShift:
+            return 7;
+        case add:
+        case substract:
+            return 8;
+        case multiply:
+        case divide:
+            return 9;
+        case remainder:
+            return 10;
         case power:
-            return 18;
+            return 11;
+        case send:
+            return 12;
         case not:
         case plus:
         case minus:
+        case receive:
+            return 13;
+        case bitwiseNot:
+            return 14;
         case increment:
         case decrement:
-        case send:
-        case receive:
-            return 19;
+            return 15;
         default:
             logError("the operator is not listed in the operator priority table",
                     "unknown operator priority");
@@ -5732,7 +5776,7 @@ final class GrParser {
                             break;
                         case increment:
                         case decrement:
-                        case addAssign: .. case powerAssign:
+                        case bitwiseAndAssign: .. case powerAssign:
                             addLoadFieldInstruction(currentType, fieldLValue.register, true);
                             break;
                         case leftParenthesis:
@@ -5902,8 +5946,8 @@ final class GrParser {
                     isEndOfExpression = true;
                     break;
                 }
-                goto case addAssign;
-            case addAssign: .. case powerAssign:
+                goto case bitwiseAndAssign;
+            case bitwiseAndAssign: .. case powerAssign:
                 if (!hadLValue)
                     logError("the value before assignation is not referenceable",
                             "missing reference before assignation");
@@ -5912,6 +5956,10 @@ final class GrParser {
             case add:
                 if (!hadValue)
                     lex.type = GrLexemeType.plus;
+                goto case multiply;
+            case concatenate:
+                if (!hadValue)
+                    lex.type = GrLexemeType.bitwiseNot;
                 goto case multiply;
             case substract:
                 if (!hadValue)
@@ -5924,14 +5972,14 @@ final class GrParser {
             case increment: .. case decrement:
                 isRightUnaryOperator = true;
                 goto case multiply;
-            case multiply: .. case not:
+            case multiply:
+            case divide:
+            case remainder: .. case not:
                 if (isExpectingLValue)
                     logError(
                             "can't do this kind of operation on the left side of an assignment",
                             "unexpected operation");
-                if (!hadValue && lex.type != GrLexemeType.plus
-                        && lex.type != GrLexemeType.minus && lex.type != GrLexemeType.not
-                        && lex.type != GrLexemeType.receive)
+                if (!hadValue && !isUnaryOperator(lex.type))
                     logError("a binary operation must have 2 operands", "missing value");
 
                 while (operatorsStack.length
@@ -5944,8 +5992,9 @@ final class GrParser {
                         addSetInstruction(lvalues[$ - 1], fileId, currentType, true);
                         lvalues.length--;
                         break;
-                    case addAssign: .. case powerAssign:
-                        currentType = addOperator(operator - (GrLexemeType.addAssign - GrLexemeType.add),
+                    case bitwiseAndAssign: .. case powerAssign:
+                    import std.stdio;writeln("a: ", operator);
+                        currentType = addOperator(operator - (GrLexemeType.bitwiseAndAssign - GrLexemeType.bitwiseAnd),
                                 typeStack, fileId);
                         addSetInstruction(lvalues[$ - 1], fileId, currentType, true);
                         lvalues.length--;
@@ -6033,9 +6082,11 @@ final class GrParser {
                 if (operatorsStack.length <= 1uL)
                     hadValue = false;
                 break;
-            case addAssign: .. case powerAssign:
+            case bitwiseAndAssign: .. case powerAssign:
+                    import std.stdio;writeln("b: ", operator, " -> ", operator - (GrLexemeType.bitwiseAndAssign - GrLexemeType.bitwiseAnd));
                 currentType = addOperator(
-                        operator - (GrLexemeType.addAssign - GrLexemeType.add), typeStack, fileId);
+                        operator - (GrLexemeType.bitwiseAndAssign - GrLexemeType.bitwiseAnd),
+                        typeStack, fileId);
                 addSetInstruction(lvalues[$ - 1], fileId, currentType,
                         isExpectingValue || operatorsStack.length > 1uL);
                 lvalues.length--;
