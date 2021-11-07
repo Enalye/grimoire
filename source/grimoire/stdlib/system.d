@@ -12,7 +12,21 @@ package void grLoadStdLibSystem(GrLibrary library) {
     static foreach (t1; ["Int", "Float", "String", "Ptr"]) {
         static foreach (t2; ["Int", "Float", "String", "Ptr"]) {
             library.addPrimitive(&_swap_2_!(t1, t2), "swap", [
-                    grAny("1"), grAny("2")
+                    grAny("1", (type, data) {
+                        static if (t1 == "Ptr") {
+                            return grIsKindOfObject(type.baseType);
+                        }
+                        else {
+                            mixin("return grIsKindOf" ~ t1 ~ "(type.baseType);");
+                        }
+                    }), grAny("2", (type, data) {
+                        static if (t2 == "Ptr") {
+                            return grIsKindOfObject(type.baseType);
+                        }
+                        else {
+                            mixin("return grIsKindOf" ~ t2 ~ "(type.baseType);");
+                        }
+                    })
                     ], [grAny("2"), grAny("1")]);
         }
     }

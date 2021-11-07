@@ -5993,7 +5993,6 @@ final class GrParser {
                         lvalues.length--;
                         break;
                     case bitwiseAndAssign: .. case powerAssign:
-                    import std.stdio;writeln("a: ", operator);
                         currentType = addOperator(operator - (GrLexemeType.bitwiseAndAssign - GrLexemeType.bitwiseAnd),
                                 typeStack, fileId);
                         addSetInstruction(lvalues[$ - 1], fileId, currentType, true);
@@ -6083,9 +6082,7 @@ final class GrParser {
                     hadValue = false;
                 break;
             case bitwiseAndAssign: .. case powerAssign:
-                    import std.stdio;writeln("b: ", operator, " -> ", operator - (GrLexemeType.bitwiseAndAssign - GrLexemeType.bitwiseAnd));
-                currentType = addOperator(
-                        operator - (GrLexemeType.bitwiseAndAssign - GrLexemeType.bitwiseAnd),
+                currentType = addOperator(operator - (GrLexemeType.bitwiseAndAssign - GrLexemeType.bitwiseAnd),
                         typeStack, fileId);
                 addSetInstruction(lvalues[$ - 1], fileId, currentType,
                         isExpectingValue || operatorsStack.length > 1uL);
@@ -6191,13 +6188,34 @@ final class GrParser {
                     GrType subType = parseSubExpression(
                             GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_PARENTHESIS
                             | GR_SUBEXPR_EXPECTING_VALUE).type;
-                    signature ~= convertType(subType, anonSignature[i], fileId);
+                    if (subType.baseType == GrBaseType.internalTuple) {
+                        auto types = grUnpackTuple(subType);
+                        if (types.length) {
+                            for (int y; y < types.length; y++, i++) {
+                                if (i >= anonSignature.length) {
+                                    const string argStr = to!string(anonSignature.length) ~ (anonSignature.length > 1
+                                            ? " arguments" : " argument");
+                                    logError("the function takes " ~ argStr ~ " but more were supplied",
+                                            "expected " ~ argStr,
+                                            "the function is of type `" ~ grGetPrettyType(type)
+                                            ~ "`");
+                                }
+                                signature ~= convertType(types[y], anonSignature[i], fileId);
+                            }
+                        }
+                        else
+                            logError("the expression yields no value",
+                                    "expected value, found nothing");
+                    }
+                    else {
+                        signature ~= convertType(subType, anonSignature[i], fileId);
+                        i++;
+                    }
                     if (get().type == GrLexemeType.rightParenthesis) {
                         checkAdvance();
                         break;
                     }
                     advance();
-                    i++;
                 }
             }
             else {
@@ -6294,6 +6312,15 @@ final class GrParser {
                             auto types = grUnpackTuple(subType);
                             if (types.length) {
                                 for (int y; y < types.length; y++, i++) {
+                                    if (i >= anonSignature.length) {
+                                        const string argStr = to!string(anonSignature.length) ~ (
+                                                anonSignature.length > 1 ? " arguments"
+                                                : " argument");
+                                        logError("the function takes " ~ argStr ~ " but more were supplied",
+                                                "expected " ~ argStr,
+                                                "the function is of type `" ~ grGetPrettyType(var.type) ~ "`",
+                                                0, "function defined here", var.lexPosition);
+                                    }
                                     signature ~= convertType(types[y], anonSignature[i], fileId);
                                 }
                             }
