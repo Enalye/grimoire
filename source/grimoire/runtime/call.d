@@ -24,6 +24,7 @@ final class GrCall {
         int _iparams, _fparams, _sparams, _oparams;
         int _iresults, _fresults, _sresults, _oresults;
         bool _isInitialized;
+        string[] _inSignature, _outSignature;
     }
 
     @property {
@@ -47,6 +48,9 @@ final class GrCall {
         _fparams = cast(int) primRef.fparams;
         _sparams = cast(int) primRef.sparams;
         _oparams = cast(int) primRef.oparams;
+
+        _inSignature = primRef.inSignature.dup;
+        _outSignature = primRef.outSignature.dup;
     }
 
     /// The actual runtime call to the primitive.
@@ -67,6 +71,14 @@ final class GrCall {
 
         if (_hasError)
             dispatchError();
+    }
+
+    string getInType(uint index) {
+        return _inSignature[index];
+    }
+
+    string getOutType(uint index) {
+        return _outSignature[index];
     }
 
     alias getBool = getParameter!GrBool;

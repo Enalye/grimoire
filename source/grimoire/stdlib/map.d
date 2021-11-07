@@ -21,6 +21,9 @@ private final class Map(T) {
             data[keys[i]] = values[i];
         }
     }
+    /// Ditto
+    this() {
+    }
 
     this(Map!T map) {
         data = map.data.dup;
@@ -55,23 +58,37 @@ package(grimoire.stdlib) void grLoadStdLibMap(GrLibrary library) {
                     return false;
                 data.set(\"T\", subType.signature[0]);
                 data.set(\"A\", grArray(subType.signature[0]));
-                return grIsKindOf" ~ t ~ "(subType.signature[0].baseType);
+                return grIsKindOf" ~ t
+                ~ "(subType.signature[0].baseType);
             });
 
-            GrType any" ~ t
-                ~ "Array = grAny(\"A\", (type, data) {
+            GrType any" ~ t ~ "Array = grAny(\"A\", (type, data) {
                 if (type.baseType != GrBaseType.array_)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
                 data.set(\"M\", grGetForeignType(\"Map\", [subType]));
-                return grIsKindOf" ~ t ~ "(subType.baseType);
+                return grIsKindOf"
+                ~ t ~ "(subType.baseType);
             });
 
-            library.addPrimitive(&_make_!\"" ~ t
-                ~ "\", \"Map\", [grStringArray, any" ~ t ~ "Array], [grAny(\"M\")]);
+            library.addPrimitive(&_make_!\"" ~ t ~ "\", \"Map\", [grStringArray, any" ~ t
+                ~ "Array], [grAny(\"M\")]);
 
-            library.addPrimitive(&_copy_!\"" ~ t
-                ~ "\", \"copy\", [any" ~ t ~ "Map], [grAny(\"M\")]);
+            library.addPrimitive(&_makeByPairs_!\"" ~ t ~ "\", \"Map\", [grAny(\"T\", (type, data) {
+                if (type.baseType != GrBaseType.array_)
+                    return false;
+                const GrType subType = grUnmangle(type.mangledType);
+                if(subType.baseType != GrBaseType.class_)
+                    return false;
+                auto pairType = grUnmangleComposite(subType.mangledType);
+                if(pairType.name != \"Pair\" || pairType.signature.length != 2 || pairType.signature[0].baseType != GrBaseType.string_)
+                    return false;
+                data.set(\"M\", grGetForeignType(\"Map\", [pairType.signature[1]]));
+                return true;
+                })], [grAny(\"M\")]);
+
+            library.addPrimitive(&_copy_!\""
+                ~ t ~ "\", \"copy\", [any" ~ t ~ "Map], [grAny(\"M\")]);
 
             library.addPrimitive(&_size_!\"" ~ t ~ "\", \"size\", [any"
                 ~ t ~ "Map], [grInt]);
@@ -88,7 +105,7 @@ package(grimoire.stdlib) void grLoadStdLibMap(GrLibrary library) {
                 ~ "\", \"set\", [any" ~ t ~ "Map, grString, grAny(\"T\")]);
 
             library.addPrimitive(&_get_!\"" ~ t
-                ~ "\", \"get\", [any" ~ t ~ "Map, grString], [grAny(\"T\")]);
+                ~ "\", \"get\", [any" ~ t ~ "Map, grString], [grBool, grAny(\"T\")]);
 
             library.addPrimitive(&_has_!\""
                 ~ t ~ "\", \"has?\", [any" ~ t ~ "Map, grString], [grBool]);
@@ -154,6 +171,22 @@ private void _make_(string t)(GrCall call) {
     call.setForeign(map);
 }
 
+private void _makeByPairs_(string t)(GrCall call) {
+    mixin(t ~ "Map map = new " ~ t ~ "Map;");
+    GrObjectArray pairs = call.getObjectArray(0);
+    for (size_t i; i < pairs.data.length; ++i) {
+        GrObject pair = cast(GrObject) pairs.data[i];
+        static if (t == "Object") {
+            auto value = pair.getPtr("second");
+        }
+        else {
+            mixin("auto value = pair.get" ~ t ~ "(\"second\");");
+        }
+        map.data[pair.getString("first")] = value;
+    }
+    call.setForeign(map);
+}
+
 private void _copy_(string t)(GrCall call) {
     mixin(t ~ "Map map = call.getForeign!" ~ t ~ "Map(0);");
     if (!map) {
@@ -212,10 +245,22 @@ private void _get_(string t)(GrCall call) {
         return;
     }
     static if (t == "Object") {
-        call.setPtr(map.data[call.getString(1)]);
+        auto p = call.getString(1) in map.data;
+        call.setBool(p !is null);
+        call.setPtr(p ? *p : null);
     }
     else {
-        mixin("call.set" ~ t ~ "(map.data[call.getString(1)]);");
+        auto p = call.getString(1) in map.data;
+        call.setBool(p !is null);
+        static if(t == "Int") {
+            call.setInt(p ? *p : 0);
+        }
+        else static if(t == "Float") {
+            call.setFloat(p ? *p : 0f);
+        }
+        else static if(t == "String") {
+            call.setString(p ? *p : "");
+        }
     }
 }
 

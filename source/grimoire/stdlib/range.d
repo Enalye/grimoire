@@ -16,6 +16,7 @@ package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library) {
     library.addPrimitive(&_range_next_i, "next", [rangeIterIntType], [
             grBool, grInt
             ]);
+    library.addOperator(&_range_i, GrLibrary.Operator.interval, [grInt, grInt], rangeIterIntType);
     library.addPrimitive(&_range_i, "range", [grInt, grInt], [rangeIterIntType]);
     library.addPrimitive(&_range_step_i, "range", [grInt, grInt, grInt], [
             rangeIterIntType
@@ -24,6 +25,7 @@ package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library) {
     library.addPrimitive(&_range_next_f, "next", [rangeIterFloatType], [
             grBool, grFloat
             ]);
+    library.addOperator(&_range_f, GrLibrary.Operator.interval, [grFloat, grFloat], rangeIterFloatType);
     library.addPrimitive(&_range_f, "range", [grFloat, grFloat], [
             rangeIterFloatType
             ]);

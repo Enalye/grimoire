@@ -16,6 +16,18 @@ package void grLoadStdLibSystem(GrLibrary library) {
                     ], [grAny("2"), grAny("1")]);
         }
     }
+    static foreach (t; ["Int", "Float", "String", "Ptr"]) {
+        library.addPrimitive(&_cond_!t, "cond", [
+                grBool, grAny("T", (type, data) {
+                    static if (t == "Ptr") {
+                        return grIsKindOfObject(type.baseType);
+                    }
+                    else {
+                        mixin("return grIsKindOf" ~ t ~ "(type.baseType);");
+                    }
+                }), grAny("T")
+                ], [grAny("T")]);
+    }
 }
 
 private void _swap_2_(string t1, string t2)(GrCall call) {
@@ -24,4 +36,8 @@ private void _swap_2_(string t1, string t2)(GrCall call) {
     call.set" ~ t2
             ~ "(v2);
     call.set" ~ t1 ~ "(v1);");
+}
+
+private void _cond_(string t)(GrCall call) {
+    mixin("call.set" ~ t ~ "(call.getBool(0) ? call.get" ~ t ~ "(1) : call.get" ~ t ~ "(2));");
 }

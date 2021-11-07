@@ -727,6 +727,7 @@ func +(float a, int b) (float) {
 ```
 
 Overridable operators are:
+
 | Operator | Symbol | Note |
 | --- | --- | --- |
 | `+` | Plus | Prefix unary operator |
@@ -737,7 +738,7 @@ Overridable operators are:
 | `/` | Divide | Binary operator |
 | `~` | Concatenate | Binary operator |
 | `%` | Remainder | Binary operator |
-| `\*\*` | Power | Binary operator |
+| `**` | Power | Binary operator |
 | `==` | Equal | Binary operator |
 | `===` | Double Equal | Binary operator |
 | `<=>` | Three Way Comparison | Binary operator |
@@ -753,11 +754,11 @@ Overridable operators are:
 | `<-` | Receive | Prefix unary operator |
 | `<-` | Send | Binary operator |
 | `&`, `bit_and` | And | Binary operator |
-| `|`, `bit_or` | Or | Binary operator |
+| `\|`, `bit_or` | Or | Binary operator |
 | `^`, `bit_xor` | Xor | Binary operator |
 | `~`, `bit_not` | Not | Prefix unary operator |
 | `&&`, `and` | And | Binary operator |
-| `||`, `or` | Or | Binary operator |
+| `\|\|`, `or` | Or | Binary operator |
 | `!`, `not` | Not | Prefix unary operator |
 
 * * *

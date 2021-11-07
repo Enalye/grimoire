@@ -995,11 +995,6 @@ package final class GrLexer {
             lex.isKeyword = false;
             lex.isLiteral = true;
             break;
-        case "not":
-            lex.type = GrLexemeType.not;
-            lex.isKeyword = false;
-            lex.isOperator = true;
-            break;
         case "and":
             lex.type = GrLexemeType.and;
             lex.isKeyword = false;
@@ -1007,6 +1002,31 @@ package final class GrLexer {
             break;
         case "or":
             lex.type = GrLexemeType.or;
+            lex.isKeyword = false;
+            lex.isOperator = true;
+            break;
+        case "not":
+            lex.type = GrLexemeType.not;
+            lex.isKeyword = false;
+            lex.isOperator = true;
+            break;
+        case "bit_and":
+            lex.type = GrLexemeType.bitwiseAnd;
+            lex.isKeyword = false;
+            lex.isOperator = true;
+            break;
+        case "bit_or":
+            lex.type = GrLexemeType.bitwiseOr;
+            lex.isKeyword = false;
+            lex.isOperator = true;
+            break;
+        case "bit_xor":
+            lex.type = GrLexemeType.bitwiseXor;
+            lex.isKeyword = false;
+            lex.isOperator = true;
+            break;
+        case "bit_not":
+            lex.type = GrLexemeType.bitwiseNot;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;

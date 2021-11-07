@@ -232,6 +232,7 @@ class GrLibrary {
         leftShift,
         rightShift,
         interval,
+        arrow,
         bitwiseAnd,
         bitwiseOr,
         bitwiseXor,
@@ -311,6 +312,9 @@ class GrLibrary {
             break;
         case interval:
             name = "..";
+            break;
+        case arrow:
+            name = "=>";
             break;
         case bitwiseAnd:
             name = "&";

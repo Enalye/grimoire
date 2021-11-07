@@ -100,7 +100,7 @@ final class GrCompiler {
 				debugSymbol.name = grGetPrettyFunction(globalScope);
 				debugSymbol.length = cast(uint) globalScope.instructions.length;
 				debugSymbol.file = lexer.getFile(globalScope.fileId);
-				foreach(ref position; globalScope.debugSymbol) {
+				foreach (ref position; globalScope.debugSymbol) {
 					GrFunctionSymbol.Position pos;
 					pos.line = position.line;
 					pos.column = position.column;
@@ -125,7 +125,7 @@ final class GrCompiler {
 				debugSymbol.name = grGetPrettyFunction(mainFunc);
 				debugSymbol.length = cast(uint) mainFunc.instructions.length;
 				debugSymbol.file = lexer.getFile(mainFunc.fileId);
-				foreach(ref position; mainFunc.debugSymbol) {
+				foreach (ref position; mainFunc.debugSymbol) {
 					GrFunctionSymbol.Position pos;
 					pos.line = position.line;
 					pos.column = position.column;
@@ -157,7 +157,7 @@ final class GrCompiler {
 				debugSymbol.name = grGetPrettyFunction(func);
 				debugSymbol.length = cast(uint) func.instructions.length;
 				debugSymbol.file = lexer.getFile(func.fileId);
-				foreach(ref position; func.debugSymbol) {
+				foreach (ref position; func.debugSymbol) {
 					GrFunctionSymbol.Position pos;
 					pos.line = position.line;
 					pos.column = position.column;
@@ -182,7 +182,7 @@ final class GrCompiler {
 				debugSymbol.name = grGetPrettyFunction(func);
 				debugSymbol.length = cast(uint) func.instructions.length;
 				debugSymbol.file = lexer.getFile(func.fileId);
-				foreach(ref position; func.debugSymbol) {
+				foreach (ref position; func.debugSymbol) {
 					GrFunctionSymbol.Position pos;
 					pos.line = position.line;
 					pos.column = position.column;
@@ -205,7 +205,7 @@ final class GrCompiler {
 				debugSymbol.name = grGetPrettyFunction(func);
 				debugSymbol.length = cast(uint) func.instructions.length;
 				debugSymbol.file = lexer.getFile(func.fileId);
-				foreach(ref position; func.debugSymbol) {
+				foreach (ref position; func.debugSymbol) {
 					GrFunctionSymbol.Position pos;
 					pos.line = position.line;
 					pos.column = position.column;
@@ -289,6 +289,7 @@ final class GrCompiler {
 				inSignature.length = 1;
 			for (size_t i; i < inSignature.length; ++i) {
 				const GrType type = inSignature[i];
+				bytecode.primitives[id].inSignature ~= grMangle(type);
 				final switch (type.baseType) with (GrBaseType) {
 				case bool_:
 				case int_:
@@ -325,6 +326,10 @@ final class GrCompiler {
 							_data._primitives[id].name,
 							inSignature) ~ ", the type cannot be " ~ grGetPrettyType(type));
 				}
+			}
+			for (size_t i; i < _data._primitives[id].outSignature.length; ++i) {
+				bytecode.primitives[id].outSignature ~= grMangle(
+						_data._primitives[id].outSignature[i]);
 			}
 		}
 

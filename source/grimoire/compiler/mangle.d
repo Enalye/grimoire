@@ -24,53 +24,7 @@ import grimoire.compiler.type;
 string grMangleSignature(GrType[] signature) {
     string mangledName;
     foreach (type; signature) {
-        mangledName ~= "$";
-        final switch (type.baseType) with (GrBaseType) {
-        case void_:
-            mangledName ~= "*";
-            break;
-        case null_:
-            mangledName ~= "0";
-            break;
-        case int_:
-            mangledName ~= "i";
-            break;
-        case float_:
-            mangledName ~= "r";
-            break;
-        case bool_:
-            mangledName ~= "b";
-            break;
-        case string_:
-            mangledName ~= "s";
-            break;
-        case array_:
-            mangledName ~= "n(" ~ type.mangledType ~ ")";
-            break;
-        case class_:
-            mangledName ~= "p(" ~ type.mangledType ~ ")";
-            break;
-        case enum_:
-            mangledName ~= "e(" ~ type.mangledType ~ ")";
-            break;
-        case foreign:
-            mangledName ~= "u(" ~ type.mangledType ~ ")";
-            break;
-        case function_:
-            mangledName ~= "f(" ~ type.mangledType ~ ")(" ~ type.mangledReturnType ~ ")";
-            break;
-        case task:
-            mangledName ~= "t(" ~ type.mangledType ~ ")";
-            break;
-        case chan:
-            mangledName ~= "c(" ~ type.mangledType ~ ")";
-            break;
-        case reference:
-            mangledName ~= "h(" ~ type.mangledType ~ ")";
-            break;
-        case internalTuple:
-            throw new Exception("Trying to mangle a tuple. Tuples should not exist here.");
-        }
+        mangledName ~= grMangle(type);
     }
     return mangledName;
 }
@@ -227,6 +181,58 @@ string grUnmangleBlock(string mangledSignature, ref int i) {
         subString ~= mangledSignature[i];
     }
     throw new Exception("Invalid subType mangling format, missing )");
+}
+
+/// Mangling operation for a single type.
+string grMangle(GrType type) {
+    string mangledName = "$";
+    final switch (type.baseType) with (GrBaseType) {
+    case void_:
+        mangledName ~= "*";
+        break;
+    case null_:
+        mangledName ~= "0";
+        break;
+    case int_:
+        mangledName ~= "i";
+        break;
+    case float_:
+        mangledName ~= "r";
+        break;
+    case bool_:
+        mangledName ~= "b";
+        break;
+    case string_:
+        mangledName ~= "s";
+        break;
+    case array_:
+        mangledName ~= "n(" ~ type.mangledType ~ ")";
+        break;
+    case class_:
+        mangledName ~= "p(" ~ type.mangledType ~ ")";
+        break;
+    case enum_:
+        mangledName ~= "e(" ~ type.mangledType ~ ")";
+        break;
+    case foreign:
+        mangledName ~= "u(" ~ type.mangledType ~ ")";
+        break;
+    case function_:
+        mangledName ~= "f(" ~ type.mangledType ~ ")(" ~ type.mangledReturnType ~ ")";
+        break;
+    case task:
+        mangledName ~= "t(" ~ type.mangledType ~ ")";
+        break;
+    case chan:
+        mangledName ~= "c(" ~ type.mangledType ~ ")";
+        break;
+    case reference:
+        mangledName ~= "h(" ~ type.mangledType ~ ")";
+        break;
+    case internalTuple:
+        throw new Exception("Trying to mangle a tuple. Tuples should not exist here.");
+    }
+    return mangledName;
 }
 
 /// Reverse the mangling operation for a single type.

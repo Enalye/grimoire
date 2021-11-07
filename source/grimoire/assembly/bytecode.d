@@ -235,6 +235,8 @@ final class GrBytecode {
             uint iparams, fparams, sparams, oparams;
             /// Ditto
             uint[] parameters;
+            /// Signature
+            string[] inSignature, outSignature;
         }
 
         /// Reference to a global variable.
@@ -374,9 +376,15 @@ final class GrBytecode {
             buffer.append!uint(primitive.sparams);
             buffer.append!uint(primitive.oparams);
 
-            buffer.append!uint(cast(uint) primitive.parameters.length);
-            foreach (int i; primitive.parameters)
-                buffer.append!uint(i);
+            buffer.append!uint(cast(uint) primitive.inSignature.length);
+            buffer.append!uint(cast(uint) primitive.outSignature.length);
+            for (size_t i; i < primitive.inSignature.length; ++i) {
+                buffer.append!uint(primitive.parameters[i]);
+                writeStr(buffer, primitive.inSignature[i]);
+            }
+            for (size_t i; i < primitive.outSignature.length; ++i) {
+                writeStr(buffer, primitive.outSignature[i]);
+            }
         }
 
         foreach (class_; classes) {
@@ -477,9 +485,17 @@ final class GrBytecode {
             primitives[i].sparams = buffer.read!uint();
             primitives[i].oparams = buffer.read!uint();
 
-            primitives[i].parameters.length = buffer.read!uint();
-            for (size_t y; y < primitives[i].parameters.length; ++y) {
+            const uint inParamsCount = buffer.read!uint();
+            const uint outParamsCount = buffer.read!uint();
+            primitives[i].parameters.length = inParamsCount;
+            primitives[i].inSignature.length = inParamsCount;
+            primitives[i].outSignature.length = outParamsCount;
+            for (size_t y; y < inParamsCount; ++y) {
                 primitives[i].parameters[y] = buffer.read!uint();
+                primitives[i].inSignature[y] = readStr(buffer);
+            }
+            for (size_t y; y < outParamsCount; ++y) {
+                primitives[i].outSignature[y] = readStr(buffer);
             }
         }
 
