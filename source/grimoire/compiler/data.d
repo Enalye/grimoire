@@ -390,7 +390,7 @@ class GrData {
             if (primitive.name == name) {
                 _anyData = new GrAnyData;
                 if (isSignatureCompatible(signature, primitive.inSignature, 0, true)) {
-                    GrPrimitive reifiedPrimitive = reifyPrimitive(primitive, signature);
+                    GrPrimitive reifiedPrimitive = reifyPrimitive(primitive);
                     if (!reifiedPrimitive)
                         continue;
                     return reifiedPrimitive;
@@ -400,7 +400,7 @@ class GrData {
         return null;
     }
 
-    package GrPrimitive reifyPrimitive(GrPrimitive templatePrimitive, GrType[] signature) {
+    package GrPrimitive reifyPrimitive(GrPrimitive templatePrimitive) {
         // We assume the signature was already validated with `isSignatureCompatible` to be fully compatible with the primitive
         GrPrimitive primitive = new GrPrimitive(templatePrimitive);
         for (int i; i < primitive.inSignature.length; ++i) {
@@ -434,8 +434,11 @@ class GrData {
             GrClassDefinition classDef = getClass(type.mangledType, 0, true);
             if (!classDef)
                 throw new Exception("undefined class `" ~ type.mangledType ~ "`");
-            foreach (GrType fieldType; classDef.signature)
+            foreach (GrType fieldType; classDef.signature) {
+                if (fieldType == type)
+                    continue;
                 checkUnknownClasses(fieldType);
+            }
             break;
         case array_:
         case chan:

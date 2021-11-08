@@ -60,29 +60,28 @@ package void grLoadStdLibVec2(GrLibrary library) {
     library.addPrimitive(&_printlVec2f, "printl", [vec2fType]);
 
     // Operators
+    static foreach (op; ["+", "-"]) {
+        library.addOperator(&_opUnaryVec2i!op, op, [vec2iType], vec2iType);
+        library.addOperator(&_opUnaryVec2f!op, op, [vec2fType], vec2fType);
+    }
     static foreach (op; ["+", "-", "*", "/", "%"]) {
         library.addOperator(&_opBinaryVec2i!op, op, [vec2iType, vec2iType], vec2iType);
         library.addOperator(&_opBinaryScalarVec2i!op, op, [vec2iType, grInt], vec2iType);
         library.addOperator(&_opBinaryScalarRightVec2i!op, op, [
                 grFloat, vec2iType
                 ], vec2iType);
-    }
-    static foreach (op; ["==", "!=", ">=", "<=", ">", "<"]) {
-        library.addOperator(&_opBinaryCompareVec2i!op, op, [
-                vec2iType, vec2iType
-                ], grBool);
-    }
 
-    static foreach (op; ["+", "-", "*", "/", "%"]) {
-        library.addOperator(&_opBinaryCompareVec2f!op, op, [
-                vec2fType, vec2fType
-                ], vec2fType);
+        library.addOperator(&_opBinaryVec2f!op, op, [vec2fType, vec2fType], vec2fType);
         library.addOperator(&_opBinaryScalarVec2f!op, op, [vec2fType, grFloat], vec2fType);
         library.addOperator(&_opBinaryScalarRightVec2f!op, op, [
                 grFloat, vec2fType
                 ], vec2fType);
     }
     static foreach (op; ["==", "!=", ">=", "<=", ">", "<"]) {
+        library.addOperator(&_opBinaryCompareVec2i!op, op, [
+                vec2iType, vec2iType
+                ], grBool);
+
         library.addOperator(&_opBinaryCompareVec2f!op, op, [
                 vec2fType, vec2fType
                 ], grBool);
@@ -162,7 +161,7 @@ package void grLoadStdLibVec2(GrLibrary library) {
 // Ctors ------------------------------------------
 private void _vec2i_0(GrCall call) {
     GrObject self = call.createObject(_vec2iTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -173,7 +172,7 @@ private void _vec2i_0(GrCall call) {
 
 private void _vec2i_1(GrCall call) {
     GrObject self = call.createObject(_vec2iTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -185,7 +184,7 @@ private void _vec2i_1(GrCall call) {
 
 private void _vec2i_2(GrCall call) {
     GrObject self = call.createObject(_vec2iTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -196,7 +195,7 @@ private void _vec2i_2(GrCall call) {
 
 private void _vec2f_0(GrCall call) {
     GrObject self = call.createObject(_vec2fTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -207,7 +206,7 @@ private void _vec2f_0(GrCall call) {
 
 private void _vec2f_1(GrCall call) {
     GrObject self = call.createObject(_vec2fTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -219,7 +218,7 @@ private void _vec2f_1(GrCall call) {
 
 private void _vec2f_2(GrCall call) {
     GrObject self = call.createObject(_vec2fTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -236,7 +235,7 @@ private void _vec2i_vec2f(GrCall call) {
         return;
     }
     GrObject v = call.createObject(_vec2fTypeName);
-    if(!v) {
+    if (!v) {
         call.raise("UnknownClassError");
         return;
     }
@@ -252,7 +251,7 @@ private void _vec2f_vec2i(GrCall call) {
         return;
     }
     GrObject v = call.createObject(_vec2iTypeName);
-    if(!v) {
+    if (!v) {
         call.raise("UnknownClassError");
         return;
     }
@@ -295,13 +294,46 @@ private void _printlVec2f(GrCall call) {
         _stdOut("{0;0}\n");
         return;
     }
-    _stdOut("Vec2(" ~ to!GrString(self.getFloat("x")) ~ ", " ~ to!GrString(self.getFloat("y")) ~ ")\n");
+    _stdOut("Vec2(" ~ to!GrString(self.getFloat("x")) ~ ", " ~ to!GrString(
+            self.getFloat("y")) ~ ")\n");
 }
 
 /// Operators ------------------------------------------
+private void _opUnaryVec2i(string op)(GrCall call) {
+    GrObject self = call.createObject(_vec2iTypeName);
+    if (!self) {
+        call.raise("UnknownClassError");
+        return;
+    }
+    GrObject v = call.getObject(0);
+    if (!v) {
+        call.raise("NullError");
+        return;
+    }
+    mixin("self.setInt(\"x\", " ~ op ~ "v.getInt(\"x\"));");
+    mixin("self.setInt(\"y\", " ~ op ~ "v.getInt(\"y\"));");
+    call.setObject(self);
+}
+
+private void _opUnaryVec2f(string op)(GrCall call) {
+    GrObject self = call.createObject(_vec2fTypeName);
+    if (!self) {
+        call.raise("UnknownClassError");
+        return;
+    }
+    GrObject v = call.getObject(0);
+    if (!v) {
+        call.raise("NullError");
+        return;
+    }
+    mixin("self.setFloat(\"x\", " ~ op ~ "v.getFloat(\"x\"));");
+    mixin("self.setFloat(\"y\", " ~ op ~ "v.getFloat(\"y\"));");
+    call.setObject(self);
+}
+
 private void _opBinaryVec2i(string op)(GrCall call) {
     GrObject self = call.createObject(_vec2iTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -318,7 +350,7 @@ private void _opBinaryVec2i(string op)(GrCall call) {
 
 private void _opBinaryScalarVec2i(string op)(GrCall call) {
     GrObject self = call.createObject(_vec2iTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -335,7 +367,7 @@ private void _opBinaryScalarVec2i(string op)(GrCall call) {
 
 private void _opBinaryScalarRightVec2i(string op)(GrCall call) {
     GrObject self = call.createObject(_vec2iTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -364,7 +396,7 @@ private void _opBinaryCompareVec2i(string op)(GrCall call) {
 
 private void _opBinaryVec2f(string op)(GrCall call) {
     GrObject self = call.createObject(_vec2fTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -381,7 +413,7 @@ private void _opBinaryVec2f(string op)(GrCall call) {
 
 private void _opBinaryScalarVec2f(string op)(GrCall call) {
     GrObject self = call.createObject(_vec2fTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -398,7 +430,7 @@ private void _opBinaryScalarVec2f(string op)(GrCall call) {
 
 private void _opBinaryScalarRightVec2f(string op)(GrCall call) {
     GrObject self = call.createObject(_vec2fTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -429,7 +461,7 @@ private void _opBinaryCompareVec2f(string op)(GrCall call) {
 // Utility ------------------------------------------
 private void _oneVec2i(GrCall call) {
     GrObject self = call.createObject(_vec2iTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -440,7 +472,7 @@ private void _oneVec2i(GrCall call) {
 
 private void _oneVec2f(GrCall call) {
     GrObject self = call.createObject(_vec2fTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -451,7 +483,7 @@ private void _oneVec2f(GrCall call) {
 
 private void _halfVec2f(GrCall call) {
     GrObject self = call.createObject(_vec2fTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -462,7 +494,7 @@ private void _halfVec2f(GrCall call) {
 
 private void _upVec2i(GrCall call) {
     GrObject self = call.createObject(_vec2iTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -472,7 +504,7 @@ private void _upVec2i(GrCall call) {
 
 private void _upVec2f(GrCall call) {
     GrObject self = call.createObject(_vec2fTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -482,7 +514,7 @@ private void _upVec2f(GrCall call) {
 
 private void _downVec2i(GrCall call) {
     GrObject self = call.createObject(_vec2iTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -492,7 +524,7 @@ private void _downVec2i(GrCall call) {
 
 private void _downVec2f(GrCall call) {
     GrObject self = call.createObject(_vec2fTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -502,7 +534,7 @@ private void _downVec2f(GrCall call) {
 
 private void _leftVec2i(GrCall call) {
     GrObject self = call.createObject(_vec2iTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -512,7 +544,7 @@ private void _leftVec2i(GrCall call) {
 
 private void _leftVec2f(GrCall call) {
     GrObject self = call.createObject(_vec2fTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -522,7 +554,7 @@ private void _leftVec2f(GrCall call) {
 
 private void _rightVec2i(GrCall call) {
     GrObject self = call.createObject(_vec2iTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -532,7 +564,7 @@ private void _rightVec2i(GrCall call) {
 
 private void _rightVec2f(GrCall call) {
     GrObject self = call.createObject(_vec2fTypeName);
-    if(!self) {
+    if (!self) {
         call.raise("UnknownClassError");
         return;
     }
@@ -692,7 +724,7 @@ private void _normalVec2i(GrCall call) {
         return;
     }
     GrObject v = call.createObject(_vec2iTypeName);
-    if(!v) {
+    if (!v) {
         call.raise("UnknownClassError");
         return;
     }
@@ -708,7 +740,7 @@ private void _normalVec2f(GrCall call) {
         return;
     }
     GrObject v = call.createObject(_vec2fTypeName);
-    if(!v) {
+    if (!v) {
         call.raise("UnknownClassError");
         return;
     }
@@ -763,7 +795,7 @@ private void _rotatedVec2f(GrCall call) {
     const GrFloat s = std.math.sin(radians);
 
     GrObject v = call.createObject(_vec2fTypeName);
-    if(!v) {
+    if (!v) {
         call.raise("UnknownClassError");
         return;
     }
@@ -775,7 +807,7 @@ private void _rotatedVec2f(GrCall call) {
 private void _angledVec2f(GrCall call) {
     const GrFloat radians = call.getFloat(0) * _degToRad;
     GrObject v = call.createObject(_vec2fTypeName);
-    if(!v) {
+    if (!v) {
         call.raise("UnknownClassError");
         return;
     }
@@ -866,7 +898,7 @@ private void _normalizedVec2f(GrCall call) {
     y /= len;
 
     GrObject v = call.createObject(_vec2fTypeName);
-    if(!v) {
+    if (!v) {
         call.raise("UnknownClassError");
         return;
     }

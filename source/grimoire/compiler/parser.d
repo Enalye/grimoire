@@ -6082,7 +6082,8 @@ final class GrParser {
                     hadValue = false;
                 break;
             case bitwiseAndAssign: .. case powerAssign:
-                currentType = addOperator(operator - (GrLexemeType.bitwiseAndAssign - GrLexemeType.bitwiseAnd),
+                currentType = addOperator(
+                        operator - (GrLexemeType.bitwiseAndAssign - GrLexemeType.bitwiseAnd),
                         typeStack, fileId);
                 addSetInstruction(lvalues[$ - 1], fileId, currentType,
                         isExpectingValue || operatorsStack.length > 1uL);

@@ -753,13 +753,13 @@ Overridable operators are:
 | `=>` | Arrow | Binary operator |
 | `<-` | Receive | Prefix unary operator |
 | `<-` | Send | Binary operator |
-| `&`, `bit_and` | And | Binary operator |
-| `\|`, `bit_or` | Or | Binary operator |
-| `^`, `bit_xor` | Xor | Binary operator |
-| `~`, `bit_not` | Not | Prefix unary operator |
-| `&&`, `and` | And | Binary operator |
-| `\|\|`, `or` | Or | Binary operator |
-| `!`, `not` | Not | Prefix unary operator |
+| `&`, `bit_and` | Bitwise And | Binary operator |
+| `|`, `bit_or` | Bitwise Or | Binary operator |
+| `^`, `bit_xor` | Bitwise Xor | Binary operator |
+| `~`, `bit_not` | Bitwise Not | Prefix unary operator |
+| `&&`, `and` | Logical And | Binary operator |
+| `||`, `or` | Logical Or | Binary operator |
+| `!`, `not` | Logical Not | Prefix unary operator |
 
 * * *
 
