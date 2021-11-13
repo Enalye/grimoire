@@ -108,7 +108,7 @@ Exemple of valid identifiers:
 ## Reserved words
 
 The following are keyword used by the language, they cannot be used as identifier (variables, functions, etc):
-`use`, `pub`, `main`, `type`, `event`, `class`, `enum`, `template`, `if`, `unless`, `else`, `switch`, `select`, `case`, `while`, `do`, `until`, `for`, `loop`, `return`, `self`, `kill`, `killall`, `yield`, `break`, `continue`, `as`, `try`, `catch`, `raise`, `defer`, `void`, `task`, `func`, `int`, `float`, `bool`, `string`, `array`, `chan`, `new`, `let`, `true`, `false`, `null`, `not`, `and`, `or`, `xor`.
+`use`, `pub`, `main`, `type`, `event`, `class`, `enum`, `template`, `if`, `unless`, `else`, `switch`, `select`, `case`, `while`, `do`, `until`, `for`, `loop`, `return`, `self`, `kill`, `killall`, `yield`, `break`, `continue`, `as`, `try`, `catch`, `raise`, `defer`, `void`, `task`, `func`, `int`, `float`, `bool`, `string`, `array`, `chan`, `new`, `let`, `true`, `false`, `null`, `not`, `and`, `or`, `bit_not`, `bit_and`, `bit_or`, `bit_xor`.
 
 ## Comments
 
@@ -749,7 +749,7 @@ Overridable operators are:
 | `<` | Lesser | Binary operator |
 | `<<` | Left Shift | Binary operator |
 | `>>` | Right Shift | Binary operator |
-| `..` | Interval | Binary operator |
+| `->` | Interval | Binary operator |
 | `=>` | Arrow | Binary operator |
 | `<-` | Receive | Prefix unary operator |
 | `<-` | Send | Binary operator |

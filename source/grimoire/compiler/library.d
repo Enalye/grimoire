@@ -311,7 +311,7 @@ class GrLibrary {
             name = ">>";
             break;
         case interval:
-            name = "..";
+            name = "->";
             break;
         case arrow:
             name = "=>";

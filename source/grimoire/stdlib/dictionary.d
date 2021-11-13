@@ -10,7 +10,7 @@ import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
-/// Hashdictionary
+/// Dictionary
 private final class Dictionary(T) {
     /// Payload
     T[GrString] data;

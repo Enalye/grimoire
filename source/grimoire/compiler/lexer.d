@@ -550,13 +550,6 @@ package final class GrLexer {
             break;
         case '.':
             lex.type = GrLexemeType.period;
-            if (_current + 1 >= _text.length)
-                break;
-            if (get(1) == '.') {
-                lex.type = GrLexemeType.interval;
-                lex._textLength = 2;
-                _current++;
-            }
             break;
         case ';':
             lex.type = GrLexemeType.semicolon;
@@ -680,6 +673,11 @@ package final class GrLexer {
                 break;
             case '-':
                 lex.type = GrLexemeType.decrement;
+                lex._textLength = 2;
+                _current++;
+                break;
+            case '>':
+                lex.type = GrLexemeType.interval;
                 lex._textLength = 2;
                 _current++;
                 break;
@@ -1152,7 +1150,7 @@ string grGetPrettyLexemeType(GrLexemeType operator) {
         "try", "catch", "raise", "defer", "=", "&=", "|=", "^=", "&&=",
         "||=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+", "-", "&", "|",
         "^", "&&", "||", "+", "-", "*", "/", "~", "%", "**", "==", "===",
-        "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "..", "=>", "~", "!",
+        "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->", "=>", "~", "!",
         "++", "--", "identifier", "const_int", "const_float", "const_bool",
         "const_str", "null", "pub", "main", "type", "event", "class", "enum",
         "template", "new", "copy", "send", "receive", "int", "float", "bool",
