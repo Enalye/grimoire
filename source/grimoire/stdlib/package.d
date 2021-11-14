@@ -24,6 +24,7 @@ import grimoire.stdlib.time;
 import grimoire.stdlib.typecast;
 import grimoire.stdlib.pair;
 import grimoire.stdlib.bitmanip;
+import grimoire.stdlib.any;
 
 /// Load the standard library
 GrLibrary grLoadStdLibrary() {
@@ -43,5 +44,6 @@ GrLibrary grLoadStdLibrary() {
     grLoadStdLibTypecast(library);
     grLoadStdLibPair(library);
     grLoadStdLibBitmanip(library);
+    grLoadStdLibAny(library);
     return library;
 }

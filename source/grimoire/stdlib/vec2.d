@@ -68,7 +68,7 @@ package void grLoadStdLibVec2(GrLibrary library) {
         library.addOperator(&_opBinaryVec2i!op, op, [vec2iType, vec2iType], vec2iType);
         library.addOperator(&_opBinaryScalarVec2i!op, op, [vec2iType, grInt], vec2iType);
         library.addOperator(&_opBinaryScalarRightVec2i!op, op, [
-                grFloat, vec2iType
+                grInt, vec2iType
                 ], vec2iType);
 
         library.addOperator(&_opBinaryVec2f!op, op, [vec2fType, vec2fType], vec2fType);
