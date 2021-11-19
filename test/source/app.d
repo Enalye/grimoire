@@ -39,7 +39,9 @@ void main() {
         GrEngine engine = new GrEngine;
         engine.addLibrary(stdlib);
         engine.load(bytecode);
-        engine.spawn();
+
+        if(engine.hasAction("test"))
+            engine.callAction("test");
 
         write("> ");
         startTime = MonoTime.currTime();

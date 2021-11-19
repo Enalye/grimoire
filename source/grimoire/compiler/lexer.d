@@ -87,9 +87,8 @@ enum GrLexemeType {
     string_,
     null_,
     public_,
-    main_,
     type_,
-    event_,
+    action,
     class_,
     enum_,
     template_,
@@ -220,8 +219,9 @@ The lexer scans the entire file and all the imported files it references.
 package final class GrLexer {
     private {
         string[] _filesToImport, _filesImported;
-        string[] _lines;
-        string _file, _text;
+        dstring[] _lines;
+        string _file;
+        dstring _text;
         uint _line, _current, _positionOfLine, _fileId;
         GrLexeme[] _lexemes;
     }
@@ -247,7 +247,7 @@ package final class GrLexer {
         while (_filesToImport.length) {
             _file = _filesToImport[$ - 1];
             _filesImported ~= _file;
-            _text = to!string(readText(to!string(_file)));
+            _text = to!dstring(readText(_file));
             _filesToImport.length--;
 
             _line = 0u;
@@ -267,11 +267,11 @@ package final class GrLexer {
     package string getLine(GrLexeme lex) {
         if (lex._fileId >= _filesImported.length)
             raiseError("Lexeme file id out of bounds");
-        auto _text = to!string(readText(to!string(_filesImported[lex._fileId])));
+        auto _text = to!dstring(readText(_filesImported[lex._fileId]));
         _lines = split(_text, "\n");
         if (lex._line >= _lines.length)
             raiseError("Lexeme line count out of bounds");
-        return _lines[lex._line];
+        return to!string(_lines[lex._line]);
     }
 
     /**
@@ -819,7 +819,7 @@ package final class GrLexer {
         GrLexeme lex = GrLexeme(this);
         lex.isKeyword = true;
 
-        string buffer;
+        dstring buffer;
         for (;;) {
             if (_current >= _text.length)
                 break;
@@ -843,186 +843,229 @@ package final class GrLexer {
         lex._textLength = cast(uint) buffer.length;
 
         switch (buffer) {
+        case "utilise":
         case "use":
             scanUse();
             return;
-        case "pub":
+        case "public":
             lex.type = GrLexemeType.public_;
-            break;
-        case "main":
-            lex.type = GrLexemeType.main_;
             break;
         case "type":
             lex.type = GrLexemeType.type_;
             break;
-        case "event":
-            lex.type = GrLexemeType.event_;
+        case "action":
+            lex.type = GrLexemeType.action;
             break;
+        case "classe":
         case "class":
             lex.type = GrLexemeType.class_;
             break;
+        case "énum":
         case "enum":
             lex.type = GrLexemeType.enum_;
             break;
+        case "patron":
         case "template":
             lex.type = GrLexemeType.template_;
             break;
+        case "si":
         case "if":
             lex.type = GrLexemeType.if_;
             break;
+        case "sauf":
         case "unless":
             lex.type = GrLexemeType.unless;
             break;
+        case "sinon":
         case "else":
             lex.type = GrLexemeType.else_;
             break;
+        case "où":
         case "switch":
             lex.type = GrLexemeType.switch_;
             break;
+        case "sélect":
         case "select":
             lex.type = GrLexemeType.select;
             break;
+        case "cas":
         case "case":
             lex.type = GrLexemeType.case_;
             break;
+        case "tant":
         case "while":
             lex.type = GrLexemeType.while_;
             break;
+        case "fais":
         case "do":
             lex.type = GrLexemeType.do_;
             break;
+        case "jusque":
         case "until":
             lex.type = GrLexemeType.until;
             break;
+        case "pour":
         case "for":
             lex.type = GrLexemeType.for_;
             break;
+        case "boucle":
         case "loop":
             lex.type = GrLexemeType.loop;
             break;
+        case "retourne":
         case "return":
             lex.type = GrLexemeType.return_;
             break;
+        case "soi":
         case "self":
             lex.type = GrLexemeType.self;
             break;
-        case "kill":
+        case "meurs":
+        case "die":
             lex.type = GrLexemeType.kill;
             break;
-        case "killall":
+        case "fin":
+        case "end":
             lex.type = GrLexemeType.killAll;
             break;
-        case "yield":
+        case "passe":
+        case "pass":
             lex.type = GrLexemeType.yield;
             break;
+        case "casse":
         case "break":
             lex.type = GrLexemeType.break_;
             break;
         case "continue":
             lex.type = GrLexemeType.continue_;
             break;
+        case "comme":
         case "as":
             lex.type = GrLexemeType.as;
             break;
+        case "essaie":
         case "try":
             lex.type = GrLexemeType.try_;
             break;
+        case "récup":
         case "catch":
             lex.type = GrLexemeType.catch_;
             break;
-        case "raise":
+        case "lance":
+        case "throw":
             lex.type = GrLexemeType.raise_;
             break;
+        case "décale":
         case "defer":
             lex.type = GrLexemeType.defer;
             break;
+        case "tâche":
         case "task":
             lex.type = GrLexemeType.taskType;
             lex.isType = true;
             break;
-        case "func":
+        case "fonction":
+        case "function":
             lex.type = GrLexemeType.functionType;
             lex.isType = true;
             break;
-        case "int":
+        case "entier":
+        case "integer":
             lex.type = GrLexemeType.intType;
             lex.isType = true;
             break;
+        case "réel":
         case "float":
             lex.type = GrLexemeType.floatType;
             lex.isType = true;
             break;
-        case "bool":
+        case "booléen":
+        case "boolean":
             lex.type = GrLexemeType.boolType;
             lex.isType = true;
             break;
+        case "chaîne":
         case "string":
             lex.type = GrLexemeType.stringType;
             lex.isType = true;
             break;
-        case "array":
+        case "liste":
+        case "list":
             lex.type = GrLexemeType.arrayType;
             lex.isType = true;
             break;
-        case "chan":
+        case "canal":
+        case "channel":
             lex.type = GrLexemeType.chanType;
             lex.isType = true;
             break;
+        case "crée":
         case "new":
             lex.type = GrLexemeType.new_;
             lex.isType = false;
             break;
+        case "soit":
         case "let":
             lex.type = GrLexemeType.autoType;
             lex.isType = false;
             break;
+        case "vrai":
         case "true":
             lex.type = GrLexemeType.boolean;
             lex.isKeyword = false;
             lex.isLiteral = true;
             lex.bvalue = true;
             break;
+        case "faux":
         case "false":
             lex.type = GrLexemeType.boolean;
             lex.isKeyword = false;
             lex.isLiteral = true;
             lex.bvalue = false;
             break;
+        case "nul":
         case "null":
             lex.type = GrLexemeType.null_;
             lex.isKeyword = false;
             lex.isLiteral = true;
             break;
+        case "et":
         case "and":
             lex.type = GrLexemeType.and;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
+        case "ou":
         case "or":
             lex.type = GrLexemeType.or;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
+        case "pas":
         case "not":
             lex.type = GrLexemeType.not;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
+        case "et_bin":
         case "bit_and":
             lex.type = GrLexemeType.bitwiseAnd;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
+        case "ou_bin":
         case "bit_or":
             lex.type = GrLexemeType.bitwiseOr;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
+        case "ouex_bin":
         case "bit_xor":
             lex.type = GrLexemeType.bitwiseXor;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
+        case "non_bin":
         case "bit_not":
             lex.type = GrLexemeType.bitwiseNot;
             lex.isKeyword = false;
@@ -1031,7 +1074,7 @@ package final class GrLexer {
         default:
             lex.isKeyword = false;
             lex.type = GrLexemeType.identifier;
-            lex.svalue = buffer;
+            lex.svalue = to!string(buffer);
             break;
         }
 
@@ -1078,10 +1121,10 @@ package final class GrLexer {
         _filesToImport ~= buffer;
     }
 
-    /// Scan a `use` directive. \
-    /// Syntax: \
-    /// `use "FILEPATH"` or \
-    /// `use { "FILEPATH1", "FILEPATH2", "FILEPATH3" }` \
+    /// Scan a `use` directive.
+    /// Syntax:
+    /// `use "FILEPATH"` or
+    /// `use { "FILEPATH1", "FILEPATH2", "FILEPATH3" }`
     /// ___
     /// add a file to the list of files to import.
     private void scanUse() {
@@ -1152,7 +1195,7 @@ string grGetPrettyLexemeType(GrLexemeType operator) {
         "^", "&&", "||", "+", "-", "*", "/", "~", "%", "**", "==", "===",
         "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->", "=>", "~", "!",
         "++", "--", "identifier", "const_int", "const_float", "const_bool",
-        "const_str", "null", "pub", "main", "type", "event", "class", "enum",
+        "const_str", "null", "public", "type", "action", "class", "enum",
         "template", "new", "copy", "send", "receive", "int", "float", "bool",
         "string", "array", "chan", "func", "task", "let", "if", "unless",
         "else", "switch", "select", "case", "while", "do", "until", "for", "loop",

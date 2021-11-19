@@ -108,6 +108,7 @@ class GrEngine {
     private void initialize() {
         _contexts = new DynamicIndexedArray!GrContext;
         _contextsToSpawn = new DynamicIndexedArray!GrContext;
+        _contexts.push(new GrContext(this));
     }
 
     /// Add a new library to the runtime.
@@ -150,41 +151,28 @@ class GrEngine {
     }
 
     /**
-	Create the main context.
-	You must call this function before running the vm.
-	---
-	main {
-		printl("Hello World !");
-	}
-	---
-    */
-    void spawn() {
-        _contexts.push(new GrContext(this));
+	Checks whether an action exists. \
+	The action's name must be mangled with its signature.
+	*/
+    bool hasAction(string mangledName) {
+        return (mangledName in _bytecode.actions) !is null;
     }
 
     /**
-	Checks whether an event exists. \
-	`eventName` must be the mangled name of the event.
-	*/
-    bool hasEvent(string eventName) {
-        return (eventName in _bytecode.events) !is null;
-    }
-
-    /**
-	Spawn a new coroutine registered as an event. \
-	`eventName` must be the mangled name of the event.
+	Spawn a new coroutine registered as an action. \
+	The action's name must be mangled with its signature.
 	---
-	event mycoroutine() {
-		printl("mycoroutine was created !");
+	action myAction() {
+		printl("myAction was created !");
 	}
 	---
 	*/
-    GrContext spawnEvent(string eventName) {
-        const auto event = eventName in _bytecode.events;
-        if (event is null)
-            throw new Exception("no event \'" ~ eventName ~ "\' in script");
+    GrContext callAction(string mangledName) {
+        const auto action = mangledName in _bytecode.actions;
+        if (action is null)
+            throw new Exception("no action \'" ~ mangledName ~ "\' in script");
         GrContext context = new GrContext(this);
-        context.pc = *event;
+        context.pc = *action;
         _contextsToSpawn.push(context);
         return context;
     }

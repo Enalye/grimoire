@@ -416,7 +416,7 @@ struct GrInstruction {
 }
 
 /**
-Function/Task/Event definition.
+Function/Task/Action definition.
 */
 package class GrFunction {
     /// Local scoping
@@ -441,7 +441,7 @@ package class GrFunction {
     string[] inputVariables, templateVariables;
     /// Function parameters' type.
     GrType[] inSignature, outSignature, templateSignature;
-    bool isTask, isAnonymous, isEvent, isMain;
+    bool isTask, isAnonymous, isAction, isMain;
 
     /// Function calls made from within its scope.
     GrFunctionCall[] functionCalls;

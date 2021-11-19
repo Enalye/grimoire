@@ -37,7 +37,7 @@ final class GrParser {
         uint scopeLevel;
 
         GrVariable[] globalVariables;
-        GrFunction[] instanciatedFunctions, functionsQueue, functions, events;
+        GrFunction[] instanciatedFunctions, functionsQueue, functions, actions;
         GrFunction[] anonymousFunctions;
         GrTemplateFunction[] templatedFunctions;
 
@@ -208,7 +208,7 @@ final class GrParser {
         if ((func = getFunction(name, fileId, isPublic)) !is null)
             logError("the name `" ~ name ~ "` is defined multiple times", "`" ~ name ~ "` is redefined here",
                     "", 0, "previous definition of `" ~ name ~ "`", func.lexPosition);
-        if ((func = getEvent(name)) !is null)
+        if ((func = getAction(name)) !is null)
             logError("the name `" ~ name ~ "` is defined multiple times", "`" ~ name ~ "` is redefined here",
                     "", 0, "previous definition of `" ~ name ~ "`", func.lexPosition);
     }
@@ -345,12 +345,12 @@ final class GrParser {
         functionStack.length--;
     }
 
-    private void beginFunction(string name, uint fileId, GrType[] signature, bool isEvent = false) {
+    private void beginFunction(string name, uint fileId, GrType[] signature, bool isAction = false) {
         const string mangledName = grMangleComposite(name, signature);
 
         GrFunction func;
-        if (isEvent)
-            func = getEvent(mangledName);
+        if (isAction)
+            func = getAction(mangledName);
         else
             func = getFunction(mangledName, fileId);
 
@@ -363,7 +363,7 @@ final class GrParser {
 
     private void preBeginFunction(string name, uint fileId, GrType[] signature,
             string[] inputVariables, bool isTask, GrType[] outSignature = [],
-            bool isAnonymous = false, bool isEvent = false, bool isPublic = false) {
+            bool isAnonymous = false, bool isAction = false, bool isPublic = false) {
         GrFunction func = new GrFunction;
         func.isTask = isTask;
         func.inputVariables = inputVariables;
@@ -394,7 +394,7 @@ final class GrParser {
             if (name == "main")
                 func.isMain = true;
 
-            func.isEvent = isEvent;
+            func.isAction = isAction;
             func.lexPosition = current;
             functionsQueue ~= func;
         }
@@ -589,8 +589,8 @@ final class GrParser {
         }
     }
 
-    private GrFunction getEvent(string name) {
-        foreach (GrFunction func; events) {
+    private GrFunction getAction(string name) {
+        foreach (GrFunction func; actions) {
             if (func.mangledName == name)
                 return func;
         }
@@ -1831,8 +1831,7 @@ final class GrParser {
             case enum_:
                 parseEnumDeclaration(isPublic);
                 break;
-            case main_:
-            case event_:
+            case action:
             case taskType:
             case functionType:
                 skipDeclaration();
@@ -1862,8 +1861,7 @@ final class GrParser {
             case type_:
                 parseTypeAliasDeclaration(isPublic);
                 break;
-            case main_:
-            case event_:
+            case action:
             case taskType:
             case functionType:
             case class_:
@@ -1895,11 +1893,8 @@ final class GrParser {
             case class_:
                 skipDeclaration();
                 break;
-            case main_:
-                parseMainDeclaration(isPublic);
-                break;
-            case event_:
-                parseEventDeclaration(isPublic);
+            case action:
+                parseActionDeclaration(isPublic);
                 break;
             case taskType:
                 if (get(1).type != GrLexemeType.identifier && get(1).type != GrLexemeType.lesser)
@@ -1942,10 +1937,9 @@ final class GrParser {
             case semicolon:
                 checkAdvance();
                 break;
-            case event_:
+            case action:
             case enum_:
             case class_:
-            case main_:
                 skipDeclaration();
                 break;
             case template_:
@@ -1995,9 +1989,9 @@ final class GrParser {
     Parse the body of global functions
     */
     void parseFunction(GrFunction func) {
-        if (func.isEvent) {
-            func.index = cast(uint) events.length;
-            events ~= func;
+        if (func.isAction) {
+            func.index = cast(uint) actions.length;
+            actions ~= func;
         }
         else {
             func.index = cast(uint) functions.length;
@@ -2015,7 +2009,7 @@ final class GrParser {
         openDeferrableSection();
         current = func.lexPosition;
         parseBlock();
-        if (func.isTask || func.isMain || func.isEvent) {
+        if (func.isTask || func.isMain || func.isAction) {
             if (!currentFunction.instructions.length
                     || currentFunction.instructions[$ - 1].opcode != GrOpcode.kill_)
                 addKill();
@@ -2663,18 +2657,9 @@ final class GrParser {
         return outSignature;
     }
 
-    private void parseMainDeclaration(bool isPublic) {
+    private void parseActionDeclaration(bool isPublic) {
         if (isPublic)
-            logError("adding `pub` before `main` is redundant", "main is already public");
-        checkAdvance();
-        preBeginFunction("main", get().fileId, [], [], false, [], false, false, true);
-        skipBlock();
-        preEndFunction();
-    }
-
-    private void parseEventDeclaration(bool isPublic) {
-        if (isPublic)
-            logError("adding `pub` before `event` is redundant", "event is already public");
+            logError("adding `pub` before `action` is redundant", "action is already public");
         checkAdvance();
         if (get().type != GrLexemeType.identifier)
             logError("expected identifier, found `" ~ grGetPrettyLexemeType(get()

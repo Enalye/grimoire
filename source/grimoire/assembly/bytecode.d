@@ -280,9 +280,9 @@ final class GrBytecode {
         /// Number of ptr based global variables declared.
         uint oglobalsCount;
 
-        /// global event functions.
+        /// global action functions.
         /// Their name are in a mangled state.
-        uint[string] events;
+        uint[string] actions;
 
         /// Global variables
         Variable[string] variables;
@@ -308,7 +308,7 @@ final class GrBytecode {
         fglobalsCount = bytecode.fglobalsCount;
         sglobalsCount = bytecode.sglobalsCount;
         oglobalsCount = bytecode.oglobalsCount;
-        events = bytecode.events;
+        actions = bytecode.actions;
         variables = bytecode.variables;
         symbols = bytecode.symbols.dup; //@TODO: change the shallow copy
     }
@@ -348,7 +348,7 @@ final class GrBytecode {
         buffer.append!uint(sglobalsCount);
         buffer.append!uint(oglobalsCount);
 
-        buffer.append!uint(cast(uint) events.length);
+        buffer.append!uint(cast(uint) actions.length);
         buffer.append!uint(cast(uint) primitives.length);
         buffer.append!uint(cast(uint) classes.length);
         buffer.append!uint(cast(uint) variables.length);
@@ -364,7 +364,7 @@ final class GrBytecode {
         // Opcodes
         foreach (uint i; opcodes)
             buffer.append!uint(i);
-        foreach (string ev, uint pos; events) {
+        foreach (string ev, uint pos; actions) {
             writeStr(buffer, ev);
             buffer.append!uint(pos);
         }
@@ -449,7 +449,7 @@ final class GrBytecode {
         sglobalsCount = buffer.read!uint();
         oglobalsCount = buffer.read!uint();
 
-        const uint eventsCount = buffer.read!uint();
+        const uint actionsCount = buffer.read!uint();
         primitives.length = buffer.read!uint();
         classes.length = buffer.read!uint();
         const uint variableCount = buffer.read!uint();
@@ -472,10 +472,10 @@ final class GrBytecode {
             opcodes[i] = buffer.read!uint();
         }
 
-        events.clear();
-        for (uint i; i < eventsCount; ++i) {
+        actions.clear();
+        for (uint i; i < actionsCount; ++i) {
             const string ev = readStr(buffer);
-            events[ev] = buffer.read!uint();
+            actions[ev] = buffer.read!uint();
         }
 
         for (size_t i; i < primitives.length; ++i) {

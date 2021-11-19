@@ -78,15 +78,11 @@ final class GrCompiler {
 		foreach (func; parser.anonymousFunctions)
 			nbOpcodes += cast(uint) func.instructions.length;
 
-		foreach (func; parser.events)
+		foreach (func; parser.actions)
 			nbOpcodes += cast(uint) func.instructions.length;
 
-		//We leave space for one kill instruction at the end.
-		nbOpcodes++;
-
-		//Without "main", we put a kill instruction instead.
-		if (parser.getFunction("main") is null)
-			nbOpcodes++;
+		//We leave space for kill instructions.
+		nbOpcodes += 2;
 
 		//Opcodes
 		uint[] opcodes = new uint[nbOpcodes];
@@ -116,41 +112,13 @@ final class GrCompiler {
 			parser.removeFunction("@global");
 		}
 
-		//Then write the main function (not callable).
-		auto mainFunc = parser.getFunction("main");
-		if (mainFunc) {
-			if (options & GrOption.symbols) {
-				auto debugSymbol = new GrFunctionSymbol();
-				debugSymbol.start = lastOpcodeCount;
-				debugSymbol.name = grGetPrettyFunction(mainFunc);
-				debugSymbol.length = cast(uint) mainFunc.instructions.length;
-				debugSymbol.file = lexer.getFile(mainFunc.fileId);
-				foreach (ref position; mainFunc.debugSymbol) {
-					GrFunctionSymbol.Position pos;
-					pos.line = position.line;
-					pos.column = position.column;
-					debugSymbol.positions ~= pos;
-				}
-				bytecode.symbols ~= debugSymbol;
-			}
-
-			mainFunc.position = lastOpcodeCount;
-			foreach (size_t i, instruction; mainFunc.instructions)
-				opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
-						instruction.value);
-			foreach (call; mainFunc.functionCalls)
-				call.position += lastOpcodeCount;
-			lastOpcodeCount += cast(uint) mainFunc.instructions.length;
-			parser.removeFunction("main");
-		}
-		else {
-			opcodes[lastOpcodeCount] = makeOpcode(cast(uint) GrOpcode.kill_, 0u);
-			lastOpcodeCount++;
-		}
+		//Then we terminate the global section
+		opcodes[lastOpcodeCount] = makeOpcode(cast(uint) GrOpcode.kill_, 0u);
+		lastOpcodeCount++;
 
 		//Every other functions.
-		uint[string] events;
-		foreach (GrFunction func; parser.events) {
+		uint[string] actions;
+		foreach (GrFunction func; parser.actions) {
 			if (options & GrOption.symbols) {
 				auto debugSymbol = new GrFunctionSymbol();
 				debugSymbol.start = lastOpcodeCount;
@@ -173,7 +141,7 @@ final class GrCompiler {
 				call.position += lastOpcodeCount;
 			func.position = lastOpcodeCount;
 			lastOpcodeCount += cast(uint) func.instructions.length;
-			events[func.mangledName] = func.position;
+			actions[func.mangledName] = func.position;
 		}
 		foreach (func; parser.anonymousFunctions) {
 			if (options & GrOption.symbols) {
@@ -277,8 +245,8 @@ final class GrCompiler {
 		//Instuctions.
 		bytecode.opcodes = opcodes;
 
-		//Global events.
-		bytecode.events = events;
+		//Global actions.
+		bytecode.actions = actions;
 
 		//Initialize every primitives.
 		bytecode.primitives.length = _data._primitives.length;
