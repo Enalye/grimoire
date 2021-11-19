@@ -3489,6 +3489,8 @@ final class GrParser {
     private void parseIfStatement() {
         bool isNegative = get().type == GrLexemeType.unless;
         advance();
+        if(isNegative && get().type == GrLexemeType.if_)
+            advance();
         if (get().type != GrLexemeType.leftParenthesis)
             logError("missing parentheses after `if`",
                     "expected `(`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
@@ -3524,6 +3526,8 @@ final class GrParser {
                     isNegative = get().type == GrLexemeType.unless;
                     isElseIf = true;
                     checkAdvance();
+                    if(isNegative && get().type == GrLexemeType.if_)
+                        checkAdvance();
                     if (get().type != GrLexemeType.leftParenthesis)
                         logError("missing parentheses after `if`",
                                 "expected `(`, found `" ~ grGetPrettyLexemeType(get().type) ~ "`");
