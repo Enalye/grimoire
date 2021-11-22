@@ -441,7 +441,7 @@ package class GrFunction {
     string[] inputVariables, templateVariables;
     /// Function parameters' type.
     GrType[] inSignature, outSignature, templateSignature;
-    bool isTask, isAnonymous, isAction, isMain;
+    bool isTask, isAnonymous, isAction;
 
     /// Function calls made from within its scope.
     GrFunctionCall[] functionCalls;

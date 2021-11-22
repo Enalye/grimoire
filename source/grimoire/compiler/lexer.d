@@ -5,15 +5,11 @@
  */
 module grimoire.compiler.lexer;
 
-import std.stdio;
-import std.string;
-import std.array;
-import std.conv;
-import std.math;
-import std.file;
+import std.stdio, std.string, std.array, std.math, std.file;
+import std.conv : to;
 import std.algorithm : canFind;
 import grimoire.assembly;
-import grimoire.compiler.error;
+import grimoire.compiler.error, grimoire.compiler.util;
 
 /**
 Kinds of valid token.
@@ -193,7 +189,7 @@ struct GrLexeme {
 
     /// boolean value of the constant.
     /// isLiteral will be true and type set to boolean.
-    bool bvalue;
+    GrBool bvalue;
 
     /// Can either describe a literal value like `"myString"` or an identifier.
     GrString svalue;
@@ -224,6 +220,7 @@ package final class GrLexer {
         dstring _text;
         uint _line, _current, _positionOfLine, _fileId;
         GrLexeme[] _lexemes;
+        GrLocale _locale;
     }
 
     @property {
@@ -231,6 +228,11 @@ package final class GrLexer {
         GrLexeme[] lexemes() {
             return _lexemes;
         }
+    }
+
+    /// Ctor
+    this(GrLocale locale) {
+        _locale = locale;
     }
 
     /// Start scanning the root file and all its dependencies.
@@ -266,11 +268,11 @@ package final class GrLexer {
 	*/
     package string getLine(GrLexeme lex) {
         if (lex._fileId >= _filesImported.length)
-            raiseError("Lexeme file id out of bounds");
+            raiseError(Error.lexFileIdOutOfBounds);
         auto _text = to!dstring(readText(_filesImported[lex._fileId]));
         _lines = split(_text, "\n");
         if (lex._line >= _lines.length)
-            raiseError("Lexeme line count out of bounds");
+            raiseError(Error.lexLineCountOutOfBounds);
         return to!string(_lines[lex._line]);
     }
 
@@ -279,20 +281,20 @@ package final class GrLexer {
 	*/
     package string getFile(GrLexeme lex) {
         if (lex._fileId >= _filesImported.length)
-            raiseError("Lexeme file id out of bounds");
+            raiseError(Error.lexFileIdOutOfBounds);
         return _filesImported[lex._fileId];
     }
     /// Ditto
-    package string getFile(size_t fileId) {
-        if (fileId >= _filesImported.length)
-            raiseError("file id out of bounds");
-        return _filesImported[fileId];
+    package string getFile(size_t lexFileIdOutOfBounds) {
+        if (lexFileIdOutOfBounds >= _filesImported.length)
+            raiseError(Error.lexFileIdOutOfBounds);
+        return _filesImported[lexFileIdOutOfBounds];
     }
 
     private dchar get(int offset = 0) {
         const uint position = to!int(_current) + offset;
         if (position < 0 || position >= _text.length)
-            raiseError("Unexpected end of script");
+            raiseError(Error.unexpectedEndOfFile);
         return _text[position];
     }
 
@@ -402,7 +404,7 @@ package final class GrLexer {
                     .. case '@':
             case '[': .. case '^':
             case '{': .. case '~':
-                    scanOperator();
+                scanOperator();
                 break;
             case '\"':
                 scanString();
@@ -479,7 +481,7 @@ package final class GrLexer {
         lex.isLiteral = true;
 
         if (get() != '\"')
-            raiseError("Expected \'\"\' at the beginning of the string.");
+            raiseError(Error.expectedQuotationMarkAtBeginningOfStr);
         _current++;
 
         string buffer;
@@ -487,7 +489,7 @@ package final class GrLexer {
         bool wasEscape = false;
         for (;;) {
             if (_current >= _text.length)
-                raiseError("Missing \'\"\' character.");
+                raiseError(Error.missingQuotationMarkAtEndOfStr);
             const dchar symbol = get();
 
             if (symbol == '\n') {
@@ -806,7 +808,7 @@ package final class GrLexer {
             }
             break;
         default:
-            raiseError("GrLexer: invalid operator");
+            raiseError(Error.invalidOp);
         }
 
         _lexemes ~= lex;
@@ -832,7 +834,7 @@ package final class GrLexer {
             }
             if (symbol <= '&' || (symbol >= '(' && symbol <= '/') || (symbol >= ':'
                     && symbol <= '@') || (symbol >= '[' && symbol <= '^')
-                    || (symbol >= '{' && symbol <= 0x7F))
+                || (symbol >= '{' && symbol <= 0x7F))
                 break;
 
             buffer ~= symbol;
@@ -1029,6 +1031,12 @@ package final class GrLexer {
             lex.isKeyword = false;
             lex.isLiteral = true;
             break;
+        case "à":
+        case "to":
+            lex.type = GrLexemeType.interval;
+            lex.isKeyword = false;
+            lex.isOperator = true;
+            break;
         case "et":
         case "and":
             lex.type = GrLexemeType.and;
@@ -1094,13 +1102,13 @@ package final class GrLexer {
         import std.path : dirName, buildNormalizedPath, absolutePath;
 
         if (get() != '\"')
-            raiseError("Expected \'\"\' at the beginning of the import.");
+            raiseError(Error.expectedQuotationMarkAtBeginningOfStr);
         _current++;
 
         string buffer;
         for (;;) {
             if (_current >= _text.length)
-                raiseError("Missing \'\"\' character.");
+                raiseError(Error.missingQuotationMarkAtEndOfStr);
             const dchar symbol = get();
             if (symbol == '\n') {
                 _positionOfLine = _current;
@@ -1140,10 +1148,10 @@ package final class GrLexer {
                 else if (get() == '\"')
                     advance();
                 else
-                    raiseError("Missing \'\"\' character.");
+                    raiseError(Error.missingQuotationMarkAtEndOfStr);
                 // EOF
                 if (_current >= _text.length)
-                    raiseError("Missing \'}\' after import list.");
+                    raiseError(Error.missingRightCurlyBraceAfterUsedFilesList);
                 // End of the import list.
                 if (get() == '}')
                     break;
@@ -1159,6 +1167,10 @@ package final class GrLexer {
     /**
 	Lexical error
 	*/
+    private void raiseError(Error error) {
+        raiseError(getLexerError(error, _locale));
+    }
+    /// Ditto
     private void raiseError(string message) {
         GrError error = new GrError;
         error.type = GrError.Type.lexer;
@@ -1184,24 +1196,75 @@ package final class GrLexer {
 
         throw new GrLexerException(error);
     }
+
+    private enum Error {
+        lexFileIdOutOfBounds,
+        lexLineCountOutOfBounds,
+        unexpectedEndOfFile,
+        expectedQuotationMarkAtBeginningOfStr,
+        missingQuotationMarkAtEndOfStr,
+        invalidOp,
+        missingRightCurlyBraceAfterUsedFilesList
+    }
+
+    private string getLexerError(Error error, GrLocale locale) {
+        immutable string[Error][GrLocale.max + 1] messages = [
+            [
+                Error.lexFileIdOutOfBounds: "lexeme file id out of bounds",
+                Error.lexLineCountOutOfBounds: "lexeme line count out of bounds",
+                Error.unexpectedEndOfFile: "unexpected end of file",
+                Error.expectedQuotationMarkAtBeginningOfStr: "expected `\"` at the beginning of the string",
+                Error.missingQuotationMarkAtEndOfStr: "missing `\"` at the end of the string",
+                Error.invalidOp: "invalid operator",
+                Error.missingRightCurlyBraceAfterUsedFilesList: "missing `}` after used files list"
+            ],
+            [
+                Error.lexFileIdOutOfBounds: "l’id de fichier du lexeme excède les limites",
+                Error.lexLineCountOutOfBounds: "le numéro de ligne du lexeme excède les limites",
+                Error.unexpectedEndOfFile: "fin de fichier inattendue",
+                Error.expectedQuotationMarkAtBeginningOfStr: "`\"` attendu au début de la chaîne",
+                Error.missingQuotationMarkAtEndOfStr: "`\"` manquant en fin de chaîne",
+                Error.invalidOp: "operateur invalide",
+                Error.missingRightCurlyBraceAfterUsedFilesList: "`}` manquant après la liste des fichiers utilisés"
+            ]
+        ];
+        return messages[locale][error];
+    }
 }
 
 /// Returns a displayable version of a token type.
-string grGetPrettyLexemeType(GrLexemeType operator) {
-    immutable string[] lexemeTypeStrTable = [
-        "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&", "as",
-        "try", "catch", "raise", "defer", "=", "&=", "|=", "^=", "&&=",
-        "||=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+", "-", "&", "|",
-        "^", "&&", "||", "+", "-", "*", "/", "~", "%", "**", "==", "===",
-        "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->", "=>", "~", "!",
-        "++", "--", "identifier", "const_int", "const_float", "const_bool",
-        "const_str", "null", "public", "type", "action", "class", "enum",
-        "template", "new", "copy", "send", "receive", "int", "float", "bool",
-        "string", "array", "chan", "func", "task", "let", "if", "unless",
-        "else", "switch", "select", "case", "while", "do", "until", "for", "loop",
-        "return", "self", "kill", "killall", "yield", "break", "continue"
+string grGetPrettyLexemeType(GrLexemeType operator, GrLocale locale = GrLocale.en_US) {
+    immutable string[][GrLocale.max + 1] lexemeTypeStrTable = [
+        [
+            "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&",
+            "as", "try", "catch", "throw", "defer", "=", "&=", "|=", "^=",
+            "&&=", "||=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+", "-",
+            "&", "|", "^", "&&", "||", "+", "-", "*", "/", "~", "%", "**",
+            "==", "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->",
+            "=>", "~", "!", "++", "--", "identifier", "const_integer",
+            "const_float", "const_boolean", "const_string", "null", "public",
+            "type", "action", "class", "enum", "template", "new", "copy", "send",
+            "receive", "integer", "float", "boolean", "string", "list", "channel",
+            "function", "task", "let", "if", "unless", "else", "switch", "select",
+            "case", "while", "do", "until", "for", "loop", "return", "self",
+            "die", "end", "pass", "break", "continue"
+        ],
+        [
+            "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&",
+            "xlnnp", "essaie", "récup", "lance", "décale", "=", "&=", "|=",
+            "^=", "&&=", "||=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+",
+            "-", "&", "|", "^", "&&", "||", "+", "-", "*", "/", "~", "%",
+            "**", "==", "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>",
+            "->", "=>", "~", "!", "++", "--", "identificateur", "entier_const",
+            "réel_const", "booléen_const", "chaîne_const", "nul", "public",
+            "type", "action", "classe", "énum", "patron", "crée", "copie",
+            "envoie", "reçois", "entier", "réel", "booléen", "chaîne", "liste",
+            "canal", "fonction", "tâche", "soit", "si", "sauf", "sinon", "où",
+            "sélect", "cas", "tant", "fais", "jusque", "pour", "boucle",
+            "retourne", "soi", "meurs", "fin", "passe", "casse", "continue"
+        ]
     ];
-    return lexemeTypeStrTable[operator];
+    return lexemeTypeStrTable[locale][operator];
 }
 
 /**

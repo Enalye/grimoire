@@ -11,6 +11,11 @@ import std.conv : to;
 import grimoire;
 
 void main() {
+    version (Windows) {
+        import core.sys.windows.windows : SetConsoleOutputCP;
+
+        SetConsoleOutputCP(65_001);
+    }
     try {
         bool testBytecode = true;
         auto startTime = MonoTime.currTime();
@@ -18,7 +23,8 @@ void main() {
 
         GrCompiler compiler = new GrCompiler;
         compiler.addLibrary(stdlib);
-        GrBytecode bytecode = compiler.compileFile("script/test.gr", GrOption.symbols);
+        GrBytecode bytecode = compiler.compileFile("script/test.gr", GrOption.symbols, GrLocale
+                .fr_FR);
         if (!bytecode) {
             writeln(compiler.getError().prettify());
             return;
@@ -40,7 +46,7 @@ void main() {
         engine.addLibrary(stdlib);
         engine.load(bytecode);
 
-        if(engine.hasAction("test"))
+        if (engine.hasAction("test"))
             engine.callAction("test");
 
         write("> ");
@@ -52,7 +58,7 @@ void main() {
             writeln("panic: " ~ to!string(engine.panicMessage));
             foreach (trace; engine.stackTraces) {
                 writeln("[", trace.pc, "] in ", trace.name, " at ", trace.file,
-                        "(", trace.line, ",", trace.column, ")");
+                    "(", trace.line, ",", trace.column, ")");
             }
         }
         auto executionTime = MonoTime.currTime() - startTime;

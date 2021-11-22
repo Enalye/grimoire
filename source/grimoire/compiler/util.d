@@ -14,6 +14,12 @@ enum GrOption {
     profile = 0x2
 }
 
+/// Compiler locale
+enum GrLocale {
+    en_US,
+    fr_FR
+}
+
 /// Search for strings that somewhat ressemble the base value
 package string[] findNearestStrings(string baseValue, const(string[]) ary, size_t distance = 0) {
     struct WeightedValue {
