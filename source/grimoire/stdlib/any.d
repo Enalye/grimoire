@@ -70,7 +70,7 @@ package(grimoire.stdlib) void grLoadStdLibAny(GrLibrary library) {
     library.addCast(&_from_s, grString, anyType);
 
     library.addCast(&_from_o, grAny("T", (type, data) {
-            return type.baseType == GrBaseType.array_ || type.baseType == GrBaseType.class_
+            return type.baseType == GrBaseType.list_ || type.baseType == GrBaseType.class_
             || type.baseType == GrBaseType.foreign || type.baseType == GrBaseType.chan;
         }), anyType);
 

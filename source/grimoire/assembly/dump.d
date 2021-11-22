@@ -72,7 +72,7 @@ private string[] instructions = [
     "ret", "unwind", "defer",
     "jmp", "jmp_eq", "jmp_neq",
 
-    "array.i", "array.f", "array.s", "array.o",
+    "list.i", "list.f", "list.s", "list.o",
     "len.i", "len.f", "len.s", "len.o",
     "idx.i", "idx.f", "idx.s", "idx.o",
     "idx2.i", "idx2.f", "idx2.s", "idx2.o",
@@ -110,7 +110,7 @@ string grDump(GrBytecode bytecode) {
             (op == GrOpcode.new_) ||
             (op >= GrOpcode.fieldLoad && op <= GrOpcode.fieldLoad2_object) ||
             (op >= GrOpcode.channel_int && op <= GrOpcode.channel_object) ||
-            (op >= GrOpcode.array_int && op <= GrOpcode.array_object)
+            (op >= GrOpcode.list_int && op <= GrOpcode.list_object)
             )
             line ~= to!string(grGetInstructionUnsignedValue(opcode));
         else if(op >= GrOpcode.fieldStore_int && op <= GrOpcode.fieldStore_object)

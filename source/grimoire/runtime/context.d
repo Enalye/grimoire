@@ -6,7 +6,7 @@
 module grimoire.runtime.context;
 
 import grimoire.assembly;
-import grimoire.runtime.engine, grimoire.runtime.array,
+import grimoire.runtime.engine, grimoire.runtime.list,
     grimoire.runtime.channel, grimoire.runtime.object;
 
 /**
@@ -217,23 +217,23 @@ final class GrContext {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
-    void setArray(T)(GrArray!T value) {
+    void setList(T)(GrList!T value) {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
-    void setIntArray(GrIntArray value) {
+    void setIntList(GrIntList value) {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
-    void setFloatArray(GrFloatArray value) {
+    void setFloatList(GrFloatList value) {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
-    void setStringArray(GrStringArray value) {
+    void setStringList(GrStringList value) {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
-    void setObjectArray(GrObjectArray value) {
+    void setObjectList(GrObjectList value) {
         setValue!GrPtr(cast(GrPtr) value);
     }
 

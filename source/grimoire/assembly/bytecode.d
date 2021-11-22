@@ -171,10 +171,10 @@ enum GrOpcode {
     jumpEqual,
     jumpNotEqual,
 
-    array_int,
-    array_float,
-    array_string,
-    array_object,
+    list_int,
+    list_float,
+    list_string,
+    list_object,
     length_int,
     length_float,
     length_string,
@@ -192,10 +192,10 @@ enum GrOpcode {
     index3_string,
     index3_object,
 
-    concatenate_intArray,
-    concatenate_floatArray,
-    concatenate_stringArray,
-    concatenate_objectArray,
+    concatenate_intList,
+    concatenate_floatList,
+    concatenate_stringList,
+    concatenate_objectList,
     append_int,
     append_float,
     append_string,
@@ -205,12 +205,12 @@ enum GrOpcode {
     prepend_string,
     prepend_object,
 
-    equal_intArray,
-    equal_floatArray,
-    equal_stringArray,
-    notEqual_intArray,
-    notEqual_floatArray,
-    notEqual_stringArray,
+    equal_intList,
+    equal_floatList,
+    equal_stringList,
+    notEqual_intList,
+    notEqual_floatList,
+    notEqual_stringList,
 
     debugProfileBegin,
     debugProfileEnd
@@ -328,7 +328,7 @@ final class GrBytecode {
         std.file.write(fileName, serialize());
     }
 
-    /// Serialize the bytecode into an array.
+    /// Serialize the bytecode into a list.
     ubyte[] serialize() {
         void writeStr(ref Appender!(ubyte[]) buffer, GrString s) {
             buffer.append!uint(cast(uint) s.length);
@@ -421,7 +421,7 @@ final class GrBytecode {
         deserialize(cast(ubyte[]) std.file.read(fileName));
     }
 
-    /// Deserialize the bytecode from an array.
+    /// Deserialize the bytecode from a list.
     void deserialize(ubyte[] buffer) {
         GrString readStr(ref ubyte[] buffer) {
             GrString s;

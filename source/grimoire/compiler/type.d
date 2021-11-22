@@ -25,7 +25,7 @@ enum GrBaseType {
     float_,
     bool_,
     string_,
-    array_,
+    list_,
     function_,
     task,
     class_,
@@ -44,7 +44,7 @@ struct GrType {
     /// General type, basic types only use that while compound types also use mangledType
     /// and mangledReturnType.
     GrBaseType baseType;
-    /// Used for compound types like arrays, functions, etc.
+    /// Used for compound types like lists, functions, etc.
     string mangledType, mangledReturnType;
     /// Is this from an object field ?
     bool isField;
@@ -85,7 +85,7 @@ struct GrType {
         if (baseType == GrBaseType.function_ || baseType == GrBaseType.task)
             return mangledType == v.mangledType && mangledReturnType == v.mangledReturnType;
         if (baseType == GrBaseType.foreign || baseType == GrBaseType.class_
-                || baseType == GrBaseType.enum_ || baseType == GrBaseType.array_)
+                || baseType == GrBaseType.enum_ || baseType == GrBaseType.list_)
             return mangledType == v.mangledType;
         return true;
     }
@@ -106,16 +106,16 @@ const GrType grFloat = GrType(GrBaseType.float_);
 const GrType grBool = GrType(GrBaseType.bool_);
 /// String
 const GrType grString = GrType(GrBaseType.string_);
-/// Int array
-const GrType grIntArray = GrType(GrBaseType.array_, grMangleSignature([grInt]));
-/// Float array
-const GrType grFloatArray = GrType(GrBaseType.array_, grMangleSignature([
+/// Int list
+const GrType grIntList = GrType(GrBaseType.list_, grMangleSignature([grInt]));
+/// Float list
+const GrType grFloatList = GrType(GrBaseType.list_, grMangleSignature([
             grFloat
         ]));
-/// Bool array
-const GrType grBoolArray = GrType(GrBaseType.array_, grMangleSignature([grBool]));
-/// String array
-const GrType grStringArray = GrType(GrBaseType.array_, grMangleSignature([
+/// Bool list
+const GrType grBoolList = GrType(GrBaseType.list_, grMangleSignature([grBool]));
+/// String list
+const GrType grStringList = GrType(GrBaseType.list_, grMangleSignature([
             grString
         ]));
 /// Int channel
@@ -131,9 +131,9 @@ const GrType grStringChannel = GrType(GrBaseType.chan, grMangleSignature([
             grString
         ]));
 
-/// Returns an array GrType of `subType` subtype.
-GrType grArray(GrType subType) {
-    return GrType(GrBaseType.array_, grMangleSignature([subType]));
+/// Returns an list GrType of `subType` subtype.
+GrType grList(GrType subType) {
+    return GrType(GrBaseType.list_, grMangleSignature([subType]));
 }
 
 /// Returns a channel GrType of `subType` subtype.
@@ -169,7 +169,7 @@ bool grIsKindOfString(GrBaseType type) {
 
 /// The type is handled by a ptr based register
 bool grIsKindOfObject(GrBaseType type) {
-    return type == GrBaseType.class_ || type == GrBaseType.array_ || type == GrBaseType.foreign
+    return type == GrBaseType.class_ || type == GrBaseType.list_ || type == GrBaseType.foreign
         || type == GrBaseType.chan || type == GrBaseType.reference || type == GrBaseType.null_;
 }
 
@@ -516,7 +516,7 @@ package class GrFunction {
         case string_:
             sregisterAvailables ~= variable.register;
             break;
-        case array_:
+        case list_:
         case class_:
         case foreign:
         case chan:

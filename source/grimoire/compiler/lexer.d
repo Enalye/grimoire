@@ -96,7 +96,7 @@ enum GrLexemeType {
     floatType,
     boolType,
     stringType,
-    arrayType,
+    listType,
     chanType,
     functionType,
     taskType,
@@ -993,7 +993,7 @@ package final class GrLexer {
             break;
         case "liste":
         case "list":
-            lex.type = GrLexemeType.arrayType;
+            lex.type = GrLexemeType.listType;
             lex.isType = true;
             break;
         case "canal":

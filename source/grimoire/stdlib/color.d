@@ -37,7 +37,7 @@ package void grLoadStdLibColor(GrLibrary library) {
             colorType
             ]);
 
-    library.addCast(&_castArrayToColor, grIntArray, colorType);
+    library.addCast(&_castListToColor, grIntList, colorType);
     library.addCast(&_castColorToString, colorType, grString);
 
     library.addPrimitive(&_unpack, "unpack", [colorType], [
@@ -175,21 +175,21 @@ private void _lerpColor(GrCall call) {
     call.setObject(self);
 }
 
-private void _castArrayToColor(GrCall call) {
-    GrIntArray array = call.getIntArray(0);
-    if (array.data.length == 3) {
+private void _castListToColor(GrCall call) {
+    GrIntList list = call.getIntList(0);
+    if (list.data.length == 3) {
         GrObject self = call.createObject("Color");
         if (!self) {
             call.raise("UnknownClassError");
             return;
         }
-        self.setFloat("r", array.data[0]);
-        self.setFloat("g", array.data[1]);
-        self.setFloat("b", array.data[2]);
+        self.setFloat("r", list.data[0]);
+        self.setFloat("g", list.data[1]);
+        self.setFloat("b", list.data[2]);
         call.setObject(self);
         return;
     }
-    call.raise("Cannot convert array to Color, invalid size");
+    call.raise("Cannot convert list to Color, invalid size");
 }
 
 private void _castColorToString(GrCall call) {

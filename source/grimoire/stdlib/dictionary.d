@@ -57,13 +57,15 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
                 if(subType.signature.length != 1)
                     return false;
                 data.set(\"T\", subType.signature[0]);
-                data.set(\"A\", grArray(subType.signature[0]));
-                return grIsKindOf" ~ t
+                data.set(\"A\", grList(subType.signature[0]));
+                return grIsKindOf"
+                ~ t
                 ~ "(subType.signature[0].baseType);
             });
 
-            GrType any" ~ t ~ "Array = grAny(\"A\", (type, data) {
-                if (type.baseType != GrBaseType.array_)
+            GrType any"
+                ~ t ~ "List = grAny(\"A\", (type, data) {
+                if (type.baseType != GrBaseType.list_)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
                 data.set(\"M\", grGetForeignType(\"Dictionary\", [subType]));
@@ -71,11 +73,13 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
                 ~ t ~ "(subType.baseType);
             });
 
-            library.addPrimitive(&_make_!\"" ~ t ~ "\", \"Dictionary\", [grStringArray, any" ~ t
-                ~ "Array], [grAny(\"M\")]);
+            library.addPrimitive(&_make_!\""
+                ~ t ~ "\", \"Dictionary\", [grStringList, any" ~ t
+                ~ "List], [grAny(\"M\")]);
 
-            library.addPrimitive(&_makeByPairs_!\"" ~ t ~ "\", \"Dictionary\", [grAny(\"T\", (type, data) {
-                if (type.baseType != GrBaseType.array_)
+            library.addPrimitive(&_makeByPairs_!\""
+                ~ t ~ "\", \"Dictionary\", [grAny(\"T\", (type, data) {
+                if (type.baseType != GrBaseType.list_)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
                 if(subType.baseType != GrBaseType.class_)
@@ -90,36 +94,47 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
             library.addPrimitive(&_copy_!\""
                 ~ t ~ "\", \"copy\", [any" ~ t ~ "Dictionary], [grAny(\"M\")]);
 
-            library.addPrimitive(&_size_!\"" ~ t ~ "\", \"size\", [any"
+            library.addPrimitive(&_size_!\""
+                ~ t ~ "\", \"size\", [any"
                 ~ t ~ "Dictionary], [grInt]);
 
-            library.addPrimitive(&_empty_!\"" ~ t ~ "\", \"empty?\", [
-                any" ~ t ~ "Dictionary
+            library.addPrimitive(&_empty_!\""
+                ~ t ~ "\", \"empty?\", [
+                any"
+                ~ t ~ "Dictionary
             ], [grBool]);
 
-            library.addPrimitive(&_clear_!\"" ~ t ~ "\", \"clear\", [
-                any" ~ t ~ "Dictionary
+            library.addPrimitive(&_clear_!\""
+                ~ t ~ "\", \"clear\", [
+                any"
+                ~ t ~ "Dictionary
             ], [grAny(\"M\")]);
 
-            library.addPrimitive(&_set_!\"" ~ t
+            library.addPrimitive(&_set_!\""
+                ~ t
                 ~ "\", \"set\", [any" ~ t ~ "Dictionary, grString, grAny(\"T\")]);
 
-            library.addPrimitive(&_get_!\"" ~ t
+            library.addPrimitive(&_get_!\""
+                ~ t
                 ~ "\", \"get\", [any" ~ t ~ "Dictionary, grString], [grBool, grAny(\"T\")]);
 
             library.addPrimitive(&_has_!\""
                 ~ t ~ "\", \"has?\", [any" ~ t ~ "Dictionary, grString], [grBool]);
 
-            library.addPrimitive(&_remove_!\"" ~ t
+            library.addPrimitive(&_remove_!\""
+                ~ t
                 ~ "\", \"remove\", [any" ~ t ~ "Dictionary, grString]);
 
-            library.addPrimitive(&_byKeys_!\"" ~ t ~ "\", \"byKeys\", [any" ~ t
-                ~ "Dictionary], [grStringArray]);
+            library.addPrimitive(&_byKeys_!\""
+                ~ t ~ "\", \"byKeys\", [any" ~ t
+                ~ "Dictionary], [grStringList]);
 
-            library.addPrimitive(&_byValues_!\"" ~ t ~ "\", \"byValues\", [any" ~ t ~ "Dictionary], [any"
-                ~ t ~ "Array]);
+            library.addPrimitive(&_byValues_!\""
+                ~ t ~ "\", \"byValues\", [any" ~ t ~ "Dictionary], [any"
+                ~ t ~ "List]);
 
-            library.addPrimitive(&_each_!\"" ~ t ~ "\", \"each\", [
+            library.addPrimitive(&_each_!\""
+                ~ t ~ "\", \"each\", [
                     grAny(\"A\", (type, data) {
                 if (type.baseType != GrBaseType.foreign)
                     return false;
@@ -129,7 +144,8 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
                 if(subType.signature.length != 1)
                     return false;
                 data.set(\"R\", grGetForeignType(\"DictionaryIter\", subType.signature));
-                return grIsKindOf" ~ t ~ "(subType.signature[0].baseType);
+                return grIsKindOf"
+                ~ t ~ "(subType.signature[0].baseType);
             })
                 ], [grAny(\"R\")]);
 
@@ -142,7 +158,8 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
                 if(result.signature.length != 1 || result.name != \"DictionaryIter\")
                     return false;
                 data.set(\"T\", grGetClassType(\"Pair\", [grString, result.signature[0]]));
-                return grIsKindOf" ~ t ~ "(result.signature[0].baseType);
+                return grIsKindOf"
+                ~ t ~ "(result.signature[0].baseType);
                     })
                 ], [grBool, grAny(\"T\")]);
             ");
@@ -166,14 +183,14 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
 }
 
 private void _make_(string t)(GrCall call) {
-    mixin(t ~ "Dictionary dictionary = new " ~ t ~ "Dictionary(call.getStringArray(0).data, call.get"
-            ~ t ~ "Array(1).data);");
+    mixin(t ~ "Dictionary dictionary = new " ~ t ~ "Dictionary(call.getStringList(0).data, call.get"
+            ~ t ~ "List(1).data);");
     call.setForeign(dictionary);
 }
 
 private void _makeByPairs_(string t)(GrCall call) {
     mixin(t ~ "Dictionary dictionary = new " ~ t ~ "Dictionary;");
-    GrObjectArray pairs = call.getObjectArray(0);
+    GrObjectList pairs = call.getObjectList(0);
     for (size_t i; i < pairs.data.length; ++i) {
         GrObject pair = cast(GrObject) pairs.data[i];
         static if (t == "Object") {
@@ -252,13 +269,13 @@ private void _get_(string t)(GrCall call) {
     else {
         auto p = call.getString(1) in dictionary.data;
         call.setBool(p !is null);
-        static if(t == "Int") {
+        static if (t == "Int") {
             call.setInt(p ? *p : 0);
         }
-        else static if(t == "Float") {
+        else static if (t == "Float") {
             call.setFloat(p ? *p : 0f);
         }
-        else static if(t == "String") {
+        else static if (t == "String") {
             call.setString(p ? *p : "");
         }
     }
@@ -288,9 +305,9 @@ private void _byKeys_(string t)(GrCall call) {
         call.raise("NullError");
         return;
     }
-    GrStringArray ary = new GrStringArray;
+    GrStringList ary = new GrStringList;
     ary.data = dictionary.data.keys;
-    call.setStringArray(ary);
+    call.setStringList(ary);
 }
 
 private void _byValues_(string t)(GrCall call) {
@@ -299,9 +316,9 @@ private void _byValues_(string t)(GrCall call) {
         call.raise("NullError");
         return;
     }
-    mixin("Gr" ~ t ~ "Array ary = new Gr" ~ t ~ "Array;");
+    mixin("Gr" ~ t ~ "List ary = new Gr" ~ t ~ "List;");
     ary.data = dictionary.data.values;
-    mixin("call.set" ~ t ~ "Array(ary);");
+    mixin("call.set" ~ t ~ "List(ary);");
 }
 
 private void _printb_(string t)(GrCall call) {

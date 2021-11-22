@@ -15,20 +15,20 @@ package(grimoire.stdlib) void grLoadStdLibPrint(GrLibrary library) {
 	library.addPrimitive(&_printb, "print", [grBool]);
 	library.addPrimitive(&_printf, "print", [grFloat]);
 	library.addPrimitive(&_prints, "print", [grString]);
-	library.addPrimitive(&_printni, "print", [grIntArray]);
-	library.addPrimitive(&_printnb, "print", [grBoolArray]);
-	library.addPrimitive(&_printnf, "print", [grFloatArray]);
-	library.addPrimitive(&_printns, "print", [grStringArray]);
+	library.addPrimitive(&_printni, "print", [grIntList]);
+	library.addPrimitive(&_printnb, "print", [grBoolList]);
+	library.addPrimitive(&_printnf, "print", [grFloatList]);
+	library.addPrimitive(&_printns, "print", [grStringList]);
 
 	//printl
 	library.addPrimitive(&_printli, "printl", [grInt]);
 	library.addPrimitive(&_printlb, "printl", [grBool]);
 	library.addPrimitive(&_printlf, "printl", [grFloat]);
 	library.addPrimitive(&_printls, "printl", [grString]);
-	library.addPrimitive(&_printlni, "printl", [grIntArray]);
-	library.addPrimitive(&_printlnb, "printl", [grBoolArray]);
-	library.addPrimitive(&_printlnf, "printl", [grFloatArray]);
-	library.addPrimitive(&_printlns, "printl", [grStringArray]);
+	library.addPrimitive(&_printlni, "printl", [grIntList]);
+	library.addPrimitive(&_printlnb, "printl", [grBoolList]);
+	library.addPrimitive(&_printlnf, "printl", [grFloatList]);
+	library.addPrimitive(&_printlns, "printl", [grStringList]);
 }
 
 // print
@@ -49,22 +49,22 @@ private void _printf(GrCall call) {
 }
 
 private void _printni(GrCall call) {
-	auto ary = call.getIntArray(0);
+	auto ary = call.getIntList(0);
 	_stdOut(to!string(ary.data));
 }
 
 private void _printnb(GrCall call) {
-	auto ary = call.getIntArray(0);
+	auto ary = call.getIntList(0);
 	_stdOut(to!string(to!(GrBool[])(ary.data)));
 }
 
 private void _printnf(GrCall call) {
-	auto ary = call.getFloatArray(0);
+	auto ary = call.getFloatList(0);
 	_stdOut(to!string(ary.data));
 }
 
 private void _printns(GrCall call) {
-	auto ary = call.getStringArray(0);
+	auto ary = call.getStringList(0);
 	_stdOut(to!string(ary.data));
 }
 
@@ -86,21 +86,21 @@ private void _printlf(GrCall call) {
 }
 
 private void _printlni(GrCall call) {
-	auto ary = call.getIntArray(0);
+	auto ary = call.getIntList(0);
 	_stdOut(to!string(ary.data) ~ "\n");
 }
 
 private void _printlnb(GrCall call) {
-	auto ary = call.getIntArray(0);
+	auto ary = call.getIntList(0);
 	_stdOut(to!string(to!(GrBool[])(ary.data)) ~ "\n");
 }
 
 private void _printlnf(GrCall call) {
-	auto ary = call.getFloatArray(0);
+	auto ary = call.getFloatList(0);
 	_stdOut(to!string(ary.data) ~ "\n");
 }
 
 private void _printlns(GrCall call) {
-	auto ary = call.getStringArray(0);
+	auto ary = call.getStringList(0);
 	_stdOut(to!string(ary.data) ~ "\n");
 }

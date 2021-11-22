@@ -53,7 +53,7 @@ string grGetPrettyType(GrType variableType, GrLocale locale = GrLocale.en_US) {
         case fr_FR:
             return "chaîne";
         }
-    case array_:
+    case list_:
         string result;
         final switch (locale) with (GrLocale) {
         case en_US:
