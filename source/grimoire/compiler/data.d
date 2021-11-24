@@ -379,6 +379,16 @@ class GrData {
                     return primitive;
             }
         }
+        foreach (GrPrimitive primitive; _abstractPrimitives) {
+            if (primitive.name == name) {
+                if (isSignatureCompatible(signature, primitive.inSignature, 0, true)) {
+                    GrPrimitive reifiedPrimitive = reifyPrimitive(primitive);
+                    if (!reifiedPrimitive)
+                        continue;
+                    return reifiedPrimitive;
+                }
+            }
+        }
         return null;
     }
 
@@ -387,7 +397,7 @@ class GrData {
         foreach (GrPrimitive primitive; _abstractPrimitives) {
             if (primitive.name == name) {
                 _anyData = new GrAnyData;
-                if (isSignatureCompatible(signature, primitive.inSignature, 0, true)) {
+                if (isAbstractSignatureCompatible(signature, primitive.inSignature, 0, true)) {
                     GrPrimitive reifiedPrimitive = reifyPrimitive(primitive);
                     if (!reifiedPrimitive)
                         continue;
@@ -416,7 +426,7 @@ class GrData {
         foreach (GrPrimitive primitive; _abstractPrimitives) {
             if (primitive.name == name) {
                 _anyData = new GrAnyData;
-                if (isSignatureCompatible(signature, primitive.inSignature, 0, true)) {
+                if (isAbstractSignatureCompatible(signature, primitive.inSignature, 0, true)) {
                     assert(name.length == 0);
                     GrPrimitive reifiedPrimitive = reifyPrimitive(primitive);
                     if (!reifiedPrimitive)
@@ -491,6 +501,43 @@ class GrData {
     /// Check if the first signature match or can be upgraded (by inheritance) to the second one.
     package bool isSignatureCompatible(GrType[] first, GrType[] second,
         uint fileId, bool isPublic = false) {
+        if (first.length != second.length)
+            return false;
+        __signatureLoop: for (int i; i < first.length; ++i) {
+            if (first[i].base == GrType.Base.null_
+                && (second[i].base == GrType.Base.foreign
+                    || second[i].base == GrType.Base.class_))
+                continue;
+            if (first[i].base == GrType.Base.foreign && second[i].base == GrType.Base.foreign) {
+                for (;;) {
+                    if (first[i] == second[i])
+                        continue __signatureLoop;
+                    const GrForeignDefinition foreignType = getForeign(first[i].mangledType);
+                    if (!foreignType.parent.length)
+                        return false;
+                    first[i].mangledType = foreignType.parent;
+                }
+            }
+            else if (first[i].base == GrType.Base.class_
+                && second[i].base == GrType.Base.class_) {
+                for (;;) {
+                    if (first[i] == second[i])
+                        continue __signatureLoop;
+                    const GrClassDefinition classType = getClass(first[i].mangledType,
+                        fileId, isPublic);
+                    if (!classType.parent.length)
+                        return false;
+                    first[i].mangledType = classType.parent;
+                }
+            }
+            else if (first[i] != second[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+    /// Ditto
+    private bool isAbstractSignatureCompatible(GrType[] first, GrType[] second, uint fileId, bool isPublic = false) {
         if (first.length != second.length)
             return false;
         __signatureLoop: for (int i; i < first.length; ++i) {

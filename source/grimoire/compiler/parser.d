@@ -4630,7 +4630,6 @@ final class GrParser {
         case decrement:
             return 16;
         default:
-        writeln(type);
             logError(getError(Error.opNotListedInOpPriorityTable),
                 getError(Error.unknownOpPriority));
             return 0;

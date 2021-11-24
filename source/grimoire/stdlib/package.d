@@ -36,6 +36,7 @@ GrLibrary grLoadStdLibrary(GrLocale locale = GrLocale.en_US) {
     }
 
     GrLibrary library = new GrLibrary;
+    grLoadStdLibLog(library, locale);
     grLoadStdLibSystem(library, locale);
     grLoadStdLibList(library, locale);
     grLoadStdLibDictionary(library, locale);
@@ -51,6 +52,5 @@ GrLibrary grLoadStdLibrary(GrLocale locale = GrLocale.en_US) {
     grLoadStdLibPair(library, locale);
     grLoadStdLibBitmanip(library, locale);
     grLoadStdLibAny(library, locale);
-    grLoadStdLibLog(library, locale);
     return library;
 }
