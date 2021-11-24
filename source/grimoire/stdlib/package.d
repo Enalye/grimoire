@@ -42,7 +42,6 @@ GrLibrary grLoadStdLibrary(GrLocale locale = GrLocale.en_US) {
     grLoadStdLibRange(library, locale);
     grLoadStdLibString(library, locale);
     grLoadStdLibChannel(library, locale);
-    grLoadStdLibLog(library, locale);
     grLoadStdLibMath(library, locale);
     grLoadStdLibVec2(library, locale);
     grLoadStdLibColor(library, locale);
@@ -52,5 +51,6 @@ GrLibrary grLoadStdLibrary(GrLocale locale = GrLocale.en_US) {
     grLoadStdLibPair(library, locale);
     grLoadStdLibBitmanip(library, locale);
     grLoadStdLibAny(library, locale);
+    grLoadStdLibLog(library, locale);
     return library;
 }

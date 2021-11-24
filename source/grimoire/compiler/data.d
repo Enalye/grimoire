@@ -117,7 +117,7 @@ class GrData {
     }
 
     package void registerClass(string name, uint fileId, bool isPublic,
-            string[] templateVariables, uint position) {
+        string[] templateVariables, uint position) {
         GrClassDefinition class_ = new GrClassDefinition;
         class_.name = name;
         class_.position = position;
@@ -249,11 +249,11 @@ class GrData {
                 for (int i; i < parentTemplateSignature.length; ++i) {
                     if (parentTemplateSignature[i].isAny) {
                         parentTemplateSignature[i] = _anyData.get(
-                                parentTemplateSignature[i].mangledType);
+                            parentTemplateSignature[i].mangledType);
                     }
                 }
                 generatedForeign.parent = grMangleComposite(generatedForeign.parent,
-                        parentTemplateSignature);
+                    parentTemplateSignature);
 
                 _foreignDefinitions ~= generatedForeign;
                 return generatedForeign;
@@ -287,7 +287,7 @@ class GrData {
         GrType[] templateTypes = grUnmangleSignature(mangledTuple[1]);
         foreach (class_; _abstractClassDefinitions) {
             if (class_.name == name && class_.templateVariables.length == templateTypes.length
-                    && (class_.fileId == fileId || class_.isPublic || isPublic)) {
+                && (class_.fileId == fileId || class_.isPublic || isPublic)) {
                 GrClassDefinition generatedClass = new GrClassDefinition;
                 generatedClass.name = mangledName;
                 generatedClass.parent = class_.parent;
@@ -305,13 +305,13 @@ class GrData {
                 _anyData = new GrAnyData;
                 for (int i; i < generatedClass.templateVariables.length; ++i) {
                     _anyData.set(generatedClass.templateVariables[i],
-                            generatedClass.templateTypes[i]);
+                        generatedClass.templateTypes[i]);
                 }
 
                 for (int i; i < generatedClass.signature.length; ++i) {
                     if (generatedClass.signature[i].isAny) {
                         generatedClass.signature[i] = _anyData.get(
-                                generatedClass.signature[i].mangledType);
+                            generatedClass.signature[i].mangledType);
                         if (generatedClass.signature[i].base == GrType.Base.void_)
                             return null;
                     }
@@ -321,11 +321,11 @@ class GrData {
                 for (int i; i < parentTemplateSignature.length; ++i) {
                     if (parentTemplateSignature[i].isAny) {
                         parentTemplateSignature[i] = _anyData.get(
-                                parentTemplateSignature[i].mangledType);
+                            parentTemplateSignature[i].mangledType);
                     }
                 }
                 generatedClass.parent = grMangleComposite(generatedClass.parent,
-                        parentTemplateSignature);
+                    parentTemplateSignature);
 
                 _classDefinitions ~= generatedClass;
                 return generatedClass;
@@ -462,7 +462,7 @@ class GrData {
 
     /// Check if the first signature match or can be upgraded (by inheritance) to the second one.
     package bool isSignatureCompatible(GrType[] first, GrType[] second,
-            uint fileId, bool isPublic = false) {
+        uint fileId, bool isPublic = false) {
         if (first.length != second.length)
             return false;
         __signatureLoop: for (int i; i < first.length; ++i) {
@@ -482,8 +482,8 @@ class GrData {
                 continue;
             }
             if (first[i].base == GrType.Base.null_
-                    && (second[i].base == GrType.Base.foreign
-                        || second[i].base == GrType.Base.class_))
+                && (second[i].base == GrType.Base.foreign
+                    || second[i].base == GrType.Base.class_))
                 continue;
             if (first[i].base == GrType.Base.foreign && second[i].base == GrType.Base.foreign) {
                 for (;;) {
@@ -496,12 +496,12 @@ class GrData {
                 }
             }
             else if (first[i].base == GrType.Base.class_
-                    && second[i].base == GrType.Base.class_) {
+                && second[i].base == GrType.Base.class_) {
                 for (;;) {
                     if (first[i] == second[i])
                         continue __signatureLoop;
                     const GrClassDefinition classType = getClass(first[i].mangledType,
-                            fileId, isPublic);
+                        fileId, isPublic);
                     if (!classType.parent.length)
                         return false;
                     first[i].mangledType = classType.parent;

@@ -20,10 +20,9 @@ private {
 
 package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
     library.addClass("Vec2", ["x", "y"], [
-            grAny("T", (t, d) {
-                return (t.base == grInt) || (t.base == grFloat);
-            }), grAny("T")
-            ], ["T"]);
+            grAny("T", (t, d) { return (t.base == grInt) || (t.base == grFloat); }),
+            grAny("T")
+        ], ["T"]);
 
     GrType vec2iType = library.addTypeAlias("Vec2i", grGetClassType("Vec2", [
                 grInt
@@ -67,22 +66,22 @@ package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
         library.addOperator(&_opBinaryScalarVec2i!op, op, [vec2iType, grInt], vec2iType);
         library.addOperator(&_opBinaryScalarRightVec2i!op, op, [
                 grInt, vec2iType
-                ], vec2iType);
+            ], vec2iType);
 
         library.addOperator(&_opBinaryVec2f!op, op, [vec2fType, vec2fType], vec2fType);
         library.addOperator(&_opBinaryScalarVec2f!op, op, [vec2fType, grFloat], vec2fType);
         library.addOperator(&_opBinaryScalarRightVec2f!op, op, [
                 grFloat, vec2fType
-                ], vec2fType);
+            ], vec2fType);
     }
     static foreach (op; ["==", "!=", ">=", "<=", ">", "<"]) {
         library.addOperator(&_opBinaryCompareVec2i!op, op, [
                 vec2iType, vec2iType
-                ], grBool);
+            ], grBool);
 
         library.addOperator(&_opBinaryCompareVec2f!op, op, [
                 vec2fType, vec2fType
-                ], grBool);
+            ], grBool);
     }
 
     // Utility
@@ -101,7 +100,7 @@ package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
     library.addPrimitive(&_unpackVec2i, "unpack", [vec2iType], [grInt, grInt]);
     library.addPrimitive(&_unpackVec2f, "unpack", [vec2fType], [
             grFloat, grFloat
-            ]);
+        ]);
 
     library.addPrimitive(&_isZeroVec2i, "zero?", [vec2iType], [grBool]);
     library.addPrimitive(&_isZeroVec2f, "zero?", [vec2fType], [grBool]);
@@ -111,49 +110,49 @@ package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
     library.addPrimitive(&_sumVec2f, "sum", [vec2fType], [grFloat]);
     library.addPrimitive(&_distanceVec2i, "distance", [vec2iType, vec2iType], [
             grFloat
-            ]);
+        ]);
     library.addPrimitive(&_distanceVec2f, "distance", [vec2fType, vec2fType], [
             grFloat
-            ]);
+        ]);
     library.addPrimitive(&_distanceVec2i, "distanceSq", [vec2iType, vec2iType], [
             grFloat
-            ]);
+        ]);
     library.addPrimitive(&_distanceVec2f, "distanceSq", [vec2fType, vec2fType], [
             grFloat
-            ]);
+        ]);
     library.addPrimitive(&_dotVec2i, "dot", [vec2iType, vec2iType], [grFloat]);
     library.addPrimitive(&_dotVec2f, "dot", [vec2fType, vec2fType], [grFloat]);
     library.addPrimitive(&_crossVec2i, "cross", [vec2iType, vec2iType], [
             grFloat
-            ]);
+        ]);
     library.addPrimitive(&_crossVec2f, "cross", [vec2fType, vec2fType], [
             grFloat
-            ]);
+        ]);
     library.addPrimitive(&_normalVec2i, "normal", [vec2iType], [vec2iType]);
     library.addPrimitive(&_normalVec2f, "normal", [vec2fType], [vec2fType]);
     library.addPrimitive(&_angleVec2i, "angle", [vec2iType], [grFloat]);
     library.addPrimitive(&_angleVec2f, "angle", [vec2fType], [grFloat]);
     library.addPrimitive(&_rotateVec2f, "rotate!", [vec2fType, grFloat], [
             vec2fType
-            ]);
+        ]);
     library.addPrimitive(&_rotatedVec2f, "rotate", [vec2fType, grFloat], [
             vec2fType
-            ]);
+        ]);
     library.addPrimitive(&_angledVec2f, "Vec2f_angled", [grFloat], [vec2fType]);
     library.addPrimitive(&_lengthVec2i, "length", [vec2iType], [grFloat]);
     library.addPrimitive(&_lengthVec2f, "length", [vec2fType], [grFloat]);
     library.addPrimitive(&_lengthSquaredVec2i, "lengthSq", [vec2iType], [
             grFloat
-            ]);
+        ]);
     library.addPrimitive(&_lengthSquaredVec2f, "lengthSq", [vec2fType], [
             grFloat
-            ]);
+        ]);
     library.addPrimitive(&_normalizeVec2f, "normalize!", [vec2fType], [
             vec2fType
-            ]);
+        ]);
     library.addPrimitive(&_normalizedVec2f, "normalize", [vec2fType], [
             vec2fType
-            ]);
+        ]);
 }
 
 // Ctors ------------------------------------------
@@ -265,7 +264,7 @@ private void _trace_i(GrCall call) {
         _stdOut("null(Vec2i)\n");
         return;
     }
-    _stdOut("Vec2(" ~ to!GrString(self.getInt("x")) ~ ", " ~ to!GrString(self.getInt("y")) ~ ")\n");
+    _stdOut("Vec2i(" ~ to!GrString(self.getInt("x")) ~ ", " ~ to!GrString(self.getInt("y")) ~ ")\n");
 }
 
 private void _trace_f(GrCall call) {
@@ -274,7 +273,7 @@ private void _trace_f(GrCall call) {
         _stdOut("null(Vec2f)\n");
         return;
     }
-    _stdOut("Vec2(" ~ to!GrString(self.getFloat("x")) ~ ", " ~ to!GrString(
+    _stdOut("Vec2f(" ~ to!GrString(self.getFloat("x")) ~ ", " ~ to!GrString(
             self.getFloat("y")) ~ ")\n");
 }
 
@@ -370,8 +369,10 @@ private void _opBinaryCompareVec2i(string op)(GrCall call) {
         return;
     }
     mixin("call.setBool(
-        v1.getInt(\"x\")" ~ op ~ "v2.getInt(\"x\") &&
-        v1.getInt(\"y\")" ~ op ~ "v2.getInt(\"y\"));");
+        v1.getInt(\"x\")"
+            ~ op ~ "v2.getInt(\"x\") &&
+        v1.getInt(\"y\")"
+            ~ op ~ "v2.getInt(\"y\"));");
 }
 
 private void _opBinaryVec2f(string op)(GrCall call) {
@@ -433,8 +434,10 @@ private void _opBinaryCompareVec2f(string op)(GrCall call) {
         return;
     }
     mixin("call.setBool(
-        v1.getFloat(\"x\")" ~ op ~ "v2.getFloat(\"x\") &&
-        v1.getFloat(\"y\")" ~ op
+        v1.getFloat(\"x\")"
+            ~ op ~ "v2.getFloat(\"x\") &&
+        v1.getFloat(\"y\")"
+            ~ op
             ~ "v2.getFloat(\"y\"));");
 }
 
