@@ -527,6 +527,94 @@ final class GrParser {
         return null;
     }
 
+    auto getFirstMatchingFuncOrPrim(string name, GrType[] signature, uint fileId = 0, bool isPublic = false) {
+        struct Result {
+            GrPrimitive prim;
+            GrFunction func;
+        }
+
+        Result result;
+
+        const string mangledName = grMangleComposite(name, signature);
+        result.prim = _data.getPrimitive(mangledName);
+        if (result.prim)
+            return result;
+
+        foreach (GrFunction func; functions) {
+            if (func.mangledName == mangledName && (func.fileId == fileId
+                    || func.isPublic || isPublic)) {
+                result.func = func;
+                return result;
+            }
+        }
+        foreach (GrFunction func; functionsQueue) {
+            if (func.mangledName == mangledName && (func.fileId == fileId
+                    || func.isPublic || isPublic)) {
+                result.func = func;
+                return result;
+            }
+        }
+        foreach (GrFunction func; instanciatedFunctions) {
+            if (func.mangledName == mangledName && (func.fileId == fileId
+                    || func.isPublic || isPublic)) {
+                functionsQueue ~= func;
+
+                functionStack ~= currentFunction;
+                currentFunction = func;
+                generateFunctionInputs();
+                currentFunction = functionStack[$ - 1];
+                functionStack.length--;
+
+                result.func = func;
+                return result;
+            }
+        }
+
+        result.prim = _data.getCompatiblePrimitive(name, signature);
+        if (result.prim)
+            return result;
+
+        foreach (GrFunction func; functions) {
+            if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
+                if (_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic)) {
+                    result.func = func;
+                    return result;
+                }
+            }
+        }
+        foreach (GrFunction func; functionsQueue) {
+            if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
+                if (_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic)) {
+                    result.func = func;
+                    return result;
+                }
+            }
+        }
+
+        foreach (GrFunction func; instanciatedFunctions) {
+            if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
+                if (_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic)) {
+                    functionsQueue ~= func;
+
+                    functionStack ~= currentFunction;
+                    currentFunction = func;
+                    generateFunctionInputs();
+                    currentFunction = functionStack[$ - 1];
+                    functionStack.length--;
+
+                    result.func = func;
+                    return result;
+                }
+            }
+        }
+
+        result.prim = _data.getAbstractPrimitive(name, signature);
+        if (result.prim)
+            return result;
+
+        return result;
+    }
+
     GrFunction getFunction(string name, GrType[] signature, uint fileId = 0, bool isPublic = false) {
         const string mangledName = grMangleComposite(name, signature);
         foreach (GrFunction func; functions) {
@@ -764,25 +852,24 @@ final class GrParser {
         GrType[] signature = [leftType, rightType];
 
         //GrPrimitive check
-        const GrPrimitive primitive = _data.getPrimitive(name, signature);
-        if (primitive) {
-            addInstruction(GrOpcode.primitiveCall, primitive.index);
-            if (primitive.outSignature.length != 1uL) {
-                logError(getError(Error.opMustHave1RetVal), format(getError(primitive.outSignature.length > 1
+        auto matching = getFirstMatchingFuncOrPrim(name, signature, fileId);
+        if (matching.prim) {
+            addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+            if (matching.prim.outSignature.length != 1uL) {
+                logError(getError(Error.opMustHave1RetVal), format(getError(matching.prim.outSignature.length > 1
                         ? Error.expected1RetValFoundX : Error.expected1RetValFoundXs),
-                        primitive.outSignature.length));
+                        matching.prim.outSignature.length));
             }
-            return primitive.outSignature[0];
+            return matching.prim.outSignature[0];
         }
 
         //GrFunction check
-        GrFunction func = getFunction(name, signature, fileId);
-        if (func) {
-            auto outSignature = addFunctionCall(func, fileId);
+        if (matching.func) {
+            auto outSignature = addFunctionCall(matching.func, fileId);
             if (outSignature.length != 1uL) {
-                logError(getError(Error.opMustHave1RetVal), format(getError(primitive.outSignature.length > 1
+                logError(getError(Error.opMustHave1RetVal), format(getError(matching.func.outSignature.length > 1
                         ? Error.expected1RetValFoundX : Error.expected1RetValFoundXs),
-                        primitive.outSignature.length));
+                        matching.func.outSignature.length));
             }
             return outSignature[0];
         }
@@ -795,25 +882,24 @@ final class GrParser {
         GrType[] signature = [type];
 
         //GrPrimitive check
-        const GrPrimitive primitive = _data.getPrimitive(name, signature);
-        if (primitive) {
-            addInstruction(GrOpcode.primitiveCall, primitive.index);
-            if (primitive.outSignature.length != 1uL) {
-                logError(getError(Error.opMustHave1RetVal), format(getError(primitive.outSignature.length > 1
+        auto matching = getFirstMatchingFuncOrPrim(name, signature, fileId);
+        if (matching.prim) {
+            addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+            if (matching.prim.outSignature.length != 1uL) {
+                logError(getError(Error.opMustHave1RetVal), format(getError(matching.prim.outSignature.length > 1
                         ? Error.expected1RetValFoundX : Error.expected1RetValFoundXs),
-                        primitive.outSignature.length));
+                        matching.prim.outSignature.length));
             }
-            return primitive.outSignature[0];
+            return matching.prim.outSignature[0];
         }
 
         //GrFunction check
-        GrFunction func = getFunction(name, signature, fileId);
-        if (func) {
-            auto outSignature = addFunctionCall(func, fileId);
+        if (matching.func) {
+            auto outSignature = addFunctionCall(matching.func, fileId);
             if (outSignature.length != 1uL) {
-                logError(getError(Error.opMustHave1RetVal), format(getError(primitive.outSignature.length > 1
+                logError(getError(Error.opMustHave1RetVal), format(getError(matching.func.outSignature.length > 1
                         ? Error.expected1RetValFoundX : Error.expected1RetValFoundXs),
-                        primitive.outSignature.length));
+                        matching.func.outSignature.length));
             }
             return outSignature[0];
         }
@@ -4115,10 +4201,11 @@ final class GrParser {
                 GrVariable iterator = registerSpecialVariable("iterator", containerType);
 
                 GrType subType;
-                GrFunction nextFunc;
-                GrPrimitive nextPrim = _data.getPrimitive("next", [
+                auto matching = getFirstMatchingFuncOrPrim("next", [
                         containerType
-                    ]);
+                    ], fileId);
+                GrFunction nextFunc = matching.func;
+                GrPrimitive nextPrim = matching.prim;
                 if (nextPrim) {
                     if (nextPrim.outSignature.length != 2 || (nextPrim.outSignature.length >= 1
                             && nextPrim.outSignature[0].base != grBool)) {
@@ -4128,13 +4215,7 @@ final class GrParser {
                     }
                     subType = nextPrim.outSignature[1];
                 }
-                else {
-                    nextFunc = getFunction("next", [containerType], fileId);
-                    if (!nextFunc) {
-                        logError(format(getError(Error.xNotDef), getPrettyFunctionCall("next",
-                                [containerType])), getError(Error.notIterable));
-                    }
-
+                else if (nextFunc) {
                     if (nextFunc.outSignature.length != 2 || (nextFunc.outSignature.length >= 1
                             && nextFunc.outSignature[0].base != grBool)) {
                         logError(format(getError(Error.funcXMustRetBoolAndVal), getPrettyFunction(
@@ -4142,6 +4223,10 @@ final class GrParser {
                             getError(Error.signatureMismatch));
                     }
                     subType = nextFunc.outSignature[1];
+                }
+                else {
+                    logError(format(getError(Error.xNotDef), getPrettyFunctionCall("next",
+                            [containerType])), getError(Error.notIterable));
                 }
 
                 if (variable.isAuto && subType.base != GrType.Base.void_) {
@@ -4511,38 +4596,41 @@ final class GrParser {
         case lesserOrEqual:
         case lesser:
             return 4;
-        case interval:
+        case concatenate:
             return 5;
+        case interval:
+            return 6;
         case bitwiseOr:
         case bitwiseAnd:
         case bitwiseXor:
-            return 6;
+            return 7;
         case leftShift:
         case rightShift:
-            return 7;
+            return 8;
         case add:
         case substract:
-            return 8;
+            return 9;
         case multiply:
         case divide:
-            return 9;
-        case remainder:
             return 10;
-        case power:
+        case remainder:
             return 11;
-        case send:
+        case power:
             return 12;
+        case send:
+            return 13;
         case not:
         case plus:
         case minus:
         case receive:
-            return 13;
-        case bitwiseNot:
             return 14;
+        case bitwiseNot:
+            return 15;
         case increment:
         case decrement:
-            return 15;
+            return 16;
         default:
+        writeln(type);
             logError(getError(Error.opNotListedInOpPriorityTable),
                 getError(Error.unknownOpPriority));
             return 0;
@@ -4569,37 +4657,39 @@ final class GrParser {
         case lesserOrEqual:
         case lesser:
             return 4;
-        case interval:
+        case concatenate:
             return 5;
+        case interval:
+            return 6;
         case bitwiseOr:
         case bitwiseAnd:
         case bitwiseXor:
-            return 6;
+            return 7;
         case leftShift:
         case rightShift:
-            return 7;
+            return 8;
         case add:
         case substract:
-            return 8;
+            return 9;
         case multiply:
         case divide:
-            return 9;
-        case remainder:
             return 10;
-        case power:
+        case remainder:
             return 11;
-        case send:
+        case power:
             return 12;
+        case send:
+            return 13;
         case not:
         case plus:
         case minus:
         case receive:
-            return 13;
-        case bitwiseNot:
             return 14;
+        case bitwiseNot:
+            return 15;
         case increment:
         case decrement:
-            return 15;
+            return 16;
         default:
             logError(getError(Error.opNotListedInOpPriorityTable),
                 getError(Error.unknownOpPriority));
@@ -4713,30 +4803,29 @@ final class GrParser {
         GrType[] signature = [leftType, rightType];
 
         //GrPrimitive check
-        const GrPrimitive primitive = _data.getPrimitive(name, signature);
-        if (primitive) {
+        auto matching = getFirstMatchingFuncOrPrim(name, signature, fileId);
+        if (matching.prim) {
             //Some implicit conversions are disabled.
             //ex: float -> int because we might lose information.
-            if (primitive.isExplicit && !isExplicit)
+            if (matching.prim.isExplicit && !isExplicit)
                 return resultType;
-            addInstruction(GrOpcode.primitiveCall, primitive.index);
-            if (primitive.outSignature.length != 1uL) {
+            addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+            if (matching.prim.outSignature.length != 1uL) {
                 logError(getError(Error.opMustHave1RetVal),
-                    format(getError(primitive.outSignature.length > 1 ? Error.expectedXRetValsFoundY
-                        : Error.expectedXRetValFoundY), 1, primitive.outSignature.length));
+                    format(getError(matching.prim.outSignature.length > 1 ? Error.expectedXRetValsFoundY
+                        : Error.expectedXRetValFoundY), 1, matching.prim.outSignature.length));
             }
             resultType = rightType;
         }
 
         //GrFunction check
         if (resultType.base == GrType.Base.void_) {
-            GrFunction func = getFunction(name, signature, fileId);
-            if (func) {
-                const GrType[] outSignature = addFunctionCall(func, fileId);
+            if (matching.func) {
+                const GrType[] outSignature = addFunctionCall(matching.func, fileId);
                 if (outSignature.length != 1uL) {
                     logError(getError(Error.opMustHave1RetVal),
-                        format(getError(primitive.outSignature.length > 1 ? Error.expectedXRetValsFoundY
-                            : Error.expectedXRetValFoundY), 1, primitive.outSignature.length));
+                        format(getError(matching.func.outSignature.length > 1 ? Error.expectedXRetValsFoundY
+                            : Error.expectedXRetValFoundY), 1, matching.func.outSignature.length));
                 }
                 resultType = rightType;
             }
@@ -6486,13 +6575,19 @@ final class GrParser {
                     advance();
 
                 //GrPrimitive call.
-                GrPrimitive primitive = _data.getPrimitive(identifierName, signature);
-                if (primitive) {
-                    addInstruction(GrOpcode.primitiveCall, primitive.index);
-                    returnType = grPackTuple(primitive.outSignature);
+                auto matching = getFirstMatchingFuncOrPrim(identifierName, signature, fileId);
+                if (matching.prim) {
+                    addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+                    returnType = grPackTuple(matching.prim.outSignature);
                 }
-                else //GrFunction/Task call.
-                    returnType = grPackTuple(addFunctionCall(identifierName, signature, fileId));
+                else if (matching.func) {
+                    //GrFunction/Task call.
+                    returnType = grPackTuple(addFunctionCall(matching.func, fileId));
+                }
+                else {
+                    logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(identifierName,
+                            signature)), getError(Error.unknownFunc), "", -1);
+                }
             }
         }
         else if (_data.isEnum(identifier.svalue, fileId, false)) {

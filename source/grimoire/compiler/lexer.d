@@ -922,16 +922,16 @@ package final class GrLexer {
         case "self":
             lex.type = GrLexemeType.self;
             break;
-        case "meurs":
-        case "die":
+        case "tue":
+        case "kill":
             lex.type = GrLexemeType.kill;
             break;
-        case "fin":
-        case "end":
+        case "tuetous":
+        case "killall":
             lex.type = GrLexemeType.killAll;
             break;
-        case "passe":
-        case "pass":
+        case "cède":
+        case "yield":
             lex.type = GrLexemeType.yield;
             break;
         case "casse":

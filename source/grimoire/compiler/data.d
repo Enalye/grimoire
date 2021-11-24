@@ -372,6 +372,33 @@ class GrData {
     }
 
     /// Ditto
+    package GrPrimitive getCompatiblePrimitive(string name, GrType[] signature) {
+        foreach (GrPrimitive primitive; _primitives) {
+            if (primitive.name == name) {
+                if (isSignatureCompatible(signature, primitive.inSignature, 0, true))
+                    return primitive;
+            }
+        }
+        return null;
+    }
+
+    /// Ditto
+    package GrPrimitive getAbstractPrimitive(string name, GrType[] signature) {
+        foreach (GrPrimitive primitive; _abstractPrimitives) {
+            if (primitive.name == name) {
+                _anyData = new GrAnyData;
+                if (isSignatureCompatible(signature, primitive.inSignature, 0, true)) {
+                    GrPrimitive reifiedPrimitive = reifyPrimitive(primitive);
+                    if (!reifiedPrimitive)
+                        continue;
+                    return reifiedPrimitive;
+                }
+            }
+        }
+        return null;
+    }
+
+    /// Ditto
     package GrPrimitive getPrimitive(string name, GrType[] signature) {
         const string mangledName = grMangleComposite(name, signature);
         foreach (GrPrimitive primitive; _primitives) {
@@ -390,6 +417,7 @@ class GrData {
             if (primitive.name == name) {
                 _anyData = new GrAnyData;
                 if (isSignatureCompatible(signature, primitive.inSignature, 0, true)) {
+                    assert(name.length == 0);
                     GrPrimitive reifiedPrimitive = reifyPrimitive(primitive);
                     if (!reifiedPrimitive)
                         continue;
