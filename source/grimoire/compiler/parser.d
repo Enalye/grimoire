@@ -918,6 +918,12 @@ final class GrParser {
             // Special case, we need to convert int to float, then swap the 2 values when needed.
             convertType(leftType, rightType, fileId);
             resultType = addInternalOperator(lexType, rightType, true);
+
+            //Check custom operator
+            if (resultType.baseType == GrBaseType.void_) {
+                addInstruction(GrOpcode.swap_float);
+                resultType = addCustomBinaryOperator(lexType, rightType, rightType, fileId);
+            }
         }
         else if (leftType != rightType) {
             //Check custom operator
@@ -3611,7 +3617,7 @@ final class GrParser {
         if (lex.type == GrLexemeType.comma) {
             checkAdvance();
             lex = get();
-            if (lex.type != GrLexemeType.integer)
+            if (lex.type != GrLexemeType.int_)
                 logError(getError(Error.chanSizeMustBePositive),
                     format(getError(Error.expectedIntFoundX), getPrettyLexemeType(get().type)));
             channelSize = lex.ivalue > int.max ? 1 : cast(int) lex.ivalue;
@@ -5738,7 +5744,7 @@ final class GrParser {
                     hasValue = true;
                 }
                 break;
-            case integer:
+            case int_:
                 currentType = GrType(GrBaseType.int_);
                 addIntConstant(lex.ivalue);
                 hasValue = true;
@@ -5752,7 +5758,7 @@ final class GrParser {
                 typeStack ~= currentType;
                 checkAdvance();
                 break;
-            case boolean:
+            case bool_:
                 currentType = GrType(GrBaseType.bool_);
                 addBoolConstant(lex.bvalue);
                 hasValue = true;

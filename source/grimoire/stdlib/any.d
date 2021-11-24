@@ -61,7 +61,7 @@ private final class Any {
     }
 }
 
-package(grimoire.stdlib) void grLoadStdLibAny(GrLibrary library) {
+package(grimoire.stdlib) void grLoadStdLibAny(GrLibrary library, GrLocale locale) {
     GrType anyType = library.addForeign("any");
 
     library.addCast(&_from_b, grBool, anyType);
@@ -84,8 +84,7 @@ package(grimoire.stdlib) void grLoadStdLibAny(GrLibrary library) {
     library.addCast(&_to_f, anyType, grFloat);
     library.addCast(&_to_s, anyType, grString);
 
-    library.addPrimitive(&_printl, "print", [anyType]);
-    library.addPrimitive(&_printl, "printl", [anyType]);
+    library.addPrimitive(&_trace, "trace", [anyType]);
 
     // Operators
     /*static foreach (op; ["+", "-"]) {
@@ -266,19 +265,10 @@ private void _to_i2(GrCall call) {
     }
 }
 
-private void _print(GrCall call) {
+private void _trace(GrCall call) {
     Any any = call.getForeign!(Any)(0);
     if (!any) {
-        _stdOut("null");
-        return;
-    }
-    _stdOut("any(" ~ grGetPrettyType(grUnmangle(any.typeInfo)) ~ ")");
-}
-
-private void _printl(GrCall call) {
-    Any any = call.getForeign!(Any)(0);
-    if (!any) {
-        _stdOut("null");
+        _stdOut("null(any)");
         return;
     }
     _stdOut("any(" ~ grGetPrettyType(grUnmangle(any.typeInfo)) ~ ")\n");

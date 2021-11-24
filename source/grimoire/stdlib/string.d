@@ -9,7 +9,7 @@ import std.string;
 import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibString(GrLibrary library) {
+package(grimoire.stdlib) void grLoadStdLibString(GrLibrary library, GrLocale locale) {
     library.addPrimitive(&_empty, "empty?", [grString], [grBool]);
     library.addPrimitive(&_unshift, "unshift", [grString, grString], [grString]);
     library.addPrimitive(&_push, "push", [grString, grString], [grString]);

@@ -17,14 +17,14 @@ void main() {
         SetConsoleOutputCP(65_001);
     }
     try {
-        bool testBytecode = true;
+        bool testBytecode = false;
         auto startTime = MonoTime.currTime();
         GrLibrary stdlib = grLoadStdLibrary();
 
         GrCompiler compiler = new GrCompiler;
         compiler.addLibrary(stdlib);
         GrBytecode bytecode = compiler.compileFile("script/test.gr", GrOption.symbols, GrLocale
-                .fr_FR);
+                .en_US);
         if (!bytecode) {
             writeln(compiler.getError().prettify());
             return;

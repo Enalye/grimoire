@@ -28,9 +28,9 @@ string grGetPrettyType(GrType variableType, GrLocale locale = GrLocale.en_US) {
     case int_:
         final switch (locale) with (GrLocale) {
         case en_US:
-            return "integer";
+            return "int";
         case fr_FR:
-            return "entier";
+            return "ent";
         }
     case float_:
         final switch (locale) with (GrLocale) {
@@ -42,9 +42,9 @@ string grGetPrettyType(GrType variableType, GrLocale locale = GrLocale.en_US) {
     case bool_:
         final switch (locale) with (GrLocale) {
         case en_US:
-            return "boolean";
+            return "bool";
         case fr_FR:
-            return "booléen";
+            return "bool";
         }
     case string_:
         final switch (locale) with (GrLocale) {
@@ -205,7 +205,7 @@ string grGetPrettyFunctionCall(string mangledName, GrLocale locale = GrLocale.en
 
     int index = cast(int) indexOf(mangledName, '$');
     assert(index != 0 && mangledName.length,
-            "Invalid mangling format, named function have no name.");
+        "Invalid mangling format, named function have no name.");
 
     if (index < 0)
         return to!string(mangledName) ~ "()";
@@ -242,7 +242,8 @@ string grGetPrettyFunctionCall(string name, GrType[] signature, GrLocale locale 
 }
 
 /// Prettify a function.
-string grGetPrettyFunction(string name, GrType[] inSignature, GrType[] outSignature, GrLocale locale = GrLocale.en_US) {
+string grGetPrettyFunction(string name, GrType[] inSignature, GrType[] outSignature, GrLocale locale = GrLocale
+        .en_US) {
     string result = to!string(name) ~ "(";
     int i;
     foreach (type; inSignature) {

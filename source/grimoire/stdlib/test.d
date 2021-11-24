@@ -7,7 +7,7 @@ module grimoire.stdlib.test;
 
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibTest(GrLibrary library) {
+package(grimoire.stdlib) void grLoadStdLibTest(GrLibrary library, GrLocale locale) {
     library.addPrimitive(&_assert, "assert", [grBool]);
     library.addPrimitive(&_assert_msg, "assert", [grBool, grString]);
     library.addPrimitive(&_setMeta, "_setMeta", [grString]);

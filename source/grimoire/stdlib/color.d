@@ -10,7 +10,7 @@ import std.algorithm.comparison : clamp;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
-package void grLoadStdLibColor(GrLibrary library) {
+package void grLoadStdLibColor(GrLibrary library, GrLocale locale) {
     auto colorType = library.addClass("Color", ["r", "g", "b"], [
             grFloat, grFloat, grFloat
             ]);
@@ -44,8 +44,7 @@ package void grLoadStdLibColor(GrLibrary library) {
             grFloat, grFloat, grFloat
             ]);
 
-    library.addPrimitive(&_print, "print", [colorType]);
-    library.addPrimitive(&_printl, "printl", [colorType]);
+    library.addPrimitive(&_trace, "trace", [colorType]);
 }
 
 private void _makeColor(GrCall call) {
@@ -213,20 +212,10 @@ private void _unpack(GrCall call) {
     call.setFloat(self.getFloat("b"));
 }
 
-private void _print(GrCall call) {
+private void _trace(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise("NullError");
-        return;
-    }
-    _stdOut("Color(" ~ to!GrString(self.getFloat("r")) ~ ", " ~ to!GrString(
-            self.getFloat("g")) ~ ", " ~ to!GrString(self.getFloat("b")) ~ ")");
-}
-
-private void _printl(GrCall call) {
-    GrObject self = call.getObject(0);
-    if (!self) {
-        call.raise("NullError");
+        _stdOut("null(Color)");
         return;
     }
     _stdOut("Color(" ~ to!GrString(self.getFloat("r")) ~ ", " ~ to!GrString(

@@ -9,7 +9,41 @@ import std.random, std.math;
 import std.algorithm.comparison : clamp;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
+package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library, GrLocale locale) {
+    string clampSymbol, randSymbol, sqrtSymbol, floorSymbol, ceilSymbol, roundSymbol, truncateSymbol,
+    positiveSymbol, negativeSymbol, zeroSymbol, nanSymbol, evenSymbol, oddSymbol;
+    final switch (locale) with (GrLocale) {
+    case en_US:
+        clampSymbol = "clamp";
+        randSymbol = "random";
+        sqrtSymbol = "sqrt";
+        floorSymbol = "floor";
+        ceilSymbol = "ceil";
+        roundSymbol = "round";
+        truncateSymbol = "truncate";
+        positiveSymbol = "positive?";
+        negativeSymbol = "negative?";
+        zeroSymbol = "zero?";
+        nanSymbol = "invalid?";
+        evenSymbol = "even?";
+        oddSymbol = "odd?";
+        break;
+    case fr_FR:
+        clampSymbol = "restreins";
+        randSymbol = "hasard";
+        sqrtSymbol = "racineCarré";
+        floorSymbol = "arrondiInf";
+        ceilSymbol = "arrondiSup";
+        roundSymbol = "arrondi";
+        truncateSymbol = "tronque";
+        positiveSymbol = "positif?";
+        negativeSymbol = "négatif?";
+        zeroSymbol = "zéro?";
+        nanSymbol = "invalide?";
+        evenSymbol = "pair?";
+        oddSymbol = "impair?";
+        break;
+    }
     library.addVariable("pi", grFloat, PI, true);
 
     library.addPrimitive(&_min_f, "min", [grFloat, grFloat], [grFloat]);
@@ -17,13 +51,13 @@ package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
     library.addPrimitive(&_max_f, "max", [grFloat, grFloat], [grFloat]);
     library.addPrimitive(&_max_i, "max", [grInt, grInt], [grInt]);
 
-    library.addPrimitive(&_clamp, "clamp", [grFloat, grFloat, grFloat], [
+    library.addPrimitive(&_clamp, clampSymbol, [grFloat, grFloat, grFloat], [
             grFloat
-            ]);
+        ]);
 
-    library.addPrimitive(&_random01, "rand", [], [grFloat]);
-    library.addPrimitive(&_random_f, "rand", [grFloat, grFloat], [grFloat]);
-    library.addPrimitive(&_random_i, "rand", [grInt, grInt], [grInt]);
+    library.addPrimitive(&_random01, randSymbol, [], [grFloat]);
+    library.addPrimitive(&_random_f, randSymbol, [grFloat, grFloat], [grFloat]);
+    library.addPrimitive(&_random_i, randSymbol, [grInt, grInt], [grInt]);
 
     library.addPrimitive(&_cos, "cos", [grFloat], [grFloat]);
     library.addPrimitive(&_sin, "sin", [grFloat], [grFloat]);
@@ -34,29 +68,30 @@ package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
     library.addPrimitive(&_atan2, "atan2", [grFloat, grFloat], [grFloat]);
 
     library.addPrimitive(&_exp, "exp", [grFloat], [grFloat]);
-    library.addPrimitive(&_sqrt, "sqrt", [grFloat], [grFloat]);
-    library.addPrimitive(&_pow, "pow", [grFloat, grFloat], [grFloat]);
+    library.addPrimitive(&_sqrt, sqrtSymbol, [grFloat], [grFloat]);
+    library.addOperator(&_pow_i, GrLibrary.Operator.power, [grInt, grInt], grInt);
+    library.addOperator(&_pow_f, GrLibrary.Operator.power, [grFloat, grFloat], grFloat);
 
     library.addPrimitive(&_lerp, "lerp", [grFloat, grFloat, grFloat], [grFloat]);
     library.addPrimitive(&_rlerp, "rlerp", [grFloat, grFloat, grFloat], [
             grFloat
-            ]);
+        ]);
 
     library.addPrimitive(&_abs_i, "abs", [grInt], [grInt]);
     library.addPrimitive(&_abs_f, "abs", [grFloat], [grFloat]);
-    library.addPrimitive(&_floor, "floor", [grFloat], [grFloat]);
-    library.addPrimitive(&_ceil, "ceil", [grFloat], [grFloat]);
-    library.addPrimitive(&_round, "round", [grFloat], [grFloat]);
-    library.addPrimitive(&_truncate, "truncate", [grFloat], [grFloat]);
-    library.addPrimitive(&_positive_i, "positive?", [grInt], [grBool]);
-    library.addPrimitive(&_positive_f, "positive?", [grFloat], [grBool]);
-    library.addPrimitive(&_negative_i, "negative?", [grInt], [grBool]);
-    library.addPrimitive(&_negative_f, "negative?", [grFloat], [grBool]);
-    library.addPrimitive(&_zero_i, "zero?", [grInt], [grBool]);
-    library.addPrimitive(&_zero_f, "zero?", [grFloat], [grBool]);
-    library.addPrimitive(&_nan, "nan?", [grFloat], [grBool]);
-    library.addPrimitive(&_even, "even?", [grInt], [grBool]);
-    library.addPrimitive(&_odd, "odd?", [grInt], [grBool]);
+    library.addPrimitive(&_floor, floorSymbol, [grFloat], [grFloat]);
+    library.addPrimitive(&_ceil, ceilSymbol, [grFloat], [grFloat]);
+    library.addPrimitive(&_round, roundSymbol, [grFloat], [grFloat]);
+    library.addPrimitive(&_truncate, truncateSymbol, [grFloat], [grFloat]);
+    library.addPrimitive(&_positive_i, positiveSymbol, [grInt], [grBool]);
+    library.addPrimitive(&_positive_f, positiveSymbol, [grFloat], [grBool]);
+    library.addPrimitive(&_negative_i, negativeSymbol, [grInt], [grBool]);
+    library.addPrimitive(&_negative_f, negativeSymbol, [grFloat], [grBool]);
+    library.addPrimitive(&_zero_i, zeroSymbol, [grInt], [grBool]);
+    library.addPrimitive(&_zero_f, zeroSymbol, [grFloat], [grBool]);
+    library.addPrimitive(&_nan, nanSymbol, [grFloat], [grBool]);
+    library.addPrimitive(&_even, evenSymbol, [grInt], [grBool]);
+    library.addPrimitive(&_odd, oddSymbol, [grInt], [grBool]);
 }
 
 private void _min_f(GrCall call) {
@@ -94,7 +129,7 @@ private void _random01(GrCall call) {
 private void _random_f(GrCall call) {
     const GrFloat a = call.getFloat(0);
     const GrFloat b = call.getFloat(1);
-    if(a < b)
+    if (a < b)
         call.setFloat(uniform!"[]"(a, b));
     else
         call.setFloat(uniform!"[]"(b, a));
@@ -103,7 +138,7 @@ private void _random_f(GrCall call) {
 private void _random_i(GrCall call) {
     const GrInt a = call.getInt(0);
     const GrInt b = call.getInt(1);
-    if(a < b)
+    if (a < b)
         call.setInt(uniform!"[]"(a, b));
     else
         call.setInt(uniform!"[]"(b, a));
@@ -145,7 +180,11 @@ private void _sqrt(GrCall call) {
     call.setFloat(sqrt(call.getFloat(0)));
 }
 
-private void _pow(GrCall call) {
+private void _pow_i(GrCall call) {
+    call.setInt(pow(call.getInt(0), call.getInt(1)));
+}
+
+private void _pow_f(GrCall call) {
     call.setFloat(pow(call.getFloat(0), call.getFloat(1)));
 }
 

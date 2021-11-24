@@ -15,7 +15,7 @@ import grimoire.stdlib.dictionary;
 import grimoire.stdlib.range;
 import grimoire.stdlib.string;
 import grimoire.stdlib.channel;
-import grimoire.stdlib.print;
+import grimoire.stdlib.log;
 import grimoire.stdlib.math;
 import grimoire.stdlib.vec2;
 import grimoire.stdlib.color;
@@ -27,23 +27,30 @@ import grimoire.stdlib.bitmanip;
 import grimoire.stdlib.any;
 
 /// Load the standard library
-GrLibrary grLoadStdLibrary() {
+GrLibrary grLoadStdLibrary(GrLocale locale = GrLocale.en_US) {
+    final switch(locale) with(GrLocale) {
+    case en_US:
+        break;
+    case fr_FR:
+        assert(false, "la version fr_FR n’est pas encore prête");
+    }
+
     GrLibrary library = new GrLibrary;
-    grLoadStdLibSystem(library);
-    grLoadStdLibList(library);
-    grLoadStdLibDictionary(library);
-    grLoadStdLibRange(library);
-    grLoadStdLibString(library);
-    grLoadStdLibChannel(library);
-    grLoadStdLibPrint(library);
-    grLoadStdLibMath(library);
-    grLoadStdLibVec2(library);
-    grLoadStdLibColor(library);
-    grLoadStdLibTest(library);
-    grLoadStdLibTime(library);
-    grLoadStdLibTypecast(library);
-    grLoadStdLibPair(library);
-    grLoadStdLibBitmanip(library);
-    grLoadStdLibAny(library);
+    grLoadStdLibSystem(library, locale);
+    grLoadStdLibList(library, locale);
+    grLoadStdLibDictionary(library, locale);
+    grLoadStdLibRange(library, locale);
+    grLoadStdLibString(library, locale);
+    grLoadStdLibChannel(library, locale);
+    grLoadStdLibLog(library, locale);
+    grLoadStdLibMath(library, locale);
+    grLoadStdLibVec2(library, locale);
+    grLoadStdLibColor(library, locale);
+    grLoadStdLibTest(library, locale);
+    grLoadStdLibTime(library, locale);
+    grLoadStdLibTypecast(library, locale);
+    grLoadStdLibPair(library, locale);
+    grLoadStdLibBitmanip(library, locale);
+    grLoadStdLibAny(library, locale);
     return library;
 }

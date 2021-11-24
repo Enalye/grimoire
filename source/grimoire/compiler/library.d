@@ -278,7 +278,7 @@ class GrLibrary {
             name = "%";
             break;
         case power:
-            name = "^";
+            name = "**";
             break;
         case equal:
             name = "==";

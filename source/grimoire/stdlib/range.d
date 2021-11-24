@@ -8,7 +8,7 @@ module grimoire.stdlib.range;
 import std.range;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library) {
+package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library, GrLocale locale) {
     library.addForeign("RangeIter", ["T"]);
     GrType rangeIterIntType = grGetForeignType("RangeIter", [grInt]);
     GrType rangeIterFloatType = grGetForeignType("RangeIter", [grFloat]);

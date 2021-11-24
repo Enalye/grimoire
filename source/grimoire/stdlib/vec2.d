@@ -18,7 +18,7 @@ private {
     enum double _radToDeg = 180.0 / std.math.PI;
 }
 
-package void grLoadStdLibVec2(GrLibrary library) {
+package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
     library.addClass("Vec2", ["x", "y"], [
             grAny("T", (t, d) {
                 return (t.baseType == grInt) || (t.baseType == grFloat);
@@ -53,11 +53,9 @@ package void grLoadStdLibVec2(GrLibrary library) {
     library.addCast(&_vec2i_vec2f, vec2iType, vec2fType);
     library.addCast(&_vec2f_vec2i, vec2fType, vec2iType);
 
-    // Prints
-    library.addPrimitive(&_printVec2i, "print", [vec2iType]);
-    library.addPrimitive(&_printlVec2i, "printl", [vec2iType]);
-    library.addPrimitive(&_printVec2f, "print", [vec2fType]);
-    library.addPrimitive(&_printlVec2f, "printl", [vec2fType]);
+    // Trace
+    library.addPrimitive(&_trace_i, "trace", [vec2iType]);
+    library.addPrimitive(&_trace_f, "trace", [vec2fType]);
 
     // Operators
     static foreach (op; ["+", "-"]) {
@@ -260,38 +258,20 @@ private void _vec2f_vec2i(GrCall call) {
     call.setObject(v);
 }
 
-// Prints ------------------------------------------
-private void _printVec2i(GrCall call) {
+// Trace ------------------------------------------
+private void _trace_i(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        _stdOut("Vec2(0, 0)");
-        return;
-    }
-    _stdOut("Vec2(" ~ to!GrString(self.getInt("x")) ~ ", " ~ to!GrString(self.getInt("y")) ~ ")");
-}
-
-private void _printlVec2i(GrCall call) {
-    GrObject self = call.getObject(0);
-    if (!self) {
-        _stdOut("{0;0}\n");
+        _stdOut("null(Vec2i)\n");
         return;
     }
     _stdOut("Vec2(" ~ to!GrString(self.getInt("x")) ~ ", " ~ to!GrString(self.getInt("y")) ~ ")\n");
 }
 
-private void _printVec2f(GrCall call) {
+private void _trace_f(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        _stdOut("{0;0}");
-        return;
-    }
-    _stdOut("Vec2(" ~ to!GrString(self.getFloat("x")) ~ ", " ~ to!GrString(self.getFloat("y")) ~ ")");
-}
-
-private void _printlVec2f(GrCall call) {
-    GrObject self = call.getObject(0);
-    if (!self) {
-        _stdOut("{0;0}\n");
+        _stdOut("null(Vec2f)\n");
         return;
     }
     _stdOut("Vec2(" ~ to!GrString(self.getFloat("x")) ~ ", " ~ to!GrString(

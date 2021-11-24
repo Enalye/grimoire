@@ -8,7 +8,7 @@ module grimoire.stdlib.bitmanip;
 import std.range;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibBitmanip(GrLibrary library) {
+package(grimoire.stdlib) void grLoadStdLibBitmanip(GrLibrary library, GrLocale locale) {
     library.addOperator(&_shiftLeft, GrLibrary.Operator.leftShift, [grInt, grInt], grInt);
     library.addOperator(&_shiftRight, GrLibrary.Operator.rightShift, [grInt, grInt], grInt);
     library.addOperator(&_and, GrLibrary.Operator.bitwiseAnd, [grInt, grInt], grInt);

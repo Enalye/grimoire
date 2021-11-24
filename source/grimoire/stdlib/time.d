@@ -9,7 +9,7 @@ import std.datetime;
 import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibTime(GrLibrary library) {
+package(grimoire.stdlib) void grLoadStdLibTime(GrLibrary library, GrLocale locale) {
 	library.addPrimitive(&_clock, "clock", [], [grInt]);
 
 	library.addPrimitive(&_wait, "wait", [grInt]);

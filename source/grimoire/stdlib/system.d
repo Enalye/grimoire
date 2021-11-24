@@ -8,10 +8,21 @@ module grimoire.stdlib.system;
 import grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
-package void grLoadStdLibSystem(GrLibrary library) {
+package void grLoadStdLibSystem(GrLibrary library, GrLocale locale) {
+    string funcSwap, funcCond;
+    final switch(locale) with(GrLocale) {
+    case en_US:
+        funcSwap = "swap";
+        funcCond = "cond";
+        break;
+    case fr_FR:
+        funcSwap = "permute";
+        funcCond = "cond";
+        break;
+    }
     static foreach (t1; ["Int", "Float", "String", "Ptr"]) {
         static foreach (t2; ["Int", "Float", "String", "Ptr"]) {
-            library.addPrimitive(&_swap_2_!(t1, t2), "swap", [
+            library.addPrimitive(&_swap_2_!(t1, t2), funcSwap, [
                     grAny("1", (type, data) {
                         static if (t1 == "Ptr") {
                             return grIsKindOfObject(type.baseType);
@@ -31,7 +42,7 @@ package void grLoadStdLibSystem(GrLibrary library) {
         }
     }
     static foreach (t; ["Int", "Float", "String", "Ptr"]) {
-        library.addPrimitive(&_cond_!t, "cond", [
+        library.addPrimitive(&_cond_!t, funcCond, [
                 grBool, grAny("T", (type, data) {
                     static if (t == "Ptr") {
                         return grIsKindOfObject(type.baseType);

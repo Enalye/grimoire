@@ -8,7 +8,7 @@ module grimoire.stdlib.list;
 import std.range;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibList(GrLibrary library) {
+package(grimoire.stdlib) void grLoadStdLibList(GrLibrary library, GrLocale locale) {
     library.addForeign("ListIter", ["T"]);
 
     static foreach (t; ["Int", "Float", "String", "Object"]) {

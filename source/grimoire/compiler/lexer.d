@@ -77,9 +77,9 @@ enum GrLexemeType {
     increment,
     decrement,
     identifier,
-    integer,
+    int_,
     float_,
-    boolean,
+    bool_,
     string_,
     null_,
     public_,
@@ -175,20 +175,20 @@ struct GrLexeme {
     /// is this a reserved grimoire word ?
     bool isKeyword;
 
-    /// Only describe first class type such as `int`, `string` or `func`.
+    /// Only describe first class type such as `int`, `string` or `function`.
     /// Structure or other custom type are not.
     bool isType;
 
     /// Integral value of the constant.
-    /// isLiteral will be true and type set to integer.
+    /// isLiteral will be true and type set to int.
     GrInt ivalue;
 
     /// Floating point value of the constant.
-    /// isLiteral will be true and type set to float_.
+    /// isLiteral will be true and type set to float.
     GrFloat fvalue;
 
-    /// boolean value of the constant.
-    /// isLiteral will be true and type set to boolean.
+    /// Boolean value of the constant.
+    /// isLiteral will be true and type set to bool.
     GrBool bvalue;
 
     /// Can either describe a literal value like `"myString"` or an identifier.
@@ -466,7 +466,7 @@ package final class GrLexer {
             lex.fvalue = to!GrFloat(buffer);
         }
         else {
-            lex.type = GrLexemeType.integer;
+            lex.type = GrLexemeType.int_;
             lex.ivalue = to!GrInt(buffer);
         }
         _lexemes ~= lex;
@@ -971,8 +971,8 @@ package final class GrLexer {
             lex.type = GrLexemeType.functionType;
             lex.isType = true;
             break;
-        case "entier":
-        case "integer":
+        case "ent":
+        case "int":
             lex.type = GrLexemeType.intType;
             lex.isType = true;
             break;
@@ -981,8 +981,7 @@ package final class GrLexer {
             lex.type = GrLexemeType.floatType;
             lex.isType = true;
             break;
-        case "booléen":
-        case "boolean":
+        case "bool":
             lex.type = GrLexemeType.boolType;
             lex.isType = true;
             break;
@@ -1013,14 +1012,14 @@ package final class GrLexer {
             break;
         case "vrai":
         case "true":
-            lex.type = GrLexemeType.boolean;
+            lex.type = GrLexemeType.bool_;
             lex.isKeyword = false;
             lex.isLiteral = true;
             lex.bvalue = true;
             break;
         case "faux":
         case "false":
-            lex.type = GrLexemeType.boolean;
+            lex.type = GrLexemeType.bool_;
             lex.isKeyword = false;
             lex.isLiteral = true;
             lex.bvalue = false;
@@ -1242,23 +1241,23 @@ string grGetPrettyLexemeType(GrLexemeType operator, GrLocale locale = GrLocale.e
             "&", "|", "^", "&&", "||", "+", "-", "*", "/", "~", "%", "**",
             "==", "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->",
             "=>", "~", "!", "++", "--", "identifier", "const_integer",
-            "const_float", "const_boolean", "const_string", "null", "public",
+            "const_float", "const_bool", "const_string", "null", "public",
             "type", "action", "class", "enum", "template", "new", "copy", "send",
-            "receive", "integer", "float", "boolean", "string", "list", "channel",
+            "receive", "int", "float", "bool", "string", "list", "channel",
             "function", "task", "let", "if", "unless", "else", "switch", "select",
             "case", "while", "do", "until", "for", "loop", "return", "self",
             "die", "end", "pass", "break", "continue"
         ],
         [
             "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&",
-            "xlnnp", "essaie", "récup", "lance", "décale", "=", "&=", "|=",
+            "comme", "essaie", "récup", "lance", "décale", "=", "&=", "|=",
             "^=", "&&=", "||=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+",
             "-", "&", "|", "^", "&&", "||", "+", "-", "*", "/", "~", "%",
             "**", "==", "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>",
             "->", "=>", "~", "!", "++", "--", "identificateur", "entier_const",
-            "réel_const", "booléen_const", "chaîne_const", "nul", "public",
+            "réel_const", "bool_const", "chaîne_const", "nul", "public",
             "type", "action", "classe", "énum", "patron", "crée", "copie",
-            "envoie", "reçois", "entier", "réel", "booléen", "chaîne", "liste",
+            "envoie", "reçois", "ent", "réel", "bool", "chaîne", "liste",
             "canal", "fonction", "tâche", "soit", "si", "sauf", "sinon", "où",
             "sélect", "cas", "tant", "fais", "jusque", "pour", "boucle",
             "retourne", "soi", "meurs", "fin", "passe", "casse", "continue"
