@@ -13,11 +13,11 @@ package(grimoire.stdlib) void grLoadStdLibList(GrLibrary library, GrLocale local
 
     static foreach (t; ["Int", "Float", "String", "Object"]) {
         mixin("GrType any" ~ t ~ "List = grAny(\"A\", (type, data) {
-                if (type.baseType != GrBaseType.list_)
+                if (type.base != GrType.Base.list_)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
                 data.set(\"T\", subType);
-                return grIsKindOf" ~ t ~ "(subType.baseType);
+                return grIsKindOf" ~ t ~ "(subType.base);
             });
             library.addPrimitive(&_copy_!\"" ~ t ~ "\", \"copy\", [any"
                 ~ t ~ "List], [grAny(\"A\")]);
@@ -88,23 +88,23 @@ package(grimoire.stdlib) void grLoadStdLibList(GrLibrary library, GrLocale local
             library.addPrimitive(&_each_!\"" ~ t
                 ~ "\", \"each\", [
                     grAny(\"A\", (type, data) {
-                if (type.baseType != GrBaseType.list_)
+                if (type.base != GrType.Base.list_)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
                 data.set(\"R\", grGetForeignType(\"ListIter\", [subType]));
-                return grIsKindOf" ~ t ~ "(subType.baseType);
+                return grIsKindOf" ~ t ~ "(subType.base);
             })
                 ], [grAny(\"R\")]);
             library.addPrimitive(&_next_!\""
                 ~ t ~ "\", \"next\", [
                     grAny(\"R\", (type, data) {
-                if (type.baseType != GrBaseType.foreign)
+                if (type.base != GrType.Base.foreign)
                     return false;
                 auto result = grUnmangleComposite(type.mangledType);
                 if(result.signature.length != 1 || result.name != \"ListIter\")
                     return false;
                 data.set(\"T\", result.signature[0]);
-                return grIsKindOf" ~ t ~ "(result.signature[0].baseType);
+                return grIsKindOf" ~ t ~ "(result.signature[0].base);
                     })
                 ], [grBool, grAny(\"T\")]);
             ");

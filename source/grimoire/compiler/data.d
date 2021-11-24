@@ -111,7 +111,7 @@ class GrData {
         enumDef.isPublic = isPublic;
         _enumDefinitions ~= enumDef;
 
-        GrType stType = GrBaseType.enum_;
+        GrType stType = GrType.Base.enum_;
         stType.mangledType = name;
         return stType;
     }
@@ -312,7 +312,7 @@ class GrData {
                     if (generatedClass.signature[i].isAny) {
                         generatedClass.signature[i] = _anyData.get(
                                 generatedClass.signature[i].mangledType);
-                        if (generatedClass.signature[i].baseType == GrBaseType.void_)
+                        if (generatedClass.signature[i].base == GrType.Base.void_)
                             return null;
                     }
                 }
@@ -406,7 +406,7 @@ class GrData {
         for (int i; i < primitive.inSignature.length; ++i) {
             if (primitive.inSignature[i].isAny) {
                 primitive.inSignature[i] = _anyData.get(primitive.inSignature[i].mangledType);
-                if (primitive.inSignature[i].baseType == GrBaseType.void_)
+                if (primitive.inSignature[i].base == GrType.Base.void_)
                     throw new Exception("`" ~ getPrettyPrimitive(primitive) ~ "` can't be reified");
             }
             checkUnknownClasses(primitive.inSignature[i]);
@@ -414,7 +414,7 @@ class GrData {
         for (int i; i < primitive.outSignature.length; ++i) {
             if (primitive.outSignature[i].isAny) {
                 primitive.outSignature[i] = _anyData.get(primitive.outSignature[i].mangledType);
-                if (primitive.outSignature[i].baseType == GrBaseType.void_)
+                if (primitive.outSignature[i].base == GrType.Base.void_)
                     throw new Exception("`" ~ getPrettyPrimitive(primitive) ~ "` can't be reified");
             }
             checkUnknownClasses(primitive.outSignature[i]);
@@ -429,7 +429,7 @@ class GrData {
 
     // Forcing the classes to be reified they aren't already
     private void checkUnknownClasses(GrType type) {
-        switch (type.baseType) with (GrBaseType) {
+        switch (type.base) with (GrType.Base) {
         case class_:
             GrClassDefinition classDef = getClass(type.mangledType, 0, true);
             if (!classDef)
@@ -441,7 +441,7 @@ class GrData {
             }
             break;
         case list_:
-        case chan:
+        case channel:
             GrType subType = grUnmangle(type.mangledType);
             checkUnknownClasses(subType);
             break;
@@ -468,7 +468,7 @@ class GrData {
         __signatureLoop: for (int i; i < first.length; ++i) {
             if (second[i].isAny) {
                 const GrType registeredType = _anyData.get(second[i].mangledType);
-                if (registeredType.baseType == GrBaseType.void_) {
+                if (registeredType.base == GrType.Base.void_) {
                     _anyData.set(second[i].mangledType, first[i]);
                 }
                 else {
@@ -481,11 +481,11 @@ class GrData {
                     return false;
                 continue;
             }
-            if (first[i].baseType == GrBaseType.null_
-                    && (second[i].baseType == GrBaseType.foreign
-                        || second[i].baseType == GrBaseType.class_))
+            if (first[i].base == GrType.Base.null_
+                    && (second[i].base == GrType.Base.foreign
+                        || second[i].base == GrType.Base.class_))
                 continue;
-            if (first[i].baseType == GrBaseType.foreign && second[i].baseType == GrBaseType.foreign) {
+            if (first[i].base == GrType.Base.foreign && second[i].base == GrType.Base.foreign) {
                 for (;;) {
                     if (first[i] == second[i])
                         continue __signatureLoop;
@@ -495,8 +495,8 @@ class GrData {
                     first[i].mangledType = foreignType.parent;
                 }
             }
-            else if (first[i].baseType == GrBaseType.class_
-                    && second[i].baseType == GrBaseType.class_) {
+            else if (first[i].base == GrType.Base.class_
+                    && second[i].base == GrType.Base.class_) {
                 for (;;) {
                     if (first[i] == second[i])
                         continue __signatureLoop;

@@ -35,25 +35,25 @@ package(grimoire.stdlib) void grLoadStdLibLog(GrLibrary library, GrLocale locale
     library.addPrimitive(&_trace_nf, "trace", [grFloatList]);
     library.addPrimitive(&_trace_ns, "trace", [grStringList]);
     library.addPrimitive(&_trace_enum, "trace", [
-            grAny("T", (type, data) { return type.baseType == GrBaseType.enum_; })
+            grAny("T", (type, data) { return type.base == GrType.Base.enum_; })
         ]
     );
     library.addPrimitive(&_trace_chan, "trace", [
-            grAny("T", (type, data) { return type.baseType == GrBaseType.chan; })
+            grAny("T", (type, data) { return type.base == GrType.Base.channel; })
         ]
     );
     library.addPrimitive(&_trace_func, "trace", [
             grAny("T", (type, data) {
-                return (type.baseType == GrBaseType.function_) || (type.baseType == GrBaseType.task);
+                return (type.base == GrType.Base.function_) || (type.base == GrType.Base.task);
             })
         ]
     );
     library.addPrimitive(&_trace_o, "trace", [
-            grAny("T", (type, data) { return type.baseType == GrBaseType.class_; })
+            grAny("T", (type, data) { return type.base == GrType.Base.class_; })
         ]
     );
     library.addPrimitive(&_trace_u, "trace", [
-            grAny("T", (type, data) { return type.baseType == GrBaseType.foreign; })
+            grAny("T", (type, data) { return type.base == GrType.Base.foreign; })
         ]
     );
 }

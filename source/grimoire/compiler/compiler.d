@@ -210,13 +210,13 @@ final class GrCompiler {
         foreach (variableDef; _data._variableDefinitions) {
             GrBytecode.Variable variable;
             variable.index = variableDef.register;
-            final switch (variableDef.type.baseType) with (GrBaseType) {
+            final switch (variableDef.type.base) with (GrType.Base) {
             case bool_:
             case int_:
             case function_:
             case task:
             case enum_:
-            case chan:
+            case channel:
                 variable.typeMask = 0x1;
                 variable.ivalue = variableDef.isInitialized ? variableDef.ivalue : 0;
                 break;
@@ -267,7 +267,7 @@ final class GrCompiler {
             for (size_t i; i < inSignature.length; ++i) {
                 const GrType type = inSignature[i];
                 bytecode.primitives[id].inSignature ~= grMangle(type);
-                final switch (type.baseType) with (GrBaseType) {
+                final switch (type.base) with (GrType.Base) {
                 case bool_:
                 case int_:
                 case function_:
@@ -290,7 +290,7 @@ final class GrCompiler {
                 case list_:
                 case class_:
                 case foreign:
-                case chan:
+                case channel:
                     bytecode.primitives[id].parameters ~= 0x80000 | (
                             bytecode.primitives[id].oparams & 0xFFFF);
                     bytecode.primitives[id].oparams++;

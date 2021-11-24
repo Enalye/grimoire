@@ -13,37 +13,37 @@ import grimoire.compiler.mangle;
 import grimoire.compiler.data;
 
 /**
-Type category.
-
-Complex types use mangledType and mangledReturnType
-to represent them.
-*/
-enum GrBaseType {
-    void_,
-    null_,
-    int_,
-    float_,
-    bool_,
-    string_,
-    list_,
-    function_,
-    task,
-    class_,
-    foreign,
-    chan,
-    enum_,
-    internalTuple,
-    reference
-}
-
-/**
 Compiler type definition for Grimoire's type system.
 It doesn't mean anything for the VM.
 */
 struct GrType {
+    /**
+    Type category.
+
+    Complex types use mangledType and mangledReturnType
+    to represent them.
+    */
+    enum Base {
+        void_,
+        null_,
+        int_,
+        float_,
+        bool_,
+        string_,
+        list_,
+        function_,
+        task,
+        class_,
+        foreign,
+        channel,
+        enum_,
+        internalTuple,
+        reference
+    }
+
     /// General type, basic types only use that while compound types also use mangledType
     /// and mangledReturnType.
-    GrBaseType baseType;
+    Base base;
     /// Used for compound types like lists, functions, etc.
     string mangledType, mangledReturnType;
     /// Is this from an object field ?
@@ -57,35 +57,35 @@ struct GrType {
     bool function(GrType, GrAnyData) predicate;
 
     /// Init as a basic type.
-    this(GrBaseType baseType_) {
-        baseType = baseType_;
+    this(Base base_) {
+        base = base_;
     }
 
     /// Compound type.
-    this(GrBaseType baseType_, string mangledType_) {
-        baseType = baseType_;
+    this(Base base_, string mangledType_) {
+        base = base_;
         mangledType = mangledType_;
     }
 
-    /// Only assign a simple type (baseType).
-    GrType opOpAssign(string op)(GrBaseType t) {
-        mixin("baseType = baseType" ~ op ~ "t;");
+    /// Only assign a simple type (base).
+    GrType opOpAssign(string op)(GrType.Base t) {
+        mixin("base = base" ~ op ~ "t;");
         return this;
     }
 
     /// Check general type equality.
-    bool opEquals(const GrBaseType v) const {
-        return (baseType == v);
+    bool opEquals(const GrType.Base v) const {
+        return (base == v);
     }
 
     /// Check full type equality.
     bool opEquals(const GrType v) const {
-        if (baseType != v.baseType)
+        if (base != v.base)
             return false;
-        if (baseType == GrBaseType.function_ || baseType == GrBaseType.task)
+        if (base == GrType.Base.function_ || base == GrType.Base.task)
             return mangledType == v.mangledType && mangledReturnType == v.mangledReturnType;
-        if (baseType == GrBaseType.foreign || baseType == GrBaseType.class_
-                || baseType == GrBaseType.enum_ || baseType == GrBaseType.list_)
+        if (base == GrType.Base.foreign || base == GrType.Base.class_
+            || base == GrType.Base.enum_ || base == GrType.Base.list_)
             return mangledType == v.mangledType;
         return true;
     }
@@ -97,54 +97,56 @@ struct GrType {
 }
 
 /// No type
-const GrType grVoid = GrType(GrBaseType.void_);
+const GrType grVoid = GrType(GrType.Base.void_);
 /// Integer
-const GrType grInt = GrType(GrBaseType.int_);
+const GrType grInt = GrType(GrType.Base.int_);
 /// Float
-const GrType grFloat = GrType(GrBaseType.float_);
+const GrType grFloat = GrType(GrType.Base.float_);
 /// Bool
-const GrType grBool = GrType(GrBaseType.bool_);
+const GrType grBool = GrType(GrType.Base.bool_);
 /// String
-const GrType grString = GrType(GrBaseType.string_);
+const GrType grString = GrType(GrType.Base.string_);
 /// Int list
-const GrType grIntList = GrType(GrBaseType.list_, grMangleSignature([grInt]));
+const GrType grIntList = GrType(GrType.Base.list_, grMangleSignature([grInt]));
 /// Float list
-const GrType grFloatList = GrType(GrBaseType.list_, grMangleSignature([
+const GrType grFloatList = GrType(GrType.Base.list_, grMangleSignature([
             grFloat
         ]));
 /// Bool list
-const GrType grBoolList = GrType(GrBaseType.list_, grMangleSignature([grBool]));
+const GrType grBoolList = GrType(GrType.Base.list_, grMangleSignature([grBool]));
 /// String list
-const GrType grStringList = GrType(GrBaseType.list_, grMangleSignature([
-            grString
-        ]));
+const GrType grStringList = GrType(GrType.Base.list_, grMangleSignature([
+        grString
+    ]));
 /// Int channel
-const GrType grIntChannel = GrType(GrBaseType.chan, grMangleSignature([grInt]));
+const GrType grIntChannel = GrType(GrType.Base.channel, grMangleSignature([grInt]));
 /// Float channel
-const GrType grFloatChannel = GrType(GrBaseType.chan, grMangleSignature([
-            grFloat
-        ]));
+const GrType grFloatChannel = GrType(GrType.Base.channel, grMangleSignature([
+        grFloat
+    ]));
 /// Bool channel
-const GrType grBoolChannel = GrType(GrBaseType.chan, grMangleSignature([grBool]));
+const GrType grBoolChannel = GrType(GrType.Base.channel, grMangleSignature([
+        grBool
+    ]));
 /// String channel
-const GrType grStringChannel = GrType(GrBaseType.chan, grMangleSignature([
-            grString
-        ]));
+const GrType grStringChannel = GrType(GrType.Base.channel, grMangleSignature([
+        grString
+    ]));
 
 /// Returns an list GrType of `subType` subtype.
 GrType grList(GrType subType) {
-    return GrType(GrBaseType.list_, grMangleSignature([subType]));
+    return GrType(GrType.Base.list_, grMangleSignature([subType]));
 }
 
 /// Returns a channel GrType of `subType` subtype.
 GrType grChannel(GrType subType) {
-    return GrType(GrBaseType.chan, grMangleSignature([subType]));
+    return GrType(GrType.Base.channel, grMangleSignature([subType]));
 }
 
 /// Special type the matches another type with a predicate.
 GrType grAny(string name, bool function(GrType, GrAnyData) predicate = (a, b) => true) {
     GrType type;
-    type.baseType = GrBaseType.void_;
+    type.base = GrType.Base.void_;
     type.mangledType = name;
     type.isAny = true;
     type.predicate = predicate;
@@ -152,25 +154,25 @@ GrType grAny(string name, bool function(GrType, GrAnyData) predicate = (a, b) =>
 }
 
 /// The type is handled by a int based register
-bool grIsKindOfInt(GrBaseType type) {
-    return type == GrBaseType.int_ || type == GrBaseType.bool_
-        || type == GrBaseType.function_ || type == GrBaseType.task || type == GrBaseType.enum_;
+bool grIsKindOfInt(GrType.Base type) {
+    return type == GrType.Base.int_ || type == GrType.Base.bool_
+        || type == GrType.Base.function_ || type == GrType.Base.task || type == GrType.Base.enum_;
 }
 
 /// The type is handled by a float based register
-bool grIsKindOfFloat(GrBaseType type) {
-    return type == GrBaseType.float_;
+bool grIsKindOfFloat(GrType.Base type) {
+    return type == GrType.Base.float_;
 }
 
 /// The type is handled by a string based register
-bool grIsKindOfString(GrBaseType type) {
-    return type == GrBaseType.string_;
+bool grIsKindOfString(GrType.Base type) {
+    return type == GrType.Base.string_;
 }
 
 /// The type is handled by a ptr based register
-bool grIsKindOfObject(GrBaseType type) {
-    return type == GrBaseType.class_ || type == GrBaseType.list_ || type == GrBaseType.foreign
-        || type == GrBaseType.chan || type == GrBaseType.reference || type == GrBaseType.null_;
+bool grIsKindOfObject(GrType.Base type) {
+    return type == GrType.Base.class_ || type == GrType.Base.list_ || type == GrType.Base.foreign
+        || type == GrType.Base.channel || type == GrType.Base.reference || type == GrType.Base.null_;
 }
 
 /// Context for any validation
@@ -198,14 +200,14 @@ final class GrAnyData {
 /// Pack multiple types as a single one.
 package GrType grPackTuple(GrType[] types) {
     const string mangledName = grMangleSignature(types);
-    GrType type = GrBaseType.internalTuple;
+    GrType type = GrType.Base.internalTuple;
     type.mangledType = mangledName;
     return type;
 }
 
 /// Unpack multiple types from a single one.
 package GrType[] grUnpackTuple(GrType type) {
-    if (type.baseType != GrBaseType.internalTuple)
+    if (type.base != GrType.Base.internalTuple)
         throw new Exception("Cannot unpack a not tuple type.");
     return grUnmangleSignature(type.mangledType);
 }
@@ -260,7 +262,7 @@ final class GrAbstractForeignDefinition {
 
 /// Create a foreign GrType for the type system.
 GrType grGetForeignType(string name, GrType[] signature = []) {
-    GrType type = GrBaseType.foreign;
+    GrType type = GrType.Base.foreign;
     type.mangledType = grMangleComposite(name, signature);
     return type;
 }
@@ -330,7 +332,7 @@ final class GrEnumDefinition {
 
 /// Create a GrType of enum for the type system.
 GrType grGetEnumType(string name) {
-    GrType stType = GrBaseType.enum_;
+    GrType stType = GrType.Base.enum_;
     stType.mangledType = name;
     return stType;
 }
@@ -382,7 +384,7 @@ final class GrClassDefinition {
 
 /// Create a GrType of class for the type system.
 GrType grGetClassType(string name, GrType[] signature = []) {
-    GrType stType = GrBaseType.class_;
+    GrType stType = GrType.Base.class_;
     stType.mangledType = grMangleComposite(name, signature);
     return stType;
 }
@@ -502,7 +504,7 @@ package class GrFunction {
     }
 
     private void freeRegister(GrVariable variable) {
-        final switch (variable.type.baseType) with (GrBaseType) {
+        final switch (variable.type.base) with (GrType.Base) {
         case int_:
         case bool_:
         case function_:
@@ -519,7 +521,7 @@ package class GrFunction {
         case list_:
         case class_:
         case foreign:
-        case chan:
+        case channel:
             oregisterAvailables ~= variable.register;
             break;
         case internalTuple:
@@ -533,7 +535,7 @@ package class GrFunction {
 
 /// Get the type of the function.
 GrType grGetFunctionAsType(GrFunction func) {
-    GrType type = func.isTask ? GrBaseType.task : GrBaseType.function_;
+    GrType type = func.isTask ? GrType.Base.task : GrType.Base.function_;
     type.mangledType = grMangleSignature(func.inSignature);
     type.mangledReturnType = grMangleSignature(func.outSignature);
     return type;

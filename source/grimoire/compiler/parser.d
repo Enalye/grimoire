@@ -225,7 +225,7 @@ final class GrParser {
     }
 
     private void setVariableRegister(GrVariable variable) {
-        final switch (variable.type.baseType) with (GrBaseType) {
+        final switch (variable.type.base) with (GrType.Base) {
         case int_:
         case bool_:
         case function_:
@@ -281,7 +281,7 @@ final class GrParser {
         case list_:
         case class_:
         case foreign:
-        case chan:
+        case channel:
             if (variable.isGlobal) {
                 variable.register = oglobalsCount;
                 oglobalsCount++;
@@ -320,7 +320,7 @@ final class GrParser {
         variable.lexPosition = current;
 
         currentFunction.setLocal(variable);
-        if (variable.type.baseType != GrBaseType.void_)
+        if (variable.type.base != GrType.Base.void_)
             setVariableRegister(variable);
 
         return variable;
@@ -462,7 +462,7 @@ final class GrParser {
     /// Generate opcodes to fetch the function or the task's parameters
     void generateFunctionInputs() {
         void fetchParameter(string name, GrType type) {
-            final switch (type.baseType) with (GrBaseType) {
+            final switch (type.base) with (GrType.Base) {
             case void_:
             case null_:
                 logError(format(getError(Error.cantUseTypeAsParam),
@@ -490,7 +490,7 @@ final class GrParser {
             case class_:
             case list_:
             case foreign:
-            case chan:
+            case channel:
             case reference:
                 currentFunction.nbObjectParameters++;
                 if (currentFunction.isTask)
@@ -823,28 +823,28 @@ final class GrParser {
 
     private GrType addBinaryOperator(GrLexemeType lexType, const GrType leftType,
         const GrType rightType, uint fileId) {
-        if (leftType.baseType == GrBaseType.internalTuple
-            || rightType.baseType == GrBaseType.internalTuple)
+        if (leftType.base == GrType.Base.internalTuple
+            || rightType.base == GrType.Base.internalTuple)
             logError(getError(Error.cantUseOpOnMultipleVal), getError(Error.exprYieldsMultipleVal));
-        GrType resultType = GrBaseType.void_;
+        GrType resultType = GrType.Base.void_;
 
-        if (leftType.baseType == GrBaseType.enum_ && rightType.baseType == GrBaseType.enum_
+        if (leftType.base == GrType.Base.enum_ && rightType.base == GrType.Base.enum_
             && leftType.mangledType == rightType.mangledType) {
             resultType = addInternalOperator(lexType, leftType);
         }
-        else if (leftType.baseType == GrBaseType.chan) {
+        else if (leftType.base == GrType.Base.channel) {
             GrType chanType = grUnmangle(leftType.mangledType);
             convertType(rightType, chanType, fileId);
             resultType = addInternalOperator(lexType, leftType);
-            if (resultType.baseType == GrBaseType.void_) {
+            if (resultType.base == GrType.Base.void_) {
                 resultType = addCustomBinaryOperator(lexType, leftType, rightType, fileId);
             }
         }
         else if (lexType == GrLexemeType.concatenate
-            && leftType.baseType == GrBaseType.list_ && leftType != rightType) {
+            && leftType.base == GrType.Base.list_ && leftType != rightType) {
             const GrType subType = grUnmangle(leftType.mangledType);
             convertType(rightType, subType, fileId);
-            final switch (subType.baseType) with (GrBaseType) {
+            final switch (subType.base) with (GrType.Base) {
             case int_:
             case bool_:
             case enum_:
@@ -861,7 +861,7 @@ final class GrParser {
             case class_:
             case list_:
             case foreign:
-            case chan:
+            case channel:
                 addInstruction(GrOpcode.append_object);
                 break;
             case null_:
@@ -873,10 +873,10 @@ final class GrParser {
             resultType = leftType;
         }
         else if (lexType == GrLexemeType.concatenate
-            && rightType.baseType == GrBaseType.list_ && leftType != rightType) {
+            && rightType.base == GrType.Base.list_ && leftType != rightType) {
             const GrType subType = grUnmangle(rightType.mangledType);
             convertType(leftType, subType, fileId);
-            final switch (subType.baseType) with (GrBaseType) {
+            final switch (subType.base) with (GrType.Base) {
             case int_:
             case bool_:
             case enum_:
@@ -893,7 +893,7 @@ final class GrParser {
             case class_:
             case list_:
             case foreign:
-            case chan:
+            case channel:
                 addInstruction(GrOpcode.prepend_object);
                 break;
             case null_:
@@ -905,22 +905,22 @@ final class GrParser {
             resultType = rightType;
         }
         else if (lexType == GrLexemeType.concatenate
-            && leftType.baseType == GrBaseType.string_ && leftType != rightType) {
+            && leftType.base == GrType.Base.string_ && leftType != rightType) {
             convertType(rightType, leftType, fileId);
             resultType = addInternalOperator(lexType, leftType);
         }
         else if (lexType == GrLexemeType.concatenate
-            && rightType.baseType == GrBaseType.string_ && leftType != rightType) {
+            && rightType.base == GrType.Base.string_ && leftType != rightType) {
             convertType(leftType, rightType, fileId);
             resultType = addInternalOperator(lexType, rightType, true);
         }
-        else if (leftType.baseType == GrBaseType.int_ && rightType.baseType == GrBaseType.float_) {
+        else if (leftType.base == GrType.Base.int_ && rightType.base == GrType.Base.float_) {
             // Special case, we need to convert int to float, then swap the 2 values when needed.
             convertType(leftType, rightType, fileId);
             resultType = addInternalOperator(lexType, rightType, true);
 
             //Check custom operator
-            if (resultType.baseType == GrBaseType.void_) {
+            if (resultType.base == GrType.Base.void_) {
                 addInstruction(GrOpcode.swap_float);
                 resultType = addCustomBinaryOperator(lexType, rightType, rightType, fileId);
             }
@@ -930,20 +930,20 @@ final class GrParser {
             resultType = addCustomBinaryOperator(lexType, leftType, rightType, fileId);
 
             //If there is no custom operator defined, we try to convert and then try again
-            if (resultType.baseType == GrBaseType.void_) {
+            if (resultType.base == GrType.Base.void_) {
                 resultType = convertType(rightType, leftType, fileId, true);
-                if (resultType.baseType != GrBaseType.void_) {
+                if (resultType.base != GrType.Base.void_) {
                     resultType = addBinaryOperator(lexType, resultType, resultType, fileId);
                 }
             }
         }
         else {
             resultType = addInternalOperator(lexType, leftType);
-            if (resultType.baseType == GrBaseType.void_) {
+            if (resultType.base == GrType.Base.void_) {
                 resultType = addCustomBinaryOperator(lexType, leftType, rightType, fileId);
             }
         }
-        if (resultType.baseType == GrBaseType.void_)
+        if (resultType.base == GrType.Base.void_)
             logError(format(getError(Error.noXBinaryOpDefForYAndZ), getPrettyLexemeType(lexType),
                     getPrettyType(leftType), getPrettyType(rightType)),
                 getError(Error.unknownOp), "", -1);
@@ -951,16 +951,16 @@ final class GrParser {
     }
 
     private GrType addUnaryOperator(GrLexemeType lexType, const GrType type, uint fileId) {
-        if (type.baseType == GrBaseType.internalTuple)
+        if (type.base == GrType.Base.internalTuple)
             logError(getError(Error.cantUseOpOnMultipleVal), getError(Error.exprYieldsMultipleVal));
-        GrType resultType = GrBaseType.void_;
+        GrType resultType = GrType.Base.void_;
 
         resultType = addInternalOperator(lexType, type);
-        if (resultType.baseType == GrBaseType.void_) {
+        if (resultType.base == GrType.Base.void_) {
             resultType = addCustomUnaryOperator(lexType, type, fileId);
         }
 
-        if (resultType.baseType == GrBaseType.void_)
+        if (resultType.base == GrType.Base.void_)
             logError(format(getError(Error.noXUnaryOpDefForY), getPrettyLexemeType(lexType),
                     getPrettyType(type)), getError(Error.unknownOp));
         return resultType;
@@ -978,18 +978,18 @@ final class GrParser {
             return typeStack[$ - 1];
         }
 
-        return GrType(GrBaseType.void_);
+        return GrType(GrType.Base.void_);
     }
 
     private GrType addInternalOperator(GrLexemeType lexType, GrType varType, bool isSwapped = false) {
-        switch (varType.baseType) with (GrBaseType) {
+        switch (varType.base) with (GrType.Base) {
         case class_:
         case foreign:
             switch (lexType) with (GrLexemeType) {
             case not:
                 addInstruction(GrOpcode.isNonNull_object);
                 addInstruction(GrOpcode.not_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             default:
                 break;
             }
@@ -998,22 +998,22 @@ final class GrParser {
             switch (lexType) with (GrLexemeType) {
             case equal:
                 addInstruction(GrOpcode.equal_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case notEqual:
                 addInstruction(GrOpcode.notEqual_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case greater:
                 addInstruction(GrOpcode.greater_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case greaterOrEqual:
                 addInstruction(GrOpcode.greaterOrEqual_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case lesser:
                 addInstruction(GrOpcode.lesser_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case lesserOrEqual:
                 addInstruction(GrOpcode.lesserOrEqual_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             default:
                 break;
             }
@@ -1022,13 +1022,13 @@ final class GrParser {
             switch (lexType) with (GrLexemeType) {
             case and:
                 addInstruction(GrOpcode.and_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case or:
                 addInstruction(GrOpcode.or_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case not:
                 addInstruction(GrOpcode.not_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             default:
                 break;
             }
@@ -1037,51 +1037,51 @@ final class GrParser {
             switch (lexType) with (GrLexemeType) {
             case add:
                 addInstruction(GrOpcode.add_int);
-                return GrType(GrBaseType.int_);
+                return GrType(GrType.Base.int_);
             case substract:
                 addInstruction(GrOpcode.substract_int);
-                return GrType(GrBaseType.int_);
+                return GrType(GrType.Base.int_);
             case multiply:
                 addInstruction(GrOpcode.multiply_int);
-                return GrType(GrBaseType.int_);
+                return GrType(GrType.Base.int_);
             case divide:
                 addInstruction(GrOpcode.divide_int);
-                return GrType(GrBaseType.int_);
+                return GrType(GrType.Base.int_);
             case remainder:
                 addInstruction(GrOpcode.remainder_int);
-                return GrType(GrBaseType.int_);
+                return GrType(GrType.Base.int_);
             case minus:
                 addInstruction(GrOpcode.negative_int);
-                return GrType(GrBaseType.int_);
+                return GrType(GrType.Base.int_);
             case plus:
-                return GrType(GrBaseType.int_);
+                return GrType(GrType.Base.int_);
             case increment:
                 addInstruction(GrOpcode.increment_int);
-                return GrType(GrBaseType.int_);
+                return GrType(GrType.Base.int_);
             case decrement:
                 addInstruction(GrOpcode.decrement_int);
-                return GrType(GrBaseType.int_);
+                return GrType(GrType.Base.int_);
             case equal:
                 addInstruction(GrOpcode.equal_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case notEqual:
                 addInstruction(GrOpcode.notEqual_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case greater:
                 addInstruction(GrOpcode.greater_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case greaterOrEqual:
                 addInstruction(GrOpcode.greaterOrEqual_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case lesser:
                 addInstruction(GrOpcode.lesser_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case lesserOrEqual:
                 addInstruction(GrOpcode.lesserOrEqual_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case not:
                 addInstruction(GrOpcode.not_int);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             default:
                 break;
             }
@@ -1090,66 +1090,66 @@ final class GrParser {
             switch (lexType) with (GrLexemeType) {
             case add:
                 addInstruction(GrOpcode.add_float);
-                return GrType(GrBaseType.float_);
+                return GrType(GrType.Base.float_);
             case substract:
                 if (isSwapped)
                     addInstruction(GrOpcode.swap_float);
                 addInstruction(GrOpcode.substract_float);
-                return GrType(GrBaseType.float_);
+                return GrType(GrType.Base.float_);
             case multiply:
                 addInstruction(GrOpcode.multiply_float);
-                return GrType(GrBaseType.float_);
+                return GrType(GrType.Base.float_);
             case divide:
                 if (isSwapped)
                     addInstruction(GrOpcode.swap_float);
                 addInstruction(GrOpcode.divide_float);
-                return GrType(GrBaseType.float_);
+                return GrType(GrType.Base.float_);
             case remainder:
                 if (isSwapped)
                     addInstruction(GrOpcode.swap_float);
                 addInstruction(GrOpcode.remainder_float);
-                return GrType(GrBaseType.float_);
+                return GrType(GrType.Base.float_);
             case minus:
                 addInstruction(GrOpcode.negative_float);
-                return GrType(GrBaseType.float_);
+                return GrType(GrType.Base.float_);
             case plus:
-                return GrType(GrBaseType.float_);
+                return GrType(GrType.Base.float_);
             case increment:
                 addInstruction(GrOpcode.increment_float);
-                return GrType(GrBaseType.float_);
+                return GrType(GrType.Base.float_);
             case decrement:
                 addInstruction(GrOpcode.decrement_float);
-                return GrType(GrBaseType.float_);
+                return GrType(GrType.Base.float_);
             case equal:
                 addInstruction(GrOpcode.equal_float);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case notEqual:
                 addInstruction(GrOpcode.notEqual_float);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case greater:
                 if (isSwapped)
                     addInstruction(GrOpcode.lesserOrEqual_float);
                 else
                     addInstruction(GrOpcode.greater_float);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case greaterOrEqual:
                 if (isSwapped)
                     addInstruction(GrOpcode.lesser_float);
                 else
                     addInstruction(GrOpcode.greaterOrEqual_float);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case lesser:
                 if (isSwapped)
                     addInstruction(GrOpcode.greaterOrEqual_float);
                 else
                     addInstruction(GrOpcode.lesser_float);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case lesserOrEqual:
                 if (isSwapped)
                     addInstruction(GrOpcode.greater_float);
                 else
                     addInstruction(GrOpcode.lesserOrEqual_float);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             default:
                 break;
             }
@@ -1160,13 +1160,13 @@ final class GrParser {
                 if (isSwapped)
                     addInstruction(GrOpcode.swap_string);
                 addInstruction(GrOpcode.concatenate_string);
-                return GrType(GrBaseType.string_);
+                return GrType(GrType.Base.string_);
             case equal:
                 addInstruction(GrOpcode.equal_string);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             case notEqual:
                 addInstruction(GrOpcode.notEqual_string);
-                return GrType(GrBaseType.bool_);
+                return GrType(GrType.Base.bool_);
             default:
                 break;
             }
@@ -1175,7 +1175,7 @@ final class GrParser {
             switch (lexType) with (GrLexemeType) {
             case equal:
                 const GrType subType = grUnmangle(varType.mangledType);
-                final switch (subType.baseType) with (GrBaseType) {
+                final switch (subType.base) with (GrType.Base) {
                 case int_:
                 case bool_:
                 case enum_:
@@ -1196,13 +1196,13 @@ final class GrParser {
                 case list_:
                 case class_:
                 case foreign:
-                case chan:
+                case channel:
                     break;
                 }
                 break;
             case notEqual:
                 const GrType subType = grUnmangle(varType.mangledType);
-                final switch (subType.baseType) with (GrBaseType) {
+                final switch (subType.base) with (GrType.Base) {
                 case int_:
                 case bool_:
                 case enum_:
@@ -1223,13 +1223,13 @@ final class GrParser {
                 case list_:
                 case class_:
                 case foreign:
-                case chan:
+                case channel:
                     break;
                 }
                 break;
             case concatenate:
                 const GrType subType = grUnmangle(varType.mangledType);
-                final switch (subType.baseType) with (GrBaseType) {
+                final switch (subType.base) with (GrType.Base) {
                 case int_:
                 case bool_:
                 case enum_:
@@ -1246,7 +1246,7 @@ final class GrParser {
                 case class_:
                 case list_:
                 case foreign:
-                case chan:
+                case channel:
                     addInstruction(GrOpcode.concatenate_objectList);
                     return varType;
                 case null_:
@@ -1260,11 +1260,11 @@ final class GrParser {
                 break;
             }
             break;
-        case chan:
+        case channel:
             switch (lexType) with (GrLexemeType) {
             case send:
                 GrType chanType = grUnmangle(varType.mangledType);
-                final switch (chanType.baseType) with (GrBaseType) {
+                final switch (chanType.base) with (GrType.Base) {
                 case int_:
                 case bool_:
                 case function_:
@@ -1281,7 +1281,7 @@ final class GrParser {
                 case class_:
                 case list_:
                 case foreign:
-                case chan:
+                case channel:
                     addInstruction(GrOpcode.send_object);
                     return chanType;
                 case void_:
@@ -1293,7 +1293,7 @@ final class GrParser {
                 break;
             case receive:
                 GrType chanType = grUnmangle(varType.mangledType);
-                final switch (chanType.baseType) with (GrBaseType) {
+                final switch (chanType.base) with (GrType.Base) {
                 case int_:
                 case bool_:
                 case function_:
@@ -1310,7 +1310,7 @@ final class GrParser {
                 case class_:
                 case list_:
                 case foreign:
-                case chan:
+                case channel:
                     addInstruction(GrOpcode.receive_object);
                     return chanType;
                 case void_:
@@ -1327,7 +1327,7 @@ final class GrParser {
         default:
             break;
         }
-        return GrType(GrBaseType.void_);
+        return GrType(GrType.Base.void_);
     }
 
     private void addSetInstruction(GrVariable variable, uint fileId,
@@ -1336,14 +1336,14 @@ final class GrParser {
         if (variable.isConstant)
             logError(format(getError(Error.xIsConstAndCantBeModified), variable.name),
                 format(getError(Error.cantModifyAConstX), getPrettyType(variable.type)));
-        if (variable.type.baseType == GrBaseType.reference) {
+        if (variable.type.base == GrType.Base.reference) {
             valueType = convertType(valueType, grUnmangle(variable.type.mangledType), fileId);
-            final switch (valueType.baseType) with (GrBaseType) {
+            final switch (valueType.base) with (GrType.Base) {
             case bool_:
             case int_:
             case function_:
             case task:
-            case chan:
+            case channel:
             case enum_:
                 addInstruction(isExpectingValue ? GrOpcode.refStore2_int : GrOpcode.refStore_int);
                 break;
@@ -1378,13 +1378,13 @@ final class GrParser {
             variable.isInitialized = true;
             variable.isAuto = false;
             variable.type = valueType;
-            if (valueType.baseType == GrBaseType.void_)
+            if (valueType.base == GrType.Base.void_)
                 logError(getError(Error.cantInferTypeOfVar), getError(Error.varNotInit));
             else
                 setVariableRegister(variable);
         }
 
-        if (valueType.baseType != GrBaseType.void_)
+        if (valueType.base != GrType.Base.void_)
             convertType(valueType, variable.type, fileId);
 
         //if(!variable.isInitialized && isExpectingValue)
@@ -1392,7 +1392,7 @@ final class GrParser {
         variable.isInitialized = true;
 
         if (variable.isField) {
-            final switch (variable.type.baseType) with (GrBaseType) {
+            final switch (variable.type.base) with (GrType.Base) {
             case bool_:
             case int_:
             case function_:
@@ -1408,7 +1408,7 @@ final class GrParser {
                 break;
             case foreign:
             case reference:
-            case chan:
+            case channel:
             case list_:
             case class_:
                 addInstruction(GrOpcode.fieldStore_object, isExpectingValue ? 0 : -1, true);
@@ -1421,7 +1421,7 @@ final class GrParser {
             }
         }
         else if (variable.isGlobal) {
-            final switch (variable.type.baseType) with (GrBaseType) {
+            final switch (variable.type.base) with (GrType.Base) {
             case bool_:
             case int_:
             case function_:
@@ -1438,7 +1438,7 @@ final class GrParser {
                 addInstruction(isExpectingValue ? GrOpcode.globalStore2_string
                         : GrOpcode.globalStore_string, variable.register);
                 break;
-            case chan:
+            case channel:
             case class_:
             case list_:
             case foreign:
@@ -1454,7 +1454,7 @@ final class GrParser {
             }
         }
         else {
-            final switch (variable.type.baseType) with (GrBaseType) {
+            final switch (variable.type.base) with (GrType.Base) {
             case bool_:
             case int_:
             case function_:
@@ -1477,7 +1477,7 @@ final class GrParser {
                 break;
             case list_:
             case foreign:
-            case chan:
+            case channel:
                 addInstruction(isExpectingValue ? GrOpcode.localStore2_object
                         : GrOpcode.localStore_object, variable.register);
                 break;
@@ -1514,7 +1514,7 @@ final class GrParser {
             throw new Exception("attempt to get field value");
         }
         else if (variable.isGlobal) {
-            final switch (variable.type.baseType) with (GrBaseType) {
+            final switch (variable.type.base) with (GrType.Base) {
             case bool_:
             case int_:
             case function_:
@@ -1553,7 +1553,7 @@ final class GrParser {
                 break;
             case list_:
             case foreign:
-            case chan:
+            case channel:
                 if (allowOptimization && currentFunction.instructions.length
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.globalStore_object
                     && currentFunction.instructions[$ - 1].value == variable.register)
@@ -1573,7 +1573,7 @@ final class GrParser {
             if (!variable.isInitialized)
                 logError(getError(Error.locVarUsedNotAssigned), getError(Error.varNotInit));
 
-            final switch (variable.type.baseType) with (GrBaseType) {
+            final switch (variable.type.base) with (GrType.Base) {
             case bool_:
             case int_:
             case function_:
@@ -1612,7 +1612,7 @@ final class GrParser {
                 break;
             case list_:
             case foreign:
-            case chan:
+            case channel:
                 if (allowOptimization && currentFunction.instructions.length
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.localStore_object
                     && currentFunction.instructions[$ - 1].value == variable.register)
@@ -2271,7 +2271,7 @@ final class GrParser {
                         class_.fieldsInfo[first].position);
                 }
             }
-            if (class_.signature[i].baseType != GrBaseType.class_) {
+            if (class_.signature[i].base != GrType.Base.class_) {
                 for (int y; y < usedClasses.length; ++y) {
                     if (class_.signature[i].mangledType == usedClasses[y]) {
                         set(class_.fieldsInfo[i].position);
@@ -2315,7 +2315,7 @@ final class GrParser {
     }
 
     private GrType parseType(bool mustBeType = true) {
-        GrType currentType = GrBaseType.void_;
+        GrType currentType = GrType.Base.void_;
 
         GrLexeme lex = get();
         if (!lex.isType) {
@@ -2327,7 +2327,7 @@ final class GrParser {
             }
             else if (lex.type == GrLexemeType.identifier
                 && _data.isClass(lex.svalue, lex.fileId, false)) {
-                currentType.baseType = GrBaseType.class_;
+                currentType.base = GrType.Base.class_;
                 checkAdvance();
                 currentType.mangledType = grMangleComposite(lex.svalue, parseTemplateSignature());
                 if (mustBeType) {
@@ -2340,13 +2340,13 @@ final class GrParser {
             }
             else if (lex.type == GrLexemeType.identifier
                 && _data.isEnum(lex.svalue, lex.fileId, false)) {
-                currentType.baseType = GrBaseType.enum_;
+                currentType.base = GrType.Base.enum_;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
                 return currentType;
             }
             else if (lex.type == GrLexemeType.identifier && _data.isForeign(lex.svalue)) {
-                currentType.baseType = GrBaseType.foreign;
+                currentType.base = GrType.Base.foreign;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
                 currentType.mangledType = grMangleComposite(lex.svalue, parseTemplateSignature());
@@ -2365,23 +2365,23 @@ final class GrParser {
 
         switch (lex.type) with (GrLexemeType) {
         case intType:
-            currentType.baseType = GrBaseType.int_;
+            currentType.base = GrType.Base.int_;
             checkAdvance();
             break;
         case floatType:
-            currentType.baseType = GrBaseType.float_;
+            currentType.base = GrType.Base.float_;
             checkAdvance();
             break;
         case boolType:
-            currentType.baseType = GrBaseType.bool_;
+            currentType.base = GrType.Base.bool_;
             checkAdvance();
             break;
         case stringType:
-            currentType.baseType = GrBaseType.string_;
+            currentType.base = GrType.Base.string_;
             checkAdvance();
             break;
         case listType:
-            currentType.baseType = GrBaseType.list_;
+            currentType.base = GrType.Base.list_;
             checkAdvance();
             string[] temp;
             auto signature = parseInSignature(temp, true);
@@ -2396,20 +2396,20 @@ final class GrParser {
             currentType.mangledType = grMangleSignature(signature);
             break;
         case functionType:
-            currentType.baseType = GrBaseType.function_;
+            currentType.base = GrType.Base.function_;
             checkAdvance();
             string[] temp;
             currentType.mangledType = grMangleSignature(parseInSignature(temp, true));
             currentType.mangledReturnType = grMangleSignature(parseOutSignature());
             break;
         case taskType:
-            currentType.baseType = GrBaseType.task;
+            currentType.base = GrType.Base.task;
             checkAdvance();
             string[] temp;
             currentType.mangledType = grMangleSignature(parseInSignature(temp, true));
             break;
         case chanType:
-            currentType.baseType = GrBaseType.chan;
+            currentType.base = GrType.Base.channel;
             checkAdvance();
             string[] temp;
             GrType[] signature = parseInSignature(temp, true);
@@ -2427,7 +2427,7 @@ final class GrParser {
     }
 
     private void addGlobalPop(GrType type) {
-        final switch (type.baseType) with (GrBaseType) {
+        final switch (type.base) with (GrType.Base) {
         case internalTuple:
         case null_:
         case void_:
@@ -2450,7 +2450,7 @@ final class GrParser {
         case class_:
         case list_:
         case foreign:
-        case chan:
+        case channel:
         case reference:
             addInstruction(GrOpcode.globalPop_object, 0u);
             break;
@@ -2460,7 +2460,7 @@ final class GrParser {
     private void addGlobalPush(GrType type, int nbPush = 1u) {
         if (nbPush == 0)
             return;
-        final switch (type.baseType) with (GrBaseType) {
+        final switch (type.base) with (GrType.Base) {
         case internalTuple:
         case null_:
         case void_:
@@ -2483,7 +2483,7 @@ final class GrParser {
         case class_:
         case list_:
         case foreign:
-        case chan:
+        case channel:
         case reference:
             addInstruction(GrOpcode.globalPush_object, nbPush);
             break;
@@ -2496,7 +2496,7 @@ final class GrParser {
         }
 
         void countParameters(ref TypeCounter typeCounter, GrType type) {
-            final switch (type.baseType) with (GrBaseType) {
+            final switch (type.base) with (GrType.Base) {
             case internalTuple:
             case null_:
             case void_:
@@ -2520,7 +2520,7 @@ final class GrParser {
             case class_:
             case list_:
             case foreign:
-            case chan:
+            case channel:
             case reference:
                 typeCounter.nbObjectParams++;
                 break;
@@ -2914,7 +2914,7 @@ final class GrParser {
 
         endFunction();
 
-        GrType functionType = isTask ? GrBaseType.task : GrBaseType.function_;
+        GrType functionType = isTask ? GrType.Base.task : GrType.Base.function_;
         functionType.mangledType = grMangleSignature(inSignature);
         functionType.mangledReturnType = grMangleSignature(outSignature);
 
@@ -3400,7 +3400,7 @@ final class GrParser {
 
     private void parseGlobalDeclaration(bool isPublic) {
         //GrVariable type
-        GrType type = GrBaseType.void_;
+        GrType type = GrType.Base.void_;
         bool isAuto;
 
         if (get().type == GrLexemeType.autoType) {
@@ -3435,7 +3435,7 @@ final class GrParser {
     //Type Identifier [= EXPRESSION] ;
     private void parseLocalDeclaration() {
         //GrVariable type
-        GrType type = GrBaseType.void_;
+        GrType type = GrType.Base.void_;
         bool isAuto;
         if (get().type == GrLexemeType.autoType) {
             isAuto = true;
@@ -3461,7 +3461,7 @@ final class GrParser {
             lvalues ~= lvalue;
 
             //A composite type does not need to be initialized.
-            if (lvalue.type == GrBaseType.class_)
+            if (lvalue.type == GrType.Base.class_)
                 lvalue.isInitialized = true;
 
             checkAdvance();
@@ -3472,33 +3472,33 @@ final class GrParser {
     }
 
     private GrType parseFunctionReturnType() {
-        GrType returnType = GrBaseType.void_;
+        GrType returnType = GrType.Base.void_;
         if (get().isType) {
             switch (get().type) with (GrLexemeType) {
             case intType:
-                returnType = GrType(GrBaseType.int_);
+                returnType = GrType(GrType.Base.int_);
                 break;
             case floatType:
-                returnType = GrType(GrBaseType.float_);
+                returnType = GrType(GrType.Base.float_);
                 break;
             case boolType:
-                returnType = GrType(GrBaseType.bool_);
+                returnType = GrType(GrType.Base.bool_);
                 break;
             case stringType:
-                returnType = GrType(GrBaseType.string_);
+                returnType = GrType(GrType.Base.string_);
                 break;
             case listType:
-                returnType = GrType(GrBaseType.list_);
+                returnType = GrType(GrType.Base.list_);
                 break;
             case functionType:
-                GrType type = GrBaseType.function_;
+                GrType type = GrType.Base.function_;
                 checkAdvance();
                 string[] temp;
                 type.mangledType = grMangleSignature(parseInSignature(temp, true));
                 returnType = type;
                 break;
             case taskType:
-                GrType type = GrBaseType.task;
+                GrType type = GrType.Base.task;
                 checkAdvance();
                 string[] temp;
                 type.mangledType = grMangleSignature(parseInSignature(temp, true));
@@ -3602,7 +3602,7 @@ final class GrParser {
     }
 
     private GrType parseChannelBuilder() {
-        GrType chanType = GrBaseType.chan;
+        GrType chanType = GrType.Base.channel;
         int channelSize = 1;
 
         checkAdvance();
@@ -3639,7 +3639,7 @@ final class GrParser {
         checkAdvance();
         chanType.mangledType = grMangleSignature([subType]);
 
-        final switch (subType.baseType) with (GrBaseType) {
+        final switch (subType.base) with (GrType.Base) {
         case int_:
         case bool_:
         case function_:
@@ -3656,7 +3656,7 @@ final class GrParser {
         case class_:
         case list_:
         case foreign:
-        case chan:
+        case channel:
         case reference:
             addInstruction(GrOpcode.channel_object, channelSize);
             break;
@@ -3929,7 +3929,7 @@ final class GrParser {
 
     private GrVariable parseDeclarableArgument() {
         GrVariable lvalue;
-        GrType type = GrBaseType.void_;
+        GrType type = GrType.Base.void_;
         bool isAuto, isTyped = true;
         switch (get().type) with (GrLexemeType) {
         case autoType:
@@ -3960,7 +3960,7 @@ final class GrParser {
         lvalue.isAuto = isTyped ? isAuto : true;
 
         //A composite type does not need to be initialized.
-        if (lvalue.type == GrBaseType.class_)
+        if (lvalue.type == GrType.Base.class_)
             lvalue.isInitialized = true;
 
         checkAdvance();
@@ -3992,7 +3992,7 @@ final class GrParser {
         //From length to 0
         GrType containerType = parseSubExpression().type;
 
-        switch (containerType.baseType) with (GrBaseType) {
+        switch (containerType.base) with (GrType.Base) {
         case list_: {
                 /* Init */
                 GrType subType = grUnmangle(containerType.mangledType);
@@ -4000,14 +4000,14 @@ final class GrParser {
                 GrVariable index = registerSpecialVariable("index", grInt);
                 GrVariable list = registerSpecialVariable("list", containerType);
 
-                if (variable.isAuto && subType.baseType != GrBaseType.void_) {
+                if (variable.isAuto && subType.base != GrType.Base.void_) {
                     variable.isAuto = false;
                     variable.type = subType;
                     setVariableRegister(variable);
                 }
 
                 addSetInstruction(list, fileId, containerType, true);
-                final switch (subType.baseType) with (GrBaseType) {
+                final switch (subType.base) with (GrType.Base) {
                 case bool_:
                 case int_:
                 case function_:
@@ -4024,7 +4024,7 @@ final class GrParser {
                 case list_:
                 case class_:
                 case foreign:
-                case chan:
+                case channel:
                 case reference:
                     addInstruction(GrOpcode.length_object);
                     break;
@@ -4053,11 +4053,11 @@ final class GrParser {
                 advance();
                 uint blockPosition = cast(uint) currentFunction.instructions.length;
 
-                addGetInstruction(iterator, GrType(GrBaseType.int_));
+                addGetInstruction(iterator, GrType(GrType.Base.int_));
                 addInstruction(GrOpcode.decrement_int);
                 addSetInstruction(iterator, fileId);
 
-                addGetInstruction(iterator, GrType(GrBaseType.int_));
+                addGetInstruction(iterator, GrType(GrType.Base.int_));
                 uint jumpPosition = cast(uint) currentFunction.instructions.length;
                 addInstruction(GrOpcode.jumpEqual);
 
@@ -4066,7 +4066,7 @@ final class GrParser {
                 addGetInstruction(index);
                 addInstruction(GrOpcode.increment_int);
                 addSetInstruction(index, fileId, grVoid, true);
-                final switch (subType.baseType) with (GrBaseType) {
+                final switch (subType.base) with (GrType.Base) {
                 case bool_:
                 case int_:
                 case function_:
@@ -4083,7 +4083,7 @@ final class GrParser {
                 case list_:
                 case class_:
                 case foreign:
-                case chan:
+                case channel:
                 case reference:
                     addInstruction(GrOpcode.index2_object);
                     break;
@@ -4121,7 +4121,7 @@ final class GrParser {
                     ]);
                 if (nextPrim) {
                     if (nextPrim.outSignature.length != 2 || (nextPrim.outSignature.length >= 1
-                            && nextPrim.outSignature[0].baseType != grBool)) {
+                            && nextPrim.outSignature[0].base != grBool)) {
                         logError(format(getError(Error.primXMustRetBoolAndVal), getPrettyFunctionCall("next",
                                 [containerType])),
                             getError(Error.signatureMismatch));
@@ -4136,7 +4136,7 @@ final class GrParser {
                     }
 
                     if (nextFunc.outSignature.length != 2 || (nextFunc.outSignature.length >= 1
-                            && nextFunc.outSignature[0].baseType != grBool)) {
+                            && nextFunc.outSignature[0].base != grBool)) {
                         logError(format(getError(Error.funcXMustRetBoolAndVal), getPrettyFunction(
                                 nextFunc)),
                             getError(Error.signatureMismatch));
@@ -4144,7 +4144,7 @@ final class GrParser {
                     subType = nextFunc.outSignature[1];
                 }
 
-                if (variable.isAuto && subType.baseType != GrBaseType.void_) {
+                if (variable.isAuto && subType.base != GrType.Base.void_) {
                     variable.isAuto = false;
                     variable.type = subType;
                     setVariableRegister(variable);
@@ -4373,7 +4373,7 @@ final class GrParser {
             }
 
             /* Init */
-            iterator = registerSpecialVariable("iterator", GrType(GrBaseType.int_));
+            iterator = registerSpecialVariable("iterator", GrType(GrType.Base.int_));
 
             //Init counter
             GrType type = parseSubExpression().type;
@@ -4610,8 +4610,8 @@ final class GrParser {
     /// Attempt to convert `src` type to the `dst` type.
     private GrType convertType(GrType src, GrType dst, uint fileId = 0,
         bool noFail = false, bool isExplicit = false) {
-        if (src.baseType == dst.baseType) {
-            final switch (src.baseType) with (GrBaseType) {
+        if (src.base == dst.base) {
+            final switch (src.base) with (GrType.Base) {
             case function_:
                 if (src.mangledType == dst.mangledType
                     && src.mangledReturnType == dst.mangledReturnType)
@@ -4642,7 +4642,7 @@ final class GrParser {
                 }
                 break;
             case list_:
-            case chan:
+            case channel:
             case reference:
             case internalTuple:
                 if (dst.mangledType == src.mangledType)
@@ -4662,16 +4662,16 @@ final class GrParser {
             }
         }
 
-        if (src.baseType == GrBaseType.null_ && (dst.baseType == GrBaseType.class_
-                || dst.baseType == GrBaseType.foreign))
+        if (src.base == GrType.Base.null_ && (dst.base == GrType.Base.class_
+                || dst.base == GrType.Base.foreign))
             return dst;
 
-        if (src.baseType == GrBaseType.internalTuple || dst.baseType == GrBaseType.internalTuple)
+        if (src.base == GrType.Base.internalTuple || dst.base == GrType.Base.internalTuple)
             logError(format(getError(Error.expectedXFoundY), getPrettyType(dst), getPrettyType(src)),
                 getError(Error.mismatchedTypes), "", -1);
 
-        if (dst.baseType == GrBaseType.bool_) {
-            final switch (src.baseType) with (GrBaseType) {
+        if (dst.base == GrType.Base.bool_) {
+            final switch (src.base) with (GrType.Base) {
             case function_:
             case task:
             case void_:
@@ -4685,7 +4685,7 @@ final class GrParser {
             case list_:
             case class_:
             case foreign:
-            case chan:
+            case channel:
             case reference:
             case null_:
                 addInstruction(GrOpcode.isNonNull_object);
@@ -4700,13 +4700,13 @@ final class GrParser {
         if (!noFail)
             logError(format(getError(Error.expectedXFoundY), getPrettyType(dst), getPrettyType(src)),
                 getError(Error.mismatchedTypes), "", -1);
-        return GrType(GrBaseType.void_);
+        return GrType(GrType.Base.void_);
     }
 
     /// Convert with a primitive or function.
     private GrType addCustomConversion(GrType leftType, GrType rightType,
         bool isExplicit, uint fileId) {
-        GrType resultType = GrBaseType.void_;
+        GrType resultType = GrType.Base.void_;
 
         //as opposed to other functions, we need the return type (rightType) to be part of the signature.
         string name = "@as";
@@ -4729,7 +4729,7 @@ final class GrParser {
         }
 
         //GrFunction check
-        if (resultType.baseType == GrBaseType.void_) {
+        if (resultType.base == GrType.Base.void_) {
             GrFunction func = getFunction(name, signature, fileId);
             if (func) {
                 const GrType[] outSignature = addFunctionCall(func, fileId);
@@ -4757,7 +4757,7 @@ final class GrParser {
                     .type)), getError(Error.missingIdentifier));
         uint fileId = get().fileId;
         GrType classType = parseType(true);
-        if (classType.baseType != GrBaseType.class_)
+        if (classType.base != GrType.Base.class_)
             logError(format(getError(Error.xNotClassType), getPrettyType(classType)),
                 getError(Error.invalidType), "", -1);
         GrClassDefinition class_ = getClass(classType.mangledType, fileId);
@@ -4847,7 +4847,7 @@ final class GrParser {
     ---
     */
     private GrType parseListBuilder() {
-        GrType listType = GrType(GrBaseType.list_);
+        GrType listType = GrType(GrType.Base.list_);
         GrType subType = grVoid;
         const uint fileId = get().fileId;
 
@@ -4861,7 +4861,7 @@ final class GrParser {
                     format(getError(Error.tryUsingXInstead), getPrettyType(grList(signature[0]))), -1);
             subType = signature[0];
             listType.mangledType = grMangleSignature(signature);
-            if (subType.baseType == GrBaseType.void_)
+            if (subType.base == GrType.Base.void_)
                 logError(format(getError(Error.listCantBeOfTypeX), getPrettyType(listType)),
                     getError(Error.invalidListType));
         }
@@ -4873,13 +4873,13 @@ final class GrParser {
 
         int listSize;
         while (get().type != GrLexemeType.rightBracket) {
-            if (subType.baseType == GrBaseType.void_) {
+            if (subType.base == GrType.Base.void_) {
                 //Implicit type specified by the type of the first element.
                 subType = parseSubExpression(
                     GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA
                         | GR_SUBEXPR_EXPECTING_VALUE).type;
                 listType.mangledType = grMangleSignature([subType]);
-                if (subType.baseType == GrBaseType.void_)
+                if (subType.base == GrType.Base.void_)
                     logError(format(getError(Error.listCantBeOfTypeX), getPrettyType(listType)),
                         getError(Error.invalidListType));
             }
@@ -4899,7 +4899,7 @@ final class GrParser {
             checkAdvance();
         }
 
-        final switch (subType.baseType) with (GrBaseType) {
+        final switch (subType.base) with (GrType.Base) {
         case bool_:
         case int_:
         case function_:
@@ -4916,7 +4916,7 @@ final class GrParser {
         case list_:
         case class_:
         case foreign:
-        case chan:
+        case channel:
         case reference:
             addInstruction(GrOpcode.list_object, listSize);
             break;
@@ -4941,15 +4941,15 @@ final class GrParser {
             auto index = parseSubExpression(
                 GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA
                     | GR_SUBEXPR_EXPECTING_VALUE).type;
-            if (index.baseType == GrBaseType.void_)
+            if (index.base == GrType.Base.void_)
                 logError(getError(Error.expectedIntFoundNothing), getError(Error.missingVal));
             convertType(index, grInt, fileId);
 
             if (get().type == GrLexemeType.rightBracket) {
-                switch (listType.baseType) with (GrBaseType) {
+                switch (listType.base) with (GrType.Base) {
                 case list_:
                     const GrType subType = grUnmangle(listType.mangledType);
-                    final switch (subType.baseType) with (GrBaseType) {
+                    final switch (subType.base) with (GrType.Base) {
                     case bool_:
                     case int_:
                     case function_:
@@ -4966,7 +4966,7 @@ final class GrParser {
                     case list_:
                     case class_:
                     case foreign:
-                    case chan:
+                    case channel:
                     case reference:
                         addInstruction(GrOpcode.index_object);
                         break;
@@ -4998,10 +4998,10 @@ final class GrParser {
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
                         GrLexemeType.comma), getPrettyLexemeType(get().type)));
 
-            switch (listType.baseType) with (GrBaseType) {
+            switch (listType.base) with (GrType.Base) {
             case list_:
                 const GrType subType = grUnmangle(listType.mangledType);
-                final switch (subType.baseType) with (GrBaseType) {
+                final switch (subType.base) with (GrType.Base) {
                 case bool_:
                 case int_:
                 case function_:
@@ -5018,7 +5018,7 @@ final class GrParser {
                 case list_:
                 case class_:
                 case foreign:
-                case chan:
+                case channel:
                 case reference:
                     addInstruction(GrOpcode.index_object);
                     break;
@@ -5142,7 +5142,7 @@ final class GrParser {
             GrType type = parseSubExpression(
                 GR_SUBEXPR_TERMINATE_SEMICOLON | GR_SUBEXPR_TERMINATE_COMMA
                     | GR_SUBEXPR_EXPECTING_VALUE).type;
-            if (type.baseType == GrBaseType.internalTuple) {
+            if (type.base == GrType.Base.internalTuple) {
                 auto types = grUnpackTuple(type);
                 if (!types.length)
                     logError(getError(Error.exprYieldsNoVal), getError(
@@ -5152,7 +5152,7 @@ final class GrParser {
                         expressionTypes ~= subType;
                 }
             }
-            else if (type.baseType != GrBaseType.void_)
+            else if (type.base != GrType.Base.void_)
                 expressionTypes ~= type;
             if (get().type != GrLexemeType.comma)
                 break;
@@ -5194,7 +5194,7 @@ final class GrParser {
                 passThrough = true;
             }
             if (passThrough) {
-                if (expressionTypes[expressionIndex].baseType == GrBaseType.void_) {
+                if (expressionTypes[expressionIndex].base == GrType.Base.void_) {
                     skippedLvalues ~= lvalues[variableIndex];
                 }
                 else {
@@ -5205,7 +5205,7 @@ final class GrParser {
                 expressionIndex--;
             }
             while (variableIndex >= 0) {
-                if (expressionTypes[expressionIndex].baseType == GrBaseType.void_) {
+                if (expressionTypes[expressionIndex].base == GrType.Base.void_) {
                     skippedLvalues ~= lvalues[variableIndex];
                 }
                 else {
@@ -5244,7 +5244,7 @@ final class GrParser {
     }
 
     private void addDefaultValue(GrType type, uint fileId) {
-        final switch (type.baseType) with (GrBaseType) {
+        final switch (type.base) with (GrType.Base) {
         case int_:
         case bool_:
         case enum_:
@@ -5292,7 +5292,7 @@ final class GrParser {
             if (subTypes.length != 1)
                 logError(getError(Error.listCanOnlyContainOneTypeOfVal), getError(Error.conflictingListSignature),
                     format(getError(Error.tryUsingXInstead), getPrettyType(grList(subTypes[0]))));
-            final switch (subTypes[0].baseType) with (GrBaseType) {
+            final switch (subTypes[0].base) with (GrType.Base) {
             case bool_:
             case int_:
             case function_:
@@ -5309,7 +5309,7 @@ final class GrParser {
             case list_:
             case class_:
             case foreign:
-            case chan:
+            case channel:
             case reference:
                 addInstruction(GrOpcode.list_object, 0);
                 break;
@@ -5328,12 +5328,12 @@ final class GrParser {
         case foreign:
             addInstruction(GrOpcode.const_null);
             break;
-        case chan:
+        case channel:
             GrType[] subTypes = grUnmangleSignature(type.mangledType);
             if (subTypes.length != 1)
                 logError(getError(Error.channelCanOnlyContainOneTypeOfVal), getError(Error.conflictingChannelSignature),
                     format(getError(Error.tryUsingXInstead), getPrettyType(grChannel(subTypes[0]))));
-            final switch (subTypes[0].baseType) with (GrBaseType) {
+            final switch (subTypes[0].base) with (GrType.Base) {
             case int_:
             case bool_:
             case function_:
@@ -5350,7 +5350,7 @@ final class GrParser {
             case class_:
             case list_:
             case foreign:
-            case chan:
+            case channel:
             case reference:
                 addInstruction(GrOpcode.channel_object, 1);
                 break;
@@ -5381,7 +5381,7 @@ final class GrParser {
 
         TypeCounter counter;
         void countSubTypes(GrType type, ref TypeCounter counter) {
-            final switch (type.baseType) with (GrBaseType) {
+            final switch (type.base) with (GrType.Base) {
             case int_:
             case bool_:
             case function_:
@@ -5398,7 +5398,7 @@ final class GrParser {
             case class_:
             case list_:
             case foreign:
-            case chan:
+            case channel:
             case reference:
                 counter.oCount++;
                 break;
@@ -5462,7 +5462,7 @@ final class GrParser {
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
                         GrLexemeType.rightParenthesis), getPrettyLexemeType(get().type)));
             checkAdvance();
-            if (currentType.baseType == GrBaseType.void_)
+            if (currentType.base == GrType.Base.void_)
                 currentType = refType;
             else
                 currentType = convertType(refType, currentType, fileId);
@@ -5471,7 +5471,8 @@ final class GrParser {
             logError(format(getError(Error.expectedFuncNameFoundX), getPrettyLexemeType(get()
                     .type)), getError(
                     Error.missingFuncName));
-        if (currentType.baseType != GrBaseType.function_ && currentType.baseType != GrBaseType.task)
+        if (currentType.base != GrType.Base.function_ && currentType.base != GrType
+            .Base.task)
             logError(format(getError(Error.cantInferTypeOfX), get().svalue),
                 getError(Error.funcTypeCantBeInferred));
 
@@ -5580,14 +5581,14 @@ final class GrParser {
                     currentType = parseAnonymousCall(typeStack[$ - 1]);
                     //Unpack function value for 1 or less return values
                     //Multiples values are left as a tuple for parseExpressionList()
-                    if (currentType.baseType == GrBaseType.internalTuple) {
+                    if (currentType.base == GrType.Base.internalTuple) {
                         auto types = grUnpackTuple(currentType);
                         if (!types.length)
                             currentType = grVoid;
                         else if (types.length == 1uL)
                             currentType = types[0];
                     }
-                    if (currentType.baseType == GrBaseType.void_) {
+                    if (currentType.base == GrType.Base.void_) {
                         typeStack.length--;
                     }
                     else {
@@ -5623,7 +5624,7 @@ final class GrParser {
                 currentType = parseIdentifier(lvalue, lastType, selfType, isExpectingLValue);
                 //Unpack function value for 1 or less return values
                 //Multiples values are left as a tuple for parseExpressionList()
-                if (currentType.baseType == GrBaseType.internalTuple) {
+                if (currentType.base == GrType.Base.internalTuple) {
                     auto types = grUnpackTuple(currentType);
                     if (!types.length)
                         currentType = grVoid;
@@ -5634,7 +5635,7 @@ final class GrParser {
                 const auto nextLexeme = get();
                 if (nextLexeme.type == GrLexemeType.leftBracket)
                     hasReference = true;
-                if (currentType != GrType(GrBaseType.void_)) {
+                if (currentType != GrType(GrType.Base.void_)) {
                     hasValue = true;
                     typeStack ~= currentType;
                 }
@@ -5657,7 +5658,7 @@ final class GrParser {
                         if ((nextLexeme.type > GrLexemeType.assign && nextLexeme.type <= GrLexemeType.powerAssign)
                             || nextLexeme.type == GrLexemeType.increment
                             || nextLexeme.type == GrLexemeType.decrement) {
-                            final switch (currentType.baseType) with (GrBaseType) {
+                            final switch (currentType.base) with (GrType.Base) {
                             case bool_:
                             case int_:
                             case function_:
@@ -5677,7 +5678,7 @@ final class GrParser {
                             case list_:
                             case class_:
                             case foreign:
-                            case chan:
+                            case channel:
                             case reference:
                                 setInstruction(GrOpcode.index3_object,
                                     cast(int) currentFunction.instructions.length - 1);
@@ -5693,14 +5694,14 @@ final class GrParser {
                         }
                         hasLValue = true;
                         GrVariable refVar = new GrVariable;
-                        refVar.type.baseType = GrBaseType.reference;
+                        refVar.type.base = GrType.Base.reference;
                         refVar.type.mangledType = grMangleSignature([
                             currentType
                         ]);
                         lvalues ~= refVar;
                     }
                     else {
-                        final switch (currentType.baseType) with (GrBaseType) {
+                        final switch (currentType.base) with (GrType.Base) {
                         case bool_:
                         case int_:
                         case function_:
@@ -5720,7 +5721,7 @@ final class GrParser {
                         case list_:
                         case class_:
                         case foreign:
-                        case chan:
+                        case channel:
                         case reference:
                             setInstruction(GrOpcode.index2_object,
                                 cast(int) currentFunction.instructions.length - 1);
@@ -5745,35 +5746,35 @@ final class GrParser {
                 }
                 break;
             case int_:
-                currentType = GrType(GrBaseType.int_);
+                currentType = GrType(GrType.Base.int_);
                 addIntConstant(lex.ivalue);
                 hasValue = true;
                 typeStack ~= currentType;
                 checkAdvance();
                 break;
             case float_:
-                currentType = GrType(GrBaseType.float_);
+                currentType = GrType(GrType.Base.float_);
                 addFloatConstant(lex.fvalue);
                 hasValue = true;
                 typeStack ~= currentType;
                 checkAdvance();
                 break;
             case bool_:
-                currentType = GrType(GrBaseType.bool_);
+                currentType = GrType(GrType.Base.bool_);
                 addBoolConstant(lex.bvalue);
                 hasValue = true;
                 typeStack ~= currentType;
                 checkAdvance();
                 break;
             case string_:
-                currentType = GrType(GrBaseType.string_);
+                currentType = GrType(GrType.Base.string_);
                 addStringConstant(lex.svalue);
                 hasValue = true;
                 typeStack ~= currentType;
                 checkAdvance();
                 break;
             case null_:
-                currentType = GrType(GrBaseType.null_);
+                currentType = GrType(GrType.Base.null_);
                 hasValue = true;
                 typeStack ~= currentType;
                 addInstruction(GrOpcode.const_null);
@@ -5790,7 +5791,7 @@ final class GrParser {
                 typeStack ~= currentType;
                 break;
             case period:
-                if (currentType.baseType != GrBaseType.class_)
+                if (currentType.base != GrType.Base.class_)
                     logError(format(getError(Error.cantAccessFieldOnTypeX), getPrettyType(currentType)),
                         format(getError(Error.expectedClassFoundX), getPrettyType(currentType)));
                 checkAdvance();
@@ -5858,14 +5859,14 @@ final class GrParser {
                             currentType = parseAnonymousCall(typeStack[$ - 1]);
                             //Unpack function value for 1 or less return values
                             //Multiples values are left as a tuple for parseExpressionList()
-                            if (currentType.baseType == GrBaseType.internalTuple) {
+                            if (currentType.base == GrType.Base.internalTuple) {
                                 auto types = grUnpackTuple(currentType);
                                 if (!types.length)
                                     currentType = grVoid;
                                 else if (types.length == 1uL)
                                     currentType = types[0];
                             }
-                            if (currentType.baseType == GrBaseType.void_) {
+                            if (currentType.base == GrType.Base.void_) {
                                 typeStack.length--;
                             }
                             else {
@@ -5915,7 +5916,7 @@ final class GrParser {
                 checkAdvance();
                 bool hasField;
 
-                if (currentType.baseType == GrBaseType.class_) {
+                if (currentType.base == GrType.Base.class_) {
                     GrClassDefinition class_ = getClass(currentType.mangledType, get().fileId);
                     if (!class_)
                         logError(format(getError(Error.xNotDecl),
@@ -5957,14 +5958,14 @@ final class GrParser {
                             currentType = parseAnonymousCall(typeStack[$ - 1], selfType);
                             //Unpack function value for 1 or less return values
                             //Multiples values are left as a tuple for parseExpressionList()
-                            if (currentType.baseType == GrBaseType.internalTuple) {
+                            if (currentType.base == GrType.Base.internalTuple) {
                                 auto types = grUnpackTuple(currentType);
                                 if (!types.length)
                                     currentType = grVoid;
                                 else if (types.length == 1uL)
                                     currentType = types[0];
                             }
-                            if (currentType.baseType == GrBaseType.void_) {
+                            if (currentType.base == GrType.Base.void_) {
                                 typeStack.length--;
                             }
                             else {
@@ -5998,7 +5999,7 @@ final class GrParser {
                 // Parse a function call that refers to its parent. 
                 checkAdvance();
                 currentType = addFunctionAddress(currentFunction, get().fileId);
-                if (currentType.baseType == GrBaseType.void_)
+                if (currentType.base == GrType.Base.void_)
                     logError(format(getError(Error.xMustBeInsideFuncOrTask), getPrettyLexemeType(GrLexemeType.self)),
                         format(getError(Error.xRefNoFuncNorTask), getPrettyLexemeType(
                             GrLexemeType.self)), "", -1);
@@ -6100,7 +6101,7 @@ final class GrParser {
                 currentType = parseIdentifier(lvalue, lastType, grVoid, isExpectingLValue);
                 //Unpack function value for 1 or less return values
                 //Multiples values are left as a tuple for parseExpressionList()
-                if (currentType.baseType == GrBaseType.internalTuple) {
+                if (currentType.base == GrType.Base.internalTuple) {
                     auto types = grUnpackTuple(currentType);
                     if (!types.length)
                         currentType = grVoid;
@@ -6122,7 +6123,7 @@ final class GrParser {
                 if (!hasLValue && nextLexeme.type == GrLexemeType.leftBracket)
                     hasReference = true;
 
-                if (currentType != GrType(GrBaseType.void_)) {
+                if (currentType != GrType(GrType.Base.void_)) {
                     hasValue = true;
                     typeStack ~= currentType;
                 }
@@ -6193,7 +6194,7 @@ final class GrParser {
             result.lvalue = lvalues[$ - 1];
         }
 
-        if (mustCleanValue && hadValue && currentType.baseType != GrBaseType.void_)
+        if (mustCleanValue && hadValue && currentType.base != GrType.Base.void_)
             shiftStackPosition(currentType, -1);
 
         result.type = currentType;
@@ -6201,7 +6202,7 @@ final class GrParser {
     }
 
     private void addLoadFieldInstruction(GrType type, uint index, bool asCopy) {
-        final switch (type.baseType) with (GrBaseType) {
+        final switch (type.base) with (GrType.Base) {
         case bool_:
         case int_:
         case function_:
@@ -6216,7 +6217,7 @@ final class GrParser {
             addInstruction(asCopy ? GrOpcode.fieldLoad2_string : GrOpcode.fieldLoad_string, index);
             break;
         case reference:
-        case chan:
+        case channel:
         case class_:
         case list_:
         case foreign:
@@ -6236,11 +6237,11 @@ final class GrParser {
         const uint fileId = get().fileId;
 
         GrVariable functionId;
-        if (type.baseType == GrBaseType.function_) {
-            functionId = registerSpecialVariable("anon", GrType(GrBaseType.int_));
-            addSetInstruction(functionId, fileId, GrType(GrBaseType.int_));
+        if (type.base == GrType.Base.function_) {
+            functionId = registerSpecialVariable("anon", GrType(GrType.Base.int_));
+            addSetInstruction(functionId, fileId, GrType(GrType.Base.int_));
         }
-        else if (type.baseType != GrBaseType.task) {
+        else if (type.base != GrType.Base.task) {
             logError(format(getError(Error.xNotCallable), getPrettyType(type)),
                 format(getError(Error.xNotFuncNorTask), getPrettyType(type)));
         }
@@ -6267,7 +6268,7 @@ final class GrParser {
                     GrType subType = parseSubExpression(
                         GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_PARENTHESIS
                             | GR_SUBEXPR_EXPECTING_VALUE).type;
-                    if (subType.baseType == GrBaseType.internalTuple) {
+                    if (subType.base == GrType.Base.internalTuple) {
                         auto types = grUnpackTuple(subType);
                         if (types.length) {
                             for (int y; y < types.length; y++, i++) {
@@ -6310,17 +6311,17 @@ final class GrParser {
         }
 
         //Push the values on the global stack for task spawning.
-        if (type.baseType == GrBaseType.task)
+        if (type.base == GrType.Base.task)
             addGlobalPush(signature);
 
         //Anonymous call.
         GrType retTypes = grPackTuple(grUnmangleSignature(type.mangledReturnType));
 
-        if (type.baseType == GrBaseType.function_) {
-            addGetInstruction(functionId, GrType(GrBaseType.int_));
+        if (type.base == GrType.Base.function_) {
+            addGetInstruction(functionId, GrType(GrType.Base.int_));
         }
 
-        if (type.baseType == GrBaseType.function_)
+        if (type.base == GrType.Base.function_)
             addInstruction(GrOpcode.anonymousCall, 0u);
         else
             addInstruction(GrOpcode.anonymousTask, 0u);
@@ -6330,7 +6331,7 @@ final class GrParser {
     /// Parse an identifier or function call and return the deduced return type and lvalue.
     private GrType parseIdentifier(ref GrVariable variable, GrType expectedType,
         GrType selfType = grVoid, bool isAssignment = false) {
-        GrType returnType = GrBaseType.void_;
+        GrType returnType = GrType.Base.void_;
         const GrLexeme identifier = get();
         bool isFunctionCall = false, isMethodCall = false, hasParenthesis = false;
         string identifierName = identifier.svalue;
@@ -6338,7 +6339,7 @@ final class GrParser {
 
         advance();
 
-        if (selfType.baseType != GrBaseType.void_) {
+        if (selfType.base != GrType.Base.void_) {
             isMethodCall = true;
             isFunctionCall = true;
         }
@@ -6358,8 +6359,8 @@ final class GrParser {
             if (!var)
                 var = getGlobalVariable(identifierName, fileId);
             if (var) {
-                if (var.type.baseType != GrBaseType.function_ && var.type.baseType
-                    != GrBaseType.task)
+                if (var.type.base != GrType.Base.function_ && var.type.base
+                    != GrType.Base.task)
                     logError(format(getError(Error.xNotCallable), identifierName),
                         format(getError(Error.funcOrTaskExpectedFoundX), getPrettyType(var.type)),
                         "", -1);
@@ -6386,7 +6387,7 @@ final class GrParser {
                         GrType subType = parseSubExpression(
                             GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_PARENTHESIS
                                 | GR_SUBEXPR_EXPECTING_VALUE).type;
-                        if (subType.baseType == GrBaseType.internalTuple) {
+                        if (subType.base == GrType.Base.internalTuple) {
                             auto types = grUnpackTuple(subType);
                             if (types.length) {
                                 for (int y; y < types.length; y++, i++) {
@@ -6438,7 +6439,7 @@ final class GrParser {
                 }
 
                 //Push the values on the global stack for task spawning.
-                if (var.type.baseType == GrBaseType.task)
+                if (var.type.base == GrType.Base.task)
                     addGlobalPush(signature);
 
                 //Anonymous call.
@@ -6447,14 +6448,14 @@ final class GrParser {
 
                 returnType = grPackTuple(grUnmangleSignature(var.type.mangledReturnType));
 
-                if (var.type.baseType == GrBaseType.function_)
+                if (var.type.base == GrType.Base.function_)
                     addInstruction(GrOpcode.anonymousCall, 0u);
-                else if (var.type.baseType == GrBaseType.task)
+                else if (var.type.base == GrType.Base.task)
                     addInstruction(GrOpcode.anonymousTask, 0u);
             }
             else {
                 if (isMethodCall) {
-                    if (selfType.baseType == GrBaseType.internalTuple)
+                    if (selfType.base == GrType.Base.internalTuple)
                         signature ~= grUnpackTuple(selfType);
                     else
                         signature ~= selfType;
@@ -6465,7 +6466,7 @@ final class GrParser {
                         auto type = parseSubExpression(
                             GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_PARENTHESIS
                                 | GR_SUBEXPR_EXPECTING_VALUE).type;
-                        if (type.baseType == GrBaseType.internalTuple) {
+                        if (type.base == GrType.Base.internalTuple) {
                             auto types = grUnpackTuple(type);
                             if (types.length)
                                 signature ~= types;
@@ -6520,7 +6521,7 @@ final class GrParser {
             }
             checkAdvance();
 
-            returnType = GrType(GrBaseType.enum_);
+            returnType = GrType(GrType.Base.enum_);
             returnType.mangledType = definition.name;
             addIntConstant(definition.getField(fieldName));
         }

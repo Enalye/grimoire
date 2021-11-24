@@ -11,10 +11,10 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 package(grimoire.stdlib) void grLoadStdLibChannel(GrLibrary library, GrLocale locale) {
     static foreach (t; ["Int", "Float", "String", "Object"]) {
         mixin("GrType any" ~ t ~ "Channel = grAny(\"C\", (type, data) {
-                if (type.baseType != GrBaseType.chan)
+                if (type.base != GrType.Base.channel)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOf" ~ t ~ "(subType.baseType);
+                return grIsKindOf" ~ t ~ "(subType.base);
             });
             library.addPrimitive(&_size_!\"" ~ t ~ "\", \"size\", [
                     any"

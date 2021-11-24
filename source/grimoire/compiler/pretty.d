@@ -10,7 +10,7 @@ import grimoire.compiler.util, grimoire.compiler.type, grimoire.compiler.mangle;
 
 /// Convert a type into a pretty format for display.
 string grGetPrettyType(GrType variableType, GrLocale locale = GrLocale.en_US) {
-    final switch (variableType.baseType) with (GrBaseType) {
+    final switch (variableType.base) with (GrType.Base) {
     case void_:
         final switch (locale) with (GrLocale) {
         case en_US:
@@ -102,7 +102,7 @@ string grGetPrettyType(GrType variableType, GrLocale locale = GrLocale.en_US) {
             i++;
         }
         return result;
-    case chan:
+    case channel:
         string result;
         final switch (locale) with (GrLocale) {
         case en_US:

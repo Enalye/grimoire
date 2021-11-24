@@ -21,7 +21,7 @@ private {
 package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
     library.addClass("Vec2", ["x", "y"], [
             grAny("T", (t, d) {
-                return (t.baseType == grInt) || (t.baseType == grFloat);
+                return (t.base == grInt) || (t.base == grFloat);
             }), grAny("T")
             ], ["T"]);
 

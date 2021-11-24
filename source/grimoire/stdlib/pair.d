@@ -29,7 +29,7 @@ package(grimoire.stdlib) void grLoadStdLibPair(GrLibrary library, GrLocale local
         library.addOperator(&_makeKeyValuePair_!\"" ~ t
                 ~ "\", GrLibrary.Operator.arrow, [grString, grAny(\"T\", (type, data) {
             data.set(\"P\", grGetClassType(\"Pair\", [grString, type]));
-            return grIsKindOf" ~ t ~ "(type.baseType);
+            return grIsKindOf" ~ t ~ "(type.base);
         })], grAny(\"P\"));
         ");
     }

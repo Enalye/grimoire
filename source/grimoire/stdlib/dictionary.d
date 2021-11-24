@@ -63,7 +63,7 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale
 
     static foreach (t; ["Int", "Float", "String", "Object"]) {
         mixin("GrType any" ~ t ~ "Dictionary = grAny(\"M\", (type, data) {
-                if (type.baseType != GrBaseType.foreign)
+                if (type.base != GrType.Base.foreign)
                     return false;
                 auto subType = grUnmangleComposite(type.mangledType);
                 if(subType.name != _dicSymbol)
@@ -74,17 +74,17 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale
                 data.set(\"A\", grList(subType.signature[0]));
                 return grIsKindOf"
                 ~ t
-                ~ "(subType.signature[0].baseType);
+                ~ "(subType.signature[0].base);
             });
 
             GrType any"
                 ~ t ~ "List = grAny(\"A\", (type, data) {
-                if (type.baseType != GrBaseType.list_)
+                if (type.base != GrType.Base.list_)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
                 data.set(\"M\", grGetForeignType(_dicSymbol, [subType]));
                 return grIsKindOf"
-                ~ t ~ "(subType.baseType);
+                ~ t ~ "(subType.base);
             });
 
             library.addPrimitive(&_make_!\""
@@ -93,13 +93,13 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale
 
             library.addPrimitive(&_makeByPairs_!\""
                 ~ t ~ "\", _dicSymbol, [grAny(\"T\", (type, data) {
-                if (type.baseType != GrBaseType.list_)
+                if (type.base != GrType.Base.list_)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
-                if(subType.baseType != GrBaseType.class_)
+                if(subType.base != GrType.Base.class_)
                     return false;
                 auto pairType = grUnmangleComposite(subType.mangledType);
-                if(pairType.name != _pairSymbol || pairType.signature.length != 2 || pairType.signature[0].baseType != GrBaseType.string_)
+                if(pairType.name != _pairSymbol || pairType.signature.length != 2 || pairType.signature[0].base != GrType.Base.string_)
                     return false;
                 data.set(\"M\", grGetForeignType(_dicSymbol, [pairType.signature[1]]));
                 return true;
@@ -150,7 +150,7 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale
             library.addPrimitive(&_each_!\""
                 ~ t ~ "\", \"each\", [
                     grAny(\"A\", (type, data) {
-                if (type.baseType != GrBaseType.foreign)
+                if (type.base != GrType.Base.foreign)
                     return false;
                 auto subType = grUnmangleComposite(type.mangledType);
                 if(subType.name != _dicSymbol)
@@ -159,21 +159,21 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale
                     return false;
                 data.set(\"R\", grGetForeignType(_dicIterSymbol, subType.signature));
                 return grIsKindOf"
-                ~ t ~ "(subType.signature[0].baseType);
+                ~ t ~ "(subType.signature[0].base);
             })
                 ], [grAny(\"R\")]);
 
             library.addPrimitive(&_next_!\""
                 ~ t ~ "\", \"next\", [
                     grAny(\"R\", (type, data) {
-                if (type.baseType != GrBaseType.foreign)
+                if (type.base != GrType.Base.foreign)
                     return false;
                 auto result = grUnmangleComposite(type.mangledType);
                 if(result.signature.length != 1 || result.name != _dicIterSymbol)
                     return false;
                 data.set(\"T\", grGetClassType(\"Pair\", [grString, result.signature[0]]));
                 return grIsKindOf"
-                ~ t ~ "(result.signature[0].baseType);
+                ~ t ~ "(result.signature[0].base);
                     })
                 ], [grBool, grAny(\"T\")]);
             ");

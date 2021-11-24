@@ -70,13 +70,13 @@ package(grimoire.stdlib) void grLoadStdLibAny(GrLibrary library, GrLocale locale
     library.addCast(&_from_s, grString, anyType);
 
     library.addCast(&_from_o, grAny("T", (type, data) {
-            return type.baseType == GrBaseType.list_ || type.baseType == GrBaseType.class_
-            || type.baseType == GrBaseType.foreign || type.baseType == GrBaseType.chan;
+            return type.base == GrType.Base.list_ || type.base == GrType.Base.class_
+            || type.base == GrType.Base.foreign || type.base == GrType.Base.channel;
         }), anyType);
 
     library.addCast(&_from_i2, grAny("T", (type, data) {
-            return type.baseType == GrBaseType.enum_
-            || type.baseType == GrBaseType.function_ || type.baseType == GrBaseType.task;
+            return type.base == GrType.Base.enum_
+            || type.base == GrType.Base.function_ || type.base == GrType.Base.task;
         }), anyType);
 
     library.addCast(&_to_b, anyType, grBool);
@@ -231,7 +231,7 @@ private void _to_o(GrCall call) {
         call.raise("NullError");
         return;
     }
-    if(any.typeInfo != call.getOutType(0)) {
+    if (any.typeInfo != call.getOutType(0)) {
         call.raise("ConvError");
         return;
     }
@@ -251,7 +251,7 @@ private void _to_i2(GrCall call) {
         call.raise("NullError");
         return;
     }
-    if(any.typeInfo != call.getOutType(0)) {
+    if (any.typeInfo != call.getOutType(0)) {
         call.raise("ConvError");
         return;
     }

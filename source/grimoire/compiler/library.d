@@ -54,7 +54,7 @@ class GrLibrary {
         variable.type = type;
         variable.isConstant = isConstant;
 
-        final switch (type.baseType) with (GrBaseType) {
+        final switch (type.base) with (GrType.Base) {
         case bool_:
         case int_:
         case enum_:
@@ -62,7 +62,7 @@ class GrLibrary {
         case string_:
             break;
         case class_:
-        case chan:
+        case channel:
         case function_:
         case task:
         case list_:
@@ -75,28 +75,28 @@ class GrLibrary {
                     "can't initialize library variable of type `" ~ grGetPrettyType(type) ~ "`");
         }
         static if (isIntegral!T) {
-            if (type.baseType != GrBaseType.int_ && type.baseType != GrBaseType.enum_)
+            if (type.base != GrType.Base.int_ && type.base != GrType.Base.enum_)
                 throw new Exception(
                         "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
                         type) ~ "`");
             variable.ivalue = cast(int) defaultValue;
         }
         else static if (is(T == bool)) {
-            if (type.baseType != GrBaseType.bool_)
+            if (type.base != GrType.Base.bool_)
                 throw new Exception(
                         "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
                         type) ~ "`");
             variable.ivalue = defaultValue ? 1 : 0;
         }
         else static if (isFloatingPoint!T) {
-            if (type.baseType != GrBaseType.float_)
+            if (type.base != GrType.Base.float_)
                 throw new Exception(
                         "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
                         type) ~ "`");
             variable.fvalue = cast(float) defaultValue;
         }
         static if (is(T == string)) {
-            if (type.baseType != GrBaseType.string_)
+            if (type.base != GrType.Base.string_)
                 throw new Exception(
                         "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
                         type) ~ "`");
@@ -114,7 +114,7 @@ class GrLibrary {
         enum_.isPublic = true;
         _enumDefinitions ~= enum_;
 
-        GrType type = GrBaseType.enum_;
+        GrType type = GrType.Base.enum_;
         type.mangledType = name;
         return type;
     }
@@ -143,7 +143,7 @@ class GrLibrary {
             class_.fieldsInfo[i].position = 0;
         }
 
-        GrType type = GrBaseType.class_;
+        GrType type = GrType.Base.class_;
         type.mangledType = name;
         type.isAbstract = class_.templateVariables.length > 0;
         return type;
@@ -171,7 +171,7 @@ class GrLibrary {
         foreign.parentTemplateSignature = parentTemplateSignature;
         _abstractForeignDefinitions ~= foreign;
 
-        GrType type = GrBaseType.foreign;
+        GrType type = GrType.Base.foreign;
         type.mangledType = name;
         type.isAbstract = foreign.templateVariables.length > 0;
         return type;

@@ -25,17 +25,17 @@ package void grLoadStdLibSystem(GrLibrary library, GrLocale locale) {
             library.addPrimitive(&_swap_2_!(t1, t2), funcSwap, [
                     grAny("1", (type, data) {
                         static if (t1 == "Ptr") {
-                            return grIsKindOfObject(type.baseType);
+                            return grIsKindOfObject(type.base);
                         }
                         else {
-                            mixin("return grIsKindOf" ~ t1 ~ "(type.baseType);");
+                            mixin("return grIsKindOf" ~ t1 ~ "(type.base);");
                         }
                     }), grAny("2", (type, data) {
                         static if (t2 == "Ptr") {
-                            return grIsKindOfObject(type.baseType);
+                            return grIsKindOfObject(type.base);
                         }
                         else {
-                            mixin("return grIsKindOf" ~ t2 ~ "(type.baseType);");
+                            mixin("return grIsKindOf" ~ t2 ~ "(type.base);");
                         }
                     })
                     ], [grAny("2"), grAny("1")]);
@@ -45,10 +45,10 @@ package void grLoadStdLibSystem(GrLibrary library, GrLocale locale) {
         library.addPrimitive(&_cond_!t, funcCond, [
                 grBool, grAny("T", (type, data) {
                     static if (t == "Ptr") {
-                        return grIsKindOfObject(type.baseType);
+                        return grIsKindOfObject(type.base);
                     }
                     else {
-                        mixin("return grIsKindOf" ~ t ~ "(type.baseType);");
+                        mixin("return grIsKindOf" ~ t ~ "(type.base);");
                     }
                 }), grAny("T")
                 ], [grAny("T")]);
