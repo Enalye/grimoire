@@ -10,18 +10,18 @@ Hope you have fun with this project !
 What it looks like:
 ```cpp
 //Hello World
-main {
-    printl("Hello World!");
+action main {
+    trace("Hello World!");
 }
 ```
 ```cpp
 //Invert a string
-main {
+action main {
     assert("Hello World !":invert == "! dlroW olleH");
 }
 
-func invert(string str) (string) {
-    let result = str as array(string);
+function invert(string str) (string) {
+    let result = str as list(string);
     loop(i, result:size / 2)
         result[i], result[-(i + 1)] = result[-(i + 1)], result[i];
     return result as string;
@@ -31,7 +31,7 @@ func invert(string str) (string) {
 //Fibonacci
 main {
     assert(
-        func(int n) (int) {
+        function(int n) (int) {
             if(n < 2) return n;
             return self(n - 1) + self(n - 2);
         }(10) == 55);
@@ -104,23 +104,22 @@ engine.prettifyProfiling();
 ### Processing
 
 Then, create the runtime's virtual machine `GrEngine`, you'll first need to add the same libraries as the compiler and in the same order.
-Then, load the bytecode and spawn the main task.
+Then, load the bytecode.
 ```d
 GrEngine engine = new GrEngine;
 engine.addLibrary(stdlib);
 engine.load(bytecode);
-engine.spawn();
 ```
 
-You're not forced to spawn the main, you can spawn any other named event like this:
+You can then spawn any action like this:
 ```d
-auto mangledName = grMangleNamedFunction("myEvent", [grString]);
-if(engine.hasEvent(mangledName)) {
-    GrContext context = engine.spawnEvent(mangledName);
+auto mangledName = grMangleComposite("myAction", [grString]);
+if(engine.hasAction(mangledName)) {
+    GrContext context = engine.callAction(mangledName);
     context.setString("Hello World!");
 }
 ```
-But be aware that every function/task/event are mangled with their signature, so use grMangleNamedFunction to generate the  correct function's name.
+But be aware that every function/task/event are mangled with their signature, so use `grMangleComposite` to generate the  correct function's name.
 
 If the event has parameters, you must push them into the context with the `setXX` functions.
 
