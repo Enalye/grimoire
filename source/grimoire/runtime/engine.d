@@ -172,7 +172,7 @@ class GrEngine {
 	The action's name must be mangled with its signature.
 	---
 	action myAction() {
-		printl("myAction was created !");
+		trace("myAction was created !");
 	}
 	---
 	*/
@@ -182,6 +182,26 @@ class GrEngine {
             throw new Exception("no action \'" ~ mangledName ~ "\' in script");
         GrContext context = new GrContext(this);
         context.pc = *action;
+        _contextsToSpawn.push(context);
+        return context;
+    }
+
+    /**
+	Spawn a new coroutine at an arbitrary address. \
+	The address needs to correspond to the start of a task, else the VM will crash. \
+	*/
+    GrContext callAddress(uint pc) {
+        if (pc == 0 || pc >= _bytecode.opcodes.length)
+            throw new Exception("address \'" ~ to!string(pc) ~ "\' out of bounds");
+
+        // For now we assume a task is always following a kill from the previous  task
+        // Not a 100% foolproof method but it'll do for now.
+        const GrOpcode opcode = cast(GrOpcode)(_bytecode.opcodes[(cast(long) pc) - 1] & 0xFF);
+        if (opcode != GrOpcode.kill_)
+            throw new Exception("the address does not correspond with a task");
+
+        GrContext context = new GrContext(this);
+        context.pc = pc;
         _contextsToSpawn.push(context);
         return context;
     }
@@ -296,46 +316,6 @@ class GrEngine {
         context.isPanicking = true;
 
         context.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
-
-        /+
-        //Exception handler found in the current function, just jump.
-        if (context.callStack[context.stackPos].exceptionHandlers.length) {
-            context.pc = context.callStack[context.stackPos].exceptionHandlers[$ - 1];
-        }
-        //No exception handler in the current function, unwinding the deferred code, then return.
-
-        //Check for deferred calls as we will exit the current function.
-        else if (context.callStack[context.stackPos].deferStack.length) {
-            //Pop the last defer and run it.
-            context.pc = context.callStack[context.stackPos].deferStack[$ - 1];
-            context.callStack[context.stackPos].deferStack.length--;
-            //The search for an exception handler will be done by Unwind after all defer
-            //has been called for this function.
-        }
-        else if (context.stackPos) {
-            //Then returns to the last context, raise will be run again.
-            context.stackPos--;
-            context.ilocalsPos -= context.callStack[context.stackPos].ilocalStackSize;
-            context.flocalsPos -= context.callStack[context.stackPos].flocalStackSize;
-            context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
-            context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
-
-            if (_isDebug)
-                _debugProfileEnd();
-        }
-        else {
-            //Kill the others.
-            foreach (coroutine; _contexts) {
-                coroutine.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
-                coroutine.isKilled = true;
-            }
-            _contextsToSpawn.reset();
-
-            //The VM is now panicking.
-            _isPanicking = true;
-            _panicMessage = _sglobalStackIn[$ - 1];
-            _sglobalStackIn.length--;
-        }+/
     }
 
     /**

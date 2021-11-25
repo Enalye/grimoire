@@ -451,6 +451,28 @@ final class GrCall {
         return _context.engine.createObject(name);
     }
 
+    
+    /**
+	Spawn a new coroutine registered as an action. \
+	The action's name must be mangled with its signature.
+	---
+	action myAction() {
+		trace("myAction was created !");
+	}
+	---
+	*/
+    GrContext callAction(string mangledName) {
+        return _context.engine.callAction(mangledName);
+    }
+
+    /**
+	Spawn a new coroutine at an arbitrary address. \
+	The address needs to correspond to the start of a task, else the VM will crash. \
+	*/
+    GrContext callAddress(uint pc) {
+        return _context.engine.callAddress(pc);
+    }
+
     /// Pause the current context.
     void block(GrBlocker blocker) {
         _context.block(blocker);
