@@ -219,5 +219,5 @@ private void _trace(GrCall call) {
         return;
     }
     _stdOut("Color(" ~ to!GrString(self.getFloat("r")) ~ ", " ~ to!GrString(
-            self.getFloat("g")) ~ ", " ~ to!GrString(self.getFloat("b")) ~ ")\n");
+            self.getFloat("g")) ~ ", " ~ to!GrString(self.getFloat("b")) ~ ")");
 }

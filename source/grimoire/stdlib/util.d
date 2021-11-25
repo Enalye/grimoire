@@ -26,7 +26,7 @@ void function(GrString) grGetOutputFunction() {
 }
 
 private void _defaultOutput(GrString message) {
-	import std.stdio : write;
+	import std.stdio : writeln;
 
-	write(message);
+	writeln(message);
 }

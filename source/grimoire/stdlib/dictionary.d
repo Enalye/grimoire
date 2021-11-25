@@ -180,20 +180,16 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale
     }
 
     GrType boolDictionary = grGetForeignType(_dicSymbol, [grBool]);
-    library.addPrimitive(&_print_!("bool", false), "print", [boolDictionary]);
-    library.addPrimitive(&_print_!("bool", true), "printl", [boolDictionary]);
+    library.addPrimitive(&_trace_!"bool", "trace", [boolDictionary]);
 
     GrType intDictionary = grGetForeignType(_dicSymbol, [grInt]);
-    library.addPrimitive(&_print_!("int", false), "print", [intDictionary]);
-    library.addPrimitive(&_print_!("int", true), "printl", [intDictionary]);
+    library.addPrimitive(&_trace_!"int", "trace", [intDictionary]);
 
     GrType floatDictionary = grGetForeignType(_dicSymbol, [grFloat]);
-    library.addPrimitive(&_print_!("float", false), "print", [floatDictionary]);
-    library.addPrimitive(&_print_!("float", true), "printl", [floatDictionary]);
+    library.addPrimitive(&_trace_!"float", "trace", [floatDictionary]);
 
     GrType stringDictionary = grGetForeignType(_dicSymbol, [grString]);
-    library.addPrimitive(&_print_!("string", false), "print", [stringDictionary]);
-    library.addPrimitive(&_print_!("string", true), "printl", [stringDictionary]);
+    library.addPrimitive(&_trace_!"string", "trace", [stringDictionary]);
 }
 
 private void _make_(string t)(GrCall call) {
@@ -335,48 +331,6 @@ private void _byValues_(string t)(GrCall call) {
     mixin("call.set" ~ t ~ "List(ary);");
 }
 
-private void _printb_(string t)(GrCall call) {
-    Dictionary dictionary = call.getForeign!(IntDictionary)(0);
-    if (!dictionary) {
-        call.raise("NullError");
-        return;
-    }
-    GrString result = "{";
-    bool isFirst = true;
-    foreach (key, value; dictionary.data) {
-        if (isFirst) {
-            isFirst = false;
-        }
-        else {
-            result ~= ", ";
-        }
-        result ~= "\"" ~ key ~ "\"=>" ~ to!string(cast(GrBool) value);
-    }
-    result ~= "}";
-    _stdOut(result);
-}
-
-private void _printlb_(string t)(GrCall call) {
-    Dictionary dictionary = call.getForeign!(IntDictionary)(0);
-    if (!dictionary) {
-        call.raise("NullError");
-        return;
-    }
-    GrString result = "{";
-    bool isFirst = true;
-    foreach (key, value; dictionary.data) {
-        if (isFirst) {
-            isFirst = false;
-        }
-        else {
-            result ~= ", ";
-        }
-        result ~= "\"" ~ key ~ "\"=>" ~ to!string(cast(GrBool) value);
-    }
-    result ~= "}\n";
-    _stdOut(result);
-}
-
 private void _each_(string t)(GrCall call) {
     mixin(t ~ "Dictionary dictionary = call.getForeign!(" ~ t ~ "Dictionary)(0);");
     if (!dictionary) {
@@ -451,7 +405,7 @@ private void _next_(string t)(GrCall call) {
     iter.index++;
 }
 
-private void _print_(string t, bool newLine)(GrCall call) {
+private void _trace_(string t)(GrCall call) {
     static if (t == "bool" || t == "int") {
         IntDictionary dictionary = call.getForeign!(IntDictionary)(0);
     }
@@ -485,6 +439,6 @@ private void _print_(string t, bool newLine)(GrCall call) {
             result ~= to!string(value);
         }
     }
-    result ~= newLine ? "}\n" : "}";
+    result ~= "}";
     _stdOut(result);
 }

@@ -10,7 +10,7 @@ import grimoire.stdlib.util;
 
 package void grLoadStdLibSystem(GrLibrary library, GrLocale locale) {
     string funcSwap, funcCond;
-    final switch(locale) with(GrLocale) {
+    final switch (locale) with (GrLocale) {
     case en_US:
         funcSwap = "swap";
         funcCond = "cond";
@@ -38,7 +38,7 @@ package void grLoadStdLibSystem(GrLibrary library, GrLocale locale) {
                             mixin("return grIsKindOf" ~ t2 ~ "(type.base);");
                         }
                     })
-                    ], [grAny("2"), grAny("1")]);
+                ], [grAny("2"), grAny("1")]);
         }
     }
     static foreach (t; ["Int", "Float", "String", "Ptr"]) {
@@ -51,18 +51,27 @@ package void grLoadStdLibSystem(GrLibrary library, GrLocale locale) {
                         mixin("return grIsKindOf" ~ t ~ "(type.base);");
                     }
                 }), grAny("T")
-                ], [grAny("T")]);
+            ], [grAny("T")]);
     }
+
+    library.addPrimitive(&_typeOf, "typeOf", [grAny("T")], [grString]);
 }
 
 private void _swap_2_(string t1, string t2)(GrCall call) {
     mixin("auto v1 = call.get" ~ t1 ~ "(0);
-    auto v2 = call.get" ~ t2 ~ "(1);
-    call.set" ~ t2
+    auto v2 = call.get"
+            ~ t2 ~ "(1);
+    call.set"
+            ~ t2
             ~ "(v2);
-    call.set" ~ t1 ~ "(v1);");
+    call.set"
+            ~ t1 ~ "(v1);");
 }
 
 private void _cond_(string t)(GrCall call) {
     mixin("call.set" ~ t ~ "(call.getBool(0) ? call.get" ~ t ~ "(1) : call.get" ~ t ~ "(2));");
+}
+
+private void _typeOf(GrCall call) {
+    call.setString(grGetPrettyType(grUnmangle(call.getInType(0))));
 }

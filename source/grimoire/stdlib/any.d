@@ -271,7 +271,7 @@ private void _trace(GrCall call) {
         _stdOut("null(any)");
         return;
     }
-    _stdOut("any(" ~ grGetPrettyType(grUnmangle(any.typeInfo)) ~ ")\n");
+    _stdOut("any(" ~ grGetPrettyType(grUnmangle(any.typeInfo)) ~ ")");
 }
 /*
 private void _add_vf(GrCall call) {

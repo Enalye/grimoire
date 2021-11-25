@@ -16,12 +16,12 @@ private {
 package(grimoire.stdlib) void grLoadStdLibLog(GrLibrary library, GrLocale locale) {
     final switch (locale) with (GrLocale) {
     case en_US:
-        _trueText = "true\n";
-        _falseText = "false\n";
+        _trueText = "true";
+        _falseText = "false";
         break;
     case fr_FR:
-        _trueText = "vrai\n";
-        _falseText = "faux\n";
+        _trueText = "vrai";
+        _falseText = "faux";
         break;
     }
 
@@ -60,7 +60,7 @@ package(grimoire.stdlib) void grLoadStdLibLog(GrLibrary library, GrLocale locale
 
 // trace
 private void _trace_s(GrCall call) {
-    _stdOut(call.getString(0) ~ "\n");
+    _stdOut(call.getString(0));
 }
 
 private void _trace_b(GrCall call) {
@@ -68,66 +68,66 @@ private void _trace_b(GrCall call) {
 }
 
 private void _trace_i(GrCall call) {
-    _stdOut(to!string(call.getInt(0)) ~ "\n");
+    _stdOut(to!string(call.getInt(0)));
 }
 
 private void _trace_f(GrCall call) {
-    _stdOut(to!string(call.getFloat(0)) ~ "\n");
+    _stdOut(to!string(call.getFloat(0)));
 }
 
 private void _trace_ni(GrCall call) {
     auto ary = call.getIntList(0);
-    _stdOut(to!string(ary.data) ~ "\n");
+    _stdOut(to!string(ary.data));
 }
 
 private void _trace_nb(GrCall call) {
     auto ary = call.getIntList(0);
-    _stdOut(to!string(to!(GrBool[])(ary.data)) ~ "\n");
+    _stdOut(to!string(to!(GrBool[])(ary.data)));
 }
 
 private void _trace_nf(GrCall call) {
     auto ary = call.getFloatList(0);
-    _stdOut(to!string(ary.data) ~ "\n");
+    _stdOut(to!string(ary.data));
 }
 
 private void _trace_ns(GrCall call) {
     auto ary = call.getStringList(0);
-    _stdOut(to!string(ary.data) ~ "\n");
+    _stdOut(to!string(ary.data));
 }
 
 private void _trace_enum(GrCall call) {
     string name = grGetPrettyType(grUnmangle(call.getInType(0)));
     auto enumValue = call.getInt(0);
-    _stdOut(name ~ "." ~ to!string(enumValue) ~ "\n");
+    _stdOut(name ~ "." ~ to!string(enumValue));
 }
 
 private void _trace_chan(GrCall call) {
     string name = grGetPrettyType(grUnmangle(call.getInType(0)));
     auto channel = call.getIntChannel(0);
-    _stdOut(name ~ " {" ~ to!string(channel.capacity) ~ "}\n");
+    _stdOut(name ~ " {" ~ to!string(channel.capacity) ~ "}");
 }
 
 private void _trace_func(GrCall call) {
     string name = grGetPrettyType(grUnmangle(call.getInType(0)));
-    _stdOut(name ~ " {" ~ to!string(call.getInt(0)) ~ "}\n");
+    _stdOut(name ~ " {" ~ to!string(call.getInt(0)) ~ "}");
 }
 
 private void _trace_o(GrCall call) {
     string name = grGetPrettyType(grUnmangle(call.getInType(0)));
     if (call.getObject(0)) {
-        _stdOut(name ~ "\n");
+        _stdOut(name);
     }
     else {
-        _stdOut("null(" ~ name ~ ")\n");
+        _stdOut("null(" ~ name ~ ")");
     }
 }
 
 private void _trace_u(GrCall call) {
     const string name = grGetPrettyType(grUnmangle(call.getInType(0)));
     if (call.getPtr(0)) {
-        _stdOut(name ~ "\n");
+        _stdOut(name);
     }
     else {
-        _stdOut("null(" ~ name ~ ")\n");
+        _stdOut("null(" ~ name ~ ")");
     }
 }

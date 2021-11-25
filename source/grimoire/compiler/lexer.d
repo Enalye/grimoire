@@ -996,7 +996,7 @@ package final class GrLexer {
             lex.isType = true;
             break;
         case "canal":
-        case "channel":
+        case "chan":
             lex.type = GrLexemeType.chanType;
             lex.isType = true;
             break;
@@ -1243,7 +1243,7 @@ string grGetPrettyLexemeType(GrLexemeType operator, GrLocale locale = GrLocale.e
             "=>", "~", "!", "++", "--", "identifier", "const_integer",
             "const_float", "const_bool", "const_string", "null", "public",
             "type", "action", "class", "enum", "template", "new", "copy", "send",
-            "receive", "int", "float", "bool", "string", "list", "channel",
+            "receive", "int", "float", "bool", "string", "list", "chan",
             "function", "task", "let", "if", "unless", "else", "switch", "select",
             "case", "while", "do", "until", "for", "loop", "return", "self",
             "die", "end", "pass", "break", "continue"

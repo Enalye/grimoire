@@ -108,7 +108,7 @@ Exemple of valid identifiers:
 ## Reserved words
 
 The following are keyword used by the language, they cannot be used as identifier (variables, functions, etc):
-`use`, `public`, `type`, `action`, `class`, `enum`, `template`, `if`, `unless`, `else`, `switch`, `select`, `case`, `while`, `do`, `until`, `for`, `loop`, `return`, `self`, `kill`, `killall`, `yield`, `break`, `continue`, `as`, `try`, `catch`, `raise`, `defer`, `void`, `task`, `function`, `int`, `float`, `bool`, `string`, `list`, `channel`, `new`, `let`, `true`, `false`, `null`, `not`, `and`, `or`, `bit_not`, `bit_and`, `bit_or`, `bit_xor`.
+`use`, `public`, `type`, `action`, `class`, `enum`, `template`, `if`, `unless`, `else`, `switch`, `select`, `case`, `while`, `do`, `until`, `for`, `loop`, `return`, `self`, `kill`, `killall`, `yield`, `break`, `continue`, `as`, `try`, `catch`, `raise`, `defer`, `void`, `task`, `function`, `int`, `float`, `bool`, `string`, `list`, `chan`, `new`, `let`, `true`, `false`, `null`, `not`, `and`, `or`, `bit_not`, `bit_and`, `bit_or`, `bit_xor`.
 
 ## Comments
 
@@ -923,14 +923,14 @@ If you know them from Go, it's roughly the same.
 
 Channels are created like this:
 ```cpp
-channel(int) c = channel(int, 5);
+chan(int) c = chan(int, 5);
 ```
 Here, we create a channel that will hold up to 5 int values.
 The size (5) of the channel is optional, by default, it's 1.
 
 To pass a value around, you need to use the <- operator
 ```cpp
-let c = channel(int);
+let c = chan(int);
 c <- 1; //We send the value 1 through the channel
 int value = <-c; //We receive the value from the channel
 ```
@@ -938,16 +938,16 @@ int value = <-c; //We receive the value from the channel
 But a send or receive operation is blocking, you can't do it on the same task.
 
 ```cpp
-task foo(channel(int) c) {
+task foo(chan(int) c) {
 	trace(<-c);
 }
 action main {
-	let c = channel(int);
+	let c = chan(int);
 	foo(c);
 	c <- "Hello World !";
 }
 ```
-Here, foo will be blocked until something is written on the channel, then it'll trace it.
+Here, foo will be blocked until something is written on the channel, then it'll print it.
 
 * * *
 

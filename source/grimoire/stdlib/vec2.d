@@ -261,20 +261,20 @@ private void _vec2f_vec2i(GrCall call) {
 private void _trace_i(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        _stdOut("null(Vec2i)\n");
+        _stdOut("null(Vec2i)");
         return;
     }
-    _stdOut("Vec2i(" ~ to!GrString(self.getInt("x")) ~ ", " ~ to!GrString(self.getInt("y")) ~ ")\n");
+    _stdOut("Vec2i(" ~ to!GrString(self.getInt("x")) ~ ", " ~ to!GrString(self.getInt("y")) ~ ")");
 }
 
 private void _trace_f(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        _stdOut("null(Vec2f)\n");
+        _stdOut("null(Vec2f)");
         return;
     }
     _stdOut("Vec2f(" ~ to!GrString(self.getFloat("x")) ~ ", " ~ to!GrString(
-            self.getFloat("y")) ~ ")\n");
+            self.getFloat("y")) ~ ")");
 }
 
 /// Operators ------------------------------------------
