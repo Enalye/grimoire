@@ -29,7 +29,7 @@ function invert(string str) (string) {
 ```
 ```cpp
 //Fibonacci
-main {
+action fib {
     assert(
         function(int n) (int) {
             if(n < 2) return n;
