@@ -68,7 +68,7 @@ else {
   - [Operators](#operators)
 
 - Compound types:
-  - [Arrays](#arrays)
+  - [Lists](#lists)
   - [Enumerations](#enumerations)
   - [Classes](#classes)
   - [Channels](#channels)
@@ -108,7 +108,7 @@ Exemple of valid identifiers:
 ## Reserved words
 
 The following are keyword used by the language, they cannot be used as identifier (variables, functions, etc):
-`use`, `public`, `type`, `action`, `class`, `enum`, `template`, `if`, `unless`, `else`, `switch`, `select`, `case`, `while`, `do`, `until`, `for`, `loop`, `return`, `self`, `kill`, `killall`, `yield`, `break`, `continue`, `as`, `try`, `catch`, `raise`, `defer`, `void`, `task`, `function`, `int`, `float`, `bool`, `string`, `array`, `channel`, `new`, `let`, `true`, `false`, `null`, `not`, `and`, `or`, `bit_not`, `bit_and`, `bit_or`, `bit_xor`.
+`use`, `public`, `type`, `action`, `class`, `enum`, `template`, `if`, `unless`, `else`, `switch`, `select`, `case`, `while`, `do`, `until`, `for`, `loop`, `return`, `self`, `kill`, `killall`, `yield`, `break`, `continue`, `as`, `try`, `catch`, `raise`, `defer`, `void`, `task`, `function`, `int`, `float`, `bool`, `string`, `list`, `channel`, `new`, `let`, `true`, `false`, `null`, `not`, `and`, `or`, `bit_not`, `bit_and`, `bit_or`, `bit_xor`.
 
 ## Comments
 
@@ -192,7 +192,7 @@ They're only a handful of basic type recognised by grimoire.
 * Floating number declared with **float** ex: 2.35f (Default value: 0f)
 * Boolean declared with **bool** ex: true, false (Default value: false)
 * String declared with **string** ex: "Hello" (Default value: "")
-* [Array](#arrays) (Default value: [])
+* [List](#lists) (Default value: [])
 * [Function](#functions) (Default value: empty function)
 * [Task](#tasks) (Default value: empty task)
 * [Channel](#channels) (Default value: size 1 channel)
@@ -434,14 +434,14 @@ while(i < 10)
 
 ## For
 
-`for` loops are yet another kind of loop that will automatically iterate on an array of values.
+`for` loops are yet another kind of loop that will automatically iterate on an list of values.
 For instance:
 ```cpp
 for(i, [1, 2, 3, 4]) {
 	trace(i);
 }
 ```
-Here, the for statement will take each value of the array, then assign them to the variable "i" specified.
+Here, the for statement will take each value of the list, then assign them to the variable "i" specified.
 
 The variable can be already declared, or declared inside the for statement like this:
 
@@ -455,7 +455,7 @@ for(int i, [1, 2]) {}
 ```
 If no type is specified, or declared as let, the variable will be automatically declared as `var`.
 
-The variable type must be convertible from the array's values, or it will raise a runtime error.
+The variable type must be convertible from the list's values, or it will raise a runtime error.
 
 ### Iterators
 
@@ -752,38 +752,38 @@ Overridable operators are:
 
 * * *
 
-# Arrays
+# Lists
 
-Array are a collection of a single type of value.
+List are a collection of a single type of value.
 
-The type of an array is `array()` with the type of its content inside the parenthesis:
+The type of an list is `list()` with the type of its content inside the parenthesis:
 ```cpp
-array(int) myCollection = [1, 2, 3];
+list(int) myCollection = [1, 2, 3];
 ```
 
-By default, a new array has the type of its first element.
-So, `[1, 2, 3]` will be an `array(int)`.
+By default, a new list has the type of its first element.
+So, `[1, 2, 3]` will be an `list(int)`.
 
-You can write it explicitly by preceding the array with its type: `array(int)[1, 2, 3]`
+You can write it explicitly by preceding the list with its type: `list(int)[1, 2, 3]`
 
-If your new array is empty `[]`, you **have** to write the type explicitly else compilation will fail: `array(string)[]`.
+If your new list is empty `[]`, you **have** to write the type explicitly else compilation will fail: `list(string)[]`.
 
-To access an array element, the array index (from 0) in written between brackets:
+To access an list element, the list index (from 0) in written between brackets:
 ```cpp
-let a = [10, 20, 30][1]; //New array, then immediately take the index 1 of [10, 20, 30], which is 20
+let a = [10, 20, 30][1]; //New list, then immediately take the index 1 of [10, 20, 30], which is 20
 
-let b = [[1, 2, 3], [11, 12, 13], [21, 22, 23]]; //New array
+let b = [[1, 2, 3], [11, 12, 13], [21, 22, 23]]; //New list
 let c = b[1][2]; //Here we access the element at index 1 -> [21, 22, 23], the element at index 2 -> 23
 let d = b[1, 2]; //Same as above in a nicer syntax
 ```
 
-When accessing an array element, you can also modify it:
+When accessing an list element, you can also modify it:
 ```cpp
 let a = [11, 12, 13];
 a[0] = 9; //a now has [9, 12, 13]
 ```
 
-Array and array indexes are passed by references, that mean manipulating array do not make copies.
+List and list indexes are passed by references, that mean manipulating list do not make copies.
 ```cpp
 let a = [1, 2, [3, 4]];
 let b = a[2]; //b is now a reference to the 3rd value of a
@@ -792,7 +792,7 @@ b[0] = 9;
 trace(a); //Prints [1, 2, [9, 4]]
 ```
 
-You can concatenate values into an array by using the concatenation operator ~
+You can concatenate values into an list by using the concatenation operator ~
 ```cpp
 let a = 1 ~ [2, 3, 4] ~ [5, 6] ~ 7; //a is now [1, 2, 3, 4, 5, 6, 7]
 ```
@@ -1106,16 +1106,16 @@ The predicate takes 2 parameters:
 - A `GrType` of the provided value,
 - The context of the checker containing the defined generic types.
 
-Exemple of a primitive that can define a `push` function for every type of array that uses integers.
-It takes an array and a value that matches the type held by the array, and returns the array itself.
+Exemple of a primitive that can define a `push` function for every type of list that uses integers.
+It takes an list and a value that matches the type held by the list, and returns the list itself.
 ```d
 library.addPrimitive(&_push, "push", [
     grAny("A",   // We declare a generic type called "A"
 	(type, data) {
-		if (type.baseType != GrBaseType.array_) // This type must be an array
+		if (type.baseType != GrBaseType.list_) // This type must be an list
 			return false;
 		const GrType subType = grUnmangle(type.mangledType); // The subType is mangled
-		data.set("T", subType);  // We define the other generic type (called "T") with the subtype of the array
+		data.set("T", subType);  // We define the other generic type (called "T") with the subtype of the list
 		return grIsKindOfInt(subType.baseType); // We check is the baseType is good for us.
 	}), grAny("T")], // "T" is already defined above, so the types must match.
 	[grAny("A")]   // "A" is already defined above, it must be of the same type. Putting any predicate here is useless.
