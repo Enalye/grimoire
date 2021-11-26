@@ -133,14 +133,27 @@ const GrType grStringChannel = GrType(GrType.Base.channel, grMangleSignature([
         grString
     ]));
 
-/// Returns an list GrType of `subType` subtype.
+/// Returns a GrType of type list and of `subType` subtype.
 GrType grList(GrType subType) {
     return GrType(GrType.Base.list_, grMangleSignature([subType]));
 }
 
-/// Returns a channel GrType of `subType` subtype.
+/// Returns a GrType of type channel and of `subType` subtype.
 GrType grChannel(GrType subType) {
     return GrType(GrType.Base.channel, grMangleSignature([subType]));
+}
+
+/// Returns a GrType of type function with given signatures.
+GrType grFunction(GrType[] inSignature, GrType[] outSignature = []) {
+    GrType type = GrType.Base.function_;
+    type.mangledType = grMangleSignature(inSignature);
+    type.mangledReturnType = grMangleSignature(outSignature);
+    return type;
+}
+
+/// Returns a GrType of type task with given signature.
+GrType grTask(GrType[] signature) {
+    return GrType(GrType.Base.task, grMangleSignature(signature));
 }
 
 /// Special type the matches another type with a predicate.
