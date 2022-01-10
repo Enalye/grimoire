@@ -344,6 +344,9 @@ package final class GrLexer {
                     _line++;
                     break;
                 case '*':
+                    advance();
+                    advance();
+                    int commentScope = 0;
                     for (;;) {
                         if ((_current + 1) >= _text.length) {
                             _current++;
@@ -354,15 +357,23 @@ package final class GrLexer {
                             _positionOfLine = _current;
                             _line++;
                         }
-
-                        if (_text[_current] == '*' && _text[_current + 1] == '/') {
-                            _current++;
-                            break;
+                        if (_text[_current] == '/' && _text[_current + 1] == '*') {
+                            commentScope++;
                         }
-
+                        else if (_text[_current] == '*' && _text[_current + 1] == '/') {
+                            if (_current > 0 && _text[_current - 1] == '/') {
+                                //Skip
+                            }
+                            else if (commentScope == 0) {
+                                _current++;
+                                break;
+                            }
+                            else {
+                                commentScope--;
+                            }
+                        }
                         _current++;
                     }
-
                     break;
                 default:
                     break whileLoop;
@@ -862,8 +873,8 @@ package final class GrLexer {
         case "class":
             lex.type = GrLexemeType.class_;
             break;
-        case "énum":
-        case "enum":
+        case "énumération":
+        case "enumeration":
             lex.type = GrLexemeType.enum_;
             break;
         case "patron":
@@ -882,11 +893,10 @@ package final class GrLexer {
         case "else":
             lex.type = GrLexemeType.else_;
             break;
-        case "où":
-        case "switch":
+        case "alternative":
             lex.type = GrLexemeType.switch_;
             break;
-        case "sélect":
+        case "sélectionne":
         case "select":
             lex.type = GrLexemeType.select;
             break;
@@ -922,16 +932,16 @@ package final class GrLexer {
         case "self":
             lex.type = GrLexemeType.self;
             break;
-        case "tue":
-        case "kill":
+        case "meurt":
+        case "die":
             lex.type = GrLexemeType.kill;
             break;
-        case "tuetous":
-        case "killall":
+        case "quitte":
+        case "quit":
             lex.type = GrLexemeType.killAll;
             break;
-        case "cède":
-        case "yield":
+        case "suspends":
+        case "suspend":
             lex.type = GrLexemeType.yield;
             break;
         case "casse":
@@ -941,7 +951,7 @@ package final class GrLexer {
         case "continue":
             lex.type = GrLexemeType.continue_;
             break;
-        case "comme":
+        case "en":
         case "as":
             lex.type = GrLexemeType.as;
             break;
@@ -949,7 +959,7 @@ package final class GrLexer {
         case "try":
             lex.type = GrLexemeType.try_;
             break;
-        case "récup":
+        case "récupère":
         case "catch":
             lex.type = GrLexemeType.catch_;
             break;
@@ -971,17 +981,18 @@ package final class GrLexer {
             lex.type = GrLexemeType.functionType;
             lex.isType = true;
             break;
-        case "ent":
-        case "int":
+        case "entier":
+        case "integer":
             lex.type = GrLexemeType.intType;
             lex.isType = true;
             break;
         case "réel":
-        case "float":
+        case "real":
             lex.type = GrLexemeType.floatType;
             lex.isType = true;
             break;
-        case "bool":
+        case "booléen":
+        case "boolean":
             lex.type = GrLexemeType.boolType;
             lex.isType = true;
             break;
@@ -996,7 +1007,7 @@ package final class GrLexer {
             lex.isType = true;
             break;
         case "canal":
-        case "chan":
+        case "channel":
             lex.type = GrLexemeType.chanType;
             lex.isType = true;
             break;
@@ -1066,7 +1077,7 @@ package final class GrLexer {
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
-        case "ouex_bin":
+        case "ou_ex_bin":
         case "bit_xor":
             lex.type = GrLexemeType.bitwiseXor;
             lex.isKeyword = false;
@@ -1242,25 +1253,29 @@ string grGetPrettyLexemeType(GrLexemeType operator, GrLocale locale = GrLocale.e
             "==", "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->",
             "=>", "~", "!", "++", "--", "identifier", "const_integer",
             "const_float", "const_bool", "const_string", "null", "public",
-            "type", "action", "class", "enum", "template", "new", "copy", "send",
+            "type", "action", "class", "enumeration", "template", "new", "copy",
+            "send",
             "receive", "int", "float", "bool", "string", "list", "chan",
-            "function", "task", "let", "if", "unless", "else", "switch", "select",
+            "function", "task", "let", "if", "unless", "else", "alternative",
+            "select",
             "case", "while", "do", "until", "for", "loop", "return", "self",
-            "die", "end", "pass", "break", "continue"
+            "die", "quit", "suspend", "break", "continue"
         ],
         [
             "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&",
-            "comme", "essaie", "récup", "lance", "décale", "=", "&=", "|=",
+            "en", "essaie", "récupère", "lance", "décale", "=", "&=", "|=",
             "^=", "&&=", "||=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+",
             "-", "&", "|", "^", "&&", "||", "+", "-", "*", "/", "~", "%",
             "**", "==", "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>",
             "->", "=>", "~", "!", "++", "--", "identificateur", "entier_const",
             "réel_const", "bool_const", "chaîne_const", "nul", "public",
-            "type", "action", "classe", "énum", "patron", "crée", "copie",
+            "type", "action", "classe", "énumération", "patron", "crée",
+            "copie",
             "envoie", "reçois", "ent", "réel", "bool", "chaîne", "liste",
-            "canal", "fonction", "tâche", "soit", "si", "sauf", "sinon", "où",
-            "sélect", "cas", "tant", "fais", "jusque", "pour", "boucle",
-            "retourne", "soi", "meurs", "fin", "passe", "casse", "continue"
+            "canal", "fonction", "tâche", "soit", "si", "sauf", "sinon",
+            "alternative",
+            "sélectionne", "cas", "tant", "fais", "jusque", "pour", "boucle",
+            "retourne", "soi", "meurs", "quitte", "suspends", "casse", "continue"
         ]
     ];
     return lexemeTypeStrTable[locale][operator];

@@ -9,7 +9,7 @@ import std.conv : to;
 import grimoire.assembly;
 import grimoire.compiler;
 import grimoire.runtime.context, grimoire.runtime.list,
-    grimoire.runtime.object, grimoire.runtime.channel;
+grimoire.runtime.object, grimoire.runtime.channel;
 
 /// Primitive type.
 alias GrCallback = void function(GrCall);
@@ -152,11 +152,9 @@ final class GrCall {
         return cast(T) cast(Object) getParameter!GrPtr(parameter);
     }
 
-    private T getParameter(T)(uint index) {
-        if (index >= _parameters.length)
-            throw new Exception("parameter index `" ~ to!string(
-                    index) ~ "` exceeds the number of parameters");
-
+    private T getParameter(T)(uint index)
+    in (index < _parameters.length, "parameter index `" ~ to!string(
+            index) ~ "` exceeds the number of parameters") {
         static if (is(T == GrInt)) {
             if ((_parameters[index] & 0x10000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not an int");
@@ -167,7 +165,7 @@ final class GrCall {
             if ((_parameters[index] & 0x10000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not a bool");
             return _context.istack[(_context.istackPos - _iparams) + (
-                        _parameters[index] & 0xFFFF) + 1] > 0;
+                    _parameters[index] & 0xFFFF) + 1] > 0;
         }
         else static if (is(T == GrFloat)) {
             if ((_parameters[index] & 0x20000) == 0)
@@ -451,7 +449,6 @@ final class GrCall {
         return _context.engine.createObject(name);
     }
 
-    
     /**
 	Spawn a new coroutine registered as an action. \
 	The action's name must be mangled with its signature.
