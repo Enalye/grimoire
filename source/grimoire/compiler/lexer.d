@@ -851,7 +851,7 @@ package final class GrLexer {
                 break;
 
             const dchar symbol = get();
-            if (symbol == '!' || symbol == '?') {
+            if (symbol == '?') {
                 buffer ~= symbol;
                 _current++;
                 break;
@@ -869,8 +869,8 @@ package final class GrLexer {
         lex._textLength = cast(uint) buffer.length;
 
         switch (buffer) {
-        case "utilise":
-        case "use":
+        case "inclus":
+        case "include":
             scanUse();
             return;
         case "public":
@@ -1090,7 +1090,7 @@ package final class GrLexer {
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
-        case "ou_ex_bin":
+        case "xou_bin":
         case "bit_xor":
             lex.type = GrLexemeType.bitwiseXor;
             lex.isKeyword = false;

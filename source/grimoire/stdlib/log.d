@@ -14,108 +14,108 @@ private {
 }
 
 package(grimoire.stdlib) void grLoadStdLibLog(GrLibrary library, GrLocale locale) {
-    string writeSymbol;
+    string printSymbol;
     final switch (locale) with (GrLocale) {
     case en_US:
         _trueText = "true";
         _falseText = "false";
-        writeSymbol = "write";
+        printSymbol = "print";
         break;
     case fr_FR:
         _trueText = "vrai";
         _falseText = "faux";
-        writeSymbol = "écris";
+        printSymbol = "affiche";
         break;
     }
 
-    //write
-    library.addPrimitive(&_write_i, writeSymbol, [grInt]);
-    library.addPrimitive(&_write_b, writeSymbol, [grBool]);
-    library.addPrimitive(&_write_f, writeSymbol, [grFloat]);
-    library.addPrimitive(&_write_s, writeSymbol, [grString]);
-    library.addPrimitive(&_write_ni, writeSymbol, [grIntList]);
-    library.addPrimitive(&_write_nb, writeSymbol, [grBoolList]);
-    library.addPrimitive(&_write_nf, writeSymbol, [grFloatList]);
-    library.addPrimitive(&_write_ns, writeSymbol, [grStringList]);
-    library.addPrimitive(&_write_enum, writeSymbol, [
+    //print
+    library.addPrimitive(&_print_i, printSymbol, [grInt]);
+    library.addPrimitive(&_print_b, printSymbol, [grBool]);
+    library.addPrimitive(&_print_f, printSymbol, [grFloat]);
+    library.addPrimitive(&_print_s, printSymbol, [grString]);
+    library.addPrimitive(&_print_ni, printSymbol, [grIntList]);
+    library.addPrimitive(&_print_nb, printSymbol, [grBoolList]);
+    library.addPrimitive(&_print_nf, printSymbol, [grFloatList]);
+    library.addPrimitive(&_print_ns, printSymbol, [grStringList]);
+    library.addPrimitive(&_print_enum, printSymbol, [
             grAny("T", (type, data) { return type.base == GrType.Base.enum_; })
         ]
     );
-    library.addPrimitive(&_write_chan, writeSymbol, [
+    library.addPrimitive(&_print_chan, printSymbol, [
             grAny("T", (type, data) { return type.base == GrType.Base.channel; })
         ]
     );
-    library.addPrimitive(&_write_func, writeSymbol, [
+    library.addPrimitive(&_print_func, printSymbol, [
             grAny("T", (type, data) {
                 return (type.base == GrType.Base.function_) || (type.base == GrType.Base.task);
             })
         ]
     );
-    library.addPrimitive(&_write_o, writeSymbol, [
+    library.addPrimitive(&_print_o, printSymbol, [
             grAny("T", (type, data) { return type.base == GrType.Base.class_; })
         ]
     );
-    library.addPrimitive(&_write_u, writeSymbol, [
+    library.addPrimitive(&_print_u, printSymbol, [
             grAny("T", (type, data) { return type.base == GrType.Base.foreign; })
         ]
     );
 }
 
-// write
-private void _write_s(GrCall call) {
+// print
+private void _print_s(GrCall call) {
     _stdOut(call.getString(0));
 }
 
-private void _write_b(GrCall call) {
+private void _print_b(GrCall call) {
     _stdOut(call.getBool(0) ? _trueText : _falseText);
 }
 
-private void _write_i(GrCall call) {
+private void _print_i(GrCall call) {
     _stdOut(to!string(call.getInt(0)));
 }
 
-private void _write_f(GrCall call) {
+private void _print_f(GrCall call) {
     _stdOut(to!string(call.getFloat(0)));
 }
 
-private void _write_ni(GrCall call) {
+private void _print_ni(GrCall call) {
     auto ary = call.getIntList(0);
     _stdOut(to!string(ary.data));
 }
 
-private void _write_nb(GrCall call) {
+private void _print_nb(GrCall call) {
     auto ary = call.getIntList(0);
     _stdOut(to!string(to!(GrBool[])(ary.data)));
 }
 
-private void _write_nf(GrCall call) {
+private void _print_nf(GrCall call) {
     auto ary = call.getFloatList(0);
     _stdOut(to!string(ary.data));
 }
 
-private void _write_ns(GrCall call) {
+private void _print_ns(GrCall call) {
     auto ary = call.getStringList(0);
     _stdOut(to!string(ary.data));
 }
 
-private void _write_enum(GrCall call) {
+private void _print_enum(GrCall call) {
     string name = grGetPrettyType(grUnmangle(call.getInType(0)));
     auto enumValue = call.getInt(0);
     _stdOut(name ~ "." ~ to!string(enumValue));
 }
 
-private void _write_chan(GrCall call) {
+private void _print_chan(GrCall call) {
     string name = grGetPrettyType(grUnmangle(call.getInType(0)));
     auto channel = call.getIntChannel(0);
     _stdOut(name ~ " {" ~ to!string(channel.capacity) ~ "}");
 }
 
-private void _write_func(GrCall call) {
+private void _print_func(GrCall call) {
     string name = grGetPrettyType(grUnmangle(call.getInType(0)));
     _stdOut(name ~ " {" ~ to!string(call.getInt(0)) ~ "}");
 }
 
-private void _write_o(GrCall call) {
+private void _print_o(GrCall call) {
     string name = grGetPrettyType(grUnmangle(call.getInType(0)));
     if (call.getObject(0)) {
         _stdOut(name);
@@ -125,7 +125,7 @@ private void _write_o(GrCall call) {
     }
 }
 
-private void _write_u(GrCall call) {
+private void _print_u(GrCall call) {
     const string name = grGetPrettyType(grUnmangle(call.getInType(0)));
     if (call.getPtr(0)) {
         _stdOut(name);

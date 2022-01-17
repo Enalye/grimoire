@@ -46,7 +46,7 @@ package {
         ["has?", "a?"],
         ["each", "chaque"],
         ["next", "suivant"],
-        ["write", "écris"],
+        ["print", "affiche"],
         ["clamp", "restreins"],
         ["random", "hasard"],
         ["squareRoot", "racineCarré"],

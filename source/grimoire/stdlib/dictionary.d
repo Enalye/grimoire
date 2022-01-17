@@ -46,7 +46,7 @@ private final class DictionaryIter(T) {
 
 package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale locale) {
     string copySymbol, sizeSymbol, emptySymbol, clearSymbol, setSymbol, getSymbol, hasSymbol, removeSymbol;
-    string byKeysSymbol, byValuesSymbol, eachSymbol, nextSymbol, writeSymbol;
+    string byKeysSymbol, byValuesSymbol, eachSymbol, nextSymbol, printSymbol;
     final switch (locale) with (GrLocale) {
     case en_US:
         _pairSymbol = "Pair";
@@ -66,7 +66,7 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale
         byValuesSymbol = "by_values";
         eachSymbol = "each";
         nextSymbol = "next";
-        writeSymbol = "write";
+        printSymbol = "print";
         break;
     case fr_FR:
         _pairSymbol = "Paire";
@@ -86,7 +86,7 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale
         byValuesSymbol = "par_valeurs";
         eachSymbol = "chaque";
         nextSymbol = "suivant";
-        writeSymbol = "écris";
+        printSymbol = "affiche";
         break;
     }
 
@@ -212,16 +212,16 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale
     }
 
     GrType boolDictionary = grGetForeignType(_dicSymbol, [grBool]);
-    library.addPrimitive(&_write_!"bool", writeSymbol, [boolDictionary]);
+    library.addPrimitive(&_print_!"bool", printSymbol, [boolDictionary]);
 
     GrType intDictionary = grGetForeignType(_dicSymbol, [grInt]);
-    library.addPrimitive(&_write_!"int", writeSymbol, [intDictionary]);
+    library.addPrimitive(&_print_!"int", printSymbol, [intDictionary]);
 
     GrType floatDictionary = grGetForeignType(_dicSymbol, [grFloat]);
-    library.addPrimitive(&_write_!"float", writeSymbol, [floatDictionary]);
+    library.addPrimitive(&_print_!"float", printSymbol, [floatDictionary]);
 
     GrType stringDictionary = grGetForeignType(_dicSymbol, [grString]);
-    library.addPrimitive(&_write_!"string", writeSymbol, [stringDictionary]);
+    library.addPrimitive(&_print_!"string", printSymbol, [stringDictionary]);
 }
 
 private void _make_(string t)(GrCall call) {
@@ -437,7 +437,7 @@ private void _next_(string t)(GrCall call) {
     iter.index++;
 }
 
-private void _write_(string t)(GrCall call) {
+private void _print_(string t)(GrCall call) {
     static if (t == "bool" || t == "int") {
         IntDictionary dictionary = call.getForeign!(IntDictionary)(0);
     }

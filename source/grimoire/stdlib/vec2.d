@@ -21,7 +21,7 @@ private {
 }
 
 package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
-    string writeSymbol, vec2ZeroSymbol, vec2HalfSymbol, vec2OneSymbol, vec2UpSymbol, vec2DownSymbol, vec2LeftSymbol;
+    string printSymbol, vec2ZeroSymbol, vec2HalfSymbol, vec2OneSymbol, vec2UpSymbol, vec2DownSymbol, vec2LeftSymbol;
     string vec2RightSymbol, vec2AngledSymbol, absSymbol, ceilSymbol, floorSymbol, roundSymbol, unpackSymbol, zeroSymbol;
     string sumSymbol, signSymbol, lerpSymbol, distanceSymbol, distanceSquaredSymbol, lengthSymbol, lengthSquaredSymbol;
     string normalizeSymbol, normalizedSymbol, dotSymbol, crossSymbol, normalSymbol, angleSymbol, rotateSymbol;
@@ -37,6 +37,7 @@ package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
         vec2LeftSymbol = "Vector2_left";
         vec2RightSymbol = "Vector2_right";
         vec2AngledSymbol = "Vector2_angled";
+        printSymbol = "print";
         zeroSymbol = "zero?";
         unpackSymbol = "unpack";
         absSymbol = "abs";
@@ -72,6 +73,7 @@ package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
         vec2LeftSymbol = "Vecteur2_gauche";
         vec2RightSymbol = "Vecteur2_droite";
         vec2AngledSymbol = "Vecteur2_anglé";
+        printSymbol = "affiche";
         zeroSymbol = "zéro?";
         unpackSymbol = "déballe";
         absSymbol = "abs";
@@ -111,7 +113,7 @@ package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
         ]);
 
     // Trace
-    library.addPrimitive(&_write, writeSymbol, [vec2Type]);
+    library.addPrimitive(&_print, printSymbol, [vec2Type]);
 
     // Operators
     static foreach (op; ["+", "-"]) {
@@ -236,8 +238,8 @@ private void _vec2_2(GrCall call) {
     call.setObject(self);
 }
 
-// Write ------------------------------------------
-private void _write(GrCall call) {
+// Print ------------------------------------------
+private void _print(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
         _stdOut("null(Vec2)");

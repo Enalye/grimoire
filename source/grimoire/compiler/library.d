@@ -367,7 +367,7 @@ class GrLibrary {
     It have to have only one parameter and return the casted value.
     */
     GrPrimitive addCast(GrCallback callback, GrType srcType, GrType dstType, bool isExplicit = false) {
-        auto primitive = addPrimitive(callback, "@as", [srcType, dstType], [
+        auto primitive = addPrimitive(callback, "@conv", [srcType, dstType], [
                 dstType
                 ]);
         primitive.isExplicit = isExplicit;
@@ -379,7 +379,7 @@ class GrLibrary {
 
         string result = primitive.name;
         auto nbParameters = primitive.inSignature.length;
-        if (primitive.name == "@as")
+        if (primitive.name == "@conv")
             nbParameters = 1;
         result ~= "(";
         for (int i; i < nbParameters; i++) {

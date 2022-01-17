@@ -2821,7 +2821,7 @@ final class GrParser {
         string name;
         bool isConversion;
         if (get().type == GrLexemeType.as) {
-            name = "@as";
+            name = "@conv";
             isConversion = true;
         }
         else if (get().type == GrLexemeType.identifier) {
@@ -4082,9 +4082,9 @@ final class GrParser {
         case list_: {
                 /* Init */
                 GrType subType = grUnmangle(containerType.mangledType);
-                GrVariable iterator = registerSpecialVariable("iterator", grInt);
+                GrVariable iterator = registerSpecialVariable("itérateur", grInt);
                 GrVariable index = registerSpecialVariable("index", grInt);
-                GrVariable list = registerSpecialVariable("list", containerType);
+                GrVariable list = registerSpecialVariable("liste", containerType);
 
                 if (variable.isAuto && subType.base != GrType.Base.void_) {
                     variable.isAuto = false;
@@ -4198,7 +4198,7 @@ final class GrParser {
             break;
         case foreign:
         case class_: {
-                GrVariable iterator = registerSpecialVariable("iterator", containerType);
+                GrVariable iterator = registerSpecialVariable("itérateur", containerType);
 
                 GrType subType;
                 auto matching = getFirstMatchingFuncOrPrim("next", [
@@ -4458,7 +4458,7 @@ final class GrParser {
             }
 
             /* Init */
-            iterator = registerSpecialVariable("iterator", GrType(GrType.Base.int_));
+            iterator = registerSpecialVariable("itérateur", GrType(GrType.Base.int_));
 
             //Init counter
             GrType type = parseSubExpression().type;
@@ -4798,7 +4798,7 @@ final class GrParser {
         GrType resultType = GrType.Base.void_;
 
         //as opposed to other functions, we need the return type (rightType) to be part of the signature.
-        string name = "@as";
+        string name = "@conv";
         GrType[] signature = [leftType, rightType];
 
         //GrPrimitive check

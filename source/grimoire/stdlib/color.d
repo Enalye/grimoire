@@ -15,7 +15,7 @@ private {
 }
 
 package void grLoadStdLibColor(GrLibrary library, GrLocale locale) {
-    string mixSymbol, lerpSymbol, unpackSymbol, writeSymbol;
+    string mixSymbol, lerpSymbol, unpackSymbol, printSymbol;
     final switch (locale) with (GrLocale) {
     case en_US:
         _colorSymbol = "Color";
@@ -25,7 +25,7 @@ package void grLoadStdLibColor(GrLibrary library, GrLocale locale) {
         mixSymbol = "mix";
         lerpSymbol = "interpolate";
         unpackSymbol = "unpack";
-        writeSymbol = "write";
+        printSymbol = "print";
         break;
     case fr_FR:
         _colorSymbol = "Couleur";
@@ -35,7 +35,7 @@ package void grLoadStdLibColor(GrLibrary library, GrLocale locale) {
         mixSymbol = "mélange";
         lerpSymbol = "interpole";
         unpackSymbol = "déballe";
-        writeSymbol = "écris";
+        printSymbol = "affiche";
         break;
     }
 
@@ -78,7 +78,7 @@ package void grLoadStdLibColor(GrLibrary library, GrLocale locale) {
             grFloat, grFloat, grFloat
         ]);
 
-    library.addPrimitive(&_write, writeSymbol, [colorType]);
+    library.addPrimitive(&_print, printSymbol, [colorType]);
 }
 
 private void _makeColor(GrCall call) {
@@ -248,7 +248,7 @@ private void _unpack(GrCall call) {
     call.setFloat(self.getFloat(_bSymbol));
 }
 
-private void _write(GrCall call) {
+private void _print(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
         _stdOut("null(Color)");

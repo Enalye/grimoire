@@ -262,7 +262,7 @@ final class GrCompiler {
         for (size_t id; id < bytecode.primitives.length; ++id) {
             bytecode.primitives[id].index = _data._primitives[id].callbackId;
             GrType[] inSignature = _data._primitives[id].inSignature;
-            if (_data._primitives[id].name == "@as")
+            if (_data._primitives[id].name == "@conv")
                 inSignature.length = 1;
             for (size_t i; i < inSignature.length; ++i) {
                 const GrType type = inSignature[i];

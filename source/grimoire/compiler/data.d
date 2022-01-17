@@ -611,7 +611,7 @@ class GrData {
 
         string result = primitive.name;
         auto nbParameters = primitive.inSignature.length;
-        if (primitive.name == "@as")
+        if (primitive.name == "@conv")
             nbParameters = 1;
         result ~= "(";
         for (int i; i < nbParameters; i++) {
