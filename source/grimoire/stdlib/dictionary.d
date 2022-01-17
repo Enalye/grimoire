@@ -35,7 +35,7 @@ private {
     alias FloatDictionary = Dictionary!(GrFloat);
     alias StringDictionary = Dictionary!(GrString);
     alias ObjectDictionary = Dictionary!(GrPtr);
-    string _pairSymbol, _dicSymbol, _dicIterSymbol;
+    string _pairSymbol, _dicSymbol, _dicIterSymbol, _valueSymbol, _keySymbol;
 }
 
 /// Iterator
@@ -45,16 +45,48 @@ private final class DictionaryIter(T) {
 }
 
 package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale locale) {
-    final switch(locale) with(GrLocale) {
+    string copySymbol, sizeSymbol, emptySymbol, clearSymbol, setSymbol, getSymbol, hasSymbol, removeSymbol;
+    string byKeysSymbol, byValuesSymbol, eachSymbol, nextSymbol, writeSymbol;
+    final switch (locale) with (GrLocale) {
     case en_US:
         _pairSymbol = "Pair";
         _dicSymbol = "Dictionary";
-        _dicIterSymbol = "DictionaryIter";
+        _dicIterSymbol = "IDictionary";
+        _valueSymbol = "value";
+        _keySymbol = "key";
+        copySymbol = "copy";
+        sizeSymbol = "size";
+        emptySymbol = "empty?";
+        clearSymbol = "clear";
+        setSymbol = "set";
+        getSymbol = "get";
+        hasSymbol = "has?";
+        removeSymbol = "remove";
+        byKeysSymbol = "by_keys";
+        byValuesSymbol = "by_values";
+        eachSymbol = "each";
+        nextSymbol = "next";
+        writeSymbol = "write";
         break;
     case fr_FR:
         _pairSymbol = "Paire";
         _dicSymbol = "Dictionnaire";
-        _dicIterSymbol = "IterDictionnaire";
+        _dicIterSymbol = "IDictionnaire";
+        _valueSymbol = "valeur";
+        _keySymbol = "clé";
+        copySymbol = "copie";
+        sizeSymbol = "taille";
+        emptySymbol = "vide?";
+        clearSymbol = "vide";
+        setSymbol = "mets";
+        getSymbol = "prends";
+        hasSymbol = "a?";
+        removeSymbol = "retire";
+        byKeysSymbol = "par_clés";
+        byValuesSymbol = "par_valeurs";
+        eachSymbol = "chaque";
+        nextSymbol = "suivant";
+        writeSymbol = "écris";
         break;
     }
 
@@ -106,49 +138,49 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale
                 })], [grAny(\"M\")]);
 
             library.addPrimitive(&_copy_!\""
-                ~ t ~ "\", \"copy\", [any" ~ t ~ "Dictionary], [grAny(\"M\")]);
+                ~ t ~ "\", copySymbol, [any" ~ t ~ "Dictionary], [grAny(\"M\")]);
 
             library.addPrimitive(&_size_!\""
-                ~ t ~ "\", \"size\", [any"
+                ~ t ~ "\", sizeSymbol, [any"
                 ~ t ~ "Dictionary], [grInt]);
 
             library.addPrimitive(&_empty_!\""
-                ~ t ~ "\", \"empty?\", [
+                ~ t ~ "\", emptySymbol, [
                 any"
                 ~ t ~ "Dictionary
             ], [grBool]);
 
             library.addPrimitive(&_clear_!\""
-                ~ t ~ "\", \"clear\", [
+                ~ t ~ "\", clearSymbol, [
                 any"
                 ~ t ~ "Dictionary
             ], [grAny(\"M\")]);
 
             library.addPrimitive(&_set_!\""
                 ~ t
-                ~ "\", \"set\", [any" ~ t ~ "Dictionary, grString, grAny(\"T\")]);
+                ~ "\", setSymbol, [any" ~ t ~ "Dictionary, grString, grAny(\"T\")]);
 
             library.addPrimitive(&_get_!\""
                 ~ t
-                ~ "\", \"get\", [any" ~ t ~ "Dictionary, grString], [grBool, grAny(\"T\")]);
+                ~ "\", getSymbol, [any" ~ t ~ "Dictionary, grString], [grBool, grAny(\"T\")]);
 
             library.addPrimitive(&_has_!\""
-                ~ t ~ "\", \"has?\", [any" ~ t ~ "Dictionary, grString], [grBool]);
+                ~ t ~ "\", hasSymbol, [any" ~ t ~ "Dictionary, grString], [grBool]);
 
             library.addPrimitive(&_remove_!\""
                 ~ t
-                ~ "\", \"remove\", [any" ~ t ~ "Dictionary, grString]);
+                ~ "\", removeSymbol, [any" ~ t ~ "Dictionary, grString]);
 
             library.addPrimitive(&_byKeys_!\""
-                ~ t ~ "\", \"byKeys\", [any" ~ t
+                ~ t ~ "\", byKeysSymbol, [any" ~ t
                 ~ "Dictionary], [grStringList]);
 
             library.addPrimitive(&_byValues_!\""
-                ~ t ~ "\", \"byValues\", [any" ~ t ~ "Dictionary], [any"
+                ~ t ~ "\", byValuesSymbol, [any" ~ t ~ "Dictionary], [any"
                 ~ t ~ "List]);
 
             library.addPrimitive(&_each_!\""
-                ~ t ~ "\", \"each\", [
+                ~ t ~ "\", eachSymbol, [
                     grAny(\"A\", (type, data) {
                 if (type.base != GrType.Base.foreign)
                     return false;
@@ -164,14 +196,14 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale
                 ], [grAny(\"R\")]);
 
             library.addPrimitive(&_next_!\""
-                ~ t ~ "\", \"next\", [
+                ~ t ~ "\", nextSymbol, [
                     grAny(\"R\", (type, data) {
                 if (type.base != GrType.Base.foreign)
                     return false;
                 auto result = grUnmangleComposite(type.mangledType);
                 if(result.signature.length != 1 || result.name != _dicIterSymbol)
                     return false;
-                data.set(\"T\", grGetClassType(\"Pair\", [grString, result.signature[0]]));
+                data.set(\"T\", grGetClassType(_pairSymbol, [grString, result.signature[0]]));
                 return grIsKindOf"
                 ~ t ~ "(result.signature[0].base);
                     })
@@ -180,16 +212,16 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale
     }
 
     GrType boolDictionary = grGetForeignType(_dicSymbol, [grBool]);
-    library.addPrimitive(&_trace_!"bool", "trace", [boolDictionary]);
+    library.addPrimitive(&_write_!"bool", writeSymbol, [boolDictionary]);
 
     GrType intDictionary = grGetForeignType(_dicSymbol, [grInt]);
-    library.addPrimitive(&_trace_!"int", "trace", [intDictionary]);
+    library.addPrimitive(&_write_!"int", writeSymbol, [intDictionary]);
 
     GrType floatDictionary = grGetForeignType(_dicSymbol, [grFloat]);
-    library.addPrimitive(&_trace_!"float", "trace", [floatDictionary]);
+    library.addPrimitive(&_write_!"float", writeSymbol, [floatDictionary]);
 
     GrType stringDictionary = grGetForeignType(_dicSymbol, [grString]);
-    library.addPrimitive(&_trace_!"string", "trace", [stringDictionary]);
+    library.addPrimitive(&_write_!"string", writeSymbol, [stringDictionary]);
 }
 
 private void _make_(string t)(GrCall call) {
@@ -204,12 +236,12 @@ private void _makeByPairs_(string t)(GrCall call) {
     for (size_t i; i < pairs.data.length; ++i) {
         GrObject pair = cast(GrObject) pairs.data[i];
         static if (t == "Object") {
-            auto value = pair.getPtr("value");
+            auto value = pair.getPtr(_valueSymbol);
         }
         else {
-            mixin("auto value = pair.get" ~ t ~ "(\"value\");");
+            mixin("auto value = pair.get" ~ t ~ "(_valueSymbol);");
         }
-        dictionary.data[pair.getString("key")] = value;
+        dictionary.data[pair.getString(_keySymbol)] = value;
     }
     call.setForeign(dictionary);
 }
@@ -217,7 +249,7 @@ private void _makeByPairs_(string t)(GrCall call) {
 private void _copy_(string t)(GrCall call) {
     mixin(t ~ "Dictionary dictionary = call.getForeign!" ~ t ~ "Dictionary(0);");
     if (!dictionary) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     mixin("call.setForeign!" ~ t ~ "Dictionary(new " ~ t ~ "Dictionary(dictionary));");
@@ -226,7 +258,7 @@ private void _copy_(string t)(GrCall call) {
 private void _size_(string t)(GrCall call) {
     mixin(t ~ "Dictionary dictionary = call.getForeign!" ~ t ~ "Dictionary(0);");
     if (!dictionary) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     call.setInt(cast(GrInt) dictionary.data.length);
@@ -235,7 +267,7 @@ private void _size_(string t)(GrCall call) {
 private void _empty_(string t)(GrCall call) {
     mixin("const " ~ t ~ "Dictionary dictionary = call.getForeign!" ~ t ~ "Dictionary(0);");
     if (!dictionary) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     call.setBool(dictionary.data.length == 0);
@@ -244,7 +276,7 @@ private void _empty_(string t)(GrCall call) {
 private void _clear_(string t)(GrCall call) {
     mixin(t ~ "Dictionary dictionary = call.getForeign!" ~ t ~ "Dictionary(0);");
     if (!dictionary) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     dictionary.data.clear();
@@ -254,7 +286,7 @@ private void _clear_(string t)(GrCall call) {
 private void _set_(string t)(GrCall call) {
     mixin(t ~ "Dictionary dictionary = call.getForeign!(" ~ t ~ "Dictionary)(0);");
     if (!dictionary) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     static if (t == "Object") {
@@ -268,7 +300,7 @@ private void _set_(string t)(GrCall call) {
 private void _get_(string t)(GrCall call) {
     mixin(t ~ "Dictionary dictionary = call.getForeign!(" ~ t ~ "Dictionary)(0);");
     if (!dictionary) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     static if (t == "Object") {
@@ -294,7 +326,7 @@ private void _get_(string t)(GrCall call) {
 private void _has_(string t)(GrCall call) {
     mixin(t ~ "Dictionary dictionary = call.getForeign!(" ~ t ~ "Dictionary)(0);");
     if (!dictionary) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     call.setBool((call.getString(1) in dictionary.data) !is null);
@@ -303,7 +335,7 @@ private void _has_(string t)(GrCall call) {
 private void _remove_(string t)(GrCall call) {
     mixin(t ~ "Dictionary dictionary = call.getForeign!(" ~ t ~ "Dictionary)(0);");
     if (!dictionary) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     dictionary.data.remove(call.getString(1));
@@ -312,7 +344,7 @@ private void _remove_(string t)(GrCall call) {
 private void _byKeys_(string t)(GrCall call) {
     mixin(t ~ "Dictionary dictionary = call.getForeign!(" ~ t ~ "Dictionary)(0);");
     if (!dictionary) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     GrStringList ary = new GrStringList;
@@ -323,7 +355,7 @@ private void _byKeys_(string t)(GrCall call) {
 private void _byValues_(string t)(GrCall call) {
     mixin(t ~ "Dictionary dictionary = call.getForeign!(" ~ t ~ "Dictionary)(0);");
     if (!dictionary) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     mixin("Gr" ~ t ~ "List ary = new Gr" ~ t ~ "List;");
@@ -334,7 +366,7 @@ private void _byValues_(string t)(GrCall call) {
 private void _each_(string t)(GrCall call) {
     mixin(t ~ "Dictionary dictionary = call.getForeign!(" ~ t ~ "Dictionary)(0);");
     if (!dictionary) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     static if (t == "Int") {
@@ -369,7 +401,7 @@ private void _next_(string t)(GrCall call) {
         DictionaryIter!(GrPtr) iter = call.getForeign!(DictionaryIter!(GrPtr))(0);
     }
     if (!iter) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     if (iter.index >= iter.pairs.length) {
@@ -379,33 +411,33 @@ private void _next_(string t)(GrCall call) {
     }
     call.setBool(true);
     static if (t == "Int") {
-        GrObject obj = new GrObject(["key", "value"]);
-        obj.setString("key", iter.pairs[iter.index][0]);
-        obj.setInt("value", iter.pairs[iter.index][1]);
+        GrObject obj = new GrObject([_keySymbol, _valueSymbol]);
+        obj.setString(_keySymbol, iter.pairs[iter.index][0]);
+        obj.setInt(_valueSymbol, iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     else static if (t == "Float") {
-        GrObject obj = new GrObject(["key", "value"]);
-        obj.setString("key", iter.pairs[iter.index][0]);
-        obj.setFloat("value", iter.pairs[iter.index][1]);
+        GrObject obj = new GrObject([_keySymbol, _valueSymbol]);
+        obj.setString(_keySymbol, iter.pairs[iter.index][0]);
+        obj.setFloat(_valueSymbol, iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     else static if (t == "String") {
-        GrObject obj = new GrObject(["key", "value"]);
-        obj.setString("key", iter.pairs[iter.index][0]);
-        obj.setString("value", iter.pairs[iter.index][1]);
+        GrObject obj = new GrObject([_keySymbol, _valueSymbol]);
+        obj.setString(_keySymbol, iter.pairs[iter.index][0]);
+        obj.setString(_valueSymbol, iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     else static if (t == "Object") {
-        GrObject obj = new GrObject(["key", "value"]);
-        obj.setString("key", iter.pairs[iter.index][0]);
-        obj.setPtr("value", iter.pairs[iter.index][1]);
+        GrObject obj = new GrObject([_keySymbol, _valueSymbol]);
+        obj.setString(_keySymbol, iter.pairs[iter.index][0]);
+        obj.setPtr(_valueSymbol, iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     iter.index++;
 }
 
-private void _trace_(string t)(GrCall call) {
+private void _write_(string t)(GrCall call) {
     static if (t == "bool" || t == "int") {
         IntDictionary dictionary = call.getForeign!(IntDictionary)(0);
     }
@@ -416,7 +448,7 @@ private void _trace_(string t)(GrCall call) {
         StringDictionary dictionary = call.getForeign!(StringDictionary)(0);
     }
     if (!dictionary) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     GrString result = "{";

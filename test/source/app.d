@@ -18,13 +18,13 @@ void main() {
     }
     try {
         bool testBytecode = false;
+        const GrLocale locale = GrLocale.fr_FR;
         auto startTime = MonoTime.currTime();
-        GrLibrary stdlib = grLoadStdLibrary();
+        GrLibrary stdlib = grLoadStdLibrary(locale);
 
         GrCompiler compiler = new GrCompiler;
         compiler.addLibrary(stdlib);
-        GrBytecode bytecode = compiler.compileFile("script/test.gr", GrOption.symbols, GrLocale
-                .en_US);
+        GrBytecode bytecode = compiler.compileFile("script/test.gr", GrOption.symbols, locale);
         if (!bytecode) {
             writeln(compiler.getError().prettify());
             return;
@@ -46,8 +46,8 @@ void main() {
         engine.addLibrary(stdlib);
         engine.load(bytecode);
 
-        if (engine.hasAction("test"))
-            engine.callAction("test");
+        if (engine.hasAction("début"))
+            engine.callAction("début");
 
         write("> ");
         startTime = MonoTime.currTime();

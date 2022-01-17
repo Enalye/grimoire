@@ -36,6 +36,13 @@ class GrLibrary {
 
         /// All the primitive callbacks.
         GrCallback[] _callbacks;
+
+        /// Name aliases
+        string[string] _aliases;
+    }
+
+    void addAlias(string name, string alias_) {
+        _aliases[name] = alias_;
     }
 
     /// Define a variable

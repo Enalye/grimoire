@@ -7,11 +7,13 @@ module grimoire.stdlib.vec2;
 
 import std.conv : to;
 import std.math;
+import std.algorithm.comparison : min, max;
+
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 private {
-    string _vec2iTypeName, _vec2fTypeName;
+    string _vector2Symbol;
     /// Ratio to multiply with to get a value in radians from a value in degrees.
     enum double _degToRad = std.math.PI / 180.0;
     /// Ratio to multiply with to get a value in degrees from a value in radians.
@@ -19,181 +21,191 @@ private {
 }
 
 package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
-    library.addClass("Vec2", ["x", "y"], [
-            grAny("T", (t, d) { return (t.base == grInt) || (t.base == grFloat); }),
-            grAny("T")
-        ], ["T"]);
+    string writeSymbol, vec2ZeroSymbol, vec2HalfSymbol, vec2OneSymbol, vec2UpSymbol, vec2DownSymbol, vec2LeftSymbol;
+    string vec2RightSymbol, vec2AngledSymbol, absSymbol, ceilSymbol, floorSymbol, roundSymbol, unpackSymbol, zeroSymbol;
+    string sumSymbol, signSymbol, lerpSymbol, distanceSymbol, distanceSquaredSymbol, lengthSymbol, lengthSquaredSymbol;
+    string normalizeSymbol, normalizedSymbol, dotSymbol, crossSymbol, normalSymbol, angleSymbol, rotateSymbol;
+    string rotatedSymbol, approachSymbol, reflectSymbol, refractSymbol;
+    final switch (locale) with (GrLocale) {
+    case en_US:
+        _vector2Symbol = "Vector2";
+        vec2ZeroSymbol = "Vector2_zero";
+        vec2HalfSymbol = "Vector2_half";
+        vec2OneSymbol = "Vector2_one";
+        vec2UpSymbol = "Vector2_up";
+        vec2DownSymbol = "Vector2_down";
+        vec2LeftSymbol = "Vector2_left";
+        vec2RightSymbol = "Vector2_right";
+        vec2AngledSymbol = "Vector2_angled";
+        zeroSymbol = "zero?";
+        unpackSymbol = "unpack";
+        absSymbol = "abs";
+        ceilSymbol = "ceil";
+        floorSymbol = "floor";
+        roundSymbol = "round";
+        sumSymbol = "sum";
+        signSymbol = "sign";
+        lerpSymbol = "interpolate";
+        approachSymbol = "approach";
+        reflectSymbol = "reflect";
+        refractSymbol = "refract";
+        distanceSymbol = "distance";
+        distanceSquaredSymbol = "distance2";
+        dotSymbol = "dot";
+        crossSymbol = "cross";
+        normalSymbol = "normal";
+        angleSymbol = "angle";
+        rotateSymbol = "rotate";
+        rotatedSymbol = "rotated";
+        lengthSymbol = "length";
+        lengthSquaredSymbol = "length2";
+        normalizeSymbol = "normalize";
+        normalizedSymbol = "normalized";
+        break;
+    case fr_FR:
+        _vector2Symbol = "Vecteur2";
+        vec2ZeroSymbol = "Vecteur2_zéro";
+        vec2HalfSymbol = "Vecteur2_moitié";
+        vec2OneSymbol = "Vecteur2_un";
+        vec2UpSymbol = "Vecteur2_haut";
+        vec2DownSymbol = "Vecteur2_bas";
+        vec2LeftSymbol = "Vecteur2_gauche";
+        vec2RightSymbol = "Vecteur2_droite";
+        vec2AngledSymbol = "Vecteur2_anglé";
+        zeroSymbol = "zéro?";
+        unpackSymbol = "déballe";
+        absSymbol = "abs";
+        ceilSymbol = "plafond";
+        floorSymbol = "plancher";
+        roundSymbol = "arrondi";
+        sumSymbol = "somme";
+        signSymbol = "signe";
+        lerpSymbol = "interpole";
+        approachSymbol = "approche";
+        reflectSymbol = "reflète";
+        refractSymbol = "réfracte";
+        distanceSymbol = "distance";
+        distanceSquaredSymbol = "distance2";
+        dotSymbol = "scalaire";
+        crossSymbol = "croix";
+        normalSymbol = "normale";
+        angleSymbol = "angle";
+        rotateSymbol = "tourne";
+        rotatedSymbol = "tourné";
+        lengthSymbol = "longueur";
+        lengthSquaredSymbol = "longueur2";
+        normalizeSymbol = "normalise";
+        normalizedSymbol = "normalisé";
+        break;
+    }
 
-    GrType vec2iType = library.addTypeAlias("Vec2i", grGetClassType("Vec2", [
-                grInt
-            ]));
-    GrType vec2fType = library.addTypeAlias("Vec2f", grGetClassType("Vec2", [
-                grFloat
-            ]));
-
-    _vec2iTypeName = grMangleComposite("Vec2", [grInt]);
-    _vec2fTypeName = grMangleComposite("Vec2", [grFloat]);
+    GrType vec2Type = library.addClass(_vector2Symbol, ["x", "y"], [
+            grFloat, grFloat
+        ]);
 
     // Ctors
-    library.addPrimitive(&_vec2i_1, "Vec2", [grInt], [vec2iType]);
-    library.addPrimitive(&_vec2f_1, "Vec2", [grFloat], [vec2fType]);
-    library.addPrimitive(&_vec2i_2, "Vec2", [grInt, grInt], [vec2iType]);
-    library.addPrimitive(&_vec2f_2, "Vec2", [grFloat, grFloat], [vec2fType]);
-
-    library.addPrimitive(&_vec2i_0, "Vec2i", [], [vec2iType]);
-    library.addPrimitive(&_vec2i_1, "Vec2i", [grInt], [vec2iType]);
-    library.addPrimitive(&_vec2i_2, "Vec2i", [grInt, grInt], [vec2iType]);
-
-    library.addPrimitive(&_vec2f_0, "Vec2f", [], [vec2fType]);
-    library.addPrimitive(&_vec2f_1, "Vec2f", [grFloat], [vec2fType]);
-    library.addPrimitive(&_vec2f_2, "Vec2f", [grFloat, grFloat], [vec2fType]);
-
-    // Cast
-    library.addCast(&_vec2i_vec2f, vec2iType, vec2fType);
-    library.addCast(&_vec2f_vec2i, vec2fType, vec2iType);
+    library.addPrimitive(&_vec2_0, _vector2Symbol, [], [vec2Type]);
+    library.addPrimitive(&_vec2_1, _vector2Symbol, [grFloat], [vec2Type]);
+    library.addPrimitive(&_vec2_2, _vector2Symbol, [grFloat, grFloat], [
+            vec2Type
+        ]);
 
     // Trace
-    library.addPrimitive(&_trace_i, "trace", [vec2iType]);
-    library.addPrimitive(&_trace_f, "trace", [vec2fType]);
+    library.addPrimitive(&_write, writeSymbol, [vec2Type]);
 
     // Operators
     static foreach (op; ["+", "-"]) {
-        library.addOperator(&_opUnaryVec2i!op, op, [vec2iType], vec2iType);
-        library.addOperator(&_opUnaryVec2f!op, op, [vec2fType], vec2fType);
+        library.addOperator(&_opUnaryVec2!op, op, [vec2Type], vec2Type);
     }
     static foreach (op; ["+", "-", "*", "/", "%"]) {
-        library.addOperator(&_opBinaryVec2i!op, op, [vec2iType, vec2iType], vec2iType);
-        library.addOperator(&_opBinaryScalarVec2i!op, op, [vec2iType, grInt], vec2iType);
-        library.addOperator(&_opBinaryScalarRightVec2i!op, op, [
-                grInt, vec2iType
-            ], vec2iType);
-
-        library.addOperator(&_opBinaryVec2f!op, op, [vec2fType, vec2fType], vec2fType);
-        library.addOperator(&_opBinaryScalarVec2f!op, op, [vec2fType, grFloat], vec2fType);
-        library.addOperator(&_opBinaryScalarRightVec2f!op, op, [
-                grFloat, vec2fType
-            ], vec2fType);
+        library.addOperator(&_opBinaryVec2!op, op, [vec2Type, vec2Type], vec2Type);
+        library.addOperator(&_opBinaryScalarVec2!op, op, [vec2Type, grFloat], vec2Type);
+        library.addOperator(&_opBinaryScalarRightVec2!op, op, [
+                grFloat, vec2Type
+            ], vec2Type);
     }
     static foreach (op; ["==", "!=", ">=", "<=", ">", "<"]) {
-        library.addOperator(&_opBinaryCompareVec2i!op, op, [
-                vec2iType, vec2iType
-            ], grBool);
-
-        library.addOperator(&_opBinaryCompareVec2f!op, op, [
-                vec2fType, vec2fType
+        library.addOperator(&_opBinaryCompareVec2!op, op, [
+                vec2Type, vec2Type
             ], grBool);
     }
 
     // Utility
-    library.addPrimitive(&_oneVec2i, "Vec2i_one", [], [vec2iType]);
-    library.addPrimitive(&_oneVec2f, "Vec2f_one", [], [vec2fType]);
-    library.addPrimitive(&_halfVec2f, "Vec2f_half", [], [vec2fType]);
-    library.addPrimitive(&_upVec2i, "Vec2i_up", [], [vec2iType]);
-    library.addPrimitive(&_upVec2f, "Vec2f_up", [], [vec2fType]);
-    library.addPrimitive(&_downVec2i, "Vec2i_down", [], [vec2iType]);
-    library.addPrimitive(&_downVec2f, "Vec2f_down", [], [vec2fType]);
-    library.addPrimitive(&_leftVec2i, "Vec2i_left", [], [vec2iType]);
-    library.addPrimitive(&_leftVec2f, "Vec2f_left", [], [vec2fType]);
-    library.addPrimitive(&_rightVec2i, "Vec2i_right", [], [vec2iType]);
-    library.addPrimitive(&_rightVec2f, "Vec2f_right", [], [vec2fType]);
+    library.addPrimitive(&_vec2_0, vec2ZeroSymbol, [], [vec2Type]);
+    library.addPrimitive(&_halfVec2, vec2HalfSymbol, [], [vec2Type]);
+    library.addPrimitive(&_oneVec2, vec2OneSymbol, [], [vec2Type]);
+    library.addPrimitive(&_upVec2, vec2UpSymbol, [], [vec2Type]);
+    library.addPrimitive(&_downVec2, vec2DownSymbol, [], [vec2Type]);
+    library.addPrimitive(&_leftVec2, vec2LeftSymbol, [], [vec2Type]);
+    library.addPrimitive(&_rightVec2, vec2RightSymbol, [], [vec2Type]);
 
-    library.addPrimitive(&_unpackVec2i, "unpack", [vec2iType], [grInt, grInt]);
-    library.addPrimitive(&_unpackVec2f, "unpack", [vec2fType], [
+    library.addPrimitive(&_unpackVec2, unpackSymbol, [vec2Type], [
             grFloat, grFloat
         ]);
 
-    library.addPrimitive(&_isZeroVec2i, "zero?", [vec2iType], [grBool]);
-    library.addPrimitive(&_isZeroVec2f, "zero?", [vec2fType], [grBool]);
+    library.addPrimitive(&_abs, absSymbol, [vec2Type], [vec2Type]);
+    library.addPrimitive(&_ceil, ceilSymbol, [vec2Type], [vec2Type]);
+    library.addPrimitive(&_floor, floorSymbol, [vec2Type], [vec2Type]);
+    library.addPrimitive(&_round, roundSymbol, [vec2Type], [vec2Type]);
+
+    library.addPrimitive(&_isZeroVec2, zeroSymbol, [vec2Type], [grBool]);
 
     // Operations
-    library.addPrimitive(&_sumVec2i, "sum", [vec2iType], [grInt]);
-    library.addPrimitive(&_sumVec2f, "sum", [vec2fType], [grFloat]);
-    library.addPrimitive(&_distanceVec2i, "distance", [vec2iType, vec2iType], [
+    library.addPrimitive(&_sumVec2, sumSymbol, [vec2Type], [grFloat]);
+    library.addPrimitive(&_sign, signSymbol, [vec2Type], [vec2Type]);
+
+    library.addPrimitive(&_lerp, lerpSymbol, [vec2Type, vec2Type, grFloat], [
+            vec2Type
+        ]);
+    library.addPrimitive(&_approach, approachSymbol, [
+            vec2Type, vec2Type, grFloat
+        ], [vec2Type]);
+
+    library.addPrimitive(&_reflect, reflectSymbol, [vec2Type, vec2Type], [
+            vec2Type
+        ]);
+    library.addPrimitive(&_refract, refractSymbol, [vec2Type, vec2Type, grFloat], [
+            vec2Type
+        ]);
+
+    library.addPrimitive(&_distance, distanceSymbol, [vec2Type, vec2Type], [
             grFloat
         ]);
-    library.addPrimitive(&_distanceVec2f, "distance", [vec2fType, vec2fType], [
+    library.addPrimitive(&_distanceSquared, distanceSquaredSymbol, [
+            vec2Type, vec2Type
+        ], [
             grFloat
         ]);
-    library.addPrimitive(&_distanceVec2i, "distanceSq", [vec2iType, vec2iType], [
+    library.addPrimitive(&_dot, dotSymbol, [vec2Type, vec2Type], [grFloat]);
+    library.addPrimitive(&_cross, crossSymbol, [vec2Type, vec2Type], [
             grFloat
         ]);
-    library.addPrimitive(&_distanceVec2f, "distanceSq", [vec2fType, vec2fType], [
+    library.addPrimitive(&_normal, normalSymbol, [vec2Type], [vec2Type]);
+    library.addPrimitive(&_angle, angleSymbol, [vec2Type], [grFloat]);
+    library.addPrimitive(&_rotate, rotateSymbol, [vec2Type, grFloat], [
+            vec2Type
+        ]);
+    library.addPrimitive(&_rotated, rotatedSymbol, [vec2Type, grFloat], [
+            vec2Type
+        ]);
+    library.addPrimitive(&_angled, vec2AngledSymbol, [grFloat], [vec2Type]);
+    library.addPrimitive(&_length, lengthSymbol, [vec2Type], [grFloat]);
+    library.addPrimitive(&_lengthSquared, lengthSquaredSymbol, [vec2Type], [
             grFloat
         ]);
-    library.addPrimitive(&_dotVec2i, "dot", [vec2iType, vec2iType], [grFloat]);
-    library.addPrimitive(&_dotVec2f, "dot", [vec2fType, vec2fType], [grFloat]);
-    library.addPrimitive(&_crossVec2i, "cross", [vec2iType, vec2iType], [
-            grFloat
+    library.addPrimitive(&_normalize, normalizeSymbol, [vec2Type], [
+            vec2Type
         ]);
-    library.addPrimitive(&_crossVec2f, "cross", [vec2fType, vec2fType], [
-            grFloat
-        ]);
-    library.addPrimitive(&_normalVec2i, "normal", [vec2iType], [vec2iType]);
-    library.addPrimitive(&_normalVec2f, "normal", [vec2fType], [vec2fType]);
-    library.addPrimitive(&_angleVec2i, "angle", [vec2iType], [grFloat]);
-    library.addPrimitive(&_angleVec2f, "angle", [vec2fType], [grFloat]);
-    library.addPrimitive(&_rotateVec2f, "rotate!", [vec2fType, grFloat], [
-            vec2fType
-        ]);
-    library.addPrimitive(&_rotatedVec2f, "rotate", [vec2fType, grFloat], [
-            vec2fType
-        ]);
-    library.addPrimitive(&_angledVec2f, "Vec2f_angled", [grFloat], [vec2fType]);
-    library.addPrimitive(&_lengthVec2i, "length", [vec2iType], [grFloat]);
-    library.addPrimitive(&_lengthVec2f, "length", [vec2fType], [grFloat]);
-    library.addPrimitive(&_lengthSquaredVec2i, "lengthSq", [vec2iType], [
-            grFloat
-        ]);
-    library.addPrimitive(&_lengthSquaredVec2f, "lengthSq", [vec2fType], [
-            grFloat
-        ]);
-    library.addPrimitive(&_normalizeVec2f, "normalize!", [vec2fType], [
-            vec2fType
-        ]);
-    library.addPrimitive(&_normalizedVec2f, "normalize", [vec2fType], [
-            vec2fType
+    library.addPrimitive(&_normalized, normalizedSymbol, [vec2Type], [
+            vec2Type
         ]);
 }
 
 // Ctors ------------------------------------------
-private void _vec2i_0(GrCall call) {
-    GrObject self = call.createObject(_vec2iTypeName);
+private void _vec2_0(GrCall call) {
+    GrObject self = call.createObject(_vector2Symbol);
     if (!self) {
-        call.raise("UnknownClassError");
-        return;
-    }
-    self.setInt("x", 0);
-    self.setInt("y", 0);
-    call.setObject(self);
-}
-
-private void _vec2i_1(GrCall call) {
-    GrObject self = call.createObject(_vec2iTypeName);
-    if (!self) {
-        call.raise("UnknownClassError");
-        return;
-    }
-    const GrInt value = call.getInt(0);
-    self.setInt("x", value);
-    self.setInt("y", value);
-    call.setObject(self);
-}
-
-private void _vec2i_2(GrCall call) {
-    GrObject self = call.createObject(_vec2iTypeName);
-    if (!self) {
-        call.raise("UnknownClassError");
-        return;
-    }
-    self.setInt("x", call.getInt(0));
-    self.setInt("y", call.getInt(1));
-    call.setObject(self);
-}
-
-private void _vec2f_0(GrCall call) {
-    GrObject self = call.createObject(_vec2fTypeName);
-    if (!self) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     self.setFloat("x", 0f);
@@ -201,10 +213,10 @@ private void _vec2f_0(GrCall call) {
     call.setObject(self);
 }
 
-private void _vec2f_1(GrCall call) {
-    GrObject self = call.createObject(_vec2fTypeName);
+private void _vec2_1(GrCall call) {
+    GrObject self = call.createObject(_vector2Symbol);
     if (!self) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     const GrFloat value = call.getFloat(0);
@@ -213,10 +225,10 @@ private void _vec2f_1(GrCall call) {
     call.setObject(self);
 }
 
-private void _vec2f_2(GrCall call) {
-    GrObject self = call.createObject(_vec2fTypeName);
+private void _vec2_2(GrCall call) {
+    GrObject self = call.createObject(_vector2Symbol);
     if (!self) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     self.setFloat("x", call.getFloat(0));
@@ -224,85 +236,27 @@ private void _vec2f_2(GrCall call) {
     call.setObject(self);
 }
 
-// Cast ------------------------------------------
-private void _vec2i_vec2f(GrCall call) {
+// Write ------------------------------------------
+private void _write(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise("NullError");
+        _stdOut("null(Vec2)");
         return;
     }
-    GrObject v = call.createObject(_vec2fTypeName);
-    if (!v) {
-        call.raise("UnknownClassError");
-        return;
-    }
-    v.setFloat("x", cast(GrFloat) self.getInt("x"));
-    v.setFloat("y", cast(GrFloat) self.getInt("y"));
-    call.setObject(v);
-}
-
-private void _vec2f_vec2i(GrCall call) {
-    GrObject self = call.getObject(0);
-    if (!self) {
-        call.raise("NullError");
-        return;
-    }
-    GrObject v = call.createObject(_vec2iTypeName);
-    if (!v) {
-        call.raise("UnknownClassError");
-        return;
-    }
-    v.setInt("x", cast(GrInt) self.getFloat("x"));
-    v.setInt("y", cast(GrInt) self.getFloat("y"));
-    call.setObject(v);
-}
-
-// Trace ------------------------------------------
-private void _trace_i(GrCall call) {
-    GrObject self = call.getObject(0);
-    if (!self) {
-        _stdOut("null(Vec2i)");
-        return;
-    }
-    _stdOut("Vec2i(" ~ to!GrString(self.getInt("x")) ~ ", " ~ to!GrString(self.getInt("y")) ~ ")");
-}
-
-private void _trace_f(GrCall call) {
-    GrObject self = call.getObject(0);
-    if (!self) {
-        _stdOut("null(Vec2f)");
-        return;
-    }
-    _stdOut("Vec2f(" ~ to!GrString(self.getFloat("x")) ~ ", " ~ to!GrString(
+    _stdOut("Vec2(" ~ to!GrString(self.getFloat("x")) ~ ", " ~ to!GrString(
             self.getFloat("y")) ~ ")");
 }
 
 /// Operators ------------------------------------------
-private void _opUnaryVec2i(string op)(GrCall call) {
-    GrObject self = call.createObject(_vec2iTypeName);
+private void _opUnaryVec2(string op)(GrCall call) {
+    GrObject self = call.createObject(_vector2Symbol);
     if (!self) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     GrObject v = call.getObject(0);
     if (!v) {
-        call.raise("NullError");
-        return;
-    }
-    mixin("self.setInt(\"x\", " ~ op ~ "v.getInt(\"x\"));");
-    mixin("self.setInt(\"y\", " ~ op ~ "v.getInt(\"y\"));");
-    call.setObject(self);
-}
-
-private void _opUnaryVec2f(string op)(GrCall call) {
-    GrObject self = call.createObject(_vec2fTypeName);
-    if (!self) {
-        call.raise("UnknownClassError");
-        return;
-    }
-    GrObject v = call.getObject(0);
-    if (!v) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     mixin("self.setFloat(\"x\", " ~ op ~ "v.getFloat(\"x\"));");
@@ -310,81 +264,16 @@ private void _opUnaryVec2f(string op)(GrCall call) {
     call.setObject(self);
 }
 
-private void _opBinaryVec2i(string op)(GrCall call) {
-    GrObject self = call.createObject(_vec2iTypeName);
+private void _opBinaryVec2(string op)(GrCall call) {
+    GrObject self = call.createObject(_vector2Symbol);
     if (!self) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
     if (!v1 || !v2) {
-        call.raise("NullError");
-        return;
-    }
-    mixin("self.setInt(\"x\", v1.getInt(\"x\")" ~ op ~ "v2.getInt(\"x\"));");
-    mixin("self.setInt(\"y\", v1.getInt(\"y\")" ~ op ~ "v2.getInt(\"y\"));");
-    call.setObject(self);
-}
-
-private void _opBinaryScalarVec2i(string op)(GrCall call) {
-    GrObject self = call.createObject(_vec2iTypeName);
-    if (!self) {
-        call.raise("UnknownClassError");
-        return;
-    }
-    GrObject v = call.getObject(0);
-    const GrInt s = call.getInt(1);
-    if (!v) {
-        call.raise("NullError");
-        return;
-    }
-    mixin("self.setInt(\"x\", v.getInt(\"x\")" ~ op ~ "s);");
-    mixin("self.setInt(\"y\", v.getInt(\"y\")" ~ op ~ "s);");
-    call.setObject(self);
-}
-
-private void _opBinaryScalarRightVec2i(string op)(GrCall call) {
-    GrObject self = call.createObject(_vec2iTypeName);
-    if (!self) {
-        call.raise("UnknownClassError");
-        return;
-    }
-    GrObject v = call.getObject(0);
-    const GrInt s = call.getInt(1);
-    if (!v) {
-        call.raise("NullError");
-        return;
-    }
-    mixin("self.setInt(\"x\", s" ~ op ~ "v.getInt(\"x\"));");
-    mixin("self.setInt(\"y\", s" ~ op ~ "v.getInt(\"y\"));");
-    call.setObject(self);
-}
-
-private void _opBinaryCompareVec2i(string op)(GrCall call) {
-    GrObject v1 = call.getObject(0);
-    GrObject v2 = call.getObject(1);
-    if (!v1 || !v2) {
-        call.raise("NullError");
-        return;
-    }
-    mixin("call.setBool(
-        v1.getInt(\"x\")"
-            ~ op ~ "v2.getInt(\"x\") &&
-        v1.getInt(\"y\")"
-            ~ op ~ "v2.getInt(\"y\"));");
-}
-
-private void _opBinaryVec2f(string op)(GrCall call) {
-    GrObject self = call.createObject(_vec2fTypeName);
-    if (!self) {
-        call.raise("UnknownClassError");
-        return;
-    }
-    GrObject v1 = call.getObject(0);
-    GrObject v2 = call.getObject(1);
-    if (!v1 || !v2) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     mixin("self.setFloat(\"x\", v1.getFloat(\"x\")" ~ op ~ "v2.getFloat(\"x\"));");
@@ -392,16 +281,16 @@ private void _opBinaryVec2f(string op)(GrCall call) {
     call.setObject(self);
 }
 
-private void _opBinaryScalarVec2f(string op)(GrCall call) {
-    GrObject self = call.createObject(_vec2fTypeName);
+private void _opBinaryScalarVec2(string op)(GrCall call) {
+    GrObject self = call.createObject(_vector2Symbol);
     if (!self) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     GrObject v = call.getObject(0);
     const GrFloat s = call.getFloat(1);
     if (!v) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     mixin("self.setFloat(\"x\", v.getFloat(\"x\")" ~ op ~ "s);");
@@ -409,16 +298,16 @@ private void _opBinaryScalarVec2f(string op)(GrCall call) {
     call.setObject(self);
 }
 
-private void _opBinaryScalarRightVec2f(string op)(GrCall call) {
-    GrObject self = call.createObject(_vec2fTypeName);
+private void _opBinaryScalarRightVec2(string op)(GrCall call) {
+    GrObject self = call.createObject(_vector2Symbol);
     if (!self) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     GrObject v = call.getObject(0);
     const GrFloat s = call.getFloat(1);
     if (!v) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     mixin("self.setFloat(\"x\", s" ~ op ~ "v.getFloat(\"x\"));");
@@ -426,11 +315,11 @@ private void _opBinaryScalarRightVec2f(string op)(GrCall call) {
     call.setObject(self);
 }
 
-private void _opBinaryCompareVec2f(string op)(GrCall call) {
+private void _opBinaryCompareVec2(string op)(GrCall call) {
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
     if (!v1 || !v2) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     mixin("call.setBool(
@@ -442,21 +331,10 @@ private void _opBinaryCompareVec2f(string op)(GrCall call) {
 }
 
 // Utility ------------------------------------------
-private void _oneVec2i(GrCall call) {
-    GrObject self = call.createObject(_vec2iTypeName);
+private void _oneVec2(GrCall call) {
+    GrObject self = call.createObject(_vector2Symbol);
     if (!self) {
-        call.raise("UnknownClassError");
-        return;
-    }
-    self.setInt("x", 1);
-    self.setInt("y", 1);
-    call.setObject(self);
-}
-
-private void _oneVec2f(GrCall call) {
-    GrObject self = call.createObject(_vec2fTypeName);
-    if (!self) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     self.setFloat("x", 1f);
@@ -464,10 +342,10 @@ private void _oneVec2f(GrCall call) {
     call.setObject(self);
 }
 
-private void _halfVec2f(GrCall call) {
-    GrObject self = call.createObject(_vec2fTypeName);
+private void _halfVec2(GrCall call) {
+    GrObject self = call.createObject(_vector2Symbol);
     if (!self) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     self.setFloat("x", .5f);
@@ -475,160 +353,254 @@ private void _halfVec2f(GrCall call) {
     call.setObject(self);
 }
 
-private void _upVec2i(GrCall call) {
-    GrObject self = call.createObject(_vec2iTypeName);
+private void _upVec2(GrCall call) {
+    GrObject self = call.createObject(_vector2Symbol);
     if (!self) {
-        call.raise("UnknownClassError");
-        return;
-    }
-    self.setInt("y", 1);
-    call.setObject(self);
-}
-
-private void _upVec2f(GrCall call) {
-    GrObject self = call.createObject(_vec2fTypeName);
-    if (!self) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     self.setFloat("y", 1f);
     call.setObject(self);
 }
 
-private void _downVec2i(GrCall call) {
-    GrObject self = call.createObject(_vec2iTypeName);
+private void _downVec2(GrCall call) {
+    GrObject self = call.createObject(_vector2Symbol);
     if (!self) {
-        call.raise("UnknownClassError");
-        return;
-    }
-    self.setInt("y", -1);
-    call.setObject(self);
-}
-
-private void _downVec2f(GrCall call) {
-    GrObject self = call.createObject(_vec2fTypeName);
-    if (!self) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     self.setFloat("y", -1f);
     call.setObject(self);
 }
 
-private void _leftVec2i(GrCall call) {
-    GrObject self = call.createObject(_vec2iTypeName);
+private void _leftVec2(GrCall call) {
+    GrObject self = call.createObject(_vector2Symbol);
     if (!self) {
-        call.raise("UnknownClassError");
-        return;
-    }
-    self.setInt("x", -1);
-    call.setObject(self);
-}
-
-private void _leftVec2f(GrCall call) {
-    GrObject self = call.createObject(_vec2fTypeName);
-    if (!self) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     self.setFloat("x", -1f);
     call.setObject(self);
 }
 
-private void _rightVec2i(GrCall call) {
-    GrObject self = call.createObject(_vec2iTypeName);
+private void _rightVec2(GrCall call) {
+    GrObject self = call.createObject(_vector2Symbol);
     if (!self) {
-        call.raise("UnknownClassError");
-        return;
-    }
-    self.setInt("x", 1);
-    call.setObject(self);
-}
-
-private void _rightVec2f(GrCall call) {
-    GrObject self = call.createObject(_vec2fTypeName);
-    if (!self) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     self.setFloat("x", 1f);
     call.setObject(self);
 }
 
-private void _unpackVec2i(GrCall call) {
+private void _unpackVec2(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise("NullError");
-        return;
-    }
-    call.setInt(self.getInt("x"));
-    call.setInt(self.getInt("y"));
-}
-
-private void _unpackVec2f(GrCall call) {
-    GrObject self = call.getObject(0);
-    if (!self) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     call.setFloat(self.getFloat("x"));
     call.setFloat(self.getFloat("y"));
 }
 
-private void _isZeroVec2i(GrCall call) {
+private void _isZeroVec2(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise("NullError");
-        return;
-    }
-    call.setBool(self.getInt("x") == 0 && self.getInt("y") == 0);
-}
-
-private void _isZeroVec2f(GrCall call) {
-    GrObject self = call.getObject(0);
-    if (!self) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     call.setBool(self.getFloat("x") == 0f && self.getFloat("y") == 0f);
 }
 
 // Operations ------------------------------------------
-private void _sumVec2i(GrCall call) {
+private void _abs(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
-    call.setInt(self.getInt("x") + self.getInt("y"));
+    GrObject v = call.createObject(_vector2Symbol);
+    if (!v) {
+        call.raise(_classError);
+        return;
+    }
+    v.setFloat("x", abs(self.getFloat("y")));
+    v.setFloat("y", abs(self.getFloat("x")));
+    call.setObject(v);
 }
 
-private void _sumVec2f(GrCall call) {
+private void _ceil(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise("NullError");
+        call.raise(_paramError);
+        return;
+    }
+    GrObject v = call.createObject(_vector2Symbol);
+    if (!v) {
+        call.raise(_classError);
+        return;
+    }
+    v.setFloat("x", ceil(self.getFloat("y")));
+    v.setFloat("y", ceil(self.getFloat("x")));
+    call.setObject(v);
+}
+
+private void _floor(GrCall call) {
+    GrObject self = call.getObject(0);
+    if (!self) {
+        call.raise(_paramError);
+        return;
+    }
+    GrObject v = call.createObject(_vector2Symbol);
+    if (!v) {
+        call.raise(_classError);
+        return;
+    }
+    v.setFloat("x", floor(self.getFloat("y")));
+    v.setFloat("y", floor(self.getFloat("x")));
+    call.setObject(v);
+}
+
+private void _round(GrCall call) {
+    GrObject self = call.getObject(0);
+    if (!self) {
+        call.raise(_paramError);
+        return;
+    }
+    GrObject v = call.createObject(_vector2Symbol);
+    if (!v) {
+        call.raise(_classError);
+        return;
+    }
+    v.setFloat("x", round(self.getFloat("y")));
+    v.setFloat("y", round(self.getFloat("x")));
+    call.setObject(v);
+}
+
+private void _sumVec2(GrCall call) {
+    GrObject self = call.getObject(0);
+    if (!self) {
+        call.raise(_paramError);
         return;
     }
     call.setFloat(self.getFloat("x") + self.getFloat("y"));
 }
 
-private void _distanceVec2i(GrCall call) {
-    GrObject v1 = call.getObject(0);
-    GrObject v2 = call.getObject(1);
-    if (!v1 || !v2) {
-        call.raise("NullError");
+private void _sign(GrCall call) {
+    GrObject self = call.getObject(0);
+    if (!self) {
+        call.raise(_paramError);
         return;
     }
-    const GrFloat px = v1.getInt("x") - v2.getInt("x");
-    const GrFloat py = v1.getInt("y") - v2.getInt("y");
-    call.setFloat(std.math.sqrt(px * px + py * py));
+    GrObject v = call.createObject(_vector2Symbol);
+    if (!v) {
+        call.raise(_classError);
+        return;
+    }
+    v.setFloat("x", self.getFloat("x") >= 0f ? 1f : -1f);
+    v.setFloat("y", self.getFloat("y") >= 0f ? 1f : -1f);
+    call.setObject(v);
 }
 
-private void _distanceVec2f(GrCall call) {
+private void _lerp(GrCall call) {
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
     if (!v1 || !v2) {
-        call.raise("NullError");
+        call.raise(_paramError);
+        return;
+    }
+    const GrFloat weight = call.getFloat(2);
+    GrObject v = call.createObject(_vector2Symbol);
+    if (!v) {
+        call.raise(_classError);
+        return;
+    }
+    v.setFloat("x", v2.getFloat("x") * weight + v1.getFloat("x") * (1f - weight));
+    v.setFloat("y", v2.getFloat("y") * weight + v1.getFloat("y") * (1f - weight));
+    call.setObject(v);
+}
+
+private void _approach(GrCall call) {
+    GrObject v1 = call.getObject(0);
+    GrObject v2 = call.getObject(1);
+    if (!v1 || !v2) {
+        call.raise(_paramError);
+        return;
+    }
+    GrObject v = call.createObject(_vector2Symbol);
+    if (!v) {
+        call.raise(_classError);
+        return;
+    }
+    const GrFloat x1 = v1.getFloat("x");
+    const GrFloat y1 = v1.getFloat("y");
+    const GrFloat x2 = v2.getFloat("x");
+    const GrFloat y2 = v2.getFloat("y");
+    const GrFloat step = call.getFloat(2);
+    v.setFloat("x", x1 > x2 ? max(x1 - step, x2) : min(x1 + step, x2));
+    v.setFloat("y", y1 > y2 ? max(y1 - step, y2) : min(y1 + step, y2));
+    call.setObject(v);
+}
+
+private void _reflect(GrCall call) {
+    GrObject v1 = call.getObject(0);
+    GrObject v2 = call.getObject(1);
+    if (!v1 || !v2) {
+        call.raise(_paramError);
+        return;
+    }
+    GrObject v = call.createObject(_vector2Symbol);
+    if (!v) {
+        call.raise(_classError);
+        return;
+    }
+    const GrFloat x1 = v1.getFloat("x");
+    const GrFloat y1 = v1.getFloat("y");
+    const GrFloat x2 = v2.getFloat("x");
+    const GrFloat y2 = v2.getFloat("y");
+    const GrFloat dotNI2 = 2.0 * x1 * x2 + y1 * y2;
+    v.setFloat("x", x1 - dotNI2 * x2);
+    v.setFloat("y", y1 - dotNI2 * y2);
+    call.setObject(v);
+}
+
+private void _refract(GrCall call) {
+    GrObject v1 = call.getObject(0);
+    GrObject v2 = call.getObject(1);
+    if (!v1 || !v2) {
+        call.raise(_paramError);
+        return;
+    }
+    GrObject v = call.createObject(_vector2Symbol);
+    if (!v) {
+        call.raise(_classError);
+        return;
+    }
+    const GrFloat x1 = v1.getFloat("x");
+    const GrFloat y1 = v1.getFloat("y");
+    const GrFloat x2 = v2.getFloat("x");
+    const GrFloat y2 = v2.getFloat("y");
+    const GrFloat eta = call.getFloat(2);
+
+    const GrFloat dotNI = (x1 * x2 + y1 * y2);
+    GrFloat k = 1.0 - eta * eta * (1.0 - dotNI * dotNI);
+    if (k < .0) {
+        v.setFloat("x", 0f);
+        v.setFloat("y", 0f);
+    }
+    else {
+        const GrFloat s = (eta * dotNI + sqrt(k));
+        v.setFloat("x", eta * x1 - s * x2);
+        v.setFloat("y", eta * y1 - s * y2);
+    }
+    call.setObject(v);
+}
+
+private void _distance(GrCall call) {
+    GrObject v1 = call.getObject(0);
+    GrObject v2 = call.getObject(1);
+    if (!v1 || !v2) {
+        call.raise(_paramError);
         return;
     }
     const GrFloat px = v1.getFloat("x") - v2.getFloat("x");
@@ -636,23 +608,11 @@ private void _distanceVec2f(GrCall call) {
     call.setFloat(std.math.sqrt(px * px + py * py));
 }
 
-private void _distanceSquaredVec2i(GrCall call) {
+private void _distanceSquared(GrCall call) {
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
     if (!v1 || !v2) {
-        call.raise("NullError");
-        return;
-    }
-    const GrFloat px = v1.getInt("x") - v2.getInt("x");
-    const GrFloat py = v1.getInt("y") - v2.getInt("y");
-    call.setFloat(px * px + py * py);
-}
-
-private void _distanceSquaredVec2f(GrCall call) {
-    GrObject v1 = call.getObject(0);
-    GrObject v2 = call.getObject(1);
-    if (!v1 || !v2) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     const GrFloat px = v1.getFloat("x") - v2.getFloat("x");
@@ -660,71 +620,35 @@ private void _distanceSquaredVec2f(GrCall call) {
     call.setFloat(px * px + py * py);
 }
 
-private void _dotVec2i(GrCall call) {
+private void _dot(GrCall call) {
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
     if (!v1 || !v2) {
-        call.raise("NullError");
-        return;
-    }
-    call.setFloat(v1.getInt("x") * v2.getInt("x") + v1.getInt("y") * v2.getInt("y"));
-}
-
-private void _dotVec2f(GrCall call) {
-    GrObject v1 = call.getObject(0);
-    GrObject v2 = call.getObject(1);
-    if (!v1 || !v2) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     call.setFloat(v1.getFloat("x") * v2.getFloat("x") + v1.getFloat("y") * v2.getFloat("y"));
 }
 
-private void _crossVec2i(GrCall call) {
+private void _cross(GrCall call) {
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
     if (!v1 || !v2) {
-        call.raise("NullError");
-        return;
-    }
-    call.setFloat(v1.getInt("x") * v2.getInt("y") - v1.getInt("y") * v2.getInt("x"));
-}
-
-private void _crossVec2f(GrCall call) {
-    GrObject v1 = call.getObject(0);
-    GrObject v2 = call.getObject(1);
-    if (!v1 || !v2) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     call.setFloat(v1.getFloat("x") * v2.getFloat("y") - v1.getFloat("y") * v2.getFloat("x"));
 }
 
-private void _normalVec2i(GrCall call) {
+private void _normal(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
-    GrObject v = call.createObject(_vec2iTypeName);
+    GrObject v = call.createObject(_vector2Symbol);
     if (!v) {
-        call.raise("UnknownClassError");
-        return;
-    }
-    v.setInt("x", -self.getInt("y"));
-    v.setInt("y", self.getInt("x"));
-    call.setObject(v);
-}
-
-private void _normalVec2f(GrCall call) {
-    GrObject self = call.getObject(0);
-    if (!self) {
-        call.raise("NullError");
-        return;
-    }
-    GrObject v = call.createObject(_vec2fTypeName);
-    if (!v) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     v.setFloat("x", -self.getFloat("y"));
@@ -732,29 +656,19 @@ private void _normalVec2f(GrCall call) {
     call.setObject(v);
 }
 
-private void _angleVec2i(GrCall call) {
+private void _angle(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise("NullError");
-        return;
-    }
-    call.setFloat(std.math.atan2(cast(GrFloat) self.getInt("y"),
-            cast(GrFloat) self.getInt("x")) * _radToDeg);
-}
-
-private void _angleVec2f(GrCall call) {
-    GrObject self = call.getObject(0);
-    if (!self) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     call.setFloat(std.math.atan2(self.getFloat("y"), self.getFloat("x")) * _radToDeg);
 }
 
-private void _rotateVec2f(GrCall call) {
+private void _rotate(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     const GrFloat radians = call.getFloat(1) * _degToRad;
@@ -766,10 +680,10 @@ private void _rotateVec2f(GrCall call) {
     call.setObject(self);
 }
 
-private void _rotatedVec2f(GrCall call) {
+private void _rotated(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     const GrFloat radians = call.getFloat(1) * _degToRad;
@@ -777,9 +691,9 @@ private void _rotatedVec2f(GrCall call) {
     const GrFloat c = std.math.cos(radians);
     const GrFloat s = std.math.sin(radians);
 
-    GrObject v = call.createObject(_vec2fTypeName);
+    GrObject v = call.createObject(_vector2Symbol);
     if (!v) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     v.setFloat("x", px * c - py * s);
@@ -787,11 +701,11 @@ private void _rotatedVec2f(GrCall call) {
     call.setObject(v);
 }
 
-private void _angledVec2f(GrCall call) {
+private void _angled(GrCall call) {
     const GrFloat radians = call.getFloat(0) * _degToRad;
-    GrObject v = call.createObject(_vec2fTypeName);
+    GrObject v = call.createObject(_vector2Symbol);
     if (!v) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     v.setFloat("x", std.math.cos(radians));
@@ -799,21 +713,10 @@ private void _angledVec2f(GrCall call) {
     call.setObject(v);
 }
 
-private void _lengthVec2i(GrCall call) {
+private void _length(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise("NullError");
-        return;
-    }
-    const GrInt x = self.getInt("x");
-    const GrInt y = self.getInt("y");
-    call.setFloat(std.math.sqrt(cast(GrFloat)(x * x + y * y)));
-}
-
-private void _lengthVec2f(GrCall call) {
-    GrObject self = call.getObject(0);
-    if (!self) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     const GrFloat x = self.getFloat("x");
@@ -821,21 +724,10 @@ private void _lengthVec2f(GrCall call) {
     call.setFloat(std.math.sqrt(x * x + y * y));
 }
 
-private void _lengthSquaredVec2i(GrCall call) {
+private void _lengthSquared(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise("NullError");
-        return;
-    }
-    const GrInt x = self.getInt("x");
-    const GrInt y = self.getInt("y");
-    call.setFloat(x * x + y * y);
-}
-
-private void _lengthSquaredVec2f(GrCall call) {
-    GrObject self = call.getObject(0);
-    if (!self) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     const GrFloat x = self.getFloat("x");
@@ -843,10 +735,10 @@ private void _lengthSquaredVec2f(GrCall call) {
     call.setFloat(x * x + y * y);
 }
 
-private void _normalizeVec2f(GrCall call) {
+private void _normalize(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     const GrFloat x = self.getFloat("x");
@@ -862,10 +754,10 @@ private void _normalizeVec2f(GrCall call) {
     call.setObject(self);
 }
 
-private void _normalizedVec2f(GrCall call) {
+private void _normalized(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     GrFloat x = self.getFloat("x");
@@ -880,9 +772,9 @@ private void _normalizedVec2f(GrCall call) {
     x /= len;
     y /= len;
 
-    GrObject v = call.createObject(_vec2fTypeName);
+    GrObject v = call.createObject(_vector2Symbol);
     if (!v) {
-        call.raise("UnknownClassError");
+        call.raise(_classError);
         return;
     }
     v.setFloat("x", x);

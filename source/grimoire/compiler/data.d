@@ -46,6 +46,9 @@ class GrData {
         GrAnyData _anyData;
 
         GrCallback[] _callbacks;
+
+        /// Name aliases
+        string[string] _aliases;
     }
 
     /// Add types and primitives defined in the library
@@ -65,6 +68,11 @@ class GrData {
             _abstractPrimitives ~= prim;
         }
         _callbacks ~= library._callbacks;
+
+        foreach (string name, string alias_; library._aliases) {
+            _aliases[name] = alias_;
+            import std.stdio;writeln(name, " -> ", alias_);
+        }
     }
 
     /// Primitive global constants, call registerIntConstant at the start of the parser. \

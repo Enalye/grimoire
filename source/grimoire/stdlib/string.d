@@ -8,33 +8,78 @@ module grimoire.stdlib.string;
 import std.string;
 import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
+import grimoire.stdlib.util;
 
 package(grimoire.stdlib) void grLoadStdLibString(GrLibrary library, GrLocale locale) {
-    library.addPrimitive(&_empty, "empty?", [grString], [grBool]);
-    library.addPrimitive(&_unshift, "unshift", [grString, grString], [grString]);
-    library.addPrimitive(&_push, "push", [grString, grString], [grString]);
-    library.addPrimitive(&_shift, "shift", [grString], [grString]);
-    library.addPrimitive(&_pop, "pop", [grString], [grString]);
-    library.addPrimitive(&_shift1, "shift", [grString, grInt], [grString]);
-    library.addPrimitive(&_pop1, "pop", [grString, grInt], [grString]);
-    library.addPrimitive(&_first, "first", [grString], [grString]);
-    library.addPrimitive(&_last, "last", [grString], [grString]);
-    library.addPrimitive(&_remove, "remove", [grString, grInt], [grString]);
-    library.addPrimitive(&_remove2, "remove", [grString, grInt, grInt], [
-            grString
-            ]);
-    library.addPrimitive(&_slice, "slice", [grString, grInt, grInt], [grString]);
-    library.addPrimitive(&_reverse, "reverse", [grString], [grString]);
-    library.addPrimitive(&_insert, "insert", [grString, grInt, grString], [
-            grString
-            ]);
-    library.addPrimitive(&_findFirst, "findFirst", [grString, grString], [grInt]);
-    library.addPrimitive(&_findLast, "findLast", [grString, grString], [grInt]);
-    library.addPrimitive(&_has, "has?", [grString, grString], [grBool]);
+    string stringIterSymbol, emptySymbol, hasSymbol, removeSymbol;
+    string unshiftSymbol, pushSymbol, shiftSymbol, popSymbol, firstSymbol, lastSymbol, sliceSymbol;
+    string reverseSymbol, insertSymbol, findFirstSymbol, findLastSymbol, eachSymbol, nextSymbol;
+    final switch (locale) with (GrLocale) {
+    case en_US:
+        stringIterSymbol = "IString";
+        emptySymbol = "empty?";
+        unshiftSymbol = "unshift";
+        pushSymbol = "push";
+        shiftSymbol = "shift";
+        popSymbol = "pop";
+        firstSymbol = "first";
+        lastSymbol = "last";
+        removeSymbol = "remove";
+        sliceSymbol = "slice";
+        reverseSymbol = "reverse";
+        insertSymbol = "insert";
+        eachSymbol = "each";
+        nextSymbol = "next";
+        findFirstSymbol = "find_first";
+        findLastSymbol = "find_last";
+        hasSymbol = "has?";
+        break;
+    case fr_FR:
+        stringIterSymbol = "IString";
+        emptySymbol = "vide?";
+        unshiftSymbol = "enfile";
+        pushSymbol = "empile";
+        shiftSymbol = "défile";
+        popSymbol = "dépile";
+        firstSymbol = "premier";
+        lastSymbol = "dernier";
+        removeSymbol = "retire";
+        sliceSymbol = "découpe";
+        reverseSymbol = "inverse";
+        insertSymbol = "insère";
+        eachSymbol = "chaque";
+        nextSymbol = "suivant";
+        findFirstSymbol = "trouve_premier";
+        findLastSymbol = "trouve_dernier";
+        hasSymbol = "a?";
+        break;
+    }
 
-    GrType stringIterType = library.addForeign("StringIter");
-    library.addPrimitive(&_each, "each", [grString], [stringIterType]);
-    library.addPrimitive(&_next, "next", [stringIterType], [grBool, grString]);
+    library.addPrimitive(&_empty, emptySymbol, [grString], [grBool]);
+    library.addPrimitive(&_unshift, unshiftSymbol, [grString, grString], [grString]);
+    library.addPrimitive(&_push, pushSymbol, [grString, grString], [grString]);
+    library.addPrimitive(&_shift, shiftSymbol, [grString], [grString]);
+    library.addPrimitive(&_pop, popSymbol, [grString], [grString]);
+    library.addPrimitive(&_shift1, shiftSymbol, [grString, grInt], [grString]);
+    library.addPrimitive(&_pop1, popSymbol, [grString, grInt], [grString]);
+    library.addPrimitive(&_first, firstSymbol, [grString], [grString]);
+    library.addPrimitive(&_last, lastSymbol, [grString], [grString]);
+    library.addPrimitive(&_remove, removeSymbol, [grString, grInt], [grString]);
+    library.addPrimitive(&_remove2, removeSymbol, [grString, grInt, grInt], [
+            grString
+            ]);
+    library.addPrimitive(&_slice, sliceSymbol, [grString, grInt, grInt], [grString]);
+    library.addPrimitive(&_reverse, reverseSymbol, [grString], [grString]);
+    library.addPrimitive(&_insert, insertSymbol, [grString, grInt, grString], [
+            grString
+            ]);
+    library.addPrimitive(&_findFirst, findFirstSymbol, [grString, grString], [grInt]);
+    library.addPrimitive(&_findLast, findLastSymbol, [grString, grString], [grInt]);
+    library.addPrimitive(&_has, hasSymbol, [grString, grString], [grBool]);
+
+    GrType stringIterType = library.addForeign(stringIterSymbol);
+    library.addPrimitive(&_each, eachSymbol, [grString], [stringIterType]);
+    library.addPrimitive(&_next, nextSymbol, [stringIterType], [grBool, grString]);
 }
 
 private void _empty(GrCall call) {
@@ -281,7 +326,7 @@ private void _each(GrCall call) {
 private void _next(GrCall call) {
     StringIter iter = call.getForeign!(StringIter)(0);
     if (!iter) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     if (iter.index >= iter.value.length) {

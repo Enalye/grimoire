@@ -8,8 +8,18 @@ module grimoire.stdlib.test;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibTest(GrLibrary library, GrLocale locale) {
-    library.addPrimitive(&_assert, "assert", [grBool]);
-    library.addPrimitive(&_assert_msg, "assert", [grBool, grString]);
+    string assertSymbol;
+    final switch (locale) with (GrLocale) {
+    case en_US:
+        assertSymbol = "assert";
+        break;
+    case fr_FR:
+        assertSymbol = "vérifie";
+        break;
+    }
+
+    library.addPrimitive(&_assert, assertSymbol, [grBool]);
+    library.addPrimitive(&_assert_msg, assertSymbol, [grBool, grString]);
     library.addPrimitive(&_setMeta, "_setMeta", [grString]);
 }
 

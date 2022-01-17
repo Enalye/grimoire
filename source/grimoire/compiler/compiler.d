@@ -43,7 +43,7 @@ final class GrCompiler {
         _error = null;
         try {
             GrLexer lexer = new GrLexer(locale);
-            lexer.scanFile(fileName);
+            lexer.scanFile(_data, fileName);
 
             GrParser parser = new GrParser(locale);
             parser.parseScript(_data, lexer, options);

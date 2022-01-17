@@ -7,30 +7,51 @@ module grimoire.stdlib.range;
 
 import std.range;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
+import grimoire.stdlib.util;
 
 package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library, GrLocale locale) {
-    library.addForeign("RangeIter", ["T"]);
-    GrType rangeIterIntType = grGetForeignType("RangeIter", [grInt]);
-    GrType rangeIterFloatType = grGetForeignType("RangeIter", [grFloat]);
+    string rangeIterSymbol, nextSymbol, rangeSymbol;
+    final switch (locale) with (GrLocale) {
+    case en_US:
+        rangeIterSymbol = "IRange";
+        nextSymbol = "next";
+        rangeSymbol = "range";
+        break;
+    case fr_FR:
+        rangeIterSymbol = "IIntervalle";
+        nextSymbol = "suivant";
+        rangeSymbol = "intervalle";
+        break;
+    }
 
-    library.addPrimitive(&_range_next_i, "next", [rangeIterIntType], [
+    library.addForeign(rangeIterSymbol, ["T"]);
+    GrType rangeIterIntType = grGetForeignType(rangeIterSymbol, [grInt]);
+    GrType rangeIterFloatType = grGetForeignType(rangeIterSymbol, [grFloat]);
+
+    library.addPrimitive(&_range_next_i, nextSymbol, [rangeIterIntType], [
             grBool, grInt
-            ]);
+        ]);
     library.addOperator(&_range_i, GrLibrary.Operator.interval, [grInt, grInt], rangeIterIntType);
-    library.addPrimitive(&_range_i, "range", [grInt, grInt], [rangeIterIntType]);
-    library.addPrimitive(&_range_step_i, "range", [grInt, grInt, grInt], [
+    library.addPrimitive(&_range_i, rangeSymbol, [grInt, grInt], [
             rangeIterIntType
-            ]);
+        ]);
+    library.addPrimitive(&_range_step_i, rangeSymbol, [grInt, grInt, grInt], [
+            rangeIterIntType
+        ]);
 
-    library.addPrimitive(&_range_next_f, "next", [rangeIterFloatType], [
+    library.addPrimitive(&_range_next_f, nextSymbol, [rangeIterFloatType], [
             grBool, grFloat
-            ]);
-    library.addOperator(&_range_f, GrLibrary.Operator.interval, [grFloat, grFloat], rangeIterFloatType);
-    library.addPrimitive(&_range_f, "range", [grFloat, grFloat], [
+        ]);
+    library.addOperator(&_range_f, GrLibrary.Operator.interval, [
+            grFloat, grFloat
+        ], rangeIterFloatType);
+    library.addPrimitive(&_range_f, rangeSymbol, [grFloat, grFloat], [
             rangeIterFloatType
-            ]);
-    library.addPrimitive(&_range_step_f, "range", [grFloat, grFloat, grFloat],
-            [rangeIterFloatType]);
+        ]);
+    library.addPrimitive(&_range_step_f, rangeSymbol, [
+            grFloat, grFloat, grFloat
+        ],
+        [rangeIterFloatType]);
 }
 
 private final class RangeIter(T) {
@@ -40,7 +61,7 @@ private final class RangeIter(T) {
 private void _range_next_i(GrCall call) {
     RangeIter!GrInt iter = call.getForeign!(RangeIter!GrInt)(0);
     if (!iter) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     if ((iter.step < 0 && iter.value < iter.end) || (iter.step > 0 && iter.value > iter.end)) {
@@ -75,7 +96,7 @@ private void _range_step_i(GrCall call) {
 private void _range_next_f(GrCall call) {
     RangeIter!GrFloat iter = call.getForeign!(RangeIter!GrFloat)(0);
     if (!iter) {
-        call.raise("NullError");
+        call.raise(_paramError);
         return;
     }
     if ((iter.step < 0f && iter.value < iter.end) || (iter.step > 0f && iter.value > iter.end)) {

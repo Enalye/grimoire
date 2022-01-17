@@ -28,23 +28,23 @@ string grGetPrettyType(GrType variableType, GrLocale locale = GrLocale.en_US) {
     case int_:
         final switch (locale) with (GrLocale) {
         case en_US:
-            return "int";
+            return "integer";
         case fr_FR:
-            return "ent";
+            return "entier";
         }
     case float_:
         final switch (locale) with (GrLocale) {
         case en_US:
-            return "float";
+            return "real";
         case fr_FR:
             return "réel";
         }
     case bool_:
         final switch (locale) with (GrLocale) {
         case en_US:
-            return "bool";
+            return "boolean";
         case fr_FR:
-            return "bool";
+            return "booléen";
         }
     case string_:
         final switch (locale) with (GrLocale) {

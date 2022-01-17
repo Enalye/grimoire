@@ -9,7 +9,7 @@ import std.stdio, std.string, std.array, std.math, std.file;
 import std.conv : to;
 import std.algorithm : canFind;
 import grimoire.assembly;
-import grimoire.compiler.error, grimoire.compiler.util;
+import grimoire.compiler.data, grimoire.compiler.error, grimoire.compiler.util;
 
 /**
 Kinds of valid token.
@@ -221,6 +221,7 @@ package final class GrLexer {
         uint _line, _current, _positionOfLine, _fileId;
         GrLexeme[] _lexemes;
         GrLocale _locale;
+        GrData _data;
     }
 
     @property {
@@ -236,8 +237,10 @@ package final class GrLexer {
     }
 
     /// Start scanning the root file and all its dependencies.
-    void scanFile(string fileName) {
+    void scanFile(GrData data, string fileName) {
         import std.path : buildNormalizedPath, absolutePath;
+
+        _data = data;
 
         string filePath = to!string(fileName);
         filePath = buildNormalizedPath(convertPathToImport(filePath));
@@ -260,6 +263,16 @@ package final class GrLexer {
             scanScript();
 
             _fileId++;
+        }
+
+        // Translate aliases
+        foreach (ref lexeme; _lexemes) {
+            if (lexeme.type == GrLexemeType.identifier) {
+                string* name = (lexeme.svalue in _data._aliases);
+                if (name) {
+                    lexeme.svalue = *name;
+                }
+            }
         }
     }
 

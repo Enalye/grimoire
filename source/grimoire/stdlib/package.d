@@ -30,9 +30,13 @@ import grimoire.stdlib.any;
 GrLibrary grLoadStdLibrary(GrLocale locale = GrLocale.en_US) {
     final switch(locale) with(GrLocale) {
     case en_US:
+        _paramError = "Null parameter";
+        _classError = "Unknown class";
         break;
     case fr_FR:
-        assert(false, "la version fr_FR n’est pas encore prête");
+        _paramError = "Paramètre nul";
+        _classError = "Classe inconnue";
+        break;
     }
 
     GrLibrary library = new GrLibrary;

@@ -16,9 +16,9 @@ package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library, GrLocale local
     case en_US:
         clampSymbol = "clamp";
         randSymbol = "random";
-        sqrtSymbol = "sqrt";
-        floorSymbol = "floor";
+        sqrtSymbol = "root";
         ceilSymbol = "ceil";
+        floorSymbol = "floor";
         roundSymbol = "round";
         truncateSymbol = "truncate";
         positiveSymbol = "positive?";
@@ -31,9 +31,9 @@ package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library, GrLocale local
     case fr_FR:
         clampSymbol = "restreins";
         randSymbol = "hasard";
-        sqrtSymbol = "racineCarré";
-        floorSymbol = "arrondiInf";
-        ceilSymbol = "arrondiSup";
+        sqrtSymbol = "racine";
+        ceilSymbol = "plafond";
+        floorSymbol = "plancher";
         roundSymbol = "arrondi";
         truncateSymbol = "tronque";
         positiveSymbol = "positif?";

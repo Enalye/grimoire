@@ -9,20 +9,20 @@ import grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 package void grLoadStdLibSystem(GrLibrary library, GrLocale locale) {
-    string funcSwap, funcCond;
+    string swapSymbol, condSymbol;
     final switch (locale) with (GrLocale) {
     case en_US:
-        funcSwap = "swap";
-        funcCond = "cond";
+        swapSymbol = "swap";
+        condSymbol = "cond";
         break;
     case fr_FR:
-        funcSwap = "permute";
-        funcCond = "cond";
+        swapSymbol = "permute";
+        condSymbol = "cond";
         break;
     }
     static foreach (t1; ["Int", "Float", "String", "Ptr"]) {
         static foreach (t2; ["Int", "Float", "String", "Ptr"]) {
-            library.addPrimitive(&_swap_2_!(t1, t2), funcSwap, [
+            library.addPrimitive(&_swap_2_!(t1, t2), swapSymbol, [
                     grAny("1", (type, data) {
                         static if (t1 == "Ptr") {
                             return grIsKindOfObject(type.base);
@@ -42,7 +42,7 @@ package void grLoadStdLibSystem(GrLibrary library, GrLocale locale) {
         }
     }
     static foreach (t; ["Int", "Float", "String", "Ptr"]) {
-        library.addPrimitive(&_cond_!t, funcCond, [
+        library.addPrimitive(&_cond_!t, condSymbol, [
                 grBool, grAny("T", (type, data) {
                     static if (t == "Ptr") {
                         return grIsKindOfObject(type.base);

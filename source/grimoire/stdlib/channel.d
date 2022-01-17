@@ -9,27 +9,50 @@ import std.range;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibChannel(GrLibrary library, GrLocale locale) {
+    string _sizeSymbol, _capacitySymbol, _emptySymbol, _fullSymbol;
+    final switch (locale) with (GrLocale) {
+    case en_US:
+        _sizeSymbol = "size";
+        _capacitySymbol = "capacity";
+        _emptySymbol = "empty?";
+        _fullSymbol = "full?";
+        break;
+    case fr_FR:
+        _sizeSymbol = "taille";
+        _capacitySymbol = "capacité";
+        _emptySymbol = "vide?";
+        _fullSymbol = "plein?";
+        break;
+    }
+
     static foreach (t; ["Int", "Float", "String", "Object"]) {
         mixin("GrType any" ~ t ~ "Channel = grAny(\"C\", (type, data) {
                 if (type.base != GrType.Base.channel)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOf" ~ t ~ "(subType.base);
+                return grIsKindOf"
+                ~ t ~ "(subType.base);
             });
-            library.addPrimitive(&_size_!\"" ~ t ~ "\", \"size\", [
+            library.addPrimitive(&_size_!\""
+                ~ t ~ "\", _sizeSymbol, [
                     any"
                 ~ t ~ "Channel
                     ], [grInt]);
-            library.addPrimitive(&_capacity_!\"" ~ t ~ "\", \"capacity\", [
-                    any" ~ t ~ "Channel
+            library.addPrimitive(&_capacity_!\""
+                ~ t ~ "\", _capacitySymbol, [
+                    any"
+                ~ t ~ "Channel
                     ], [grInt]);
-            library.addPrimitive(&_empty_!\"" ~ t
-                ~ "\", \"empty?\", [
-                    any" ~ t ~ "Channel
+            library.addPrimitive(&_empty_!\""
+                ~ t
+                ~ "\", _emptySymbol, [
+                    any"
+                ~ t ~ "Channel
                     ], [grBool]);
             library.addPrimitive(&_full_!\""
-                ~ t ~ "\", \"full?\", [
-                    any" ~ t ~ "Channel
+                ~ t ~ "\", _fullSymbol, [
+                    any"
+                ~ t ~ "Channel
                     ], [grBool]);
                     ");
     }
