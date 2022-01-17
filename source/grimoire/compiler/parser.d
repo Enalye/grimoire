@@ -6135,6 +6135,8 @@ final class GrParser {
             case increment: .. case decrement:
                 isRightUnaryOperator = true;
                 goto case multiply;
+            case and:
+            case or:
             case multiply:
             case divide:
             case remainder: .. case not:
