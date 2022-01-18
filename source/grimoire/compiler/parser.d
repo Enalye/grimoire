@@ -2825,14 +2825,23 @@ final class GrParser {
             isConversion = true;
         }
         else if (get().type == GrLexemeType.identifier) {
-            name = get().svalue;
-        }
-        else if (get().isOverridableOperator()) {
-            name = "@op_" ~ getPrettyLexemeType(get().type);
-        }
-        else if (get().isOperator) {
-            logError(format(getError(Error.cantOverrideXOp), getPrettyLexemeType(get()
-                    .type)), getError(Error.opCantBeOverriden));
+            if (get().svalue == "opérateur" || get().svalue == "operator") {
+                advance();
+                if (get().isOverridableOperator()) {
+                    name = "@op_" ~ getPrettyLexemeType(get().type);
+                }
+                else if (get().isOperator) {
+                    logError(format(getError(Error.cantOverrideXOp), getPrettyLexemeType(get()
+                            .type)), getError(Error.opCantBeOverriden));
+                }
+                else {
+                    logError(format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get()
+                            .type)), getError(Error.missingIdentifier));
+                }
+            }
+            else {
+                name = get().svalue;
+            }
         }
         else {
             logError(format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get()
