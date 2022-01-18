@@ -26,9 +26,9 @@ struct GrType {
     enum Base {
         void_,
         null_,
-        int_,
-        float_,
-        bool_,
+        integer,
+        real_,
+        boolean,
         string_,
         list_,
         function_,
@@ -36,7 +36,7 @@ struct GrType {
         class_,
         foreign,
         channel,
-        enum_,
+        enumeration,
         internalTuple,
         reference
     }
@@ -85,7 +85,7 @@ struct GrType {
         if (base == GrType.Base.function_ || base == GrType.Base.task)
             return mangledType == v.mangledType && mangledReturnType == v.mangledReturnType;
         if (base == GrType.Base.foreign || base == GrType.Base.class_
-            || base == GrType.Base.enum_ || base == GrType.Base.list_)
+            || base == GrType.Base.enumeration || base == GrType.Base.list_)
             return mangledType == v.mangledType;
         return true;
     }
@@ -99,18 +99,18 @@ struct GrType {
 /// No type
 const GrType grVoid = GrType(GrType.Base.void_);
 /// Integer
-const GrType grInt = GrType(GrType.Base.int_);
-/// Float
-const GrType grFloat = GrType(GrType.Base.float_);
+const GrType grInt = GrType(GrType.Base.integer);
+/// Real
+const GrType grReal = GrType(GrType.Base.real_);
 /// Bool
-const GrType grBool = GrType(GrType.Base.bool_);
+const GrType grBool = GrType(GrType.Base.boolean);
 /// String
 const GrType grString = GrType(GrType.Base.string_);
 /// Int list
 const GrType grIntList = GrType(GrType.Base.list_, grMangleSignature([grInt]));
-/// Float list
-const GrType grFloatList = GrType(GrType.Base.list_, grMangleSignature([
-            grFloat
+/// Real list
+const GrType grRealList = GrType(GrType.Base.list_, grMangleSignature([
+            grReal
         ]));
 /// Bool list
 const GrType grBoolList = GrType(GrType.Base.list_, grMangleSignature([grBool]));
@@ -120,9 +120,9 @@ const GrType grStringList = GrType(GrType.Base.list_, grMangleSignature([
     ]));
 /// Int channel
 const GrType grIntChannel = GrType(GrType.Base.channel, grMangleSignature([grInt]));
-/// Float channel
-const GrType grFloatChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grFloat
+/// Real channel
+const GrType grRealChannel = GrType(GrType.Base.channel, grMangleSignature([
+        grReal
     ]));
 /// Bool channel
 const GrType grBoolChannel = GrType(GrType.Base.channel, grMangleSignature([
@@ -168,13 +168,13 @@ GrType grAny(string name, bool function(GrType, GrAnyData) predicate = (a, b) =>
 
 /// The type is handled by a int based register
 bool grIsKindOfInt(GrType.Base type) {
-    return type == GrType.Base.int_ || type == GrType.Base.bool_
-        || type == GrType.Base.function_ || type == GrType.Base.task || type == GrType.Base.enum_;
+    return type == GrType.Base.integer || type == GrType.Base.boolean
+        || type == GrType.Base.function_ || type == GrType.Base.task || type == GrType.Base.enumeration;
 }
 
-/// The type is handled by a float based register
-bool grIsKindOfFloat(GrType.Base type) {
-    return type == GrType.Base.float_;
+/// The type is handled by a real based register
+bool grIsKindOfReal(GrType.Base type) {
+    return type == GrType.Base.real_;
 }
 
 /// The type is handled by a string based register
@@ -231,7 +231,7 @@ A local or global variable.
 package class GrVariable {
     /// Its type.
     GrType type;
-    /// Register position, separate for each type (int, float, string and objects);
+    /// Register position, separate for each type (int, real, string and objects);
     uint register = uint.max;
     /// Declared from the global scope ?
     bool isGlobal;
@@ -345,7 +345,7 @@ final class GrEnumDefinition {
 
 /// Create a GrType of enum for the type system.
 GrType grGetEnumType(string name) {
-    GrType stType = GrType.Base.enum_;
+    GrType stType = GrType.Base.enumeration;
     stType.mangledType = name;
     return stType;
 }
@@ -413,7 +413,7 @@ final class GrVariableDefinition {
     /// Integral init value
     GrInt ivalue;
     /// Floating init value
-    GrFloat fvalue;
+    GrReal rvalue;
     /// String init value
     GrString svalue;
     /// Can the variable be mutated in script ?
@@ -442,7 +442,7 @@ package class GrFunction {
     /// Ditto
     Scope[] scopes;
 
-    uint[] iregisterAvailables, fregisterAvailables, sregisterAvailables, oregisterAvailables;
+    uint[] iregisterAvailables, rregisterAvailables, sregisterAvailables, oregisterAvailables;
 
     /// All the function instructions.
     GrInstruction[] instructions;
@@ -463,7 +463,7 @@ package class GrFunction {
     GrFunction anonParent;
     uint position, anonReference;
 
-    uint nbIntegerParameters, nbFloatParameters, nbStringParameters, nbObjectParameters;
+    uint nbIntegerParameters, nbRealParameters, nbStringParameters, nbObjectParameters;
     uint ilocalsCount, flocalsCount, slocalsCount, olocalsCount;
 
     GrDeferrableSection[] deferrableSections;
@@ -518,15 +518,15 @@ package class GrFunction {
 
     private void freeRegister(GrVariable variable) {
         final switch (variable.type.base) with (GrType.Base) {
-        case int_:
-        case bool_:
+        case integer:
+        case boolean:
         case function_:
         case task:
-        case enum_:
+        case enumeration:
             iregisterAvailables ~= variable.register;
             break;
-        case float_:
-            fregisterAvailables ~= variable.register;
+        case real_:
+            rregisterAvailables ~= variable.register;
             break;
         case string_:
             sregisterAvailables ~= variable.register;

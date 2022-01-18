@@ -25,7 +25,7 @@ package(grimoire.stdlib) void grLoadStdLibChannel(GrLibrary library, GrLocale lo
         break;
     }
 
-    static foreach (t; ["Int", "Float", "String", "Object"]) {
+    static foreach (t; ["Int", "Real", "String", "Object"]) {
         mixin("GrType any" ~ t ~ "Channel = grAny(\"C\", (type, data) {
                 if (type.base != GrType.Base.channel)
                     return false;

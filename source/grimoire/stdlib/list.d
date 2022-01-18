@@ -72,7 +72,7 @@ package(grimoire.stdlib) void grLoadStdLibList(GrLibrary library, GrLocale local
 
     library.addForeign(_listIterSymbol, ["T"]);
 
-    static foreach (t; ["Int", "Float", "String", "Object"]) {
+    static foreach (t; ["Int", "Real", "String", "Object"]) {
         mixin("GrType any" ~ t ~ "List = grAny(\"A\", (type, data) {
                 if (type.base != GrType.Base.list_)
                     return false;
@@ -213,7 +213,7 @@ private void _resize_(string t)(GrCall call) {
         call.raise("ArgumentError");
         return;
     }
-    static if (t == "Float") {
+    static if (t == "Real") {
         if (size > list.data.length) {
             GrInt index = cast(GrInt) list.data.length;
             list.data.length = size;
@@ -593,8 +593,8 @@ private void _each_(string t)(GrCall call) {
     static if (t == "Int") {
         ListIter!(GrInt) iter = new ListIter!(GrInt);
     }
-    else static if (t == "Float") {
-        ListIter!(GrFloat) iter = new ListIter!(GrFloat);
+    else static if (t == "Real") {
+        ListIter!(GrReal) iter = new ListIter!(GrReal);
     }
     else static if (t == "String") {
         ListIter!(GrString) iter = new ListIter!(GrString);
@@ -610,8 +610,8 @@ private void _next_(string t)(GrCall call) {
     static if (t == "Int") {
         ListIter!(GrInt) iter = call.getForeign!(ListIter!(GrInt))(0);
     }
-    else static if (t == "Float") {
-        ListIter!(GrFloat) iter = call.getForeign!(ListIter!(GrFloat))(0);
+    else static if (t == "Real") {
+        ListIter!(GrReal) iter = call.getForeign!(ListIter!(GrReal))(0);
     }
     else static if (t == "String") {
         ListIter!(GrString) iter = call.getForeign!(ListIter!(GrString))(0);
@@ -628,8 +628,8 @@ private void _next_(string t)(GrCall call) {
         static if (t == "Int") {
             call.setInt(0);
         }
-        else static if (t == "Float") {
-            call.setFloat(0f);
+        else static if (t == "Real") {
+            call.setReal(0f);
         }
         else static if (t == "String") {
             call.setString("");
@@ -643,8 +643,8 @@ private void _next_(string t)(GrCall call) {
     static if (t == "Int") {
         call.setInt(iter.list[iter.index]);
     }
-    else static if (t == "Float") {
-        call.setFloat(iter.list[iter.index]);
+    else static if (t == "Real") {
+        call.setReal(iter.list[iter.index]);
     }
     else static if (t == "String") {
         call.setString(iter.list[iter.index]);

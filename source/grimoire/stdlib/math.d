@@ -44,60 +44,60 @@ package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library, GrLocale local
         oddSymbol = "impair?";
         break;
     }
-    library.addVariable("pi", grFloat, PI, true);
+    library.addVariable("pi", grReal, PI, true);
 
-    library.addPrimitive(&_min_f, "min", [grFloat, grFloat], [grFloat]);
+    library.addPrimitive(&_min_f, "min", [grReal, grReal], [grReal]);
     library.addPrimitive(&_min_i, "min", [grInt, grInt], [grInt]);
-    library.addPrimitive(&_max_f, "max", [grFloat, grFloat], [grFloat]);
+    library.addPrimitive(&_max_f, "max", [grReal, grReal], [grReal]);
     library.addPrimitive(&_max_i, "max", [grInt, grInt], [grInt]);
 
-    library.addPrimitive(&_clamp, clampSymbol, [grFloat, grFloat, grFloat], [
-            grFloat
+    library.addPrimitive(&_clamp, clampSymbol, [grReal, grReal, grReal], [
+            grReal
         ]);
 
-    library.addPrimitive(&_random01, randSymbol, [], [grFloat]);
-    library.addPrimitive(&_random_f, randSymbol, [grFloat, grFloat], [grFloat]);
+    library.addPrimitive(&_random01, randSymbol, [], [grReal]);
+    library.addPrimitive(&_random_f, randSymbol, [grReal, grReal], [grReal]);
     library.addPrimitive(&_random_i, randSymbol, [grInt, grInt], [grInt]);
 
-    library.addPrimitive(&_cos, "cos", [grFloat], [grFloat]);
-    library.addPrimitive(&_sin, "sin", [grFloat], [grFloat]);
-    library.addPrimitive(&_tan, "tan", [grFloat], [grFloat]);
-    library.addPrimitive(&_acos, "acos", [grFloat], [grFloat]);
-    library.addPrimitive(&_asin, "asin", [grFloat], [grFloat]);
-    library.addPrimitive(&_atan, "atan", [grFloat], [grFloat]);
-    library.addPrimitive(&_atan2, "atan2", [grFloat, grFloat], [grFloat]);
+    library.addPrimitive(&_cos, "cos", [grReal], [grReal]);
+    library.addPrimitive(&_sin, "sin", [grReal], [grReal]);
+    library.addPrimitive(&_tan, "tan", [grReal], [grReal]);
+    library.addPrimitive(&_acos, "acos", [grReal], [grReal]);
+    library.addPrimitive(&_asin, "asin", [grReal], [grReal]);
+    library.addPrimitive(&_atan, "atan", [grReal], [grReal]);
+    library.addPrimitive(&_atan2, "atan2", [grReal, grReal], [grReal]);
 
-    library.addPrimitive(&_exp, "exp", [grFloat], [grFloat]);
-    library.addPrimitive(&_sqrt, sqrtSymbol, [grFloat], [grFloat]);
+    library.addPrimitive(&_exp, "exp", [grReal], [grReal]);
+    library.addPrimitive(&_sqrt, sqrtSymbol, [grReal], [grReal]);
     library.addOperator(&_pow_i, GrLibrary.Operator.power, [grInt, grInt], grInt);
-    library.addOperator(&_pow_f, GrLibrary.Operator.power, [grFloat, grFloat], grFloat);
+    library.addOperator(&_pow_f, GrLibrary.Operator.power, [grReal, grReal], grReal);
 
-    library.addPrimitive(&_lerp, "lerp", [grFloat, grFloat, grFloat], [grFloat]);
-    library.addPrimitive(&_rlerp, "rlerp", [grFloat, grFloat, grFloat], [
-            grFloat
+    library.addPrimitive(&_lerp, "lerp", [grReal, grReal, grReal], [grReal]);
+    library.addPrimitive(&_rlerp, "rlerp", [grReal, grReal, grReal], [
+            grReal
         ]);
 
     library.addPrimitive(&_abs_i, "abs", [grInt], [grInt]);
-    library.addPrimitive(&_abs_f, "abs", [grFloat], [grFloat]);
-    library.addPrimitive(&_floor, floorSymbol, [grFloat], [grFloat]);
-    library.addPrimitive(&_ceil, ceilSymbol, [grFloat], [grFloat]);
-    library.addPrimitive(&_round, roundSymbol, [grFloat], [grFloat]);
-    library.addPrimitive(&_truncate, truncateSymbol, [grFloat], [grFloat]);
+    library.addPrimitive(&_abs_f, "abs", [grReal], [grReal]);
+    library.addPrimitive(&_floor, floorSymbol, [grReal], [grReal]);
+    library.addPrimitive(&_ceil, ceilSymbol, [grReal], [grReal]);
+    library.addPrimitive(&_round, roundSymbol, [grReal], [grReal]);
+    library.addPrimitive(&_truncate, truncateSymbol, [grReal], [grReal]);
     library.addPrimitive(&_positive_i, positiveSymbol, [grInt], [grBool]);
-    library.addPrimitive(&_positive_f, positiveSymbol, [grFloat], [grBool]);
+    library.addPrimitive(&_positive_f, positiveSymbol, [grReal], [grBool]);
     library.addPrimitive(&_negative_i, negativeSymbol, [grInt], [grBool]);
-    library.addPrimitive(&_negative_f, negativeSymbol, [grFloat], [grBool]);
+    library.addPrimitive(&_negative_f, negativeSymbol, [grReal], [grBool]);
     library.addPrimitive(&_zero_i, zeroSymbol, [grInt], [grBool]);
-    library.addPrimitive(&_zero_f, zeroSymbol, [grFloat], [grBool]);
-    library.addPrimitive(&_nan, nanSymbol, [grFloat], [grBool]);
+    library.addPrimitive(&_zero_f, zeroSymbol, [grReal], [grBool]);
+    library.addPrimitive(&_nan, nanSymbol, [grReal], [grBool]);
     library.addPrimitive(&_even, evenSymbol, [grInt], [grBool]);
     library.addPrimitive(&_odd, oddSymbol, [grInt], [grBool]);
 }
 
 private void _min_f(GrCall call) {
-    const GrFloat a = call.getFloat(0);
-    const GrFloat b = call.getFloat(1);
-    call.setFloat(a < b ? a : b);
+    const GrReal a = call.getReal(0);
+    const GrReal b = call.getReal(1);
+    call.setReal(a < b ? a : b);
 }
 
 private void _min_i(GrCall call) {
@@ -107,9 +107,9 @@ private void _min_i(GrCall call) {
 }
 
 private void _max_f(GrCall call) {
-    const GrFloat a = call.getFloat(0);
-    const GrFloat b = call.getFloat(1);
-    call.setFloat(a > b ? a : b);
+    const GrReal a = call.getReal(0);
+    const GrReal b = call.getReal(1);
+    call.setReal(a > b ? a : b);
 }
 
 private void _max_i(GrCall call) {
@@ -119,20 +119,20 @@ private void _max_i(GrCall call) {
 }
 
 private void _clamp(GrCall call) {
-    call.setFloat(clamp(call.getFloat(0), call.getFloat(1), call.getFloat(2)));
+    call.setReal(clamp(call.getReal(0), call.getReal(1), call.getReal(2)));
 }
 
 private void _random01(GrCall call) {
-    call.setFloat(uniform01());
+    call.setReal(uniform01());
 }
 
 private void _random_f(GrCall call) {
-    const GrFloat a = call.getFloat(0);
-    const GrFloat b = call.getFloat(1);
+    const GrReal a = call.getReal(0);
+    const GrReal b = call.getReal(1);
     if (a < b)
-        call.setFloat(uniform!"[]"(a, b));
+        call.setReal(uniform!"[]"(a, b));
     else
-        call.setFloat(uniform!"[]"(b, a));
+        call.setReal(uniform!"[]"(b, a));
 }
 
 private void _random_i(GrCall call) {
@@ -145,39 +145,39 @@ private void _random_i(GrCall call) {
 }
 
 private void _cos(GrCall call) {
-    call.setFloat(cos(call.getFloat(0)));
+    call.setReal(cos(call.getReal(0)));
 }
 
 private void _sin(GrCall call) {
-    call.setFloat(sin(call.getFloat(0)));
+    call.setReal(sin(call.getReal(0)));
 }
 
 private void _tan(GrCall call) {
-    call.setFloat(tan(call.getFloat(0)));
+    call.setReal(tan(call.getReal(0)));
 }
 
 private void _acos(GrCall call) {
-    call.setFloat(acos(call.getFloat(0)));
+    call.setReal(acos(call.getReal(0)));
 }
 
 private void _asin(GrCall call) {
-    call.setFloat(asin(call.getFloat(0)));
+    call.setReal(asin(call.getReal(0)));
 }
 
 private void _atan(GrCall call) {
-    call.setFloat(atan(call.getFloat(0)));
+    call.setReal(atan(call.getReal(0)));
 }
 
 private void _atan2(GrCall call) {
-    call.setFloat(atan2(call.getFloat(0), call.getFloat(1)));
+    call.setReal(atan2(call.getReal(0), call.getReal(1)));
 }
 
 private void _exp(GrCall call) {
-    call.setFloat(exp(call.getFloat(0)));
+    call.setReal(exp(call.getReal(0)));
 }
 
 private void _sqrt(GrCall call) {
-    call.setFloat(sqrt(call.getFloat(0)));
+    call.setReal(sqrt(call.getReal(0)));
 }
 
 private void _pow_i(GrCall call) {
@@ -185,25 +185,25 @@ private void _pow_i(GrCall call) {
 }
 
 private void _pow_f(GrCall call) {
-    call.setFloat(pow(call.getFloat(0), call.getFloat(1)));
+    call.setReal(pow(call.getReal(0), call.getReal(1)));
 }
 
 private void _lerp(GrCall call) {
-    const GrFloat a = call.getFloat(0);
-    const GrFloat b = call.getFloat(1);
-    const GrFloat t = call.getFloat(2);
-    call.setFloat(t * b + (1f - t) * a);
+    const GrReal a = call.getReal(0);
+    const GrReal b = call.getReal(1);
+    const GrReal t = call.getReal(2);
+    call.setReal(t * b + (1f - t) * a);
 }
 
 private void _rlerp(GrCall call) {
-    const GrFloat a = call.getFloat(0);
-    const GrFloat b = call.getFloat(1);
-    const GrFloat v = call.getFloat(2);
+    const GrReal a = call.getReal(0);
+    const GrReal b = call.getReal(1);
+    const GrReal v = call.getReal(2);
     if ((b - a) == 0f) {
-        call.setFloat(0f);
+        call.setReal(0f);
         return;
     }
-    call.setFloat((v - a) / (b - a));
+    call.setReal((v - a) / (b - a));
 }
 
 private void _abs_i(GrCall call) {
@@ -211,23 +211,23 @@ private void _abs_i(GrCall call) {
 }
 
 private void _abs_f(GrCall call) {
-    call.setFloat(abs(call.getFloat(0)));
+    call.setReal(abs(call.getReal(0)));
 }
 
 private void _floor(GrCall call) {
-    call.setFloat(floor(call.getFloat(0)));
+    call.setReal(floor(call.getReal(0)));
 }
 
 private void _ceil(GrCall call) {
-    call.setFloat(ceil(call.getFloat(0)));
+    call.setReal(ceil(call.getReal(0)));
 }
 
 private void _round(GrCall call) {
-    call.setFloat(round(call.getFloat(0)));
+    call.setReal(round(call.getReal(0)));
 }
 
 private void _truncate(GrCall call) {
-    call.setFloat(trunc(call.getFloat(0)));
+    call.setReal(trunc(call.getReal(0)));
 }
 
 private void _positive_i(GrCall call) {
@@ -235,7 +235,7 @@ private void _positive_i(GrCall call) {
 }
 
 private void _positive_f(GrCall call) {
-    call.setBool(call.getFloat(0) > 0);
+    call.setBool(call.getReal(0) > 0);
 }
 
 private void _negative_i(GrCall call) {
@@ -243,7 +243,7 @@ private void _negative_i(GrCall call) {
 }
 
 private void _negative_f(GrCall call) {
-    call.setBool(call.getFloat(0) < 0);
+    call.setBool(call.getReal(0) < 0);
 }
 
 private void _zero_i(GrCall call) {
@@ -251,11 +251,11 @@ private void _zero_i(GrCall call) {
 }
 
 private void _zero_f(GrCall call) {
-    call.setBool(call.getFloat(0) == 0);
+    call.setBool(call.getReal(0) == 0);
 }
 
 private void _nan(GrCall call) {
-    call.setBool(isNaN(call.getFloat(0)));
+    call.setBool(isNaN(call.getReal(0)));
 }
 
 private void _even(GrCall call) {

@@ -14,23 +14,23 @@ enum GrOpcode {
     raise_,
     try_,
     catch_,
-    kill_,
-    killAll_,
-    yield,
+    die,
+    quit,
+    suspend,
     task,
     anonymousTask,
     new_,
 
     channel_int,
-    channel_float,
+    channel_real,
     channel_string,
     channel_object,
     send_int,
-    send_float,
+    send_real,
     send_string,
     send_object,
     receive_int,
-    receive_float,
+    receive_real,
     receive_string,
     receive_object,
     startSelectChannel,
@@ -39,90 +39,90 @@ enum GrOpcode {
     checkChannel,
 
     shiftStack_int,
-    shiftStack_float,
+    shiftStack_real,
     shiftStack_string,
     shiftStack_object,
 
     localStore_int,
-    localStore_float,
+    localStore_real,
     localStore_string,
     localStore_object,
     localStore2_int,
-    localStore2_float,
+    localStore2_real,
     localStore2_string,
     localStore2_object,
     localLoad_int,
-    localLoad_float,
+    localLoad_real,
     localLoad_string,
     localLoad_object,
 
     globalStore_int,
-    globalStore_float,
+    globalStore_real,
     globalStore_string,
     globalStore_object,
     globalStore2_int,
-    globalStore2_float,
+    globalStore2_real,
     globalStore2_string,
     globalStore2_object,
     globalLoad_int,
-    globalLoad_float,
+    globalLoad_real,
     globalLoad_string,
     globalLoad_object,
 
     refStore_int,
-    refStore_float,
+    refStore_real,
     refStore_string,
     refStore_object,
     refStore2_int,
-    refStore2_float,
+    refStore2_real,
     refStore2_string,
     refStore2_object,
 
     fieldStore_int,
-    fieldStore_float,
+    fieldStore_real,
     fieldStore_string,
     fieldStore_object,
     fieldLoad,
     fieldLoad2,
     fieldLoad_int,
-    fieldLoad_float,
+    fieldLoad_real,
     fieldLoad_string,
     fieldLoad_object,
     fieldLoad2_int,
-    fieldLoad2_float,
+    fieldLoad2_real,
     fieldLoad2_string,
     fieldLoad2_object,
 
     const_int,
-    const_float,
+    const_real,
     const_bool,
     const_string,
     const_meta,
     const_null,
 
     globalPush_int,
-    globalPush_float,
+    globalPush_real,
     globalPush_string,
     globalPush_object,
     globalPop_int,
-    globalPop_float,
+    globalPop_real,
     globalPop_string,
     globalPop_object,
 
     equal_int,
-    equal_float,
+    equal_real,
     equal_string,
     notEqual_int,
-    notEqual_float,
+    notEqual_real,
     notEqual_string,
     greaterOrEqual_int,
-    greaterOrEqual_float,
+    greaterOrEqual_real,
     lesserOrEqual_int,
-    lesserOrEqual_float,
+    lesserOrEqual_real,
     greater_int,
-    greater_float,
+    greater_real,
     lesser_int,
-    lesser_float,
+    lesser_real,
     isNonNull_object,
 
     and_int,
@@ -130,35 +130,35 @@ enum GrOpcode {
     not_int,
     concatenate_string,
     add_int,
-    add_float,
+    add_real,
     substract_int,
-    substract_float,
+    substract_real,
     multiply_int,
-    multiply_float,
+    multiply_real,
     divide_int,
-    divide_float,
+    divide_real,
     remainder_int,
-    remainder_float,
+    remainder_real,
     negative_int,
-    negative_float,
+    negative_real,
     increment_int,
-    increment_float,
+    increment_real,
     decrement_int,
-    decrement_float,
+    decrement_real,
 
     copy_int,
-    copy_float,
+    copy_real,
     copy_string,
     copy_object,
     swap_int,
-    swap_float,
+    swap_real,
     swap_string,
     swap_object,
 
     setupIterator,
 
     localStack_int,
-    localStack_float,
+    localStack_real,
     localStack_string,
     localStack_object,
     call,
@@ -172,44 +172,44 @@ enum GrOpcode {
     jumpNotEqual,
 
     list_int,
-    list_float,
+    list_real,
     list_string,
     list_object,
     length_int,
-    length_float,
+    length_real,
     length_string,
     length_object,
     index_int,
-    index_float,
+    index_real,
     index_string,
     index_object,
     index2_int,
-    index2_float,
+    index2_real,
     index2_string,
     index2_object,
     index3_int,
-    index3_float,
+    index3_real,
     index3_string,
     index3_object,
 
     concatenate_intList,
-    concatenate_floatList,
+    concatenate_realList,
     concatenate_stringList,
     concatenate_objectList,
     append_int,
-    append_float,
+    append_real,
     append_string,
     append_object,
     prepend_int,
-    prepend_float,
+    prepend_real,
     prepend_string,
     prepend_object,
 
     equal_intList,
-    equal_floatList,
+    equal_realList,
     equal_stringList,
     notEqual_intList,
-    notEqual_floatList,
+    notEqual_realList,
     notEqual_stringList,
 
     debugProfileBegin,
@@ -247,8 +247,8 @@ final class GrBytecode {
             uint typeMask;
             /// Integral init value
             GrInt ivalue;
-            /// Floating init value
-            GrFloat fvalue;
+            /// Realing init value
+            GrReal rvalue;
             /// String init value
             GrString svalue;
         }
@@ -259,8 +259,8 @@ final class GrBytecode {
         /// Integer constants.
         GrInt[] iconsts;
 
-        /// Floating point constants.
-        GrFloat[] fconsts;
+        /// Realing point constants.
+        GrReal[] rconsts;
 
         /// String constants.
         GrString[] sconsts;
@@ -273,8 +273,8 @@ final class GrBytecode {
 
         /// Number of int based global variables declared.
         uint iglobalsCount;
-        /// Number of float based global variables declared.
-        uint fglobalsCount;
+        /// Number of real based global variables declared.
+        uint rglobalsCount;
         /// Number of string based global variables declared.
         uint sglobalsCount;
         /// Number of ptr based global variables declared.
@@ -300,12 +300,12 @@ final class GrBytecode {
     this(GrBytecode bytecode) {
         opcodes = bytecode.opcodes;
         iconsts = bytecode.iconsts;
-        fconsts = bytecode.fconsts;
+        rconsts = bytecode.rconsts;
         sconsts = bytecode.sconsts;
         primitives = bytecode.primitives;
         classes = bytecode.classes;
         iglobalsCount = bytecode.iglobalsCount;
-        fglobalsCount = bytecode.fglobalsCount;
+        rglobalsCount = bytecode.rglobalsCount;
         sglobalsCount = bytecode.sglobalsCount;
         oglobalsCount = bytecode.oglobalsCount;
         actions = bytecode.actions;
@@ -339,12 +339,12 @@ final class GrBytecode {
         buffer.put(cast(ubyte[]) magicWord);
 
         buffer.append!uint(cast(uint) iconsts.length);
-        buffer.append!uint(cast(uint) fconsts.length);
+        buffer.append!uint(cast(uint) rconsts.length);
         buffer.append!uint(cast(uint) sconsts.length);
         buffer.append!uint(cast(uint) opcodes.length);
 
         buffer.append!uint(iglobalsCount);
-        buffer.append!uint(fglobalsCount);
+        buffer.append!uint(rglobalsCount);
         buffer.append!uint(sglobalsCount);
         buffer.append!uint(oglobalsCount);
 
@@ -356,8 +356,8 @@ final class GrBytecode {
 
         foreach (GrInt i; iconsts)
             buffer.append!GrInt(i);
-        foreach (GrFloat i; fconsts)
-            buffer.append!GrFloat(i);
+        foreach (GrReal i; rconsts)
+            buffer.append!GrReal(i);
         foreach (string i; sconsts) {
             writeStr(buffer, i);
         }
@@ -402,7 +402,7 @@ final class GrBytecode {
             if (reference.typeMask & 0x1)
                 buffer.append!GrInt(reference.ivalue);
             else if (reference.typeMask & 0x2)
-                buffer.append!GrFloat(reference.fvalue);
+                buffer.append!GrReal(reference.rvalue);
             else if (reference.typeMask & 0x4)
                 writeStr(buffer, reference.svalue);
         }
@@ -440,12 +440,12 @@ final class GrBytecode {
         buffer = buffer[magicWord.length .. $];
 
         iconsts.length = buffer.read!uint();
-        fconsts.length = buffer.read!uint();
+        rconsts.length = buffer.read!uint();
         sconsts.length = buffer.read!uint();
         opcodes.length = buffer.read!uint();
 
         iglobalsCount = buffer.read!uint();
-        fglobalsCount = buffer.read!uint();
+        rglobalsCount = buffer.read!uint();
         sglobalsCount = buffer.read!uint();
         oglobalsCount = buffer.read!uint();
 
@@ -459,8 +459,8 @@ final class GrBytecode {
             iconsts[i] = buffer.read!GrInt();
         }
 
-        for (uint i; i < fconsts.length; ++i) {
-            fconsts[i] = buffer.read!GrFloat();
+        for (uint i; i < rconsts.length; ++i) {
+            rconsts[i] = buffer.read!GrReal();
         }
 
         for (uint i; i < sconsts.length; ++i) {
@@ -520,7 +520,7 @@ final class GrBytecode {
             if (reference.typeMask & 0x1)
                 reference.ivalue = buffer.read!GrInt();
             else if (reference.typeMask & 0x2)
-                reference.fvalue = buffer.read!GrFloat();
+                reference.rvalue = buffer.read!GrReal();
             else if (reference.typeMask & 0x4)
                 reference.svalue = readStr(buffer);
             variables[name] = reference;

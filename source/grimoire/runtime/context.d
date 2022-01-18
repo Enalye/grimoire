@@ -14,7 +14,7 @@ Represents a single function context in the callStack.
 */
 struct GrStackFrame {
     /// Size of the locals in the calling function.
-    uint ilocalStackSize, flocalStackSize, slocalStackSize, olocalStackSize;
+    uint ilocalStackSize, rlocalStackSize, slocalStackSize, olocalStackSize;
     /// PC to jumps back to.
     uint retPosition;
     /// All current function deferred blocks.
@@ -30,7 +30,7 @@ Used when we need to restore the context to a previous state.
 struct GrContextState {
     /// Current expression stack top
     int istackPos, /// Ditto
-        fstackPos, /// Ditto
+        rstackPos, /// Ditto
         sstackPos, /// Ditto
         ostackPos;
 
@@ -42,7 +42,7 @@ struct GrContextState {
     uint stackPos;
 
     /// Local variables: Access with Xlocals[XlocalsPos + variableIndex]
-    uint ilocalsPos, flocalsPos, slocalsPos, olocalsPos;
+    uint ilocalsPos, rlocalsPos, slocalsPos, olocalsPos;
 }
 
 /**
@@ -71,7 +71,7 @@ final class GrContext {
     /// Local variables
     GrInt[] ilocals;
     /// Ditto
-    GrFloat[] flocals;
+    GrReal[] rlocals;
     /// Ditto
     GrString[] slocals;
     /// Ditto
@@ -83,7 +83,7 @@ final class GrContext {
     /// Expression stack.
     GrInt[] istack;
     /// Ditto
-    GrFloat[] fstack;
+    GrReal[] rstack;
     /// Ditto
     GrString[] sstack;
     /// Ditto
@@ -92,14 +92,14 @@ final class GrContext {
     /// Operation pointer.
     uint pc;
     /// Local variables: Access with Xlocals[XlocalsPos + variableIndex]
-    uint ilocalsPos, flocalsPos, slocalsPos, olocalsPos;
+    uint ilocalsPos, rlocalsPos, slocalsPos, olocalsPos;
     /// Stack frame pointer for the current function.
     /// Each function takes 2 integer: the return pc, and the local variable size.
     uint stackPos;
 
     /// Current expression stack top
     int istackPos = -1, /// Ditto
-        fstackPos = -1, /// Ditto
+        rstackPos = -1, /// Ditto
         sstackPos = -1, /// Ditto
         ostackPos = -1;
 
@@ -129,7 +129,7 @@ final class GrContext {
     /// Current callstack max depth.
     uint callStackLimit;
     /// Current max local variable available.
-    uint ilocalsLimit, flocalsLimit, slocalsLimit, olocalsLimit;
+    uint ilocalsLimit, rlocalsLimit, slocalsLimit, olocalsLimit;
 
     /// Initialize the call stacks.
     void setupCallStack(uint size) {
@@ -140,7 +140,7 @@ final class GrContext {
     /// Initialize the expression stacks.
     void setupStack(uint size) {
         istack = new GrInt[size];
-        fstack = new GrFloat[size];
+        rstack = new GrReal[size];
         sstack = new GrString[size];
         ostack = new GrPtr[size];
     }
@@ -148,11 +148,11 @@ final class GrContext {
     /// Initialize the local variable stacks.
     void setupLocals(uint isize, uint fsize, uint ssize, uint osize) {
         ilocalsLimit = isize;
-        flocalsLimit = fsize;
+        rlocalsLimit = fsize;
         slocalsLimit = ssize;
         olocalsLimit = osize;
         ilocals = new GrInt[ilocalsLimit];
-        flocals = new GrFloat[flocalsLimit];
+        rlocals = new GrReal[rlocalsLimit];
         slocals = new GrString[slocalsLimit];
         olocals = new GrPtr[olocalsLimit];
     }
@@ -170,11 +170,11 @@ final class GrContext {
         ilocals.length = ilocalsLimit;
     }
 
-    /// Double the current float locals stacks' size.
-    void doubleFloatLocalsStackSize(uint localsStackSize) {
-        while (localsStackSize >= flocalsLimit)
-            flocalsLimit <<= 1;
-        flocals.length = flocalsLimit;
+    /// Double the current real locals stacks' size.
+    void doubleRealLocalsStackSize(uint localsStackSize) {
+        while (localsStackSize >= rlocalsLimit)
+            rlocalsLimit <<= 1;
+        rlocals.length = rlocalsLimit;
     }
 
     /// Double the current string locals stacks' size.
@@ -193,7 +193,7 @@ final class GrContext {
 
     alias setBool = setValue!GrBool;
     alias setInt = setValue!GrInt;
-    alias setFloat = setValue!GrFloat;
+    alias setReal = setValue!GrReal;
     alias setString = setValue!GrString;
     alias setPtr = setValue!GrPtr;
 
@@ -205,12 +205,12 @@ final class GrContext {
         setValue!GrInt(cast(GrInt) value);
     }
 
-    void setFloat32(float value) {
-        setValue!GrFloat(cast(GrFloat) value);
+    void setReal32(real value) {
+        setValue!GrReal(cast(GrReal) value);
     }
 
-    void setFloat64(double value) {
-        setValue!GrFloat(cast(GrFloat) value);
+    void setReal64(double value) {
+        setValue!GrReal(cast(GrReal) value);
     }
 
     void setObject(GrObject value) {
@@ -225,7 +225,7 @@ final class GrContext {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
-    void setFloatList(GrFloatList value) {
+    void setRealList(GrRealList value) {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
@@ -241,7 +241,7 @@ final class GrContext {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
-    void setFloatChannel(GrFloatChannel value) {
+    void setRealChannel(GrRealChannel value) {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
@@ -270,9 +270,9 @@ final class GrContext {
             istackPos++;
             istack[istackPos] = value;
         }
-        else static if (is(T == GrFloat)) {
-            fstackPos++;
-            fstack[fstackPos] = value;
+        else static if (is(T == GrReal)) {
+            rstackPos++;
+            rstack[rstackPos] = value;
         }
         else static if (is(T == GrString)) {
             sstackPos++;
@@ -288,13 +288,13 @@ final class GrContext {
     void pushState() {
         GrContextState state;
         state.istackPos = istackPos;
-        state.fstackPos = fstackPos;
+        state.rstackPos = rstackPos;
         state.sstackPos = sstackPos;
         state.ostackPos = ostackPos;
         state.stackPos = stackPos;
         state.stackFrame = callStack[stackPos];
         state.ilocalsPos = ilocalsPos;
-        state.flocalsPos = flocalsPos;
+        state.rlocalsPos = rlocalsPos;
         state.slocalsPos = slocalsPos;
         state.olocalsPos = olocalsPos;
         states ~= state;
@@ -306,12 +306,12 @@ final class GrContext {
             throw new Exception("Fatal error: pop context state");
         GrContextState state = states[$ - 1];
         istackPos = state.istackPos;
-        fstackPos = state.fstackPos;
+        rstackPos = state.rstackPos;
         sstackPos = state.sstackPos;
         ostackPos = state.ostackPos;
         stackPos = state.stackPos;
         ilocalsPos = state.ilocalsPos;
-        flocalsPos = state.flocalsPos;
+        rlocalsPos = state.rlocalsPos;
         slocalsPos = state.slocalsPos;
         olocalsPos = state.olocalsPos;
         callStack[stackPos] = state.stackFrame;
@@ -337,7 +337,7 @@ final class GrContext {
         import std.conv : to;
 
         string result = "Context Dump:";
-        result ~= "\nfstack: " ~ to!string(fstack[0 .. (fstackPos + 1)]);
+        result ~= "\nfstack: " ~ to!string(rstack[0 .. (rstackPos + 1)]);
         result ~= "\nistack: " ~ to!string(istack[0 .. (istackPos + 1)]);
         result ~= "\nsstack: " ~ to!string(sstack[0 .. (sstackPos + 1)]);
         result ~= "\nostack: " ~ to!string(ostack[0 .. (ostackPos + 1)]);

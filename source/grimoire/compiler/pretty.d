@@ -25,21 +25,21 @@ string grGetPrettyType(GrType variableType, GrLocale locale = GrLocale.en_US) {
         case fr_FR:
             return "nul";
         }
-    case int_:
+    case integer:
         final switch (locale) with (GrLocale) {
         case en_US:
             return "integer";
         case fr_FR:
             return "entier";
         }
-    case float_:
+    case real_:
         final switch (locale) with (GrLocale) {
         case en_US:
             return "real";
         case fr_FR:
             return "réel";
         }
-    case bool_:
+    case boolean:
         final switch (locale) with (GrLocale) {
         case en_US:
             return "boolean";
@@ -162,7 +162,7 @@ string grGetPrettyType(GrType variableType, GrLocale locale = GrLocale.en_US) {
         }
         result ~= ")";
         return result;
-    case enum_:
+    case enumeration:
         return to!string(variableType.mangledType);
     case foreign:
     case class_:

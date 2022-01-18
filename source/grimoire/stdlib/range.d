@@ -26,7 +26,7 @@ package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library, GrLocale loca
 
     library.addForeign(rangeIterSymbol, ["T"]);
     GrType rangeIterIntType = grGetForeignType(rangeIterSymbol, [grInt]);
-    GrType rangeIterFloatType = grGetForeignType(rangeIterSymbol, [grFloat]);
+    GrType rangeIterRealType = grGetForeignType(rangeIterSymbol, [grReal]);
 
     library.addPrimitive(&_range_next_i, nextSymbol, [rangeIterIntType], [
             grBool, grInt
@@ -39,19 +39,19 @@ package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library, GrLocale loca
             rangeIterIntType
         ]);
 
-    library.addPrimitive(&_range_next_f, nextSymbol, [rangeIterFloatType], [
-            grBool, grFloat
+    library.addPrimitive(&_range_next_f, nextSymbol, [rangeIterRealType], [
+            grBool, grReal
         ]);
     library.addOperator(&_range_f, GrLibrary.Operator.interval, [
-            grFloat, grFloat
-        ], rangeIterFloatType);
-    library.addPrimitive(&_range_f, rangeSymbol, [grFloat, grFloat], [
-            rangeIterFloatType
+            grReal, grReal
+        ], rangeIterRealType);
+    library.addPrimitive(&_range_f, rangeSymbol, [grReal, grReal], [
+            rangeIterRealType
         ]);
     library.addPrimitive(&_range_step_f, rangeSymbol, [
-            grFloat, grFloat, grFloat
+            grReal, grReal, grReal
         ],
-        [rangeIterFloatType]);
+        [rangeIterRealType]);
 }
 
 private final class RangeIter(T) {
@@ -94,34 +94,34 @@ private void _range_step_i(GrCall call) {
 }
 
 private void _range_next_f(GrCall call) {
-    RangeIter!GrFloat iter = call.getForeign!(RangeIter!GrFloat)(0);
+    RangeIter!GrReal iter = call.getForeign!(RangeIter!GrReal)(0);
     if (!iter) {
         call.raise(_paramError);
         return;
     }
     if ((iter.step < 0f && iter.value < iter.end) || (iter.step > 0f && iter.value > iter.end)) {
         call.setBool(false);
-        call.setFloat(0f);
+        call.setReal(0f);
         return;
     }
     call.setBool(true);
-    call.setFloat(iter.value);
+    call.setReal(iter.value);
     iter.value += iter.step;
 }
 
 private void _range_f(GrCall call) {
-    RangeIter!GrFloat iter = new RangeIter!GrFloat;
-    iter.value = call.getFloat(0);
-    iter.end = call.getFloat(1);
+    RangeIter!GrReal iter = new RangeIter!GrReal;
+    iter.value = call.getReal(0);
+    iter.end = call.getReal(1);
     iter.step = iter.value > iter.end ? -1f : 1f;
     call.setForeign(iter);
 }
 
 private void _range_step_f(GrCall call) {
-    RangeIter!GrFloat iter = new RangeIter!GrFloat;
-    iter.value = call.getFloat(0);
-    iter.end = call.getFloat(1);
-    iter.step = call.getFloat(2);
+    RangeIter!GrReal iter = new RangeIter!GrReal;
+    iter.value = call.getReal(0);
+    iter.end = call.getReal(1);
+    iter.step = call.getReal(2);
     if ((iter.value > iter.end && iter.step > 0f) || (iter.value < iter.end && iter.step < 0f)) {
         iter.step = -iter.step;
     }

@@ -32,7 +32,7 @@ private final class Dictionary(T) {
 
 private {
     alias IntDictionary = Dictionary!(GrInt);
-    alias FloatDictionary = Dictionary!(GrFloat);
+    alias RealDictionary = Dictionary!(GrReal);
     alias StringDictionary = Dictionary!(GrString);
     alias ObjectDictionary = Dictionary!(GrPtr);
     string _pairSymbol, _dicSymbol, _dicIterSymbol, _valueSymbol, _keySymbol;
@@ -93,7 +93,7 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale
     library.addForeign(_dicSymbol, ["T"]);
     library.addForeign(_dicIterSymbol, ["T"]);
 
-    static foreach (t; ["Int", "Float", "String", "Object"]) {
+    static foreach (t; ["Int", "Real", "String", "Object"]) {
         mixin("GrType any" ~ t ~ "Dictionary = grAny(\"M\", (type, data) {
                 if (type.base != GrType.Base.foreign)
                     return false;
@@ -217,8 +217,8 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale
     GrType intDictionary = grGetForeignType(_dicSymbol, [grInt]);
     library.addPrimitive(&_print_!"int", printSymbol, [intDictionary]);
 
-    GrType floatDictionary = grGetForeignType(_dicSymbol, [grFloat]);
-    library.addPrimitive(&_print_!"float", printSymbol, [floatDictionary]);
+    GrType realDictionary = grGetForeignType(_dicSymbol, [grReal]);
+    library.addPrimitive(&_print_!"real", printSymbol, [realDictionary]);
 
     GrType stringDictionary = grGetForeignType(_dicSymbol, [grString]);
     library.addPrimitive(&_print_!"string", printSymbol, [stringDictionary]);
@@ -314,8 +314,8 @@ private void _get_(string t)(GrCall call) {
         static if (t == "Int") {
             call.setInt(p ? *p : 0);
         }
-        else static if (t == "Float") {
-            call.setFloat(p ? *p : 0f);
+        else static if (t == "Real") {
+            call.setReal(p ? *p : 0f);
         }
         else static if (t == "String") {
             call.setString(p ? *p : "");
@@ -372,8 +372,8 @@ private void _each_(string t)(GrCall call) {
     static if (t == "Int") {
         DictionaryIter!(GrInt) iter = new DictionaryIter!(GrInt);
     }
-    else static if (t == "Float") {
-        DictionaryIter!(GrFloat) iter = new DictionaryIter!(GrFloat);
+    else static if (t == "Real") {
+        DictionaryIter!(GrReal) iter = new DictionaryIter!(GrReal);
     }
     else static if (t == "String") {
         DictionaryIter!(GrString) iter = new DictionaryIter!(GrString);
@@ -391,8 +391,8 @@ private void _next_(string t)(GrCall call) {
     static if (t == "Int") {
         DictionaryIter!(GrInt) iter = call.getForeign!(DictionaryIter!(GrInt))(0);
     }
-    else static if (t == "Float") {
-        DictionaryIter!(GrFloat) iter = call.getForeign!(DictionaryIter!(GrFloat))(0);
+    else static if (t == "Real") {
+        DictionaryIter!(GrReal) iter = call.getForeign!(DictionaryIter!(GrReal))(0);
     }
     else static if (t == "String") {
         DictionaryIter!(GrString) iter = call.getForeign!(DictionaryIter!(GrString))(0);
@@ -416,10 +416,10 @@ private void _next_(string t)(GrCall call) {
         obj.setInt(_valueSymbol, iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
-    else static if (t == "Float") {
+    else static if (t == "Real") {
         GrObject obj = new GrObject([_keySymbol, _valueSymbol]);
         obj.setString(_keySymbol, iter.pairs[iter.index][0]);
-        obj.setFloat(_valueSymbol, iter.pairs[iter.index][1]);
+        obj.setReal(_valueSymbol, iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     else static if (t == "String") {
@@ -441,8 +441,8 @@ private void _print_(string t)(GrCall call) {
     static if (t == "bool" || t == "int") {
         IntDictionary dictionary = call.getForeign!(IntDictionary)(0);
     }
-    else static if (t == "float") {
-        FloatDictionary dictionary = call.getForeign!(FloatDictionary)(0);
+    else static if (t == "real") {
+        RealDictionary dictionary = call.getForeign!(RealDictionary)(0);
     }
     else static if (t == "string") {
         StringDictionary dictionary = call.getForeign!(StringDictionary)(0);

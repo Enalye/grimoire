@@ -62,10 +62,10 @@ class GrLibrary {
         variable.isConstant = isConstant;
 
         final switch (type.base) with (GrType.Base) {
-        case bool_:
-        case int_:
-        case enum_:
-        case float_:
+        case boolean:
+        case integer:
+        case enumeration:
+        case real_:
         case string_:
             break;
         case class_:
@@ -82,25 +82,25 @@ class GrLibrary {
                     "can't initialize library variable of type `" ~ grGetPrettyType(type) ~ "`");
         }
         static if (isIntegral!T) {
-            if (type.base != GrType.Base.int_ && type.base != GrType.Base.enum_)
+            if (type.base != GrType.Base.integer && type.base != GrType.Base.enumeration)
                 throw new Exception(
                         "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
                         type) ~ "`");
             variable.ivalue = cast(int) defaultValue;
         }
         else static if (is(T == bool)) {
-            if (type.base != GrType.Base.bool_)
+            if (type.base != GrType.Base.boolean)
                 throw new Exception(
                         "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
                         type) ~ "`");
             variable.ivalue = defaultValue ? 1 : 0;
         }
         else static if (isFloatingPoint!T) {
-            if (type.base != GrType.Base.float_)
+            if (type.base != GrType.Base.real_)
                 throw new Exception(
                         "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
                         type) ~ "`");
-            variable.fvalue = cast(float) defaultValue;
+            variable.rvalue = cast(float) defaultValue;
         }
         static if (is(T == string)) {
             if (type.base != GrType.Base.string_)
@@ -115,13 +115,13 @@ class GrLibrary {
 
     /// Define an enumeration
     GrType addEnum(string name, string[] fields) {
-        GrEnumDefinition enum_ = new GrEnumDefinition;
-        enum_.name = name;
-        enum_.fields = fields;
-        enum_.isPublic = true;
-        _enumDefinitions ~= enum_;
+        GrEnumDefinition enumeration = new GrEnumDefinition;
+        enumeration.name = name;
+        enumeration.fields = fields;
+        enumeration.isPublic = true;
+        _enumDefinitions ~= enumeration;
 
-        GrType type = GrType.Base.enum_;
+        GrType type = GrType.Base.enumeration;
         type.mangledType = name;
         return type;
     }

@@ -48,13 +48,13 @@ GrType[] grUnmangleSignature(string mangledSignature) {
             currentType.base = GrType.Base.void_;
             break;
         case 'i':
-            currentType.base = GrType.Base.int_;
+            currentType.base = GrType.Base.integer;
             break;
         case 'r':
-            currentType.base = GrType.Base.float_;
+            currentType.base = GrType.Base.real_;
             break;
         case 'b':
-            currentType.base = GrType.Base.bool_;
+            currentType.base = GrType.Base.boolean;
             break;
         case 's':
             currentType.base = GrType.Base.string_;
@@ -65,7 +65,7 @@ GrType[] grUnmangleSignature(string mangledSignature) {
             currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             break;
         case 'e':
-            currentType.base = GrType.Base.enum_;
+            currentType.base = GrType.Base.enumeration;
             string enumName;
             if ((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid mangling format");
@@ -193,13 +193,13 @@ string grMangle(GrType type) {
     case null_:
         mangledName ~= "0";
         break;
-    case int_:
+    case integer:
         mangledName ~= "i";
         break;
-    case float_:
+    case real_:
         mangledName ~= "r";
         break;
-    case bool_:
+    case boolean:
         mangledName ~= "b";
         break;
     case string_:
@@ -211,7 +211,7 @@ string grMangle(GrType type) {
     case class_:
         mangledName ~= "p(" ~ type.mangledType ~ ")";
         break;
-    case enum_:
+    case enumeration:
         mangledName ~= "e(" ~ type.mangledType ~ ")";
         break;
     case foreign:
@@ -252,13 +252,13 @@ GrType grUnmangle(string mangledSignature) {
             currentType.base = GrType.Base.void_;
             break;
         case 'i':
-            currentType.base = GrType.Base.int_;
+            currentType.base = GrType.Base.integer;
             break;
         case 'r':
-            currentType.base = GrType.Base.float_;
+            currentType.base = GrType.Base.real_;
             break;
         case 'b':
-            currentType.base = GrType.Base.bool_;
+            currentType.base = GrType.Base.boolean;
             break;
         case 's':
             currentType.base = GrType.Base.string_;
@@ -270,7 +270,7 @@ GrType grUnmangle(string mangledSignature) {
             i++;
             break;
         case 'e':
-            currentType.base = GrType.Base.enum_;
+            currentType.base = GrType.Base.enumeration;
             string enumName;
             if ((i + 2) >= mangledSignature.length)
                 throw new Exception("Invalid unmangle mangling format in struct");

@@ -102,13 +102,13 @@ package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
     }
 
     GrType vec2Type = library.addClass(_vector2Symbol, ["x", "y"], [
-            grFloat, grFloat
+            grReal, grReal
         ]);
 
     // Ctors
     library.addPrimitive(&_vec2_0, _vector2Symbol, [], [vec2Type]);
-    library.addPrimitive(&_vec2_1, _vector2Symbol, [grFloat], [vec2Type]);
-    library.addPrimitive(&_vec2_2, _vector2Symbol, [grFloat, grFloat], [
+    library.addPrimitive(&_vec2_1, _vector2Symbol, [grReal], [vec2Type]);
+    library.addPrimitive(&_vec2_2, _vector2Symbol, [grReal, grReal], [
             vec2Type
         ]);
 
@@ -121,9 +121,9 @@ package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
     }
     static foreach (op; ["+", "-", "*", "/", "%"]) {
         library.addOperator(&_opBinaryVec2!op, op, [vec2Type, vec2Type], vec2Type);
-        library.addOperator(&_opBinaryScalarVec2!op, op, [vec2Type, grFloat], vec2Type);
+        library.addOperator(&_opBinaryScalarVec2!op, op, [vec2Type, grReal], vec2Type);
         library.addOperator(&_opBinaryScalarRightVec2!op, op, [
-                grFloat, vec2Type
+                grReal, vec2Type
             ], vec2Type);
     }
     static foreach (op; ["==", "!=", ">=", "<=", ">", "<"]) {
@@ -142,7 +142,7 @@ package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
     library.addPrimitive(&_rightVec2, vec2RightSymbol, [], [vec2Type]);
 
     library.addPrimitive(&_unpackVec2, unpackSymbol, [vec2Type], [
-            grFloat, grFloat
+            grReal, grReal
         ]);
 
     library.addPrimitive(&_abs, absSymbol, [vec2Type], [vec2Type]);
@@ -153,47 +153,47 @@ package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
     library.addPrimitive(&_isZeroVec2, zeroSymbol, [vec2Type], [grBool]);
 
     // Operations
-    library.addPrimitive(&_sumVec2, sumSymbol, [vec2Type], [grFloat]);
+    library.addPrimitive(&_sumVec2, sumSymbol, [vec2Type], [grReal]);
     library.addPrimitive(&_sign, signSymbol, [vec2Type], [vec2Type]);
 
-    library.addPrimitive(&_lerp, lerpSymbol, [vec2Type, vec2Type, grFloat], [
+    library.addPrimitive(&_lerp, lerpSymbol, [vec2Type, vec2Type, grReal], [
             vec2Type
         ]);
     library.addPrimitive(&_approach, approachSymbol, [
-            vec2Type, vec2Type, grFloat
+            vec2Type, vec2Type, grReal
         ], [vec2Type]);
 
     library.addPrimitive(&_reflect, reflectSymbol, [vec2Type, vec2Type], [
             vec2Type
         ]);
-    library.addPrimitive(&_refract, refractSymbol, [vec2Type, vec2Type, grFloat], [
+    library.addPrimitive(&_refract, refractSymbol, [vec2Type, vec2Type, grReal], [
             vec2Type
         ]);
 
     library.addPrimitive(&_distance, distanceSymbol, [vec2Type, vec2Type], [
-            grFloat
+            grReal
         ]);
     library.addPrimitive(&_distanceSquared, distanceSquaredSymbol, [
             vec2Type, vec2Type
         ], [
-            grFloat
+            grReal
         ]);
-    library.addPrimitive(&_dot, dotSymbol, [vec2Type, vec2Type], [grFloat]);
+    library.addPrimitive(&_dot, dotSymbol, [vec2Type, vec2Type], [grReal]);
     library.addPrimitive(&_cross, crossSymbol, [vec2Type, vec2Type], [
-            grFloat
+            grReal
         ]);
     library.addPrimitive(&_normal, normalSymbol, [vec2Type], [vec2Type]);
-    library.addPrimitive(&_angle, angleSymbol, [vec2Type], [grFloat]);
-    library.addPrimitive(&_rotate, rotateSymbol, [vec2Type, grFloat], [
+    library.addPrimitive(&_angle, angleSymbol, [vec2Type], [grReal]);
+    library.addPrimitive(&_rotate, rotateSymbol, [vec2Type, grReal], [
             vec2Type
         ]);
-    library.addPrimitive(&_rotated, rotatedSymbol, [vec2Type, grFloat], [
+    library.addPrimitive(&_rotated, rotatedSymbol, [vec2Type, grReal], [
             vec2Type
         ]);
-    library.addPrimitive(&_angled, vec2AngledSymbol, [grFloat], [vec2Type]);
-    library.addPrimitive(&_length, lengthSymbol, [vec2Type], [grFloat]);
+    library.addPrimitive(&_angled, vec2AngledSymbol, [grReal], [vec2Type]);
+    library.addPrimitive(&_length, lengthSymbol, [vec2Type], [grReal]);
     library.addPrimitive(&_lengthSquared, lengthSquaredSymbol, [vec2Type], [
-            grFloat
+            grReal
         ]);
     library.addPrimitive(&_normalize, normalizeSymbol, [vec2Type], [
             vec2Type
@@ -210,8 +210,8 @@ private void _vec2_0(GrCall call) {
         call.raise(_classError);
         return;
     }
-    self.setFloat("x", 0f);
-    self.setFloat("y", 0f);
+    self.setReal("x", 0f);
+    self.setReal("y", 0f);
     call.setObject(self);
 }
 
@@ -221,9 +221,9 @@ private void _vec2_1(GrCall call) {
         call.raise(_classError);
         return;
     }
-    const GrFloat value = call.getFloat(0);
-    self.setFloat("x", value);
-    self.setFloat("y", value);
+    const GrReal value = call.getReal(0);
+    self.setReal("x", value);
+    self.setReal("y", value);
     call.setObject(self);
 }
 
@@ -233,8 +233,8 @@ private void _vec2_2(GrCall call) {
         call.raise(_classError);
         return;
     }
-    self.setFloat("x", call.getFloat(0));
-    self.setFloat("y", call.getFloat(1));
+    self.setReal("x", call.getReal(0));
+    self.setReal("y", call.getReal(1));
     call.setObject(self);
 }
 
@@ -245,8 +245,8 @@ private void _print(GrCall call) {
         _stdOut("null(Vec2)");
         return;
     }
-    _stdOut("Vec2(" ~ to!GrString(self.getFloat("x")) ~ ", " ~ to!GrString(
-            self.getFloat("y")) ~ ")");
+    _stdOut("Vec2(" ~ to!GrString(self.getReal("x")) ~ ", " ~ to!GrString(
+            self.getReal("y")) ~ ")");
 }
 
 /// Operators ------------------------------------------
@@ -261,8 +261,8 @@ private void _opUnaryVec2(string op)(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    mixin("self.setFloat(\"x\", " ~ op ~ "v.getFloat(\"x\"));");
-    mixin("self.setFloat(\"y\", " ~ op ~ "v.getFloat(\"y\"));");
+    mixin("self.setReal(\"x\", " ~ op ~ "v.getReal(\"x\"));");
+    mixin("self.setReal(\"y\", " ~ op ~ "v.getReal(\"y\"));");
     call.setObject(self);
 }
 
@@ -278,8 +278,8 @@ private void _opBinaryVec2(string op)(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    mixin("self.setFloat(\"x\", v1.getFloat(\"x\")" ~ op ~ "v2.getFloat(\"x\"));");
-    mixin("self.setFloat(\"y\", v1.getFloat(\"y\")" ~ op ~ "v2.getFloat(\"y\"));");
+    mixin("self.setReal(\"x\", v1.getReal(\"x\")" ~ op ~ "v2.getReal(\"x\"));");
+    mixin("self.setReal(\"y\", v1.getReal(\"y\")" ~ op ~ "v2.getReal(\"y\"));");
     call.setObject(self);
 }
 
@@ -290,13 +290,13 @@ private void _opBinaryScalarVec2(string op)(GrCall call) {
         return;
     }
     GrObject v = call.getObject(0);
-    const GrFloat s = call.getFloat(1);
+    const GrReal s = call.getReal(1);
     if (!v) {
         call.raise(_paramError);
         return;
     }
-    mixin("self.setFloat(\"x\", v.getFloat(\"x\")" ~ op ~ "s);");
-    mixin("self.setFloat(\"y\", v.getFloat(\"y\")" ~ op ~ "s);");
+    mixin("self.setReal(\"x\", v.getReal(\"x\")" ~ op ~ "s);");
+    mixin("self.setReal(\"y\", v.getReal(\"y\")" ~ op ~ "s);");
     call.setObject(self);
 }
 
@@ -307,13 +307,13 @@ private void _opBinaryScalarRightVec2(string op)(GrCall call) {
         return;
     }
     GrObject v = call.getObject(0);
-    const GrFloat s = call.getFloat(1);
+    const GrReal s = call.getReal(1);
     if (!v) {
         call.raise(_paramError);
         return;
     }
-    mixin("self.setFloat(\"x\", s" ~ op ~ "v.getFloat(\"x\"));");
-    mixin("self.setFloat(\"y\", s" ~ op ~ "v.getFloat(\"y\"));");
+    mixin("self.setReal(\"x\", s" ~ op ~ "v.getReal(\"x\"));");
+    mixin("self.setReal(\"y\", s" ~ op ~ "v.getReal(\"y\"));");
     call.setObject(self);
 }
 
@@ -325,11 +325,11 @@ private void _opBinaryCompareVec2(string op)(GrCall call) {
         return;
     }
     mixin("call.setBool(
-        v1.getFloat(\"x\")"
-            ~ op ~ "v2.getFloat(\"x\") &&
-        v1.getFloat(\"y\")"
+        v1.getReal(\"x\")"
+            ~ op ~ "v2.getReal(\"x\") &&
+        v1.getReal(\"y\")"
             ~ op
-            ~ "v2.getFloat(\"y\"));");
+            ~ "v2.getReal(\"y\"));");
 }
 
 // Utility ------------------------------------------
@@ -339,8 +339,8 @@ private void _oneVec2(GrCall call) {
         call.raise(_classError);
         return;
     }
-    self.setFloat("x", 1f);
-    self.setFloat("y", 1f);
+    self.setReal("x", 1f);
+    self.setReal("y", 1f);
     call.setObject(self);
 }
 
@@ -350,8 +350,8 @@ private void _halfVec2(GrCall call) {
         call.raise(_classError);
         return;
     }
-    self.setFloat("x", .5f);
-    self.setFloat("y", .5f);
+    self.setReal("x", .5f);
+    self.setReal("y", .5f);
     call.setObject(self);
 }
 
@@ -361,7 +361,7 @@ private void _upVec2(GrCall call) {
         call.raise(_classError);
         return;
     }
-    self.setFloat("y", 1f);
+    self.setReal("y", 1f);
     call.setObject(self);
 }
 
@@ -371,7 +371,7 @@ private void _downVec2(GrCall call) {
         call.raise(_classError);
         return;
     }
-    self.setFloat("y", -1f);
+    self.setReal("y", -1f);
     call.setObject(self);
 }
 
@@ -381,7 +381,7 @@ private void _leftVec2(GrCall call) {
         call.raise(_classError);
         return;
     }
-    self.setFloat("x", -1f);
+    self.setReal("x", -1f);
     call.setObject(self);
 }
 
@@ -391,7 +391,7 @@ private void _rightVec2(GrCall call) {
         call.raise(_classError);
         return;
     }
-    self.setFloat("x", 1f);
+    self.setReal("x", 1f);
     call.setObject(self);
 }
 
@@ -401,8 +401,8 @@ private void _unpackVec2(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    call.setFloat(self.getFloat("x"));
-    call.setFloat(self.getFloat("y"));
+    call.setReal(self.getReal("x"));
+    call.setReal(self.getReal("y"));
 }
 
 private void _isZeroVec2(GrCall call) {
@@ -411,7 +411,7 @@ private void _isZeroVec2(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    call.setBool(self.getFloat("x") == 0f && self.getFloat("y") == 0f);
+    call.setBool(self.getReal("x") == 0f && self.getReal("y") == 0f);
 }
 
 // Operations ------------------------------------------
@@ -426,8 +426,8 @@ private void _abs(GrCall call) {
         call.raise(_classError);
         return;
     }
-    v.setFloat("x", abs(self.getFloat("y")));
-    v.setFloat("y", abs(self.getFloat("x")));
+    v.setReal("x", abs(self.getReal("y")));
+    v.setReal("y", abs(self.getReal("x")));
     call.setObject(v);
 }
 
@@ -442,8 +442,8 @@ private void _ceil(GrCall call) {
         call.raise(_classError);
         return;
     }
-    v.setFloat("x", ceil(self.getFloat("y")));
-    v.setFloat("y", ceil(self.getFloat("x")));
+    v.setReal("x", ceil(self.getReal("y")));
+    v.setReal("y", ceil(self.getReal("x")));
     call.setObject(v);
 }
 
@@ -458,8 +458,8 @@ private void _floor(GrCall call) {
         call.raise(_classError);
         return;
     }
-    v.setFloat("x", floor(self.getFloat("y")));
-    v.setFloat("y", floor(self.getFloat("x")));
+    v.setReal("x", floor(self.getReal("y")));
+    v.setReal("y", floor(self.getReal("x")));
     call.setObject(v);
 }
 
@@ -474,8 +474,8 @@ private void _round(GrCall call) {
         call.raise(_classError);
         return;
     }
-    v.setFloat("x", round(self.getFloat("y")));
-    v.setFloat("y", round(self.getFloat("x")));
+    v.setReal("x", round(self.getReal("y")));
+    v.setReal("y", round(self.getReal("x")));
     call.setObject(v);
 }
 
@@ -485,7 +485,7 @@ private void _sumVec2(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    call.setFloat(self.getFloat("x") + self.getFloat("y"));
+    call.setReal(self.getReal("x") + self.getReal("y"));
 }
 
 private void _sign(GrCall call) {
@@ -499,8 +499,8 @@ private void _sign(GrCall call) {
         call.raise(_classError);
         return;
     }
-    v.setFloat("x", self.getFloat("x") >= 0f ? 1f : -1f);
-    v.setFloat("y", self.getFloat("y") >= 0f ? 1f : -1f);
+    v.setReal("x", self.getReal("x") >= 0f ? 1f : -1f);
+    v.setReal("y", self.getReal("y") >= 0f ? 1f : -1f);
     call.setObject(v);
 }
 
@@ -511,14 +511,14 @@ private void _lerp(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    const GrFloat weight = call.getFloat(2);
+    const GrReal weight = call.getReal(2);
     GrObject v = call.createObject(_vector2Symbol);
     if (!v) {
         call.raise(_classError);
         return;
     }
-    v.setFloat("x", v2.getFloat("x") * weight + v1.getFloat("x") * (1f - weight));
-    v.setFloat("y", v2.getFloat("y") * weight + v1.getFloat("y") * (1f - weight));
+    v.setReal("x", v2.getReal("x") * weight + v1.getReal("x") * (1f - weight));
+    v.setReal("y", v2.getReal("y") * weight + v1.getReal("y") * (1f - weight));
     call.setObject(v);
 }
 
@@ -534,13 +534,13 @@ private void _approach(GrCall call) {
         call.raise(_classError);
         return;
     }
-    const GrFloat x1 = v1.getFloat("x");
-    const GrFloat y1 = v1.getFloat("y");
-    const GrFloat x2 = v2.getFloat("x");
-    const GrFloat y2 = v2.getFloat("y");
-    const GrFloat step = call.getFloat(2);
-    v.setFloat("x", x1 > x2 ? max(x1 - step, x2) : min(x1 + step, x2));
-    v.setFloat("y", y1 > y2 ? max(y1 - step, y2) : min(y1 + step, y2));
+    const GrReal x1 = v1.getReal("x");
+    const GrReal y1 = v1.getReal("y");
+    const GrReal x2 = v2.getReal("x");
+    const GrReal y2 = v2.getReal("y");
+    const GrReal step = call.getReal(2);
+    v.setReal("x", x1 > x2 ? max(x1 - step, x2) : min(x1 + step, x2));
+    v.setReal("y", y1 > y2 ? max(y1 - step, y2) : min(y1 + step, y2));
     call.setObject(v);
 }
 
@@ -556,13 +556,13 @@ private void _reflect(GrCall call) {
         call.raise(_classError);
         return;
     }
-    const GrFloat x1 = v1.getFloat("x");
-    const GrFloat y1 = v1.getFloat("y");
-    const GrFloat x2 = v2.getFloat("x");
-    const GrFloat y2 = v2.getFloat("y");
-    const GrFloat dotNI2 = 2.0 * x1 * x2 + y1 * y2;
-    v.setFloat("x", x1 - dotNI2 * x2);
-    v.setFloat("y", y1 - dotNI2 * y2);
+    const GrReal x1 = v1.getReal("x");
+    const GrReal y1 = v1.getReal("y");
+    const GrReal x2 = v2.getReal("x");
+    const GrReal y2 = v2.getReal("y");
+    const GrReal dotNI2 = 2.0 * x1 * x2 + y1 * y2;
+    v.setReal("x", x1 - dotNI2 * x2);
+    v.setReal("y", y1 - dotNI2 * y2);
     call.setObject(v);
 }
 
@@ -578,22 +578,22 @@ private void _refract(GrCall call) {
         call.raise(_classError);
         return;
     }
-    const GrFloat x1 = v1.getFloat("x");
-    const GrFloat y1 = v1.getFloat("y");
-    const GrFloat x2 = v2.getFloat("x");
-    const GrFloat y2 = v2.getFloat("y");
-    const GrFloat eta = call.getFloat(2);
+    const GrReal x1 = v1.getReal("x");
+    const GrReal y1 = v1.getReal("y");
+    const GrReal x2 = v2.getReal("x");
+    const GrReal y2 = v2.getReal("y");
+    const GrReal eta = call.getReal(2);
 
-    const GrFloat dotNI = (x1 * x2 + y1 * y2);
-    GrFloat k = 1.0 - eta * eta * (1.0 - dotNI * dotNI);
+    const GrReal dotNI = (x1 * x2 + y1 * y2);
+    GrReal k = 1.0 - eta * eta * (1.0 - dotNI * dotNI);
     if (k < .0) {
-        v.setFloat("x", 0f);
-        v.setFloat("y", 0f);
+        v.setReal("x", 0f);
+        v.setReal("y", 0f);
     }
     else {
-        const GrFloat s = (eta * dotNI + sqrt(k));
-        v.setFloat("x", eta * x1 - s * x2);
-        v.setFloat("y", eta * y1 - s * y2);
+        const GrReal s = (eta * dotNI + sqrt(k));
+        v.setReal("x", eta * x1 - s * x2);
+        v.setReal("y", eta * y1 - s * y2);
     }
     call.setObject(v);
 }
@@ -605,9 +605,9 @@ private void _distance(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    const GrFloat px = v1.getFloat("x") - v2.getFloat("x");
-    const GrFloat py = v1.getFloat("y") - v2.getFloat("y");
-    call.setFloat(std.math.sqrt(px * px + py * py));
+    const GrReal px = v1.getReal("x") - v2.getReal("x");
+    const GrReal py = v1.getReal("y") - v2.getReal("y");
+    call.setReal(std.math.sqrt(px * px + py * py));
 }
 
 private void _distanceSquared(GrCall call) {
@@ -617,9 +617,9 @@ private void _distanceSquared(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    const GrFloat px = v1.getFloat("x") - v2.getFloat("x");
-    const GrFloat py = v1.getFloat("y") - v2.getFloat("y");
-    call.setFloat(px * px + py * py);
+    const GrReal px = v1.getReal("x") - v2.getReal("x");
+    const GrReal py = v1.getReal("y") - v2.getReal("y");
+    call.setReal(px * px + py * py);
 }
 
 private void _dot(GrCall call) {
@@ -629,7 +629,7 @@ private void _dot(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    call.setFloat(v1.getFloat("x") * v2.getFloat("x") + v1.getFloat("y") * v2.getFloat("y"));
+    call.setReal(v1.getReal("x") * v2.getReal("x") + v1.getReal("y") * v2.getReal("y"));
 }
 
 private void _cross(GrCall call) {
@@ -639,7 +639,7 @@ private void _cross(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    call.setFloat(v1.getFloat("x") * v2.getFloat("y") - v1.getFloat("y") * v2.getFloat("x"));
+    call.setReal(v1.getReal("x") * v2.getReal("y") - v1.getReal("y") * v2.getReal("x"));
 }
 
 private void _normal(GrCall call) {
@@ -653,8 +653,8 @@ private void _normal(GrCall call) {
         call.raise(_classError);
         return;
     }
-    v.setFloat("x", -self.getFloat("y"));
-    v.setFloat("y", self.getFloat("x"));
+    v.setReal("x", -self.getReal("y"));
+    v.setReal("y", self.getReal("x"));
     call.setObject(v);
 }
 
@@ -664,7 +664,7 @@ private void _angle(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    call.setFloat(std.math.atan2(self.getFloat("y"), self.getFloat("x")) * _radToDeg);
+    call.setReal(std.math.atan2(self.getReal("y"), self.getReal("x")) * _radToDeg);
 }
 
 private void _rotate(GrCall call) {
@@ -673,12 +673,12 @@ private void _rotate(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    const GrFloat radians = call.getFloat(1) * _degToRad;
-    const GrFloat px = self.getFloat("x"), py = self.getFloat("y");
-    const GrFloat c = std.math.cos(radians);
-    const GrFloat s = std.math.sin(radians);
-    self.setFloat("x", px * c - py * s);
-    self.setFloat("y", px * s + py * c);
+    const GrReal radians = call.getReal(1) * _degToRad;
+    const GrReal px = self.getReal("x"), py = self.getReal("y");
+    const GrReal c = std.math.cos(radians);
+    const GrReal s = std.math.sin(radians);
+    self.setReal("x", px * c - py * s);
+    self.setReal("y", px * s + py * c);
     call.setObject(self);
 }
 
@@ -688,30 +688,30 @@ private void _rotated(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    const GrFloat radians = call.getFloat(1) * _degToRad;
-    const GrFloat px = self.getFloat("x"), py = self.getFloat("y");
-    const GrFloat c = std.math.cos(radians);
-    const GrFloat s = std.math.sin(radians);
+    const GrReal radians = call.getReal(1) * _degToRad;
+    const GrReal px = self.getReal("x"), py = self.getReal("y");
+    const GrReal c = std.math.cos(radians);
+    const GrReal s = std.math.sin(radians);
 
     GrObject v = call.createObject(_vector2Symbol);
     if (!v) {
         call.raise(_classError);
         return;
     }
-    v.setFloat("x", px * c - py * s);
-    v.setFloat("y", px * s + py * c);
+    v.setReal("x", px * c - py * s);
+    v.setReal("y", px * s + py * c);
     call.setObject(v);
 }
 
 private void _angled(GrCall call) {
-    const GrFloat radians = call.getFloat(0) * _degToRad;
+    const GrReal radians = call.getReal(0) * _degToRad;
     GrObject v = call.createObject(_vector2Symbol);
     if (!v) {
         call.raise(_classError);
         return;
     }
-    v.setFloat("x", std.math.cos(radians));
-    v.setFloat("y", std.math.sin(radians));
+    v.setReal("x", std.math.cos(radians));
+    v.setReal("y", std.math.sin(radians));
     call.setObject(v);
 }
 
@@ -721,9 +721,9 @@ private void _length(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    const GrFloat x = self.getFloat("x");
-    const GrFloat y = self.getFloat("y");
-    call.setFloat(std.math.sqrt(x * x + y * y));
+    const GrReal x = self.getReal("x");
+    const GrReal y = self.getReal("y");
+    call.setReal(std.math.sqrt(x * x + y * y));
 }
 
 private void _lengthSquared(GrCall call) {
@@ -732,9 +732,9 @@ private void _lengthSquared(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    const GrFloat x = self.getFloat("x");
-    const GrFloat y = self.getFloat("y");
-    call.setFloat(x * x + y * y);
+    const GrReal x = self.getReal("x");
+    const GrReal y = self.getReal("y");
+    call.setReal(x * x + y * y);
 }
 
 private void _normalize(GrCall call) {
@@ -743,16 +743,16 @@ private void _normalize(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    const GrFloat x = self.getFloat("x");
-    const GrFloat y = self.getFloat("y");
-    const GrFloat len = std.math.sqrt(x * x + y * y);
+    const GrReal x = self.getReal("x");
+    const GrReal y = self.getReal("y");
+    const GrReal len = std.math.sqrt(x * x + y * y);
     if (len == 0) {
-        self.setFloat("x", len);
-        self.setFloat("y", len);
+        self.setReal("x", len);
+        self.setReal("y", len);
         return;
     }
-    self.setFloat("x", x / len);
-    self.setFloat("y", y / len);
+    self.setReal("x", x / len);
+    self.setReal("y", y / len);
     call.setObject(self);
 }
 
@@ -762,9 +762,9 @@ private void _normalized(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    GrFloat x = self.getFloat("x");
-    GrFloat y = self.getFloat("y");
-    const GrFloat len = std.math.sqrt(x * x + y * y);
+    GrReal x = self.getReal("x");
+    GrReal y = self.getReal("y");
+    const GrReal len = std.math.sqrt(x * x + y * y);
 
     if (len == 0) {
         x = len;
@@ -779,7 +779,7 @@ private void _normalized(GrCall call) {
         call.raise(_classError);
         return;
     }
-    v.setFloat("x", x);
-    v.setFloat("y", y);
+    v.setReal("x", x);
+    v.setReal("y", y);
     call.setObject(v);
 }

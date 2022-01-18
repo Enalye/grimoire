@@ -31,7 +31,7 @@ package(grimoire.stdlib) void grLoadStdLibPair(GrLibrary library, GrLocale local
             "A", "B"
         ]);
 
-    static foreach (t; ["Int", "Float", "String", "Object"]) {
+    static foreach (t; ["Int", "Real", "String", "Object"]) {
         mixin(
             "
         library.addOperator(&_makeKeyValuePair_!\""
@@ -51,8 +51,8 @@ private void _makeKeyValuePair_(string t)(GrCall call) {
     static if (t == "Int") {
         obj.setInt(valueSymbol, call.getInt(1));
     }
-    else static if (t == "Float") {
-        obj.setFloat(valueSymbol, call.getFloat(1));
+    else static if (t == "Real") {
+        obj.setReal(valueSymbol, call.getReal(1));
     }
     else static if (t == "String") {
         obj.setString(valueSymbol, call.getString(1));

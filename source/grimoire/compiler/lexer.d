@@ -77,24 +77,24 @@ enum GrLexemeType {
     increment,
     decrement,
     identifier,
-    int_,
-    float_,
-    bool_,
+    integer,
+    real_,
+    boolean,
     string_,
     null_,
     public_,
     type_,
     action,
     class_,
-    enum_,
+    enumeration,
     template_,
     new_,
     copy,
     send,
     receive,
-    intType,
-    floatType,
-    boolType,
+    integerType,
+    realType,
+    booleanType,
     stringType,
     listType,
     chanType,
@@ -114,9 +114,9 @@ enum GrLexemeType {
     loop,
     return_,
     self,
-    kill,
-    killAll,
-    yield,
+    die,
+    quit,
+    suspend,
     break_,
     continue_,
 }
@@ -185,7 +185,7 @@ struct GrLexeme {
 
     /// Floating point value of the constant.
     /// isLiteral will be true and type set to float.
-    GrFloat fvalue;
+    GrReal fvalue;
 
     /// Boolean value of the constant.
     /// isLiteral will be true and type set to bool.
@@ -486,11 +486,11 @@ package final class GrLexer {
         lex._textLength = cast(uint) buffer.length;
 
         if (isFloat) {
-            lex.type = GrLexemeType.float_;
-            lex.fvalue = to!GrFloat(buffer);
+            lex.type = GrLexemeType.real_;
+            lex.fvalue = to!GrReal(buffer);
         }
         else {
-            lex.type = GrLexemeType.int_;
+            lex.type = GrLexemeType.integer;
             lex.ivalue = to!GrInt(buffer);
         }
         _lexemes ~= lex;
@@ -888,7 +888,7 @@ package final class GrLexer {
             break;
         case "énumération":
         case "enumeration":
-            lex.type = GrLexemeType.enum_;
+            lex.type = GrLexemeType.enumeration;
             break;
         case "patron":
         case "template":
@@ -947,15 +947,15 @@ package final class GrLexer {
             break;
         case "meurt":
         case "die":
-            lex.type = GrLexemeType.kill;
+            lex.type = GrLexemeType.die;
             break;
         case "quitte":
         case "quit":
-            lex.type = GrLexemeType.killAll;
+            lex.type = GrLexemeType.quit;
             break;
         case "suspends":
         case "suspend":
-            lex.type = GrLexemeType.yield;
+            lex.type = GrLexemeType.suspend;
             break;
         case "casse":
         case "break":
@@ -972,7 +972,7 @@ package final class GrLexer {
         case "try":
             lex.type = GrLexemeType.try_;
             break;
-        case "récupère":
+        case "attrape":
         case "catch":
             lex.type = GrLexemeType.catch_;
             break;
@@ -996,17 +996,17 @@ package final class GrLexer {
             break;
         case "entier":
         case "integer":
-            lex.type = GrLexemeType.intType;
+            lex.type = GrLexemeType.integerType;
             lex.isType = true;
             break;
         case "réel":
         case "real":
-            lex.type = GrLexemeType.floatType;
+            lex.type = GrLexemeType.realType;
             lex.isType = true;
             break;
         case "booléen":
         case "boolean":
-            lex.type = GrLexemeType.boolType;
+            lex.type = GrLexemeType.booleanType;
             lex.isType = true;
             break;
         case "chaîne":
@@ -1036,14 +1036,14 @@ package final class GrLexer {
             break;
         case "vrai":
         case "true":
-            lex.type = GrLexemeType.bool_;
+            lex.type = GrLexemeType.boolean;
             lex.isKeyword = false;
             lex.isLiteral = true;
             lex.bvalue = true;
             break;
         case "faux":
         case "false":
-            lex.type = GrLexemeType.bool_;
+            lex.type = GrLexemeType.boolean;
             lex.isKeyword = false;
             lex.isLiteral = true;
             lex.bvalue = false;

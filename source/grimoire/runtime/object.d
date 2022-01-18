@@ -17,7 +17,7 @@ package final class GrField {
     string name;
     union {
         GrInt ivalue;
-        GrFloat fvalue;
+        GrReal rvalue;
         GrString svalue;
         GrPtr ovalue;
     }
@@ -50,7 +50,7 @@ final class GrObject {
 
     alias getBool = getField!bool;
     alias getInt = getField!GrInt;
-    alias getFloat = getField!GrFloat;
+    alias getReal = getField!GrReal;
     alias getString = getField!GrString;
     alias getPtr = getField!GrPtr;
 
@@ -62,12 +62,12 @@ final class GrObject {
         return cast(long) getField!GrInt(fieldName);
     }
 
-    float getFloat32(string fieldName) {
-        return cast(float) getField!GrFloat(fieldName);
+    real getReal32(string fieldName) {
+        return cast(real) getField!GrReal(fieldName);
     }
 
-    double getFloat64(string fieldName) {
-        return cast(double) getField!GrFloat(fieldName);
+    double getReal64(string fieldName) {
+        return cast(double) getField!GrReal(fieldName);
     }
 
     GrObject getObject(string fieldName) {
@@ -82,8 +82,8 @@ final class GrObject {
         return cast(GrIntList) getField!GrPtr(fieldName);
     }
 
-    GrFloatList getFloatList(string fieldName) {
-        return cast(GrFloatList) getField!GrPtr(fieldName);
+    GrRealList getRealList(string fieldName) {
+        return cast(GrRealList) getField!GrPtr(fieldName);
     }
 
     GrStringList getStringList(string fieldName) {
@@ -98,8 +98,8 @@ final class GrObject {
         return cast(GrIntChannel) getField!GrPtr(fieldName);
     }
 
-    GrFloatChannel getFloatChannel(string fieldName) {
-        return cast(GrFloatChannel) getField!GrPtr(fieldName);
+    GrRealChannel getRealChannel(string fieldName) {
+        return cast(GrRealChannel) getField!GrPtr(fieldName);
     }
 
     GrStringChannel getStringChannel(string fieldName) {
@@ -126,8 +126,8 @@ final class GrObject {
                     return _fields[index].ivalue;
                 else static if (is(T == GrBool))
                     return cast(T) _fields[index].ivalue;
-                else static if (is(T == GrFloat))
-                    return _fields[index].fvalue;
+                else static if (is(T == GrReal))
+                    return _fields[index].rvalue;
                 else static if (is(T == GrString))
                     return _fields[index].svalue;
                 else static if (is(T == GrPtr))
@@ -141,7 +141,7 @@ final class GrObject {
 
     alias setBool = setField!bool;
     alias setInt = setField!GrInt;
-    alias setFloat = setField!GrFloat;
+    alias setReal = setField!GrReal;
     alias setString = setField!GrString;
     alias setPtr = setField!GrPtr;
 
@@ -153,12 +153,12 @@ final class GrObject {
         setField!GrInt(fieldName, cast(GrInt) value);
     }
 
-    void setFloat32(string fieldName, float value) {
-        setField!GrFloat(fieldName, cast(GrFloat) value);
+    void setReal32(string fieldName, real value) {
+        setField!GrReal(fieldName, cast(GrReal) value);
     }
 
-    void setFloat64(string fieldName, double value) {
-        setField!GrFloat(fieldName, cast(GrFloat) value);
+    void setReal64(string fieldName, double value) {
+        setField!GrReal(fieldName, cast(GrReal) value);
     }
 
     void setObject(string fieldName, GrObject value) {
@@ -173,7 +173,7 @@ final class GrObject {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setFloatList(string fieldName, GrFloatList value) {
+    void setRealList(string fieldName, GrRealList value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
@@ -189,7 +189,7 @@ final class GrObject {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setFloatChannel(string fieldName, GrFloatChannel value) {
+    void setRealChannel(string fieldName, GrRealChannel value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
@@ -216,8 +216,8 @@ final class GrObject {
                     return _fields[index].ivalue = cast(int) value;
                 else static if (is(T == GrBool))
                     return _fields[index].ivalue = value;
-                else static if (is(T == GrFloat))
-                    return _fields[index].fvalue = value;
+                else static if (is(T == GrReal))
+                    return _fields[index].rvalue = value;
                 else static if (is(T == GrString))
                     return _fields[index].svalue = value;
                 else static if (is(T == GrPtr))

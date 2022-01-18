@@ -36,13 +36,13 @@ package(grimoire.stdlib) void grLoadStdLibTime(GrLibrary library, GrLocale local
     library.addPrimitive(&_sleep, sleepSymbol, [grInt]);
 
     library.addPrimitive(&_seconds_i, secondsSymbol, [grInt], [grInt]);
-    library.addPrimitive(&_seconds_f, secondsSymbol, [grFloat], [grInt]);
+    library.addPrimitive(&_seconds_f, secondsSymbol, [grReal], [grInt]);
 
     library.addPrimitive(&_minutes_i, minutesSymbol, [grInt], [grInt]);
-    library.addPrimitive(&_minutes_f, minutesSymbol, [grFloat], [grInt]);
+    library.addPrimitive(&_minutes_f, minutesSymbol, [grReal], [grInt]);
 
     library.addPrimitive(&_hours_i, hoursSymbol, [grInt], [grInt]);
-    library.addPrimitive(&_hours_f, hoursSymbol, [grFloat], [grInt]);
+    library.addPrimitive(&_hours_f, hoursSymbol, [grReal], [grInt]);
 }
 
 private void _clock(GrCall call) {
@@ -95,7 +95,7 @@ private void _seconds_i(GrCall call) {
 }
 
 private void _seconds_f(GrCall call) {
-    call.setInt(cast(GrInt)(call.getFloat(0) * 1_000f));
+    call.setInt(cast(GrInt)(call.getReal(0) * 1_000f));
 }
 
 private void _minutes_i(GrCall call) {
@@ -103,7 +103,7 @@ private void _minutes_i(GrCall call) {
 }
 
 private void _minutes_f(GrCall call) {
-    call.setInt(cast(GrInt)(call.getFloat(0) * 60_000f));
+    call.setInt(cast(GrInt)(call.getReal(0) * 60_000f));
 }
 
 private void _hours_i(GrCall call) {
@@ -111,5 +111,5 @@ private void _hours_i(GrCall call) {
 }
 
 private void _hours_f(GrCall call) {
-    call.setInt(cast(GrInt)(call.getFloat(0) * 3_600_000f));
+    call.setInt(cast(GrInt)(call.getReal(0) * 3_600_000f));
 }

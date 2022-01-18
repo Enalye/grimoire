@@ -12,87 +12,110 @@ import grimoire.compiler;
 import grimoire.assembly.bytecode;
 
 private string[] instructions = [
-    "nop", "raise", "try", "catch",
-    "kill", "killall", "yield", "task", "anon_task", "new",
+    "rien",
+    "lance",
+    "essaie",
+    "attrape",
+    "meurs",
+    "quitte",
+    "suspds",
+    "tâche",
+    "tâchea",
+    "crée",
 
-    "chan.i", "chan.f", "chan.s", "chan.o",
-    "snd.i", "snd.f", "snd.s", "snd.o",
-    "rcv.i", "rcv.f", "rcv.s", "rcv.o",
-    "select_start", "select_end", "chan_try", "chan_check",
+    "knal.e",
+    "knal.r",
+    "knal.c",
+    "knal.o",
+    "env.e",
+    "env.r",
+    "env.c",
+    "env.o",
+    "rçoi.e",
+    "rçoi.r",
+    "rçoi.c",
+    "rçoi.o",
+    "sélctdb",
+    "sélctfn",
+    "essaiknal",
+    "vérifknal",
 
-    "shift.i", "shift.f", "shift.s", "shift.o",
-    
-    "lstore.i", "lstore.f", "lstore.s", "lstore.o",
-    "lstore2.i", "lstore2.f", "lstore2.s", "lstore2.o",
-    "lload.i", "lload.f", "lload.s", "lload.o",
+    "dcal.e",
+    "dcal.r",
+    "dcal.c",
+    "dcal.o",
 
-    "gstore.i", "gstore.f", "gstore.s", "gstore.o",
-    "gstore2.i", "gstore2.f", "gstore2.s", "gstore2.o",
-    "gload.i", "gload.f", "gload.s", "gload.o",
-    
-    "rstore.i", "rstore.f", "rstore.s", "rstore.o",
-    "rstore2.i", "rstore2.f", "rstore2.s", "rstore2.o",
+    "lenrg.e", "lenrg.r", "lenrg.c", "lenrg.o",
+    "lenrg2.e", "lenrg2.r", "lenrg2.c", "lenrg2.o",
+    "lchrg.e", "lchrg.r", "lchrg.c", "lchrg.o",
 
-    "fstore.i", "fstore.f", "fstore.s", "fstore.o",
-    "fload", "fload2",
-    "fload.i", "fload.f", "fload.s", "fload.o",
-    "fload2.i", "fload2.f", "fload2.s", "fload2.o",
+    "genrg.e", "genrg.r", "genrg.c", "genrg.o",
+    "genrg2.e", "genrg2.r", "genrg2.c", "genrg2.o",
+    "gchrg.e", "gchrg.r", "gchrg.c", "gchrg.o",
 
-    "const.i", "const.f", "const.b", "const.s", "meta", "null",
-    
-    "gpush.i", "gpush.f", "gpush.s", "gpush.o",
-    "gpop.i", "gpop.f", "gpop.s", "gpop.o",
+    "renrg.e", "renrg.r", "renrg.c", "renrg.o",
+    "renrg2.e", "renrg2.r", "renrg2.c", "renrg2.o",
 
-    "eq.i", "eq.f", "eq.s",
-    "neq.i", "neq.f", "neq.s",
-    "geq.i", "geq.f",
-    "leq.i", "leq.f",
-    "gt.i", "gt.f",
-    "lt.i", "lt.f",
-    "nnull.o",
+    "cenrg.e", "cenrg.r", "cenrg.c", "cenrg.o",
+    "cchrg", "cchrg2",
+    "cchrg.e", "cchrg.r", "cchrg.c", "cchrg.o",
+    "cchrg2.e", "cchrg2.r", "cchrg2.c", "cchrg2.o",
 
-    "and.i", "or.i", "not.i",
-    "cat.s",
-    "add.i", "add.f",
-    "sub.i", "sub.f",
-    "mul.i", "mul.f",
-    "div.i", "div.f",
-    "rem.i", "rem.f",
-    "neg.i", "neg.f",
-    "inc.i", "inc.f",
-    "dec.i", "dec.f",
-    
-    "copy.i", "copy.f", "copy.s", "copy.o",
-    "swap.i", "swap.f", "swap.s", "swap.o",
+    "const.e", "const.r", "const.b", "const.c", "méta", "nul",
 
-    "setup_it",
+    "gempil.e", "gempil.r", "gempil.c", "gempil.o",
+    "gdpil.e", "gdpil.r", "gdpil.c", "gdpil.o",
 
-    "loc.i", "loc.f", "loc.s", "loc.o",
-    "call", "acall", "pcall",
-    "ret", "unwind", "defer",
-    "jmp", "jmp_eq", "jmp_neq",
+    "égl.e", "égl.r", "égl.c",
+    "pégl.e", "pégl.r", "pégl.c",
+    "pgoé.e", "pgoé.r",
+    "ppoé.e", "ppoé.r",
+    "pg.e", "pg.r",
+    "pp.e", "pp.r",
+    "nnul.o",
 
-    "list.i", "list.f", "list.s", "list.o",
-    "len.i", "len.f", "len.s", "len.o",
-    "idx.i", "idx.f", "idx.s", "idx.o",
-    "idx2.i", "idx2.f", "idx2.s", "idx2.o",
-    "idx3.i", "idx3.f", "idx3.s", "idx3.o",
+    "et.e", "ou.e", "pas.e",
+    "cncat.c",
+    "plus.e", "plus.r",
+    "moins.e", "moins.r",
+    "mul.e", "mul.r",
+    "div.e", "div.r",
+    "reste.e", "reste.r",
+    "nég.e", "nég.r",
+    "incr.e", "incr.r",
+    "décr.e", "décr.r",
 
-    "cat.ni", "cat.nf", "cat.ns", "cat.no",
-    "append.i", "append.f", "append.s", "append.o",
-    "prepend.i", "prepend.f", "prepend.s", "prepend.o",
+    "copie.e", "copie.r", "copie.c", "copie.o",
+    "prmut.e", "prmut.r", "prmut.c", "prmut.o",
 
-    "eq.ni", "eq.nf", "eq.ns",
-    "neq.ni", "neq.nf", "neq.ns",
+    "prépitér",
 
-    "dbg_prfbegin", "dbg_prfend"
+    "loc.e", "loc.r", "loc.c", "loc.o",
+    "appel", "appela", "appelp",
+    "retrn", "déroule", "reporte",
+    "saut", "saut0", "sautp0",
+
+    "liste.e", "liste.r", "liste.c", "liste.o",
+    "long.e", "long.r", "long.c", "long.o",
+    "indx.e", "indx.r", "indx.c", "indx.o",
+    "indx2.e", "indx2.r", "indx2.c", "indx2.o",
+    "indx3.e", "indx3.r", "indx3.c", "indx3.o",
+
+    "cncat.ne", "cncat.nf", "cncat.ns", "cncat.no",
+    "ajoutfn.e", "ajoutfn.r", "ajoutfn.c", "ajoutfn.o",
+    "ajoutdb.e", "ajoutdb.r", "ajoutdb.c", "ajoutdb.o",
+
+    "égl.ne", "égl.nf", "égl.ns",
+    "pégl.ne", "pégl.nf", "pégl.ns",
+
+    "profldb", "proflfn"
 ];
 
-/// Dump the bytecode's instruction list in a pretty format.
+/// Dump the bytecode's instruction liste in a pretty format.
 string grDump(GrBytecode bytecode) {
     /*writeln("\n----- VM DUMP ------");
     writeln("iconsts: ", bytecode.iconsts);
-    writeln("fconsts: ", bytecode.fconsts);
+    writeln("rconsts: ", bytecode.rconsts);
     writeln("sconsts: ", bytecode.sconsts);
     writeln("\nOpcodes:");*/
 
@@ -121,10 +144,10 @@ string grDump(GrBytecode bytecode) {
             line ~= to!string(grGetInstructionUnsignedValue(opcode));
         else if(op == GrOpcode.const_int)
             line ~= to!string(bytecode.iconsts[grGetInstructionUnsignedValue(opcode)]);
-        else if(op == GrOpcode.const_float)
-            line ~= to!string(bytecode.fconsts[grGetInstructionUnsignedValue(opcode)]);
+        else if(op == GrOpcode.const_real)
+            line ~= to!string(bytecode.rconsts[grGetInstructionUnsignedValue(opcode)]);
         else if(op == GrOpcode.const_bool)
-            line ~= (grGetInstructionUnsignedValue(opcode) ? "true" : "false");
+            line ~= (grGetInstructionUnsignedValue(opcode) ? "vrai" : "faux");
         else if(op == GrOpcode.const_string || op == GrOpcode.const_meta || op == GrOpcode.debugProfileBegin)
             line ~= "\"" ~ to!string(bytecode.sconsts[grGetInstructionUnsignedValue(opcode)]) ~ "\"";
         else if(op >= GrOpcode.jump && op <= GrOpcode.jumpNotEqual)

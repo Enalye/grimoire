@@ -12,15 +12,15 @@ private final class Any {
     union {
         GrBool bvalue;
         GrInt ivalue;
-        GrFloat fvalue;
+        GrReal fvalue;
         GrString svalue;
         GrPtr ovalue;
     }
 
     enum Type {
-        bool_,
-        int_,
-        float_,
+        boolean,
+        integer,
+        real_,
         string_,
         ptr_,
         otherInt,
@@ -31,19 +31,19 @@ private final class Any {
     string typeInfo;
 
     this(GrBool value_, string typeInfo_) {
-        type = Type.bool_;
+        type = Type.boolean;
         ivalue = value_;
         typeInfo = typeInfo_;
     }
 
     this(GrInt value_, string typeInfo_) {
-        type = Type.int_;
+        type = Type.integer;
         ivalue = value_;
         typeInfo = typeInfo_;
     }
 
-    this(GrFloat value_, string typeInfo_) {
-        type = Type.float_;
+    this(GrReal value_, string typeInfo_) {
+        type = Type.real_;
         fvalue = value_;
         typeInfo = typeInfo_;
     }
@@ -66,7 +66,7 @@ package(grimoire.stdlib) void grLoadStdLibAny(GrLibrary library, GrLocale locale
 
     library.addCast(&_from_b, grBool, anyType);
     library.addCast(&_from_i, grInt, anyType);
-    library.addCast(&_from_f, grFloat, anyType);
+    library.addCast(&_from_f, grReal, anyType);
     library.addCast(&_from_s, grString, anyType);
 
     library.addCast(&_from_o, grAny("T", (type, data) {
@@ -75,13 +75,13 @@ package(grimoire.stdlib) void grLoadStdLibAny(GrLibrary library, GrLocale locale
         }), anyType);
 
     library.addCast(&_from_i2, grAny("T", (type, data) {
-            return type.base == GrType.Base.enum_
+            return type.base == GrType.Base.enumeration
             || type.base == GrType.Base.function_ || type.base == GrType.Base.task;
         }), anyType);
 
     library.addCast(&_to_b, anyType, grBool);
     library.addCast(&_to_i, anyType, grInt);
-    library.addCast(&_to_f, anyType, grFloat);
+    library.addCast(&_to_f, anyType, grReal);
     library.addCast(&_to_s, anyType, grString);
 
     library.addPrimitive(&_trace, "trace", [anyType]);
@@ -94,13 +94,13 @@ package(grimoire.stdlib) void grLoadStdLibAny(GrLibrary library, GrLocale locale
         library.addOperator(&_opBinaryAny!op, op, [anyType, anyType], anyType);
         library.addOperator(&_opBinaryScalarAny!op, op, [anyType, grInt], anyType);
         library.addOperator(&_opBinaryScalarRightAny!op, op, [
-                grFloat, anyType
+                grReal, anyType
                 ], anyType);
 
         library.addOperator(&_opBinaryVec2f!op, op, [vec2fType, vec2fType], vec2fType);
-        library.addOperator(&_opBinaryScalarVec2f!op, op, [vec2fType, grFloat], vec2fType);
+        library.addOperator(&_opBinaryScalarVec2f!op, op, [vec2fType, grReal], vec2fType);
         library.addOperator(&_opBinaryScalarRightVec2f!op, op, [
-                grFloat, vec2fType
+                grReal, vec2fType
                 ], vec2fType);
     }
     static foreach (op; ["==", "!=", ">=", "<=", ">", "<"]) {
@@ -123,7 +123,7 @@ private void _from_i(GrCall call) {
 }
 
 private void _from_f(GrCall call) {
-    call.setForeign(new Any(call.getFloat(0), call.getInType(0)));
+    call.setForeign(new Any(call.getReal(0), call.getInType(0)));
 }
 
 private void _from_s(GrCall call) {
@@ -145,13 +145,13 @@ private void _to_b(GrCall call) {
         return;
     }
     switch (any.type) with (Any.Type) {
-    case bool_:
+    case boolean:
         call.setBool(any.bvalue);
         return;
-    case int_:
+    case integer:
         call.setBool(any.ivalue != 0);
         return;
-    case float_:
+    case real_:
         call.setBool(any.fvalue != .0);
         return;
     default:
@@ -167,10 +167,10 @@ private void _to_i(GrCall call) {
         return;
     }
     switch (any.type) with (Any.Type) {
-    case int_:
+    case integer:
         call.setInt(any.ivalue);
         return;
-    case float_:
+    case real_:
         call.setInt(cast(int) any.fvalue);
         return;
     default:
@@ -186,11 +186,11 @@ private void _to_f(GrCall call) {
         return;
     }
     switch (any.type) with (Any.Type) {
-    case int_:
-        call.setFloat(cast(float) any.ivalue);
+    case integer:
+        call.setReal(cast(real) any.ivalue);
         return;
-    case float_:
-        call.setFloat(any.fvalue);
+    case real_:
+        call.setReal(any.fvalue);
         return;
     default:
         call.raise("ConvError");
@@ -207,13 +207,13 @@ private void _to_s(GrCall call) {
         return;
     }
     switch (any.type) with (Any.Type) {
-    case bool_:
+    case boolean:
         call.setString(to!GrString(any.bvalue));
         return;
-    case int_:
+    case integer:
         call.setString(to!GrString(any.ivalue));
         return;
-    case float_:
+    case real_:
         call.setString(to!GrString(any.fvalue));
         return;
     case string_:

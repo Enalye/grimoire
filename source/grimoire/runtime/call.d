@@ -21,8 +21,8 @@ final class GrCall {
         GrCallback _callback;
 
         uint[] _parameters;
-        int _iparams, _fparams, _sparams, _oparams;
-        int _iresults, _fresults, _sresults, _oresults;
+        int _iparams, _rparams, _sparams, _oparams;
+        int _iresults, _rresults, _sresults, _oresults;
         bool _isInitialized;
         string[] _inSignature, _outSignature;
     }
@@ -45,7 +45,7 @@ final class GrCall {
         _parameters = primRef.parameters.dup;
 
         _iparams = cast(int) primRef.iparams;
-        _fparams = cast(int) primRef.fparams;
+        _rparams = cast(int) primRef.fparams;
         _sparams = cast(int) primRef.sparams;
         _oparams = cast(int) primRef.oparams;
 
@@ -56,7 +56,7 @@ final class GrCall {
     /// The actual runtime call to the primitive.
     void call(GrContext context) {
         _iresults = 0;
-        _fresults = 0;
+        _rresults = 0;
         _sresults = 0;
         _oresults = 0;
         _hasError = false;
@@ -65,7 +65,7 @@ final class GrCall {
         _callback(this);
 
         _context.istackPos -= (_iparams - _iresults);
-        _context.fstackPos -= (_fparams - _fresults);
+        _context.rstackPos -= (_rparams - _rresults);
         _context.sstackPos -= (_sparams - _sresults);
         _context.ostackPos -= (_oparams - _oresults);
 
@@ -83,7 +83,7 @@ final class GrCall {
 
     alias getBool = getParameter!GrBool;
     alias getInt = getParameter!GrInt;
-    alias getFloat = getParameter!GrFloat;
+    alias getReal = getParameter!GrReal;
     alias getString = getParameter!GrString;
     alias getPtr = getParameter!GrPtr;
 
@@ -95,12 +95,12 @@ final class GrCall {
         return cast(long) getParameter!GrInt(index);
     }
 
-    float getFloat32(uint index) {
-        return cast(float) getParameter!GrFloat(index);
+    real getReal32(uint index) {
+        return cast(real) getParameter!GrReal(index);
     }
 
-    double getFloat64(uint index) {
-        return cast(double) getParameter!GrFloat(index);
+    double getReal64(uint index) {
+        return cast(double) getParameter!GrReal(index);
     }
 
     GrObject getObject(uint index) {
@@ -115,8 +115,8 @@ final class GrCall {
         return cast(GrIntList) getParameter!GrPtr(index);
     }
 
-    GrFloatList getFloatList(uint index) {
-        return cast(GrFloatList) getParameter!GrPtr(index);
+    GrRealList getRealList(uint index) {
+        return cast(GrRealList) getParameter!GrPtr(index);
     }
 
     GrStringList getStringList(uint index) {
@@ -131,8 +131,8 @@ final class GrCall {
         return cast(GrIntChannel) getParameter!GrPtr(index);
     }
 
-    GrFloatChannel getFloatChannel(uint index) {
-        return cast(GrFloatChannel) getParameter!GrPtr(index);
+    GrRealChannel getRealChannel(uint index) {
+        return cast(GrRealChannel) getParameter!GrPtr(index);
     }
 
     GrStringChannel getStringChannel(uint index) {
@@ -167,10 +167,10 @@ final class GrCall {
             return _context.istack[(_context.istackPos - _iparams) + (
                     _parameters[index] & 0xFFFF) + 1] > 0;
         }
-        else static if (is(T == GrFloat)) {
+        else static if (is(T == GrReal)) {
             if ((_parameters[index] & 0x20000) == 0)
-                throw new Exception("parameter " ~ to!string(index) ~ " is not a GrFloat");
-            return _context.fstack[(_context.fstackPos - _fparams) + (_parameters[index] & 0xFFFF)
+                throw new Exception("parameter " ~ to!string(index) ~ " is not a GrReal");
+            return _context.rstack[(_context.rstackPos - _rparams) + (_parameters[index] & 0xFFFF)
                 + 1];
         }
         else static if (is(T == GrString)) {
@@ -189,7 +189,7 @@ final class GrCall {
 
     alias setBool = setResult!GrBool;
     alias setInt = setResult!GrInt;
-    alias setFloat = setResult!GrFloat;
+    alias setReal = setResult!GrReal;
     alias setString = setResult!GrString;
     alias setPtr = setResult!GrPtr;
 
@@ -201,12 +201,12 @@ final class GrCall {
         setResult!GrInt(cast(GrInt) value);
     }
 
-    void setFloat32(float value) {
-        setResult!GrFloat(cast(GrFloat) value);
+    void setReal32(real value) {
+        setResult!GrReal(cast(GrReal) value);
     }
 
-    void setFloat64(double value) {
-        setResult!GrFloat(cast(GrFloat) value);
+    void setReal64(double value) {
+        setResult!GrReal(cast(GrReal) value);
     }
 
     void setObject(GrObject value) {
@@ -221,7 +221,7 @@ final class GrCall {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
-    void setFloatList(GrFloatList value) {
+    void setRealList(GrRealList value) {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
@@ -237,7 +237,7 @@ final class GrCall {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
-    void setFloatChannel(GrFloatChannel value) {
+    void setRealChannel(GrRealChannel value) {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
@@ -272,12 +272,12 @@ final class GrCall {
                 _context.istack.length *= 2;
             _context.istack[idx] = value ? 1 : 0;
         }
-        else static if (is(T == GrFloat)) {
-            _fresults++;
-            const size_t idx = (_context.fstackPos - _fparams) + _fresults;
-            if (idx >= _context.fstack.length)
-                _context.fstack.length *= 2;
-            _context.fstack[idx] = value;
+        else static if (is(T == GrReal)) {
+            _rresults++;
+            const size_t idx = (_context.rstackPos - _rparams) + _rresults;
+            if (idx >= _context.rstack.length)
+                _context.rstack.length *= 2;
+            _context.rstack[idx] = value;
         }
         else static if (is(T == GrString)) {
             _sresults++;
@@ -303,8 +303,8 @@ final class GrCall {
         return _context.engine.getIntVariable(name);
     }
 
-    GrFloat getFloatVariable(string name) {
-        return _context.engine.getFloatVariable(name);
+    GrReal getRealVariable(string name) {
+        return _context.engine.getRealVariable(name);
     }
 
     GrString getStringVariable(string name) {
@@ -323,8 +323,8 @@ final class GrCall {
         return _context.engine.getIntListVariable(name);
     }
 
-    GrFloatList getFloatListVariable(string name) {
-        return _context.engine.getFloatListVariable(name);
+    GrRealList getRealListVariable(string name) {
+        return _context.engine.getRealListVariable(name);
     }
 
     GrStringList getStringListVariable(string name) {
@@ -339,8 +339,8 @@ final class GrCall {
         return _context.engine.getIntChannelVariable(name);
     }
 
-    GrFloatChannel getFloatChannelVariable(string name) {
-        return _context.engine.getFloatChannelVariable(name);
+    GrRealChannel getRealChannelVariable(string name) {
+        return _context.engine.getRealChannelVariable(name);
     }
 
     GrStringChannel getStringChannelVariable(string name) {
@@ -367,8 +367,8 @@ final class GrCall {
         _context.engine.setIntVariable(name, value);
     }
 
-    void setFloatVariable(string name, GrFloat value) {
-        _context.engine.setFloatVariable(name, value);
+    void setRealVariable(string name, GrReal value) {
+        _context.engine.setRealVariable(name, value);
     }
 
     void setStringVariable(string name, GrString value) {
@@ -387,8 +387,8 @@ final class GrCall {
         _context.engine.setIntListVariable(name, value);
     }
 
-    void setFloatListVariable(string name, GrFloatList value) {
-        _context.engine.setFloatListVariable(name, value);
+    void setRealListVariable(string name, GrRealList value) {
+        _context.engine.setRealListVariable(name, value);
     }
 
     void setStringListVariable(string name, GrStringList value) {
@@ -403,8 +403,8 @@ final class GrCall {
         _context.engine.setIntChannelVariable(name, value);
     }
 
-    void setFloatChannelVariable(string name, GrFloatChannel value) {
-        _context.engine.setFloatChannelVariable(name, value);
+    void setRealChannelVariable(string name, GrRealChannel value) {
+        _context.engine.setRealChannelVariable(name, value);
     }
 
     void setStringChannelVariable(string name, GrStringChannel value) {

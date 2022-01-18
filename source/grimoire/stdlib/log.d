@@ -31,14 +31,14 @@ package(grimoire.stdlib) void grLoadStdLibLog(GrLibrary library, GrLocale locale
     //print
     library.addPrimitive(&_print_i, printSymbol, [grInt]);
     library.addPrimitive(&_print_b, printSymbol, [grBool]);
-    library.addPrimitive(&_print_f, printSymbol, [grFloat]);
+    library.addPrimitive(&_print_f, printSymbol, [grReal]);
     library.addPrimitive(&_print_s, printSymbol, [grString]);
     library.addPrimitive(&_print_ni, printSymbol, [grIntList]);
     library.addPrimitive(&_print_nb, printSymbol, [grBoolList]);
-    library.addPrimitive(&_print_nf, printSymbol, [grFloatList]);
+    library.addPrimitive(&_print_nf, printSymbol, [grRealList]);
     library.addPrimitive(&_print_ns, printSymbol, [grStringList]);
     library.addPrimitive(&_print_enum, printSymbol, [
-            grAny("T", (type, data) { return type.base == GrType.Base.enum_; })
+            grAny("T", (type, data) { return type.base == GrType.Base.enumeration; })
         ]
     );
     library.addPrimitive(&_print_chan, printSymbol, [
@@ -75,7 +75,7 @@ private void _print_i(GrCall call) {
 }
 
 private void _print_f(GrCall call) {
-    _stdOut(to!string(call.getFloat(0)));
+    _stdOut(to!string(call.getReal(0)));
 }
 
 private void _print_ni(GrCall call) {
@@ -89,7 +89,7 @@ private void _print_nb(GrCall call) {
 }
 
 private void _print_nf(GrCall call) {
-    auto ary = call.getFloatList(0);
+    auto ary = call.getRealList(0);
     _stdOut(to!string(ary.data));
 }
 

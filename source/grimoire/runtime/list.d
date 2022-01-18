@@ -10,7 +10,7 @@ import grimoire.compiler.primitive;
 import grimoire.runtime.call;
 
 alias GrIntList = GrList!GrInt;
-alias GrFloatList = GrList!GrFloat;
+alias GrRealList = GrList!GrReal;
 alias GrStringList = GrList!GrString;
 alias GrObjectList = GrList!GrPtr;
 

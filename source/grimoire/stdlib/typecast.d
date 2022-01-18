@@ -10,16 +10,16 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibTypecast(GrLibrary library, GrLocale locale) {
     //As int
-    library.addCast(&typecast_r2i, grFloat, grInt, true);
+    library.addCast(&typecast_r2i, grReal, grInt, true);
     library.addCast(&typecast_b2i, grBool, grInt);
 
-    //As GrFloat
-    library.addCast(&typecast_i2r, grInt, grFloat);
+    //As GrReal
+    library.addCast(&typecast_i2r, grInt, grReal);
 
     //As string
     library.addCast(&typecast_b2s, grBool, grString);
     library.addCast(&typecast_i2s, grInt, grString);
-    library.addCast(&typecast_r2s, grFloat, grString);
+    library.addCast(&typecast_r2s, grReal, grString);
     library.addCast(&typecast_as2s, grStringList, grString);
 
     //As String List
@@ -28,16 +28,16 @@ package(grimoire.stdlib) void grLoadStdLibTypecast(GrLibrary library, GrLocale l
 
 //As int
 private void typecast_r2i(GrCall call) {
-    call.setInt(to!GrInt(call.getFloat(0)));
+    call.setInt(to!GrInt(call.getReal(0)));
 }
 
 private void typecast_b2i(GrCall call) {
     call.setInt(to!GrInt(call.getBool(0)));
 }
 
-//As float
+//As real
 private void typecast_i2r(GrCall call) {
-    call.setFloat(to!GrFloat(call.getInt(0)));
+    call.setReal(to!GrReal(call.getInt(0)));
 }
 
 //As string
@@ -50,7 +50,7 @@ private void typecast_i2s(GrCall call) {
 }
 
 private void typecast_r2s(GrCall call) {
-    call.setString(to!GrString(call.getFloat(0)));
+    call.setString(to!GrString(call.getReal(0)));
 }
 
 private void typecast_as2s(GrCall call) {

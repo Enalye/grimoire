@@ -83,7 +83,7 @@ final class GrCompiler {
         foreach (func; parser.actions)
             nbOpcodes += cast(uint) func.instructions.length;
 
-        //We leave space for kill instructions.
+        //We leave space for die instructions.
         nbOpcodes += 2;
 
         //Opcodes
@@ -115,7 +115,7 @@ final class GrCompiler {
         }
 
         //Then we terminate the global section
-        opcodes[lastOpcodeCount] = makeOpcode(cast(uint) GrOpcode.kill_, 0u);
+        opcodes[lastOpcodeCount] = makeOpcode(cast(uint) GrOpcode.die, 0u);
         lastOpcodeCount++;
 
         //Every other functions.
@@ -198,12 +198,12 @@ final class GrCompiler {
 
         //Constants.
         bytecode.iconsts = parser.iconsts;
-        bytecode.fconsts = parser.fconsts;
+        bytecode.rconsts = parser.rconsts;
         bytecode.sconsts = parser.sconsts;
 
         //Global variables.
         bytecode.iglobalsCount = parser.iglobalsCount;
-        bytecode.fglobalsCount = parser.fglobalsCount;
+        bytecode.rglobalsCount = parser.rglobalsCount;
         bytecode.sglobalsCount = parser.sglobalsCount;
         bytecode.oglobalsCount = parser.oglobalsCount;
 
@@ -211,18 +211,18 @@ final class GrCompiler {
             GrBytecode.Variable variable;
             variable.index = variableDef.register;
             final switch (variableDef.type.base) with (GrType.Base) {
-            case bool_:
-            case int_:
+            case boolean:
+            case integer:
             case function_:
             case task:
-            case enum_:
+            case enumeration:
             case channel:
                 variable.typeMask = 0x1;
                 variable.ivalue = variableDef.isInitialized ? variableDef.ivalue : 0;
                 break;
-            case float_:
+            case real_:
                 variable.typeMask = 0x2;
-                variable.fvalue = variableDef.isInitialized ? variableDef.fvalue : 0f;
+                variable.rvalue = variableDef.isInitialized ? variableDef.rvalue : 0f;
                 break;
             case string_:
                 variable.typeMask = 0x4;
@@ -268,16 +268,16 @@ final class GrCompiler {
                 const GrType type = inSignature[i];
                 bytecode.primitives[id].inSignature ~= grMangle(type);
                 final switch (type.base) with (GrType.Base) {
-                case bool_:
-                case int_:
+                case boolean:
+                case integer:
                 case function_:
                 case task:
-                case enum_:
+                case enumeration:
                     bytecode.primitives[id].parameters ~= 0x10000 | (
                             bytecode.primitives[id].iparams & 0xFFFF);
                     bytecode.primitives[id].iparams++;
                     break;
-                case float_:
+                case real_:
                     bytecode.primitives[id].parameters ~= 0x20000 | (
                             bytecode.primitives[id].fparams & 0xFFFF);
                     bytecode.primitives[id].fparams++;
