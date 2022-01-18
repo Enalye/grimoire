@@ -11,9 +11,9 @@ import grimoire.assembly.symbol;
 /// Low-level instructions for the VM.
 enum GrOpcode {
     nop,
-    raise_,
-    try_,
-    catch_,
+    error,
+    isolate,
+    capture,
     die,
     quit,
     suspend,

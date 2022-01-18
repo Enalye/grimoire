@@ -1927,7 +1927,7 @@ final class GrParser {
                 skipDeclaration();
                 break;
             case type_:
-            case template_:
+            case instance:
             default:
                 skipExpression();
                 break;
@@ -1958,7 +1958,7 @@ final class GrParser {
             case enumeration:
                 skipDeclaration();
                 break;
-            case template_:
+            case instance:
             default:
                 skipExpression();
                 break;
@@ -2002,7 +2002,7 @@ final class GrParser {
             case autoType:
             case identifier:
             case type_:
-            case template_:
+            case instance:
                 skipExpression();
                 break;
             default:
@@ -2032,8 +2032,8 @@ final class GrParser {
             case class_:
                 skipDeclaration();
                 break;
-            case template_:
-                parseTemplateDeclaration(isPublic);
+            case instance:
+                parseInstanceDeclaration(isPublic);
                 break;
             case taskType:
                 if (get(1).type != GrLexemeType.identifier && get(1).type != GrLexemeType.lesser)
@@ -2862,7 +2862,7 @@ final class GrParser {
         skipBlock();
     }
 
-    private void parseTemplateDeclaration(bool isPublic) {
+    private void parseInstanceDeclaration(bool isPublic) {
         checkAdvance();
         if (get().type != GrLexemeType.lesser)
             logError(getError(Error.missingTemplateSignature),
@@ -3058,10 +3058,10 @@ final class GrParser {
             case loop:
                 parseLoopStatement();
                 break;
-            case raise_:
-                parseRaiseStatement();
+            case error:
+                parseErrorStatement();
                 break;
-            case try_:
+            case isolate:
                 parseExceptionHandler();
                 break;
             case return_:
@@ -3213,14 +3213,14 @@ final class GrParser {
                     skipParenthesis();
                 skipBlock();
                 break;
-            case raise_:
+            case error:
                 checkAdvance();
                 skipBlock();
                 break;
-            case try_:
+            case isolate:
                 checkAdvance();
                 skipBlock();
-                if (get().type == GrLexemeType.catch_) {
+                if (get().type == GrLexemeType.capture) {
                     checkAdvance();
                     skipParenthesis();
                     skipBlock();
@@ -3292,63 +3292,74 @@ final class GrParser {
     }
 
     //Exception handling
-    private void parseRaiseStatement() {
+    private void parseErrorStatement() {
         advance();
         GrType type = parseSubExpression(GR_SUBEXPR_TERMINATE_SEMICOLON | GR_SUBEXPR_EXPECTING_VALUE)
             .type;
         checkAdvance();
         convertType(type, grString);
-        addInstruction(GrOpcode.raise_);
+        addInstruction(GrOpcode.error);
         checkDeferStatement();
     }
 
     private void parseExceptionHandler() {
         advance();
 
-        const auto tryPosition = currentFunction.instructions.length;
-        addInstruction(GrOpcode.try_);
+        const auto isolatePosition = currentFunction.instructions.length;
+        addInstruction(GrOpcode.isolate);
 
         parseBlock();
 
         const uint fileId = get().fileId;
-        if (get().type != GrLexemeType.catch_)
-            logError(getError(Error.tryMustBeFollowedByCatch),
-                format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexemeType.catch_), getPrettyLexemeType(
-                    get().type)));
-        advance();
+        if (get().type == GrLexemeType.capture) {
+            advance();
 
-        if (get().type != GrLexemeType.leftParenthesis)
-            logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexemeType.catch_)),
-                format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexemeType.leftParenthesis), getPrettyLexemeType(get().type)));
-        advance();
+            if (get().type != GrLexemeType.leftParenthesis)
+                logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexemeType.else_)),
+                    format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                        GrLexemeType.leftParenthesis), getPrettyLexemeType(get().type)));
+            advance();
 
-        if (get().type != GrLexemeType.identifier)
-            logError(getError(Error.missingIdentifier),
-                format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get().type)));
-        GrVariable errVariable = registerLocalVariable(get().svalue, grString);
+            if (get().type != GrLexemeType.identifier)
+                logError(getError(Error.missingIdentifier),
+                    format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get().type)));
+            GrVariable errVariable = registerLocalVariable(get().svalue, grString);
 
-        advance();
-        if (get().type != GrLexemeType.rightParenthesis)
-            logError(getError(Error.missingParentheses),
-                format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexemeType.rightParenthesis), getPrettyLexemeType(get().type)));
-        advance();
+            advance();
+            if (get().type != GrLexemeType.rightParenthesis)
+                logError(getError(Error.missingParentheses),
+                    format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                        GrLexemeType.rightParenthesis), getPrettyLexemeType(get().type)));
+            advance();
 
-        const auto catchPosition = currentFunction.instructions.length;
-        addInstruction(GrOpcode.catch_);
+            const auto capturePosition = currentFunction.instructions.length;
+            addInstruction(GrOpcode.capture);
 
-        addInstruction(GrOpcode.globalPop_string);
-        addSetInstruction(errVariable, fileId, grString);
+            addInstruction(GrOpcode.globalPop_string);
+            addSetInstruction(errVariable, fileId, grString);
 
-        parseBlock(true);
+            parseBlock(true);
 
-        const auto endPosition = currentFunction.instructions.length;
+            const auto endPosition = currentFunction.instructions.length;
 
-        setInstruction(GrOpcode.try_, cast(uint) tryPosition,
-            cast(uint)(catchPosition - tryPosition), true);
-        setInstruction(GrOpcode.catch_, cast(uint) catchPosition,
-            cast(uint)(endPosition - catchPosition), true);
+            setInstruction(GrOpcode.isolate, cast(uint) isolatePosition,
+                cast(uint)(capturePosition - isolatePosition), true);
+            setInstruction(GrOpcode.capture, cast(uint) capturePosition,
+                cast(uint)(endPosition - capturePosition), true);
+        }
+        else {
+            const auto capturePosition = currentFunction.instructions.length;
+            addInstruction(GrOpcode.capture);
+            addInstruction(GrOpcode.globalPop_string);
+            addInstruction(GrOpcode.shiftStack_string, 1, true);
+
+            const auto endPosition = currentFunction.instructions.length;
+
+            setInstruction(GrOpcode.isolate, cast(uint) isolatePosition,
+                cast(uint)(capturePosition - isolatePosition), true);
+            setInstruction(GrOpcode.capture, cast(uint) capturePosition,
+                cast(uint)(endPosition - capturePosition), true);
+        }
     }
 
     //defer
@@ -6775,7 +6786,6 @@ final class GrParser {
         expected1ParamFoundX,
         expected1ParamFoundXs,
         missingCurlyBraces,
-        tryMustBeFollowedByCatch,
         deferInsideDefer,
         cantDeferInsideDefer,
         xInsideDefer,
@@ -7001,7 +7011,6 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.expected1ParamFoundX: "expected 1 parameter, found %s parameter",
                 Error.expected1ParamFoundXs: "expected 1 parameter, found %s parameters",
                 Error.missingCurlyBraces: "missing curly braces",
-                Error.tryMustBeFollowedByCatch: "a `try` must always be followed by a `catch`",
                 Error.expectedIntFoundX: "expected integer, found `%s`",
                 Error.deferInsideDefer: "`defer` inside another `defer`",
                 Error.cantDeferInsideDefer: "can't `defer` inside another `defer`",
@@ -7214,7 +7223,6 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.expected1ParamFoundX: "1 paramètre attendu, %s paramètre trouvé",
                 Error.expected1ParamFoundXs: "1 paramètre attendu, %s paramètres trouvés",
                 Error.missingCurlyBraces: "accolades manquantes",
-                Error.tryMustBeFollowedByCatch: "un `essaie` doit toujours s’accompagner d’un `récup`",
                 Error.expectedIntFoundX: "entier attendu, `%s` trouvé",
                 Error.deferInsideDefer: "`décale` à l’intérieur d’un autre `décale`",
                 Error.cantDeferInsideDefer: "impossible de faire un `décale` dans un autre `defer`",

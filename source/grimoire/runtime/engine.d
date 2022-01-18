@@ -518,7 +518,7 @@ class GrEngine {
                 case nop:
                     context.pc++;
                     break;
-                case raise_:
+                case error:
                     if (!context.isPanicking) {
                         //Error message.
                         _sglobalStackIn ~= context.sstack[context.sstackPos];
@@ -568,12 +568,12 @@ class GrEngine {
                         continue contextsLabel;
                     }
                     break;
-                case try_:
+                case isolate:
                     context.callStack[context.stackPos].exceptionHandlers ~= context.pc + grGetInstructionSignedValue(
                         opcode);
                     context.pc++;
                     break;
-                case catch_:
+                case capture:
                     context.callStack[context.stackPos].exceptionHandlers.length--;
                     if (context.isPanicking) {
                         context.isPanicking = false;

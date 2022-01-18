@@ -29,9 +29,9 @@ enum GrLexemeType {
     at,
     pointer,
     as,
-    try_,
-    catch_,
-    raise_,
+    isolate,
+    capture,
+    error,
     defer,
     assign,
     bitwiseAndAssign,
@@ -87,7 +87,7 @@ enum GrLexemeType {
     action,
     class_,
     enumeration,
-    template_,
+    instance,
     new_,
     copy,
     send,
@@ -890,9 +890,8 @@ package final class GrLexer {
         case "enumeration":
             lex.type = GrLexemeType.enumeration;
             break;
-        case "patron":
-        case "template":
-            lex.type = GrLexemeType.template_;
+        case "instance":
+            lex.type = GrLexemeType.instance;
             break;
         case "si":
         case "if":
@@ -968,17 +967,16 @@ package final class GrLexer {
         case "as":
             lex.type = GrLexemeType.as;
             break;
-        case "essaie":
-        case "try":
-            lex.type = GrLexemeType.try_;
+        case "isole":
+        case "isolate":
+            lex.type = GrLexemeType.isolate;
             break;
-        case "attrape":
-        case "catch":
-            lex.type = GrLexemeType.catch_;
+        case "capture":
+            lex.type = GrLexemeType.capture;
             break;
-        case "lance":
-        case "throw":
-            lex.type = GrLexemeType.raise_;
+        case "erreur":
+        case "error":
+            lex.type = GrLexemeType.error;
             break;
         case "décale":
         case "defer":
@@ -1260,15 +1258,15 @@ string grGetPrettyLexemeType(GrLexemeType operator, GrLocale locale = GrLocale.e
     immutable string[][GrLocale.max + 1] lexemeTypeStrTable = [
         [
             "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&",
-            "as", "try", "catch", "throw", "defer", "=", "&=", "|=", "^=",
+            "as", "isolate", "capture", "error", "defer", "=", "&=", "|=", "^=",
             "&&=", "||=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+", "-",
             "&", "|", "^", "&&", "||", "+", "-", "*", "/", "~", "%", "**",
             "==", "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->",
             "=>", "~", "!", "++", "--", "identifier", "const_integer",
             "const_float", "const_bool", "const_string", "null", "public",
-            "type", "action", "class", "enumeration", "template", "new", "copy",
+            "type", "action", "class", "enumeration", "instance", "new", "copy",
             "send",
-            "receive", "int", "float", "bool", "string", "list", "chan",
+            "receive", "integer", "real", "boolean", "string", "list", "channel",
             "function", "task", "let", "if", "unless", "else", "alternative",
             "select",
             "case", "while", "do", "until", "for", "loop", "return", "self",
@@ -1276,15 +1274,15 @@ string grGetPrettyLexemeType(GrLexemeType operator, GrLocale locale = GrLocale.e
         ],
         [
             "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&",
-            "en", "essaie", "récupère", "lance", "décale", "=", "&=", "|=",
+            "en", "isole", "capture", "erreur", "reporte", "=", "&=", "|=",
             "^=", "&&=", "||=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+",
             "-", "&", "|", "^", "&&", "||", "+", "-", "*", "/", "~", "%",
             "**", "==", "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>",
             "->", "=>", "~", "!", "++", "--", "identificateur", "entier_const",
             "réel_const", "bool_const", "chaîne_const", "nul", "public",
-            "type", "action", "classe", "énumération", "patron", "crée",
+            "type", "action", "classe", "énumération", "instance", "crée",
             "copie",
-            "envoie", "reçois", "ent", "réel", "bool", "chaîne", "liste",
+            "envoie", "reçois", "entier", "réel", "booléen", "chaîne", "liste",
             "canal", "fonction", "tâche", "soit", "si", "sauf", "sinon",
             "alternative",
             "sélectionne", "cas", "tant", "fais", "jusque", "pour", "boucle",

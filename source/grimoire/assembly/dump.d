@@ -13,9 +13,9 @@ import grimoire.assembly.bytecode;
 
 private string[] instructions = [
     "rien",
-    "lance",
-    "essaie",
-    "attrape",
+    "erreur",
+    "isole",
+    "captr",
     "meurs",
     "quitte",
     "suspds",
@@ -152,7 +152,7 @@ string grDump(GrBytecode bytecode) {
             line ~= "\"" ~ to!string(bytecode.sconsts[grGetInstructionUnsignedValue(opcode)]) ~ "\"";
         else if(op >= GrOpcode.jump && op <= GrOpcode.jumpNotEqual)
             line ~= to!string(i + grGetInstructionSignedValue(opcode));
-        else if(op == GrOpcode.defer || op == GrOpcode.try_ || op == GrOpcode.catch_ || op == GrOpcode.tryChannel)
+        else if(op == GrOpcode.defer || op == GrOpcode.isolate || op == GrOpcode.capture || op == GrOpcode.tryChannel)
             line ~= to!string(i + grGetInstructionSignedValue(opcode));
 
         i++;
