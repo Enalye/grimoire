@@ -56,10 +56,13 @@ final class GrParser {
         bool isTypeChecking;
 
         /// Number of int based global variables declared.
-        uint iglobalsCount, /// Number of real based global variables declared.
-            rglobalsCount, /// Number of string based global variables declared.
-            sglobalsCount, /// Number of ptr based global variables declared.
-            oglobalsCount;
+        uint iglobalsCount;
+        /// Number of real based global variables declared.
+        uint rglobalsCount;
+        /// Number of string based global variables declared.
+        uint sglobalsCount;
+        /// Number of ptr based global variables declared.
+        uint oglobalsCount;
 
         GrLocale _locale;
     }
@@ -824,29 +827,29 @@ final class GrParser {
         currentFunction.instructions[index] = instruction;
     }
 
-    private bool isBinaryOperator(GrLexemeType lexType) {
-        if (lexType >= GrLexemeType.bitwiseAnd && lexType <= GrLexemeType.arrow)
+    private bool isBinaryOperator(GrLexeme.Type lexType) {
+        if (lexType >= GrLexeme.Type.bitwiseAnd && lexType <= GrLexeme.Type.arrow)
             return true;
-        else if (lexType == GrLexemeType.send)
-            return true;
-        else
-            return false;
-    }
-
-    private bool isUnaryOperator(GrLexemeType lexType) {
-        if (lexType >= GrLexemeType.plus && lexType <= GrLexemeType.minus)
-            return true;
-        else if (lexType >= GrLexemeType.increment && lexType <= GrLexemeType.decrement)
-            return true;
-        else if (lexType == GrLexemeType.not || lexType == GrLexemeType.bitwiseNot)
-            return true;
-        else if (lexType == GrLexemeType.receive)
+        else if (lexType == GrLexeme.Type.send)
             return true;
         else
             return false;
     }
 
-    private GrType addCustomBinaryOperator(GrLexemeType lexType, GrType leftType,
+    private bool isUnaryOperator(GrLexeme.Type lexType) {
+        if (lexType >= GrLexeme.Type.plus && lexType <= GrLexeme.Type.minus)
+            return true;
+        else if (lexType >= GrLexeme.Type.increment && lexType <= GrLexeme.Type.decrement)
+            return true;
+        else if (lexType == GrLexeme.Type.not || lexType == GrLexeme.Type.bitwiseNot)
+            return true;
+        else if (lexType == GrLexeme.Type.receive)
+            return true;
+        else
+            return false;
+    }
+
+    private GrType addCustomBinaryOperator(GrLexeme.Type lexType, GrType leftType,
         GrType rightType, uint fileId) {
         string name = "@op_" ~ getPrettyLexemeType(lexType);
         GrType[] signature = [leftType, rightType];
@@ -877,7 +880,7 @@ final class GrParser {
         return grVoid;
     }
 
-    private GrType addCustomUnaryOperator(GrLexemeType lexType, const GrType type, uint fileId) {
+    private GrType addCustomUnaryOperator(GrLexeme.Type lexType, const GrType type, uint fileId) {
         string name = "@op_" ~ getPrettyLexemeType(lexType);
         GrType[] signature = [type];
 
@@ -907,7 +910,7 @@ final class GrParser {
         return grVoid;
     }
 
-    private GrType addBinaryOperator(GrLexemeType lexType, const GrType leftType,
+    private GrType addBinaryOperator(GrLexeme.Type lexType, const GrType leftType,
         const GrType rightType, uint fileId) {
         if (leftType.base == GrType.Base.internalTuple
             || rightType.base == GrType.Base.internalTuple)
@@ -926,7 +929,7 @@ final class GrParser {
                 resultType = addCustomBinaryOperator(lexType, leftType, rightType, fileId);
             }
         }
-        else if (lexType == GrLexemeType.concatenate
+        else if (lexType == GrLexeme.Type.concatenate
             && leftType.base == GrType.Base.list_ && leftType != rightType) {
             const GrType subType = grUnmangle(leftType.mangledType);
             convertType(rightType, subType, fileId);
@@ -958,7 +961,7 @@ final class GrParser {
             }
             resultType = leftType;
         }
-        else if (lexType == GrLexemeType.concatenate
+        else if (lexType == GrLexeme.Type.concatenate
             && rightType.base == GrType.Base.list_ && leftType != rightType) {
             const GrType subType = grUnmangle(rightType.mangledType);
             convertType(leftType, subType, fileId);
@@ -990,12 +993,12 @@ final class GrParser {
             }
             resultType = rightType;
         }
-        else if (lexType == GrLexemeType.concatenate
+        else if (lexType == GrLexeme.Type.concatenate
             && leftType.base == GrType.Base.string_ && leftType != rightType) {
             convertType(rightType, leftType, fileId);
             resultType = addInternalOperator(lexType, leftType);
         }
-        else if (lexType == GrLexemeType.concatenate
+        else if (lexType == GrLexeme.Type.concatenate
             && rightType.base == GrType.Base.string_ && leftType != rightType) {
             convertType(leftType, rightType, fileId);
             resultType = addInternalOperator(lexType, rightType, true);
@@ -1036,7 +1039,7 @@ final class GrParser {
         return resultType;
     }
 
-    private GrType addUnaryOperator(GrLexemeType lexType, const GrType type, uint fileId) {
+    private GrType addUnaryOperator(GrLexeme.Type lexType, const GrType type, uint fileId) {
         if (type.base == GrType.Base.internalTuple)
             logError(getError(Error.cantUseOpOnMultipleVal), getError(Error.exprYieldsMultipleVal));
         GrType resultType = GrType.Base.void_;
@@ -1052,7 +1055,7 @@ final class GrParser {
         return resultType;
     }
 
-    private GrType addOperator(GrLexemeType lexType, ref GrType[] typeStack, uint fileId) {
+    private GrType addOperator(GrLexeme.Type lexType, ref GrType[] typeStack, uint fileId) {
         if (isBinaryOperator(lexType)) {
             typeStack[$ - 2] = addBinaryOperator(lexType, typeStack[$ - 2],
                 typeStack[$ - 1], fileId);
@@ -1067,11 +1070,11 @@ final class GrParser {
         return GrType(GrType.Base.void_);
     }
 
-    private GrType addInternalOperator(GrLexemeType lexType, GrType varType, bool isSwapped = false) {
+    private GrType addInternalOperator(GrLexeme.Type lexType, GrType varType, bool isSwapped = false) {
         switch (varType.base) with (GrType.Base) {
         case class_:
         case foreign:
-            switch (lexType) with (GrLexemeType) {
+            switch (lexType) with (GrLexeme.Type) {
             case not:
                 addInstruction(GrOpcode.isNonNull_object);
                 addInstruction(GrOpcode.not_int);
@@ -1081,7 +1084,7 @@ final class GrParser {
             }
             break;
         case enumeration:
-            switch (lexType) with (GrLexemeType) {
+            switch (lexType) with (GrLexeme.Type) {
             case equal:
                 addInstruction(GrOpcode.equal_int);
                 return GrType(GrType.Base.boolean);
@@ -1105,7 +1108,7 @@ final class GrParser {
             }
             break;
         case boolean:
-            switch (lexType) with (GrLexemeType) {
+            switch (lexType) with (GrLexeme.Type) {
             case and:
                 addInstruction(GrOpcode.and_int);
                 return GrType(GrType.Base.boolean);
@@ -1120,7 +1123,7 @@ final class GrParser {
             }
             break;
         case integer:
-            switch (lexType) with (GrLexemeType) {
+            switch (lexType) with (GrLexeme.Type) {
             case add:
                 addInstruction(GrOpcode.add_int);
                 return GrType(GrType.Base.integer);
@@ -1173,7 +1176,7 @@ final class GrParser {
             }
             break;
         case real_:
-            switch (lexType) with (GrLexemeType) {
+            switch (lexType) with (GrLexeme.Type) {
             case add:
                 addInstruction(GrOpcode.add_real);
                 return GrType(GrType.Base.real_);
@@ -1241,7 +1244,7 @@ final class GrParser {
             }
             break;
         case string_:
-            switch (lexType) with (GrLexemeType) {
+            switch (lexType) with (GrLexeme.Type) {
             case concatenate:
                 if (isSwapped)
                     addInstruction(GrOpcode.swap_string);
@@ -1258,7 +1261,7 @@ final class GrParser {
             }
             break;
         case list_:
-            switch (lexType) with (GrLexemeType) {
+            switch (lexType) with (GrLexeme.Type) {
             case equal:
                 const GrType subType = grUnmangle(varType.mangledType);
                 final switch (subType.base) with (GrType.Base) {
@@ -1347,7 +1350,7 @@ final class GrParser {
             }
             break;
         case channel:
-            switch (lexType) with (GrLexemeType) {
+            switch (lexType) with (GrLexeme.Type) {
             case send:
                 GrType chanType = grUnmangle(varType.mangledType);
                 final switch (chanType.base) with (GrType.Base) {
@@ -1867,8 +1870,8 @@ final class GrParser {
         foreach (size_t i, GrInt ivalue; iconsts)
             writeln(".iconst " ~ to!string(ivalue) ~ "\t;" ~ to!string(i));
 
-        foreach (size_t i, GrReal fvalue; rconsts)
-            writeln(".fconst " ~ to!string(fvalue) ~ "\t;" ~ to!string(i));
+        foreach (size_t i, GrReal rvalue; rconsts)
+            writeln(".fconst " ~ to!string(rvalue) ~ "\t;" ~ to!string(i));
 
         foreach (size_t i, GrString svalue; sconsts)
             writeln(".sconst " ~ to!string(svalue) ~ "\t;" ~ to!string(i));
@@ -1906,12 +1909,12 @@ final class GrParser {
         while (!isEnd()) {
             GrLexeme lex = get();
             isPublic = false;
-            if (lex.type == GrLexemeType.public_) {
+            if (lex.type == GrLexeme.Type.public_) {
                 isPublic = true;
                 checkAdvance();
                 lex = get();
             }
-            switch (lex.type) with (GrLexemeType) {
+            switch (lex.type) with (GrLexeme.Type) {
             case semicolon:
                 checkAdvance();
                 break;
@@ -1939,12 +1942,12 @@ final class GrParser {
         while (!isEnd()) {
             GrLexeme lex = get();
             isPublic = false;
-            if (lex.type == GrLexemeType.public_) {
+            if (lex.type == GrLexeme.Type.public_) {
                 isPublic = true;
                 checkAdvance();
                 lex = get();
             }
-            switch (lex.type) with (GrLexemeType) {
+            switch (lex.type) with (GrLexeme.Type) {
             case semicolon:
                 checkAdvance();
                 break;
@@ -1970,12 +1973,12 @@ final class GrParser {
         while (!isEnd()) {
             GrLexeme lex = get();
             isPublic = false;
-            if (lex.type == GrLexemeType.public_) {
+            if (lex.type == GrLexeme.Type.public_) {
                 isPublic = true;
                 checkAdvance();
                 lex = get();
             }
-            switch (lex.type) with (GrLexemeType) {
+            switch (lex.type) with (GrLexeme.Type) {
             case semicolon:
                 checkAdvance();
                 break;
@@ -1987,14 +1990,14 @@ final class GrParser {
                 parseActionDeclaration(isPublic);
                 break;
             case taskType:
-                if (get(1).type != GrLexemeType.identifier && get(1).type != GrLexemeType.lesser)
+                if (get(1).type != GrLexeme.Type.identifier && get(1).type != GrLexeme.Type.lesser)
                     goto case integerType;
                 parseTaskDeclaration(isPublic);
                 break;
             case functionType:
-                if (get(1).type != GrLexemeType.identifier && !get(1)
-                    .isOperator && get(1).type != GrLexemeType.as && get(1)
-                    .type != GrLexemeType.lesser)
+                if (get(1).type != GrLexeme.Type.identifier && !get(1)
+                    .isOperator && get(1).type != GrLexeme.Type.as && get(1)
+                    .type != GrLexeme.Type.lesser)
                     goto case integerType;
                 parseFunctionDeclaration(isPublic);
                 break;
@@ -2018,12 +2021,12 @@ final class GrParser {
         while (!isEnd()) {
             GrLexeme lex = get();
             isPublic = false;
-            if (lex.type == GrLexemeType.public_) {
+            if (lex.type == GrLexeme.Type.public_) {
                 isPublic = true;
                 checkAdvance();
                 lex = get();
             }
-            switch (lex.type) with (GrLexemeType) {
+            switch (lex.type) with (GrLexeme.Type) {
             case semicolon:
                 checkAdvance();
                 break;
@@ -2036,14 +2039,14 @@ final class GrParser {
                 parseInstanceDeclaration(isPublic);
                 break;
             case taskType:
-                if (get(1).type != GrLexemeType.identifier && get(1).type != GrLexemeType.lesser)
+                if (get(1).type != GrLexeme.Type.identifier && get(1).type != GrLexeme.Type.lesser)
                     goto case integerType;
                 skipDeclaration();
                 break;
             case functionType:
-                if (get(1).type != GrLexemeType.identifier && !get(1)
-                    .isOperator && get(1).type != GrLexemeType.as && get(1)
-                    .type != GrLexemeType.lesser)
+                if (get(1).type != GrLexeme.Type.identifier && !get(1)
+                    .isOperator && get(1).type != GrLexeme.Type.as && get(1)
+                    .type != GrLexeme.Type.lesser)
                     goto case integerType;
                 skipDeclaration();
                 break;
@@ -2129,17 +2132,17 @@ final class GrParser {
     private void parseTypeAliasDeclaration(bool isPublic) {
         const uint fileId = get().fileId;
         checkAdvance();
-        if (get().type != GrLexemeType.identifier)
+        if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedTypeAliasNameFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
         const string typeAliasName = get().svalue;
         checkAdvance();
-        if (get().type != GrLexemeType.assign)
+        if (get().type != GrLexeme.Type.assign)
             logError(getError(Error.missingAssignInType),
                 format(getError(Error.expectedXFoundY), "=", getPrettyLexemeType(get().type)));
         checkAdvance();
         GrType type = parseType(true);
-        if (get().type != GrLexemeType.semicolon)
+        if (get().type != GrLexeme.Type.semicolon)
             logError(getError(Error.missingSemicolonAfterType),
                 format(getError(Error.expectedXFoundY), ";", getPrettyLexemeType(get().type)));
 
@@ -2152,24 +2155,24 @@ final class GrParser {
     private void parseEnumDeclaration(bool isPublic) {
         const uint fileId = get().fileId;
         checkAdvance();
-        if (get().type != GrLexemeType.identifier)
+        if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedEnumNameFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
         const string enumName = get().svalue;
         checkAdvance();
-        if (get().type != GrLexemeType.leftCurlyBrace)
+        if (get().type != GrLexeme.Type.leftCurlyBrace)
             logError(getError(Error.enumDefNotHaveBody),
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexemeType.leftCurlyBrace), getPrettyLexemeType(get().type)));
+                    GrLexeme.Type.leftCurlyBrace), getPrettyLexemeType(get().type)));
         checkAdvance();
 
         string[] fields;
         while (!isEnd()) {
-            if (get().type == GrLexemeType.rightCurlyBrace) {
+            if (get().type == GrLexeme.Type.rightCurlyBrace) {
                 checkAdvance();
                 break;
             }
-            if (get().type != GrLexemeType.identifier)
+            if (get().type != GrLexeme.Type.identifier)
                 logError(format(getError(Error.expectedEnumFieldFoundX), getPrettyLexemeType(get()
                         .type)), getError(Error.missingIdentifier));
 
@@ -2177,10 +2180,10 @@ final class GrParser {
             checkAdvance();
             fields ~= fieldName;
 
-            if (get().type != GrLexemeType.semicolon)
+            if (get().type != GrLexeme.Type.semicolon)
                 logError(getError(Error.missingSemicolonAfterEnumField),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.semicolon), getPrettyLexemeType(get().type)));
+                        GrLexeme.Type.semicolon), getPrettyLexemeType(get().type)));
             checkAdvance();
         }
         if (_data.isTypeDeclared(enumName, fileId, isPublic))
@@ -2194,7 +2197,7 @@ final class GrParser {
         string[] templateVariables = parseTemplateVariables();
         const uint fileId = get().fileId;
         const uint declPosition = current;
-        if (get().type != GrLexemeType.identifier)
+        if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedClassNameFoundX), getPrettyLexemeType(get()
                     .type)), getError(Error.missingIdentifier));
         const string className = get().svalue;
@@ -2226,7 +2229,7 @@ final class GrParser {
         }
 
         uint[] fieldPositions;
-        if (get().type != GrLexemeType.identifier)
+        if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedClassNameFoundX), getPrettyLexemeType(get()
                     .type)), getError(Error.missingIdentifier));
         const string className = get().svalue;
@@ -2234,9 +2237,9 @@ final class GrParser {
         checkAdvance();
 
         //Inheritance
-        if (get().type == GrLexemeType.colon) {
+        if (get().type == GrLexeme.Type.colon) {
             checkAdvance();
-            if (get().type != GrLexemeType.identifier)
+            if (get().type != GrLexeme.Type.identifier)
                 logError(getError(Error.parentClassNameMissing),
                     format(getError(Error.expectedClassNameFoundX), getPrettyLexemeType(get()
                         .type)));
@@ -2244,30 +2247,30 @@ final class GrParser {
             checkAdvance();
             parentClassName = grMangleComposite(parentClassName, parseTemplateSignature());
         }
-        if (get().type != GrLexemeType.leftCurlyBrace)
+        if (get().type != GrLexeme.Type.leftCurlyBrace)
             logError(getError(Error.classHaveNoBody),
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexemeType.leftCurlyBrace), getPrettyLexemeType(get().type)));
+                    GrLexeme.Type.leftCurlyBrace), getPrettyLexemeType(get().type)));
         checkAdvance();
 
         string[] fields;
         GrType[] signature;
         bool[] fieldScopes;
         while (!isEnd()) {
-            if (get().type == GrLexemeType.rightCurlyBrace) {
+            if (get().type == GrLexeme.Type.rightCurlyBrace) {
                 checkAdvance();
                 break;
             }
 
             bool isFieldPublic = false;
-            if (get().type == GrLexemeType.public_) {
+            if (get().type == GrLexeme.Type.public_) {
                 isFieldPublic = true;
                 checkAdvance();
             }
 
             GrType fieldType = parseType();
             do {
-                if (get().type == GrLexemeType.comma)
+                if (get().type == GrLexeme.Type.comma)
                     checkAdvance();
 
                 const string fieldName = get().svalue;
@@ -2277,15 +2280,15 @@ final class GrParser {
                 fieldPositions ~= current;
                 checkAdvance();
             }
-            while (get().type == GrLexemeType.comma);
+            while (get().type == GrLexeme.Type.comma);
 
-            if (get().type != GrLexemeType.semicolon)
+            if (get().type != GrLexeme.Type.semicolon)
                 logError(getError(Error.missingSemicolonAfterClassFieldDecl),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.semicolon), getPrettyLexemeType(get().type)));
+                        GrLexeme.Type.semicolon), getPrettyLexemeType(get().type)));
             checkAdvance();
 
-            if (get().type == GrLexemeType.rightCurlyBrace) {
+            if (get().type == GrLexeme.Type.rightCurlyBrace) {
                 checkAdvance();
                 break;
             }
@@ -2373,7 +2376,7 @@ final class GrParser {
     private void skipDeclaration() {
         checkAdvance();
         while (!isEnd()) {
-            if (get().type != GrLexemeType.leftCurlyBrace) {
+            if (get().type != GrLexeme.Type.leftCurlyBrace) {
                 checkAdvance();
             }
             else {
@@ -2386,7 +2389,7 @@ final class GrParser {
     private void skipExpression() {
         checkAdvance();
         while (!isEnd()) {
-            switch (get().type) with (GrLexemeType) {
+            switch (get().type) with (GrLexeme.Type) {
             case semicolon:
                 checkAdvance();
                 return;
@@ -2405,13 +2408,13 @@ final class GrParser {
 
         GrLexeme lex = get();
         if (!lex.isType) {
-            if (lex.type == GrLexemeType.identifier
+            if (lex.type == GrLexeme.Type.identifier
                 && _data.isTypeAlias(lex.svalue, lex.fileId, false)) {
                 currentType = _data.getTypeAlias(lex.svalue, lex.fileId).type;
                 checkAdvance();
                 return currentType;
             }
-            else if (lex.type == GrLexemeType.identifier
+            else if (lex.type == GrLexeme.Type.identifier
                 && _data.isClass(lex.svalue, lex.fileId, false)) {
                 currentType.base = GrType.Base.class_;
                 checkAdvance();
@@ -2424,14 +2427,14 @@ final class GrParser {
                 }
                 return currentType;
             }
-            else if (lex.type == GrLexemeType.identifier
+            else if (lex.type == GrLexeme.Type.identifier
                 && _data.isEnum(lex.svalue, lex.fileId, false)) {
                 currentType.base = GrType.Base.enumeration;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
                 return currentType;
             }
-            else if (lex.type == GrLexemeType.identifier && _data.isForeign(lex.svalue)) {
+            else if (lex.type == GrLexeme.Type.identifier && _data.isForeign(lex.svalue)) {
                 currentType.base = GrType.Base.foreign;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
@@ -2439,7 +2442,7 @@ final class GrParser {
                 return currentType;
             }
             else if (mustBeType) {
-                const string typeName = lex.type == GrLexemeType.identifier
+                const string typeName = lex.type == GrLexeme.Type.identifier
                     ? lex.svalue : getPrettyLexemeType(lex.type);
                 logError(format(getError(Error.xNotValidType), typeName),
                     format(getError(Error.expectedValidTypeFoundX), typeName));
@@ -2449,7 +2452,7 @@ final class GrParser {
             }
         }
 
-        switch (lex.type) with (GrLexemeType) {
+        switch (lex.type) with (GrLexeme.Type) {
         case integerType:
             currentType.base = GrType.Base.integer;
             checkAdvance();
@@ -2630,29 +2633,29 @@ final class GrParser {
 
     private string[] parseTemplateVariables() {
         string[] variables;
-        if (get().type != GrLexemeType.lesser)
+        if (get().type != GrLexeme.Type.lesser)
             return variables;
         checkAdvance();
-        if (get().type == GrLexemeType.greater) {
+        if (get().type == GrLexeme.Type.greater) {
             checkAdvance();
             return variables;
         }
         for (;;) {
-            if (get().type != GrLexemeType.identifier)
+            if (get().type != GrLexeme.Type.identifier)
                 logError(format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get()
                         .type)), getError(Error.missingTemplateVal));
             variables ~= get().svalue;
             checkAdvance();
 
             const GrLexeme lex = get();
-            if (lex.type == GrLexemeType.greater) {
+            if (lex.type == GrLexeme.Type.greater) {
                 checkAdvance();
                 break;
             }
-            else if (lex.type != GrLexemeType.comma)
+            else if (lex.type != GrLexeme.Type.comma)
                 logError(getError(Error.templateValShouldBeSeparatedByComma),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.comma), getPrettyLexemeType(lex.type)));
+                        GrLexeme.Type.comma), getPrettyLexemeType(lex.type)));
             checkAdvance();
         }
         return variables;
@@ -2660,10 +2663,10 @@ final class GrParser {
 
     private GrType[] parseTemplateSignature() {
         GrType[] signature;
-        if (get().type != GrLexemeType.lesser)
+        if (get().type != GrLexeme.Type.lesser)
             return signature;
         checkAdvance();
-        if (get().type == GrLexemeType.greater) {
+        if (get().type == GrLexeme.Type.greater) {
             checkAdvance();
             return signature;
         }
@@ -2671,14 +2674,14 @@ final class GrParser {
             signature ~= parseType();
 
             const GrLexeme lex = get();
-            if (lex.type == GrLexemeType.greater) {
+            if (lex.type == GrLexeme.Type.greater) {
                 checkAdvance();
                 break;
             }
-            else if (lex.type != GrLexemeType.comma)
+            else if (lex.type != GrLexeme.Type.comma)
                 logError(getError(Error.templateTypesShouldBeSeparatedByComma),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.comma), getPrettyLexemeType(lex.type)));
+                        GrLexeme.Type.comma), getPrettyLexemeType(lex.type)));
             checkAdvance();
         }
         return signature;
@@ -2687,17 +2690,17 @@ final class GrParser {
     private GrType[] parseInSignature(ref string[] inputVariables, bool asType = false) {
         GrType[] inSignature;
 
-        if (get().type != GrLexemeType.leftParenthesis)
+        if (get().type != GrLexeme.Type.leftParenthesis)
             logError(getError(Error.missingParentheses),
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexemeType.leftParenthesis), getPrettyLexemeType(get().type)));
+                    GrLexeme.Type.leftParenthesis), getPrettyLexemeType(get().type)));
 
         bool startLoop = true;
         for (;;) {
             checkAdvance();
             GrLexeme lex = get();
 
-            if (startLoop && lex.type == GrLexemeType.rightParenthesis)
+            if (startLoop && lex.type == GrLexeme.Type.rightParenthesis)
                 break;
             startLoop = false;
 
@@ -2706,24 +2709,24 @@ final class GrParser {
             //If we want to know whether it's a type or an anon, we can't throw exceptions.
             if (isTypeChecking) {
                 lex = get();
-                if (get().type == GrLexemeType.identifier) {
+                if (get().type == GrLexeme.Type.identifier) {
                     inputVariables ~= lex.svalue;
                     checkAdvance();
                     lex = get();
                 }
 
-                if (lex.type == GrLexemeType.rightParenthesis)
+                if (lex.type == GrLexeme.Type.rightParenthesis)
                     break;
-                else if (lex.type != GrLexemeType.comma)
+                else if (lex.type != GrLexeme.Type.comma)
                     logError(getError(Error.paramShouldBeSeparatedByComma),
                         format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                            GrLexemeType.comma), getPrettyLexemeType(get().type)));
+                            GrLexeme.Type.comma), getPrettyLexemeType(get().type)));
             }
             else {
                 //Is it a function type or a function declaration ?
                 if (!asType) {
                     lex = get();
-                    if (get().type != GrLexemeType.identifier)
+                    if (get().type != GrLexeme.Type.identifier)
                         logError(format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get()
                                 .type)), getError(Error.missingIdentifier));
                     inputVariables ~= lex.svalue;
@@ -2731,12 +2734,12 @@ final class GrParser {
                 }
 
                 lex = get();
-                if (lex.type == GrLexemeType.rightParenthesis)
+                if (lex.type == GrLexeme.Type.rightParenthesis)
                     break;
-                else if (lex.type != GrLexemeType.comma)
+                else if (lex.type != GrLexeme.Type.comma)
                     logError(getError(Error.paramShouldBeSeparatedByComma),
                         format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                            GrLexemeType.comma), getPrettyLexemeType(get().type)));
+                            GrLexeme.Type.comma), getPrettyLexemeType(get().type)));
             }
         }
         checkAdvance();
@@ -2746,10 +2749,10 @@ final class GrParser {
 
     private GrType[] parseOutSignature() {
         GrType[] outSignature;
-        if (get().type != GrLexemeType.leftParenthesis)
+        if (get().type != GrLexeme.Type.leftParenthesis)
             return outSignature;
         checkAdvance();
-        if (get().type == GrLexemeType.rightParenthesis) {
+        if (get().type == GrLexeme.Type.rightParenthesis) {
             checkAdvance();
             return outSignature;
         }
@@ -2757,14 +2760,14 @@ final class GrParser {
             outSignature ~= parseType();
 
             const GrLexeme lex = get();
-            if (lex.type == GrLexemeType.rightParenthesis) {
+            if (lex.type == GrLexeme.Type.rightParenthesis) {
                 checkAdvance();
                 break;
             }
-            else if (lex.type != GrLexemeType.comma)
+            else if (lex.type != GrLexeme.Type.comma)
                 logError(getError(Error.typesShouldBeSeparatedByComma),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.comma), getPrettyLexemeType(lex.type)));
+                        GrLexeme.Type.comma), getPrettyLexemeType(lex.type)));
             checkAdvance();
         }
         return outSignature;
@@ -2775,7 +2778,7 @@ final class GrParser {
             logError(getError(Error.addingPubBeforeActionIsRedundant), getError(
                     Error.actionAlreadyPublic));
         checkAdvance();
-        if (get().type != GrLexemeType.identifier)
+        if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get()
                     .type)), getError(Error.missingIdentifier));
         string name = get().svalue;
@@ -2790,7 +2793,7 @@ final class GrParser {
     private void parseTaskDeclaration(bool isPublic) {
         checkAdvance();
         string[] templateVariables = parseTemplateVariables();
-        if (get().type != GrLexemeType.identifier)
+        if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get()
                     .type)), getError(Error.missingIdentifier));
 
@@ -2810,7 +2813,7 @@ final class GrParser {
         else
             instanciatedFunctions ~= parseTemplatedFunctionDeclaration(temp, []);
 
-        if (get().type == GrLexemeType.leftParenthesis)
+        if (get().type == GrLexeme.Type.leftParenthesis)
             skipParenthesis();
         skipBlock();
     }
@@ -2820,11 +2823,11 @@ final class GrParser {
         string[] templateVariables = parseTemplateVariables();
         string name;
         bool isConversion;
-        if (get().type == GrLexemeType.as) {
+        if (get().type == GrLexeme.Type.as) {
             name = "@conv";
             isConversion = true;
         }
-        else if (get().type == GrLexemeType.identifier) {
+        else if (get().type == GrLexeme.Type.identifier) {
             if (get().svalue == "opérateur" || get().svalue == "operator") {
                 advance();
                 if (get().isOverridableOperator()) {
@@ -2864,24 +2867,24 @@ final class GrParser {
         else
             instanciatedFunctions ~= parseTemplatedFunctionDeclaration(temp, []);
 
-        if (get().type == GrLexemeType.leftParenthesis)
+        if (get().type == GrLexeme.Type.leftParenthesis)
             skipParenthesis();
-        if (get().type == GrLexemeType.leftParenthesis)
+        if (get().type == GrLexeme.Type.leftParenthesis)
             skipParenthesis();
         skipBlock();
     }
 
     private void parseInstanceDeclaration(bool isPublic) {
         checkAdvance();
-        if (get().type != GrLexemeType.lesser)
+        if (get().type != GrLexeme.Type.lesser)
             logError(getError(Error.missingTemplateSignature),
-                format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexemeType.lesser), getPrettyLexemeType(
+                format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.lesser), getPrettyLexemeType(
                     get().type)));
 
         GrType[] templateList = parseTemplateSignature();
 
         string name;
-        if (get().type == GrLexemeType.identifier) {
+        if (get().type == GrLexeme.Type.identifier) {
             name = get().svalue;
         }
         else if (get().isOverridableOperator()) {
@@ -2903,10 +2906,10 @@ final class GrParser {
             logError(getError(Error.emptyTemplateSignature), getError(
                     Error.templateSignatureCantBeEmpty), "", -1);
 
-        if (get().type != GrLexemeType.semicolon)
+        if (get().type != GrLexeme.Type.semicolon)
             logError(getError(Error.missingSemicolonAfterTemplateDecl),
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexemeType.semicolon), getPrettyLexemeType(get().type)));
+                    GrLexeme.Type.semicolon), getPrettyLexemeType(get().type)));
         checkAdvance();
 
         foreach (GrTemplateFunction temp; templatedFunctions) {
@@ -3023,17 +3026,17 @@ final class GrParser {
         if (changeOptimizationBlockLevel)
             _isAssignationOptimizable = false;
         bool isMultiline;
-        if (get().type == GrLexemeType.leftCurlyBrace) {
+        if (get().type == GrLexeme.Type.leftCurlyBrace) {
             isMultiline = true;
             if (!checkAdvance())
                 logError(getError(Error.eof),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.rightCurlyBrace), getPrettyLexemeType(get().type)));
+                        GrLexeme.Type.rightCurlyBrace), getPrettyLexemeType(get().type)));
         }
         openBlock();
 
         void parseStatement() {
-            switch (get().type) with (GrLexemeType) {
+            switch (get().type) with (GrLexeme.Type) {
             case semicolon:
             case rightCurlyBrace:
                 advance();
@@ -3099,7 +3102,7 @@ final class GrParser {
                 break;
             case identifier:
                 if (_data.isTypeDeclared(get().svalue, get().fileId, false)
-                    && get(1).type != GrLexemeType.leftParenthesis)
+                    && get(1).type != GrLexeme.Type.leftParenthesis)
                     parseLocalDeclaration();
                 else
                     goto default;
@@ -3112,21 +3115,21 @@ final class GrParser {
 
         if (isMultiline) {
             while (!isEnd()) {
-                if (get().type == GrLexemeType.rightCurlyBrace)
+                if (get().type == GrLexeme.Type.rightCurlyBrace)
                     break;
                 parseStatement();
             }
         }
         else {
-            if (get().type != GrLexemeType.semicolon)
+            if (get().type != GrLexeme.Type.semicolon)
                 parseStatement();
         }
 
         if (isMultiline) {
-            if (get().type != GrLexemeType.rightCurlyBrace)
+            if (get().type != GrLexeme.Type.rightCurlyBrace)
                 logError(getError(Error.missingCurlyBraces),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.rightCurlyBrace), getPrettyLexemeType(get().type)));
+                        GrLexeme.Type.rightCurlyBrace), getPrettyLexemeType(get().type)));
             checkAdvance();
         }
         closeBlock();
@@ -3137,13 +3140,13 @@ final class GrParser {
     private bool isDeclaration() {
         const auto tempPos = current;
         isTypeChecking = true;
-        if (get().type == GrLexemeType.autoType)
+        if (get().type == GrLexeme.Type.autoType)
             checkAdvance();
         else
             parseType(false);
         isTypeChecking = false;
         bool isDecl;
-        if (get().type == GrLexemeType.identifier)
+        if (get().type == GrLexeme.Type.identifier)
             isDecl = true;
         current = tempPos;
         return isDecl;
@@ -3151,17 +3154,17 @@ final class GrParser {
 
     private void skipBlock() {
         bool isMultiline;
-        if (get().type == GrLexemeType.leftCurlyBrace) {
+        if (get().type == GrLexeme.Type.leftCurlyBrace) {
             isMultiline = true;
             if (!checkAdvance())
                 logError(getError(Error.eof),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.rightCurlyBrace), getPrettyLexemeType(get().type)));
+                        GrLexeme.Type.rightCurlyBrace), getPrettyLexemeType(get().type)));
         }
         openBlock();
 
         void skipStatement() {
-            switch (get().type) with (GrLexemeType) {
+            switch (get().type) with (GrLexeme.Type) {
             case leftParenthesis:
                 skipParenthesis();
                 break;
@@ -3178,9 +3181,9 @@ final class GrParser {
             case switch_:
                 checkAdvance();
                 skipParenthesis();
-                while (get().type == GrLexemeType.case_) {
+                while (get().type == GrLexeme.Type.case_) {
                     checkAdvance();
-                    if (get().type == GrLexemeType.leftParenthesis)
+                    if (get().type == GrLexeme.Type.leftParenthesis)
                         skipParenthesis();
                     skipBlock();
                 }
@@ -3193,9 +3196,9 @@ final class GrParser {
                 break;
             case select:
                 checkAdvance();
-                while (get().type == GrLexemeType.case_) {
+                while (get().type == GrLexeme.Type.case_) {
                     checkAdvance();
-                    if (get().type == GrLexemeType.leftParenthesis)
+                    if (get().type == GrLexeme.Type.leftParenthesis)
                         skipParenthesis();
                     skipBlock();
                 }
@@ -3218,7 +3221,7 @@ final class GrParser {
                 break;
             case loop:
                 checkAdvance();
-                if (get().type == GrLexemeType.leftParenthesis)
+                if (get().type == GrLexeme.Type.leftParenthesis)
                     skipParenthesis();
                 skipBlock();
                 break;
@@ -3229,7 +3232,7 @@ final class GrParser {
             case isolate:
                 checkAdvance();
                 skipBlock();
-                if (get().type == GrLexemeType.capture) {
+                if (get().type == GrLexeme.Type.capture) {
                     checkAdvance();
                     skipParenthesis();
                     skipBlock();
@@ -3250,9 +3253,9 @@ final class GrParser {
 
         if (isMultiline) {
             while (!isEnd()) {
-                if (get().type == GrLexemeType.rightCurlyBrace)
+                if (get().type == GrLexeme.Type.rightCurlyBrace)
                     break;
-                switch (get().type) with (GrLexemeType) {
+                switch (get().type) with (GrLexeme.Type) {
                 case leftParenthesis:
                     skipParenthesis();
                     break;
@@ -3268,14 +3271,14 @@ final class GrParser {
                 }
             }
 
-            if (get().type != GrLexemeType.rightCurlyBrace)
+            if (get().type != GrLexeme.Type.rightCurlyBrace)
                 logError(getError(Error.missingCurlyBraces),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.rightCurlyBrace), getPrettyLexemeType(get().type)));
+                        GrLexeme.Type.rightCurlyBrace), getPrettyLexemeType(get().type)));
             checkAdvance();
         }
         else {
-            if (get().type != GrLexemeType.semicolon)
+            if (get().type != GrLexeme.Type.semicolon)
                 skipStatement();
         }
         closeBlock();
@@ -3320,25 +3323,25 @@ final class GrParser {
         parseBlock();
 
         const uint fileId = get().fileId;
-        if (get().type == GrLexemeType.capture) {
+        if (get().type == GrLexeme.Type.capture) {
             advance();
 
-            if (get().type != GrLexemeType.leftParenthesis)
-                logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexemeType.else_)),
+            if (get().type != GrLexeme.Type.leftParenthesis)
+                logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexeme.Type.else_)),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.leftParenthesis), getPrettyLexemeType(get().type)));
+                        GrLexeme.Type.leftParenthesis), getPrettyLexemeType(get().type)));
             advance();
 
-            if (get().type != GrLexemeType.identifier)
+            if (get().type != GrLexeme.Type.identifier)
                 logError(getError(Error.missingIdentifier),
                     format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get().type)));
             GrVariable errVariable = registerLocalVariable(get().svalue, grString);
 
             advance();
-            if (get().type != GrLexemeType.rightParenthesis)
+            if (get().type != GrLexeme.Type.rightParenthesis)
                 logError(getError(Error.missingParentheses),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.rightParenthesis), getPrettyLexemeType(get().type)));
+                        GrLexeme.Type.rightParenthesis), getPrettyLexemeType(get().type)));
             advance();
 
             const auto capturePosition = currentFunction.instructions.length;
@@ -3412,7 +3415,7 @@ final class GrParser {
 
     private void checkDeferStatement() {
         if (currentFunction.isDeferrableSectionLocked[$ - 1]) {
-            GrLexemeType type = get().type;
+            GrLexeme.Type type = get().type;
             logError(format(getError(Error.xInsideDefer), getPrettyLexemeType(type)),
                 format(getError(Error.cantXInsideDefer), getPrettyLexemeType(type)));
         }
@@ -3509,7 +3512,7 @@ final class GrParser {
         GrType type = GrType.Base.void_;
         bool isAuto;
 
-        if (get().type == GrLexemeType.autoType) {
+        if (get().type == GrLexeme.Type.autoType) {
             isAuto = true;
             checkAdvance();
         }
@@ -3518,10 +3521,10 @@ final class GrParser {
 
         GrVariable[] lvalues;
         do {
-            if (get().type == GrLexemeType.comma)
+            if (get().type == GrLexeme.Type.comma)
                 checkAdvance();
             //Identifier
-            if (get().type != GrLexemeType.identifier)
+            if (get().type != GrLexeme.Type.identifier)
                 logError(format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get()
                         .type)), getError(Error.missingIdentifier));
 
@@ -3533,7 +3536,7 @@ final class GrParser {
 
             checkAdvance();
         }
-        while (get().type == GrLexemeType.comma);
+        while (get().type == GrLexeme.Type.comma);
 
         parseAssignList(lvalues, true);
     }
@@ -3543,7 +3546,7 @@ final class GrParser {
         //GrVariable type
         GrType type = GrType.Base.void_;
         bool isAuto;
-        if (get().type == GrLexemeType.autoType) {
+        if (get().type == GrLexeme.Type.autoType) {
             isAuto = true;
             checkAdvance();
         }
@@ -3552,10 +3555,10 @@ final class GrParser {
 
         GrVariable[] lvalues;
         do {
-            if (get().type == GrLexemeType.comma)
+            if (get().type == GrLexeme.Type.comma)
                 checkAdvance();
             //Identifier
-            if (get().type != GrLexemeType.identifier)
+            if (get().type != GrLexeme.Type.identifier)
                 logError(format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get()
                         .type)), getError(Error.missingIdentifier));
 
@@ -3572,7 +3575,7 @@ final class GrParser {
 
             checkAdvance();
         }
-        while (get().type == GrLexemeType.comma);
+        while (get().type == GrLexeme.Type.comma);
 
         parseAssignList(lvalues, true);
     }
@@ -3580,7 +3583,7 @@ final class GrParser {
     private GrType parseFunctionReturnType() {
         GrType returnType = GrType.Base.void_;
         if (get().isType) {
-            switch (get().type) with (GrLexemeType) {
+            switch (get().type) with (GrLexeme.Type) {
             case integerType:
                 returnType = GrType(GrType.Base.integer);
                 break;
@@ -3629,15 +3632,16 @@ final class GrParser {
     ---
     */
     private void parseIfStatement() {
-        bool isNegative = get().type == GrLexemeType.unless;
+        bool isNegative = get().type == GrLexeme.Type.unless;
         advance();
-        if (isNegative && get().type == GrLexemeType.if_)
+        if (isNegative && get().type == GrLexeme.Type.if_)
             advance();
-        if (get().type != GrLexemeType.leftParenthesis)
-            logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(isNegative ? GrLexemeType
-                    .unless : GrLexemeType.if_)),
+        if (get().type != GrLexeme.Type.leftParenthesis)
+            logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(isNegative ? GrLexeme
+                    .Type
+                    .unless : GrLexeme.Type.if_)),
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexemeType.leftParenthesis), getPrettyLexemeType(get().type)));
+                    GrLexeme.Type.leftParenthesis), getPrettyLexemeType(get().type)));
 
         advance();
         GrSubExprResult result = parseSubExpression();
@@ -3652,7 +3656,7 @@ final class GrParser {
 
         //If(1){}, jumps out.
         uint[] exitJumps;
-        if (get().type == GrLexemeType.else_) {
+        if (get().type == GrLexeme.Type.else_) {
             exitJumps ~= cast(uint) currentFunction.instructions.length;
             addInstruction(GrOpcode.jump);
         }
@@ -3664,19 +3668,19 @@ final class GrParser {
         bool isElseIf;
         do {
             isElseIf = false;
-            if (get().type == GrLexemeType.else_) {
+            if (get().type == GrLexeme.Type.else_) {
                 checkAdvance();
-                if (get().type == GrLexemeType.if_ || get().type == GrLexemeType.unless) {
-                    isNegative = get().type == GrLexemeType.unless;
+                if (get().type == GrLexeme.Type.if_ || get().type == GrLexeme.Type.unless) {
+                    isNegative = get().type == GrLexeme.Type.unless;
                     isElseIf = true;
                     checkAdvance();
-                    if (isNegative && get().type == GrLexemeType.if_)
+                    if (isNegative && get().type == GrLexeme.Type.if_)
                         checkAdvance();
-                    if (get().type != GrLexemeType.leftParenthesis)
-                        logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(isNegative ? GrLexemeType.unless
-                                : GrLexemeType.if_)),
+                    if (get().type != GrLexeme.Type.leftParenthesis)
+                        logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(isNegative ? GrLexeme
+                                .Type.unless : GrLexeme.Type.if_)),
                             format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                                GrLexemeType.leftParenthesis), getPrettyLexemeType(get().type)));
+                                GrLexeme.Type.leftParenthesis), getPrettyLexemeType(get().type)));
                     checkAdvance();
 
                     parseSubExpression();
@@ -3712,18 +3716,18 @@ final class GrParser {
         int channelSize = 1;
 
         checkAdvance();
-        if (get().type != GrLexemeType.leftParenthesis)
-            logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexemeType.chanType)),
+        if (get().type != GrLexeme.Type.leftParenthesis)
+            logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexeme.Type.chanType)),
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexemeType.leftParenthesis), getPrettyLexemeType(get().type)));
+                    GrLexeme.Type.leftParenthesis), getPrettyLexemeType(get().type)));
         checkAdvance();
         GrType subType = parseType();
 
         GrLexeme lex = get();
-        if (lex.type == GrLexemeType.comma) {
+        if (lex.type == GrLexeme.Type.comma) {
             checkAdvance();
             lex = get();
-            if (lex.type != GrLexemeType.integer)
+            if (lex.type != GrLexeme.Type.integer)
                 logError(getError(Error.chanSizeMustBePositive),
                     format(getError(Error.expectedIntFoundX), getPrettyLexemeType(get().type)));
             channelSize = lex.ivalue > int.max ? 1 : cast(int) lex.ivalue;
@@ -3732,16 +3736,16 @@ final class GrParser {
                     format(getError(Error.expectedAtLeastSizeOf1FoundX), channelSize));
             checkAdvance();
         }
-        else if (lex.type != GrLexemeType.rightParenthesis) {
+        else if (lex.type != GrLexeme.Type.rightParenthesis) {
             logError(getError(Error.missingCommaOrRightParenthesisInsideChanSignature),
                 format(getError(Error.expectedCommaOrRightParenthesisFoundX), getPrettyLexemeType(get()
                     .type)));
         }
         lex = get();
-        if (lex.type != GrLexemeType.rightParenthesis)
+        if (lex.type != GrLexeme.Type.rightParenthesis)
             logError(getError(Error.missingParenthesesAfterChanSignature),
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexemeType.rightParenthesis), getPrettyLexemeType(get().type)));
+                    GrLexeme.Type.rightParenthesis), getPrettyLexemeType(get().type)));
         checkAdvance();
         chanType.mangledType = grMangleSignature([subType]);
 
@@ -3785,10 +3789,10 @@ final class GrParser {
     */
     private void parseSwitchStatement() {
         advance();
-        if (get().type != GrLexemeType.leftParenthesis)
-            logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexemeType.switch_)),
+        if (get().type != GrLexeme.Type.leftParenthesis)
+            logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexeme.Type.switch_)),
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexemeType.leftParenthesis), getPrettyLexemeType(get().type)));
+                    GrLexeme.Type.leftParenthesis), getPrettyLexemeType(get().type)));
 
         advance();
         const uint fileId = get().fileId;
@@ -3803,17 +3807,17 @@ final class GrParser {
         uint jumpPosition, casePosition, defaultCasePosition, defaultCaseKeywordPosition;
         bool hasCase, hasDefaultCase;
 
-        while (get().type == GrLexemeType.case_) {
+        while (get().type == GrLexeme.Type.case_) {
             casePosition = current;
             advance();
-            if (get().type != GrLexemeType.leftParenthesis)
-                logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexemeType.case_)),
+            if (get().type != GrLexeme.Type.leftParenthesis)
+                logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexeme.Type.case_)),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.leftParenthesis), getPrettyLexemeType(get().type)));
+                        GrLexeme.Type.leftParenthesis), getPrettyLexemeType(get().type)));
             advance();
-            if (get().type == GrLexemeType.rightParenthesis) {
+            if (get().type == GrLexeme.Type.rightParenthesis) {
                 if (hasDefaultCase)
-                    logError(format(getError(Error.onlyOneDefaultCasePerX), getPrettyLexemeType(GrLexemeType.switch_)),
+                    logError(format(getError(Error.onlyOneDefaultCasePerX), getPrettyLexemeType(GrLexeme.Type.switch_)),
                         getError(Error.defaultCaseAlreadyDef), "",
                         casePosition - current, getError(Error.prevDefaultCaseDef),
                         defaultCaseKeywordPosition);
@@ -3827,7 +3831,7 @@ final class GrParser {
                 hasCase = true;
                 addGetInstruction(switchVar);
                 GrType caseType = parseSubExpression().type;
-                addBinaryOperator(GrLexemeType.equal, switchType, caseType, fileId);
+                addBinaryOperator(GrLexeme.Type.equal, switchType, caseType, fileId);
                 advance();
 
                 jumpPosition = cast(uint) currentFunction.instructions.length;
@@ -3879,18 +3883,18 @@ final class GrParser {
         uint startJump = cast(uint) currentFunction.instructions.length;
 
         addInstruction(GrOpcode.startSelectChannel);
-        while (get().type == GrLexemeType.case_) {
+        while (get().type == GrLexeme.Type.case_) {
             casePosition = current;
             advance();
-            if (get().type != GrLexemeType.leftParenthesis)
-                logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexemeType.case_)),
+            if (get().type != GrLexeme.Type.leftParenthesis)
+                logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexeme.Type.case_)),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.leftParenthesis), getPrettyLexemeType(get().type)));
+                        GrLexeme.Type.leftParenthesis), getPrettyLexemeType(get().type)));
             advance();
 
-            if (get().type == GrLexemeType.rightParenthesis) {
+            if (get().type == GrLexeme.Type.rightParenthesis) {
                 if (hasDefaultCase)
-                    logError(format(getError(Error.onlyOneDefaultCasePerX), getPrettyLexemeType(GrLexemeType.select)),
+                    logError(format(getError(Error.onlyOneDefaultCasePerX), getPrettyLexemeType(GrLexeme.Type.select)),
                         getError(Error.defaultCaseAlreadyDef), "",
                         casePosition - current, getError(Error.prevDefaultCaseDef),
                         defaultCaseKeywordPosition);
@@ -3951,13 +3955,14 @@ final class GrParser {
     ---
     */
     private void parseWhileStatement() {
-        const bool isNegative = get().type == GrLexemeType.until;
+        const bool isNegative = get().type == GrLexeme.Type.until;
         advance();
-        if (get().type != GrLexemeType.leftParenthesis)
-            logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(isNegative ? GrLexemeType
-                    .until : GrLexemeType.while_)),
+        if (get().type != GrLexeme.Type.leftParenthesis)
+            logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(isNegative ? GrLexeme
+                    .Type
+                    .until : GrLexeme.Type.while_)),
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexemeType.leftParenthesis), getPrettyLexemeType(get().type)));
+                    GrLexeme.Type.leftParenthesis), getPrettyLexemeType(get().type)));
 
         /* While is breakable and continuable. */
         openBreakableSection();
@@ -4005,9 +4010,9 @@ final class GrParser {
         parseBlock(true);
 
         bool isNegative;
-        if (get().type == GrLexemeType.until)
+        if (get().type == GrLexeme.Type.until)
             isNegative = true;
-        else if (get().type != GrLexemeType.while_)
+        else if (get().type != GrLexeme.Type.while_)
             logError(getError(Error.missingWhileOrUntilAfterLoop),
                 format(getError(Error.expectedWhileOrUntilFoundX), getPrettyLexemeType(get().type)));
         advance();
@@ -4015,11 +4020,12 @@ final class GrParser {
         /* Continue jump. */
         setContinuableSectionDestination();
 
-        if (get().type != GrLexemeType.leftParenthesis)
-            logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(isNegative ? GrLexemeType
-                    .until : GrLexemeType.while_)),
+        if (get().type != GrLexeme.Type.leftParenthesis)
+            logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(isNegative ? GrLexeme
+                    .Type
+                    .until : GrLexeme.Type.while_)),
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexemeType.leftParenthesis), getPrettyLexemeType(get().type)));
+                    GrLexeme.Type.leftParenthesis), getPrettyLexemeType(get().type)));
 
         advance();
         parseSubExpression();
@@ -4037,7 +4043,7 @@ final class GrParser {
         GrVariable lvalue;
         GrType type = GrType.Base.void_;
         bool isAuto, isTyped = true;
-        switch (get().type) with (GrLexemeType) {
+        switch (get().type) with (GrLexeme.Type) {
         case autoType:
             isAuto = true;
             checkAdvance();
@@ -4058,7 +4064,7 @@ final class GrParser {
             break;
         }
         GrLexeme identifier = get();
-        if (identifier.type != GrLexemeType.identifier)
+        if (identifier.type != GrLexeme.Type.identifier)
             logError(getError(Error.varNameExpected),
                 format(getError(Error.varNameExpectedFoundX), getPrettyLexemeType(get().type)));
 
@@ -4079,19 +4085,19 @@ final class GrParser {
     private void parseForStatement() {
         advance();
         const uint fileId = get().fileId;
-        if (get().type != GrLexemeType.leftParenthesis)
-            logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexemeType.for_)),
+        if (get().type != GrLexeme.Type.leftParenthesis)
+            logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexeme.Type.for_)),
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexemeType.leftParenthesis), getPrettyLexemeType(get().type)));
+                    GrLexeme.Type.leftParenthesis), getPrettyLexemeType(get().type)));
 
         advance();
         currentFunction.openScope();
 
         GrVariable variable = parseDeclarableArgument();
 
-        if (get().type != GrLexemeType.comma)
-            logError(format(getError(Error.missingCommaInX), getPrettyLexemeType(GrLexemeType.for_)),
-                format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexemeType.comma), getPrettyLexemeType(
+        if (get().type != GrLexeme.Type.comma)
+            logError(format(getError(Error.missingCommaInX), getPrettyLexemeType(GrLexeme.Type.for_)),
+                format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.comma), getPrettyLexemeType(
                     get().type)));
         advance();
 
@@ -4298,12 +4304,12 @@ final class GrParser {
 
     /// Skips everything from a `(` to its matching `)`.
     private void skipParenthesis() {
-        if (get().type != GrLexemeType.leftParenthesis)
+        if (get().type != GrLexeme.Type.leftParenthesis)
             return;
         advance();
 
         __loop: while (!isEnd()) {
-            switch (get().type) with (GrLexemeType) {
+            switch (get().type) with (GrLexeme.Type) {
             case rightParenthesis:
                 advance();
                 return;
@@ -4329,12 +4335,12 @@ final class GrParser {
 
     /// Skips everything from a `[` to its matching `]`.
     private void skipBrackets() {
-        if (get().type != GrLexemeType.leftBracket)
+        if (get().type != GrLexeme.Type.leftBracket)
             return;
         advance();
 
         __loop: while (!isEnd()) {
-            switch (get().type) with (GrLexemeType) {
+            switch (get().type) with (GrLexeme.Type) {
             case rightBracket:
                 advance();
                 return;
@@ -4365,23 +4371,23 @@ final class GrParser {
 
         bool useParenthesis, useBrackets, useCurlyBraces;
 
-        switch (get().type) with (GrLexemeType) {
+        switch (get().type) with (GrLexeme.Type) {
         case leftParenthesis:
             advance();
             useParenthesis = true;
-            if (get(1).type != GrLexemeType.rightParenthesis)
+            if (get(1).type != GrLexeme.Type.rightParenthesis)
                 arity++;
             break;
         case leftBracket:
             advance();
             useBrackets = true;
-            if (get(1).type != GrLexemeType.rightBracket)
+            if (get(1).type != GrLexeme.Type.rightBracket)
                 arity++;
             break;
         case leftCurlyBrace:
             advance();
             useCurlyBraces = true;
-            if (get(1).type != GrLexemeType.rightCurlyBrace)
+            if (get(1).type != GrLexeme.Type.rightCurlyBrace)
                 arity++;
             break;
         default:
@@ -4390,7 +4396,7 @@ final class GrParser {
         }
 
         __loop: while (!isEnd()) {
-            switch (get().type) with (GrLexemeType) {
+            switch (get().type) with (GrLexeme.Type) {
             case comma:
                 arity++;
                 advance();
@@ -4450,7 +4456,7 @@ final class GrParser {
         const uint fileId = get().fileId;
         currentFunction.openScope();
         advance();
-        if (get().type == GrLexemeType.leftParenthesis) {
+        if (get().type == GrLexeme.Type.leftParenthesis) {
             const int arity = checkArity();
             advance();
             if (arity == 2) {
@@ -4470,10 +4476,10 @@ final class GrParser {
                 addIntConstant(0);
                 addSetInstruction(customIterator, fileId);
 
-                if (get().type != GrLexemeType.comma)
-                    logError(format(getError(Error.missingCommaInX), getPrettyLexemeType(GrLexemeType.loop)),
+                if (get().type != GrLexeme.Type.comma)
+                    logError(format(getError(Error.missingCommaInX), getPrettyLexemeType(GrLexeme.Type.loop)),
                         format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                            GrLexemeType.comma), getPrettyLexemeType(get().type)));
+                            GrLexeme.Type.comma), getPrettyLexemeType(get().type)));
                 advance();
             }
 
@@ -4597,8 +4603,8 @@ final class GrParser {
     }
 
     /// The more it is, the less you need parenthesis.
-    private uint getLeftOperatorPriority(GrLexemeType type) {
-        switch (type) with (GrLexemeType) {
+    private uint getLeftOperatorPriority(GrLexeme.Type type) {
+        switch (type) with (GrLexeme.Type) {
         case assign: .. case powerAssign:
             return 0;
         case arrow:
@@ -4657,8 +4663,8 @@ final class GrParser {
     }
 
     /// The more it is, the less you need parenthesis.
-    private uint getRightOperatorPriority(GrLexemeType type) {
-        switch (type) with (GrLexemeType) {
+    private uint getRightOperatorPriority(GrLexeme.Type type) {
+        switch (type) with (GrLexeme.Type) {
         case assign: .. case powerAssign:
             return 20;
         case arrow:
@@ -4853,14 +4859,14 @@ final class GrParser {
     }
 
     private GrType parseObjectBuilder() {
-        if (get().type != GrLexemeType.new_)
-            logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexemeType.new_), getPrettyLexemeType(
+        if (get().type != GrLexeme.Type.new_)
+            logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.new_), getPrettyLexemeType(
                     get()
                     .type)), format(getError(Error.missingX), getPrettyLexemeType(
-                    GrLexemeType.new_)));
+                    GrLexeme.Type.new_)));
         checkAdvance();
-        if (get().type != GrLexemeType.identifier)
-            logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexemeType.identifier), getPrettyLexemeType(
+        if (get().type != GrLexeme.Type.identifier)
+            logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.identifier), getPrettyLexemeType(
                     get()
                     .type)), getError(Error.missingIdentifier));
         uint fileId = get().fileId;
@@ -4880,14 +4886,14 @@ final class GrParser {
         lexPositions.length = class_.fields.length;
 
         // Init
-        if (get().type == GrLexemeType.leftCurlyBrace) {
+        if (get().type == GrLexeme.Type.leftCurlyBrace) {
             checkAdvance();
             while (!isEnd()) {
-                if (get().type == GrLexemeType.rightCurlyBrace) {
+                if (get().type == GrLexeme.Type.rightCurlyBrace) {
                     checkAdvance();
                     break;
                 }
-                else if (get().type == GrLexemeType.identifier) {
+                else if (get().type == GrLexeme.Type.identifier) {
                     const string fieldName = get().svalue;
                     checkAdvance();
                     bool hasField = false;
@@ -4960,7 +4966,7 @@ final class GrParser {
         const uint fileId = get().fileId;
 
         //Explicit type like: list(int)[1, 2, 3]
-        if (get().type == GrLexemeType.listType) {
+        if (get().type == GrLexeme.Type.listType) {
             checkAdvance();
             string[] temp;
             auto signature = parseInSignature(temp, true);
@@ -4974,13 +4980,13 @@ final class GrParser {
                     getError(Error.invalidListType));
         }
 
-        if (get().type != GrLexemeType.leftBracket)
+        if (get().type != GrLexeme.Type.leftBracket)
             logError(format(getError(Error.missingBracketsAfterX), getPrettyType(listType)),
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(get().type)));
         advance();
 
         int listSize;
-        while (get().type != GrLexemeType.rightBracket) {
+        while (get().type != GrLexeme.Type.rightBracket) {
             if (subType.base == GrType.Base.void_) {
                 //Implicit type specified by the type of the first element.
                 subType = parseSubExpression(
@@ -4998,12 +5004,12 @@ final class GrParser {
             }
             listSize++;
 
-            if (get().type == GrLexemeType.rightBracket)
+            if (get().type == GrLexeme.Type.rightBracket)
                 break;
-            if (get().type != GrLexemeType.comma)
+            if (get().type != GrLexeme.Type.comma)
                 logError(getError(Error.indexesShouldBeSeparatedByComma),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.comma), getPrettyLexemeType(get().type)));
+                        GrLexeme.Type.comma), getPrettyLexemeType(get().type)));
             checkAdvance();
         }
 
@@ -5044,7 +5050,7 @@ final class GrParser {
         advance();
 
         for (;;) {
-            if (get().type == GrLexemeType.comma)
+            if (get().type == GrLexeme.Type.comma)
                 logError(getError(Error.expectedIndexFoundComma), getError(Error.missingVal));
             auto index = parseSubExpression(
                 GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA
@@ -5053,7 +5059,7 @@ final class GrParser {
                 logError(getError(Error.expectedIntFoundNothing), getError(Error.missingVal));
             convertType(index, grInt, fileId);
 
-            if (get().type == GrLexemeType.rightBracket) {
+            if (get().type == GrLexeme.Type.rightBracket) {
                 switch (listType.base) with (GrType.Base) {
                 case list_:
                     const GrType subType = grUnmangle(listType.mangledType);
@@ -5091,20 +5097,20 @@ final class GrParser {
                 default:
                     logError(getError(Error.invalidListType),
                         format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                            GrLexemeType.listType),
+                            GrLexeme.Type.listType),
                             getPrettyType(listType)));
                 }
                 break;
             }
-            if (get().type != GrLexemeType.comma)
+            if (get().type != GrLexeme.Type.comma)
                 logError(getError(Error.indexesShouldBeSeparatedByComma),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.comma), getPrettyLexemeType(get().type)));
+                        GrLexeme.Type.comma), getPrettyLexemeType(get().type)));
             checkAdvance();
-            if (get().type == GrLexemeType.rightBracket)
+            if (get().type == GrLexeme.Type.rightBracket)
                 logError(getError(Error.indexesShouldBeSeparatedByComma),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.comma), getPrettyLexemeType(get().type)));
+                        GrLexeme.Type.comma), getPrettyLexemeType(get().type)));
 
             switch (listType.base) with (GrType.Base) {
             case list_:
@@ -5142,7 +5148,7 @@ final class GrParser {
             default:
                 logError(getError(Error.invalidListType),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.listType),
+                        GrLexeme.Type.listType),
                         getPrettyType(listType)));
             }
         }
@@ -5170,7 +5176,7 @@ final class GrParser {
     /// Parse an assignable (named) element.
     private GrVariable parseLValue() {
         const uint fileId = get().fileId;
-        if (get().type != GrLexemeType.identifier)
+        if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedVarFoundX), getPrettyLexemeType(get()
                     .type)), getError(Error.missingVar));
 
@@ -5196,7 +5202,7 @@ final class GrParser {
         bool isAssignmentList;
         const auto tempPos = current;
         __skipLoop: while (!isEnd()) {
-            switch (get().type) with (GrLexemeType) {
+            switch (get().type) with (GrLexeme.Type) {
             case leftBracket:
                 skipBrackets();
                 break;
@@ -5226,14 +5232,14 @@ final class GrParser {
                 if (lvalues.length)
                     checkAdvance();
                 //Identifier
-                if (get().type != GrLexemeType.identifier)
+                if (get().type != GrLexeme.Type.identifier)
                     logError(format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get()
                             .type)), getError(Error.missingIdentifier));
                 lvalues ~= parseSubExpression(
                     GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_ASSIGN
                         | GR_SUBEXPR_EXPECTING_LVALUE).lvalue;
             }
-            while (get().type == GrLexemeType.comma);
+            while (get().type == GrLexeme.Type.comma);
 
             parseAssignList(lvalues);
         }
@@ -5262,14 +5268,14 @@ final class GrParser {
             }
             else if (type.base != GrType.Base.void_)
                 expressionTypes ~= type;
-            if (get().type != GrLexemeType.comma)
+            if (get().type != GrLexeme.Type.comma)
                 break;
             checkAdvance();
         }
-        if (get().type != GrLexemeType.semicolon)
+        if (get().type != GrLexeme.Type.semicolon)
             logError(getError(Error.missingSemicolonAfterExprList),
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexemeType.semicolon), getPrettyLexemeType(get().type)));
+                    GrLexeme.Type.semicolon), getPrettyLexemeType(get().type)));
         checkAdvance();
         return expressionTypes;
     }
@@ -5277,7 +5283,7 @@ final class GrParser {
     /// Parse the right side of a multiple assignment and associate them with the `lvalues`.
     private void parseAssignList(GrVariable[] lvalues, bool isInitialization = false) {
         const uint fileId = get().fileId;
-        switch (get().type) with (GrLexemeType) {
+        switch (get().type) with (GrLexeme.Type) {
         case assign:
             advance();
             GrType[] expressionTypes = parseExpressionList();
@@ -5347,7 +5353,7 @@ final class GrParser {
         default:
             logError(getError(Error.missingSemicolonAfterAssignmentList),
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexemeType.semicolon), getPrettyLexemeType(get().type)));
+                    GrLexeme.Type.semicolon), getPrettyLexemeType(get().type)));
         }
     }
 
@@ -5544,8 +5550,8 @@ final class GrParser {
     }
 
     /// Does this operation require a left-expr ?
-    private bool requireLValue(GrLexemeType operatorType) {
-        switch (operatorType) with (GrLexemeType) {
+    private bool requireLValue(GrLexeme.Type operatorType) {
+        switch (operatorType) with (GrLexeme.Type) {
         case increment:
         case decrement:
         case assign: .. case powerAssign:
@@ -5562,20 +5568,20 @@ final class GrParser {
     private GrType parseFunctionPointer(GrType currentType) {
         const uint fileId = get().fileId;
         checkAdvance();
-        if (get().type == GrLexemeType.leftParenthesis) {
+        if (get().type == GrLexeme.Type.leftParenthesis) {
             checkAdvance();
             GrType refType = parseType();
-            if (get().type != GrLexemeType.rightParenthesis)
+            if (get().type != GrLexeme.Type.rightParenthesis)
                 logError(getError(Error.missingParenthesesAfterType),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.rightParenthesis), getPrettyLexemeType(get().type)));
+                        GrLexeme.Type.rightParenthesis), getPrettyLexemeType(get().type)));
             checkAdvance();
             if (currentType.base == GrType.Base.void_)
                 currentType = refType;
             else
                 currentType = convertType(refType, currentType, fileId);
         }
-        if (get().type != GrLexemeType.identifier)
+        if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedFuncNameFoundX), getPrettyLexemeType(get()
                     .type)), getError(
                     Error.missingFuncName));
@@ -5622,7 +5628,7 @@ final class GrParser {
         const bool isExpectingLValue = (flags & GR_SUBEXPR_EXPECTING_LVALUE) > 0;
 
         GrVariable[] lvalues;
-        GrLexemeType[] operatorsStack;
+        GrLexeme.Type[] operatorsStack;
         GrType[] typeStack;
         GrType currentType = grVoid, lastType = grVoid;
         bool hasValue = false, hadValue = false, hasLValue = false, hadLValue = false, hasReference = false,
@@ -5651,7 +5657,7 @@ final class GrParser {
 
             GrLexeme lex = get();
             fileId = lex.fileId;
-            switch (lex.type) with (GrLexemeType) {
+            switch (lex.type) with (GrLexeme.Type) {
             case semicolon:
                 if (useSemicolon)
                     isEndOfExpression = true;
@@ -5718,7 +5724,7 @@ final class GrParser {
                 if (!hadValue)
                     logError(getError(Error.methodCallMustBePlacedAfterVal), getError(
                             Error.missingVal));
-                if (get().type != GrLexemeType.identifier)
+                if (get().type != GrLexeme.Type.identifier)
                     logError(format(getError(Error.expectedFuncNameFoundX), getPrettyLexemeType(get()
                             .type)), getError(
                             Error.missingFuncName));
@@ -5741,7 +5747,7 @@ final class GrParser {
                 }
 
                 const auto nextLexeme = get();
-                if (nextLexeme.type == GrLexemeType.leftBracket)
+                if (nextLexeme.type == GrLexeme.Type.leftBracket)
                     hasReference = true;
                 if (currentType != GrType(GrType.Base.void_)) {
                     hasValue = true;
@@ -5762,10 +5768,10 @@ final class GrParser {
                     //Check if there is an assignement or not, discard if it's only a rvalue
                     const auto nextLexeme = get();
                     if (requireLValue(nextLexeme.type) || (isExpectingLValue
-                            && nextLexeme.type == GrLexemeType.comma)) {
-                        if ((nextLexeme.type > GrLexemeType.assign && nextLexeme.type <= GrLexemeType.powerAssign)
-                            || nextLexeme.type == GrLexemeType.increment
-                            || nextLexeme.type == GrLexemeType.decrement) {
+                            && nextLexeme.type == GrLexeme.Type.comma)) {
+                        if ((nextLexeme.type > GrLexeme.Type.assign && nextLexeme.type <= GrLexeme.Type.powerAssign)
+                            || nextLexeme.type == GrLexeme.Type.increment
+                            || nextLexeme.type == GrLexeme.Type.decrement) {
                             final switch (currentType.base) with (GrType.Base) {
                             case boolean:
                             case integer:
@@ -5862,7 +5868,7 @@ final class GrParser {
                 break;
             case real_:
                 currentType = GrType(GrType.Base.real_);
-                addRealConstant(lex.fvalue);
+                addRealConstant(lex.rvalue);
                 hasValue = true;
                 typeStack ~= currentType;
                 checkAdvance();
@@ -5903,7 +5909,7 @@ final class GrParser {
                     logError(format(getError(Error.cantAccessFieldOnTypeX), getPrettyType(currentType)),
                         format(getError(Error.expectedClassFoundX), getPrettyType(currentType)));
                 checkAdvance();
-                if (get().type != GrLexemeType.identifier)
+                if (get().type != GrLexeme.Type.identifier)
                     logError(format(getError(Error.expectedFieldNameFoundX), getPrettyLexemeType(get()
                             .type)), getError(Error.missingField));
                 const string identifier = get().svalue;
@@ -5949,7 +5955,7 @@ final class GrParser {
                         hasLValue = true;
                         hadLValue = false;
 
-                        switch (get().type) with (GrLexemeType) {
+                        switch (get().type) with (GrLexeme.Type) {
                         case period:
                             addInstruction(GrOpcode.fieldLoad_object, fieldLValue.register);
                             break;
@@ -6016,7 +6022,7 @@ final class GrParser {
                         getError(Error.methodCallMustBePlacedAfterVal));
                 checkAdvance();
                 GrType selfType = currentType;
-                if (get().type != GrLexemeType.identifier)
+                if (get().type != GrLexeme.Type.identifier)
                     logError(format(getError(Error.expectedFuncNameFoundX), getPrettyLexemeType(get()
                             .type)), getError(
                             Error.missingFuncName));
@@ -6098,7 +6104,7 @@ final class GrParser {
             case as:
                 if (!hadValue)
                     logError(format(getError(Error.xMustBePlacedAfterVal), getPrettyLexemeType(
-                            GrLexemeType.as)), getError(Error.missingVal));
+                            GrLexeme.Type.as)), getError(Error.missingVal));
                 currentType = parseConversionOperator(typeStack);
                 hasValue = true;
                 hadValue = false;
@@ -6108,9 +6114,9 @@ final class GrParser {
                 checkAdvance();
                 currentType = addFunctionAddress(currentFunction, get().fileId);
                 if (currentType.base == GrType.Base.void_)
-                    logError(format(getError(Error.xMustBeInsideFuncOrTask), getPrettyLexemeType(GrLexemeType.self)),
+                    logError(format(getError(Error.xMustBeInsideFuncOrTask), getPrettyLexemeType(GrLexeme.Type.self)),
                         format(getError(Error.xRefNoFuncNorTask), getPrettyLexemeType(
-                            GrLexemeType.self)), "", -1);
+                            GrLexeme.Type.self)), "", -1);
                 typeStack ~= currentType;
                 hasValue = true;
                 break;
@@ -6138,19 +6144,19 @@ final class GrParser {
                 goto case multiply;
             case add:
                 if (!hadValue)
-                    lex.type = GrLexemeType.plus;
+                    lex.type = GrLexeme.Type.plus;
                 goto case multiply;
             case concatenate:
                 if (!hadValue)
-                    lex.type = GrLexemeType.bitwiseNot;
+                    lex.type = GrLexeme.Type.bitwiseNot;
                 goto case multiply;
             case substract:
                 if (!hadValue)
-                    lex.type = GrLexemeType.minus;
+                    lex.type = GrLexeme.Type.minus;
                 goto case multiply;
             case send:
                 if (!hadValue)
-                    lex.type = GrLexemeType.receive;
+                    lex.type = GrLexeme.Type.receive;
                 goto case multiply;
             case increment: .. case decrement:
                 isRightUnaryOperator = true;
@@ -6171,15 +6177,15 @@ final class GrParser {
                 while (operatorsStack.length
                     && getLeftOperatorPriority(operatorsStack[$ - 1]) > getRightOperatorPriority(
                         lex.type)) {
-                    GrLexemeType operator = operatorsStack[$ - 1];
+                    GrLexeme.Type operator = operatorsStack[$ - 1];
 
-                    switch (operator) with (GrLexemeType) {
+                    switch (operator) with (GrLexeme.Type) {
                     case assign:
                         addSetInstruction(lvalues[$ - 1], fileId, currentType, true);
                         lvalues.length--;
                         break;
                     case bitwiseAndAssign: .. case powerAssign:
-                        currentType = addOperator(operator - (GrLexemeType.bitwiseAndAssign - GrLexemeType.bitwiseAnd),
+                        currentType = addOperator(operator - (GrLexeme.Type.bitwiseAndAssign - GrLexeme.Type.bitwiseAnd),
                             typeStack, fileId);
                         addSetInstruction(lvalues[$ - 1], fileId, currentType, true);
                         lvalues.length--;
@@ -6222,7 +6228,7 @@ final class GrParser {
                 //Check if there is an assignement or not, discard if it's only a rvalue
                 const auto nextLexeme = get();
                 if (lvalue !is null && (requireLValue(nextLexeme.type)
-                        || (isExpectingLValue && nextLexeme.type == GrLexemeType.comma))) {
+                        || (isExpectingLValue && nextLexeme.type == GrLexeme.Type.comma))) {
                     hasLValue = true;
                     lvalues ~= lvalue;
 
@@ -6230,7 +6236,7 @@ final class GrParser {
                         hasValue = true;
                 }
 
-                if (!hasLValue && nextLexeme.type == GrLexemeType.leftBracket)
+                if (!hasLValue && nextLexeme.type == GrLexeme.Type.leftBracket)
                     hasReference = true;
 
                 if (currentType != GrType(GrType.Base.void_)) {
@@ -6247,7 +6253,7 @@ final class GrParser {
             if (hasValue && hadValue)
                 logError(getError(Error.missingSemicolonAtEndOfExpr),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexemeType.semicolon), getPrettyLexemeType(get().type)));
+                        GrLexeme.Type.semicolon), getPrettyLexemeType(get().type)));
         }
         while (!isEndOfExpression);
 
@@ -6258,9 +6264,9 @@ final class GrParser {
         }
 
         while (operatorsStack.length) {
-            GrLexemeType operator = operatorsStack[$ - 1];
+            GrLexeme.Type operator = operatorsStack[$ - 1];
 
-            switch (operator) with (GrLexemeType) {
+            switch (operator) with (GrLexeme.Type) {
             case assign:
                 addSetInstruction(lvalues[$ - 1], fileId, currentType,
                     isExpectingValue || operatorsStack.length > 1uL);
@@ -6271,7 +6277,7 @@ final class GrParser {
                 break;
             case bitwiseAndAssign: .. case powerAssign:
                 currentType = addOperator(
-                    operator - (GrLexemeType.bitwiseAndAssign - GrLexemeType.bitwiseAnd),
+                    operator - (GrLexeme.Type.bitwiseAndAssign - GrLexeme.Type.bitwiseAnd),
                     typeStack, fileId);
                 addSetInstruction(lvalues[$ - 1], fileId, currentType,
                     isExpectingValue || operatorsStack.length > 1uL);
@@ -6364,9 +6370,9 @@ final class GrParser {
             signature ~= convertType(selfType, anonSignature[i], fileId);
             i++;
         }
-        if (get().type == GrLexemeType.leftParenthesis) {
+        if (get().type == GrLexeme.Type.leftParenthesis) {
             checkAdvance();
-            if (get().type != GrLexemeType.rightParenthesis) {
+            if (get().type != GrLexeme.Type.rightParenthesis) {
                 for (;;) {
                     if (i >= anonSignature.length) {
                         logError(format(getError(anonSignature.length > 1 ? Error.funcTakesXArgsButMoreWereSupplied : Error.funcTakesXArgButMoreWereSupplied), anonSignature
@@ -6401,7 +6407,7 @@ final class GrParser {
                         signature ~= convertType(subType, anonSignature[i], fileId);
                         i++;
                     }
-                    if (get().type == GrLexemeType.rightParenthesis) {
+                    if (get().type == GrLexeme.Type.rightParenthesis) {
                         checkAdvance();
                         break;
                     }
@@ -6454,7 +6460,7 @@ final class GrParser {
             isFunctionCall = true;
         }
 
-        if (get().type == GrLexemeType.leftParenthesis) {
+        if (get().type == GrLexeme.Type.leftParenthesis) {
             isFunctionCall = true;
             hasParenthesis = true;
         }
@@ -6484,7 +6490,7 @@ final class GrParser {
                     signature ~= convertType(selfType, anonSignature[i], fileId);
                     i++;
                 }
-                if (hasParenthesis && get().type != GrLexemeType.rightParenthesis) {
+                if (hasParenthesis && get().type != GrLexeme.Type.rightParenthesis) {
                     for (;;) {
                         if (i >= anonSignature.length) {
                             logError(format(getError(anonSignature.length > 1 ? Error.funcTakesXArgsButMoreWereSupplied : Error.funcTakesXArgButMoreWereSupplied), anonSignature
@@ -6521,7 +6527,7 @@ final class GrParser {
                             signature ~= convertType(subType, anonSignature[i], fileId);
                             i++;
                         }
-                        if (get().type == GrLexemeType.rightParenthesis) {
+                        if (get().type == GrLexeme.Type.rightParenthesis) {
                             if (signature.length != anonSignature.length) {
                                 logError(format(getError(anonSignature.length > 1 ? Error.funcTakesXArgsButYWereSupplied : Error.funcTakesXArgButYWereSupplied), anonSignature
                                         .length, signature.length),
@@ -6533,11 +6539,11 @@ final class GrParser {
                         }
                         advance();
                     }
-                    if (hasParenthesis && get().type == GrLexemeType.rightParenthesis)
+                    if (hasParenthesis && get().type == GrLexeme.Type.rightParenthesis)
                         advance();
                 }
                 else {
-                    if (hasParenthesis && get().type == GrLexemeType.rightParenthesis)
+                    if (hasParenthesis && get().type == GrLexeme.Type.rightParenthesis)
                         advance();
                     if (signature.length != anonSignature.length) {
                         logError(format(getError(anonSignature.length > 1 ? Error.funcTakesXArgsButYWereSupplied : Error.funcTakesXArgButYWereSupplied), anonSignature
@@ -6571,7 +6577,7 @@ final class GrParser {
                         signature ~= selfType;
                 }
                 //Signature parsing, no coercion is made
-                if (hasParenthesis && get().type != GrLexemeType.rightParenthesis) {
+                if (hasParenthesis && get().type != GrLexeme.Type.rightParenthesis) {
                     for (;;) {
                         auto type = parseSubExpression(
                             GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_PARENTHESIS
@@ -6587,12 +6593,12 @@ final class GrParser {
                         else
                             signature ~= type;
 
-                        if (get().type == GrLexemeType.rightParenthesis)
+                        if (get().type == GrLexeme.Type.rightParenthesis)
                             break;
                         advance();
                     }
                 }
-                if (hasParenthesis && get().type == GrLexemeType.rightParenthesis)
+                if (hasParenthesis && get().type == GrLexeme.Type.rightParenthesis)
                     advance();
 
                 //GrPrimitive call.
@@ -6613,11 +6619,11 @@ final class GrParser {
         }
         else if (_data.isEnum(identifier.svalue, fileId, false)) {
             const GrEnumDefinition definition = _data.getEnum(identifier.svalue, fileId);
-            if (get().type != GrLexemeType.period)
+            if (get().type != GrLexeme.Type.period)
                 logError(getError(Error.expectedDotAfterEnumType), getError(
                         Error.missingEnumConstantName));
             checkAdvance();
-            if (get().type != GrLexemeType.identifier)
+            if (get().type != GrLexeme.Type.identifier)
                 logError(getError(Error.expectedConstNameAfterEnumType),
                     getError(Error.missingEnumConstantName));
             const string fieldName = get().svalue;
@@ -6647,8 +6653,8 @@ final class GrParser {
             returnType = variable.type;
             //If it's an assignement, we want the GET instruction to be after the assignement, not there.
             const auto nextLexeme = get();
-            if (!(nextLexeme.type == GrLexemeType.assign || (isAssignment
-                    && nextLexeme.type == GrLexemeType.comma)))
+            if (!(nextLexeme.type == GrLexeme.Type.assign || (isAssignment
+                    && nextLexeme.type == GrLexeme.Type.comma)))
                 addGetInstruction(variable, expectedType);
         }
         return returnType;
@@ -6666,7 +6672,7 @@ final class GrParser {
         return grGetPrettyType(type, _locale);
     }
 
-    private string getPrettyLexemeType(GrLexemeType type) {
+    private string getPrettyLexemeType(GrLexeme.Type type) {
         return grGetPrettyLexemeType(type, _locale);
     }
 

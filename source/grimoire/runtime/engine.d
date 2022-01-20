@@ -70,6 +70,11 @@ class GrEngine {
         GrClassBuilder[string] _classBuilders;
     }
 
+    enum Priority {
+        immediate,
+        normal
+    }
+
     /// External way of stopping the VM.
     shared bool isRunning = true;
 
@@ -172,17 +177,24 @@ class GrEngine {
 	The action's name must be mangled with its signature.
 	---
 	action myAction() {
-		trace("myAction was created !");
+		print("myAction was created !");
 	}
 	---
 	*/
-    GrContext callAction(string mangledName) {
+    GrContext callAction(string mangledName, Priority priority = Priority.normal) {
         const auto action = mangledName in _bytecode.actions;
         if (action is null)
             throw new Exception("no action \'" ~ mangledName ~ "\' in script");
         GrContext context = new GrContext(this);
         context.pc = *action;
-        _contextsToSpawn.push(context);
+        final switch (priority) with (Priority) {
+        case immediate:
+            _contexts.push(context);
+            break;
+        case normal:
+            _contextsToSpawn.push(context);
+            break;
+        }
         return context;
     }
 
