@@ -12,119 +12,119 @@ import grimoire.assembly;
 import grimoire.compiler.data, grimoire.compiler.error, grimoire.compiler.util;
 
 /**
-Kinds of valid token.
-*/
-enum GrLexemeType {
-    leftBracket,
-    rightBracket,
-    leftParenthesis,
-    rightParenthesis,
-    leftCurlyBrace,
-    rightCurlyBrace,
-    period,
-    semicolon,
-    colon,
-    doubleColon,
-    comma,
-    at,
-    pointer,
-    as,
-    isolate,
-    capture,
-    error,
-    defer,
-    assign,
-    bitwiseAndAssign,
-    bitwiseOrAssign,
-    bitwiseXorAssign,
-    andAssign,
-    orAssign,
-    addAssign,
-    substractAssign,
-    multiplyAssign,
-    divideAssign,
-    concatenateAssign,
-    remainderAssign,
-    powerAssign,
-    plus,
-    minus,
-    bitwiseAnd,
-    bitwiseOr,
-    bitwiseXor,
-    and,
-    or,
-    add,
-    substract,
-    multiply,
-    divide,
-    concatenate,
-    remainder,
-    power,
-    equal,
-    doubleEqual,
-    threeWayComparison,
-    notEqual,
-    greaterOrEqual,
-    greater,
-    lesserOrEqual,
-    lesser,
-    leftShift,
-    rightShift,
-    interval,
-    arrow,
-    bitwiseNot,
-    not,
-    increment,
-    decrement,
-    identifier,
-    integer,
-    real_,
-    boolean,
-    string_,
-    null_,
-    public_,
-    type_,
-    action,
-    class_,
-    enumeration,
-    instance,
-    new_,
-    copy,
-    send,
-    receive,
-    integerType,
-    realType,
-    booleanType,
-    stringType,
-    listType,
-    chanType,
-    functionType,
-    taskType,
-    autoType,
-    if_,
-    unless,
-    else_,
-    switch_,
-    select,
-    case_,
-    while_,
-    do_,
-    until,
-    for_,
-    loop,
-    return_,
-    self,
-    die,
-    quit,
-    suspend,
-    break_,
-    continue_,
-}
-
-/**
 Describe the smallest element found in a source _file.
 */
 struct GrLexeme {
+    /**
+    Kinds of valid token.
+    */
+    enum Type {
+        leftBracket,
+        rightBracket,
+        leftParenthesis,
+        rightParenthesis,
+        leftCurlyBrace,
+        rightCurlyBrace,
+        period,
+        semicolon,
+        colon,
+        doubleColon,
+        comma,
+        at,
+        pointer,
+        as,
+        isolate,
+        capture,
+        error,
+        defer,
+        assign,
+        bitwiseAndAssign,
+        bitwiseOrAssign,
+        bitwiseXorAssign,
+        andAssign,
+        orAssign,
+        addAssign,
+        substractAssign,
+        multiplyAssign,
+        divideAssign,
+        concatenateAssign,
+        remainderAssign,
+        powerAssign,
+        plus,
+        minus,
+        bitwiseAnd,
+        bitwiseOr,
+        bitwiseXor,
+        and,
+        or,
+        add,
+        substract,
+        multiply,
+        divide,
+        concatenate,
+        remainder,
+        power,
+        equal,
+        doubleEqual,
+        threeWayComparison,
+        notEqual,
+        greaterOrEqual,
+        greater,
+        lesserOrEqual,
+        lesser,
+        leftShift,
+        rightShift,
+        interval,
+        arrow,
+        bitwiseNot,
+        not,
+        increment,
+        decrement,
+        identifier,
+        integer,
+        real_,
+        boolean,
+        string_,
+        null_,
+        public_,
+        type_,
+        action,
+        class_,
+        enumeration,
+        instance,
+        new_,
+        copy,
+        send,
+        receive,
+        integerType,
+        realType,
+        booleanType,
+        stringType,
+        listType,
+        chanType,
+        functionType,
+        taskType,
+        autoType,
+        if_,
+        unless,
+        else_,
+        switch_,
+        select,
+        case_,
+        while_,
+        do_,
+        until,
+        for_,
+        loop,
+        return_,
+        self,
+        die,
+        quit,
+        suspend,
+        break_,
+        continue_,
+    }
+
     /// Default.
     this(GrLexer _lexer) {
         _line = _lexer._line;
@@ -164,7 +164,7 @@ struct GrLexeme {
     }
 
     /// Kind of token.
-    GrLexemeType type;
+    Type type;
 
     /// Whether the lexeme is a constant value.
     bool isLiteral;
@@ -185,7 +185,7 @@ struct GrLexeme {
 
     /// Floating point value of the constant.
     /// isLiteral will be true and type set to float.
-    GrReal fvalue;
+    GrReal rvalue;
 
     /// Boolean value of the constant.
     /// isLiteral will be true and type set to bool.
@@ -205,7 +205,7 @@ struct GrLexeme {
 
     /// Can we define a custom function with this operator
     bool isOverridableOperator() const {
-        return type >= GrLexemeType.add && type <= GrLexemeType.not;
+        return type >= Type.add && type <= Type.not;
     }
 }
 
@@ -267,7 +267,7 @@ package final class GrLexer {
 
         // Translate aliases
         foreach (ref lexeme; _lexemes) {
-            if (lexeme.type == GrLexemeType.identifier) {
+            if (lexeme.type == GrLexeme.Type.identifier) {
                 string* name = (lexeme.svalue in _data._aliases);
                 if (name) {
                     lexeme.svalue = *name;
@@ -486,11 +486,11 @@ package final class GrLexer {
         lex._textLength = cast(uint) buffer.length;
 
         if (isFloat) {
-            lex.type = GrLexemeType.real_;
-            lex.fvalue = to!GrReal(buffer);
+            lex.type = GrLexeme.Type.real_;
+            lex.rvalue = to!GrReal(buffer);
         }
         else {
-            lex.type = GrLexemeType.integer;
+            lex.type = GrLexeme.Type.integer;
             lex.ivalue = to!GrInt(buffer);
         }
         _lexemes ~= lex;
@@ -501,7 +501,7 @@ package final class GrLexer {
     */
     void scanString() {
         GrLexeme lex = GrLexeme(this);
-        lex.type = GrLexemeType.string_;
+        lex.type = GrLexeme.Type.string_;
         lex.isLiteral = true;
 
         if (get() != '\"')
@@ -557,63 +557,63 @@ package final class GrLexer {
 
         switch (get()) {
         case '{':
-            lex.type = GrLexemeType.leftCurlyBrace;
+            lex.type = GrLexeme.Type.leftCurlyBrace;
             break;
         case '}':
-            lex.type = GrLexemeType.rightCurlyBrace;
+            lex.type = GrLexeme.Type.rightCurlyBrace;
             break;
         case '(':
-            lex.type = GrLexemeType.leftParenthesis;
+            lex.type = GrLexeme.Type.leftParenthesis;
             break;
         case ')':
-            lex.type = GrLexemeType.rightParenthesis;
+            lex.type = GrLexeme.Type.rightParenthesis;
             break;
         case '[':
-            lex.type = GrLexemeType.leftBracket;
+            lex.type = GrLexeme.Type.leftBracket;
             break;
         case ']':
-            lex.type = GrLexemeType.rightBracket;
+            lex.type = GrLexeme.Type.rightBracket;
             break;
         case '.':
-            lex.type = GrLexemeType.period;
+            lex.type = GrLexeme.Type.period;
             break;
         case ';':
-            lex.type = GrLexemeType.semicolon;
+            lex.type = GrLexeme.Type.semicolon;
             break;
         case ':':
-            lex.type = GrLexemeType.colon;
+            lex.type = GrLexeme.Type.colon;
             if (_current + 1 >= _text.length)
                 break;
             if (get(1) == ':') {
-                lex.type = GrLexemeType.doubleColon;
+                lex.type = GrLexeme.Type.doubleColon;
                 lex._textLength = 2;
                 _current++;
             }
             break;
         case ',':
-            lex.type = GrLexemeType.comma;
+            lex.type = GrLexeme.Type.comma;
             break;
         case '@':
-            lex.type = GrLexemeType.pointer;
+            lex.type = GrLexeme.Type.pointer;
             break;
         case '&':
-            lex.type = GrLexemeType.bitwiseAnd;
+            lex.type = GrLexeme.Type.bitwiseAnd;
             if (_current + 1 >= _text.length)
                 break;
             switch (get(1)) {
             case '=':
-                lex.type = GrLexemeType.bitwiseAndAssign;
+                lex.type = GrLexeme.Type.bitwiseAndAssign;
                 lex._textLength = 2;
                 _current++;
                 break;
             case '&':
-                lex.type = GrLexemeType.and;
+                lex.type = GrLexeme.Type.and;
                 lex._textLength = 2;
                 _current++;
                 if (_current + 1 >= _text.length)
                     break;
                 if (get(1) == '&') {
-                    lex.type = GrLexemeType.andAssign;
+                    lex.type = GrLexeme.Type.andAssign;
                     lex._textLength = 3;
                     _current++;
                 }
@@ -623,23 +623,23 @@ package final class GrLexer {
             }
             break;
         case '|':
-            lex.type = GrLexemeType.bitwiseOr;
+            lex.type = GrLexeme.Type.bitwiseOr;
             if (_current + 1 >= _text.length)
                 break;
             switch (get(1)) {
             case '=':
-                lex.type = GrLexemeType.bitwiseOrAssign;
+                lex.type = GrLexeme.Type.bitwiseOrAssign;
                 lex._textLength = 2;
                 _current++;
                 break;
             case '|':
-                lex.type = GrLexemeType.or;
+                lex.type = GrLexeme.Type.or;
                 lex._textLength = 2;
                 _current++;
                 if (_current + 1 >= _text.length)
                     break;
                 if (get(1) == '|') {
-                    lex.type = GrLexemeType.orAssign;
+                    lex.type = GrLexeme.Type.orAssign;
                     lex._textLength = 3;
                     _current++;
                 }
@@ -649,37 +649,37 @@ package final class GrLexer {
             }
             break;
         case '^':
-            lex.type = GrLexemeType.bitwiseXor;
+            lex.type = GrLexeme.Type.bitwiseXor;
             if (_current + 1 >= _text.length)
                 break;
             if (get(1) == '=') {
-                lex.type = GrLexemeType.bitwiseXorAssign;
+                lex.type = GrLexeme.Type.bitwiseXorAssign;
                 lex._textLength = 2;
                 _current++;
             }
             break;
         case '~':
-            lex.type = GrLexemeType.concatenate;
+            lex.type = GrLexeme.Type.concatenate;
             if (_current + 1 >= _text.length)
                 break;
             if (get(1) == '=') {
-                lex.type = GrLexemeType.concatenateAssign;
+                lex.type = GrLexeme.Type.concatenateAssign;
                 lex._textLength = 2;
                 _current++;
             }
             break;
         case '+':
-            lex.type = GrLexemeType.add;
+            lex.type = GrLexeme.Type.add;
             if (_current + 1 >= _text.length)
                 break;
             switch (get(1)) {
             case '=':
-                lex.type = GrLexemeType.addAssign;
+                lex.type = GrLexeme.Type.addAssign;
                 lex._textLength = 2;
                 _current++;
                 break;
             case '+':
-                lex.type = GrLexemeType.increment;
+                lex.type = GrLexeme.Type.increment;
                 lex._textLength = 2;
                 _current++;
                 break;
@@ -688,22 +688,22 @@ package final class GrLexer {
             }
             break;
         case '-':
-            lex.type = GrLexemeType.substract;
+            lex.type = GrLexeme.Type.substract;
             if (_current + 1 >= _text.length)
                 break;
             switch (get(1)) {
             case '=':
-                lex.type = GrLexemeType.substractAssign;
+                lex.type = GrLexeme.Type.substractAssign;
                 lex._textLength = 2;
                 _current++;
                 break;
             case '-':
-                lex.type = GrLexemeType.decrement;
+                lex.type = GrLexeme.Type.decrement;
                 lex._textLength = 2;
                 _current++;
                 break;
             case '>':
-                lex.type = GrLexemeType.interval;
+                lex.type = GrLexeme.Type.interval;
                 lex._textLength = 2;
                 _current++;
                 break;
@@ -712,66 +712,66 @@ package final class GrLexer {
             }
             break;
         case '*':
-            lex.type = GrLexemeType.multiply;
+            lex.type = GrLexeme.Type.multiply;
             if (_current + 1 >= _text.length)
                 break;
             if (get(1) == '=') {
-                lex.type = GrLexemeType.multiplyAssign;
+                lex.type = GrLexeme.Type.multiplyAssign;
                 lex._textLength = 2;
                 _current++;
             }
             else if (get(1) == '*') {
-                lex.type = GrLexemeType.power;
+                lex.type = GrLexeme.Type.power;
                 lex._textLength = 2;
                 _current++;
                 if (_current + 1 >= _text.length)
                     break;
                 if (get(1) == '=') {
-                    lex.type = GrLexemeType.powerAssign;
+                    lex.type = GrLexeme.Type.powerAssign;
                     lex._textLength = 3;
                     _current++;
                 }
             }
             break;
         case '/':
-            lex.type = GrLexemeType.divide;
+            lex.type = GrLexeme.Type.divide;
             if (_current + 1 >= _text.length)
                 break;
             if (get(1) == '=') {
-                lex.type = GrLexemeType.divideAssign;
+                lex.type = GrLexeme.Type.divideAssign;
                 lex._textLength = 2;
                 _current++;
             }
             break;
         case '%':
-            lex.type = GrLexemeType.remainder;
+            lex.type = GrLexeme.Type.remainder;
             if (_current + 1 >= _text.length)
                 break;
             if (get(1) == '=') {
-                lex.type = GrLexemeType.remainderAssign;
+                lex.type = GrLexeme.Type.remainderAssign;
                 lex._textLength = 2;
                 _current++;
             }
             break;
         case '=':
-            lex.type = GrLexemeType.assign;
+            lex.type = GrLexeme.Type.assign;
             if (_current + 1 >= _text.length)
                 break;
             switch (get(1)) {
             case '=':
-                lex.type = GrLexemeType.equal;
+                lex.type = GrLexeme.Type.equal;
                 lex._textLength = 2;
                 _current++;
                 if (_current + 1 >= _text.length)
                     break;
                 if (get(1) == '=') {
-                    lex.type = GrLexemeType.doubleEqual;
+                    lex.type = GrLexeme.Type.doubleEqual;
                     lex._textLength = 3;
                     _current++;
                 }
                 break;
             case '>':
-                lex.type = GrLexemeType.arrow;
+                lex.type = GrLexeme.Type.arrow;
                 lex._textLength = 2;
                 _current++;
                 break;
@@ -780,53 +780,53 @@ package final class GrLexer {
             }
             break;
         case '<':
-            lex.type = GrLexemeType.lesser;
+            lex.type = GrLexeme.Type.lesser;
             if (_current + 1 >= _text.length)
                 break;
             if (get(1) == '=') {
-                lex.type = GrLexemeType.lesserOrEqual;
+                lex.type = GrLexeme.Type.lesserOrEqual;
                 lex._textLength = 2;
                 _current++;
                 if (_current + 1 >= _text.length)
                     break;
                 if (get(1) == '>') {
-                    lex.type = GrLexemeType.threeWayComparison;
+                    lex.type = GrLexeme.Type.threeWayComparison;
                     lex._textLength = 3;
                     _current++;
                 }
             }
             else if (get(1) == '-') {
-                lex.type = GrLexemeType.send;
+                lex.type = GrLexeme.Type.send;
                 lex._textLength = 2;
                 _current++;
             }
             else if (get(1) == '<') {
-                lex.type = GrLexemeType.leftShift;
+                lex.type = GrLexeme.Type.leftShift;
                 lex._textLength = 2;
                 _current++;
             }
             break;
         case '>':
-            lex.type = GrLexemeType.greater;
+            lex.type = GrLexeme.Type.greater;
             if (_current + 1 >= _text.length)
                 break;
             if (get(1) == '=') {
-                lex.type = GrLexemeType.greaterOrEqual;
+                lex.type = GrLexeme.Type.greaterOrEqual;
                 lex._textLength = 2;
                 _current++;
             }
             else if (get(1) == '>') {
-                lex.type = GrLexemeType.rightShift;
+                lex.type = GrLexeme.Type.rightShift;
                 lex._textLength = 2;
                 _current++;
             }
             break;
         case '!':
-            lex.type = GrLexemeType.not;
+            lex.type = GrLexeme.Type.not;
             if (_current + 1 >= _text.length)
                 break;
             if (get(1) == '=') {
-                lex.type = GrLexemeType.notEqual;
+                lex.type = GrLexeme.Type.notEqual;
                 lex._textLength = 2;
                 _current++;
             }
@@ -874,235 +874,235 @@ package final class GrLexer {
             scanUse();
             return;
         case "public":
-            lex.type = GrLexemeType.public_;
+            lex.type = GrLexeme.Type.public_;
             break;
         case "type":
-            lex.type = GrLexemeType.type_;
+            lex.type = GrLexeme.Type.type_;
             break;
         case "action":
-            lex.type = GrLexemeType.action;
+            lex.type = GrLexeme.Type.action;
             break;
         case "classe":
         case "class":
-            lex.type = GrLexemeType.class_;
+            lex.type = GrLexeme.Type.class_;
             break;
         case "énumération":
         case "enumeration":
-            lex.type = GrLexemeType.enumeration;
+            lex.type = GrLexeme.Type.enumeration;
             break;
         case "instance":
-            lex.type = GrLexemeType.instance;
+            lex.type = GrLexeme.Type.instance;
             break;
         case "si":
         case "if":
-            lex.type = GrLexemeType.if_;
+            lex.type = GrLexeme.Type.if_;
             break;
         case "sauf":
         case "unless":
-            lex.type = GrLexemeType.unless;
+            lex.type = GrLexeme.Type.unless;
             break;
         case "sinon":
         case "else":
-            lex.type = GrLexemeType.else_;
+            lex.type = GrLexeme.Type.else_;
             break;
         case "alternative":
-            lex.type = GrLexemeType.switch_;
+            lex.type = GrLexeme.Type.switch_;
             break;
         case "sélectionne":
         case "select":
-            lex.type = GrLexemeType.select;
+            lex.type = GrLexeme.Type.select;
             break;
         case "cas":
         case "case":
-            lex.type = GrLexemeType.case_;
+            lex.type = GrLexeme.Type.case_;
             break;
         case "tant":
         case "while":
-            lex.type = GrLexemeType.while_;
+            lex.type = GrLexeme.Type.while_;
             break;
         case "fais":
         case "do":
-            lex.type = GrLexemeType.do_;
+            lex.type = GrLexeme.Type.do_;
             break;
         case "jusque":
         case "until":
-            lex.type = GrLexemeType.until;
+            lex.type = GrLexeme.Type.until;
             break;
         case "pour":
         case "for":
-            lex.type = GrLexemeType.for_;
+            lex.type = GrLexeme.Type.for_;
             break;
         case "boucle":
         case "loop":
-            lex.type = GrLexemeType.loop;
+            lex.type = GrLexeme.Type.loop;
             break;
         case "retourne":
         case "return":
-            lex.type = GrLexemeType.return_;
+            lex.type = GrLexeme.Type.return_;
             break;
         case "soi":
         case "self":
-            lex.type = GrLexemeType.self;
+            lex.type = GrLexeme.Type.self;
             break;
         case "meurt":
         case "die":
-            lex.type = GrLexemeType.die;
+            lex.type = GrLexeme.Type.die;
             break;
         case "quitte":
         case "quit":
-            lex.type = GrLexemeType.quit;
+            lex.type = GrLexeme.Type.quit;
             break;
         case "suspends":
         case "suspend":
-            lex.type = GrLexemeType.suspend;
+            lex.type = GrLexeme.Type.suspend;
             break;
         case "casse":
         case "break":
-            lex.type = GrLexemeType.break_;
+            lex.type = GrLexeme.Type.break_;
             break;
         case "continue":
-            lex.type = GrLexemeType.continue_;
+            lex.type = GrLexeme.Type.continue_;
             break;
         case "en":
         case "as":
-            lex.type = GrLexemeType.as;
+            lex.type = GrLexeme.Type.as;
             break;
         case "isole":
         case "isolate":
-            lex.type = GrLexemeType.isolate;
+            lex.type = GrLexeme.Type.isolate;
             break;
         case "capture":
-            lex.type = GrLexemeType.capture;
+            lex.type = GrLexeme.Type.capture;
             break;
         case "erreur":
         case "error":
-            lex.type = GrLexemeType.error;
+            lex.type = GrLexeme.Type.error;
             break;
         case "décale":
         case "defer":
-            lex.type = GrLexemeType.defer;
+            lex.type = GrLexeme.Type.defer;
             break;
         case "tâche":
         case "task":
-            lex.type = GrLexemeType.taskType;
+            lex.type = GrLexeme.Type.taskType;
             lex.isType = true;
             break;
         case "fonction":
         case "function":
-            lex.type = GrLexemeType.functionType;
+            lex.type = GrLexeme.Type.functionType;
             lex.isType = true;
             break;
         case "entier":
         case "integer":
-            lex.type = GrLexemeType.integerType;
+            lex.type = GrLexeme.Type.integerType;
             lex.isType = true;
             break;
         case "réel":
         case "real":
-            lex.type = GrLexemeType.realType;
+            lex.type = GrLexeme.Type.realType;
             lex.isType = true;
             break;
         case "booléen":
         case "boolean":
-            lex.type = GrLexemeType.booleanType;
+            lex.type = GrLexeme.Type.booleanType;
             lex.isType = true;
             break;
         case "chaîne":
         case "string":
-            lex.type = GrLexemeType.stringType;
+            lex.type = GrLexeme.Type.stringType;
             lex.isType = true;
             break;
         case "liste":
         case "list":
-            lex.type = GrLexemeType.listType;
+            lex.type = GrLexeme.Type.listType;
             lex.isType = true;
             break;
         case "canal":
         case "channel":
-            lex.type = GrLexemeType.chanType;
+            lex.type = GrLexeme.Type.chanType;
             lex.isType = true;
             break;
         case "crée":
         case "new":
-            lex.type = GrLexemeType.new_;
+            lex.type = GrLexeme.Type.new_;
             lex.isType = false;
             break;
         case "soit":
         case "let":
-            lex.type = GrLexemeType.autoType;
+            lex.type = GrLexeme.Type.autoType;
             lex.isType = false;
             break;
         case "vrai":
         case "true":
-            lex.type = GrLexemeType.boolean;
+            lex.type = GrLexeme.Type.boolean;
             lex.isKeyword = false;
             lex.isLiteral = true;
             lex.bvalue = true;
             break;
         case "faux":
         case "false":
-            lex.type = GrLexemeType.boolean;
+            lex.type = GrLexeme.Type.boolean;
             lex.isKeyword = false;
             lex.isLiteral = true;
             lex.bvalue = false;
             break;
         case "nul":
         case "null":
-            lex.type = GrLexemeType.null_;
+            lex.type = GrLexeme.Type.null_;
             lex.isKeyword = false;
             lex.isLiteral = true;
             break;
         case "à":
         case "to":
-            lex.type = GrLexemeType.interval;
+            lex.type = GrLexeme.Type.interval;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
         case "et":
         case "and":
-            lex.type = GrLexemeType.and;
+            lex.type = GrLexeme.Type.and;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
         case "ou":
         case "or":
-            lex.type = GrLexemeType.or;
+            lex.type = GrLexeme.Type.or;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
         case "pas":
         case "not":
-            lex.type = GrLexemeType.not;
+            lex.type = GrLexeme.Type.not;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
         case "et_bin":
         case "bit_and":
-            lex.type = GrLexemeType.bitwiseAnd;
+            lex.type = GrLexeme.Type.bitwiseAnd;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
         case "ou_bin":
         case "bit_or":
-            lex.type = GrLexemeType.bitwiseOr;
+            lex.type = GrLexeme.Type.bitwiseOr;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
         case "xou_bin":
         case "bit_xor":
-            lex.type = GrLexemeType.bitwiseXor;
+            lex.type = GrLexeme.Type.bitwiseXor;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
         case "non_bin":
         case "bit_not":
-            lex.type = GrLexemeType.bitwiseNot;
+            lex.type = GrLexeme.Type.bitwiseNot;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
         default:
             lex.isKeyword = false;
-            lex.type = GrLexemeType.identifier;
+            lex.type = GrLexeme.Type.identifier;
             lex.svalue = to!string(buffer);
             break;
         }
@@ -1254,7 +1254,7 @@ package final class GrLexer {
 }
 
 /// Returns a displayable version of a token type.
-string grGetPrettyLexemeType(GrLexemeType operator, GrLocale locale = GrLocale.en_US) {
+string grGetPrettyLexemeType(GrLexeme.Type operator, GrLocale locale = GrLocale.en_US) {
     immutable string[][GrLocale.max + 1] lexemeTypeStrTable = [
         [
             "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&",
