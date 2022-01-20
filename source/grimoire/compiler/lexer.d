@@ -944,7 +944,7 @@ package final class GrLexer {
         case "self":
             lex.type = GrLexemeType.self;
             break;
-        case "meurt":
+        case "meurs":
         case "die":
             lex.type = GrLexemeType.die;
             break;
@@ -978,7 +978,7 @@ package final class GrLexer {
         case "error":
             lex.type = GrLexemeType.error;
             break;
-        case "décale":
+        case "reporte":
         case "defer":
             lex.type = GrLexemeType.defer;
             break;
