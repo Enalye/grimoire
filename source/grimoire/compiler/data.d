@@ -486,7 +486,7 @@ class GrData {
                 checkUnknownClasses(fieldType);
             }
             break;
-        case list_:
+        case array:
         case channel:
             GrType subType = grUnmangle(type.mangledType);
             checkUnknownClasses(subType);

@@ -10,7 +10,7 @@ import grimoire.compiler;
 public import grimoire.stdlib.util;
 
 import grimoire.stdlib.system;
-import grimoire.stdlib.list;
+import grimoire.stdlib.array;
 import grimoire.stdlib.dictionary;
 import grimoire.stdlib.range;
 import grimoire.stdlib.string;
@@ -35,7 +35,7 @@ GrLibrary grLoadStdLibrary() {
     GrLibrary library = new GrLibrary;
     grLoadStdLibLog(library);
     grLoadStdLibSystem(library);
-    grLoadStdLibList(library);
+    grLoadStdLibArray(library);
     grLoadStdLibDictionary(library);
     grLoadStdLibRange(library);
     grLoadStdLibString(library);

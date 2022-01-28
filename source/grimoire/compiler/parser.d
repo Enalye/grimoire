@@ -38,7 +38,7 @@ final class GrParser {
         uint scopeLevel;
 
         GrVariable[] globalVariables;
-        GrFunction[] instanciatedFunctions, functionsQueue, functions, actions;
+        GrFunction[] instanciatedFunctions, functionsQueue, functions, events;
         GrFunction[] anonymousFunctions;
         GrTemplateFunction[] templatedFunctions;
 
@@ -221,7 +221,7 @@ final class GrParser {
             logError(format(getError(Error.nameXDefMultipleTimes), name),
                 format(getError(Error.xRedefHere), name), "", 0,
                 format(getError(Error.prevDefOfX), name), func.lexPosition);
-        if ((func = getAction(name)) !is null)
+        if ((func = getEvent(name)) !is null)
             logError(format(getError(Error.nameXDefMultipleTimes), name),
                 format(getError(Error.xRedefHere), name), "", 0,
                 format(getError(Error.prevDefOfX), name), func.lexPosition);
@@ -281,7 +281,7 @@ final class GrParser {
                 }
             }
             break;
-        case list_:
+        case array:
         case class_:
         case foreign:
         case channel:
@@ -359,12 +359,12 @@ final class GrParser {
         functionStack.length--;
     }
 
-    private void beginFunction(string name, uint fileId, GrType[] signature, bool isAction = false) {
+    private void beginFunction(string name, uint fileId, GrType[] signature, bool isEvent = false) {
         const string mangledName = grMangleComposite(name, signature);
 
         GrFunction func;
-        if (isAction)
-            func = getAction(mangledName);
+        if (isEvent)
+            func = getEvent(mangledName);
         else
             func = getFunction(mangledName, fileId);
 
@@ -377,7 +377,7 @@ final class GrParser {
 
     private void preBeginFunction(string name, uint fileId, GrType[] signature,
         string[] inputVariables, bool isTask, GrType[] outSignature = [],
-        bool isAnonymous = false, bool isAction = false, bool isPublic = false) {
+        bool isAnonymous = false, bool isEvent = false, bool isPublic = false) {
         GrFunction func = new GrFunction;
         func.isTask = isTask;
         func.inputVariables = inputVariables;
@@ -405,7 +405,7 @@ final class GrParser {
             func.mangledName = grMangleComposite(name, signature);
             assertNoGlobalDeclaration(func.mangledName, fileId, isPublic);
 
-            func.isAction = isAction;
+            func.isEvent = isEvent;
             func.lexPosition = current;
             functionsQueue ~= func;
         }
@@ -491,7 +491,7 @@ final class GrParser {
                     addInstruction(GrOpcode.globalPop_string, 0u);
                 break;
             case class_:
-            case list_:
+            case array:
             case foreign:
             case channel:
             case reference:
@@ -688,8 +688,8 @@ final class GrParser {
         }
     }
 
-    private GrFunction getAction(string name) {
-        foreach (GrFunction func; actions) {
+    private GrFunction getEvent(string name) {
+        foreach (GrFunction func; events) {
             if (func.mangledName == name)
                 return func;
         }
@@ -922,15 +922,15 @@ final class GrParser {
             resultType = addInternalOperator(lexType, leftType);
         }
         else if (leftType.base == GrType.Base.channel) {
-            GrType chanType = grUnmangle(leftType.mangledType);
-            convertType(rightType, chanType, fileId);
+            GrType channelType = grUnmangle(leftType.mangledType);
+            convertType(rightType, channelType, fileId);
             resultType = addInternalOperator(lexType, leftType);
             if (resultType.base == GrType.Base.void_) {
                 resultType = addCustomBinaryOperator(lexType, leftType, rightType, fileId);
             }
         }
         else if (lexType == GrLexeme.Type.concatenate
-            && leftType.base == GrType.Base.list_ && leftType != rightType) {
+            && leftType.base == GrType.Base.array && leftType != rightType) {
             const GrType subType = grUnmangle(leftType.mangledType);
             convertType(rightType, subType, fileId);
             final switch (subType.base) with (GrType.Base) {
@@ -948,7 +948,7 @@ final class GrParser {
                 addInstruction(GrOpcode.append_string);
                 break;
             case class_:
-            case list_:
+            case array:
             case foreign:
             case channel:
                 addInstruction(GrOpcode.append_object);
@@ -962,7 +962,7 @@ final class GrParser {
             resultType = leftType;
         }
         else if (lexType == GrLexeme.Type.concatenate
-            && rightType.base == GrType.Base.list_ && leftType != rightType) {
+            && rightType.base == GrType.Base.array && leftType != rightType) {
             const GrType subType = grUnmangle(rightType.mangledType);
             convertType(leftType, subType, fileId);
             final switch (subType.base) with (GrType.Base) {
@@ -980,7 +980,7 @@ final class GrParser {
                 addInstruction(GrOpcode.prepend_string);
                 break;
             case class_:
-            case list_:
+            case array:
             case foreign:
             case channel:
                 addInstruction(GrOpcode.prepend_object);
@@ -1260,7 +1260,7 @@ final class GrParser {
                 break;
             }
             break;
-        case list_:
+        case array:
             switch (lexType) with (GrLexeme.Type) {
             case equal:
                 const GrType subType = grUnmangle(varType.mangledType);
@@ -1270,19 +1270,19 @@ final class GrParser {
                 case enumeration:
                 case function_:
                 case task:
-                    addInstruction(GrOpcode.equal_intList);
+                    addInstruction(GrOpcode.equal_intArray);
                     return grBool;
                 case real_:
-                    addInstruction(GrOpcode.equal_realList);
+                    addInstruction(GrOpcode.equal_realArray);
                     return grBool;
                 case string_:
-                    addInstruction(GrOpcode.equal_stringList);
+                    addInstruction(GrOpcode.equal_stringArray);
                     return grBool;
                 case null_:
                 case void_:
                 case reference:
                 case internalTuple:
-                case list_:
+                case array:
                 case class_:
                 case foreign:
                 case channel:
@@ -1297,19 +1297,19 @@ final class GrParser {
                 case enumeration:
                 case function_:
                 case task:
-                    addInstruction(GrOpcode.notEqual_intList);
+                    addInstruction(GrOpcode.notEqual_intArray);
                     return grBool;
                 case real_:
-                    addInstruction(GrOpcode.notEqual_realList);
+                    addInstruction(GrOpcode.notEqual_realArray);
                     return grBool;
                 case string_:
-                    addInstruction(GrOpcode.notEqual_stringList);
+                    addInstruction(GrOpcode.notEqual_stringArray);
                     return grBool;
                 case null_:
                 case void_:
                 case reference:
                 case internalTuple:
-                case list_:
+                case array:
                 case class_:
                 case foreign:
                 case channel:
@@ -1324,19 +1324,19 @@ final class GrParser {
                 case enumeration:
                 case function_:
                 case task:
-                    addInstruction(GrOpcode.concatenate_intList);
+                    addInstruction(GrOpcode.concatenate_intArray);
                     return varType;
                 case real_:
-                    addInstruction(GrOpcode.concatenate_realList);
+                    addInstruction(GrOpcode.concatenate_realArray);
                     return varType;
                 case string_:
-                    addInstruction(GrOpcode.concatenate_stringList);
+                    addInstruction(GrOpcode.concatenate_stringArray);
                     return varType;
                 case class_:
-                case list_:
+                case array:
                 case foreign:
                 case channel:
-                    addInstruction(GrOpcode.concatenate_objectList);
+                    addInstruction(GrOpcode.concatenate_objectArray);
                     return varType;
                 case null_:
                 case void_:
@@ -1352,27 +1352,27 @@ final class GrParser {
         case channel:
             switch (lexType) with (GrLexeme.Type) {
             case send:
-                GrType chanType = grUnmangle(varType.mangledType);
-                final switch (chanType.base) with (GrType.Base) {
+                GrType channelType = grUnmangle(varType.mangledType);
+                final switch (channelType.base) with (GrType.Base) {
                 case integer:
                 case boolean:
                 case function_:
                 case task:
                 case enumeration:
                     addInstruction(GrOpcode.send_int);
-                    return chanType;
+                    return channelType;
                 case real_:
                     addInstruction(GrOpcode.send_real);
-                    return chanType;
+                    return channelType;
                 case string_:
                     addInstruction(GrOpcode.send_string);
-                    return chanType;
+                    return channelType;
                 case class_:
-                case list_:
+                case array:
                 case foreign:
                 case channel:
                     addInstruction(GrOpcode.send_object);
-                    return chanType;
+                    return channelType;
                 case void_:
                 case null_:
                 case internalTuple:
@@ -1381,27 +1381,27 @@ final class GrParser {
                 }
                 break;
             case receive:
-                GrType chanType = grUnmangle(varType.mangledType);
-                final switch (chanType.base) with (GrType.Base) {
+                GrType channelType = grUnmangle(varType.mangledType);
+                final switch (channelType.base) with (GrType.Base) {
                 case integer:
                 case boolean:
                 case function_:
                 case task:
                 case enumeration:
                     addInstruction(GrOpcode.receive_int);
-                    return chanType;
+                    return channelType;
                 case real_:
                     addInstruction(GrOpcode.receive_real);
-                    return chanType;
+                    return channelType;
                 case string_:
                     addInstruction(GrOpcode.receive_string);
-                    return chanType;
+                    return channelType;
                 case class_:
-                case list_:
+                case array:
                 case foreign:
                 case channel:
                     addInstruction(GrOpcode.receive_object);
-                    return chanType;
+                    return channelType;
                 case void_:
                 case null_:
                 case internalTuple:
@@ -1448,7 +1448,7 @@ final class GrParser {
                 addInstruction(isExpectingValue ? GrOpcode.refStore2_object
                         : GrOpcode.refStore_object);
                 break;
-            case list_:
+            case array:
             case foreign:
                 addInstruction(isExpectingValue ? GrOpcode.refStore2_object
                         : GrOpcode.refStore_object);
@@ -1498,7 +1498,7 @@ final class GrParser {
             case foreign:
             case reference:
             case channel:
-            case list_:
+            case array:
             case class_:
                 addInstruction(GrOpcode.fieldStore_object, isExpectingValue ? 0 : -1, true);
                 break;
@@ -1529,7 +1529,7 @@ final class GrParser {
                 break;
             case channel:
             case class_:
-            case list_:
+            case array:
             case foreign:
                 addInstruction(isExpectingValue ? GrOpcode.globalStore2_object
                         : GrOpcode.globalStore_object, variable.register);
@@ -1564,7 +1564,7 @@ final class GrParser {
                 addInstruction(isExpectingValue ? GrOpcode.localStore2_object
                         : GrOpcode.localStore_object, variable.register);
                 break;
-            case list_:
+            case array:
             case foreign:
             case channel:
                 addInstruction(isExpectingValue ? GrOpcode.localStore2_object
@@ -1640,7 +1640,7 @@ final class GrParser {
                 else
                     addInstruction(GrOpcode.globalLoad_object, variable.register);
                 break;
-            case list_:
+            case array:
             case foreign:
             case channel:
                 if (allowOptimization && currentFunction.instructions.length
@@ -1699,7 +1699,7 @@ final class GrParser {
                 else
                     addInstruction(GrOpcode.localLoad_object, variable.register);
                 break;
-            case list_:
+            case array:
             case foreign:
             case channel:
                 if (allowOptimization && currentFunction.instructions.length
@@ -1924,12 +1924,12 @@ final class GrParser {
             case enumeration:
                 parseEnumDeclaration(isPublic);
                 break;
-            case action:
+            case event:
             case taskType:
             case functionType:
                 skipDeclaration();
                 break;
-            case type_:
+            case alias_:
             case instance:
             default:
                 skipExpression();
@@ -1951,10 +1951,10 @@ final class GrParser {
             case semicolon:
                 checkAdvance();
                 break;
-            case type_:
+            case alias_:
                 parseTypeAliasDeclaration(isPublic);
                 break;
-            case action:
+            case event:
             case taskType:
             case functionType:
             case class_:
@@ -1986,8 +1986,8 @@ final class GrParser {
             case class_:
                 skipDeclaration();
                 break;
-            case action:
-                parseActionDeclaration(isPublic);
+            case event:
+                parseEventDeclaration(isPublic);
                 break;
             case taskType:
                 if (get(1).type != GrLexeme.Type.identifier && get(1).type != GrLexeme.Type.lesser)
@@ -2001,10 +2001,10 @@ final class GrParser {
                     goto case integerType;
                 parseFunctionDeclaration(isPublic);
                 break;
-            case integerType: .. case chanType:
+            case integerType: .. case channelType:
             case autoType:
             case identifier:
-            case type_:
+            case alias_:
             case instance:
                 skipExpression();
                 break;
@@ -2030,7 +2030,7 @@ final class GrParser {
             case semicolon:
                 checkAdvance();
                 break;
-            case action:
+            case event:
             case enumeration:
             case class_:
                 skipDeclaration();
@@ -2050,7 +2050,7 @@ final class GrParser {
                     goto case integerType;
                 skipDeclaration();
                 break;
-            case integerType: .. case chanType:
+            case integerType: .. case channelType:
             case autoType:
                 parseGlobalDeclaration(isPublic);
                 break;
@@ -2060,7 +2060,7 @@ final class GrParser {
                     break;
                 }
                 goto default;
-            case type_:
+            case alias_:
                 skipExpression();
                 break;
             default:
@@ -2082,9 +2082,9 @@ final class GrParser {
     Parse the body of global functions
     */
     void parseFunction(GrFunction func) {
-        if (func.isAction) {
-            func.index = cast(uint) actions.length;
-            actions ~= func;
+        if (func.isEvent) {
+            func.index = cast(uint) events.length;
+            events ~= func;
         }
         else {
             func.index = cast(uint) functions.length;
@@ -2102,7 +2102,7 @@ final class GrParser {
         openDeferrableSection();
         current = func.lexPosition;
         parseBlock();
-        if (func.isTask || func.isAction) {
+        if (func.isTask || func.isEvent) {
             if (!currentFunction.instructions.length
                 || currentFunction.instructions[$ - 1].opcode != GrOpcode.die)
                 addDie();
@@ -2469,18 +2469,18 @@ final class GrParser {
             currentType.base = GrType.Base.string_;
             checkAdvance();
             break;
-        case listType:
-            currentType.base = GrType.Base.list_;
+        case arrayType:
+            currentType.base = GrType.Base.array;
             checkAdvance();
             string[] temp;
             auto signature = parseInSignature(temp, true);
             if (signature.length > 1) {
-                logError(getError(Error.listCanOnlyContainOneTypeOfVal), getError(Error.conflictingListSignature),
-                    format(getError(Error.tryUsingXInstead), getPrettyType(grList(signature[0]))), -1);
+                logError(getError(Error.arrayCanOnlyContainOneTypeOfVal), getError(Error.conflictingArraySignature),
+                    format(getError(Error.tryUsingXInstead), getPrettyType(grArray(signature[0]))), -1);
             }
             else if (signature.length == 0) {
-                logError(getError(Error.listCanOnlyContainOneTypeOfVal), getError(
-                        Error.conflictingListSignature), "", -1);
+                logError(getError(Error.arrayCanOnlyContainOneTypeOfVal), getError(
+                        Error.conflictingArraySignature), "", -1);
             }
             currentType.mangledType = grMangleSignature(signature);
             break;
@@ -2497,7 +2497,7 @@ final class GrParser {
             string[] temp;
             currentType.mangledType = grMangleSignature(parseInSignature(temp, true));
             break;
-        case chanType:
+        case channelType:
             currentType.base = GrType.Base.channel;
             checkAdvance();
             string[] temp;
@@ -2537,7 +2537,7 @@ final class GrParser {
             addInstruction(GrOpcode.globalPop_string, 0u);
             break;
         case class_:
-        case list_:
+        case array:
         case foreign:
         case channel:
         case reference:
@@ -2570,7 +2570,7 @@ final class GrParser {
             addInstruction(GrOpcode.globalPush_string, nbPush);
             break;
         case class_:
-        case list_:
+        case array:
         case foreign:
         case channel:
         case reference:
@@ -2607,7 +2607,7 @@ final class GrParser {
                 typeCounter.nbStringParams++;
                 break;
             case class_:
-            case list_:
+            case array:
             case foreign:
             case channel:
             case reference:
@@ -2773,10 +2773,10 @@ final class GrParser {
         return outSignature;
     }
 
-    private void parseActionDeclaration(bool isPublic) {
+    private void parseEventDeclaration(bool isPublic) {
         if (isPublic)
-            logError(getError(Error.addingPubBeforeActionIsRedundant), getError(
-                    Error.actionAlreadyPublic));
+            logError(getError(Error.addingPubBeforeEventIsRedundant), getError(
+                    Error.eventAlreadyPublic));
         checkAdvance();
         if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get()
@@ -3070,10 +3070,10 @@ final class GrParser {
             case loop:
                 parseLoopStatement();
                 break;
-            case error:
-                parseErrorStatement();
+            case throw_:
+                parseThrowStatement();
                 break;
-            case isolate:
+            case try_:
                 parseExceptionHandler();
                 break;
             case return_:
@@ -3225,14 +3225,14 @@ final class GrParser {
                     skipParenthesis();
                 skipBlock();
                 break;
-            case error:
+            case throw_:
                 checkAdvance();
                 skipBlock();
                 break;
-            case isolate:
+            case try_:
                 checkAdvance();
                 skipBlock();
-                if (get().type == GrLexeme.Type.capture) {
+                if (get().type == GrLexeme.Type.catch_) {
                     checkAdvance();
                     skipParenthesis();
                     skipBlock();
@@ -3304,13 +3304,13 @@ final class GrParser {
     }
 
     //Exception handling
-    private void parseErrorStatement() {
+    private void parseThrowStatement() {
         advance();
         GrType type = parseSubExpression(GR_SUBEXPR_TERMINATE_SEMICOLON | GR_SUBEXPR_EXPECTING_VALUE)
             .type;
         checkAdvance();
         convertType(type, grString);
-        addInstruction(GrOpcode.error);
+        addInstruction(GrOpcode.throw_);
         checkDeferStatement();
     }
 
@@ -3318,12 +3318,12 @@ final class GrParser {
         advance();
 
         const auto isolatePosition = currentFunction.instructions.length;
-        addInstruction(GrOpcode.isolate);
+        addInstruction(GrOpcode.try_);
 
         parseBlock();
 
         const uint fileId = get().fileId;
-        if (get().type == GrLexeme.Type.capture) {
+        if (get().type == GrLexeme.Type.catch_) {
             advance();
 
             if (get().type != GrLexeme.Type.leftParenthesis)
@@ -3345,7 +3345,7 @@ final class GrParser {
             advance();
 
             const auto capturePosition = currentFunction.instructions.length;
-            addInstruction(GrOpcode.capture);
+            addInstruction(GrOpcode.catch_);
 
             addInstruction(GrOpcode.globalPop_string);
             addSetInstruction(errVariable, fileId, grString);
@@ -3354,22 +3354,22 @@ final class GrParser {
 
             const auto endPosition = currentFunction.instructions.length;
 
-            setInstruction(GrOpcode.isolate, cast(uint) isolatePosition,
+            setInstruction(GrOpcode.try_, cast(uint) isolatePosition,
                 cast(uint)(capturePosition - isolatePosition), true);
-            setInstruction(GrOpcode.capture, cast(uint) capturePosition,
+            setInstruction(GrOpcode.catch_, cast(uint) capturePosition,
                 cast(uint)(endPosition - capturePosition), true);
         }
         else {
             const auto capturePosition = currentFunction.instructions.length;
-            addInstruction(GrOpcode.capture);
+            addInstruction(GrOpcode.catch_);
             addInstruction(GrOpcode.globalPop_string);
             addInstruction(GrOpcode.shiftStack_string, 1, true);
 
             const auto endPosition = currentFunction.instructions.length;
 
-            setInstruction(GrOpcode.isolate, cast(uint) isolatePosition,
+            setInstruction(GrOpcode.try_, cast(uint) isolatePosition,
                 cast(uint)(capturePosition - isolatePosition), true);
-            setInstruction(GrOpcode.capture, cast(uint) capturePosition,
+            setInstruction(GrOpcode.catch_, cast(uint) capturePosition,
                 cast(uint)(endPosition - capturePosition), true);
         }
     }
@@ -3596,8 +3596,8 @@ final class GrParser {
             case stringType:
                 returnType = GrType(GrType.Base.string_);
                 break;
-            case listType:
-                returnType = GrType(GrType.Base.list_);
+            case arrayType:
+                returnType = GrType(GrType.Base.array);
                 break;
             case functionType:
                 GrType type = GrType.Base.function_;
@@ -3712,12 +3712,12 @@ final class GrParser {
     }
 
     private GrType parseChannelBuilder() {
-        GrType chanType = GrType.Base.channel;
+        GrType channelType = GrType.Base.channel;
         int channelSize = 1;
 
         checkAdvance();
         if (get().type != GrLexeme.Type.leftParenthesis)
-            logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexeme.Type.chanType)),
+            logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexeme.Type.channelType)),
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(
                     GrLexeme.Type.leftParenthesis), getPrettyLexemeType(get().type)));
         checkAdvance();
@@ -3747,7 +3747,7 @@ final class GrParser {
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(
                     GrLexeme.Type.rightParenthesis), getPrettyLexemeType(get().type)));
         checkAdvance();
-        chanType.mangledType = grMangleSignature([subType]);
+        channelType.mangledType = grMangleSignature([subType]);
 
         final switch (subType.base) with (GrType.Base) {
         case integer:
@@ -3764,7 +3764,7 @@ final class GrParser {
             addInstruction(GrOpcode.channel_string, channelSize);
             break;
         case class_:
-        case list_:
+        case array:
         case foreign:
         case channel:
         case reference:
@@ -3776,7 +3776,7 @@ final class GrParser {
             logError(format(getError(Error.chanCantBeOfTypeX), getPrettyType(grChannel(subType))),
                 getError(Error.invalidChanType));
         }
-        return chanType;
+        return channelType;
     }
 
     /**
@@ -4048,7 +4048,7 @@ final class GrParser {
             isAuto = true;
             checkAdvance();
             break;
-        case integerType: .. case chanType:
+        case integerType: .. case channelType:
             type = parseType();
             break;
         case identifier:
@@ -4080,7 +4080,7 @@ final class GrParser {
     }
 
     /**
-    The for statement takes an iterator and a list.
+    The for statement takes an iterator and a array.
     */
     private void parseForStatement() {
         advance();
@@ -4105,12 +4105,12 @@ final class GrParser {
         GrType containerType = parseSubExpression().type;
 
         switch (containerType.base) with (GrType.Base) {
-        case list_: {
+        case array: {
                 /* Init */
                 GrType subType = grUnmangle(containerType.mangledType);
-                GrVariable iterator = registerSpecialVariable("itérateur", grInt);
-                GrVariable index = registerSpecialVariable("index", grInt);
-                GrVariable list = registerSpecialVariable("liste", containerType);
+                GrVariable iterator = registerSpecialVariable("it", grInt);
+                GrVariable index = registerSpecialVariable("idx", grInt);
+                GrVariable array = registerSpecialVariable("ary", containerType);
 
                 if (variable.isAuto && subType.base != GrType.Base.void_) {
                     variable.isAuto = false;
@@ -4118,7 +4118,7 @@ final class GrParser {
                     setVariableRegister(variable);
                 }
 
-                addSetInstruction(list, fileId, containerType, true);
+                addSetInstruction(array, fileId, containerType, true);
                 final switch (subType.base) with (GrType.Base) {
                 case boolean:
                 case integer:
@@ -4133,7 +4133,7 @@ final class GrParser {
                 case string_:
                     addInstruction(GrOpcode.length_string);
                     break;
-                case list_:
+                case array:
                 case class_:
                 case foreign:
                 case channel:
@@ -4143,9 +4143,9 @@ final class GrParser {
                 case void_:
                 case null_:
                 case internalTuple:
-                    logError(format(getError(Error.listCantBeOfTypeX), getPrettyType(
-                            grList(subType))),
-                        getError(Error.invalidListType));
+                    logError(format(getError(Error.arrayCantBeOfTypeX), getPrettyType(
+                            grArray(subType))),
+                        getError(Error.invalidArrayType));
                     break;
                 }
                 addInstruction(GrOpcode.setupIterator);
@@ -4174,7 +4174,7 @@ final class GrParser {
                 addInstruction(GrOpcode.jumpEqual);
 
                 //Set Index
-                addGetInstruction(list);
+                addGetInstruction(array);
                 addGetInstruction(index);
                 addInstruction(GrOpcode.increment_int);
                 addSetInstruction(index, fileId, grVoid, true);
@@ -4192,7 +4192,7 @@ final class GrParser {
                 case string_:
                     addInstruction(GrOpcode.index2_string);
                     break;
-                case list_:
+                case array:
                 case class_:
                 case foreign:
                 case channel:
@@ -4202,9 +4202,9 @@ final class GrParser {
                 case void_:
                 case null_:
                 case internalTuple:
-                    logError(format(getError(Error.listCantBeOfTypeX), getPrettyType(
-                            grList(subType))),
-                        getError(Error.invalidListType));
+                    logError(format(getError(Error.arrayCantBeOfTypeX), getPrettyType(
+                            grArray(subType))),
+                        getError(Error.invalidArrayType));
                     break;
                 }
                 convertType(subType, variable.type, fileId);
@@ -4224,7 +4224,7 @@ final class GrParser {
             break;
         case foreign:
         case class_: {
-                GrVariable iterator = registerSpecialVariable("itérateur", containerType);
+                GrVariable iterator = registerSpecialVariable("it", containerType);
 
                 GrType subType;
                 auto matching = getFirstMatchingFuncOrPrim("next", [
@@ -4484,7 +4484,7 @@ final class GrParser {
             }
 
             /* Init */
-            iterator = registerSpecialVariable("itérateur", GrType(GrType.Base.integer));
+            iterator = registerSpecialVariable("it", GrType(GrType.Base.integer));
 
             //Init counter
             GrType type = parseSubExpression().type;
@@ -4756,7 +4756,7 @@ final class GrParser {
                     className = classType.parent;
                 }
                 break;
-            case list_:
+            case array:
             case channel:
             case reference:
             case internalTuple:
@@ -4797,7 +4797,7 @@ final class GrParser {
             case internalTuple:
             case enumeration:
                 break;
-            case list_:
+            case array:
             case class_:
             case foreign:
             case channel:
@@ -4951,58 +4951,58 @@ final class GrParser {
     }
 
     /**
-    Parse a list creation.
-    The type is optional if the list is not empty.
-    If no type is specified, the list subtype is set to the type of the first element.
+    Parse an array creation.
+    The type is optional if the array is not empty.
+    If no type is specified, the array subtype is set to the type of the first element.
     ---
-    list(int)[1, 2, 3]
+    array(int)[1, 2, 3]
     ["1", "2", "3"]
-    list(string)[]
+    array(string)[]
     ---
     */
-    private GrType parseListBuilder() {
-        GrType listType = GrType(GrType.Base.list_);
+    private GrType parseArrayBuilder() {
+        GrType arrayType = GrType(GrType.Base.array);
         GrType subType = grVoid;
         const uint fileId = get().fileId;
 
-        //Explicit type like: list(int)[1, 2, 3]
-        if (get().type == GrLexeme.Type.listType) {
+        //Explicit type like: array(int)[1, 2, 3]
+        if (get().type == GrLexeme.Type.arrayType) {
             checkAdvance();
             string[] temp;
             auto signature = parseInSignature(temp, true);
             if (signature.length > 1)
-                logError(getError(Error.listCanOnlyContainOneTypeOfVal), getError(Error.conflictingListSignature),
-                    format(getError(Error.tryUsingXInstead), getPrettyType(grList(signature[0]))), -1);
+                logError(getError(Error.arrayCanOnlyContainOneTypeOfVal), getError(Error.conflictingArraySignature),
+                    format(getError(Error.tryUsingXInstead), getPrettyType(grArray(signature[0]))), -1);
             subType = signature[0];
-            listType.mangledType = grMangleSignature(signature);
+            arrayType.mangledType = grMangleSignature(signature);
             if (subType.base == GrType.Base.void_)
-                logError(format(getError(Error.listCantBeOfTypeX), getPrettyType(listType)),
-                    getError(Error.invalidListType));
+                logError(format(getError(Error.arrayCantBeOfTypeX), getPrettyType(arrayType)),
+                    getError(Error.invalidArrayType));
         }
 
         if (get().type != GrLexeme.Type.leftBracket)
-            logError(format(getError(Error.missingBracketsAfterX), getPrettyType(listType)),
+            logError(format(getError(Error.missingBracketsAfterX), getPrettyType(arrayType)),
                 format(getError(Error.expectedXFoundY), getPrettyLexemeType(get().type)));
         advance();
 
-        int listSize;
+        int arraySize;
         while (get().type != GrLexeme.Type.rightBracket) {
             if (subType.base == GrType.Base.void_) {
                 //Implicit type specified by the type of the first element.
                 subType = parseSubExpression(
                     GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA
                         | GR_SUBEXPR_EXPECTING_VALUE).type;
-                listType.mangledType = grMangleSignature([subType]);
+                arrayType.mangledType = grMangleSignature([subType]);
                 if (subType.base == GrType.Base.void_)
-                    logError(format(getError(Error.listCantBeOfTypeX), getPrettyType(listType)),
-                        getError(Error.invalidListType));
+                    logError(format(getError(Error.arrayCantBeOfTypeX), getPrettyType(arrayType)),
+                        getError(Error.invalidArrayType));
             }
             else {
                 convertType(parseSubExpression(
                         GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_EXPECTING_VALUE)
                         .type, subType, fileId);
             }
-            listSize++;
+            arraySize++;
 
             if (get().type == GrLexeme.Type.rightBracket)
                 break;
@@ -5019,33 +5019,33 @@ final class GrParser {
         case function_:
         case task:
         case enumeration:
-            addInstruction(GrOpcode.list_int, listSize);
+            addInstruction(GrOpcode.array_int, arraySize);
             break;
         case real_:
-            addInstruction(GrOpcode.list_real, listSize);
+            addInstruction(GrOpcode.array_real, arraySize);
             break;
         case string_:
-            addInstruction(GrOpcode.list_string, listSize);
+            addInstruction(GrOpcode.array_string, arraySize);
             break;
-        case list_:
+        case array:
         case class_:
         case foreign:
         case channel:
         case reference:
-            addInstruction(GrOpcode.list_object, listSize);
+            addInstruction(GrOpcode.array_object, arraySize);
             break;
         case void_:
         case null_:
         case internalTuple:
-            logError(format(getError(Error.listCantBeOfTypeX), getPrettyType(grList(subType))),
-                getError(Error.invalidListType));
+            logError(format(getError(Error.arrayCantBeOfTypeX), getPrettyType(grArray(subType))),
+                getError(Error.invalidArrayType));
             break;
         }
         advance();
-        return listType;
+        return arrayType;
     }
 
-    private GrType parseListIndex(GrType listType) {
+    private GrType parseArrayIndex(GrType arrayType) {
         const uint fileId = get().fileId;
         advance();
 
@@ -5060,9 +5060,9 @@ final class GrParser {
             convertType(index, grInt, fileId);
 
             if (get().type == GrLexeme.Type.rightBracket) {
-                switch (listType.base) with (GrType.Base) {
-                case list_:
-                    const GrType subType = grUnmangle(listType.mangledType);
+                switch (arrayType.base) with (GrType.Base) {
+                case array:
+                    const GrType subType = grUnmangle(arrayType.mangledType);
                     final switch (subType.base) with (GrType.Base) {
                     case boolean:
                     case integer:
@@ -5077,7 +5077,7 @@ final class GrParser {
                     case string_:
                         addInstruction(GrOpcode.index_string);
                         break;
-                    case list_:
+                    case array:
                     case class_:
                     case foreign:
                     case channel:
@@ -5087,18 +5087,18 @@ final class GrParser {
                     case void_:
                     case null_:
                     case internalTuple:
-                        logError(format(getError(Error.listCantBeOfTypeX), getPrettyType(
-                                grList(subType))),
-                            getError(Error.invalidListType));
+                        logError(format(getError(Error.arrayCantBeOfTypeX), getPrettyType(
+                                grArray(subType))),
+                            getError(Error.invalidArrayType));
                         break;
                     }
-                    listType = subType;
+                    arrayType = subType;
                     break;
                 default:
-                    logError(getError(Error.invalidListType),
+                    logError(getError(Error.invalidArrayType),
                         format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                            GrLexeme.Type.listType),
-                            getPrettyType(listType)));
+                            GrLexeme.Type.arrayType),
+                            getPrettyType(arrayType)));
                 }
                 break;
             }
@@ -5112,9 +5112,9 @@ final class GrParser {
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
                         GrLexeme.Type.comma), getPrettyLexemeType(get().type)));
 
-            switch (listType.base) with (GrType.Base) {
-            case list_:
-                const GrType subType = grUnmangle(listType.mangledType);
+            switch (arrayType.base) with (GrType.Base) {
+            case array:
+                const GrType subType = grUnmangle(arrayType.mangledType);
                 final switch (subType.base) with (GrType.Base) {
                 case boolean:
                 case integer:
@@ -5129,7 +5129,7 @@ final class GrParser {
                 case string_:
                     addInstruction(GrOpcode.index_string);
                     break;
-                case list_:
+                case array:
                 case class_:
                 case foreign:
                 case channel:
@@ -5139,21 +5139,21 @@ final class GrParser {
                 case void_:
                 case null_:
                 case internalTuple:
-                    logError(format(getError(Error.listCantBeOfTypeX), getPrettyType(listType)),
-                        getError(Error.invalidListType));
+                    logError(format(getError(Error.arrayCantBeOfTypeX), getPrettyType(arrayType)),
+                        getError(Error.invalidArrayType));
                     break;
                 }
-                listType = subType;
+                arrayType = subType;
                 break;
             default:
-                logError(getError(Error.invalidListType),
+                logError(getError(Error.invalidArrayType),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexeme.Type.listType),
-                        getPrettyType(listType)));
+                        GrLexeme.Type.arrayType),
+                        getPrettyType(arrayType)));
             }
         }
         advance();
-        return listType;
+        return arrayType;
     }
 
     /**
@@ -5226,7 +5226,7 @@ final class GrParser {
         current = tempPos;
 
         if (isAssignmentList) {
-            //Get list of lvalues
+            //Get array of lvalues
             GrVariable[] lvalues;
             do {
                 if (lvalues.length)
@@ -5401,38 +5401,38 @@ final class GrParser {
             registerDeferBlocks();
             endFunction();
             break;
-        case list_:
+        case array:
             GrType[] subTypes = grUnmangleSignature(type.mangledType);
             if (subTypes.length != 1)
-                logError(getError(Error.listCanOnlyContainOneTypeOfVal), getError(Error.conflictingListSignature),
-                    format(getError(Error.tryUsingXInstead), getPrettyType(grList(subTypes[0]))));
+                logError(getError(Error.arrayCanOnlyContainOneTypeOfVal), getError(Error.conflictingArraySignature),
+                    format(getError(Error.tryUsingXInstead), getPrettyType(grArray(subTypes[0]))));
             final switch (subTypes[0].base) with (GrType.Base) {
             case boolean:
             case integer:
             case function_:
             case task:
             case enumeration:
-                addInstruction(GrOpcode.list_int, 0);
+                addInstruction(GrOpcode.array_int, 0);
                 break;
             case real_:
-                addInstruction(GrOpcode.list_real, 0);
+                addInstruction(GrOpcode.array_real, 0);
                 break;
             case string_:
-                addInstruction(GrOpcode.list_string, 0);
+                addInstruction(GrOpcode.array_string, 0);
                 break;
-            case list_:
+            case array:
             case class_:
             case foreign:
             case channel:
             case reference:
-                addInstruction(GrOpcode.list_object, 0);
+                addInstruction(GrOpcode.array_object, 0);
                 break;
             case void_:
             case null_:
             case internalTuple:
-                logError(format(getError(Error.listCantBeOfTypeX), getPrettyType(
-                        grList(subTypes[0]))),
-                    getError(Error.invalidListType));
+                logError(format(getError(Error.arrayCantBeOfTypeX), getPrettyType(
+                        grArray(subTypes[0]))),
+                    getError(Error.invalidArrayType));
                 break;
             }
             break;
@@ -5462,7 +5462,7 @@ final class GrParser {
                 addInstruction(GrOpcode.channel_string, 1);
                 break;
             case class_:
-            case list_:
+            case array:
             case foreign:
             case channel:
             case reference:
@@ -5510,7 +5510,7 @@ final class GrParser {
                 counter.sCount++;
                 break;
             case class_:
-            case list_:
+            case array:
             case foreign:
             case channel:
             case reference:
@@ -5754,8 +5754,8 @@ final class GrParser {
                     typeStack ~= currentType;
                 }
                 break;
-            case listType:
-                currentType = parseListBuilder();
+            case arrayType:
+                currentType = parseArrayBuilder();
                 typeStack ~= currentType;
                 hasValue = true;
                 break;
@@ -5763,7 +5763,7 @@ final class GrParser {
                 //Index
                 if (hadValue) {
                     hadValue = false;
-                    currentType = parseListIndex(lastType);
+                    currentType = parseArrayIndex(lastType);
                     hasReference = true;
                     //Check if there is an assignement or not, discard if it's only a rvalue
                     const auto nextLexeme = get();
@@ -5789,7 +5789,7 @@ final class GrParser {
                                 setInstruction(GrOpcode.index3_string,
                                     cast(int) currentFunction.instructions.length - 1);
                                 break;
-                            case list_:
+                            case array:
                             case class_:
                             case foreign:
                             case channel:
@@ -5800,9 +5800,9 @@ final class GrParser {
                             case void_:
                             case null_:
                             case internalTuple:
-                                logError(format(getError(Error.listCantBeIndexedByX), getPrettyType(
+                                logError(format(getError(Error.arrayCantBeIndexedByX), getPrettyType(
                                         currentType)),
-                                    getError(Error.invalidListIndexType));
+                                    getError(Error.invalidArrayIndexType));
                                 break;
                             }
                         }
@@ -5832,7 +5832,7 @@ final class GrParser {
                             setInstruction(GrOpcode.index2_string,
                                 cast(int) currentFunction.instructions.length - 1);
                             break;
-                        case list_:
+                        case array:
                         case class_:
                         case foreign:
                         case channel:
@@ -5843,9 +5843,9 @@ final class GrParser {
                         case void_:
                         case null_:
                         case internalTuple:
-                            logError(format(getError(Error.listCantBeIndexedByX), getPrettyType(
+                            logError(format(getError(Error.arrayCantBeIndexedByX), getPrettyType(
                                     currentType)),
-                                getError(Error.invalidListIndexType));
+                                getError(Error.invalidArrayIndexType));
                             break;
                         }
                     }
@@ -5854,7 +5854,7 @@ final class GrParser {
                     hasValue = true;
                 }
                 else {
-                    currentType = parseListBuilder();
+                    currentType = parseArrayBuilder();
                     typeStack ~= currentType;
                     hasValue = true;
                 }
@@ -5899,7 +5899,7 @@ final class GrParser {
                 hasValue = true;
                 typeStack ~= currentType;
                 break;
-            case chanType:
+            case channelType:
                 currentType = parseChannelBuilder();
                 hasValue = true;
                 typeStack ~= currentType;
@@ -6335,7 +6335,7 @@ final class GrParser {
         case reference:
         case channel:
         case class_:
-        case list_:
+        case array:
         case foreign:
             addInstruction(asCopy ? GrOpcode.fieldLoad2_object : GrOpcode.fieldLoad_object, index);
             break;
@@ -6776,8 +6776,8 @@ final class GrParser {
         recursiveDecl,
         xNotValidType,
         expectedValidTypeFoundX,
-        listCanOnlyContainOneTypeOfVal,
-        conflictingListSignature,
+        arrayCanOnlyContainOneTypeOfVal,
+        conflictingArraySignature,
         tryUsingXInstead,
         channelCanOnlyContainOneTypeOfVal,
         conflictingChannelSignature,
@@ -6788,8 +6788,8 @@ final class GrParser {
         paramShouldBeSeparatedByComma,
         expectedIdentifierFoundX,
         typesShouldBeSeparatedByComma,
-        addingPubBeforeActionIsRedundant,
-        actionAlreadyPublic,
+        addingPubBeforeEventIsRedundant,
+        eventAlreadyPublic,
         cantOverrideXOp,
         opCantBeOverriden,
         missingTemplateSignature,
@@ -6830,8 +6830,8 @@ final class GrParser {
         varOrRefExpectedFoundX,
         varNameExpected,
         varNameExpectedFoundX,
-        listCantBeOfTypeX,
-        invalidListType,
+        arrayCantBeOfTypeX,
+        invalidArrayType,
         primXMustRetBoolAndVal,
         signatureMismatch,
         funcXMustRetBoolAndVal,
@@ -6889,8 +6889,8 @@ final class GrParser {
         unexpectedXFoundInExpr,
         xCantExistInsideThisExpr,
         methodCallMustBePlacedAfterVal,
-        listCantBeIndexedByX,
-        invalidListIndexType,
+        arrayCantBeIndexedByX,
+        invalidArrayIndexType,
         cantAccessFieldOnTypeX,
         expectedClassFoundX,
         xOnTypeYIsPrivate,
@@ -6949,8 +6949,8 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.invalidType: "invalid type",
                 Error.invalidParamType: "invalid parameter type",
                 Error.invalidChanType: "invalid channel type",
-                Error.invalidListType: "invalid list type",
-                Error.invalidListIndexType: "invalid list index type",
+                Error.invalidArrayType: "invalid array type",
+                Error.invalidArrayIndexType: "invalid array index type",
                 Error.xNotDef: "`%s` is not defined",
                 Error.xNotDecl: "`%s` is not declared",
                 Error.nameXDefMultipleTimes: "the name `%s` is defined multiple times",
@@ -7001,8 +7001,8 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.recursiveDecl: "recursive declaration",
                 Error.xNotValidType: "`%s` is not a valid type",
                 Error.expectedValidTypeFoundX: "expected a valid type, found `%s`",
-                Error.listCanOnlyContainOneTypeOfVal: "a list can only contain one type of value",
-                Error.conflictingListSignature: "conflicting list signature",
+                Error.arrayCanOnlyContainOneTypeOfVal: "a array can only contain one type of value",
+                Error.conflictingArraySignature: "conflicting array signature",
                 Error.tryUsingXInstead: "try using `%s` instead",
                 Error.channelCanOnlyContainOneTypeOfVal: "a channel can only contain one type of value",
                 Error.conflictingChannelSignature: "conflicting channel signature",
@@ -7013,8 +7013,8 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.paramShouldBeSeparatedByComma: "parameters should be separated by a comma",
                 Error.expectedIdentifierFoundX: "expected identifier, found `%s`",
                 Error.typesShouldBeSeparatedByComma: "types should be separated by a comma",
-                Error.addingPubBeforeActionIsRedundant: "adding `public` before `action` is redundant",
-                Error.actionAlreadyPublic: "action is already public",
+                Error.addingPubBeforeEventIsRedundant: "adding `public` before `event` is redundant",
+                Error.eventAlreadyPublic: "event is already public",
                 Error.cantOverrideXOp: "can't override `%s` operator",
                 Error.opCantBeOverriden: "this operator can't be overriden",
                 Error.missingTemplateSignature: "missing template signature",
@@ -7054,7 +7054,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.varOrRefExpectedFoundX: "a variable or reference is expected, found `%s`",
                 Error.varNameExpected: "a variable name is expected",
                 Error.varNameExpectedFoundX: "a variable name is expected, found `%s`",
-                Error.listCantBeOfTypeX: "a list can't be of type `%s`",
+                Error.arrayCantBeOfTypeX: "a array can't be of type `%s`",
                 Error.primXMustRetBoolAndVal: "the primitive `%s` must return a bool and a value",
                 Error.signatureMismatch: "signature mismatch",
                 Error.funcXMustRetBoolAndVal: "the function `%s` must return a bool and a value",
@@ -7090,16 +7090,16 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.missingVar: "missing variable",
                 Error.exprYieldsNoVal: "the expression yields no value",
                 Error.expectedValFoundNothing: "expected value, found nothing",
-                Error.missingSemicolonAfterExprList: "missing semicolon after expression list",
+                Error.missingSemicolonAfterExprList: "missing semicolon after expression array",
                 Error.tryingAssignXValsToYVar: "trying to assign `%s` values to %s variable",
                 Error.tryingAssignXValsToYVars: "trying to assign `%s` values to %s variables",
                 Error.moreValThanVarToAssign: "there are more values than variable to assign to",
                 Error.assignationMissingVal: "the assignation is missing a value",
                 Error.expressionEmpty: "the expression is empty",
-                Error.firstValOfAssignmentListCantBeEmpty: "first value of an assignment list can't be empty",
+                Error.firstValOfAssignmentListCantBeEmpty: "first value of an assignment array can't be empty",
                 Error.cantInferTypeWithoutAssignment: "can't infer the type without assignment",
                 Error.missingTypeInfoOrInitVal: "missing type information or initial value",
-                Error.missingSemicolonAfterAssignmentList: "missing semicolon after assignment list",
+                Error.missingSemicolonAfterAssignmentList: "missing semicolon after assignment array",
                 Error.typeXHasNoDefaultVal: "the type `%s` has no default value",
                 Error.cantInitThisType: "can't initialize this type",
                 Error.missingParenthesesAfterType: "missing parentheses after the type",
@@ -7110,7 +7110,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.unexpectedXFoundInExpr: "unexpected `%s` found in expression",
                 Error.xCantExistInsideThisExpr: "a `%s` can't exist inside this expression",
                 Error.methodCallMustBePlacedAfterVal: "a method call must be placed after a value",
-                Error.listCantBeIndexedByX: "a list can't be indexed by a `%s`",
+                Error.arrayCantBeIndexedByX: "a array can't be indexed by a `%s`",
                 Error.cantAccessFieldOnTypeX: "can't access a field on type `%s`",
                 Error.expectedClassFoundX: "expected a class, found `%s`",
                 Error.xOnTypeYIsPrivate: "`%s` on type `%s` is private",
@@ -7161,8 +7161,8 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.invalidType: "type invalide",
                 Error.invalidParamType: "type de paramètre invalide",
                 Error.invalidChanType: "type de canal invalide",
-                Error.invalidListType: "type de liste invalide",
-                Error.invalidListIndexType: "type d’index de liste invalide",
+                Error.invalidArrayType: "type de liste invalide",
+                Error.invalidArrayIndexType: "type d’index de liste invalide",
                 Error.xNotDef: "`%s` n’est pas défini",
                 Error.xNotDecl: "`%s` n’est pas déclaré",
                 Error.nameXDefMultipleTimes: "le nom `%s` est défini plusieurs fois",
@@ -7213,8 +7213,8 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.recursiveDecl: "déclaration récursive",
                 Error.xNotValidType: "`%s` n’est pas un type valide",
                 Error.expectedValidTypeFoundX: "type valide attendu, `%s` trouvé",
-                Error.listCanOnlyContainOneTypeOfVal: "une liste ne peut contenir qu’un type de valeur",
-                Error.conflictingListSignature: "signature de liste conflictuelle",
+                Error.arrayCanOnlyContainOneTypeOfVal: "une liste ne peut contenir qu’un type de valeur",
+                Error.conflictingArraySignature: "signature de liste conflictuelle",
                 Error.tryUsingXInstead: "utilisez plutôt `%s`",
                 Error.channelCanOnlyContainOneTypeOfVal: "un canal ne peut contenir qu’un type de valeur",
                 Error.conflictingChannelSignature: "signature de canal conflictuelle",
@@ -7225,8 +7225,8 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.paramShouldBeSeparatedByComma: "les paramètres doivent être séparées par des virgules",
                 Error.expectedIdentifierFoundX: "identificateur attendu, `%s` trouvé",
                 Error.typesShouldBeSeparatedByComma: "les types doivent être séparés par des virgules",
-                Error.addingPubBeforeActionIsRedundant: "ajouter `public` devant `action` est redondant",
-                Error.actionAlreadyPublic: "les actions sont déjà publiques",
+                Error.addingPubBeforeEventIsRedundant: "ajouter `public` devant `event` est redondant",
+                Error.eventAlreadyPublic: "les events sont déjà publiques",
                 Error.cantOverrideXOp: "impossible de surcharger l’opérateur `%s`",
                 Error.opCantBeOverriden: "cet opérateur ne peut être surchargé",
                 Error.missingTemplateSignature: "signature de patron manquante",
@@ -7266,7 +7266,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.varOrRefExpectedFoundX: "une variable ou référence est attendue, `%s` trouvé",
                 Error.varNameExpected: "un nom de variable est attendu",
                 Error.varNameExpectedFoundX: "un nom de variable est attendu, `%s` trouvé",
-                Error.listCantBeOfTypeX: "une liste ne peut pas être de type `%s`",
+                Error.arrayCantBeOfTypeX: "une liste ne peut pas être de type `%s`",
                 Error.primXMustRetBoolAndVal: "la primitive `%s` doit retourner un booléen et une valeur",
                 Error.signatureMismatch: "la signature ne correspond pas",
                 Error.funcXMustRetBoolAndVal: "la function `%s` doit retourner un booléen et une valeur",
@@ -7322,7 +7322,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.unexpectedXFoundInExpr: "`%s` inattendu dans l’expression",
                 Error.xCantExistInsideThisExpr: "un `%s` ne peut exister dans l’expression",
                 Error.methodCallMustBePlacedAfterVal: "un appel de méthode doit se placer après une valeur",
-                Error.listCantBeIndexedByX: "une liste ne peut pas être indexé par un `%s`",
+                Error.arrayCantBeIndexedByX: "une liste ne peut pas être indexé par un `%s`",
                 Error.cantAccessFieldOnTypeX: "impossible d’accéder à un champ sur `%s`",
                 Error.expectedClassFoundX: "classe attendue, `%s` trouvé",
                 Error.xOnTypeYIsPrivate: "`%s` du type `%s` est privé",

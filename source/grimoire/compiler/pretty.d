@@ -23,7 +23,7 @@ string grGetPrettyType(GrType variableType) {
         return "bool";
     case string_:
         return "string";
-    case list_:
+    case array:
         string result = "list(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);

@@ -57,15 +57,15 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
                 if(subType.signature.length != 1)
                     return false;
                 data.set(\"T\", subType.signature[0]);
-                data.set(\"A\", grList(subType.signature[0]));
+                data.set(\"A\", grArray(subType.signature[0]));
                 return grIsKindOf"
                 ~ t
                 ~ "(subType.signature[0].base);
             });
 
             GrType any"
-                ~ t ~ "List = grAny(\"A\", (type, data) {
-                if (type.base != GrType.Base.list_)
+                ~ t ~ "Array = grAny(\"A\", (type, data) {
+                if (type.base != GrType.Base.array)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
                 data.set(\"M\", grGetForeignType(\"Dictionary\", [subType]));
@@ -74,12 +74,12 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
             });
 
             library.addFunction(&_make_!\""
-                ~ t ~ "\", \"Dictionary\", [grStringList, any" ~ t
-                ~ "List], [grAny(\"M\")]);
+                ~ t ~ "\", \"Dictionary\", [grStringArray, any" ~ t
+                ~ "Array], [grAny(\"M\")]);
 
             library.addFunction(&_makeByPairs_!\""
                 ~ t ~ "\", \"Dictionary\", [grAny(\"T\", (type, data) {
-                if (type.base != GrType.Base.list_)
+                if (type.base != GrType.Base.array)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
                 if(subType.base != GrType.Base.class_)
@@ -127,11 +127,11 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
 
             library.addFunction(&_byKeys_!\""
                 ~ t ~ "\", \"byKeys\", [any" ~ t
-                ~ "Dictionary], [grStringList]);
+                ~ "Dictionary], [grStringArray]);
 
             library.addFunction(&_byValues_!\""
                 ~ t ~ "\", \"byValues\", [any" ~ t ~ "Dictionary], [any"
-                ~ t ~ "List]);
+                ~ t ~ "Array]);
 
             library.addFunction(&_each_!\""
                 ~ t ~ "\", \"each\", [
@@ -179,14 +179,14 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
 }
 
 private void _make_(string t)(GrCall call) {
-    mixin(t ~ "Dictionary dictionary = new " ~ t ~ "Dictionary(call.getStringList(0).data, call.get"
-            ~ t ~ "List(1).data);");
+    mixin(t ~ "Dictionary dictionary = new " ~ t ~ "Dictionary(call.getStringArray(0).data, call.get"
+            ~ t ~ "Array(1).data);");
     call.setForeign(dictionary);
 }
 
 private void _makeByPairs_(string t)(GrCall call) {
     mixin(t ~ "Dictionary dictionary = new " ~ t ~ "Dictionary;");
-    GrObjectList pairs = call.getObjectList(0);
+    GrObjectArray pairs = call.getObjectArray(0);
     for (size_t i; i < pairs.data.length; ++i) {
         GrObject pair = cast(GrObject) pairs.data[i];
         static if (t == "Object") {
@@ -301,9 +301,9 @@ private void _byKeys_(string t)(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    GrStringList ary = new GrStringList;
+    GrStringArray ary = new GrStringArray;
     ary.data = dictionary.data.keys;
-    call.setStringList(ary);
+    call.setStringArray(ary);
 }
 
 private void _byValues_(string t)(GrCall call) {
@@ -312,9 +312,9 @@ private void _byValues_(string t)(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    mixin("Gr" ~ t ~ "List ary = new Gr" ~ t ~ "List;");
+    mixin("Gr" ~ t ~ "Array ary = new Gr" ~ t ~ "Array;");
     ary.data = dictionary.data.values;
-    mixin("call.set" ~ t ~ "List(ary);");
+    mixin("call.set" ~ t ~ "Array(ary);");
 }
 
 private void _each_(string t)(GrCall call) {

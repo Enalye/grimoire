@@ -33,9 +33,9 @@ struct GrLexeme {
         at,
         pointer,
         as,
-        isolate,
-        capture,
-        error,
+        try_,
+        catch_,
+        throw_,
         defer,
         assign,
         bitwiseAndAssign,
@@ -87,8 +87,8 @@ struct GrLexeme {
         string_,
         null_,
         public_,
-        type_,
-        action,
+        alias_,
+        event,
         class_,
         enumeration,
         instance,
@@ -100,8 +100,8 @@ struct GrLexeme {
         realType,
         booleanType,
         stringType,
-        listType,
-        chanType,
+        arrayType,
+        channelType,
         functionType,
         taskType,
         autoType,
@@ -875,11 +875,11 @@ package final class GrLexer {
         case "public":
             lex.type = GrLexeme.Type.public_;
             break;
-        case "type":
-            lex.type = GrLexeme.Type.type_;
+        case "alias":
+            lex.type = GrLexeme.Type.alias_;
             break;
-        case "action":
-            lex.type = GrLexeme.Type.action;
+        case "event":
+            lex.type = GrLexeme.Type.event;
             break;
         case "class":
             lex.type = GrLexeme.Type.class_;
@@ -948,18 +948,17 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.as;
             break;
         case "try":
-            lex.type = GrLexeme.Type.isolate;
+            lex.type = GrLexeme.Type.try_;
             break;
         case "catch":
-            lex.type = GrLexeme.Type.capture;
+            lex.type = GrLexeme.Type.catch_;
             break;
         case "throw":
-            lex.type = GrLexeme.Type.error;
+            lex.type = GrLexeme.Type.throw_;
             break;
         case "defer":
             lex.type = GrLexeme.Type.defer;
             break;
-        case "tâche":
         case "task":
             lex.type = GrLexeme.Type.taskType;
             lex.isType = true;
@@ -984,12 +983,12 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.stringType;
             lex.isType = true;
             break;
-        case "list":
-            lex.type = GrLexeme.Type.listType;
+        case "array":
+            lex.type = GrLexeme.Type.arrayType;
             lex.isType = true;
             break;
         case "channel":
-            lex.type = GrLexeme.Type.chanType;
+            lex.type = GrLexeme.Type.channelType;
             lex.isType = true;
             break;
         case "new":
@@ -1075,7 +1074,7 @@ package final class GrLexer {
         return replaceAll(path, regex(r"\\/|/|\\"), dirSeparator);
     }
 
-    /// add a single _file path delimited by `" "` to the import list.
+    /// add a single file path delimited by `"` to the import list.
     private void scanFilePath() {
         import std.path : dirName, buildNormalizedPath, absolutePath;
 
@@ -1218,8 +1217,8 @@ private immutable string[] _prettyLexemeTypeTable = [
     "==", "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->",
     "=>", "~", "!", "++", "--", "identifier", "const_int",
     "const_float", "const_bool", "const_string", "null", "public",
-    "type", "action", "class", "enum", "instance", "new", "copy",
-    "send", "receive", "int", "real", "bool", "string", "list",
+    "type", "event", "class", "enum", "instance", "new", "copy",
+    "send", "receive", "int", "real", "bool", "string", "array",
     "channel", "function", "task", "let", "if", "unless", "else",
     "switch", "select", "case", "while", "do", "until", "for",
     "loop", "return", "self", "die", "exit", "yield", "break", "continue"

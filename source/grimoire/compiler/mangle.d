@@ -61,7 +61,7 @@ GrType[] grUnmangleSignature(string mangledSignature) {
             break;
         case 'n':
             i++;
-            currentType.base = GrType.Base.list_;
+            currentType.base = GrType.Base.array;
             currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             break;
         case 'e':
@@ -205,7 +205,7 @@ string grMangle(GrType type) {
     case string_:
         mangledName ~= "s";
         break;
-    case list_:
+    case array:
         mangledName ~= "n(" ~ type.mangledType ~ ")";
         break;
     case class_:
@@ -265,7 +265,7 @@ GrType grUnmangle(string mangledSignature) {
             break;
         case 'n':
             i++;
-            currentType.base = GrType.Base.list_;
+            currentType.base = GrType.Base.array;
             currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             i++;
             break;

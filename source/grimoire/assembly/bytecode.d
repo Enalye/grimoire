@@ -11,9 +11,9 @@ import grimoire.assembly.symbol;
 /// Low-level instructions for the VM.
 enum GrOpcode {
     nop,
-    error,
-    isolate,
-    capture,
+    throw_,
+    try_,
+    catch_,
     die,
     quit,
     suspend,
@@ -171,10 +171,10 @@ enum GrOpcode {
     jumpEqual,
     jumpNotEqual,
 
-    list_int,
-    list_real,
-    list_string,
-    list_object,
+    array_int,
+    array_real,
+    array_string,
+    array_object,
     length_int,
     length_real,
     length_string,
@@ -192,10 +192,10 @@ enum GrOpcode {
     index3_string,
     index3_object,
 
-    concatenate_intList,
-    concatenate_realList,
-    concatenate_stringList,
-    concatenate_objectList,
+    concatenate_intArray,
+    concatenate_realArray,
+    concatenate_stringArray,
+    concatenate_objectArray,
     append_int,
     append_real,
     append_string,
@@ -205,12 +205,12 @@ enum GrOpcode {
     prepend_string,
     prepend_object,
 
-    equal_intList,
-    equal_realList,
-    equal_stringList,
-    notEqual_intList,
-    notEqual_realList,
-    notEqual_stringList,
+    equal_intArray,
+    equal_realArray,
+    equal_stringArray,
+    notEqual_intArray,
+    notEqual_realArray,
+    notEqual_stringArray,
 
     debugProfileBegin,
     debugProfileEnd
@@ -280,9 +280,9 @@ final class GrBytecode {
         /// Number of ptr based global variables declared.
         uint oglobalsCount;
 
-        /// global action functions.
+        /// global event functions.
         /// Their name are in a mangled state.
-        uint[string] actions;
+        uint[string] events;
 
         /// Global variables
         Variable[string] variables;
@@ -308,7 +308,7 @@ final class GrBytecode {
         rglobalsCount = bytecode.rglobalsCount;
         sglobalsCount = bytecode.sglobalsCount;
         oglobalsCount = bytecode.oglobalsCount;
-        actions = bytecode.actions;
+        events = bytecode.events;
         variables = bytecode.variables;
         symbols = bytecode.symbols.dup; //@TODO: change the shallow copy
     }
@@ -328,7 +328,7 @@ final class GrBytecode {
         std.file.write(fileName, serialize());
     }
 
-    /// Serialize the bytecode into a list.
+    /// Serialize the bytecode into an array.
     ubyte[] serialize() {
         void writeStr(ref Appender!(ubyte[]) buffer, GrString s) {
             buffer.append!uint(cast(uint) s.length);
@@ -348,7 +348,7 @@ final class GrBytecode {
         buffer.append!uint(sglobalsCount);
         buffer.append!uint(oglobalsCount);
 
-        buffer.append!uint(cast(uint) actions.length);
+        buffer.append!uint(cast(uint) events.length);
         buffer.append!uint(cast(uint) primitives.length);
         buffer.append!uint(cast(uint) classes.length);
         buffer.append!uint(cast(uint) variables.length);
@@ -364,7 +364,7 @@ final class GrBytecode {
         // Opcodes
         foreach (uint i; opcodes)
             buffer.append!uint(i);
-        foreach (string ev, uint pos; actions) {
+        foreach (string ev, uint pos; events) {
             writeStr(buffer, ev);
             buffer.append!uint(pos);
         }
@@ -421,7 +421,7 @@ final class GrBytecode {
         deserialize(cast(ubyte[]) std.file.read(fileName));
     }
 
-    /// Deserialize the bytecode from a list.
+    /// Deserialize the bytecode from an array.
     void deserialize(ubyte[] buffer) {
         GrString readStr(ref ubyte[] buffer) {
             GrString s;
@@ -449,7 +449,7 @@ final class GrBytecode {
         sglobalsCount = buffer.read!uint();
         oglobalsCount = buffer.read!uint();
 
-        const uint actionsCount = buffer.read!uint();
+        const uint eventsCount = buffer.read!uint();
         primitives.length = buffer.read!uint();
         classes.length = buffer.read!uint();
         const uint variableCount = buffer.read!uint();
@@ -472,10 +472,10 @@ final class GrBytecode {
             opcodes[i] = buffer.read!uint();
         }
 
-        actions.clear();
-        for (uint i; i < actionsCount; ++i) {
+        events.clear();
+        for (uint i; i < eventsCount; ++i) {
             const string ev = readStr(buffer);
-            actions[ev] = buffer.read!uint();
+            events[ev] = buffer.read!uint();
         }
 
         for (size_t i; i < primitives.length; ++i) {

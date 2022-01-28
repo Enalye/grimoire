@@ -15,10 +15,10 @@ package(grimoire.stdlib) void grLoadStdLibLog(GrLibrary library) {
     library.addFunction(&_print_b, "print", [grBool]);
     library.addFunction(&_print_f, "print", [grReal]);
     library.addFunction(&_print_s, "print", [grString]);
-    library.addFunction(&_print_ni, "print", [grIntList]);
-    library.addFunction(&_print_nb, "print", [grBoolList]);
-    library.addFunction(&_print_nf, "print", [grRealList]);
-    library.addFunction(&_print_ns, "print", [grStringList]);
+    library.addFunction(&_print_ni, "print", [grIntArray]);
+    library.addFunction(&_print_nb, "print", [grBoolArray]);
+    library.addFunction(&_print_nf, "print", [grRealArray]);
+    library.addFunction(&_print_ns, "print", [grStringArray]);
     library.addFunction(&_print_enum, "print", [
             grAny("T", (type, data) { return type.base == GrType.Base.enumeration; })
         ]
@@ -61,22 +61,22 @@ private void _print_f(GrCall call) {
 }
 
 private void _print_ni(GrCall call) {
-    auto ary = call.getIntList(0);
+    auto ary = call.getIntArray(0);
     _stdOut(to!string(ary.data));
 }
 
 private void _print_nb(GrCall call) {
-    auto ary = call.getIntList(0);
+    auto ary = call.getIntArray(0);
     _stdOut(to!string(to!(GrBool[])(ary.data)));
 }
 
 private void _print_nf(GrCall call) {
-    auto ary = call.getRealList(0);
+    auto ary = call.getRealArray(0);
     _stdOut(to!string(ary.data));
 }
 
 private void _print_ns(GrCall call) {
-    auto ary = call.getStringList(0);
+    auto ary = call.getStringArray(0);
     _stdOut(to!string(ary.data));
 }
 

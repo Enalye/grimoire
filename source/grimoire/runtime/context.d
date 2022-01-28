@@ -6,8 +6,8 @@
 module grimoire.runtime.context;
 
 import grimoire.assembly;
-import grimoire.runtime.engine, grimoire.runtime.list,
-    grimoire.runtime.channel, grimoire.runtime.object;
+import grimoire.runtime.engine, grimoire.runtime.array,
+grimoire.runtime.channel, grimoire.runtime.object;
 
 /**
 Represents a single function context in the callStack.
@@ -217,23 +217,23 @@ final class GrContext {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
-    void setList(T)(GrList!T value) {
+    void setArray(T)(GrArray!T value) {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
-    void setIntList(GrIntList value) {
+    void setIntArray(GrIntArray value) {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
-    void setRealList(GrRealList value) {
+    void setRealArray(GrRealArray value) {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
-    void setStringList(GrStringList value) {
+    void setStringArray(GrStringArray value) {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
-    void setObjectList(GrObjectList value) {
+    void setObjectArray(GrObjectArray value) {
         setValue!GrPtr(cast(GrPtr) value);
     }
 

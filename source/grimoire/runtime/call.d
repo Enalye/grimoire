@@ -8,7 +8,7 @@ module grimoire.runtime.call;
 import std.conv : to;
 import grimoire.assembly;
 import grimoire.compiler;
-import grimoire.runtime.context, grimoire.runtime.list,
+import grimoire.runtime.context, grimoire.runtime.array,
 grimoire.runtime.object, grimoire.runtime.channel;
 
 /// Primitive type.
@@ -107,24 +107,24 @@ final class GrCall {
         return cast(GrObject) getParameter!GrPtr(index);
     }
 
-    GrList!T getList(T)(uint index) {
-        return cast(GrList!T) getParameter!GrPtr(index);
+    GrArray!T getArray(T)(uint index) {
+        return cast(GrArray!T) getParameter!GrPtr(index);
     }
 
-    GrIntList getIntList(uint index) {
-        return cast(GrIntList) getParameter!GrPtr(index);
+    GrIntArray getIntArray(uint index) {
+        return cast(GrIntArray) getParameter!GrPtr(index);
     }
 
-    GrRealList getRealList(uint index) {
-        return cast(GrRealList) getParameter!GrPtr(index);
+    GrRealArray getRealArray(uint index) {
+        return cast(GrRealArray) getParameter!GrPtr(index);
     }
 
-    GrStringList getStringList(uint index) {
-        return cast(GrStringList) getParameter!GrPtr(index);
+    GrStringArray getStringArray(uint index) {
+        return cast(GrStringArray) getParameter!GrPtr(index);
     }
 
-    GrObjectList getObjectList(uint index) {
-        return cast(GrObjectList) getParameter!GrPtr(index);
+    GrObjectArray getObjectArray(uint index) {
+        return cast(GrObjectArray) getParameter!GrPtr(index);
     }
 
     GrIntChannel getIntChannel(uint index) {
@@ -213,23 +213,23 @@ final class GrCall {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
-    void setList(T)(GrList!T value) {
+    void setArray(T)(GrArray!T value) {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
-    void setIntList(GrIntList value) {
+    void setIntArray(GrIntArray value) {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
-    void setRealList(GrRealList value) {
+    void setRealArray(GrRealArray value) {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
-    void setStringList(GrStringList value) {
+    void setStringArray(GrStringArray value) {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
-    void setObjectList(GrObjectList value) {
+    void setObjectArray(GrObjectArray value) {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
@@ -319,20 +319,20 @@ final class GrCall {
         return _context.engine.getObjectVariable(name);
     }
 
-    GrIntList getIntListVariable(string name) {
-        return _context.engine.getIntListVariable(name);
+    GrIntArray getIntArrayVariable(string name) {
+        return _context.engine.getIntArrayVariable(name);
     }
 
-    GrRealList getRealListVariable(string name) {
-        return _context.engine.getRealListVariable(name);
+    GrRealArray getRealArrayVariable(string name) {
+        return _context.engine.getRealArrayVariable(name);
     }
 
-    GrStringList getStringListVariable(string name) {
-        return _context.engine.getStringListVariable(name);
+    GrStringArray getStringArrayVariable(string name) {
+        return _context.engine.getStringArrayVariable(name);
     }
 
-    GrObjectList getObjectListVariable(string name) {
-        return _context.engine.getObjectListVariable(name);
+    GrObjectArray getObjectArrayVariable(string name) {
+        return _context.engine.getObjectArrayVariable(name);
     }
 
     GrIntChannel getIntChannelVariable(string name) {
@@ -383,20 +383,20 @@ final class GrCall {
         _context.engine.setObjectVariable(name, value);
     }
 
-    void setIntListVariable(string name, GrIntList value) {
-        _context.engine.setIntListVariable(name, value);
+    void setIntArrayVariable(string name, GrIntArray value) {
+        _context.engine.setIntArrayVariable(name, value);
     }
 
-    void setRealListVariable(string name, GrRealList value) {
-        _context.engine.setRealListVariable(name, value);
+    void setRealArrayVariable(string name, GrRealArray value) {
+        _context.engine.setRealArrayVariable(name, value);
     }
 
-    void setStringListVariable(string name, GrStringList value) {
-        _context.engine.setStringListVariable(name, value);
+    void setStringArrayVariable(string name, GrStringArray value) {
+        _context.engine.setStringArrayVariable(name, value);
     }
 
-    void setObjectListVariable(string name, GrObjectList value) {
-        _context.engine.setObjectListVariable(name, value);
+    void setObjectArrayVariable(string name, GrObjectArray value) {
+        _context.engine.setObjectArrayVariable(name, value);
     }
 
     void setIntChannelVariable(string name, GrIntChannel value) {
@@ -450,16 +450,16 @@ final class GrCall {
     }
 
     /**
-	Spawn a new coroutine registered as an action. \
-	The action's name must be mangled with its signature.
+	Spawn a new coroutine registered as an event. \
+	The event's name must be mangled with its signature.
 	---
-	action myAction() {
-		trace("myAction was created !");
+	event myEvent() {
+		trace("myEvent was created !");
 	}
 	---
 	*/
-    GrContext callAction(string mangledName) {
-        return _context.engine.callAction(mangledName);
+    GrContext callEvent(string mangledName) {
+        return _context.engine.callEvent(mangledName);
     }
 
     /**

@@ -30,7 +30,7 @@ struct GrType {
         real_,
         boolean,
         string_,
-        list_,
+        array,
         function_,
         task,
         class_,
@@ -44,7 +44,7 @@ struct GrType {
     /// General type, basic types only use that while compound types also use mangledType
     /// and mangledReturnType.
     Base base;
-    /// Used for compound types like lists, functions, etc.
+    /// Used for compound types like arrays, functions, etc.
     string mangledType, mangledReturnType;
     /// Is this from an object field ?
     bool isField;
@@ -85,7 +85,7 @@ struct GrType {
         if (base == GrType.Base.function_ || base == GrType.Base.task)
             return mangledType == v.mangledType && mangledReturnType == v.mangledReturnType;
         if (base == GrType.Base.foreign || base == GrType.Base.class_
-            || base == GrType.Base.enumeration || base == GrType.Base.list_)
+            || base == GrType.Base.enumeration || base == GrType.Base.array)
             return mangledType == v.mangledType;
         return true;
     }
@@ -106,20 +106,22 @@ const GrType grReal = GrType(GrType.Base.real_);
 const GrType grBool = GrType(GrType.Base.boolean);
 /// String
 const GrType grString = GrType(GrType.Base.string_);
-/// Int list
-const GrType grIntList = GrType(GrType.Base.list_, grMangleSignature([grInt]));
-/// Real list
-const GrType grRealList = GrType(GrType.Base.list_, grMangleSignature([
+/// Int array
+const GrType grIntArray = GrType(GrType.Base.array, grMangleSignature([grInt]));
+/// Real array
+const GrType grRealArray = GrType(GrType.Base.array, grMangleSignature([
             grReal
         ]));
-/// Bool list
-const GrType grBoolList = GrType(GrType.Base.list_, grMangleSignature([grBool]));
-/// String list
-const GrType grStringList = GrType(GrType.Base.list_, grMangleSignature([
+/// Bool array
+const GrType grBoolArray = GrType(GrType.Base.array, grMangleSignature([grBool]));
+/// String array
+const GrType grStringArray = GrType(GrType.Base.array, grMangleSignature([
         grString
     ]));
 /// Int channel
-const GrType grIntChannel = GrType(GrType.Base.channel, grMangleSignature([grInt]));
+const GrType grIntChannel = GrType(GrType.Base.channel, grMangleSignature([
+        grInt
+    ]));
 /// Real channel
 const GrType grRealChannel = GrType(GrType.Base.channel, grMangleSignature([
         grReal
@@ -133,9 +135,9 @@ const GrType grStringChannel = GrType(GrType.Base.channel, grMangleSignature([
         grString
     ]));
 
-/// Returns a GrType of type list and of `subType` subtype.
-GrType grList(GrType subType) {
-    return GrType(GrType.Base.list_, grMangleSignature([subType]));
+/// Returns a GrType of type array and of `subType` subtype.
+GrType grArray(GrType subType) {
+    return GrType(GrType.Base.array, grMangleSignature([subType]));
 }
 
 /// Returns a GrType of type channel and of `subType` subtype.
@@ -169,7 +171,8 @@ GrType grAny(string name, bool function(GrType, GrAnyData) predicate = (a, b) =>
 /// The type is handled by a int based register
 bool grIsKindOfInt(GrType.Base type) {
     return type == GrType.Base.integer || type == GrType.Base.boolean
-        || type == GrType.Base.function_ || type == GrType.Base.task || type == GrType.Base.enumeration;
+        || type == GrType.Base.function_ || type == GrType.Base.task || type == GrType
+        .Base.enumeration;
 }
 
 /// The type is handled by a real based register
@@ -184,8 +187,9 @@ bool grIsKindOfString(GrType.Base type) {
 
 /// The type is handled by a ptr based register
 bool grIsKindOfObject(GrType.Base type) {
-    return type == GrType.Base.class_ || type == GrType.Base.list_ || type == GrType.Base.foreign
-        || type == GrType.Base.channel || type == GrType.Base.reference || type == GrType.Base.null_;
+    return type == GrType.Base.class_ || type == GrType.Base.array || type == GrType.Base.foreign
+        || type == GrType.Base.channel || type == GrType.Base.reference || type == GrType
+        .Base.null_;
 }
 
 /// Context for any validation
@@ -431,7 +435,7 @@ struct GrInstruction {
 }
 
 /**
-Function/Task/Action definition.
+Function/Task/Event definition.
 */
 package class GrFunction {
     /// Local scoping
@@ -456,7 +460,7 @@ package class GrFunction {
     string[] inputVariables, templateVariables;
     /// Function parameters' type.
     GrType[] inSignature, outSignature, templateSignature;
-    bool isTask, isAnonymous, isAction;
+    bool isTask, isAnonymous, isEvent;
 
     /// Function calls made from within its scope.
     GrFunctionCall[] functionCalls;
@@ -531,7 +535,7 @@ package class GrFunction {
         case string_:
             sregisterAvailables ~= variable.register;
             break;
-        case list_:
+        case array:
         case class_:
         case foreign:
         case channel:

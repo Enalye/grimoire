@@ -6,7 +6,7 @@
 module grimoire.runtime.object;
 
 import grimoire.compiler, grimoire.assembly;
-import grimoire.runtime.list, grimoire.runtime.channel;
+import grimoire.runtime.array, grimoire.runtime.channel;
 
 /**
 A single field of an object. \
@@ -74,24 +74,24 @@ final class GrObject {
         return cast(GrObject) getField!GrPtr(fieldName);
     }
 
-    GrList!T getList(T)(string fieldName) {
-        return cast(GrList!T) getField!GrPtr(fieldName);
+    GrArray!T getArray(T)(string fieldName) {
+        return cast(GrArray!T) getField!GrPtr(fieldName);
     }
 
-    GrIntList getIntList(string fieldName) {
-        return cast(GrIntList) getField!GrPtr(fieldName);
+    GrIntArray getIntArray(string fieldName) {
+        return cast(GrIntArray) getField!GrPtr(fieldName);
     }
 
-    GrRealList getRealList(string fieldName) {
-        return cast(GrRealList) getField!GrPtr(fieldName);
+    GrRealArray getRealArray(string fieldName) {
+        return cast(GrRealArray) getField!GrPtr(fieldName);
     }
 
-    GrStringList getStringList(string fieldName) {
-        return cast(GrStringList) getField!GrPtr(fieldName);
+    GrStringArray getStringArray(string fieldName) {
+        return cast(GrStringArray) getField!GrPtr(fieldName);
     }
 
-    GrObjectList getObjectList(string fieldName) {
-        return cast(GrObjectList) getField!GrPtr(fieldName);
+    GrObjectArray getObjectArray(string fieldName) {
+        return cast(GrObjectArray) getField!GrPtr(fieldName);
     }
 
     GrIntChannel getIntChannel(string fieldName) {
@@ -165,23 +165,23 @@ final class GrObject {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setList(T)(string fieldName, GrList!T value) {
+    void setArray(T)(string fieldName, GrArray!T value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setIntList(string fieldName, GrIntList value) {
+    void setIntArray(string fieldName, GrIntArray value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setRealList(string fieldName, GrRealList value) {
+    void setRealArray(string fieldName, GrRealArray value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setStringList(string fieldName, GrStringList value) {
+    void setStringArray(string fieldName, GrStringArray value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setObjectList(string fieldName, GrObjectList value) {
+    void setObjectArray(string fieldName, GrObjectArray value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 

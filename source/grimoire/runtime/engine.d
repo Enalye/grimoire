@@ -15,7 +15,7 @@ import std.typecons : Nullable;
 import grimoire.compiler, grimoire.assembly;
 
 import grimoire.runtime.context;
-import grimoire.runtime.list;
+import grimoire.runtime.array;
 import grimoire.runtime.object;
 import grimoire.runtime.channel;
 import grimoire.runtime.indexedarray;
@@ -165,28 +165,28 @@ class GrEngine {
     }
 
     /**
-	Checks whether an action exists. \
-	The action's name must be mangled with its signature.
+	Checks whether an event exists. \
+	The event's name must be mangled with its signature.
 	*/
-    bool hasAction(string mangledName) {
-        return (mangledName in _bytecode.actions) !is null;
+    bool hasEvent(string mangledName) {
+        return (mangledName in _bytecode.events) !is null;
     }
 
     /**
-	Spawn a new task registered as an action. \
-	The action's name must be mangled with its signature.
+	Spawn a new task registered as an event. \
+	The event's name must be mangled with its signature.
 	---
-	action myAction() {
-		print("myAction was created !");
+	event myEvent() {
+		print("myEvent was created !");
 	}
 	---
 	*/
-    GrContext callAction(string mangledName, Priority priority = Priority.normal) {
-        const auto action = mangledName in _bytecode.actions;
-        if (action is null)
-            throw new Exception("no action \'" ~ mangledName ~ "\' in script");
+    GrContext callEvent(string mangledName, Priority priority = Priority.normal) {
+        const auto event = mangledName in _bytecode.events;
+        if (event is null)
+            throw new Exception("no event \'" ~ mangledName ~ "\' in script");
         GrContext context = new GrContext(this);
-        context.pc = *action;
+        context.pc = *event;
         final switch (priority) with (Priority) {
         case immediate:
             _contexts.push(context);
@@ -351,20 +351,20 @@ class GrEngine {
         return cast(GrObject) getVariable!(GrPtr)(name);
     }
 
-    GrIntList getIntListVariable(string name) {
-        return cast(GrIntList) getVariable!(GrPtr)(name);
+    GrIntArray getIntArrayVariable(string name) {
+        return cast(GrIntArray) getVariable!(GrPtr)(name);
     }
 
-    GrRealList getRealListVariable(string name) {
-        return cast(GrRealList) getVariable!(GrPtr)(name);
+    GrRealArray getRealArrayVariable(string name) {
+        return cast(GrRealArray) getVariable!(GrPtr)(name);
     }
 
-    GrStringList getStringListVariable(string name) {
-        return cast(GrStringList) getVariable!(GrPtr)(name);
+    GrStringArray getStringArrayVariable(string name) {
+        return cast(GrStringArray) getVariable!(GrPtr)(name);
     }
 
-    GrObjectList getObjectListVariable(string name) {
-        return cast(GrObjectList) getVariable!(GrPtr)(name);
+    GrObjectArray getObjectArrayVariable(string name) {
+        return cast(GrObjectArray) getVariable!(GrPtr)(name);
     }
 
     GrIntChannel getIntChannelVariable(string name) {
@@ -433,19 +433,19 @@ class GrEngine {
         setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
-    void setIntListVariable(string name, GrIntList value) {
+    void setIntArrayVariable(string name, GrIntArray value) {
         setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
-    void setRealListVariable(string name, GrRealList value) {
+    void setRealArrayVariable(string name, GrRealArray value) {
         setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
-    void setStringListVariable(string name, GrStringList value) {
+    void setStringArrayVariable(string name, GrStringArray value) {
         setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
-    void setObjectListVariable(string name, GrObjectList value) {
+    void setObjectArrayVariable(string name, GrObjectArray value) {
         setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
@@ -530,7 +530,7 @@ class GrEngine {
                 case nop:
                     context.pc++;
                     break;
-                case error:
+                case throw_:
                     if (!context.isPanicking) {
                         //Error message.
                         _sglobalStackIn ~= context.sstack[context.sstackPos];
@@ -580,12 +580,12 @@ class GrEngine {
                         continue contextsLabel;
                     }
                     break;
-                case isolate:
+                case try_:
                     context.callStack[context.stackPos].exceptionHandlers ~= context.pc + grGetInstructionSignedValue(
                         opcode);
                     context.pc++;
                     break;
-                case capture:
+                case catch_:
                     context.callStack[context.stackPos].exceptionHandlers.length--;
                     if (context.isPanicking) {
                         context.isPanicking = false;
@@ -1898,8 +1898,8 @@ class GrEngine {
                         context.pc++;
                     context.istackPos--;
                     break;
-                case list_int:
-                    GrIntList ary = new GrIntList;
+                case array_int:
+                    GrIntArray ary = new GrIntArray;
                     const auto arySize = grGetInstructionUnsignedValue(opcode);
                     for (int i = arySize - 1; i >= 0; i--)
                         ary.data ~= context.istack[context.istackPos - i];
@@ -1910,8 +1910,8 @@ class GrEngine {
                     context.ostack[context.ostackPos] = cast(GrPtr) ary;
                     context.pc++;
                     break;
-                case list_real:
-                    GrRealList ary = new GrRealList;
+                case array_real:
+                    GrRealArray ary = new GrRealArray;
                     const auto arySize = grGetInstructionUnsignedValue(opcode);
                     for (int i = arySize - 1; i >= 0; i--)
                         ary.data ~= context.rstack[context.rstackPos - i];
@@ -1922,8 +1922,8 @@ class GrEngine {
                     context.ostack[context.ostackPos] = cast(GrPtr) ary;
                     context.pc++;
                     break;
-                case list_string:
-                    GrStringList ary = new GrStringList;
+                case array_string:
+                    GrStringArray ary = new GrStringArray;
                     const auto arySize = grGetInstructionUnsignedValue(opcode);
                     for (int i = arySize - 1; i >= 0; i--)
                         ary.data ~= context.sstack[context.sstackPos - i];
@@ -1934,8 +1934,8 @@ class GrEngine {
                     context.ostack[context.ostackPos] = cast(GrPtr) ary;
                     context.pc++;
                     break;
-                case list_object:
-                    GrObjectList ary = new GrObjectList;
+                case array_object:
+                    GrObjectArray ary = new GrObjectArray;
                     const auto arySize = grGetInstructionUnsignedValue(opcode);
                     for (int i = arySize - 1; i >= 0; i--)
                         ary.data ~= context.ostack[context.ostackPos - i];
@@ -1947,7 +1947,7 @@ class GrEngine {
                     context.pc++;
                     break;
                 case index_int:
-                    GrIntList ary = cast(GrIntList) context.ostack[context.ostackPos];
+                    GrIntArray ary = cast(GrIntArray) context.ostack[context.ostackPos];
                     auto idx = context.istack[context.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
@@ -1961,7 +1961,7 @@ class GrEngine {
                     context.pc++;
                     break;
                 case index_real:
-                    GrRealList ary = cast(GrRealList) context.ostack[context.ostackPos];
+                    GrRealArray ary = cast(GrRealArray) context.ostack[context.ostackPos];
                     auto idx = context.istack[context.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
@@ -1975,7 +1975,7 @@ class GrEngine {
                     context.pc++;
                     break;
                 case index_string:
-                    GrStringList ary = cast(GrStringList) context.ostack[context.ostackPos];
+                    GrStringArray ary = cast(GrStringArray) context.ostack[context.ostackPos];
                     auto idx = context.istack[context.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
@@ -1989,7 +1989,7 @@ class GrEngine {
                     context.pc++;
                     break;
                 case index_object:
-                    GrObjectList ary = cast(GrObjectList) context.ostack[context.ostackPos];
+                    GrObjectArray ary = cast(GrObjectArray) context.ostack[context.ostackPos];
                     auto idx = context.istack[context.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
@@ -2003,7 +2003,7 @@ class GrEngine {
                     context.pc++;
                     break;
                 case index2_int:
-                    GrIntList ary = cast(GrIntList) context.ostack[context.ostackPos];
+                    GrIntArray ary = cast(GrIntArray) context.ostack[context.ostackPos];
                     auto idx = context.istack[context.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
@@ -2017,7 +2017,7 @@ class GrEngine {
                     context.pc++;
                     break;
                 case index2_real:
-                    GrRealList ary = cast(GrRealList) context.ostack[context.ostackPos];
+                    GrRealArray ary = cast(GrRealArray) context.ostack[context.ostackPos];
                     auto idx = context.istack[context.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
@@ -2035,7 +2035,7 @@ class GrEngine {
                     context.pc++;
                     break;
                 case index2_string:
-                    GrStringList ary = cast(GrStringList) context.ostack[context.ostackPos];
+                    GrStringArray ary = cast(GrStringArray) context.ostack[context.ostackPos];
                     auto idx = context.istack[context.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
@@ -2053,7 +2053,7 @@ class GrEngine {
                     context.pc++;
                     break;
                 case index2_object:
-                    GrObjectList ary = cast(GrObjectList) context.ostack[context.ostackPos];
+                    GrObjectArray ary = cast(GrObjectArray) context.ostack[context.ostackPos];
                     auto idx = context.istack[context.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
@@ -2067,7 +2067,7 @@ class GrEngine {
                     context.pc++;
                     break;
                 case index3_int:
-                    GrIntList ary = cast(GrIntList) context.ostack[context.ostackPos];
+                    GrIntArray ary = cast(GrIntArray) context.ostack[context.ostackPos];
                     auto idx = context.istack[context.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
@@ -2081,7 +2081,7 @@ class GrEngine {
                     context.pc++;
                     break;
                 case index3_real:
-                    GrRealList ary = cast(GrRealList) context.ostack[context.ostackPos];
+                    GrRealArray ary = cast(GrRealArray) context.ostack[context.ostackPos];
                     auto idx = context.istack[context.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
@@ -2097,7 +2097,7 @@ class GrEngine {
                     context.pc++;
                     break;
                 case index3_string:
-                    GrStringList ary = cast(GrStringList) context.ostack[context.ostackPos];
+                    GrStringArray ary = cast(GrStringArray) context.ostack[context.ostackPos];
                     auto idx = context.istack[context.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
@@ -2113,7 +2113,7 @@ class GrEngine {
                     context.pc++;
                     break;
                 case index3_object:
-                    GrObjectList ary = cast(GrObjectList) context.ostack[context.ostackPos];
+                    GrObjectArray ary = cast(GrObjectArray) context.ostack[context.ostackPos];
                     auto idx = context.istack[context.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
@@ -2133,7 +2133,7 @@ class GrEngine {
                     if (context.istackPos == context.istack.length)
                         context.istack.length *= 2;
                     context.istack[context.istackPos] = cast(int)(
-                        (cast(GrIntList) context.ostack[context.ostackPos]).data.length);
+                        (cast(GrIntArray) context.ostack[context.ostackPos]).data.length);
                     context.ostackPos--;
                     context.pc++;
                     break;
@@ -2142,7 +2142,7 @@ class GrEngine {
                     if (context.istackPos == context.istack.length)
                         context.istack.length *= 2;
                     context.istack[context.istackPos] = cast(int)(
-                        (cast(GrRealList) context.ostack[context.ostackPos]).data.length);
+                        (cast(GrRealArray) context.ostack[context.ostackPos]).data.length);
                     context.ostackPos--;
                     context.pc++;
                     break;
@@ -2151,7 +2151,7 @@ class GrEngine {
                     if (context.istackPos == context.istack.length)
                         context.istack.length *= 2;
                     context.istack[context.istackPos] = cast(int)(
-                        (cast(GrStringList) context.ostack[context.ostackPos]).data.length);
+                        (cast(GrStringArray) context.ostack[context.ostackPos]).data.length);
                     context.ostackPos--;
                     context.pc++;
                     break;
@@ -2160,158 +2160,158 @@ class GrEngine {
                     if (context.istackPos == context.istack.length)
                         context.istack.length *= 2;
                     context.istack[context.istackPos] = cast(int)(
-                        (cast(GrObjectList) context.ostack[context.ostackPos]).data.length);
+                        (cast(GrObjectArray) context.ostack[context.ostackPos]).data.length);
                     context.ostackPos--;
                     context.pc++;
                     break;
-                case concatenate_intList:
-                    GrIntList nList = new GrIntList;
+                case concatenate_intArray:
+                    GrIntArray nArray = new GrIntArray;
                     context.ostackPos--;
-                    nList.data = (cast(GrIntList) context.ostack[context.ostackPos])
-                        .data ~ (cast(GrIntList) context.ostack[context.ostackPos + 1]).data;
-                    context.ostack[context.ostackPos] = cast(GrPtr) nList;
+                    nArray.data = (cast(GrIntArray) context.ostack[context.ostackPos])
+                        .data ~ (cast(GrIntArray) context.ostack[context.ostackPos + 1]).data;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.pc++;
                     break;
-                case concatenate_realList:
-                    GrRealList nList = new GrRealList;
+                case concatenate_realArray:
+                    GrRealArray nArray = new GrRealArray;
                     context.ostackPos--;
-                    nList.data = (cast(GrRealList) context.ostack[context.ostackPos])
-                        .data ~ (cast(GrRealList) context.ostack[context.ostackPos + 1]).data;
-                    context.ostack[context.ostackPos] = cast(GrPtr) nList;
+                    nArray.data = (cast(GrRealArray) context.ostack[context.ostackPos])
+                        .data ~ (cast(GrRealArray) context.ostack[context.ostackPos + 1]).data;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.pc++;
                     break;
-                case concatenate_stringList:
-                    GrStringList nList = new GrStringList;
+                case concatenate_stringArray:
+                    GrStringArray nArray = new GrStringArray;
                     context.ostackPos--;
-                    nList.data = (cast(GrStringList) context.ostack[context.ostackPos])
-                        .data ~ (cast(GrStringList) context.ostack[context.ostackPos + 1]).data;
-                    context.ostack[context.ostackPos] = cast(GrPtr) nList;
+                    nArray.data = (cast(GrStringArray) context.ostack[context.ostackPos])
+                        .data ~ (cast(GrStringArray) context.ostack[context.ostackPos + 1]).data;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.pc++;
                     break;
-                case concatenate_objectList:
-                    GrObjectList nList = new GrObjectList;
+                case concatenate_objectArray:
+                    GrObjectArray nArray = new GrObjectArray;
                     context.ostackPos--;
-                    nList.data = (cast(GrObjectList) context.ostack[context.ostackPos])
-                        .data ~ (cast(GrObjectList) context.ostack[context.ostackPos + 1]).data;
-                    context.ostack[context.ostackPos] = cast(GrPtr) nList;
+                    nArray.data = (cast(GrObjectArray) context.ostack[context.ostackPos])
+                        .data ~ (cast(GrObjectArray) context.ostack[context.ostackPos + 1]).data;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.pc++;
                     break;
                 case append_int:
-                    GrIntList nList = new GrIntList;
-                    nList.data = (cast(GrIntList) context.ostack[context.ostackPos])
+                    GrIntArray nArray = new GrIntArray;
+                    nArray.data = (cast(GrIntArray) context.ostack[context.ostackPos])
                         .data ~ context.istack[context.istackPos];
-                    context.ostack[context.ostackPos] = cast(GrPtr) nList;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.istackPos--;
                     context.pc++;
                     break;
                 case append_real:
-                    GrRealList nList = new GrRealList;
-                    nList.data = (cast(GrRealList) context.ostack[context.ostackPos])
+                    GrRealArray nArray = new GrRealArray;
+                    nArray.data = (cast(GrRealArray) context.ostack[context.ostackPos])
                         .data ~ context.rstack[context.rstackPos];
-                    context.ostack[context.ostackPos] = cast(GrPtr) nList;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.rstackPos--;
                     context.pc++;
                     break;
                 case append_string:
-                    GrStringList nList = new GrStringList;
-                    nList.data = (cast(GrStringList) context.ostack[context.ostackPos])
+                    GrStringArray nArray = new GrStringArray;
+                    nArray.data = (cast(GrStringArray) context.ostack[context.ostackPos])
                         .data ~ context.sstack[context.sstackPos];
-                    context.ostack[context.ostackPos] = cast(GrPtr) nList;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.sstackPos--;
                     context.pc++;
                     break;
                 case append_object:
-                    GrObjectList nList = new GrObjectList;
+                    GrObjectArray nArray = new GrObjectArray;
                     context.ostackPos--;
-                    nList.data = (cast(GrObjectList) context.ostack[context.ostackPos])
+                    nArray.data = (cast(GrObjectArray) context.ostack[context.ostackPos])
                         .data ~ context.ostack[context.ostackPos + 1];
-                    context.ostack[context.ostackPos] = cast(GrPtr) nList;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.pc++;
                     break;
                 case prepend_int:
-                    GrIntList nList = new GrIntList;
-                    nList.data = context.istack[context.istackPos] ~ (
-                        cast(GrIntList) context.ostack[context.ostackPos]).data;
-                    context.ostack[context.ostackPos] = cast(GrPtr) nList;
+                    GrIntArray nArray = new GrIntArray;
+                    nArray.data = context.istack[context.istackPos] ~ (
+                        cast(GrIntArray) context.ostack[context.ostackPos]).data;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.istackPos--;
                     context.pc++;
                     break;
                 case prepend_real:
-                    GrRealList nList = new GrRealList;
-                    nList.data = context.rstack[context.rstackPos] ~ (
-                        cast(GrRealList) context.ostack[context.ostackPos]).data;
-                    context.ostack[context.ostackPos] = cast(GrPtr) nList;
+                    GrRealArray nArray = new GrRealArray;
+                    nArray.data = context.rstack[context.rstackPos] ~ (
+                        cast(GrRealArray) context.ostack[context.ostackPos]).data;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.rstackPos--;
                     context.pc++;
                     break;
                 case prepend_string:
-                    GrStringList nList = new GrStringList;
-                    nList.data = context.sstack[context.sstackPos] ~ (
-                        cast(GrStringList) context.ostack[context.ostackPos]).data;
-                    context.ostack[context.ostackPos] = cast(GrPtr) nList;
+                    GrStringArray nArray = new GrStringArray;
+                    nArray.data = context.sstack[context.sstackPos] ~ (
+                        cast(GrStringArray) context.ostack[context.ostackPos]).data;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.sstackPos--;
                     context.pc++;
                     break;
                 case prepend_object:
-                    GrObjectList nList = new GrObjectList;
+                    GrObjectArray nArray = new GrObjectArray;
                     context.ostackPos--;
-                    nList.data = context.ostack[context.ostackPos] ~ (
+                    nArray.data = context.ostack[context.ostackPos] ~ (
                         cast(
-                            GrObjectList) context.ostack[context.ostackPos + 1]).data;
-                    context.ostack[context.ostackPos] = cast(GrPtr) nList;
+                            GrObjectArray) context.ostack[context.ostackPos + 1]).data;
+                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
                     context.pc++;
                     break;
-                case equal_intList:
+                case equal_intArray:
                     context.istackPos++;
                     if (context.istackPos == context.istack.length)
                         context.istack.length *= 2;
-                    context.istack[context.istackPos] = (cast(GrIntList) context.ostack[context.ostackPos - 1])
-                        .data == (cast(GrIntList) context.ostack[context.ostackPos]).data;
+                    context.istack[context.istackPos] = (cast(GrIntArray) context.ostack[context.ostackPos - 1])
+                        .data == (cast(GrIntArray) context.ostack[context.ostackPos]).data;
                     context.ostackPos -= 2;
                     context.pc++;
                     break;
-                case equal_realList:
+                case equal_realArray:
                     context.istackPos++;
                     if (context.istackPos == context.istack.length)
                         context.istack.length *= 2;
-                    context.istack[context.istackPos] = (cast(GrRealList) context.ostack[context.ostackPos - 1])
-                        .data == (cast(GrRealList) context.ostack[context.ostackPos]).data;
+                    context.istack[context.istackPos] = (cast(GrRealArray) context.ostack[context.ostackPos - 1])
+                        .data == (cast(GrRealArray) context.ostack[context.ostackPos]).data;
                     context.ostackPos -= 2;
                     context.pc++;
                     break;
-                case equal_stringList:
+                case equal_stringArray:
                     context.istackPos++;
                     if (context.istackPos == context.istack.length)
                         context.istack.length *= 2;
-                    context.istack[context.istackPos] = (cast(GrStringList) context.ostack[context.ostackPos - 1])
-                        .data == (cast(GrStringList) context.ostack[context.ostackPos]).data;
+                    context.istack[context.istackPos] = (cast(GrStringArray) context.ostack[context.ostackPos - 1])
+                        .data == (cast(GrStringArray) context.ostack[context.ostackPos]).data;
                     context.ostackPos -= 2;
                     context.pc++;
                     break;
-                case notEqual_intList:
+                case notEqual_intArray:
                     context.istackPos++;
                     if (context.istackPos == context.istack.length)
                         context.istack.length *= 2;
-                    context.istack[context.istackPos] = (cast(GrIntList) context.ostack[context.ostackPos - 1])
-                        .data != (cast(GrIntList) context.ostack[context.ostackPos]).data;
+                    context.istack[context.istackPos] = (cast(GrIntArray) context.ostack[context.ostackPos - 1])
+                        .data != (cast(GrIntArray) context.ostack[context.ostackPos]).data;
                     context.ostackPos -= 2;
                     context.pc++;
                     break;
-                case notEqual_realList:
+                case notEqual_realArray:
                     context.istackPos++;
                     if (context.istackPos == context.istack.length)
                         context.istack.length *= 2;
-                    context.istack[context.istackPos] = (cast(GrRealList) context.ostack[context.ostackPos - 1])
-                        .data != (cast(GrRealList) context.ostack[context.ostackPos]).data;
+                    context.istack[context.istackPos] = (cast(GrRealArray) context.ostack[context.ostackPos - 1])
+                        .data != (cast(GrRealArray) context.ostack[context.ostackPos]).data;
                     context.ostackPos -= 2;
                     context.pc++;
                     break;
-                case notEqual_stringList:
+                case notEqual_stringArray:
                     context.istackPos++;
                     if (context.istackPos == context.istack.length)
                         context.istack.length *= 2;
-                    context.istack[context.istackPos] = (cast(GrStringList) context.ostack[context.ostackPos - 1])
-                        .data != (cast(GrStringList) context.ostack[context.ostackPos]).data;
+                    context.istack[context.istackPos] = (cast(GrStringArray) context.ostack[context.ostackPos - 1])
+                        .data != (cast(GrStringArray) context.ostack[context.ostackPos]).data;
                     context.ostackPos -= 2;
                     context.pc++;
                     break;
