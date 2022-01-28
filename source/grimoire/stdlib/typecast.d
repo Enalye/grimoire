@@ -8,12 +8,12 @@ module grimoire.stdlib.typecast;
 import std.conv;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibTypecast(GrLibrary library, GrLocale locale) {
+package(grimoire.stdlib) void grLoadStdLibTypecast(GrLibrary library) {
     //As int
     library.addCast(&typecast_r2i, grReal, grInt, true);
     library.addCast(&typecast_b2i, grBool, grInt);
 
-    //As GrReal
+    //As real
     library.addCast(&typecast_i2r, grInt, grReal);
 
     //As string
@@ -22,7 +22,7 @@ package(grimoire.stdlib) void grLoadStdLibTypecast(GrLibrary library, GrLocale l
     library.addCast(&typecast_r2s, grReal, grString);
     library.addCast(&typecast_as2s, grStringList, grString);
 
-    //As String List
+    //As string list
     library.addCast(&typecast_s2as, grString, grStringList);
 }
 

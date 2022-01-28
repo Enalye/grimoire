@@ -9,40 +9,20 @@ import std.datetime;
 import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibTime(GrLibrary library, GrLocale locale) {
-    string clockSymbol, waitSymbol, sleepSymbol, secondsSymbol, minutesSymbol, hoursSymbol;
-    final switch (locale) with (GrLocale) {
-    case en_US:
-        clockSymbol = "clock";
-        waitSymbol = "wait";
-        sleepSymbol = "sleep";
-        secondsSymbol = "seconds";
-        minutesSymbol = "minutes";
-        hoursSymbol = "hours";
-        break;
-    case fr_FR:
-        clockSymbol = "horloge";
-        waitSymbol = "attends";
-        sleepSymbol = "dors";
-        secondsSymbol = "secondes";
-        minutesSymbol = "minutes";
-        hoursSymbol = "heures";
-        break;
-    }
+package(grimoire.stdlib) void grLoadStdLibTime(GrLibrary library) {
+    library.addFunction(&_clock, "clock", [], [grInt]);
 
-    library.addPrimitive(&_clock, clockSymbol, [], [grInt]);
+    library.addFunction(&_wait, "wait", [grInt]);
+    library.addFunction(&_sleep, "sleep", [grInt]);
 
-    library.addPrimitive(&_wait, waitSymbol, [grInt]);
-    library.addPrimitive(&_sleep, sleepSymbol, [grInt]);
+    library.addFunction(&_seconds_i, "seconds", [grInt], [grInt]);
+    library.addFunction(&_seconds_f, "seconds", [grReal], [grInt]);
 
-    library.addPrimitive(&_seconds_i, secondsSymbol, [grInt], [grInt]);
-    library.addPrimitive(&_seconds_f, secondsSymbol, [grReal], [grInt]);
+    library.addFunction(&_minutes_i, "minutes", [grInt], [grInt]);
+    library.addFunction(&_minutes_f, "minutes", [grReal], [grInt]);
 
-    library.addPrimitive(&_minutes_i, minutesSymbol, [grInt], [grInt]);
-    library.addPrimitive(&_minutes_f, minutesSymbol, [grReal], [grInt]);
-
-    library.addPrimitive(&_hours_i, hoursSymbol, [grInt], [grInt]);
-    library.addPrimitive(&_hours_f, hoursSymbol, [grReal], [grInt]);
+    library.addFunction(&_hours_i, "hours", [grInt], [grInt]);
+    library.addFunction(&_hours_f, "hours", [grReal], [grInt]);
 }
 
 private void _clock(GrCall call) {

@@ -79,8 +79,8 @@ class GrEngine {
     shared bool isRunning = true;
 
     @property {
-        /// Check if there is a coroutine currently running.
-        bool hasCoroutines() const {
+        /// Check if there is a task currently running.
+        bool hasTasks() const {
             return (_contexts.length + _contextsToSpawn.length) > 0uL;
         }
 
@@ -173,7 +173,7 @@ class GrEngine {
     }
 
     /**
-	Spawn a new coroutine registered as an action. \
+	Spawn a new task registered as an action. \
 	The action's name must be mangled with its signature.
 	---
 	action myAction() {
@@ -199,7 +199,7 @@ class GrEngine {
     }
 
     /**
-	Spawn a new coroutine at an arbitrary address. \
+	Spawn a new task at an arbitrary address. \
 	The address needs to correspond to the start of a task, else the VM will crash. \
 	*/
     GrContext callAddress(uint pc) {
@@ -307,14 +307,14 @@ class GrEngine {
 
     /**
 	Raise an error message and attempt to recover from it. \
-	The error is raised inside a coroutine. \
+	The error is raised inside a task. \
 	___
 	For each function it unwinds, it'll search for a `try/catch` that captures it. \
 	If none is found, it'll execute every `defer` statements inside the function and
 	do the same for the next function in the callstack.
 	___
-	If nothing catches the error inside the coroutine, the VM enters in a panic state. \
-	Every coroutines will then execute their `defer` statements and be killed.
+	If nothing catches the error inside the task, the VM enters in a panic state. \
+	Every tasks will then execute their `defer` statements and be killed.
 	*/
     void raise(GrContext context, string message) {
         if (context.isPanicking)
@@ -324,19 +324,19 @@ class GrEngine {
 
         generateStackTrace(context);
 
-        //We indicate that the coroutine is in a panic state until a catch is found.
+        //We indicate that the task is in a panic state until a catch is found.
         context.isPanicking = true;
 
         context.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
     }
 
     /**
-	Marks each coroutine as killed and prevents any new coroutine from spawning.
+	Marks each task as killed and prevents any new task from spawning.
 	*/
     private void end() {
-        foreach (coroutine; _contexts) {
-            coroutine.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
-            coroutine.isKilled = true;
+        foreach (task; _contexts) {
+            task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
+            task.isKilled = true;
         }
         _contextsToSpawn.reset();
     }
@@ -537,7 +537,7 @@ class GrEngine {
                         context.sstackPos--;
                         generateStackTrace(context);
 
-                        //We indicate that the coroutine is in a panic state until a catch is found.
+                        //We indicate that the task is in a panic state until a catch is found.
                         context.isPanicking = true;
                     }
 
@@ -1790,9 +1790,9 @@ class GrEngine {
                         }
                         else {
                             //Kill the others.
-                            foreach (coroutine; _contexts) {
-                                coroutine.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
-                                coroutine.isKilled = true;
+                            foreach (task; _contexts) {
+                                task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
+                                task.isKilled = true;
                             }
                             _contextsToSpawn.reset();
 

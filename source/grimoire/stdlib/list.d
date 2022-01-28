@@ -9,68 +9,8 @@ import std.range;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
-private {
-    string _listIterSymbol;
-}
-
-package(grimoire.stdlib) void grLoadStdLibList(GrLibrary library, GrLocale locale) {
-    string copySymbol, sizeSymbol, resizeSymbol, emptySymbol, clearSymbol, hasSymbol, removeSymbol;
-    string fillSymbol, unshiftSymbol, pushSymbol, shiftSymbol, popSymbol, firstSymbol, lastSymbol, sliceSymbol;
-    string reverseSymbol, insertSymbol, sortSymbol, findFirstSymbol, findLastSymbol, eachSymbol, nextSymbol;
-    final switch (locale) with (GrLocale) {
-    case en_US:
-        _listIterSymbol = "IList";
-        copySymbol = "copy";
-        sizeSymbol = "size";
-        resizeSymbol = "resize";
-        emptySymbol = "empty?";
-        fillSymbol = "fill";
-        clearSymbol = "clear";
-        unshiftSymbol = "unshift";
-        pushSymbol = "push";
-        shiftSymbol = "shift";
-        popSymbol = "pop";
-        firstSymbol = "first";
-        lastSymbol = "last";
-        removeSymbol = "remove";
-        sliceSymbol = "slice";
-        reverseSymbol = "reverse";
-        insertSymbol = "insert";
-        eachSymbol = "each";
-        nextSymbol = "next";
-        sortSymbol = "sort";
-        findFirstSymbol = "find_first";
-        findLastSymbol = "find_last";
-        hasSymbol = "has?";
-        break;
-    case fr_FR:
-        _listIterSymbol = "IListe";
-        copySymbol = "copie";
-        sizeSymbol = "taille";
-        resizeSymbol = "redimensionne";
-        emptySymbol = "vide?";
-        fillSymbol = "remplis";
-        clearSymbol = "vide";
-        unshiftSymbol = "enfile";
-        pushSymbol = "empile";
-        shiftSymbol = "défile";
-        popSymbol = "dépile";
-        firstSymbol = "premier";
-        lastSymbol = "dernier";
-        removeSymbol = "retire";
-        sliceSymbol = "découpe";
-        reverseSymbol = "inverse";
-        insertSymbol = "insère";
-        eachSymbol = "chaque";
-        nextSymbol = "suivant";
-        sortSymbol = "trie";
-        findFirstSymbol = "trouve_premier";
-        findLastSymbol = "trouve_dernier";
-        hasSymbol = "a?";
-        break;
-    }
-
-    library.addForeign(_listIterSymbol, ["T"]);
+package(grimoire.stdlib) void grLoadStdLibList(GrLibrary library) {
+    library.addForeign("ArrayIterator", ["T"]);
 
     static foreach (t; ["Int", "Real", "String", "Object"]) {
         mixin("GrType any" ~ t ~ "List = grAny(\"A\", (type, data) {
@@ -78,117 +18,166 @@ package(grimoire.stdlib) void grLoadStdLibList(GrLibrary library, GrLocale local
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
                 data.set(\"T\", subType);
-                return grIsKindOf" ~ t ~ "(subType.base);
+                return grIsKindOf"
+                ~ t ~ "(subType.base);
             });
-            library.addPrimitive(&_copy_!\"" ~ t ~ "\", copySymbol, [any"
+            library.addFunction(&_copy_!\""
+                ~ t ~ "\", \"copy\", [any"
                 ~ t ~ "List], [grAny(\"A\")]);
-            library.addPrimitive(&_size_!\"" ~ t ~ "\", sizeSymbol, [any" ~ t ~ "List], [grInt]);
-            library.addPrimitive(&_resize_!\"" ~ t ~ "\", resizeSymbol, [
+            library.addFunction(&_size_!\""
+                ~ t ~ "\", \"size\", [any" ~ t ~ "List], [grInt]);
+            library.addFunction(&_resize_!\""
+                ~ t ~ "\", \"resize\", [
                 any"
                 ~ t ~ "List, grInt
             ], [grAny(\"A\")]);
-            library.addPrimitive(&_empty_!\"" ~ t ~ "\", emptySymbol, [
-                any" ~ t ~ "List
+            library.addFunction(&_empty_!\""
+                ~ t ~ "\", \"empty?\", [
+                any"
+                ~ t ~ "List
             ], [grBool]);
-            library.addPrimitive(&_fill_!\"" ~ t ~ "\", fillSymbol, [
-                any" ~ t
+            library.addFunction(&_fill_!\""
+                ~ t ~ "\", \"fill\", [
+                any"
+                ~ t
                 ~ "List, grAny(\"T\")
             ], [grAny(\"A\")]);
-            library.addPrimitive(&_clear_!\"" ~ t ~ "\", clearSymbol, [
-                any" ~ t
+            library.addFunction(&_clear_!\""
+                ~ t ~ "\", \"clear\", [
+                any"
+                ~ t
                 ~ "List
             ], [grAny(\"A\")]);
-            library.addPrimitive(&_unshift_!\"" ~ t ~ "\", unshiftSymbol, [
-                    any" ~ t ~ "List, grAny(\"T\")
+            library.addFunction(&_unshift_!\""
+                ~ t ~ "\", \"unshift\", [
+                    any"
+                ~ t ~ "List, grAny(\"T\")
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_push_!\"" ~ t
-                ~ "\", pushSymbol, [
-                    any" ~ t ~ "List, grAny(\"T\")
+            library.addFunction(&_push_!\""
+                ~ t
+                ~ "\", \"push\", [
+                    any"
+                ~ t ~ "List, grAny(\"T\")
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_shift_!\"" ~ t ~ "\", shiftSymbol, [
-                    any" ~ t ~ "List
-                ], [grAny(\"T\")]);
-            library.addPrimitive(&_pop_!\"" ~ t
-                ~ "\", popSymbol, [
-                    any" ~ t ~ "List
-                ], [grAny(\"T\")]);
-            library.addPrimitive(&_shift1_!\"" ~ t ~ "\", shiftSymbol, [
-                    any" ~ t ~ "List, grInt
-                ], [grAny(\"A\")]);
-            library.addPrimitive(&_pop1_!\"" ~ t ~ "\", popSymbol, [
-                    any" ~ t
-                ~ "List, grInt
-                ], [grAny(\"A\")]);
-            library.addPrimitive(&_first_!\"" ~ t ~ "\", firstSymbol, [
-                any" ~ t ~ "List
-            ], [grAny(\"T\")]);
-            library.addPrimitive(&_last_!\"" ~ t ~ "\", lastSymbol, [
+            library.addFunction(&_shift_!\""
+                ~ t ~ "\", \"shift\", [
                     any"
                 ~ t ~ "List
                 ], [grAny(\"T\")]);
-            library.addPrimitive(&_remove_!\"" ~ t ~ "\", removeSymbol, [
-                    any" ~ t ~ "List, grInt
+            library.addFunction(&_pop_!\""
+                ~ t
+                ~ "\", \"pop\", [
+                    any"
+                ~ t ~ "List
+                ], [grAny(\"T\")]);
+            library.addFunction(&_shift1_!\""
+                ~ t ~ "\", \"shift\", [
+                    any"
+                ~ t ~ "List, grInt
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_remove2_!\"" ~ t ~ "\", removeSymbol, [
-                    any" ~ t ~ "List, grInt, grInt
+            library.addFunction(&_pop1_!\""
+                ~ t ~ "\", \"pop\", [
+                    any"
+                ~ t
+                ~ "List, grInt
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_slice_!\""
+            library.addFunction(&_first_!\""
+                ~ t ~ "\", \"first\", [
+                any"
+                ~ t ~ "List
+            ], [grAny(\"T\")]);
+            library.addFunction(&_last_!\""
+                ~ t ~ "\", \"last\", [
+                    any"
+                ~ t ~ "List
+                ], [grAny(\"T\")]);
+            library.addFunction(&_remove_!\""
+                ~ t ~ "\", \"remove\", [
+                    any"
+                ~ t ~ "List, grInt
+                ], [grAny(\"A\")]);
+            library.addFunction(&_remove2_!\""
+                ~ t ~ "\", \"remove\", [
+                    any"
+                ~ t ~ "List, grInt, grInt
+                ], [grAny(\"A\")]);
+            library.addFunction(&_slice_!\""
                 ~ t ~ "\", \"slice!\", [
-                    any" ~ t ~ "List, grInt, grInt
+                    any"
+                ~ t ~ "List, grInt, grInt
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_slice_copy_!\"" ~ t ~ "\", sliceSymbol, [
-                    any" ~ t ~ "List, grInt, grInt
+            library.addFunction(&_slice_copy_!\""
+                ~ t ~ "\", \"slice\", [
+                    any"
+                ~ t ~ "List, grInt, grInt
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_reverse_!\"" ~ t
-                ~ "\", reverseSymbol, [
-                    any" ~ t ~ "List
+            library.addFunction(&_reverse_!\""
+                ~ t
+                ~ "\", \"reverse\", [
+                    any"
+                ~ t ~ "List
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_insert_!\"" ~ t ~ "\", insertSymbol, [
-                    any" ~ t ~ "List, grInt, grAny(\"T\")
+            library.addFunction(&_insert_!\""
+                ~ t ~ "\", \"insert\", [
+                    any"
+                ~ t ~ "List, grInt, grAny(\"T\")
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_each_!\"" ~ t
-                ~ "\", eachSymbol, [
+            library.addFunction(&_each_!\""
+                ~ t
+                ~ "\", \"each\", [
                     grAny(\"A\", (type, data) {
                 if (type.base != GrType.Base.list_)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
-                data.set(\"R\", grGetForeignType(_listIterSymbol, [subType]));
-                return grIsKindOf" ~ t ~ "(subType.base);
+                data.set(\"R\", grGetForeignType(\"ArrayIterator\", [subType]));
+                return grIsKindOf"
+                ~ t ~ "(subType.base);
             })
                 ], [grAny(\"R\")]);
-            library.addPrimitive(&_next_!\""
-                ~ t ~ "\", nextSymbol, [
+            library.addFunction(&_next_!\""
+                ~ t ~ "\", \"next\", [
                     grAny(\"R\", (type, data) {
                 if (type.base != GrType.Base.foreign)
                     return false;
                 auto result = grUnmangleComposite(type.mangledType);
-                if(result.signature.length != 1 || result.name != _listIterSymbol)
+                if(result.signature.length != 1 || result.name != \"ArrayIterator\")
                     return false;
                 data.set(\"T\", result.signature[0]);
-                return grIsKindOf" ~ t ~ "(result.signature[0].base);
+                return grIsKindOf"
+                ~ t ~ "(result.signature[0].base);
                     })
                 ], [grBool, grAny(\"T\")]);
             ");
 
         static if (t != "Object") {
             mixin("
-            library.addPrimitive(&_sort_!\"" ~ t ~ "\", sortSymbol, [
-                    any" ~ t ~ "List
+            library.addFunction(&_sort_!\""
+                    ~ t ~ "\", \"sort\", [
+                    any"
+                    ~ t ~ "List
                 ], [grAny(\"A\")]);
-            library.addPrimitive(&_findFirst_!\"" ~ t ~ "\", findFirstSymbol, [
-                    any" ~ t ~ "List, grAny(\"T\")
+            library.addFunction(&_findFirst_!\""
+                    ~ t ~ "\", \"findFirst\", [
+                    any"
+                    ~ t ~ "List, grAny(\"T\")
                 ], [grInt]);
-            library.addPrimitive(&_findLast_!\"" ~ t
+            library.addFunction(&_findLast_!\""
+                    ~ t
                     ~ "\", \"findLast\", [
-                    any" ~ t ~ "List, grAny(\"T\")
+                    any"
+                    ~ t ~ "List, grAny(\"T\")
                 ], [grInt]);
-            library.addPrimitive(&_findLast_!\"" ~ t ~ "\", findLastSymbol, [
-                    any" ~ t
+            library.addFunction(&_findLast_!\""
+                    ~ t ~ "\", \"findLast\", [
+                    any"
+                    ~ t
                     ~ "List, grAny(\"T\")
                 ], [grInt]);
-            library.addPrimitive(&_has_!\"" ~ t
-                    ~ "\", hasSymbol, [
-                    any" ~ t ~ "List, grAny(\"T\")
+            library.addFunction(&_has_!\""
+                    ~ t
+                    ~ "\", \"has?\", [
+                    any"
+                    ~ t ~ "List, grAny(\"T\")
                 ], [grBool]);
                 ");
         }
@@ -199,7 +188,8 @@ private void _copy_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "List copy = new Gr" ~ t ~ "List;
         copy.data = call.get"
             ~ t ~ "List(0).data.dup;
-        call.set" ~ t ~ "List(copy);");
+        call.set"
+            ~ t ~ "List(copy);");
 }
 
 private void _size_(string t)(GrCall call) {

@@ -9,64 +9,26 @@ import std.conv : to;
 import grimoire.compiler.util, grimoire.compiler.type, grimoire.compiler.mangle;
 
 /// Convert a type into a pretty format for display.
-string grGetPrettyType(GrType variableType, GrLocale locale = GrLocale.en_US) {
+string grGetPrettyType(GrType variableType) {
     final switch (variableType.base) with (GrType.Base) {
     case void_:
-        final switch (locale) with (GrLocale) {
-        case en_US:
-            return "void";
-        case fr_FR:
-            return "vide";
-        }
+        return "void";
     case null_:
-        final switch (locale) with (GrLocale) {
-        case en_US:
-            return "null";
-        case fr_FR:
-            return "nul";
-        }
+        return "null";
     case integer:
-        final switch (locale) with (GrLocale) {
-        case en_US:
-            return "integer";
-        case fr_FR:
-            return "entier";
-        }
+        return "int";
     case real_:
-        final switch (locale) with (GrLocale) {
-        case en_US:
-            return "real";
-        case fr_FR:
-            return "réel";
-        }
+        return "real";
     case boolean:
-        final switch (locale) with (GrLocale) {
-        case en_US:
-            return "boolean";
-        case fr_FR:
-            return "booléen";
-        }
+        return "bool";
     case string_:
-        final switch (locale) with (GrLocale) {
-        case en_US:
-            return "string";
-        case fr_FR:
-            return "chaîne";
-        }
+        return "string";
     case list_:
-        string result;
-        final switch (locale) with (GrLocale) {
-        case en_US:
-            result = "list(";
-            break;
-        case fr_FR:
-            result = "liste(";
-            break;
-        }
+        string result = "list(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach (parameter; parameters) {
-            result ~= grGetPrettyType(parameter, locale);
+            result ~= grGetPrettyType(parameter);
             if ((i + 2) <= parameters.length)
                 result ~= ", ";
             i++;
@@ -74,19 +36,11 @@ string grGetPrettyType(GrType variableType, GrLocale locale = GrLocale.en_US) {
         result ~= ")";
         return result;
     case function_:
-        string result;
-        final switch (locale) with (GrLocale) {
-        case en_US:
-            result = "function(";
-            break;
-        case fr_FR:
-            result = "fonction(";
-            break;
-        }
+        string result = "function(";
         int i;
         auto inSignature = grUnmangleSignature(variableType.mangledType);
         foreach (type; inSignature) {
-            result ~= grGetPrettyType(type, locale);
+            result ~= grGetPrettyType(type);
             if ((i + 2) <= inSignature.length)
                 result ~= ", ";
             i++;
@@ -96,26 +50,18 @@ string grGetPrettyType(GrType variableType, GrLocale locale = GrLocale.en_US) {
         if (outSignature.length)
             result ~= " ";
         foreach (type; outSignature) {
-            result ~= grGetPrettyType(type, locale);
+            result ~= grGetPrettyType(type);
             if ((i + 2) <= outSignature.length)
                 result ~= ", ";
             i++;
         }
         return result;
     case channel:
-        string result;
-        final switch (locale) with (GrLocale) {
-        case en_US:
-            result = "channel(";
-            break;
-        case fr_FR:
-            result = "canal(";
-            break;
-        }
+        string result = "channel(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach (parameter; parameters) {
-            result ~= grGetPrettyType(parameter, locale);
+            result ~= grGetPrettyType(parameter);
             if ((i + 2) <= parameters.length)
                 result ~= ", ";
             i++;
@@ -123,19 +69,11 @@ string grGetPrettyType(GrType variableType, GrLocale locale = GrLocale.en_US) {
         result ~= ")";
         return result;
     case reference:
-        string result;
-        final switch (locale) with (GrLocale) {
-        case en_US:
-            result = "ref(";
-            break;
-        case fr_FR:
-            result = "réf(";
-            break;
-        }
+        string result = "ref(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach (parameter; parameters) {
-            result ~= grGetPrettyType(parameter, locale);
+            result ~= grGetPrettyType(parameter);
             if ((i + 2) <= parameters.length)
                 result ~= ", ";
             i++;
@@ -143,19 +81,11 @@ string grGetPrettyType(GrType variableType, GrLocale locale = GrLocale.en_US) {
         result ~= ")";
         return result;
     case task:
-        string result;
-        final switch (locale) with (GrLocale) {
-        case en_US:
-            result = "task(";
-            break;
-        case fr_FR:
-            result = "tâche(";
-            break;
-        }
+        string result = "task(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach (parameter; parameters) {
-            result ~= grGetPrettyType(parameter, locale);
+            result ~= grGetPrettyType(parameter);
             if ((i + 2) <= parameters.length)
                 result ~= ", ";
             i++;
@@ -175,7 +105,7 @@ string grGetPrettyType(GrType variableType, GrLocale locale = GrLocale.en_US) {
             result ~= "<";
             int i;
             foreach (templateType; templateTypes) {
-                result ~= grGetPrettyType(templateType, locale);
+                result ~= grGetPrettyType(templateType);
                 if ((i + 2) <= templateTypes.length)
                     result ~= ", ";
                 i++;
@@ -188,7 +118,7 @@ string grGetPrettyType(GrType variableType, GrLocale locale = GrLocale.en_US) {
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach (parameter; parameters) {
-            result ~= grGetPrettyType(parameter, locale);
+            result ~= grGetPrettyType(parameter);
             if ((i + 2) <= parameters.length)
                 result ~= ", ";
             i++;
@@ -200,7 +130,7 @@ string grGetPrettyType(GrType variableType, GrLocale locale = GrLocale.en_US) {
 
 /// Displayable format for a mangled string of format: function$signature \
 /// Return signature is not used.
-string grGetPrettyFunctionCall(string mangledName, GrLocale locale = GrLocale.en_US) {
+string grGetPrettyFunctionCall(string mangledName) {
     import std.string : indexOf;
 
     int index = cast(int) indexOf(mangledName, '$');
@@ -217,7 +147,7 @@ string grGetPrettyFunctionCall(string mangledName, GrLocale locale = GrLocale.en
     int i;
     auto inSignature = grUnmangleSignature(mangledName);
     foreach (type; inSignature) {
-        result ~= grGetPrettyType(type, locale);
+        result ~= grGetPrettyType(type);
         if ((i + 2) <= inSignature.length)
             result ~= ", ";
         i++;
@@ -228,11 +158,11 @@ string grGetPrettyFunctionCall(string mangledName, GrLocale locale = GrLocale.en
 
 /// Displayable format for a mangled string of format: function$signature \
 /// Return signature is not used.
-string grGetPrettyFunctionCall(string name, GrType[] signature, GrLocale locale = GrLocale.en_US) {
+string grGetPrettyFunctionCall(string name, GrType[] signature) {
     string result = to!string(name) ~ "(";
     int i;
     foreach (type; signature) {
-        result ~= grGetPrettyType(type, locale);
+        result ~= grGetPrettyType(type);
         if ((i + 2) <= signature.length)
             result ~= ", ";
         i++;
@@ -242,12 +172,11 @@ string grGetPrettyFunctionCall(string name, GrType[] signature, GrLocale locale 
 }
 
 /// Prettify a function.
-string grGetPrettyFunction(string name, GrType[] inSignature, GrType[] outSignature, GrLocale locale = GrLocale
-        .en_US) {
+string grGetPrettyFunction(string name, GrType[] inSignature, GrType[] outSignature) {
     string result = to!string(name) ~ "(";
     int i;
     foreach (type; inSignature) {
-        result ~= grGetPrettyType(type, locale);
+        result ~= grGetPrettyType(type);
         if ((i + 2) <= inSignature.length)
             result ~= ", ";
         i++;
@@ -256,7 +185,7 @@ string grGetPrettyFunction(string name, GrType[] inSignature, GrType[] outSignat
     if (outSignature.length)
         result ~= "(";
     foreach (type; outSignature) {
-        result ~= grGetPrettyType(type, locale);
+        result ~= grGetPrettyType(type);
         if ((i + 2) <= outSignature.length)
             result ~= ", ";
         i++;
@@ -267,6 +196,6 @@ string grGetPrettyFunction(string name, GrType[] inSignature, GrType[] outSignat
 }
 
 /// Ditto
-string grGetPrettyFunction(GrFunction func, GrLocale locale = GrLocale.en_US) {
-    return grGetPrettyFunction(func.name, func.inSignature, func.outSignature, locale);
+string grGetPrettyFunction(GrFunction func) {
+    return grGetPrettyFunction(func.name, func.inSignature, func.outSignature);
 }

@@ -10,47 +10,19 @@ import std.algorithm.comparison : clamp;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
-private {
-    string _colorSymbol, _rSymbol, _gSymbol, _bSymbol;
-}
-
-package void grLoadStdLibColor(GrLibrary library, GrLocale locale) {
-    string mixSymbol, lerpSymbol, unpackSymbol, printSymbol;
-    final switch (locale) with (GrLocale) {
-    case en_US:
-        _colorSymbol = "Color";
-        _rSymbol = "r";
-        _gSymbol = "g";
-        _bSymbol = "b";
-        mixSymbol = "mix";
-        lerpSymbol = "interpolate";
-        unpackSymbol = "unpack";
-        printSymbol = "print";
-        break;
-    case fr_FR:
-        _colorSymbol = "Couleur";
-        _rSymbol = "r";
-        _gSymbol = "v";
-        _bSymbol = "b";
-        mixSymbol = "mélange";
-        lerpSymbol = "interpole";
-        unpackSymbol = "déballe";
-        printSymbol = "affiche";
-        break;
-    }
-
-    auto colorType = library.addClass(_colorSymbol, [
-            _rSymbol, _gSymbol, _bSymbol
+package void grLoadStdLibColor(GrLibrary library) {
+    auto colorType = library.addClass("Color", [
+            "r", "g", "b"
         ], [
             grReal, grReal, grReal
         ]);
 
-    library.addPrimitive(&_makeColor, _colorSymbol, [], [colorType]);
-    library.addPrimitive(&_makeColor3, _colorSymbol, [grReal, grReal, grReal], [
+    library.addFunction(&_makeColor, "Color", [], [colorType]);
+    library.addFunction(&_makeColor3, "Color", [grReal, grReal, grReal], [
             colorType
         ]);
 
-    library.addPrimitive(&_makeColor3i, _colorSymbol, [grInt, grInt, grInt], [
+    library.addFunction(&_makeColor3i, "Color", [grInt, grInt, grInt], [
             colorType
         ]);
 
@@ -62,10 +34,10 @@ package void grLoadStdLibColor(GrLibrary library, GrLocale locale) {
             ], colorType);
     }
 
-    library.addPrimitive(&_mixColor, mixSymbol, [colorType, colorType], [
+    library.addFunction(&_mixColor, "mix", [colorType, colorType], [
             colorType
         ]);
-    library.addPrimitive(&_lerpColor, lerpSymbol, [
+    library.addFunction(&_lerpColor, "lerp", [
             colorType, colorType, grReal
         ], [
             colorType
@@ -74,51 +46,51 @@ package void grLoadStdLibColor(GrLibrary library, GrLocale locale) {
     library.addCast(&_castListToColor, grIntList, colorType);
     library.addCast(&_castColorToString, colorType, grString);
 
-    library.addPrimitive(&_unpack, unpackSymbol, [colorType], [
+    library.addFunction(&_unpack, "unpack", [colorType], [
             grReal, grReal, grReal
         ]);
 
-    library.addPrimitive(&_print, printSymbol, [colorType]);
+    library.addFunction(&_print, "print", [colorType]);
 }
 
 private void _makeColor(GrCall call) {
-    GrObject self = call.createObject(_colorSymbol);
+    GrObject self = call.createObject("Color");
     if (!self) {
         call.raise(_classError);
         return;
     }
-    self.setReal(_rSymbol, 0f);
-    self.setReal(_gSymbol, 0f);
-    self.setReal(_bSymbol, 0f);
+    self.setReal("r", 0f);
+    self.setReal("g", 0f);
+    self.setReal("b", 0f);
     call.setObject(self);
 }
 
 private void _makeColor3(GrCall call) {
-    GrObject self = call.createObject(_colorSymbol);
+    GrObject self = call.createObject("Color");
     if (!self) {
         call.raise(_classError);
         return;
     }
-    self.setReal(_rSymbol, call.getReal(0));
-    self.setReal(_gSymbol, call.getReal(1));
-    self.setReal(_bSymbol, call.getReal(2));
+    self.setReal("r", call.getReal(0));
+    self.setReal("g", call.getReal(1));
+    self.setReal("b", call.getReal(2));
     call.setObject(self);
 }
 
 private void _makeColor3i(GrCall call) {
-    GrObject self = call.createObject(_colorSymbol);
+    GrObject self = call.createObject("Color");
     if (!self) {
         call.raise(_classError);
         return;
     }
-    self.setReal(_rSymbol, clamp(call.getInt(0) / 255f, 0f, 1f));
-    self.setReal(_gSymbol, clamp(call.getInt(1) / 255f, 0f, 1f));
-    self.setReal(_bSymbol, clamp(call.getInt(2) / 255f, 0f, 1f));
+    self.setReal("r", clamp(call.getInt(0) / 255f, 0f, 1f));
+    self.setReal("g", clamp(call.getInt(1) / 255f, 0f, 1f));
+    self.setReal("b", clamp(call.getInt(2) / 255f, 0f, 1f));
     call.setObject(self);
 }
 
 private void _opBinaryColor(string op)(GrCall call) {
-    GrObject self = call.createObject(_colorSymbol);
+    GrObject self = call.createObject("Color");
     if (!self) {
         call.raise(_classError);
         return;
@@ -136,7 +108,7 @@ private void _opBinaryColor(string op)(GrCall call) {
 }
 
 private void _opBinaryScalarColor(string op)(GrCall call) {
-    GrObject self = call.createObject(_colorSymbol);
+    GrObject self = call.createObject("Color");
     if (!self) {
         call.raise(_classError);
         return;
@@ -154,7 +126,7 @@ private void _opBinaryScalarColor(string op)(GrCall call) {
 }
 
 private void _opBinaryScalarRightColor(string op)(GrCall call) {
-    GrObject self = call.createObject(_colorSymbol);
+    GrObject self = call.createObject("Color");
     if (!self) {
         call.raise(_classError);
         return;
@@ -172,7 +144,7 @@ private void _opBinaryScalarRightColor(string op)(GrCall call) {
 }
 
 private void _mixColor(GrCall call) {
-    GrObject self = call.createObject(_colorSymbol);
+    GrObject self = call.createObject("Color");
     if (!self) {
         call.raise(_classError);
         return;
@@ -183,14 +155,14 @@ private void _mixColor(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    self.setReal(_rSymbol, (c1.getReal(_rSymbol) + c2.getReal(_rSymbol)) / 2f);
-    self.setReal(_gSymbol, (c1.getReal(_gSymbol) + c2.getReal(_gSymbol)) / 2f);
-    self.setReal(_bSymbol, (c1.getReal(_bSymbol) + c2.getReal(_bSymbol)) / 2f);
+    self.setReal("r", (c1.getReal("r") + c2.getReal("r")) / 2f);
+    self.setReal("g", (c1.getReal("g") + c2.getReal("g")) / 2f);
+    self.setReal("b", (c1.getReal("b") + c2.getReal("b")) / 2f);
     call.setObject(self);
 }
 
 private void _lerpColor(GrCall call) {
-    GrObject self = call.createObject(_colorSymbol);
+    GrObject self = call.createObject("Color");
     if (!self) {
         call.raise(_classError);
         return;
@@ -202,23 +174,23 @@ private void _lerpColor(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    self.setReal(_rSymbol, (t * c2.getReal(_rSymbol)) + ((1f - t) * c1.getReal(_rSymbol)));
-    self.setReal(_gSymbol, (t * c2.getReal(_gSymbol)) + ((1f - t) * c1.getReal(_gSymbol)));
-    self.setReal(_bSymbol, (t * c2.getReal(_bSymbol)) + ((1f - t) * c1.getReal(_bSymbol)));
+    self.setReal("r", (t * c2.getReal("r")) + ((1f - t) * c1.getReal("r")));
+    self.setReal("g", (t * c2.getReal("g")) + ((1f - t) * c1.getReal("g")));
+    self.setReal("b", (t * c2.getReal("b")) + ((1f - t) * c1.getReal("b")));
     call.setObject(self);
 }
 
 private void _castListToColor(GrCall call) {
     GrIntList list = call.getIntList(0);
     if (list.data.length == 3) {
-        GrObject self = call.createObject(_colorSymbol);
+        GrObject self = call.createObject("Color");
         if (!self) {
             call.raise(_classError);
             return;
         }
-        self.setReal(_rSymbol, list.data[0]);
-        self.setReal(_gSymbol, list.data[1]);
-        self.setReal(_bSymbol, list.data[2]);
+        self.setReal("r", list.data[0]);
+        self.setReal("g", list.data[1]);
+        self.setReal("b", list.data[2]);
         call.setObject(self);
         return;
     }
@@ -232,9 +204,9 @@ private void _castColorToString(GrCall call) {
         return;
     }
     call.setString("Color(" ~ to!GrString(
-            self.getReal(_rSymbol)) ~ ", " ~ to!GrString(
+            self.getReal("r")) ~ ", " ~ to!GrString(
             self.getReal(
-            _gSymbol)) ~ ", " ~ to!GrString(self.getReal(_bSymbol)) ~ ")");
+            "g")) ~ ", " ~ to!GrString(self.getReal("b")) ~ ")");
 }
 
 private void _unpack(GrCall call) {
@@ -243,9 +215,9 @@ private void _unpack(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    call.setReal(self.getReal(_rSymbol));
-    call.setReal(self.getReal(_gSymbol));
-    call.setReal(self.getReal(_bSymbol));
+    call.setReal(self.getReal("r"));
+    call.setReal(self.getReal("g"));
+    call.setReal(self.getReal("b"));
 }
 
 private void _print(GrCall call) {
@@ -254,6 +226,6 @@ private void _print(GrCall call) {
         _stdOut("null(Color)");
         return;
     }
-    _stdOut("Color(" ~ to!GrString(self.getReal(_rSymbol)) ~ ", " ~ to!GrString(
-            self.getReal(_gSymbol)) ~ ", " ~ to!GrString(self.getReal(_bSymbol)) ~ ")");
+    _stdOut("Color(" ~ to!GrString(self.getReal("r")) ~ ", " ~ to!GrString(
+            self.getReal("g")) ~ ", " ~ to!GrString(self.getReal("b")) ~ ")");
 }

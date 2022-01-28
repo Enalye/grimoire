@@ -869,8 +869,7 @@ package final class GrLexer {
         lex._textLength = cast(uint) buffer.length;
 
         switch (buffer) {
-        case "inclus":
-        case "include":
+        case "import":
             scanUse();
             return;
         case "public":
@@ -882,103 +881,81 @@ package final class GrLexer {
         case "action":
             lex.type = GrLexeme.Type.action;
             break;
-        case "classe":
         case "class":
             lex.type = GrLexeme.Type.class_;
             break;
-        case "énumération":
-        case "enumeration":
+        case "enum":
             lex.type = GrLexeme.Type.enumeration;
             break;
         case "instance":
             lex.type = GrLexeme.Type.instance;
             break;
-        case "si":
         case "if":
             lex.type = GrLexeme.Type.if_;
             break;
-        case "sauf":
         case "unless":
             lex.type = GrLexeme.Type.unless;
             break;
-        case "sinon":
         case "else":
             lex.type = GrLexeme.Type.else_;
             break;
-        case "alternative":
+        case "switch":
             lex.type = GrLexeme.Type.switch_;
             break;
-        case "sélectionne":
         case "select":
             lex.type = GrLexeme.Type.select;
             break;
-        case "cas":
         case "case":
             lex.type = GrLexeme.Type.case_;
             break;
-        case "tant":
         case "while":
             lex.type = GrLexeme.Type.while_;
             break;
-        case "fais":
         case "do":
             lex.type = GrLexeme.Type.do_;
             break;
-        case "jusque":
         case "until":
             lex.type = GrLexeme.Type.until;
             break;
-        case "pour":
         case "for":
             lex.type = GrLexeme.Type.for_;
             break;
-        case "boucle":
         case "loop":
             lex.type = GrLexeme.Type.loop;
             break;
-        case "retourne":
         case "return":
             lex.type = GrLexeme.Type.return_;
             break;
-        case "soi":
         case "self":
             lex.type = GrLexeme.Type.self;
             break;
-        case "meurt":
         case "die":
             lex.type = GrLexeme.Type.die;
             break;
-        case "quitte":
-        case "quit":
+        case "exit":
             lex.type = GrLexeme.Type.quit;
             break;
-        case "suspends":
-        case "suspend":
+        case "yield":
             lex.type = GrLexeme.Type.suspend;
             break;
-        case "casse":
         case "break":
             lex.type = GrLexeme.Type.break_;
             break;
         case "continue":
             lex.type = GrLexeme.Type.continue_;
             break;
-        case "en":
         case "as":
             lex.type = GrLexeme.Type.as;
             break;
-        case "isole":
-        case "isolate":
+        case "try":
             lex.type = GrLexeme.Type.isolate;
             break;
-        case "capture":
+        case "catch":
             lex.type = GrLexeme.Type.capture;
             break;
-        case "erreur":
-        case "error":
+        case "throw":
             lex.type = GrLexeme.Type.error;
             break;
-        case "décale":
         case "defer":
             lex.type = GrLexeme.Type.defer;
             break;
@@ -987,114 +964,94 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.taskType;
             lex.isType = true;
             break;
-        case "fonction":
         case "function":
             lex.type = GrLexeme.Type.functionType;
             lex.isType = true;
             break;
-        case "entier":
-        case "integer":
+        case "int":
             lex.type = GrLexeme.Type.integerType;
             lex.isType = true;
             break;
-        case "réel":
         case "real":
             lex.type = GrLexeme.Type.realType;
             lex.isType = true;
             break;
-        case "booléen":
-        case "boolean":
+        case "bool":
             lex.type = GrLexeme.Type.booleanType;
             lex.isType = true;
             break;
-        case "chaîne":
         case "string":
             lex.type = GrLexeme.Type.stringType;
             lex.isType = true;
             break;
-        case "liste":
         case "list":
             lex.type = GrLexeme.Type.listType;
             lex.isType = true;
             break;
-        case "canal":
         case "channel":
             lex.type = GrLexeme.Type.chanType;
             lex.isType = true;
             break;
-        case "crée":
         case "new":
             lex.type = GrLexeme.Type.new_;
             lex.isType = false;
             break;
-        case "soit":
         case "let":
             lex.type = GrLexeme.Type.autoType;
             lex.isType = false;
             break;
-        case "vrai":
         case "true":
             lex.type = GrLexeme.Type.boolean;
             lex.isKeyword = false;
             lex.isLiteral = true;
             lex.bvalue = true;
             break;
-        case "faux":
         case "false":
             lex.type = GrLexeme.Type.boolean;
             lex.isKeyword = false;
             lex.isLiteral = true;
             lex.bvalue = false;
             break;
-        case "nul":
         case "null":
             lex.type = GrLexeme.Type.null_;
             lex.isKeyword = false;
             lex.isLiteral = true;
             break;
-        case "à":
         case "to":
             lex.type = GrLexeme.Type.interval;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
-        case "et":
         case "and":
             lex.type = GrLexeme.Type.and;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
-        case "ou":
         case "or":
             lex.type = GrLexeme.Type.or;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
-        case "pas":
         case "not":
             lex.type = GrLexeme.Type.not;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
-        case "et_bin":
         case "bit_and":
             lex.type = GrLexeme.Type.bitwiseAnd;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
-        case "ou_bin":
         case "bit_or":
             lex.type = GrLexeme.Type.bitwiseOr;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
-        case "xou_bin":
         case "bit_xor":
             lex.type = GrLexeme.Type.bitwiseXor;
             lex.isKeyword = false;
             lex.isOperator = true;
             break;
-        case "non_bin":
         case "bit_not":
             lex.type = GrLexeme.Type.bitwiseNot;
             lex.isKeyword = false;
@@ -1245,7 +1202,7 @@ package final class GrLexer {
                 Error.unexpectedEndOfFile: "fin de fichier inattendue",
                 Error.expectedQuotationMarkAtBeginningOfStr: "`\"` attendu au début de la chaîne",
                 Error.missingQuotationMarkAtEndOfStr: "`\"` manquant en fin de chaîne",
-                Error.invalidOp: "operateur invalide",
+                Error.invalidOp: "opérateur invalide",
                 Error.missingRightCurlyBraceAfterUsedFilesList: "`}` manquant après la liste des fichiers utilisés"
             ]
         ];
@@ -1253,43 +1210,24 @@ package final class GrLexer {
     }
 }
 
+private immutable string[] _prettyLexemeTypeTable = [
+    "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&",
+    "as", "try", "catch", "error", "defer", "=", "&=", "|=", "^=",
+    "&&=", "||=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+", "-",
+    "&", "|", "^", "&&", "||", "+", "-", "*", "/", "~", "%", "**",
+    "==", "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->",
+    "=>", "~", "!", "++", "--", "identifier", "const_int",
+    "const_float", "const_bool", "const_string", "null", "public",
+    "type", "action", "class", "enum", "instance", "new", "copy",
+    "send", "receive", "int", "real", "bool", "string", "list",
+    "channel", "function", "task", "let", "if", "unless", "else",
+    "switch", "select", "case", "while", "do", "until", "for",
+    "loop", "return", "self", "die", "exit", "yield", "break", "continue"
+];
+
 /// Returns a displayable version of a token type.
-string grGetPrettyLexemeType(GrLexeme.Type operator, GrLocale locale = GrLocale.en_US) {
-    immutable string[][GrLocale.max + 1] lexemeTypeStrTable = [
-        [
-            "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&",
-            "as", "isolate", "capture", "error", "defer", "=", "&=", "|=", "^=",
-            "&&=", "||=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+", "-",
-            "&", "|", "^", "&&", "||", "+", "-", "*", "/", "~", "%", "**",
-            "==", "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->",
-            "=>", "~", "!", "++", "--", "identifier", "const_integer",
-            "const_float", "const_bool", "const_string", "null", "public",
-            "type", "action", "class", "enumeration", "instance", "new", "copy",
-            "send",
-            "receive", "integer", "real", "boolean", "string", "list", "channel",
-            "function", "task", "let", "if", "unless", "else", "alternative",
-            "select",
-            "case", "while", "do", "until", "for", "loop", "return", "self",
-            "die", "quit", "suspend", "break", "continue"
-        ],
-        [
-            "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&",
-            "en", "isole", "capture", "erreur", "reporte", "=", "&=", "|=",
-            "^=", "&&=", "||=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+",
-            "-", "&", "|", "^", "&&", "||", "+", "-", "*", "/", "~", "%",
-            "**", "==", "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>",
-            "->", "=>", "~", "!", "++", "--", "identificateur", "entier_const",
-            "réel_const", "bool_const", "chaîne_const", "nul", "public",
-            "type", "action", "classe", "énumération", "instance", "crée",
-            "copie",
-            "envoie", "reçois", "entier", "réel", "booléen", "chaîne", "liste",
-            "canal", "fonction", "tâche", "soit", "si", "sauf", "sinon",
-            "alternative",
-            "sélectionne", "cas", "tant", "fais", "jusque", "pour", "boucle",
-            "retourne", "soi", "meurs", "quitte", "suspends", "casse", "continue"
-        ]
-    ];
-    return lexemeTypeStrTable[locale][operator];
+string grGetPrettyLexemeType(GrLexeme.Type operator) {
+    return _prettyLexemeTypeTable[operator];
 }
 
 /**

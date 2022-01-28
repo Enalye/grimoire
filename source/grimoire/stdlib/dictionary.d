@@ -35,7 +35,6 @@ private {
     alias RealDictionary = Dictionary!(GrReal);
     alias StringDictionary = Dictionary!(GrString);
     alias ObjectDictionary = Dictionary!(GrPtr);
-    string _pairSymbol, _dicSymbol, _dicIterSymbol, _valueSymbol, _keySymbol;
 }
 
 /// Iterator
@@ -44,61 +43,16 @@ private final class DictionaryIter(T) {
     size_t index;
 }
 
-package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale locale) {
-    string copySymbol, sizeSymbol, emptySymbol, clearSymbol, setSymbol, getSymbol, hasSymbol, removeSymbol;
-    string byKeysSymbol, byValuesSymbol, eachSymbol, nextSymbol, printSymbol;
-    final switch (locale) with (GrLocale) {
-    case en_US:
-        _pairSymbol = "Pair";
-        _dicSymbol = "Dictionary";
-        _dicIterSymbol = "IDictionary";
-        _valueSymbol = "value";
-        _keySymbol = "key";
-        copySymbol = "copy";
-        sizeSymbol = "size";
-        emptySymbol = "empty?";
-        clearSymbol = "clear";
-        setSymbol = "set";
-        getSymbol = "get";
-        hasSymbol = "has?";
-        removeSymbol = "remove";
-        byKeysSymbol = "by_keys";
-        byValuesSymbol = "by_values";
-        eachSymbol = "each";
-        nextSymbol = "next";
-        printSymbol = "print";
-        break;
-    case fr_FR:
-        _pairSymbol = "Paire";
-        _dicSymbol = "Dictionnaire";
-        _dicIterSymbol = "IDictionnaire";
-        _valueSymbol = "valeur";
-        _keySymbol = "clé";
-        copySymbol = "copie";
-        sizeSymbol = "taille";
-        emptySymbol = "vide?";
-        clearSymbol = "vide";
-        setSymbol = "mets";
-        getSymbol = "prends";
-        hasSymbol = "a?";
-        removeSymbol = "retire";
-        byKeysSymbol = "par_clés";
-        byValuesSymbol = "par_valeurs";
-        eachSymbol = "chaque";
-        nextSymbol = "suivant";
-        printSymbol = "affiche";
-        break;
-    }
-
-    library.addForeign(_dicSymbol, ["T"]);
-    library.addForeign(_dicIterSymbol, ["T"]);
+package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
+    library.addForeign("Dictionary", ["T"]);
+    library.addForeign("DictionaryIterator", ["T"]);
 
     static foreach (t; ["Int", "Real", "String", "Object"]) {
         mixin("GrType any" ~ t ~ "Dictionary = grAny(\"M\", (type, data) {
                 if (type.base != GrType.Base.foreign)
                     return false;
                 auto subType = grUnmangleComposite(type.mangledType);
-                if(subType.name != _dicSymbol)
+                if(subType.name != \"Dictionary\")
                     return false;
                 if(subType.signature.length != 1)
                     return false;
@@ -114,96 +68,96 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale
                 if (type.base != GrType.Base.list_)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
-                data.set(\"M\", grGetForeignType(_dicSymbol, [subType]));
+                data.set(\"M\", grGetForeignType(\"Dictionary\", [subType]));
                 return grIsKindOf"
                 ~ t ~ "(subType.base);
             });
 
-            library.addPrimitive(&_make_!\""
-                ~ t ~ "\", _dicSymbol, [grStringList, any" ~ t
+            library.addFunction(&_make_!\""
+                ~ t ~ "\", \"Dictionary\", [grStringList, any" ~ t
                 ~ "List], [grAny(\"M\")]);
 
-            library.addPrimitive(&_makeByPairs_!\""
-                ~ t ~ "\", _dicSymbol, [grAny(\"T\", (type, data) {
+            library.addFunction(&_makeByPairs_!\""
+                ~ t ~ "\", \"Dictionary\", [grAny(\"T\", (type, data) {
                 if (type.base != GrType.Base.list_)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
                 if(subType.base != GrType.Base.class_)
                     return false;
                 auto pairType = grUnmangleComposite(subType.mangledType);
-                if(pairType.name != _pairSymbol || pairType.signature.length != 2 || pairType.signature[0].base != GrType.Base.string_)
+                if(pairType.name != \"Pair\" || pairType.signature.length != 2 || pairType.signature[0].base != GrType.Base.string_)
                     return false;
-                data.set(\"M\", grGetForeignType(_dicSymbol, [pairType.signature[1]]));
+                data.set(\"M\", grGetForeignType(\"Dictionary\", [pairType.signature[1]]));
                 return true;
                 })], [grAny(\"M\")]);
 
-            library.addPrimitive(&_copy_!\""
-                ~ t ~ "\", copySymbol, [any" ~ t ~ "Dictionary], [grAny(\"M\")]);
+            library.addFunction(&_copy_!\""
+                ~ t ~ "\", \"copy\", [any" ~ t ~ "Dictionary], [grAny(\"M\")]);
 
-            library.addPrimitive(&_size_!\""
-                ~ t ~ "\", sizeSymbol, [any"
+            library.addFunction(&_size_!\""
+                ~ t ~ "\", \"size\", [any"
                 ~ t ~ "Dictionary], [grInt]);
 
-            library.addPrimitive(&_empty_!\""
-                ~ t ~ "\", emptySymbol, [
+            library.addFunction(&_empty_!\""
+                ~ t ~ "\", \"empty?\", [
                 any"
                 ~ t ~ "Dictionary
             ], [grBool]);
 
-            library.addPrimitive(&_clear_!\""
-                ~ t ~ "\", clearSymbol, [
+            library.addFunction(&_clear_!\""
+                ~ t ~ "\", \"clear\", [
                 any"
                 ~ t ~ "Dictionary
             ], [grAny(\"M\")]);
 
-            library.addPrimitive(&_set_!\""
+            library.addFunction(&_set_!\""
                 ~ t
-                ~ "\", setSymbol, [any" ~ t ~ "Dictionary, grString, grAny(\"T\")]);
+                ~ "\", \"set\", [any" ~ t ~ "Dictionary, grString, grAny(\"T\")]);
 
-            library.addPrimitive(&_get_!\""
+            library.addFunction(&_get_!\""
                 ~ t
-                ~ "\", getSymbol, [any" ~ t ~ "Dictionary, grString], [grBool, grAny(\"T\")]);
+                ~ "\", \"get\", [any" ~ t ~ "Dictionary, grString], [grBool, grAny(\"T\")]);
 
-            library.addPrimitive(&_has_!\""
-                ~ t ~ "\", hasSymbol, [any" ~ t ~ "Dictionary, grString], [grBool]);
+            library.addFunction(&_has_!\""
+                ~ t ~ "\", \"has?\", [any" ~ t ~ "Dictionary, grString], [grBool]);
 
-            library.addPrimitive(&_remove_!\""
+            library.addFunction(&_remove_!\""
                 ~ t
-                ~ "\", removeSymbol, [any" ~ t ~ "Dictionary, grString]);
+                ~ "\", \"remove\", [any" ~ t ~ "Dictionary, grString]);
 
-            library.addPrimitive(&_byKeys_!\""
-                ~ t ~ "\", byKeysSymbol, [any" ~ t
+            library.addFunction(&_byKeys_!\""
+                ~ t ~ "\", \"byKeys\", [any" ~ t
                 ~ "Dictionary], [grStringList]);
 
-            library.addPrimitive(&_byValues_!\""
-                ~ t ~ "\", byValuesSymbol, [any" ~ t ~ "Dictionary], [any"
+            library.addFunction(&_byValues_!\""
+                ~ t ~ "\", \"byValues\", [any" ~ t ~ "Dictionary], [any"
                 ~ t ~ "List]);
 
-            library.addPrimitive(&_each_!\""
-                ~ t ~ "\", eachSymbol, [
+            library.addFunction(&_each_!\""
+                ~ t ~ "\", \"each\", [
                     grAny(\"A\", (type, data) {
                 if (type.base != GrType.Base.foreign)
                     return false;
                 auto subType = grUnmangleComposite(type.mangledType);
-                if(subType.name != _dicSymbol)
+                if(subType.name != \"Dictionary\")
                     return false;
                 if(subType.signature.length != 1)
                     return false;
-                data.set(\"R\", grGetForeignType(_dicIterSymbol, subType.signature));
+                data.set(\"R\", grGetForeignType(\"DictionaryIterator\", subType.signature));
                 return grIsKindOf"
                 ~ t ~ "(subType.signature[0].base);
             })
                 ], [grAny(\"R\")]);
 
-            library.addPrimitive(&_next_!\""
-                ~ t ~ "\", nextSymbol, [
+            library.addFunction(&_next_!\""
+                ~ t ~ "\", \"next\", [
                     grAny(\"R\", (type, data) {
                 if (type.base != GrType.Base.foreign)
                     return false;
                 auto result = grUnmangleComposite(type.mangledType);
-                if(result.signature.length != 1 || result.name != _dicIterSymbol)
+                if(result.signature.length != 1 || result.name != \"DictionaryIterator\")
                     return false;
-                data.set(\"T\", grGetClassType(_pairSymbol, [grString, result.signature[0]]));
+                data.set(\"T\", grGetClassType(\"Pair\", [grString, result.signature[0]]));
                 return grIsKindOf"
                 ~ t ~ "(result.signature[0].base);
                     })
@@ -211,17 +165,17 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library, GrLocale
             ");
     }
 
-    GrType boolDictionary = grGetForeignType(_dicSymbol, [grBool]);
-    library.addPrimitive(&_print_!"bool", printSymbol, [boolDictionary]);
+    GrType boolDictionary = grGetForeignType("Dictionary", [grBool]);
+    library.addFunction(&_print_!"bool", "print", [boolDictionary]);
 
-    GrType intDictionary = grGetForeignType(_dicSymbol, [grInt]);
-    library.addPrimitive(&_print_!"int", printSymbol, [intDictionary]);
+    GrType intDictionary = grGetForeignType("Dictionary", [grInt]);
+    library.addFunction(&_print_!"int", "print", [intDictionary]);
 
-    GrType realDictionary = grGetForeignType(_dicSymbol, [grReal]);
-    library.addPrimitive(&_print_!"real", printSymbol, [realDictionary]);
+    GrType realDictionary = grGetForeignType("Dictionary", [grReal]);
+    library.addFunction(&_print_!"real", "print", [realDictionary]);
 
-    GrType stringDictionary = grGetForeignType(_dicSymbol, [grString]);
-    library.addPrimitive(&_print_!"string", printSymbol, [stringDictionary]);
+    GrType stringDictionary = grGetForeignType("Dictionary", [grString]);
+    library.addFunction(&_print_!"string", "print", [stringDictionary]);
 }
 
 private void _make_(string t)(GrCall call) {
@@ -236,12 +190,12 @@ private void _makeByPairs_(string t)(GrCall call) {
     for (size_t i; i < pairs.data.length; ++i) {
         GrObject pair = cast(GrObject) pairs.data[i];
         static if (t == "Object") {
-            auto value = pair.getPtr(_valueSymbol);
+            auto value = pair.getPtr("value");
         }
         else {
-            mixin("auto value = pair.get" ~ t ~ "(_valueSymbol);");
+            mixin("auto value = pair.get" ~ t ~ "(\"value\");");
         }
-        dictionary.data[pair.getString(_keySymbol)] = value;
+        dictionary.data[pair.getString("key")] = value;
     }
     call.setForeign(dictionary);
 }
@@ -411,27 +365,27 @@ private void _next_(string t)(GrCall call) {
     }
     call.setBool(true);
     static if (t == "Int") {
-        GrObject obj = new GrObject([_keySymbol, _valueSymbol]);
-        obj.setString(_keySymbol, iter.pairs[iter.index][0]);
-        obj.setInt(_valueSymbol, iter.pairs[iter.index][1]);
+        GrObject obj = new GrObject(["key", "value"]);
+        obj.setString("key", iter.pairs[iter.index][0]);
+        obj.setInt("value", iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     else static if (t == "Real") {
-        GrObject obj = new GrObject([_keySymbol, _valueSymbol]);
-        obj.setString(_keySymbol, iter.pairs[iter.index][0]);
-        obj.setReal(_valueSymbol, iter.pairs[iter.index][1]);
+        GrObject obj = new GrObject(["key", "value"]);
+        obj.setString("key", iter.pairs[iter.index][0]);
+        obj.setReal("value", iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     else static if (t == "String") {
-        GrObject obj = new GrObject([_keySymbol, _valueSymbol]);
-        obj.setString(_keySymbol, iter.pairs[iter.index][0]);
-        obj.setString(_valueSymbol, iter.pairs[iter.index][1]);
+        GrObject obj = new GrObject(["key", "value"]);
+        obj.setString("key", iter.pairs[iter.index][0]);
+        obj.setString("value", iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     else static if (t == "Object") {
-        GrObject obj = new GrObject([_keySymbol, _valueSymbol]);
-        obj.setString(_keySymbol, iter.pairs[iter.index][0]);
-        obj.setPtr(_valueSymbol, iter.pairs[iter.index][1]);
+        GrObject obj = new GrObject(["key", "value"]);
+        obj.setString("key", iter.pairs[iter.index][0]);
+        obj.setPtr("value", iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     iter.index++;

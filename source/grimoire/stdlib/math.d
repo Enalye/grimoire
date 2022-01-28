@@ -9,89 +9,55 @@ import std.random, std.math;
 import std.algorithm.comparison : clamp;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library, GrLocale locale) {
-    string clampSymbol, randSymbol, sqrtSymbol, floorSymbol, ceilSymbol, roundSymbol, truncateSymbol,
-    positiveSymbol, negativeSymbol, zeroSymbol, nanSymbol, evenSymbol, oddSymbol;
-    final switch (locale) with (GrLocale) {
-    case en_US:
-        clampSymbol = "clamp";
-        randSymbol = "random";
-        sqrtSymbol = "root";
-        ceilSymbol = "ceil";
-        floorSymbol = "floor";
-        roundSymbol = "round";
-        truncateSymbol = "truncate";
-        positiveSymbol = "positive?";
-        negativeSymbol = "negative?";
-        zeroSymbol = "zero?";
-        nanSymbol = "invalid?";
-        evenSymbol = "even?";
-        oddSymbol = "odd?";
-        break;
-    case fr_FR:
-        clampSymbol = "restreins";
-        randSymbol = "hasard";
-        sqrtSymbol = "racine";
-        ceilSymbol = "plafond";
-        floorSymbol = "plancher";
-        roundSymbol = "arrondi";
-        truncateSymbol = "tronque";
-        positiveSymbol = "positif?";
-        negativeSymbol = "négatif?";
-        zeroSymbol = "zéro?";
-        nanSymbol = "invalide?";
-        evenSymbol = "pair?";
-        oddSymbol = "impair?";
-        break;
-    }
+package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
     library.addVariable("pi", grReal, PI, true);
 
-    library.addPrimitive(&_min_f, "min", [grReal, grReal], [grReal]);
-    library.addPrimitive(&_min_i, "min", [grInt, grInt], [grInt]);
-    library.addPrimitive(&_max_f, "max", [grReal, grReal], [grReal]);
-    library.addPrimitive(&_max_i, "max", [grInt, grInt], [grInt]);
+    library.addFunction(&_min_f, "min", [grReal, grReal], [grReal]);
+    library.addFunction(&_min_i, "min", [grInt, grInt], [grInt]);
+    library.addFunction(&_max_f, "max", [grReal, grReal], [grReal]);
+    library.addFunction(&_max_i, "max", [grInt, grInt], [grInt]);
 
-    library.addPrimitive(&_clamp, clampSymbol, [grReal, grReal, grReal], [
+    library.addFunction(&_clamp, "clamp", [grReal, grReal, grReal], [
             grReal
         ]);
 
-    library.addPrimitive(&_random01, randSymbol, [], [grReal]);
-    library.addPrimitive(&_random_f, randSymbol, [grReal, grReal], [grReal]);
-    library.addPrimitive(&_random_i, randSymbol, [grInt, grInt], [grInt]);
+    library.addFunction(&_random01, "rand", [], [grReal]);
+    library.addFunction(&_random_f, "rand", [grReal, grReal], [grReal]);
+    library.addFunction(&_random_i, "rand", [grInt, grInt], [grInt]);
 
-    library.addPrimitive(&_cos, "cos", [grReal], [grReal]);
-    library.addPrimitive(&_sin, "sin", [grReal], [grReal]);
-    library.addPrimitive(&_tan, "tan", [grReal], [grReal]);
-    library.addPrimitive(&_acos, "acos", [grReal], [grReal]);
-    library.addPrimitive(&_asin, "asin", [grReal], [grReal]);
-    library.addPrimitive(&_atan, "atan", [grReal], [grReal]);
-    library.addPrimitive(&_atan2, "atan2", [grReal, grReal], [grReal]);
+    library.addFunction(&_cos, "cos", [grReal], [grReal]);
+    library.addFunction(&_sin, "sin", [grReal], [grReal]);
+    library.addFunction(&_tan, "tan", [grReal], [grReal]);
+    library.addFunction(&_acos, "acos", [grReal], [grReal]);
+    library.addFunction(&_asin, "asin", [grReal], [grReal]);
+    library.addFunction(&_atan, "atan", [grReal], [grReal]);
+    library.addFunction(&_atan2, "atan2", [grReal, grReal], [grReal]);
 
-    library.addPrimitive(&_exp, "exp", [grReal], [grReal]);
-    library.addPrimitive(&_sqrt, sqrtSymbol, [grReal], [grReal]);
+    library.addFunction(&_exp, "exp", [grReal], [grReal]);
+    library.addFunction(&_sqrt, "sqrt", [grReal], [grReal]);
     library.addOperator(&_pow_i, GrLibrary.Operator.power, [grInt, grInt], grInt);
     library.addOperator(&_pow_f, GrLibrary.Operator.power, [grReal, grReal], grReal);
 
-    library.addPrimitive(&_lerp, "lerp", [grReal, grReal, grReal], [grReal]);
-    library.addPrimitive(&_rlerp, "rlerp", [grReal, grReal, grReal], [
+    library.addFunction(&_lerp, "lerp", [grReal, grReal, grReal], [grReal]);
+    library.addFunction(&_rlerp, "rlerp", [grReal, grReal, grReal], [
             grReal
         ]);
 
-    library.addPrimitive(&_abs_i, "abs", [grInt], [grInt]);
-    library.addPrimitive(&_abs_f, "abs", [grReal], [grReal]);
-    library.addPrimitive(&_floor, floorSymbol, [grReal], [grReal]);
-    library.addPrimitive(&_ceil, ceilSymbol, [grReal], [grReal]);
-    library.addPrimitive(&_round, roundSymbol, [grReal], [grReal]);
-    library.addPrimitive(&_truncate, truncateSymbol, [grReal], [grReal]);
-    library.addPrimitive(&_positive_i, positiveSymbol, [grInt], [grBool]);
-    library.addPrimitive(&_positive_f, positiveSymbol, [grReal], [grBool]);
-    library.addPrimitive(&_negative_i, negativeSymbol, [grInt], [grBool]);
-    library.addPrimitive(&_negative_f, negativeSymbol, [grReal], [grBool]);
-    library.addPrimitive(&_zero_i, zeroSymbol, [grInt], [grBool]);
-    library.addPrimitive(&_zero_f, zeroSymbol, [grReal], [grBool]);
-    library.addPrimitive(&_nan, nanSymbol, [grReal], [grBool]);
-    library.addPrimitive(&_even, evenSymbol, [grInt], [grBool]);
-    library.addPrimitive(&_odd, oddSymbol, [grInt], [grBool]);
+    library.addFunction(&_abs_i, "abs", [grInt], [grInt]);
+    library.addFunction(&_abs_f, "abs", [grReal], [grReal]);
+    library.addFunction(&_floor, "floor", [grReal], [grReal]);
+    library.addFunction(&_ceil, "ceil", [grReal], [grReal]);
+    library.addFunction(&_round, "round", [grReal], [grReal]);
+    library.addFunction(&_truncate, "truncate", [grReal], [grReal]);
+    library.addFunction(&_positive_i, "positive?", [grInt], [grBool]);
+    library.addFunction(&_positive_f, "positive?", [grReal], [grBool]);
+    library.addFunction(&_negative_i, "negative?", [grInt], [grBool]);
+    library.addFunction(&_negative_f, "negative?", [grReal], [grBool]);
+    library.addFunction(&_zero_i, "zero?", [grInt], [grBool]);
+    library.addFunction(&_zero_f, "zero?", [grReal], [grBool]);
+    library.addFunction(&_nan, "invalid?", [grReal], [grBool]);
+    library.addFunction(&_even, "even?", [grInt], [grBool]);
+    library.addFunction(&_odd, "odd?", [grInt], [grBool]);
 }
 
 private void _min_f(GrCall call) {

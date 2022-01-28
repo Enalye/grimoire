@@ -185,7 +185,7 @@ class GrLibrary {
     }
 
     /// Define a new primitive.
-    GrPrimitive addPrimitive(GrCallback callback, string name,
+    GrPrimitive addFunction(GrCallback callback, string name,
             GrType[] inSignature = [], GrType[] outSignature = []) {
         bool isAbstract;
         foreach (GrType type; inSignature) {
@@ -359,7 +359,7 @@ class GrLibrary {
             throw new Exception(
                     "The operator `" ~ name ~ "` cannot take more than 2 parameters: " ~ grGetPrettyFunctionCall("",
                     inSignature));
-        return addPrimitive(callback, "@op_" ~ name, inSignature, [outType]);
+        return addFunction(callback, "@op_" ~ name, inSignature, [outType]);
     }
 
     /**
@@ -367,7 +367,7 @@ class GrLibrary {
     It have to have only one parameter and return the casted value.
     */
     GrPrimitive addCast(GrCallback callback, GrType srcType, GrType dstType, bool isExplicit = false) {
-        auto primitive = addPrimitive(callback, "@conv", [srcType, dstType], [
+        auto primitive = addFunction(callback, "@conv", [srcType, dstType], [
                 dstType
                 ]);
         primitive.isExplicit = isExplicit;

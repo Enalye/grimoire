@@ -9,53 +9,35 @@ import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
-private {
-    string _trueText, _falseText;
-}
-
-package(grimoire.stdlib) void grLoadStdLibLog(GrLibrary library, GrLocale locale) {
-    string printSymbol;
-    final switch (locale) with (GrLocale) {
-    case en_US:
-        _trueText = "true";
-        _falseText = "false";
-        printSymbol = "print";
-        break;
-    case fr_FR:
-        _trueText = "vrai";
-        _falseText = "faux";
-        printSymbol = "affiche";
-        break;
-    }
-
+package(grimoire.stdlib) void grLoadStdLibLog(GrLibrary library) {
     //print
-    library.addPrimitive(&_print_i, printSymbol, [grInt]);
-    library.addPrimitive(&_print_b, printSymbol, [grBool]);
-    library.addPrimitive(&_print_f, printSymbol, [grReal]);
-    library.addPrimitive(&_print_s, printSymbol, [grString]);
-    library.addPrimitive(&_print_ni, printSymbol, [grIntList]);
-    library.addPrimitive(&_print_nb, printSymbol, [grBoolList]);
-    library.addPrimitive(&_print_nf, printSymbol, [grRealList]);
-    library.addPrimitive(&_print_ns, printSymbol, [grStringList]);
-    library.addPrimitive(&_print_enum, printSymbol, [
+    library.addFunction(&_print_i, "print", [grInt]);
+    library.addFunction(&_print_b, "print", [grBool]);
+    library.addFunction(&_print_f, "print", [grReal]);
+    library.addFunction(&_print_s, "print", [grString]);
+    library.addFunction(&_print_ni, "print", [grIntList]);
+    library.addFunction(&_print_nb, "print", [grBoolList]);
+    library.addFunction(&_print_nf, "print", [grRealList]);
+    library.addFunction(&_print_ns, "print", [grStringList]);
+    library.addFunction(&_print_enum, "print", [
             grAny("T", (type, data) { return type.base == GrType.Base.enumeration; })
         ]
     );
-    library.addPrimitive(&_print_chan, printSymbol, [
+    library.addFunction(&_print_chan, "print", [
             grAny("T", (type, data) { return type.base == GrType.Base.channel; })
         ]
     );
-    library.addPrimitive(&_print_func, printSymbol, [
+    library.addFunction(&_print_func, "print", [
             grAny("T", (type, data) {
                 return (type.base == GrType.Base.function_) || (type.base == GrType.Base.task);
             })
         ]
     );
-    library.addPrimitive(&_print_o, printSymbol, [
+    library.addFunction(&_print_o, "print", [
             grAny("T", (type, data) { return type.base == GrType.Base.class_; })
         ]
     );
-    library.addPrimitive(&_print_u, printSymbol, [
+    library.addFunction(&_print_u, "print", [
             grAny("T", (type, data) { return type.base == GrType.Base.foreign; })
         ]
     );
@@ -67,7 +49,7 @@ private void _print_s(GrCall call) {
 }
 
 private void _print_b(GrCall call) {
-    _stdOut(call.getBool(0) ? _trueText : _falseText);
+    _stdOut(call.getBool(0) ? "true" : "false");
 }
 
 private void _print_i(GrCall call) {

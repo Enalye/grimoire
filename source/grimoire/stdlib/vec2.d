@@ -13,107 +13,26 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 private {
-    string _vector2Symbol;
     /// Ratio to multiply with to get a value in radians from a value in degrees.
     enum double _degToRad = std.math.PI / 180.0;
     /// Ratio to multiply with to get a value in degrees from a value in radians.
     enum double _radToDeg = 180.0 / std.math.PI;
 }
 
-package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
-    string printSymbol, vec2ZeroSymbol, vec2HalfSymbol, vec2OneSymbol, vec2UpSymbol, vec2DownSymbol, vec2LeftSymbol;
-    string vec2RightSymbol, vec2AngledSymbol, absSymbol, ceilSymbol, floorSymbol, roundSymbol, unpackSymbol, zeroSymbol;
-    string sumSymbol, signSymbol, lerpSymbol, distanceSymbol, distanceSquaredSymbol, lengthSymbol, lengthSquaredSymbol;
-    string normalizeSymbol, normalizedSymbol, dotSymbol, crossSymbol, normalSymbol, angleSymbol, rotateSymbol;
-    string rotatedSymbol, approachSymbol, reflectSymbol, refractSymbol;
-    final switch (locale) with (GrLocale) {
-    case en_US:
-        _vector2Symbol = "Vector2";
-        vec2ZeroSymbol = "Vector2_zero";
-        vec2HalfSymbol = "Vector2_half";
-        vec2OneSymbol = "Vector2_one";
-        vec2UpSymbol = "Vector2_up";
-        vec2DownSymbol = "Vector2_down";
-        vec2LeftSymbol = "Vector2_left";
-        vec2RightSymbol = "Vector2_right";
-        vec2AngledSymbol = "Vector2_angled";
-        printSymbol = "print";
-        zeroSymbol = "zero?";
-        unpackSymbol = "unpack";
-        absSymbol = "abs";
-        ceilSymbol = "ceil";
-        floorSymbol = "floor";
-        roundSymbol = "round";
-        sumSymbol = "sum";
-        signSymbol = "sign";
-        lerpSymbol = "interpolate";
-        approachSymbol = "approach";
-        reflectSymbol = "reflect";
-        refractSymbol = "refract";
-        distanceSymbol = "distance";
-        distanceSquaredSymbol = "distance2";
-        dotSymbol = "dot";
-        crossSymbol = "cross";
-        normalSymbol = "normal";
-        angleSymbol = "angle";
-        rotateSymbol = "rotate";
-        rotatedSymbol = "rotated";
-        lengthSymbol = "length";
-        lengthSquaredSymbol = "length2";
-        normalizeSymbol = "normalize";
-        normalizedSymbol = "normalized";
-        break;
-    case fr_FR:
-        _vector2Symbol = "Vecteur2";
-        vec2ZeroSymbol = "Vecteur2_zéro";
-        vec2HalfSymbol = "Vecteur2_moitié";
-        vec2OneSymbol = "Vecteur2_un";
-        vec2UpSymbol = "Vecteur2_haut";
-        vec2DownSymbol = "Vecteur2_bas";
-        vec2LeftSymbol = "Vecteur2_gauche";
-        vec2RightSymbol = "Vecteur2_droite";
-        vec2AngledSymbol = "Vecteur2_anglé";
-        printSymbol = "affiche";
-        zeroSymbol = "zéro?";
-        unpackSymbol = "déballe";
-        absSymbol = "abs";
-        ceilSymbol = "plafond";
-        floorSymbol = "plancher";
-        roundSymbol = "arrondi";
-        sumSymbol = "somme";
-        signSymbol = "signe";
-        lerpSymbol = "interpole";
-        approachSymbol = "approche";
-        reflectSymbol = "reflète";
-        refractSymbol = "réfracte";
-        distanceSymbol = "distance";
-        distanceSquaredSymbol = "distance2";
-        dotSymbol = "scalaire";
-        crossSymbol = "croix";
-        normalSymbol = "normale";
-        angleSymbol = "angle";
-        rotateSymbol = "tourne";
-        rotatedSymbol = "tourné";
-        lengthSymbol = "longueur";
-        lengthSquaredSymbol = "longueur2";
-        normalizeSymbol = "normalise";
-        normalizedSymbol = "normalisé";
-        break;
-    }
-
-    GrType vec2Type = library.addClass(_vector2Symbol, ["x", "y"], [
+package void grLoadStdLibVec2(GrLibrary library) {
+    GrType vec2Type = library.addClass("Vector2", ["x", "y"], [
             grReal, grReal
         ]);
 
     // Ctors
-    library.addPrimitive(&_vec2_0, _vector2Symbol, [], [vec2Type]);
-    library.addPrimitive(&_vec2_1, _vector2Symbol, [grReal], [vec2Type]);
-    library.addPrimitive(&_vec2_2, _vector2Symbol, [grReal, grReal], [
+    library.addFunction(&_vec2_0, "Vector2", [], [vec2Type]);
+    library.addFunction(&_vec2_1, "Vector2", [grReal], [vec2Type]);
+    library.addFunction(&_vec2_2, "Vector2", [grReal, grReal], [
             vec2Type
         ]);
 
     // Trace
-    library.addPrimitive(&_print, printSymbol, [vec2Type]);
+    library.addFunction(&_print, "print", [vec2Type]);
 
     // Operators
     static foreach (op; ["+", "-"]) {
@@ -133,79 +52,79 @@ package void grLoadStdLibVec2(GrLibrary library, GrLocale locale) {
     }
 
     // Utility
-    library.addPrimitive(&_vec2_0, vec2ZeroSymbol, [], [vec2Type]);
-    library.addPrimitive(&_halfVec2, vec2HalfSymbol, [], [vec2Type]);
-    library.addPrimitive(&_oneVec2, vec2OneSymbol, [], [vec2Type]);
-    library.addPrimitive(&_upVec2, vec2UpSymbol, [], [vec2Type]);
-    library.addPrimitive(&_downVec2, vec2DownSymbol, [], [vec2Type]);
-    library.addPrimitive(&_leftVec2, vec2LeftSymbol, [], [vec2Type]);
-    library.addPrimitive(&_rightVec2, vec2RightSymbol, [], [vec2Type]);
+    library.addFunction(&_vec2_0, "Vector2_zero", [], [vec2Type]);
+    library.addFunction(&_halfVec2, "Vector2_half", [], [vec2Type]);
+    library.addFunction(&_oneVec2, "Vector2_one", [], [vec2Type]);
+    library.addFunction(&_upVec2, "Vector2_up", [], [vec2Type]);
+    library.addFunction(&_downVec2, "Vector2_down", [], [vec2Type]);
+    library.addFunction(&_leftVec2, "Vector2_left", [], [vec2Type]);
+    library.addFunction(&_rightVec2, "Vector2_right", [], [vec2Type]);
 
-    library.addPrimitive(&_unpackVec2, unpackSymbol, [vec2Type], [
+    library.addFunction(&_unpackVec2, "unpack", [vec2Type], [
             grReal, grReal
         ]);
 
-    library.addPrimitive(&_abs, absSymbol, [vec2Type], [vec2Type]);
-    library.addPrimitive(&_ceil, ceilSymbol, [vec2Type], [vec2Type]);
-    library.addPrimitive(&_floor, floorSymbol, [vec2Type], [vec2Type]);
-    library.addPrimitive(&_round, roundSymbol, [vec2Type], [vec2Type]);
+    library.addFunction(&_abs, "abs", [vec2Type], [vec2Type]);
+    library.addFunction(&_ceil, "abs", [vec2Type], [vec2Type]);
+    library.addFunction(&_floor, "floor", [vec2Type], [vec2Type]);
+    library.addFunction(&_round, "round", [vec2Type], [vec2Type]);
 
-    library.addPrimitive(&_isZeroVec2, zeroSymbol, [vec2Type], [grBool]);
+    library.addFunction(&_isZeroVec2, "zero?", [vec2Type], [grBool]);
 
     // Operations
-    library.addPrimitive(&_sumVec2, sumSymbol, [vec2Type], [grReal]);
-    library.addPrimitive(&_sign, signSymbol, [vec2Type], [vec2Type]);
+    library.addFunction(&_sumVec2, "sum", [vec2Type], [grReal]);
+    library.addFunction(&_sign, "sign", [vec2Type], [vec2Type]);
 
-    library.addPrimitive(&_lerp, lerpSymbol, [vec2Type, vec2Type, grReal], [
+    library.addFunction(&_lerp, "lerp", [vec2Type, vec2Type, grReal], [
             vec2Type
         ]);
-    library.addPrimitive(&_approach, approachSymbol, [
+    library.addFunction(&_approach, "approach", [
             vec2Type, vec2Type, grReal
         ], [vec2Type]);
 
-    library.addPrimitive(&_reflect, reflectSymbol, [vec2Type, vec2Type], [
+    library.addFunction(&_reflect, "reflect", [vec2Type, vec2Type], [
             vec2Type
         ]);
-    library.addPrimitive(&_refract, refractSymbol, [vec2Type, vec2Type, grReal], [
+    library.addFunction(&_refract, "refract", [vec2Type, vec2Type, grReal], [
             vec2Type
         ]);
 
-    library.addPrimitive(&_distance, distanceSymbol, [vec2Type, vec2Type], [
+    library.addFunction(&_distance, "distance", [vec2Type, vec2Type], [
             grReal
         ]);
-    library.addPrimitive(&_distanceSquared, distanceSquaredSymbol, [
+    library.addFunction(&_distanceSquared, "distance2", [
             vec2Type, vec2Type
         ], [
             grReal
         ]);
-    library.addPrimitive(&_dot, dotSymbol, [vec2Type, vec2Type], [grReal]);
-    library.addPrimitive(&_cross, crossSymbol, [vec2Type, vec2Type], [
+    library.addFunction(&_dot, "dot", [vec2Type, vec2Type], [grReal]);
+    library.addFunction(&_cross, "cross", [vec2Type, vec2Type], [
             grReal
         ]);
-    library.addPrimitive(&_normal, normalSymbol, [vec2Type], [vec2Type]);
-    library.addPrimitive(&_angle, angleSymbol, [vec2Type], [grReal]);
-    library.addPrimitive(&_rotate, rotateSymbol, [vec2Type, grReal], [
+    library.addFunction(&_normal, "normal", [vec2Type], [vec2Type]);
+    library.addFunction(&_angle, "angle", [vec2Type], [grReal]);
+    library.addFunction(&_rotate, "rotate", [vec2Type, grReal], [
             vec2Type
         ]);
-    library.addPrimitive(&_rotated, rotatedSymbol, [vec2Type, grReal], [
+    library.addFunction(&_rotated, "rotated", [vec2Type, grReal], [
             vec2Type
         ]);
-    library.addPrimitive(&_angled, vec2AngledSymbol, [grReal], [vec2Type]);
-    library.addPrimitive(&_length, lengthSymbol, [vec2Type], [grReal]);
-    library.addPrimitive(&_lengthSquared, lengthSquaredSymbol, [vec2Type], [
+    library.addFunction(&_angled, "Vector2_angled", [grReal], [vec2Type]);
+    library.addFunction(&_length, "length", [vec2Type], [grReal]);
+    library.addFunction(&_lengthSquared, "length2", [vec2Type], [
             grReal
         ]);
-    library.addPrimitive(&_normalize, normalizeSymbol, [vec2Type], [
+    library.addFunction(&_normalize, "normalize", [vec2Type], [
             vec2Type
         ]);
-    library.addPrimitive(&_normalized, normalizedSymbol, [vec2Type], [
+    library.addFunction(&_normalized, "normalized", [vec2Type], [
             vec2Type
         ]);
 }
 
 // Ctors ------------------------------------------
 private void _vec2_0(GrCall call) {
-    GrObject self = call.createObject(_vector2Symbol);
+    GrObject self = call.createObject("Vector2");
     if (!self) {
         call.raise(_classError);
         return;
@@ -216,7 +135,7 @@ private void _vec2_0(GrCall call) {
 }
 
 private void _vec2_1(GrCall call) {
-    GrObject self = call.createObject(_vector2Symbol);
+    GrObject self = call.createObject("Vector2");
     if (!self) {
         call.raise(_classError);
         return;
@@ -228,7 +147,7 @@ private void _vec2_1(GrCall call) {
 }
 
 private void _vec2_2(GrCall call) {
-    GrObject self = call.createObject(_vector2Symbol);
+    GrObject self = call.createObject("Vector2");
     if (!self) {
         call.raise(_classError);
         return;
@@ -251,7 +170,7 @@ private void _print(GrCall call) {
 
 /// Operators ------------------------------------------
 private void _opUnaryVec2(string op)(GrCall call) {
-    GrObject self = call.createObject(_vector2Symbol);
+    GrObject self = call.createObject("Vector2");
     if (!self) {
         call.raise(_classError);
         return;
@@ -267,7 +186,7 @@ private void _opUnaryVec2(string op)(GrCall call) {
 }
 
 private void _opBinaryVec2(string op)(GrCall call) {
-    GrObject self = call.createObject(_vector2Symbol);
+    GrObject self = call.createObject("Vector2");
     if (!self) {
         call.raise(_classError);
         return;
@@ -284,7 +203,7 @@ private void _opBinaryVec2(string op)(GrCall call) {
 }
 
 private void _opBinaryScalarVec2(string op)(GrCall call) {
-    GrObject self = call.createObject(_vector2Symbol);
+    GrObject self = call.createObject("Vector2");
     if (!self) {
         call.raise(_classError);
         return;
@@ -301,7 +220,7 @@ private void _opBinaryScalarVec2(string op)(GrCall call) {
 }
 
 private void _opBinaryScalarRightVec2(string op)(GrCall call) {
-    GrObject self = call.createObject(_vector2Symbol);
+    GrObject self = call.createObject("Vector2");
     if (!self) {
         call.raise(_classError);
         return;
@@ -334,7 +253,7 @@ private void _opBinaryCompareVec2(string op)(GrCall call) {
 
 // Utility ------------------------------------------
 private void _oneVec2(GrCall call) {
-    GrObject self = call.createObject(_vector2Symbol);
+    GrObject self = call.createObject("Vector2");
     if (!self) {
         call.raise(_classError);
         return;
@@ -345,7 +264,7 @@ private void _oneVec2(GrCall call) {
 }
 
 private void _halfVec2(GrCall call) {
-    GrObject self = call.createObject(_vector2Symbol);
+    GrObject self = call.createObject("Vector2");
     if (!self) {
         call.raise(_classError);
         return;
@@ -356,7 +275,7 @@ private void _halfVec2(GrCall call) {
 }
 
 private void _upVec2(GrCall call) {
-    GrObject self = call.createObject(_vector2Symbol);
+    GrObject self = call.createObject("Vector2");
     if (!self) {
         call.raise(_classError);
         return;
@@ -366,7 +285,7 @@ private void _upVec2(GrCall call) {
 }
 
 private void _downVec2(GrCall call) {
-    GrObject self = call.createObject(_vector2Symbol);
+    GrObject self = call.createObject("Vector2");
     if (!self) {
         call.raise(_classError);
         return;
@@ -376,7 +295,7 @@ private void _downVec2(GrCall call) {
 }
 
 private void _leftVec2(GrCall call) {
-    GrObject self = call.createObject(_vector2Symbol);
+    GrObject self = call.createObject("Vector2");
     if (!self) {
         call.raise(_classError);
         return;
@@ -386,7 +305,7 @@ private void _leftVec2(GrCall call) {
 }
 
 private void _rightVec2(GrCall call) {
-    GrObject self = call.createObject(_vector2Symbol);
+    GrObject self = call.createObject("Vector2");
     if (!self) {
         call.raise(_classError);
         return;
@@ -421,7 +340,7 @@ private void _abs(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    GrObject v = call.createObject(_vector2Symbol);
+    GrObject v = call.createObject("Vector2");
     if (!v) {
         call.raise(_classError);
         return;
@@ -437,7 +356,7 @@ private void _ceil(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    GrObject v = call.createObject(_vector2Symbol);
+    GrObject v = call.createObject("Vector2");
     if (!v) {
         call.raise(_classError);
         return;
@@ -453,7 +372,7 @@ private void _floor(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    GrObject v = call.createObject(_vector2Symbol);
+    GrObject v = call.createObject("Vector2");
     if (!v) {
         call.raise(_classError);
         return;
@@ -469,7 +388,7 @@ private void _round(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    GrObject v = call.createObject(_vector2Symbol);
+    GrObject v = call.createObject("Vector2");
     if (!v) {
         call.raise(_classError);
         return;
@@ -494,7 +413,7 @@ private void _sign(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    GrObject v = call.createObject(_vector2Symbol);
+    GrObject v = call.createObject("Vector2");
     if (!v) {
         call.raise(_classError);
         return;
@@ -512,7 +431,7 @@ private void _lerp(GrCall call) {
         return;
     }
     const GrReal weight = call.getReal(2);
-    GrObject v = call.createObject(_vector2Symbol);
+    GrObject v = call.createObject("Vector2");
     if (!v) {
         call.raise(_classError);
         return;
@@ -529,7 +448,7 @@ private void _approach(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    GrObject v = call.createObject(_vector2Symbol);
+    GrObject v = call.createObject("Vector2");
     if (!v) {
         call.raise(_classError);
         return;
@@ -551,7 +470,7 @@ private void _reflect(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    GrObject v = call.createObject(_vector2Symbol);
+    GrObject v = call.createObject("Vector2");
     if (!v) {
         call.raise(_classError);
         return;
@@ -573,7 +492,7 @@ private void _refract(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    GrObject v = call.createObject(_vector2Symbol);
+    GrObject v = call.createObject("Vector2");
     if (!v) {
         call.raise(_classError);
         return;
@@ -648,7 +567,7 @@ private void _normal(GrCall call) {
         call.raise(_paramError);
         return;
     }
-    GrObject v = call.createObject(_vector2Symbol);
+    GrObject v = call.createObject("Vector2");
     if (!v) {
         call.raise(_classError);
         return;
@@ -693,7 +612,7 @@ private void _rotated(GrCall call) {
     const GrReal c = std.math.cos(radians);
     const GrReal s = std.math.sin(radians);
 
-    GrObject v = call.createObject(_vector2Symbol);
+    GrObject v = call.createObject("Vector2");
     if (!v) {
         call.raise(_classError);
         return;
@@ -705,7 +624,7 @@ private void _rotated(GrCall call) {
 
 private void _angled(GrCall call) {
     const GrReal radians = call.getReal(0) * _degToRad;
-    GrObject v = call.createObject(_vector2Symbol);
+    GrObject v = call.createObject("Vector2");
     if (!v) {
         call.raise(_classError);
         return;
@@ -774,7 +693,7 @@ private void _normalized(GrCall call) {
     x /= len;
     y /= len;
 
-    GrObject v = call.createObject(_vector2Symbol);
+    GrObject v = call.createObject("Vector2");
     if (!v) {
         call.raise(_classError);
         return;

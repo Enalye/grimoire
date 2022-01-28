@@ -6661,19 +6661,19 @@ final class GrParser {
     }
 
     private string getPrettyFunctionCall(string name, GrType[] signature) {
-        return grGetPrettyFunctionCall(name, signature, _locale);
+        return grGetPrettyFunctionCall(name, signature);
     }
 
     private string getPrettyFunction(GrFunction func) {
-        return grGetPrettyFunction(func, _locale);
+        return grGetPrettyFunction(func);
     }
 
     private string getPrettyType(GrType type) {
-        return grGetPrettyType(type, _locale);
+        return grGetPrettyType(type);
     }
 
     private string getPrettyLexemeType(GrLexeme.Type type) {
-        return grGetPrettyLexemeType(type, _locale);
+        return grGetPrettyLexemeType(type);
     }
 
     /// Check and raise an error.

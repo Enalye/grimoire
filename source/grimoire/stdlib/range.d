@@ -9,46 +9,32 @@ import std.range;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
-package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library, GrLocale locale) {
-    string rangeIterSymbol, nextSymbol, rangeSymbol;
-    final switch (locale) with (GrLocale) {
-    case en_US:
-        rangeIterSymbol = "IRange";
-        nextSymbol = "next";
-        rangeSymbol = "range";
-        break;
-    case fr_FR:
-        rangeIterSymbol = "IIntervalle";
-        nextSymbol = "suivant";
-        rangeSymbol = "intervalle";
-        break;
-    }
+package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library) {
+    library.addForeign("RangeIterator", ["T"]);
+    GrType rangeIterIntType = grGetForeignType("RangeIterator", [grInt]);
+    GrType rangeIterRealType = grGetForeignType("RangeIterator", [grReal]);
 
-    library.addForeign(rangeIterSymbol, ["T"]);
-    GrType rangeIterIntType = grGetForeignType(rangeIterSymbol, [grInt]);
-    GrType rangeIterRealType = grGetForeignType(rangeIterSymbol, [grReal]);
-
-    library.addPrimitive(&_range_next_i, nextSymbol, [rangeIterIntType], [
+    library.addFunction(&_range_next_i, "next", [rangeIterIntType], [
             grBool, grInt
         ]);
     library.addOperator(&_range_i, GrLibrary.Operator.interval, [grInt, grInt], rangeIterIntType);
-    library.addPrimitive(&_range_i, rangeSymbol, [grInt, grInt], [
+    library.addFunction(&_range_i, "range", [grInt, grInt], [
             rangeIterIntType
         ]);
-    library.addPrimitive(&_range_step_i, rangeSymbol, [grInt, grInt, grInt], [
+    library.addFunction(&_range_step_i, "range", [grInt, grInt, grInt], [
             rangeIterIntType
         ]);
 
-    library.addPrimitive(&_range_next_f, nextSymbol, [rangeIterRealType], [
+    library.addFunction(&_range_next_f, "next", [rangeIterRealType], [
             grBool, grReal
         ]);
     library.addOperator(&_range_f, GrLibrary.Operator.interval, [
             grReal, grReal
         ], rangeIterRealType);
-    library.addPrimitive(&_range_f, rangeSymbol, [grReal, grReal], [
+    library.addFunction(&_range_f, "range", [grReal, grReal], [
             rangeIterRealType
         ]);
-    library.addPrimitive(&_range_step_f, rangeSymbol, [
+    library.addFunction(&_range_step_f, "range", [
             grReal, grReal, grReal
         ],
         [rangeIterRealType]);

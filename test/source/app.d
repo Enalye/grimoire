@@ -20,7 +20,7 @@ void main() {
         bool testBytecode = false;
         const GrLocale locale = GrLocale.fr_FR;
         auto startTime = MonoTime.currTime();
-        GrLibrary stdlib = grLoadStdLibrary(locale);
+        GrLibrary stdlib = grLoadStdLibrary();
 
         GrCompiler compiler = new GrCompiler;
         compiler.addLibrary(stdlib);
@@ -46,13 +46,13 @@ void main() {
         engine.addLibrary(stdlib);
         engine.load(bytecode);
 
-        if (engine.hasAction("début"))
-            engine.callAction("début");
+        if (engine.hasAction("onLoad"))
+            engine.callAction("onLoad");
 
         write("> ");
         startTime = MonoTime.currTime();
 
-        while (engine.hasCoroutines)
+        while (engine.hasTasks)
             engine.process();
         if (engine.isPanicking) {
             writeln("panic: " ~ to!string(engine.panicMessage));

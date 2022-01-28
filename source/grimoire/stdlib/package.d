@@ -27,34 +27,27 @@ import grimoire.stdlib.bitmanip;
 import grimoire.stdlib.any;
 
 /// Load the standard library
-GrLibrary grLoadStdLibrary(GrLocale locale = GrLocale.en_US) {
-    final switch(locale) with(GrLocale) {
-    case en_US:
-        _paramError = "Null parameter";
-        _classError = "Unknown class";
-        break;
-    case fr_FR:
-        _paramError = "Paramètre nul";
-        _classError = "Classe inconnue";
-        break;
-    }
+GrLibrary grLoadStdLibrary() {
+    ///@TODO: Change this
+    _paramError = "Null parameter";
+    _classError = "Unknown class";
 
     GrLibrary library = new GrLibrary;
-    grLoadStdLibLog(library, locale);
-    grLoadStdLibSystem(library, locale);
-    grLoadStdLibList(library, locale);
-    grLoadStdLibDictionary(library, locale);
-    grLoadStdLibRange(library, locale);
-    grLoadStdLibString(library, locale);
-    grLoadStdLibChannel(library, locale);
-    grLoadStdLibMath(library, locale);
-    grLoadStdLibVec2(library, locale);
-    grLoadStdLibColor(library, locale);
-    grLoadStdLibTest(library, locale);
-    grLoadStdLibTime(library, locale);
-    grLoadStdLibTypecast(library, locale);
-    grLoadStdLibPair(library, locale);
-    grLoadStdLibBitmanip(library, locale);
-    grLoadStdLibAny(library, locale);
+    grLoadStdLibLog(library);
+    grLoadStdLibSystem(library);
+    grLoadStdLibList(library);
+    grLoadStdLibDictionary(library);
+    grLoadStdLibRange(library);
+    grLoadStdLibString(library);
+    grLoadStdLibChannel(library);
+    grLoadStdLibMath(library);
+    grLoadStdLibVec2(library);
+    grLoadStdLibColor(library);
+    grLoadStdLibTest(library);
+    grLoadStdLibTime(library);
+    grLoadStdLibTypecast(library);
+    grLoadStdLibPair(library);
+    grLoadStdLibBitmanip(library);
+    grLoadStdLibAny(library);
     return library;
 }

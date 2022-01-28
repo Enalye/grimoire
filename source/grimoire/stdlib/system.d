@@ -8,21 +8,10 @@ module grimoire.stdlib.system;
 import grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
-package void grLoadStdLibSystem(GrLibrary library, GrLocale locale) {
-    string swapSymbol, condSymbol;
-    final switch (locale) with (GrLocale) {
-    case en_US:
-        swapSymbol = "swap";
-        condSymbol = "cond";
-        break;
-    case fr_FR:
-        swapSymbol = "permute";
-        condSymbol = "cond";
-        break;
-    }
+package void grLoadStdLibSystem(GrLibrary library) {
     static foreach (t1; ["Int", "Real", "String", "Ptr"]) {
         static foreach (t2; ["Int", "Real", "String", "Ptr"]) {
-            library.addPrimitive(&_swap_2_!(t1, t2), swapSymbol, [
+            library.addFunction(&_swap_2_!(t1, t2), "swap", [
                     grAny("1", (type, data) {
                         static if (t1 == "Ptr") {
                             return grIsKindOfObject(type.base);
@@ -42,7 +31,7 @@ package void grLoadStdLibSystem(GrLibrary library, GrLocale locale) {
         }
     }
     static foreach (t; ["Int", "Real", "String", "Ptr"]) {
-        library.addPrimitive(&_cond_!t, condSymbol, [
+        library.addFunction(&_cond_!t, "cond", [
                 grBool, grAny("T", (type, data) {
                     static if (t == "Ptr") {
                         return grIsKindOfObject(type.base);
@@ -54,7 +43,7 @@ package void grLoadStdLibSystem(GrLibrary library, GrLocale locale) {
             ], [grAny("T")]);
     }
 
-    library.addPrimitive(&_typeOf, "typeOf", [grAny("T")], [grString]);
+    library.addFunction(&_typeOf, "typeOf", [grAny("T")], [grString]);
 }
 
 private void _swap_2_(string t1, string t2)(GrCall call) {

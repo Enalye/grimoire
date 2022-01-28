@@ -7,25 +7,8 @@ module grimoire.stdlib.pair;
 
 import grimoire.compiler, grimoire.runtime;
 
-private {
-    string pairSymbol, keySymbol, valueSymbol;
-}
-
-package(grimoire.stdlib) void grLoadStdLibPair(GrLibrary library, GrLocale locale) {
-    final switch (locale) with (GrLocale) {
-    case en_US:
-        pairSymbol = "Pair";
-        keySymbol = "key";
-        valueSymbol = "value";
-        break;
-    case fr_FR:
-        pairSymbol = "Paire";
-        keySymbol = "clé";
-        valueSymbol = "valeur";
-        break;
-    }
-
-    library.addClass(pairSymbol, [keySymbol, valueSymbol], [
+package(grimoire.stdlib) void grLoadStdLibPair(GrLibrary library) {
+    library.addClass("Pair", ["key", "value"], [
             grAny("A"), grAny("B")
         ], [
             "A", "B"
@@ -37,7 +20,7 @@ package(grimoire.stdlib) void grLoadStdLibPair(GrLibrary library, GrLocale local
         library.addOperator(&_makeKeyValuePair_!\""
                 ~ t
                 ~ "\", GrLibrary.Operator.arrow, [grString, grAny(\"T\", (type, data) {
-            data.set(\"P\", grGetClassType(pairSymbol, [grString, type]));
+            data.set(\"P\", grGetClassType(\"Pair\", [grString, type]));
             return grIsKindOf"
                 ~ t ~ "(type.base);
         })], grAny(\"P\"));
@@ -47,18 +30,18 @@ package(grimoire.stdlib) void grLoadStdLibPair(GrLibrary library, GrLocale local
 
 private void _makeKeyValuePair_(string t)(GrCall call) {
     GrObject obj = call.createObject(grUnmangle(call.getOutType(0)).mangledType);
-    obj.setString(keySymbol, call.getString(0));
+    obj.setString("key", call.getString(0));
     static if (t == "Int") {
-        obj.setInt(valueSymbol, call.getInt(1));
+        obj.setInt("value", call.getInt(1));
     }
     else static if (t == "Real") {
-        obj.setReal(valueSymbol, call.getReal(1));
+        obj.setReal("value", call.getReal(1));
     }
     else static if (t == "String") {
-        obj.setString(valueSymbol, call.getString(1));
+        obj.setString("value", call.getString(1));
     }
     else static if (t == "Object") {
-        obj.setPtr(valueSymbol, call.getPtr(1));
+        obj.setPtr("value", call.getPtr(1));
     }
     call.setObject(obj);
 }

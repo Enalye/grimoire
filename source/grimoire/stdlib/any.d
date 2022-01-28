@@ -61,7 +61,7 @@ private final class Any {
     }
 }
 
-package(grimoire.stdlib) void grLoadStdLibAny(GrLibrary library, GrLocale locale) {
+package(grimoire.stdlib) void grLoadStdLibAny(GrLibrary library) {
     GrType anyType = library.addForeign("any");
 
     library.addCast(&_from_b, grBool, anyType);
@@ -84,7 +84,7 @@ package(grimoire.stdlib) void grLoadStdLibAny(GrLibrary library, GrLocale locale
     library.addCast(&_to_f, anyType, grReal);
     library.addCast(&_to_s, anyType, grString);
 
-    library.addPrimitive(&_trace, "trace", [anyType]);
+    library.addFunction(&_trace, "trace", [anyType]);
 
     // Operators
     /*static foreach (op; ["+", "-"]) {
