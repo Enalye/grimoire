@@ -10,7 +10,7 @@ import std.algorithm.comparison : clamp;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
-    library.addVariable("pi", grReal, PI, true);
+    library.addVariable("PI", grReal, PI, true);
 
     library.addFunction(&_min_f, "min", [grReal, grReal], [grReal]);
     library.addFunction(&_min_i, "min", [grInt, grInt], [grInt]);
@@ -21,9 +21,12 @@ package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
             grReal
         ]);
 
-    library.addFunction(&_random01, "rand", [], [grReal]);
-    library.addFunction(&_random_f, "rand", [grReal, grReal], [grReal]);
-    library.addFunction(&_random_i, "rand", [grInt, grInt], [grInt]);
+    library.addFunction(&_rand01, "rand", [], [grReal]);
+    library.addFunction(&_rand_f, "rand", [grReal, grReal], [grReal]);
+    library.addFunction(&_rand_i, "rand", [grInt, grInt], [grInt]);
+
+    library.addFunction(&_deg, "deg", [grReal], [grReal]);
+    library.addFunction(&_rad, "rad", [grReal], [grReal]);
 
     library.addFunction(&_cos, "cos", [grReal], [grReal]);
     library.addFunction(&_sin, "sin", [grReal], [grReal]);
@@ -34,6 +37,9 @@ package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
     library.addFunction(&_atan2, "atan2", [grReal, grReal], [grReal]);
 
     library.addFunction(&_exp, "exp", [grReal], [grReal]);
+    library.addFunction(&_log, "log", [grReal], [grReal]);
+    library.addFunction(&_log2, "log2", [grReal], [grReal]);
+    library.addFunction(&_log10, "log10", [grReal], [grReal]);
     library.addFunction(&_sqrt, "sqrt", [grReal], [grReal]);
     library.addOperator(&_pow_i, GrLibrary.Operator.power, [grInt, grInt], grInt);
     library.addOperator(&_pow_f, GrLibrary.Operator.power, [grReal, grReal], grReal);
@@ -88,11 +94,11 @@ private void _clamp(GrCall call) {
     call.setReal(clamp(call.getReal(0), call.getReal(1), call.getReal(2)));
 }
 
-private void _random01(GrCall call) {
+private void _rand01(GrCall call) {
     call.setReal(uniform01());
 }
 
-private void _random_f(GrCall call) {
+private void _rand_f(GrCall call) {
     const GrReal a = call.getReal(0);
     const GrReal b = call.getReal(1);
     if (a < b)
@@ -101,13 +107,21 @@ private void _random_f(GrCall call) {
         call.setReal(uniform!"[]"(b, a));
 }
 
-private void _random_i(GrCall call) {
+private void _rand_i(GrCall call) {
     const GrInt a = call.getInt(0);
     const GrInt b = call.getInt(1);
     if (a < b)
         call.setInt(uniform!"[]"(a, b));
     else
         call.setInt(uniform!"[]"(b, a));
+}
+
+private void _deg(GrCall call) {
+    call.setReal(call.getReal(0) * (180.0 / PI));
+}
+
+private void _rad(GrCall call) {
+    call.setReal(call.getReal(0) * (PI / 180.0));
 }
 
 private void _cos(GrCall call) {
@@ -140,6 +154,18 @@ private void _atan2(GrCall call) {
 
 private void _exp(GrCall call) {
     call.setReal(exp(call.getReal(0)));
+}
+
+private void _log(GrCall call) {
+    call.setReal(log(call.getReal(0)));
+}
+
+private void _log2(GrCall call) {
+    call.setReal(log2(call.getReal(0)));
+}
+
+private void _log10(GrCall call) {
+    call.setReal(log10(call.getReal(0)));
 }
 
 private void _sqrt(GrCall call) {

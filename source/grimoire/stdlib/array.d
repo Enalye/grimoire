@@ -10,7 +10,7 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
-    library.addForeign("ArrayIterator", ["T"]);
+    library.addForeign("IterArray", ["T"]);
 
     static foreach (t; ["Int", "Real", "String", "Object"]) {
         mixin("GrType any" ~ t ~ "Array = grAny(\"A\", (type, data) {
@@ -129,7 +129,7 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
                 if (type.base != GrType.Base.array)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
-                data.set(\"R\", grGetForeignType(\"ArrayIterator\", [subType]));
+                data.set(\"R\", grGetForeignType(\"IterArray\", [subType]));
                 return grIsKindOf"
                 ~ t ~ "(subType.base);
             })
@@ -140,7 +140,7 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
                 if (type.base != GrType.Base.foreign)
                     return false;
                 auto result = grUnmangleComposite(type.mangledType);
-                if(result.signature.length != 1 || result.name != \"ArrayIterator\")
+                if(result.signature.length != 1 || result.name != \"IterArray\")
                     return false;
                 data.set(\"T\", result.signature[0]);
                 return grIsKindOf"
@@ -573,7 +573,7 @@ private void _has_(string t)(GrCall call) {
     call.setBool(false);
 }
 
-private final class ArrayIter(T) {
+private final class IterArray(T) {
     T[] array;
     size_t index;
 }
@@ -581,16 +581,16 @@ private final class ArrayIter(T) {
 private void _each_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
     static if (t == "Int") {
-        ArrayIter!(GrInt) iter = new ArrayIter!(GrInt);
+        IterArray!(GrInt) iter = new IterArray!(GrInt);
     }
     else static if (t == "Real") {
-        ArrayIter!(GrReal) iter = new ArrayIter!(GrReal);
+        IterArray!(GrReal) iter = new IterArray!(GrReal);
     }
     else static if (t == "String") {
-        ArrayIter!(GrString) iter = new ArrayIter!(GrString);
+        IterArray!(GrString) iter = new IterArray!(GrString);
     }
     else static if (t == "Object") {
-        ArrayIter!(GrPtr) iter = new ArrayIter!(GrPtr);
+        IterArray!(GrPtr) iter = new IterArray!(GrPtr);
     }
     iter.array = array.data.dup;
     call.setForeign(iter);
@@ -598,19 +598,19 @@ private void _each_(string t)(GrCall call) {
 
 private void _next_(string t)(GrCall call) {
     static if (t == "Int") {
-        ArrayIter!(GrInt) iter = call.getForeign!(ArrayIter!(GrInt))(0);
+        IterArray!(GrInt) iter = call.getForeign!(IterArray!(GrInt))(0);
     }
     else static if (t == "Real") {
-        ArrayIter!(GrReal) iter = call.getForeign!(ArrayIter!(GrReal))(0);
+        IterArray!(GrReal) iter = call.getForeign!(IterArray!(GrReal))(0);
     }
     else static if (t == "String") {
-        ArrayIter!(GrString) iter = call.getForeign!(ArrayIter!(GrString))(0);
+        IterArray!(GrString) iter = call.getForeign!(IterArray!(GrString))(0);
     }
     else static if (t == "Object") {
-        ArrayIter!(GrPtr) iter = call.getForeign!(ArrayIter!(GrPtr))(0);
+        IterArray!(GrPtr) iter = call.getForeign!(IterArray!(GrPtr))(0);
     }
     if (!iter) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     if (iter.index >= iter.array.length) {

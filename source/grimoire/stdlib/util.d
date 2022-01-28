@@ -8,8 +8,6 @@ module grimoire.stdlib.util;
 import grimoire.assembly, grimoire.compiler;
 
 package {
-    string _paramError, _classError;
-
     void function(GrString) _stdOut = &_defaultOutput;
 }
 

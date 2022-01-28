@@ -1425,6 +1425,7 @@ final class GrParser {
         if (variable.isConstant)
             logError(format(getError(Error.xIsConstAndCantBeModified), variable.name),
                 format(getError(Error.cantModifyAConstX), getPrettyType(variable.type)));
+
         if (variable.type.base == GrType.Base.reference) {
             valueType = convertType(valueType, grUnmangle(variable.type.mangledType), fileId);
             final switch (valueType.base) with (GrType.Base) {
@@ -2422,8 +2423,10 @@ final class GrParser {
                 if (mustBeType) {
                     GrClassDefinition class_ = getClass(currentType.mangledType, lex.fileId);
                     if (!class_)
-                        logError(format(getError(Error.xNotDecl),
-                                getPrettyType(currentType)), getError(Error.unknownClass), "", -1);
+                        logError(format(getError(Error.xIsAbstract),
+                                getPrettyType(currentType)), format(getError(
+                                Error.xIsAbstractAndCannotBeInstanciated), getPrettyType(
+                                currentType)), "", -1);
                 }
                 return currentType;
             }
@@ -2439,6 +2442,14 @@ final class GrParser {
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
                 currentType.mangledType = grMangleComposite(lex.svalue, parseTemplateSignature());
+                if (mustBeType) {
+                    GrForeignDefinition foreign = _data.getForeign(currentType.mangledType);
+                    if (!foreign)
+                        logError(format(getError(Error.xIsAbstract),
+                                getPrettyType(currentType)), format(getError(
+                                Error.xIsAbstractAndCannotBeInstanciated), getPrettyType(
+                                currentType)), "", -1);
+                }
                 return currentType;
             }
             else if (mustBeType) {
@@ -3080,19 +3091,19 @@ final class GrParser {
                 parseReturnStatement();
                 break;
             case die:
-                parseDie();
+                parseDieStatement();
                 break;
             case quit:
-                parseQuit();
+                parseQuitStatement();
                 break;
             case yield:
-                parseSuspend();
+                parseYieldStatement();
                 break;
             case continue_:
-                parseContinue();
+                parseContinueStatement();
                 break;
             case break_:
-                parseBreak();
+                parseBreakStatement();
                 break;
             case integerType: .. case autoType:
                 if (isDeclaration())
@@ -3284,21 +3295,21 @@ final class GrParser {
         closeBlock();
     }
 
-    private void parseDie() {
+    private void parseDieStatement() {
         if (!currentFunction.instructions.length
             || currentFunction.instructions[$ - 1].opcode != GrOpcode.die)
             addDie();
         advance();
     }
 
-    private void parseQuit() {
+    private void parseQuitStatement() {
         if (!currentFunction.instructions.length
             || currentFunction.instructions[$ - 1].opcode != GrOpcode.quit)
             addQuit();
         advance();
     }
 
-    private void parseSuspend() {
+    private void parseYieldStatement() {
         addInstruction(GrOpcode.yield, 0u);
         advance();
     }
@@ -3465,7 +3476,7 @@ final class GrParser {
         _isAssignationOptimizable = false;
     }
 
-    private void parseBreak() {
+    private void parseBreakStatement() {
         if (!breaksJumps.length)
             logError(getError(Error.breakOutsideLoop), getError(Error.cantBreakOutsideLoop));
 
@@ -3498,7 +3509,7 @@ final class GrParser {
         continuesDestinations ~= cast(uint) currentFunction.instructions.length;
     }
 
-    private void parseContinue() {
+    private void parseContinueStatement() {
         if (!continuesJumps.length)
             logError(getError(Error.continueOutsideLoop), getError(Error.cantContinueOutsideLoop));
 
@@ -6927,6 +6938,8 @@ final class GrParser {
         expectedDotAfterEnumType,
         missingEnumConstantName,
         expectedConstNameAfterEnumType,
+        xIsAbstract,
+        xIsAbstractAndCannotBeInstanciated
     }
     // format(getError(Error.), )
     /*
@@ -7146,7 +7159,9 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.funcDefHere: "function defined here",
                 Error.expectedDotAfterEnumType: "expected a `.` after the enum type",
                 Error.missingEnumConstantName: "missing the enum constant name",
-                Error.expectedConstNameAfterEnumType: "expected a constant name after the enum type"
+                Error.expectedConstNameAfterEnumType: "expected a constant name after the enum type",
+                Error.xIsAbstract: "`%s` is abstract",
+                Error.xIsAbstractAndCannotBeInstanciated: "`%s` is abstract and can't be instanciated"
             ],
             [ // fr_FR
                 Error.eofReached: "fin de fichier atteinte",
@@ -7358,7 +7373,9 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.funcDefHere: "fonction définie là",
                 Error.expectedDotAfterEnumType: "`.` attendu après le type d’énumération",
                 Error.missingEnumConstantName: "nom de la constante d’énumération attendu",
-                Error.expectedConstNameAfterEnumType: "nom de la constante attendue après le type d’énumération"
+                Error.expectedConstNameAfterEnumType: "nom de la constante attendue après le type d’énumération",
+                Error.xIsAbstract: "`%s` est abstrait",
+                Error.xIsAbstractAndCannotBeInstanciated: "`%s` est abstrait et ne peut pas être instancié"
             ]
         ];
         return messages[_locale][error];

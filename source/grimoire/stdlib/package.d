@@ -11,7 +11,7 @@ public import grimoire.stdlib.util;
 
 import grimoire.stdlib.system;
 import grimoire.stdlib.array;
-import grimoire.stdlib.dictionary;
+import grimoire.stdlib.hashmap;
 import grimoire.stdlib.range;
 import grimoire.stdlib.string;
 import grimoire.stdlib.channel;
@@ -28,15 +28,11 @@ import grimoire.stdlib.any;
 
 /// Load the standard library
 GrLibrary grLoadStdLibrary() {
-    ///@TODO: Change this
-    _paramError = "Null parameter";
-    _classError = "Unknown class";
-
     GrLibrary library = new GrLibrary;
     grLoadStdLibLog(library);
     grLoadStdLibSystem(library);
     grLoadStdLibArray(library);
-    grLoadStdLibDictionary(library);
+    grLoadStdLibHashMap(library);
     grLoadStdLibRange(library);
     grLoadStdLibString(library);
     grLoadStdLibChannel(library);

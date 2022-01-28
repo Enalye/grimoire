@@ -56,7 +56,7 @@ package void grLoadStdLibColor(GrLibrary library) {
 private void _makeColor(GrCall call) {
     GrObject self = call.createObject("Color");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     self.setReal("r", 0f);
@@ -68,7 +68,7 @@ private void _makeColor(GrCall call) {
 private void _makeColor3(GrCall call) {
     GrObject self = call.createObject("Color");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     self.setReal("r", call.getReal(0));
@@ -80,7 +80,7 @@ private void _makeColor3(GrCall call) {
 private void _makeColor3i(GrCall call) {
     GrObject self = call.createObject("Color");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     self.setReal("r", clamp(call.getInt(0) / 255f, 0f, 1f));
@@ -92,13 +92,13 @@ private void _makeColor3i(GrCall call) {
 private void _opBinaryColor(string op)(GrCall call) {
     GrObject self = call.createObject("Color");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     GrObject c1 = call.getObject(0);
     GrObject c2 = call.getObject(1);
     if (!c1 || !c2) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     mixin("self.setReal(\"r\", c1.getReal(\"r\")" ~ op ~ "c2.getReal(\"r\"));");
@@ -110,13 +110,13 @@ private void _opBinaryColor(string op)(GrCall call) {
 private void _opBinaryScalarColor(string op)(GrCall call) {
     GrObject self = call.createObject("Color");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     GrObject c = call.getObject(0);
     const GrReal s = call.getReal(1);
     if (!c) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     mixin("self.setReal(\"r\", c.getReal(\"r\")" ~ op ~ "s);");
@@ -128,13 +128,13 @@ private void _opBinaryScalarColor(string op)(GrCall call) {
 private void _opBinaryScalarRightColor(string op)(GrCall call) {
     GrObject self = call.createObject("Color");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     GrObject c = call.getObject(0);
     const GrReal s = call.getReal(1);
     if (!c) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     mixin("self.setReal(\"r\", s" ~ op ~ "c.getReal(\"r\"));");
@@ -146,13 +146,13 @@ private void _opBinaryScalarRightColor(string op)(GrCall call) {
 private void _mixColor(GrCall call) {
     GrObject self = call.createObject("Color");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     GrObject c1 = call.getObject(0);
     GrObject c2 = call.getObject(1);
     if (!c1 || !c2) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     self.setReal("r", (c1.getReal("r") + c2.getReal("r")) / 2f);
@@ -164,14 +164,14 @@ private void _mixColor(GrCall call) {
 private void _lerpColor(GrCall call) {
     GrObject self = call.createObject("Color");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     GrObject c1 = call.getObject(0);
     GrObject c2 = call.getObject(1);
     const GrReal t = call.getReal(2);
     if (!c1 || !c2) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     self.setReal("r", (t * c2.getReal("r")) + ((1f - t) * c1.getReal("r")));
@@ -185,7 +185,7 @@ private void _castArrayToColor(GrCall call) {
     if (array.data.length == 3) {
         GrObject self = call.createObject("Color");
         if (!self) {
-            call.raise(_classError);
+            call.raise("UnknownClass");
             return;
         }
         self.setReal("r", array.data[0]);
@@ -200,7 +200,7 @@ private void _castArrayToColor(GrCall call) {
 private void _castColorToString(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     call.setString("Color(" ~ to!GrString(
@@ -212,7 +212,7 @@ private void _castColorToString(GrCall call) {
 private void _unpack(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     call.setReal(self.getReal("r"));

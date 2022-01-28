@@ -126,7 +126,7 @@ package void grLoadStdLibVec2(GrLibrary library) {
 private void _vec2_0(GrCall call) {
     GrObject self = call.createObject("Vector2");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     self.setReal("x", 0f);
@@ -137,7 +137,7 @@ private void _vec2_0(GrCall call) {
 private void _vec2_1(GrCall call) {
     GrObject self = call.createObject("Vector2");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     const GrReal value = call.getReal(0);
@@ -149,7 +149,7 @@ private void _vec2_1(GrCall call) {
 private void _vec2_2(GrCall call) {
     GrObject self = call.createObject("Vector2");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     self.setReal("x", call.getReal(0));
@@ -172,12 +172,12 @@ private void _print(GrCall call) {
 private void _opUnaryVec2(string op)(GrCall call) {
     GrObject self = call.createObject("Vector2");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     GrObject v = call.getObject(0);
     if (!v) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     mixin("self.setReal(\"x\", " ~ op ~ "v.getReal(\"x\"));");
@@ -188,13 +188,13 @@ private void _opUnaryVec2(string op)(GrCall call) {
 private void _opBinaryVec2(string op)(GrCall call) {
     GrObject self = call.createObject("Vector2");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
     if (!v1 || !v2) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     mixin("self.setReal(\"x\", v1.getReal(\"x\")" ~ op ~ "v2.getReal(\"x\"));");
@@ -205,13 +205,13 @@ private void _opBinaryVec2(string op)(GrCall call) {
 private void _opBinaryScalarVec2(string op)(GrCall call) {
     GrObject self = call.createObject("Vector2");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     GrObject v = call.getObject(0);
     const GrReal s = call.getReal(1);
     if (!v) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     mixin("self.setReal(\"x\", v.getReal(\"x\")" ~ op ~ "s);");
@@ -222,13 +222,13 @@ private void _opBinaryScalarVec2(string op)(GrCall call) {
 private void _opBinaryScalarRightVec2(string op)(GrCall call) {
     GrObject self = call.createObject("Vector2");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     GrObject v = call.getObject(0);
     const GrReal s = call.getReal(1);
     if (!v) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     mixin("self.setReal(\"x\", s" ~ op ~ "v.getReal(\"x\"));");
@@ -240,7 +240,7 @@ private void _opBinaryCompareVec2(string op)(GrCall call) {
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
     if (!v1 || !v2) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     mixin("call.setBool(
@@ -255,7 +255,7 @@ private void _opBinaryCompareVec2(string op)(GrCall call) {
 private void _oneVec2(GrCall call) {
     GrObject self = call.createObject("Vector2");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     self.setReal("x", 1f);
@@ -266,7 +266,7 @@ private void _oneVec2(GrCall call) {
 private void _halfVec2(GrCall call) {
     GrObject self = call.createObject("Vector2");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     self.setReal("x", .5f);
@@ -277,7 +277,7 @@ private void _halfVec2(GrCall call) {
 private void _upVec2(GrCall call) {
     GrObject self = call.createObject("Vector2");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     self.setReal("y", 1f);
@@ -287,7 +287,7 @@ private void _upVec2(GrCall call) {
 private void _downVec2(GrCall call) {
     GrObject self = call.createObject("Vector2");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     self.setReal("y", -1f);
@@ -297,7 +297,7 @@ private void _downVec2(GrCall call) {
 private void _leftVec2(GrCall call) {
     GrObject self = call.createObject("Vector2");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     self.setReal("x", -1f);
@@ -307,7 +307,7 @@ private void _leftVec2(GrCall call) {
 private void _rightVec2(GrCall call) {
     GrObject self = call.createObject("Vector2");
     if (!self) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     self.setReal("x", 1f);
@@ -317,7 +317,7 @@ private void _rightVec2(GrCall call) {
 private void _unpackVec2(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     call.setReal(self.getReal("x"));
@@ -327,7 +327,7 @@ private void _unpackVec2(GrCall call) {
 private void _isZeroVec2(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     call.setBool(self.getReal("x") == 0f && self.getReal("y") == 0f);
@@ -337,12 +337,12 @@ private void _isZeroVec2(GrCall call) {
 private void _abs(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     GrObject v = call.createObject("Vector2");
     if (!v) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     v.setReal("x", abs(self.getReal("y")));
@@ -353,12 +353,12 @@ private void _abs(GrCall call) {
 private void _ceil(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     GrObject v = call.createObject("Vector2");
     if (!v) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     v.setReal("x", ceil(self.getReal("y")));
@@ -369,12 +369,12 @@ private void _ceil(GrCall call) {
 private void _floor(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     GrObject v = call.createObject("Vector2");
     if (!v) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     v.setReal("x", floor(self.getReal("y")));
@@ -385,12 +385,12 @@ private void _floor(GrCall call) {
 private void _round(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     GrObject v = call.createObject("Vector2");
     if (!v) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     v.setReal("x", round(self.getReal("y")));
@@ -401,7 +401,7 @@ private void _round(GrCall call) {
 private void _sumVec2(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     call.setReal(self.getReal("x") + self.getReal("y"));
@@ -410,12 +410,12 @@ private void _sumVec2(GrCall call) {
 private void _sign(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     GrObject v = call.createObject("Vector2");
     if (!v) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     v.setReal("x", self.getReal("x") >= 0f ? 1f : -1f);
@@ -427,13 +427,13 @@ private void _lerp(GrCall call) {
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
     if (!v1 || !v2) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     const GrReal weight = call.getReal(2);
     GrObject v = call.createObject("Vector2");
     if (!v) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     v.setReal("x", v2.getReal("x") * weight + v1.getReal("x") * (1f - weight));
@@ -445,12 +445,12 @@ private void _approach(GrCall call) {
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
     if (!v1 || !v2) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     GrObject v = call.createObject("Vector2");
     if (!v) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     const GrReal x1 = v1.getReal("x");
@@ -467,12 +467,12 @@ private void _reflect(GrCall call) {
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
     if (!v1 || !v2) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     GrObject v = call.createObject("Vector2");
     if (!v) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     const GrReal x1 = v1.getReal("x");
@@ -489,12 +489,12 @@ private void _refract(GrCall call) {
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
     if (!v1 || !v2) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     GrObject v = call.createObject("Vector2");
     if (!v) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     const GrReal x1 = v1.getReal("x");
@@ -521,7 +521,7 @@ private void _distance(GrCall call) {
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
     if (!v1 || !v2) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     const GrReal px = v1.getReal("x") - v2.getReal("x");
@@ -533,7 +533,7 @@ private void _distanceSquared(GrCall call) {
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
     if (!v1 || !v2) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     const GrReal px = v1.getReal("x") - v2.getReal("x");
@@ -545,7 +545,7 @@ private void _dot(GrCall call) {
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
     if (!v1 || !v2) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     call.setReal(v1.getReal("x") * v2.getReal("x") + v1.getReal("y") * v2.getReal("y"));
@@ -555,7 +555,7 @@ private void _cross(GrCall call) {
     GrObject v1 = call.getObject(0);
     GrObject v2 = call.getObject(1);
     if (!v1 || !v2) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     call.setReal(v1.getReal("x") * v2.getReal("y") - v1.getReal("y") * v2.getReal("x"));
@@ -564,12 +564,12 @@ private void _cross(GrCall call) {
 private void _normal(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     GrObject v = call.createObject("Vector2");
     if (!v) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     v.setReal("x", -self.getReal("y"));
@@ -580,7 +580,7 @@ private void _normal(GrCall call) {
 private void _angle(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     call.setReal(std.math.atan2(self.getReal("y"), self.getReal("x")) * _radToDeg);
@@ -589,7 +589,7 @@ private void _angle(GrCall call) {
 private void _rotate(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     const GrReal radians = call.getReal(1) * _degToRad;
@@ -604,7 +604,7 @@ private void _rotate(GrCall call) {
 private void _rotated(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     const GrReal radians = call.getReal(1) * _degToRad;
@@ -614,7 +614,7 @@ private void _rotated(GrCall call) {
 
     GrObject v = call.createObject("Vector2");
     if (!v) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     v.setReal("x", px * c - py * s);
@@ -626,7 +626,7 @@ private void _angled(GrCall call) {
     const GrReal radians = call.getReal(0) * _degToRad;
     GrObject v = call.createObject("Vector2");
     if (!v) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     v.setReal("x", std.math.cos(radians));
@@ -637,7 +637,7 @@ private void _angled(GrCall call) {
 private void _length(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     const GrReal x = self.getReal("x");
@@ -648,7 +648,7 @@ private void _length(GrCall call) {
 private void _lengthSquared(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     const GrReal x = self.getReal("x");
@@ -659,7 +659,7 @@ private void _lengthSquared(GrCall call) {
 private void _normalize(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     const GrReal x = self.getReal("x");
@@ -678,7 +678,7 @@ private void _normalize(GrCall call) {
 private void _normalized(GrCall call) {
     GrObject self = call.getObject(0);
     if (!self) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     GrReal x = self.getReal("x");
@@ -695,7 +695,7 @@ private void _normalized(GrCall call) {
 
     GrObject v = call.createObject("Vector2");
     if (!v) {
-        call.raise(_classError);
+        call.raise("UnknownClass");
         return;
     }
     v.setReal("x", x);

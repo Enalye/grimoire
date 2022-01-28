@@ -47,7 +47,7 @@ private final class RangeIter(T) {
 private void _range_next_i(GrCall call) {
     RangeIter!GrInt iter = call.getForeign!(RangeIter!GrInt)(0);
     if (!iter) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     if ((iter.step < 0 && iter.value < iter.end) || (iter.step > 0 && iter.value > iter.end)) {
@@ -82,7 +82,7 @@ private void _range_step_i(GrCall call) {
 private void _range_next_f(GrCall call) {
     RangeIter!GrReal iter = call.getForeign!(RangeIter!GrReal)(0);
     if (!iter) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     if ((iter.step < 0f && iter.value < iter.end) || (iter.step > 0f && iter.value > iter.end)) {

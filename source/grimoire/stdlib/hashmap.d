@@ -3,15 +3,15 @@
  * License: Zlib
  * Authors: Enalye
  */
-module grimoire.stdlib.dictionary;
+module grimoire.stdlib.hashmap;
 
 import std.typecons : Tuple, tuple;
 import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
-/// Dictionary
-private final class Dictionary(T) {
+/// HashMap
+private final class HashMap(T) {
     /// Payload
     T[GrString] data;
 
@@ -25,34 +25,34 @@ private final class Dictionary(T) {
     this() {
     }
 
-    this(Dictionary!T dictionary) {
-        data = dictionary.data.dup;
+    this(HashMap!T hashmap) {
+        data = hashmap.data.dup;
     }
 }
 
 private {
-    alias IntDictionary = Dictionary!(GrInt);
-    alias RealDictionary = Dictionary!(GrReal);
-    alias StringDictionary = Dictionary!(GrString);
-    alias ObjectDictionary = Dictionary!(GrPtr);
+    alias IntHashMap = HashMap!(GrInt);
+    alias RealHashMap = HashMap!(GrReal);
+    alias StringHashMap = HashMap!(GrString);
+    alias ObjectHashMap = HashMap!(GrPtr);
 }
 
 /// Iterator
-private final class DictionaryIter(T) {
+private final class IterHashMap(T) {
     Tuple!(GrString, T)[] pairs;
     size_t index;
 }
 
-package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
-    library.addForeign("Dictionary", ["T"]);
-    library.addForeign("DictionaryIterator", ["T"]);
+package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
+    library.addForeign("HashMap", ["T"]);
+    library.addForeign("IterHashMap", ["T"]);
 
     static foreach (t; ["Int", "Real", "String", "Object"]) {
-        mixin("GrType any" ~ t ~ "Dictionary = grAny(\"M\", (type, data) {
+        mixin("GrType any" ~ t ~ "HashMap = grAny(\"M\", (type, data) {
                 if (type.base != GrType.Base.foreign)
                     return false;
                 auto subType = grUnmangleComposite(type.mangledType);
-                if(subType.name != \"Dictionary\")
+                if(subType.name != \"HashMap\")
                     return false;
                 if(subType.signature.length != 1)
                     return false;
@@ -68,17 +68,17 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
                 if (type.base != GrType.Base.array)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
-                data.set(\"M\", grGetForeignType(\"Dictionary\", [subType]));
+                data.set(\"M\", grGetForeignType(\"HashMap\", [subType]));
                 return grIsKindOf"
                 ~ t ~ "(subType.base);
             });
 
             library.addFunction(&_make_!\""
-                ~ t ~ "\", \"Dictionary\", [grStringArray, any" ~ t
+                ~ t ~ "\", \"HashMap\", [grStringArray, any" ~ t
                 ~ "Array], [grAny(\"M\")]);
 
             library.addFunction(&_makeByPairs_!\""
-                ~ t ~ "\", \"Dictionary\", [grAny(\"T\", (type, data) {
+                ~ t ~ "\", \"HashMap\", [grAny(\"T\", (type, data) {
                 if (type.base != GrType.Base.array)
                     return false;
                 const GrType subType = grUnmangle(type.mangledType);
@@ -87,50 +87,50 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
                 auto pairType = grUnmangleComposite(subType.mangledType);
                 if(pairType.name != \"Pair\" || pairType.signature.length != 2 || pairType.signature[0].base != GrType.Base.string_)
                     return false;
-                data.set(\"M\", grGetForeignType(\"Dictionary\", [pairType.signature[1]]));
+                data.set(\"M\", grGetForeignType(\"HashMap\", [pairType.signature[1]]));
                 return true;
                 })], [grAny(\"M\")]);
 
             library.addFunction(&_copy_!\""
-                ~ t ~ "\", \"copy\", [any" ~ t ~ "Dictionary], [grAny(\"M\")]);
+                ~ t ~ "\", \"copy\", [any" ~ t ~ "HashMap], [grAny(\"M\")]);
 
             library.addFunction(&_size_!\""
                 ~ t ~ "\", \"size\", [any"
-                ~ t ~ "Dictionary], [grInt]);
+                ~ t ~ "HashMap], [grInt]);
 
             library.addFunction(&_empty_!\""
                 ~ t ~ "\", \"empty?\", [
                 any"
-                ~ t ~ "Dictionary
+                ~ t ~ "HashMap
             ], [grBool]);
 
             library.addFunction(&_clear_!\""
                 ~ t ~ "\", \"clear\", [
                 any"
-                ~ t ~ "Dictionary
+                ~ t ~ "HashMap
             ], [grAny(\"M\")]);
 
             library.addFunction(&_set_!\""
                 ~ t
-                ~ "\", \"set\", [any" ~ t ~ "Dictionary, grString, grAny(\"T\")]);
+                ~ "\", \"set\", [any" ~ t ~ "HashMap, grString, grAny(\"T\")]);
 
             library.addFunction(&_get_!\""
                 ~ t
-                ~ "\", \"get\", [any" ~ t ~ "Dictionary, grString], [grBool, grAny(\"T\")]);
+                ~ "\", \"get\", [any" ~ t ~ "HashMap, grString], [grBool, grAny(\"T\")]);
 
             library.addFunction(&_has_!\""
-                ~ t ~ "\", \"has?\", [any" ~ t ~ "Dictionary, grString], [grBool]);
+                ~ t ~ "\", \"has?\", [any" ~ t ~ "HashMap, grString], [grBool]);
 
             library.addFunction(&_remove_!\""
                 ~ t
-                ~ "\", \"remove\", [any" ~ t ~ "Dictionary, grString]);
+                ~ "\", \"remove\", [any" ~ t ~ "HashMap, grString]);
 
             library.addFunction(&_byKeys_!\""
                 ~ t ~ "\", \"byKeys\", [any" ~ t
-                ~ "Dictionary], [grStringArray]);
+                ~ "HashMap], [grStringArray]);
 
             library.addFunction(&_byValues_!\""
-                ~ t ~ "\", \"byValues\", [any" ~ t ~ "Dictionary], [any"
+                ~ t ~ "\", \"byValues\", [any" ~ t ~ "HashMap], [any"
                 ~ t ~ "Array]);
 
             library.addFunction(&_each_!\""
@@ -139,11 +139,11 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
                 if (type.base != GrType.Base.foreign)
                     return false;
                 auto subType = grUnmangleComposite(type.mangledType);
-                if(subType.name != \"Dictionary\")
+                if(subType.name != \"HashMap\")
                     return false;
                 if(subType.signature.length != 1)
                     return false;
-                data.set(\"R\", grGetForeignType(\"DictionaryIterator\", subType.signature));
+                data.set(\"R\", grGetForeignType(\"IterHashMap\", subType.signature));
                 return grIsKindOf"
                 ~ t ~ "(subType.signature[0].base);
             })
@@ -155,7 +155,7 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
                 if (type.base != GrType.Base.foreign)
                     return false;
                 auto result = grUnmangleComposite(type.mangledType);
-                if(result.signature.length != 1 || result.name != \"DictionaryIterator\")
+                if(result.signature.length != 1 || result.name != \"IterHashMap\")
                     return false;
                 data.set(\"T\", grGetClassType(\"Pair\", [grString, result.signature[0]]));
                 return grIsKindOf"
@@ -165,105 +165,105 @@ package(grimoire.stdlib) void grLoadStdLibDictionary(GrLibrary library) {
             ");
     }
 
-    GrType boolDictionary = grGetForeignType("Dictionary", [grBool]);
-    library.addFunction(&_print_!"bool", "print", [boolDictionary]);
+    GrType boolHashMap = grGetForeignType("HashMap", [grBool]);
+    library.addFunction(&_print_!"bool", "print", [boolHashMap]);
 
-    GrType intDictionary = grGetForeignType("Dictionary", [grInt]);
-    library.addFunction(&_print_!"int", "print", [intDictionary]);
+    GrType intHashMap = grGetForeignType("HashMap", [grInt]);
+    library.addFunction(&_print_!"int", "print", [intHashMap]);
 
-    GrType realDictionary = grGetForeignType("Dictionary", [grReal]);
-    library.addFunction(&_print_!"real", "print", [realDictionary]);
+    GrType realHashMap = grGetForeignType("HashMap", [grReal]);
+    library.addFunction(&_print_!"real", "print", [realHashMap]);
 
-    GrType stringDictionary = grGetForeignType("Dictionary", [grString]);
-    library.addFunction(&_print_!"string", "print", [stringDictionary]);
+    GrType stringHashMap = grGetForeignType("HashMap", [grString]);
+    library.addFunction(&_print_!"string", "print", [stringHashMap]);
 }
 
 private void _make_(string t)(GrCall call) {
-    mixin(t ~ "Dictionary dictionary = new " ~ t ~ "Dictionary(call.getStringArray(0).data, call.get"
+    mixin(t ~ "HashMap hashmap = new " ~ t ~ "HashMap(call.getStringArray(0).data, call.get"
             ~ t ~ "Array(1).data);");
-    call.setForeign(dictionary);
+    call.setForeign(hashmap);
 }
 
 private void _makeByPairs_(string t)(GrCall call) {
-    mixin(t ~ "Dictionary dictionary = new " ~ t ~ "Dictionary;");
+    mixin(t ~ "HashMap hashmap = new " ~ t ~ "HashMap;");
     GrObjectArray pairs = call.getObjectArray(0);
     for (size_t i; i < pairs.data.length; ++i) {
         GrObject pair = cast(GrObject) pairs.data[i];
         static if (t == "Object") {
-            auto value = pair.getPtr("value");
+            auto value = pair.getPtr("second");
         }
         else {
-            mixin("auto value = pair.get" ~ t ~ "(\"value\");");
+            mixin("auto value = pair.get" ~ t ~ "(\"second\");");
         }
-        dictionary.data[pair.getString("key")] = value;
+        hashmap.data[pair.getString("first")] = value;
     }
-    call.setForeign(dictionary);
+    call.setForeign(hashmap);
 }
 
 private void _copy_(string t)(GrCall call) {
-    mixin(t ~ "Dictionary dictionary = call.getForeign!" ~ t ~ "Dictionary(0);");
-    if (!dictionary) {
-        call.raise(_paramError);
+    mixin(t ~ "HashMap hashmap = call.getForeign!" ~ t ~ "HashMap(0);");
+    if (!hashmap) {
+        call.raise("NullError");
         return;
     }
-    mixin("call.setForeign!" ~ t ~ "Dictionary(new " ~ t ~ "Dictionary(dictionary));");
+    mixin("call.setForeign!" ~ t ~ "HashMap(new " ~ t ~ "HashMap(hashmap));");
 }
 
 private void _size_(string t)(GrCall call) {
-    mixin(t ~ "Dictionary dictionary = call.getForeign!" ~ t ~ "Dictionary(0);");
-    if (!dictionary) {
-        call.raise(_paramError);
+    mixin(t ~ "HashMap hashmap = call.getForeign!" ~ t ~ "HashMap(0);");
+    if (!hashmap) {
+        call.raise("NullError");
         return;
     }
-    call.setInt(cast(GrInt) dictionary.data.length);
+    call.setInt(cast(GrInt) hashmap.data.length);
 }
 
 private void _empty_(string t)(GrCall call) {
-    mixin("const " ~ t ~ "Dictionary dictionary = call.getForeign!" ~ t ~ "Dictionary(0);");
-    if (!dictionary) {
-        call.raise(_paramError);
+    mixin("const " ~ t ~ "HashMap hashmap = call.getForeign!" ~ t ~ "HashMap(0);");
+    if (!hashmap) {
+        call.raise("NullError");
         return;
     }
-    call.setBool(dictionary.data.length == 0);
+    call.setBool(hashmap.data.length == 0);
 }
 
 private void _clear_(string t)(GrCall call) {
-    mixin(t ~ "Dictionary dictionary = call.getForeign!" ~ t ~ "Dictionary(0);");
-    if (!dictionary) {
-        call.raise(_paramError);
+    mixin(t ~ "HashMap hashmap = call.getForeign!" ~ t ~ "HashMap(0);");
+    if (!hashmap) {
+        call.raise("NullError");
         return;
     }
-    dictionary.data.clear();
-    mixin("call.setForeign!" ~ t ~ "Dictionary(dictionary);");
+    hashmap.data.clear();
+    mixin("call.setForeign!" ~ t ~ "HashMap(hashmap);");
 }
 
 private void _set_(string t)(GrCall call) {
-    mixin(t ~ "Dictionary dictionary = call.getForeign!(" ~ t ~ "Dictionary)(0);");
-    if (!dictionary) {
-        call.raise(_paramError);
+    mixin(t ~ "HashMap hashmap = call.getForeign!(" ~ t ~ "HashMap)(0);");
+    if (!hashmap) {
+        call.raise("NullError");
         return;
     }
     static if (t == "Object") {
-        dictionary.data[call.getString(1)] = call.getPtr(2);
+        hashmap.data[call.getString(1)] = call.getPtr(2);
     }
     else {
-        mixin("dictionary.data[call.getString(1)] = call.get" ~ t ~ "(2);");
+        mixin("hashmap.data[call.getString(1)] = call.get" ~ t ~ "(2);");
     }
 }
 
 private void _get_(string t)(GrCall call) {
-    mixin(t ~ "Dictionary dictionary = call.getForeign!(" ~ t ~ "Dictionary)(0);");
-    if (!dictionary) {
-        call.raise(_paramError);
+    mixin(t ~ "HashMap hashmap = call.getForeign!(" ~ t ~ "HashMap)(0);");
+    if (!hashmap) {
+        call.raise("NullError");
         return;
     }
     static if (t == "Object") {
-        auto p = call.getString(1) in dictionary.data;
+        auto p = call.getString(1) in hashmap.data;
         call.setBool(p !is null);
         call.setPtr(p ? *p : null);
     }
     else {
-        auto p = call.getString(1) in dictionary.data;
+        auto p = call.getString(1) in hashmap.data;
         call.setBool(p !is null);
         static if (t == "Int") {
             call.setInt(p ? *p : 0);
@@ -278,64 +278,64 @@ private void _get_(string t)(GrCall call) {
 }
 
 private void _has_(string t)(GrCall call) {
-    mixin(t ~ "Dictionary dictionary = call.getForeign!(" ~ t ~ "Dictionary)(0);");
-    if (!dictionary) {
-        call.raise(_paramError);
+    mixin(t ~ "HashMap hashmap = call.getForeign!(" ~ t ~ "HashMap)(0);");
+    if (!hashmap) {
+        call.raise("NullError");
         return;
     }
-    call.setBool((call.getString(1) in dictionary.data) !is null);
+    call.setBool((call.getString(1) in hashmap.data) !is null);
 }
 
 private void _remove_(string t)(GrCall call) {
-    mixin(t ~ "Dictionary dictionary = call.getForeign!(" ~ t ~ "Dictionary)(0);");
-    if (!dictionary) {
-        call.raise(_paramError);
+    mixin(t ~ "HashMap hashmap = call.getForeign!(" ~ t ~ "HashMap)(0);");
+    if (!hashmap) {
+        call.raise("NullError");
         return;
     }
-    dictionary.data.remove(call.getString(1));
+    hashmap.data.remove(call.getString(1));
 }
 
 private void _byKeys_(string t)(GrCall call) {
-    mixin(t ~ "Dictionary dictionary = call.getForeign!(" ~ t ~ "Dictionary)(0);");
-    if (!dictionary) {
-        call.raise(_paramError);
+    mixin(t ~ "HashMap hashmap = call.getForeign!(" ~ t ~ "HashMap)(0);");
+    if (!hashmap) {
+        call.raise("NullError");
         return;
     }
     GrStringArray ary = new GrStringArray;
-    ary.data = dictionary.data.keys;
+    ary.data = hashmap.data.keys;
     call.setStringArray(ary);
 }
 
 private void _byValues_(string t)(GrCall call) {
-    mixin(t ~ "Dictionary dictionary = call.getForeign!(" ~ t ~ "Dictionary)(0);");
-    if (!dictionary) {
-        call.raise(_paramError);
+    mixin(t ~ "HashMap hashmap = call.getForeign!(" ~ t ~ "HashMap)(0);");
+    if (!hashmap) {
+        call.raise("NullError");
         return;
     }
     mixin("Gr" ~ t ~ "Array ary = new Gr" ~ t ~ "Array;");
-    ary.data = dictionary.data.values;
+    ary.data = hashmap.data.values;
     mixin("call.set" ~ t ~ "Array(ary);");
 }
 
 private void _each_(string t)(GrCall call) {
-    mixin(t ~ "Dictionary dictionary = call.getForeign!(" ~ t ~ "Dictionary)(0);");
-    if (!dictionary) {
-        call.raise(_paramError);
+    mixin(t ~ "HashMap hashmap = call.getForeign!(" ~ t ~ "HashMap)(0);");
+    if (!hashmap) {
+        call.raise("NullError");
         return;
     }
     static if (t == "Int") {
-        DictionaryIter!(GrInt) iter = new DictionaryIter!(GrInt);
+        IterHashMap!(GrInt) iter = new IterHashMap!(GrInt);
     }
     else static if (t == "Real") {
-        DictionaryIter!(GrReal) iter = new DictionaryIter!(GrReal);
+        IterHashMap!(GrReal) iter = new IterHashMap!(GrReal);
     }
     else static if (t == "String") {
-        DictionaryIter!(GrString) iter = new DictionaryIter!(GrString);
+        IterHashMap!(GrString) iter = new IterHashMap!(GrString);
     }
     else static if (t == "Object") {
-        DictionaryIter!(GrPtr) iter = new DictionaryIter!(GrPtr);
+        IterHashMap!(GrPtr) iter = new IterHashMap!(GrPtr);
     }
-    foreach (pair; dictionary.data.byKeyValue()) {
+    foreach (pair; hashmap.data.byKeyValue()) {
         iter.pairs ~= tuple(pair.key, pair.value);
     }
     call.setForeign(iter);
@@ -343,19 +343,19 @@ private void _each_(string t)(GrCall call) {
 
 private void _next_(string t)(GrCall call) {
     static if (t == "Int") {
-        DictionaryIter!(GrInt) iter = call.getForeign!(DictionaryIter!(GrInt))(0);
+        IterHashMap!(GrInt) iter = call.getForeign!(IterHashMap!(GrInt))(0);
     }
     else static if (t == "Real") {
-        DictionaryIter!(GrReal) iter = call.getForeign!(DictionaryIter!(GrReal))(0);
+        IterHashMap!(GrReal) iter = call.getForeign!(IterHashMap!(GrReal))(0);
     }
     else static if (t == "String") {
-        DictionaryIter!(GrString) iter = call.getForeign!(DictionaryIter!(GrString))(0);
+        IterHashMap!(GrString) iter = call.getForeign!(IterHashMap!(GrString))(0);
     }
     else static if (t == "Object") {
-        DictionaryIter!(GrPtr) iter = call.getForeign!(DictionaryIter!(GrPtr))(0);
+        IterHashMap!(GrPtr) iter = call.getForeign!(IterHashMap!(GrPtr))(0);
     }
     if (!iter) {
-        call.raise(_paramError);
+        call.raise("NullError");
         return;
     }
     if (iter.index >= iter.pairs.length) {
@@ -365,27 +365,27 @@ private void _next_(string t)(GrCall call) {
     }
     call.setBool(true);
     static if (t == "Int") {
-        GrObject obj = new GrObject(["key", "value"]);
-        obj.setString("key", iter.pairs[iter.index][0]);
-        obj.setInt("value", iter.pairs[iter.index][1]);
+        GrObject obj = new GrObject(["first", "second"]);
+        obj.setString("first", iter.pairs[iter.index][0]);
+        obj.setInt("second", iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     else static if (t == "Real") {
-        GrObject obj = new GrObject(["key", "value"]);
-        obj.setString("key", iter.pairs[iter.index][0]);
-        obj.setReal("value", iter.pairs[iter.index][1]);
+        GrObject obj = new GrObject(["first", "second"]);
+        obj.setString("first", iter.pairs[iter.index][0]);
+        obj.setReal("second", iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     else static if (t == "String") {
-        GrObject obj = new GrObject(["key", "value"]);
-        obj.setString("key", iter.pairs[iter.index][0]);
-        obj.setString("value", iter.pairs[iter.index][1]);
+        GrObject obj = new GrObject(["first", "second"]);
+        obj.setString("first", iter.pairs[iter.index][0]);
+        obj.setString("second", iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     else static if (t == "Object") {
-        GrObject obj = new GrObject(["key", "value"]);
-        obj.setString("key", iter.pairs[iter.index][0]);
-        obj.setPtr("value", iter.pairs[iter.index][1]);
+        GrObject obj = new GrObject(["first", "second"]);
+        obj.setString("first", iter.pairs[iter.index][0]);
+        obj.setPtr("second", iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     iter.index++;
@@ -393,21 +393,21 @@ private void _next_(string t)(GrCall call) {
 
 private void _print_(string t)(GrCall call) {
     static if (t == "bool" || t == "int") {
-        IntDictionary dictionary = call.getForeign!(IntDictionary)(0);
+        IntHashMap hashmap = call.getForeign!(IntHashMap)(0);
     }
     else static if (t == "real") {
-        RealDictionary dictionary = call.getForeign!(RealDictionary)(0);
+        RealHashMap hashmap = call.getForeign!(RealHashMap)(0);
     }
     else static if (t == "string") {
-        StringDictionary dictionary = call.getForeign!(StringDictionary)(0);
+        StringHashMap hashmap = call.getForeign!(StringHashMap)(0);
     }
-    if (!dictionary) {
-        call.raise(_paramError);
+    if (!hashmap) {
+        call.raise("NullError");
         return;
     }
     GrString result = "{";
     bool isFirst = true;
-    foreach (key, value; dictionary.data) {
+    foreach (key, value; hashmap.data) {
         if (isFirst) {
             isFirst = false;
         }

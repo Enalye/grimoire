@@ -8,40 +8,58 @@ module grimoire.stdlib.pair;
 import grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibPair(GrLibrary library) {
-    library.addClass("Pair", ["key", "value"], [
+    library.addClass("Pair", ["first", "second"], [
             grAny("A"), grAny("B")
         ], [
             "A", "B"
         ]);
 
-    static foreach (t; ["Int", "Real", "String", "Object"]) {
-        mixin(
-            "
-        library.addOperator(&_makeKeyValuePair_!\""
-                ~ t
-                ~ "\", GrLibrary.Operator.arrow, [grString, grAny(\"T\", (type, data) {
-            data.set(\"P\", grGetClassType(\"Pair\", [grString, type]));
-            return grIsKindOf"
-                ~ t ~ "(type.base);
-        })], grAny(\"P\"));
-        ");
+    static foreach (t1; ["Int", "Real", "String", "Object"]) {
+        static foreach (t2; ["Int", "Real", "String", "Object"]) {
+            mixin(
+                "
+            library.addOperator(&_makeKeyValuePair_!(\""
+                    ~ t1 ~ "\", \"" ~ t2
+                    ~ "\"), GrLibrary.Operator.arrow, [grAny(\"T1\"),
+                    grAny(\"T2\", (t2, data) {
+                        auto t1 = data.get(\"T1\");
+                        data.set(\"P\", grGetClassType(\"Pair\", [t1, t2]));
+                        return grIsKindOf"
+                    ~ t1 ~ "(t1.base) && grIsKindOf"
+                    ~ t2 ~ "(t2.base);
+                    })],
+                    grAny(\"P\"));
+            ");
+        }
     }
 }
 
-private void _makeKeyValuePair_(string t)(GrCall call) {
+private void _makeKeyValuePair_(string t1, string t2)(GrCall call) {
     GrObject obj = call.createObject(grUnmangle(call.getOutType(0)).mangledType);
-    obj.setString("key", call.getString(0));
-    static if (t == "Int") {
-        obj.setInt("value", call.getInt(1));
+    static if (t1 == "Int") {
+        obj.setInt("first", call.getInt(0));
     }
-    else static if (t == "Real") {
-        obj.setReal("value", call.getReal(1));
+    else static if (t1 == "Real") {
+        obj.setReal("first", call.getReal(0));
     }
-    else static if (t == "String") {
-        obj.setString("value", call.getString(1));
+    else static if (t1 == "String") {
+        obj.setString("first", call.getString(0));
     }
-    else static if (t == "Object") {
-        obj.setPtr("value", call.getPtr(1));
+    else static if (t1 == "Object") {
+        obj.setPtr("first", call.getPtr(0));
+    }
+
+    static if (t2 == "Int") {
+        obj.setInt("second", call.getInt(1));
+    }
+    else static if (t2 == "Real") {
+        obj.setReal("second", call.getReal(1));
+    }
+    else static if (t2 == "String") {
+        obj.setString("second", call.getString(1));
+    }
+    else static if (t2 == "Object") {
+        obj.setPtr("second", call.getPtr(1));
     }
     call.setObject(obj);
 }
