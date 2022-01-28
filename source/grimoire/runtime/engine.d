@@ -18,7 +18,6 @@ import grimoire.runtime.task;
 import grimoire.runtime.array;
 import grimoire.runtime.object;
 import grimoire.runtime.channel;
-import grimoire.runtime.indexedarray;
 import grimoire.runtime.call;
 
 /**
@@ -48,7 +47,7 @@ class GrEngine {
         GrPtr[] _oglobalStackIn, _oglobalStackOut;
 
         /// Task array.
-        DynamicIndexedArray!GrTask _tasks, _createdTasks;
+        GrTask[] _tasks, _createdTasks;
 
         /// Global panic state.
         /// It means that the throwing task didn't handle the exception.
@@ -114,9 +113,7 @@ class GrEngine {
     }
 
     private void initialize() {
-        _tasks = new DynamicIndexedArray!GrTask;
-        _createdTasks = new DynamicIndexedArray!GrTask;
-        _tasks.push(new GrTask(this));
+        _tasks ~= new GrTask(this);
     }
 
     /// Add a new library to the runtime.
@@ -189,10 +186,10 @@ class GrEngine {
         task.pc = *event;
         final switch (priority) with (Priority) {
         case immediate:
-            _tasks.push(task);
+            _tasks ~= task;
             break;
         case normal:
-            _createdTasks.push(task);
+            _createdTasks ~= task;
             break;
         }
         return task;
@@ -214,19 +211,19 @@ class GrEngine {
 
         GrTask task = new GrTask(this);
         task.pc = pc;
-        _createdTasks.push(task);
+        _createdTasks ~= task;
         return task;
     }
 
     package(grimoire) void pushTask(GrTask task) {
-        _createdTasks.push(task);
+        _createdTasks ~= task;
     }
 
     /**
     Captures an unhandled error and kill the VM.
     */
     void panic() {
-        _tasks.reset();
+        _tasks.length = 0;
     }
 
     /**
@@ -338,7 +335,7 @@ class GrEngine {
             task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
             task.isKilled = true;
         }
-        _createdTasks.reset();
+        _createdTasks.length = 0;
     }
 
     alias getBoolVariable = getVariable!bool;
@@ -506,19 +503,21 @@ class GrEngine {
 
     /// Run the vm until all the contexts are finished or suspended.
     void process() {
+        import std.algorithm.mutation : remove, swap;
+
         if (_createdTasks.length) {
-            for (int index = cast(int) _createdTasks.length - 1; index >= 0; index--)
-                _tasks.push(_createdTasks[index]);
-            _createdTasks.reset();
-            import std.algorithm.mutation : swap;
+            foreach_reverse (task; _createdTasks)
+                _tasks ~= task;
+            _createdTasks.length = 0;
 
             swap(_iglobalStackIn, _iglobalStackOut);
             swap(_fglobalStackIn, _fglobalStackOut);
             swap(_sglobalStackIn, _sglobalStackOut);
             swap(_oglobalStackIn, _oglobalStackOut);
         }
-        contextsLabel: for (uint index = 0u; index < _tasks.length; index++) {
-            GrTask currentTask = _tasks.data[index];
+
+        tasksLabel: for (uint index = 0u; index < _tasks.length;) {
+            GrTask currentTask = _tasks[index];
             if (currentTask.blocker) {
                 if (!currentTask.blocker.run())
                     continue;
@@ -582,8 +581,8 @@ class GrEngine {
                         _sglobalStackIn.length--;
 
                         //Every deferred call has been executed, now die.
-                        _tasks.markInternalForRemoval(index);
-                        continue contextsLabel;
+                        _tasks = _tasks.remove(index);
+                        continue tasksLabel;
                     }
                     break;
                 case try_:
@@ -603,16 +602,16 @@ class GrEngine {
                     }
                     break;
                 case task:
-                    GrTask newCoro = new GrTask(this);
-                    newCoro.pc = grGetInstructionUnsignedValue(opcode);
-                    _createdTasks.push(newCoro);
+                    GrTask nTask = new GrTask(this);
+                    nTask.pc = grGetInstructionUnsignedValue(opcode);
+                    _createdTasks ~= nTask;
                     currentTask.pc++;
                     break;
                 case anonymousTask:
-                    GrTask newCoro = new GrTask(this);
-                    newCoro.pc = cast(uint) currentTask.istack[currentTask.istackPos];
+                    GrTask nTask = new GrTask(this);
+                    nTask.pc = cast(uint) currentTask.istack[currentTask.istackPos];
                     currentTask.istackPos--;
-                    _createdTasks.push(newCoro);
+                    _createdTasks ~= nTask;
                     currentTask.pc++;
                     break;
                 case die:
@@ -644,16 +643,16 @@ class GrEngine {
                     }
                     else {
                         //No need to flag if the call stack is empty without any deferred statement.
-                        _tasks.markInternalForRemoval(index);
-                        continue contextsLabel;
+                        _tasks = _tasks.remove(index);
+                        continue tasksLabel;
                     }
                     break;
                 case quit:
                     killtasks();
-                    continue contextsLabel;
+                    continue tasksLabel;
                 case yield:
                     currentTask.pc++;
-                    continue contextsLabel;
+                    continue tasksLabel;
                 case new_:
                     currentTask.ostackPos++;
                     if (currentTask.ostackPos == currentTask.ostack.length)
@@ -728,7 +727,7 @@ class GrEngine {
                             currentTask.pc = currentTask.selectPositionJump;
                         }
                         else
-                            continue contextsLabel;
+                            continue tasksLabel;
                     }
                     break;
                 case send_real:
@@ -761,7 +760,7 @@ class GrEngine {
                             currentTask.pc = currentTask.selectPositionJump;
                         }
                         else
-                            continue contextsLabel;
+                            continue tasksLabel;
                     }
                     break;
                 case send_string:
@@ -794,7 +793,7 @@ class GrEngine {
                             currentTask.pc = currentTask.selectPositionJump;
                         }
                         else
-                            continue contextsLabel;
+                            continue tasksLabel;
                     }
                     break;
                 case send_object:
@@ -828,7 +827,7 @@ class GrEngine {
                             currentTask.pc = currentTask.selectPositionJump;
                         }
                         else
-                            continue contextsLabel;
+                            continue tasksLabel;
                     }
                     break;
                 case receive_int:
@@ -864,7 +863,7 @@ class GrEngine {
                             currentTask.pc = currentTask.selectPositionJump;
                         }
                         else
-                            continue contextsLabel;
+                            continue tasksLabel;
                     }
                     break;
                 case receive_real:
@@ -900,7 +899,7 @@ class GrEngine {
                             currentTask.pc = currentTask.selectPositionJump;
                         }
                         else
-                            continue contextsLabel;
+                            continue tasksLabel;
                     }
                     break;
                 case receive_string:
@@ -936,7 +935,7 @@ class GrEngine {
                             currentTask.pc = currentTask.selectPositionJump;
                         }
                         else
-                            continue contextsLabel;
+                            continue tasksLabel;
                     }
                     break;
                 case receive_object:
@@ -968,7 +967,7 @@ class GrEngine {
                             currentTask.pc = currentTask.selectPositionJump;
                         }
                         else
-                            continue contextsLabel;
+                            continue tasksLabel;
                     }
                     break;
                 case startSelectChannel:
@@ -1765,8 +1764,8 @@ class GrEngine {
                     //If another task was killed by an exception,
                     //we might killtasks up there if the task has just been spawned.
                     if (currentTask.stackPos < 0 && currentTask.isKilled) {
-                        _tasks.markInternalForRemoval(index);
-                        continue contextsLabel;
+                        _tasks = _tasks.remove(index);
+                        continue tasksLabel;
                     }
                     //Check for deferred calls.
                     else if (currentTask.callStack[currentTask.stackPos].deferStack.length) {
@@ -1793,8 +1792,8 @@ class GrEngine {
                     //If another task was killed by an exception,
                     //we might killtasks up there if the task has just been spawned.
                     if (currentTask.stackPos < 0) {
-                        _tasks.markInternalForRemoval(index);
-                        continue contextsLabel;
+                        _tasks = _tasks.remove(index);
+                        continue tasksLabel;
                     }
                     //Check for deferred calls.
                     else if (currentTask.callStack[currentTask.stackPos].deferStack.length) {
@@ -1821,8 +1820,8 @@ class GrEngine {
                         }
                         else {
                             //Every deferred call has been executed, now die.
-                            _tasks.markInternalForRemoval(index);
-                            continue contextsLabel;
+                            _tasks = _tasks.remove(index);
+                            continue tasksLabel;
                         }
                     }
                     else if (currentTask.isPanicking) {
@@ -1857,7 +1856,7 @@ class GrEngine {
                                 otherTask.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
                                 otherTask.isKilled = true;
                             }
-                            _createdTasks.reset();
+                            _createdTasks.length = 0;
 
                             //The VM is now panicking.
                             _isPanicking = true;
@@ -1865,8 +1864,8 @@ class GrEngine {
                             _sglobalStackIn.length--;
 
                             //Every deferred call has been executed, now die.
-                            _tasks.markInternalForRemoval(index);
-                            continue contextsLabel;
+                            _tasks = _tasks.remove(index);
+                            continue tasksLabel;
                         }
                     }
                     else {
@@ -1954,7 +1953,7 @@ class GrEngine {
                     _calls[grGetInstructionUnsignedValue(opcode)].call(currentTask);
                     currentTask.pc++;
                     if (currentTask.blocker)
-                        continue contextsLabel;
+                        continue tasksLabel;
                     break;
                 case jump:
                     currentTask.pc += grGetInstructionSignedValue(opcode);
@@ -2418,8 +2417,8 @@ class GrEngine {
                     break;
                 }
             }
+            index++;
         }
-        _tasks.sweepMarkedData();
     }
 
     /// Create a new object.
