@@ -75,7 +75,7 @@ package(grimoire.stdlib) void grLoadStdLibAny(GrLibrary library) {
         }), anyType);
 
     library.addCast(&_from_i2, grAny("T", (type, data) {
-            return type.base == GrType.Base.enumeration
+            return type.base == GrType.Base.enum_
             || type.base == GrType.Base.function_ || type.base == GrType.Base.task;
         }), anyType);
 

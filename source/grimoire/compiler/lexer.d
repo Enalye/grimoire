@@ -90,7 +90,7 @@ struct GrLexeme {
         alias_,
         event,
         class_,
-        enumeration,
+        enum_,
         instance,
         new_,
         copy,
@@ -120,7 +120,7 @@ struct GrLexeme {
         self,
         die,
         quit,
-        suspend,
+        yield,
         break_,
         continue_,
     }
@@ -885,7 +885,7 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.class_;
             break;
         case "enum":
-            lex.type = GrLexeme.Type.enumeration;
+            lex.type = GrLexeme.Type.enum_;
             break;
         case "instance":
             lex.type = GrLexeme.Type.instance;
@@ -936,7 +936,7 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.quit;
             break;
         case "yield":
-            lex.type = GrLexeme.Type.suspend;
+            lex.type = GrLexeme.Type.yield;
             break;
         case "break":
             lex.type = GrLexeme.Type.break_;

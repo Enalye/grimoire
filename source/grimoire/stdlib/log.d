@@ -20,7 +20,7 @@ package(grimoire.stdlib) void grLoadStdLibLog(GrLibrary library) {
     library.addFunction(&_print_nf, "print", [grRealArray]);
     library.addFunction(&_print_ns, "print", [grStringArray]);
     library.addFunction(&_print_enum, "print", [
-            grAny("T", (type, data) { return type.base == GrType.Base.enumeration; })
+            grAny("T", (type, data) { return type.base == GrType.Base.enum_; })
         ]
     );
     library.addFunction(&_print_chan, "print", [

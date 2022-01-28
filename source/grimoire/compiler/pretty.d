@@ -24,7 +24,7 @@ string grGetPrettyType(GrType variableType) {
     case string_:
         return "string";
     case array:
-        string result = "list(";
+        string result = "array(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach (parameter; parameters) {
@@ -35,6 +35,20 @@ string grGetPrettyType(GrType variableType) {
         }
         result ~= ")";
         return result;
+    case channel:
+        string result = "channel(";
+        int i;
+        auto parameters = grUnmangleSignature(variableType.mangledType);
+        foreach (parameter; parameters) {
+            result ~= grGetPrettyType(parameter);
+            if ((i + 2) <= parameters.length)
+                result ~= ", ";
+            i++;
+        }
+        result ~= ")";
+        return result;
+    case enum_:
+        return to!string(variableType.mangledType);
     case function_:
         string result = "function(";
         int i;
@@ -56,8 +70,8 @@ string grGetPrettyType(GrType variableType) {
             i++;
         }
         return result;
-    case channel:
-        string result = "channel(";
+    case task:
+        string result = "task(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach (parameter; parameters) {
@@ -80,20 +94,6 @@ string grGetPrettyType(GrType variableType) {
         }
         result ~= ")";
         return result;
-    case task:
-        string result = "task(";
-        int i;
-        auto parameters = grUnmangleSignature(variableType.mangledType);
-        foreach (parameter; parameters) {
-            result ~= grGetPrettyType(parameter);
-            if ((i + 2) <= parameters.length)
-                result ~= ", ";
-            i++;
-        }
-        result ~= ")";
-        return result;
-    case enumeration:
-        return to!string(variableType.mangledType);
     case foreign:
     case class_:
         import std.algorithm.searching : findSplitBefore;

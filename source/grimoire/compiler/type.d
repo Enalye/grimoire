@@ -36,7 +36,7 @@ struct GrType {
         class_,
         foreign,
         channel,
-        enumeration,
+        enum_,
         internalTuple,
         reference
     }
@@ -85,7 +85,7 @@ struct GrType {
         if (base == GrType.Base.function_ || base == GrType.Base.task)
             return mangledType == v.mangledType && mangledReturnType == v.mangledReturnType;
         if (base == GrType.Base.foreign || base == GrType.Base.class_
-            || base == GrType.Base.enumeration || base == GrType.Base.array)
+            || base == GrType.Base.enum_ || base == GrType.Base.array)
             return mangledType == v.mangledType;
         return true;
     }
@@ -172,7 +172,7 @@ GrType grAny(string name, bool function(GrType, GrAnyData) predicate = (a, b) =>
 bool grIsKindOfInt(GrType.Base type) {
     return type == GrType.Base.integer || type == GrType.Base.boolean
         || type == GrType.Base.function_ || type == GrType.Base.task || type == GrType
-        .Base.enumeration;
+        .Base.enum_;
 }
 
 /// The type is handled by a real based register
@@ -343,13 +343,13 @@ final class GrEnumDefinition {
                 return fieldIndex;
             fieldIndex++;
         }
-        assert(false, "Undefined enum \'" ~ name ~ "\'");
+        assert(false, "undefined enum \'" ~ name ~ "\'");
     }
 }
 
 /// Create a GrType of enum for the type system.
 GrType grGetEnumType(string name) {
-    GrType stType = GrType.Base.enumeration;
+    GrType stType = GrType.Base.enum_;
     stType.mangledType = name;
     return stType;
 }
@@ -526,7 +526,7 @@ package class GrFunction {
         case boolean:
         case function_:
         case task:
-        case enumeration:
+        case enum_:
             iregisterAvailables ~= variable.register;
             break;
         case real_:

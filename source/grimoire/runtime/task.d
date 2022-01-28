@@ -3,14 +3,14 @@
  * License: Zlib
  * Authors: Enalye
  */
-module grimoire.runtime.context;
+module grimoire.runtime.task;
 
 import grimoire.assembly;
 import grimoire.runtime.engine, grimoire.runtime.array,
 grimoire.runtime.channel, grimoire.runtime.object;
 
 /**
-Represents a single function context in the callStack.
+Represents a single function task in the callStack.
 */
 struct GrStackFrame {
     /// Size of the locals in the calling function.
@@ -24,10 +24,10 @@ struct GrStackFrame {
 }
 
 /**
-Snapshot of the context's state. \
-Used when we need to restore the context to a previous state.
+Snapshot of the task's state. \
+Used when we need to restore the task to a previous state.
 */
-struct GrContextState {
+struct GrTaskState {
     /// Current expression stack top
     int istackPos, /// Ditto
         rstackPos, /// Ditto
@@ -46,17 +46,17 @@ struct GrContextState {
 }
 
 /**
-Pause the associated context.
+Pause the associated task.
 */
 abstract class GrBlocker {
-    /// Update the state, returns true if the context is still paused.
+    /// Update the state, returns true if the task is still paused.
     bool run();
 }
 
 /**
-Coroutines are contexts that hold local data.
+Coroutines are tasks that hold local data.
 */
-final class GrContext {
+final class GrTask {
     /// Default ctor.
     this(GrEngine engine_) {
         engine = engine_;
@@ -65,7 +65,7 @@ final class GrContext {
         setupLocals(2, 2, 2, 2);
     }
 
-    /// Parent engine where the context is running.
+    /// Parent engine where the task is running.
     GrEngine engine;
 
     /// Local variables
@@ -109,22 +109,22 @@ final class GrContext {
     /// An exception has been raised an is not caught.
     bool isPanicking;
 
-    /// Set when the context is in a select/case statement.
-    /// Then, the context is not stopped by a blocking channel.
+    /// Set when the task is in a select/case statement.
+    /// Then, the task is not stopped by a blocking channel.
     bool isEvaluatingChannel;
 
-    /// Set when the context is forced to yield by a blocking channel.
+    /// Set when the task is forced to yield by a blocking channel.
     /// Release only when the channel is ready.
     bool isLocked;
 
     /// When evaluating, a blocking jump to this position will occur instead of blocking.
     uint selectPositionJump;
 
-    /// The context will block until the blocker is cleared.
+    /// The task will block until the blocker is cleared.
     GrBlocker blocker;
 
     /// Backup to restore stack state after select evaluation.
-    GrContextState[] states;
+    GrTaskState[] states;
 
     /// Current callstack max depth.
     uint callStackLimit;
@@ -284,9 +284,9 @@ final class GrContext {
         }
     }
 
-    /// Register the current state of the context
+    /// Register the current state of the task
     void pushState() {
-        GrContextState state;
+        GrTaskState state;
         state.istackPos = istackPos;
         state.rstackPos = rstackPos;
         state.sstackPos = sstackPos;
@@ -300,11 +300,11 @@ final class GrContext {
         states ~= state;
     }
 
-    /// Restore the last state of the context
+    /// Restore the last state of the task
     void restoreState() {
         if (!states.length)
-            throw new Exception("Fatal error: pop context state");
-        GrContextState state = states[$ - 1];
+            throw new Exception("Fatal error: pop task state");
+        GrTaskState state = states[$ - 1];
         istackPos = state.istackPos;
         rstackPos = state.rstackPos;
         sstackPos = state.sstackPos;
@@ -317,17 +317,17 @@ final class GrContext {
         callStack[stackPos] = state.stackFrame;
     }
 
-    /// Remove last state of the context
+    /// Remove last state of the task
     void popState() {
         states.length--;
     }
 
-    /// Lock the context until the blocker is cleared
+    /// Lock the task until the blocker is cleared
     void block(GrBlocker blocker_) {
         blocker = blocker_;
     }
 
-    /// Unlock the context from the blocker
+    /// Unlock the task from the blocker
     void unblock() {
         blocker = null;
     }
@@ -336,7 +336,7 @@ final class GrContext {
     string dump() {
         import std.conv : to;
 
-        string result = "Context Dump:";
+        string result = "Task Dump:";
         result ~= "\nfstack: " ~ to!string(rstack[0 .. (rstackPos + 1)]);
         result ~= "\nistack: " ~ to!string(istack[0 .. (istackPos + 1)]);
         result ~= "\nsstack: " ~ to!string(sstack[0 .. (sstackPos + 1)]);

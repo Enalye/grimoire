@@ -8,16 +8,16 @@ module grimoire.runtime.call;
 import std.conv : to;
 import grimoire.assembly;
 import grimoire.compiler;
-import grimoire.runtime.context, grimoire.runtime.array,
+import grimoire.runtime.task, grimoire.runtime.array,
 grimoire.runtime.object, grimoire.runtime.channel;
 
 /// Primitive type.
 alias GrCallback = void function(GrCall);
 
-/// Primitive context.
+/// Primitive task.
 final class GrCall {
     private {
-        GrContext _context;
+        GrTask _task;
         GrCallback _callback;
 
         uint[] _parameters;
@@ -29,13 +29,13 @@ final class GrCall {
 
     @property {
         /// Current task running the primitive.
-        GrContext context() {
-            return _context;
+        GrTask task() {
+            return _task;
         }
 
         /// Extra type compiler information.
         string meta() const {
-            return _context.engine.meta;
+            return _task.engine.meta;
         }
     }
 
@@ -54,20 +54,20 @@ final class GrCall {
     }
 
     /// The actual runtime call to the primitive.
-    void call(GrContext context) {
+    void call(GrTask task) {
         _iresults = 0;
         _rresults = 0;
         _sresults = 0;
         _oresults = 0;
         _hasError = false;
-        _context = context;
+        _task = task;
 
         _callback(this);
 
-        _context.istackPos -= (_iparams - _iresults);
-        _context.rstackPos -= (_rparams - _rresults);
-        _context.sstackPos -= (_sparams - _sresults);
-        _context.ostackPos -= (_oparams - _oresults);
+        _task.istackPos -= (_iparams - _iresults);
+        _task.rstackPos -= (_rparams - _rresults);
+        _task.sstackPos -= (_sparams - _sresults);
+        _task.ostackPos -= (_oparams - _oresults);
 
         if (_hasError)
             dispatchError();
@@ -158,31 +158,31 @@ final class GrCall {
         static if (is(T == GrInt)) {
             if ((_parameters[index] & 0x10000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not an int");
-            return _context.istack[(_context.istackPos - _iparams) + (_parameters[index] & 0xFFFF)
+            return _task.istack[(_task.istackPos - _iparams) + (_parameters[index] & 0xFFFF)
                 + 1];
         }
         else static if (is(T == GrBool)) {
             if ((_parameters[index] & 0x10000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not a bool");
-            return _context.istack[(_context.istackPos - _iparams) + (
+            return _task.istack[(_task.istackPos - _iparams) + (
                     _parameters[index] & 0xFFFF) + 1] > 0;
         }
         else static if (is(T == GrReal)) {
             if ((_parameters[index] & 0x20000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not a GrReal");
-            return _context.rstack[(_context.rstackPos - _rparams) + (_parameters[index] & 0xFFFF)
+            return _task.rstack[(_task.rstackPos - _rparams) + (_parameters[index] & 0xFFFF)
                 + 1];
         }
         else static if (is(T == GrString)) {
             if ((_parameters[index] & 0x40000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not a string");
-            return _context.sstack[(_context.sstackPos - _sparams) + (_parameters[index] & 0xFFFF)
+            return _task.sstack[(_task.sstackPos - _sparams) + (_parameters[index] & 0xFFFF)
                 + 1];
         }
         else static if (is(T == GrPtr)) {
             if ((_parameters[index] & 0x80000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not an object");
-            return _context.ostack[(_context.ostackPos - _oparams) + (_parameters[index] & 0xFFFF)
+            return _task.ostack[(_task.ostackPos - _oparams) + (_parameters[index] & 0xFFFF)
                 + 1];
         }
     }
@@ -260,167 +260,167 @@ final class GrCall {
     private void setResult(T)(T value) {
         static if (is(T == GrInt)) {
             _iresults++;
-            const size_t idx = (_context.istackPos - _iparams) + _iresults;
-            if (idx >= _context.istack.length)
-                _context.istack.length *= 2;
-            _context.istack[idx] = value;
+            const size_t idx = (_task.istackPos - _iparams) + _iresults;
+            if (idx >= _task.istack.length)
+                _task.istack.length *= 2;
+            _task.istack[idx] = value;
         }
         else static if (is(T == GrBool)) {
             _iresults++;
-            const size_t idx = (_context.istackPos - _iparams) + _iresults;
-            if (idx >= _context.istack.length)
-                _context.istack.length *= 2;
-            _context.istack[idx] = value ? 1 : 0;
+            const size_t idx = (_task.istackPos - _iparams) + _iresults;
+            if (idx >= _task.istack.length)
+                _task.istack.length *= 2;
+            _task.istack[idx] = value ? 1 : 0;
         }
         else static if (is(T == GrReal)) {
             _rresults++;
-            const size_t idx = (_context.rstackPos - _rparams) + _rresults;
-            if (idx >= _context.rstack.length)
-                _context.rstack.length *= 2;
-            _context.rstack[idx] = value;
+            const size_t idx = (_task.rstackPos - _rparams) + _rresults;
+            if (idx >= _task.rstack.length)
+                _task.rstack.length *= 2;
+            _task.rstack[idx] = value;
         }
         else static if (is(T == GrString)) {
             _sresults++;
-            const size_t idx = (_context.sstackPos - _sparams) + _sresults;
-            if (idx >= _context.sstack.length)
-                _context.sstack.length *= 2;
-            _context.sstack[idx] = value;
+            const size_t idx = (_task.sstackPos - _sparams) + _sresults;
+            if (idx >= _task.sstack.length)
+                _task.sstack.length *= 2;
+            _task.sstack[idx] = value;
         }
         else static if (is(T == GrPtr)) {
             _oresults++;
-            const size_t idx = (_context.ostackPos - _oparams) + _oresults;
-            if (idx >= _context.ostack.length)
-                _context.ostack.length *= 2;
-            _context.ostack[idx] = value;
+            const size_t idx = (_task.ostackPos - _oparams) + _oresults;
+            if (idx >= _task.ostack.length)
+                _task.ostack.length *= 2;
+            _task.ostack[idx] = value;
         }
     }
 
     GrBool getBoolVariable(string name) {
-        return _context.engine.getBoolVariable(name);
+        return _task.engine.getBoolVariable(name);
     }
 
     GrInt getIntVariable(string name) {
-        return _context.engine.getIntVariable(name);
+        return _task.engine.getIntVariable(name);
     }
 
     GrReal getRealVariable(string name) {
-        return _context.engine.getRealVariable(name);
+        return _task.engine.getRealVariable(name);
     }
 
     GrString getStringVariable(string name) {
-        return _context.engine.getStringVariable(name);
+        return _task.engine.getStringVariable(name);
     }
 
     GrPtr getPtrVariable(string name) {
-        return _context.engine.getPtrVariable(name);
+        return _task.engine.getPtrVariable(name);
     }
 
     GrObject getObjectVariable(string name) {
-        return _context.engine.getObjectVariable(name);
+        return _task.engine.getObjectVariable(name);
     }
 
     GrIntArray getIntArrayVariable(string name) {
-        return _context.engine.getIntArrayVariable(name);
+        return _task.engine.getIntArrayVariable(name);
     }
 
     GrRealArray getRealArrayVariable(string name) {
-        return _context.engine.getRealArrayVariable(name);
+        return _task.engine.getRealArrayVariable(name);
     }
 
     GrStringArray getStringArrayVariable(string name) {
-        return _context.engine.getStringArrayVariable(name);
+        return _task.engine.getStringArrayVariable(name);
     }
 
     GrObjectArray getObjectArrayVariable(string name) {
-        return _context.engine.getObjectArrayVariable(name);
+        return _task.engine.getObjectArrayVariable(name);
     }
 
     GrIntChannel getIntChannelVariable(string name) {
-        return _context.engine.getIntChannelVariable(name);
+        return _task.engine.getIntChannelVariable(name);
     }
 
     GrRealChannel getRealChannelVariable(string name) {
-        return _context.engine.getRealChannelVariable(name);
+        return _task.engine.getRealChannelVariable(name);
     }
 
     GrStringChannel getStringChannelVariable(string name) {
-        return _context.engine.getStringChannelVariable(name);
+        return _task.engine.getStringChannelVariable(name);
     }
 
     GrObjectChannel getObjectChannelVariable(string name) {
-        return _context.engine.getObjectChannelVariable(name);
+        return _task.engine.getObjectChannelVariable(name);
     }
 
     T getEnumVariable(T)(string name) {
-        return _context.engine.getEnumVariable(T)(name);
+        return _task.engine.getEnumVariable(T)(name);
     }
 
     T getForeignVariable(T)(string name) {
-        return _context.engine.getForeignVariable(T)(name);
+        return _task.engine.getForeignVariable(T)(name);
     }
 
     void setBoolVariable(string name, GrBool value) {
-        _context.engine.setBoolVariable(name, value);
+        _task.engine.setBoolVariable(name, value);
     }
 
     void setIntVariable(string name, GrInt value) {
-        _context.engine.setIntVariable(name, value);
+        _task.engine.setIntVariable(name, value);
     }
 
     void setRealVariable(string name, GrReal value) {
-        _context.engine.setRealVariable(name, value);
+        _task.engine.setRealVariable(name, value);
     }
 
     void setStringVariable(string name, GrString value) {
-        _context.engine.setStringVariable(name, value);
+        _task.engine.setStringVariable(name, value);
     }
 
     void setPtrVariable(string name, GrPtr value) {
-        _context.engine.setPtrVariable(name, value);
+        _task.engine.setPtrVariable(name, value);
     }
 
     void setObjectVariable(string name, GrObject value) {
-        _context.engine.setObjectVariable(name, value);
+        _task.engine.setObjectVariable(name, value);
     }
 
     void setIntArrayVariable(string name, GrIntArray value) {
-        _context.engine.setIntArrayVariable(name, value);
+        _task.engine.setIntArrayVariable(name, value);
     }
 
     void setRealArrayVariable(string name, GrRealArray value) {
-        _context.engine.setRealArrayVariable(name, value);
+        _task.engine.setRealArrayVariable(name, value);
     }
 
     void setStringArrayVariable(string name, GrStringArray value) {
-        _context.engine.setStringArrayVariable(name, value);
+        _task.engine.setStringArrayVariable(name, value);
     }
 
     void setObjectArrayVariable(string name, GrObjectArray value) {
-        _context.engine.setObjectArrayVariable(name, value);
+        _task.engine.setObjectArrayVariable(name, value);
     }
 
     void setIntChannelVariable(string name, GrIntChannel value) {
-        _context.engine.setIntChannelVariable(name, value);
+        _task.engine.setIntChannelVariable(name, value);
     }
 
     void setRealChannelVariable(string name, GrRealChannel value) {
-        _context.engine.setRealChannelVariable(name, value);
+        _task.engine.setRealChannelVariable(name, value);
     }
 
     void setStringChannelVariable(string name, GrStringChannel value) {
-        _context.engine.setStringChannelVariable(name, value);
+        _task.engine.setStringChannelVariable(name, value);
     }
 
     void setObjectChannelVariable(string name, GrObjectChannel value) {
-        _context.engine.setObjectChannelVariable(name, value);
+        _task.engine.setObjectChannelVariable(name, value);
     }
 
     void setEnumVariable(T)(string name, T value) {
-        _context.engine.setEnumVariable(name, value);
+        _task.engine.setEnumVariable(name, value);
     }
 
     void setForeignVariable(T)(string name, T value) {
-        _context.engine.setForeignVariable(name, value);
+        _task.engine.setForeignVariable(name, value);
     }
 
     private {
@@ -428,7 +428,7 @@ final class GrCall {
         bool _hasError;
     }
 
-    /// Does not actually send the error to the context.
+    /// Does not actually send the error to the task.
     /// Because the stacks would be in an undefined state.
     /// So we wait until the primitive is finished before calling dispatchError().
     void raise(string message) {
@@ -437,16 +437,16 @@ final class GrCall {
     }
 
     private void dispatchError() {
-        _context.engine.raise(_context, _message);
+        _task.engine.raise(_task, _message);
 
-        //The context is still in a primitive call
+        //The task is still in a primitive call
         //and will increment the pc, so we prevent that.
-        _context.pc--;
+        _task.pc--;
     }
 
     /// Create a new object of type `typeName`.
     GrObject createObject(string name) {
-        return _context.engine.createObject(name);
+        return _task.engine.createObject(name);
     }
 
     /**
@@ -458,20 +458,20 @@ final class GrCall {
 	}
 	---
 	*/
-    GrContext callEvent(string mangledName) {
-        return _context.engine.callEvent(mangledName);
+    GrTask callEvent(string mangledName) {
+        return _task.engine.callEvent(mangledName);
     }
 
     /**
 	Spawn a new coroutine at an arbitrary address. \
 	The address needs to correspond to the start of a task, else the VM will crash. \
 	*/
-    GrContext callAddress(uint pc) {
-        return _context.engine.callAddress(pc);
+    GrTask callAddress(uint pc) {
+        return _task.engine.callAddress(pc);
     }
 
-    /// Pause the current context.
+    /// Pause the current task.
     void block(GrBlocker blocker) {
-        _context.block(blocker);
+        _task.block(blocker);
     }
 }

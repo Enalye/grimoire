@@ -233,7 +233,7 @@ final class GrParser {
         case boolean:
         case function_:
         case task:
-        case enumeration:
+        case enum_:
             if (variable.isGlobal) {
                 variable.register = iglobalsCount;
                 iglobalsCount++;
@@ -475,7 +475,7 @@ final class GrParser {
             case boolean:
             case function_:
             case task:
-            case enumeration:
+            case enum_:
                 currentFunction.nbIntegerParameters++;
                 if (currentFunction.isTask)
                     addInstruction(GrOpcode.globalPop_int, 0u);
@@ -917,7 +917,7 @@ final class GrParser {
             logError(getError(Error.cantUseOpOnMultipleVal), getError(Error.exprYieldsMultipleVal));
         GrType resultType = GrType.Base.void_;
 
-        if (leftType.base == GrType.Base.enumeration && rightType.base == GrType.Base.enumeration
+        if (leftType.base == GrType.Base.enum_ && rightType.base == GrType.Base.enum_
             && leftType.mangledType == rightType.mangledType) {
             resultType = addInternalOperator(lexType, leftType);
         }
@@ -936,7 +936,7 @@ final class GrParser {
             final switch (subType.base) with (GrType.Base) {
             case integer:
             case boolean:
-            case enumeration:
+            case enum_:
             case function_:
             case task:
                 addInstruction(GrOpcode.append_int);
@@ -968,7 +968,7 @@ final class GrParser {
             final switch (subType.base) with (GrType.Base) {
             case integer:
             case boolean:
-            case enumeration:
+            case enum_:
             case function_:
             case task:
                 addInstruction(GrOpcode.prepend_int);
@@ -1083,7 +1083,7 @@ final class GrParser {
                 break;
             }
             break;
-        case enumeration:
+        case enum_:
             switch (lexType) with (GrLexeme.Type) {
             case equal:
                 addInstruction(GrOpcode.equal_int);
@@ -1267,7 +1267,7 @@ final class GrParser {
                 final switch (subType.base) with (GrType.Base) {
                 case integer:
                 case boolean:
-                case enumeration:
+                case enum_:
                 case function_:
                 case task:
                     addInstruction(GrOpcode.equal_intArray);
@@ -1294,7 +1294,7 @@ final class GrParser {
                 final switch (subType.base) with (GrType.Base) {
                 case integer:
                 case boolean:
-                case enumeration:
+                case enum_:
                 case function_:
                 case task:
                     addInstruction(GrOpcode.notEqual_intArray);
@@ -1321,7 +1321,7 @@ final class GrParser {
                 final switch (subType.base) with (GrType.Base) {
                 case integer:
                 case boolean:
-                case enumeration:
+                case enum_:
                 case function_:
                 case task:
                     addInstruction(GrOpcode.concatenate_intArray);
@@ -1358,7 +1358,7 @@ final class GrParser {
                 case boolean:
                 case function_:
                 case task:
-                case enumeration:
+                case enum_:
                     addInstruction(GrOpcode.send_int);
                     return channelType;
                 case real_:
@@ -1387,7 +1387,7 @@ final class GrParser {
                 case boolean:
                 case function_:
                 case task:
-                case enumeration:
+                case enum_:
                     addInstruction(GrOpcode.receive_int);
                     return channelType;
                 case real_:
@@ -1433,7 +1433,7 @@ final class GrParser {
             case function_:
             case task:
             case channel:
-            case enumeration:
+            case enum_:
                 addInstruction(isExpectingValue ? GrOpcode.refStore2_int : GrOpcode.refStore_int);
                 break;
             case real_:
@@ -1486,7 +1486,7 @@ final class GrParser {
             case integer:
             case function_:
             case task:
-            case enumeration:
+            case enum_:
                 addInstruction(GrOpcode.fieldStore_int, isExpectingValue ? 0 : -1, true);
                 break;
             case real_:
@@ -1515,7 +1515,7 @@ final class GrParser {
             case integer:
             case function_:
             case task:
-            case enumeration:
+            case enum_:
                 addInstruction(isExpectingValue ? GrOpcode.globalStore2_int
                         : GrOpcode.globalStore_int, variable.register);
                 break;
@@ -1548,7 +1548,7 @@ final class GrParser {
             case integer:
             case function_:
             case task:
-            case enumeration:
+            case enum_:
                 addInstruction(isExpectingValue ? GrOpcode.localStore2_int
                         : GrOpcode.localStore_int, variable.register);
                 break;
@@ -1591,7 +1591,7 @@ final class GrParser {
                     bool a = true;
                     loop {
                         if(a) {}  //a is just after a = true, so will be optimized.
-                        suspend;
+                        yield;
                     } //We jump back to the loop where lstore2 is, crashing the VM.
                 }"
                 To avoid that, we disallow optimization of different scope levels.
@@ -1608,7 +1608,7 @@ final class GrParser {
             case integer:
             case function_:
             case task:
-            case enumeration:
+            case enum_:
                 if (allowOptimization && currentFunction.instructions.length
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.globalStore_int
                     && currentFunction.instructions[$ - 1].value == variable.register)
@@ -1667,7 +1667,7 @@ final class GrParser {
             case integer:
             case function_:
             case task:
-            case enumeration:
+            case enum_:
                 if (allowOptimization && currentFunction.instructions.length
                     && currentFunction.instructions[$ - 1].opcode == GrOpcode.localStore_int
                     && currentFunction.instructions[$ - 1].value == variable.register)
@@ -1921,7 +1921,7 @@ final class GrParser {
             case class_:
                 registerClassDeclaration(isPublic);
                 break;
-            case enumeration:
+            case enum_:
                 parseEnumDeclaration(isPublic);
                 break;
             case event:
@@ -1958,7 +1958,7 @@ final class GrParser {
             case taskType:
             case functionType:
             case class_:
-            case enumeration:
+            case enum_:
                 skipDeclaration();
                 break;
             case instance:
@@ -1982,7 +1982,7 @@ final class GrParser {
             case semicolon:
                 checkAdvance();
                 break;
-            case enumeration:
+            case enum_:
             case class_:
                 skipDeclaration();
                 break;
@@ -2031,7 +2031,7 @@ final class GrParser {
                 checkAdvance();
                 break;
             case event:
-            case enumeration:
+            case enum_:
             case class_:
                 skipDeclaration();
                 break;
@@ -2429,7 +2429,7 @@ final class GrParser {
             }
             else if (lex.type == GrLexeme.Type.identifier
                 && _data.isEnum(lex.svalue, lex.fileId, false)) {
-                currentType.base = GrType.Base.enumeration;
+                currentType.base = GrType.Base.enum_;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
                 return currentType;
@@ -2527,7 +2527,7 @@ final class GrParser {
         case boolean:
         case function_:
         case task:
-        case enumeration:
+        case enum_:
             addInstruction(GrOpcode.globalPop_int, 0u);
             break;
         case real_:
@@ -2560,7 +2560,7 @@ final class GrParser {
         case boolean:
         case function_:
         case task:
-        case enumeration:
+        case enum_:
             addInstruction(GrOpcode.globalPush_int, nbPush);
             break;
         case real_:
@@ -2597,7 +2597,7 @@ final class GrParser {
             case boolean:
             case function_:
             case task:
-            case enumeration:
+            case enum_:
                 typeCounter.nbIntParams++;
                 break;
             case real_:
@@ -3085,7 +3085,7 @@ final class GrParser {
             case quit:
                 parseQuit();
                 break;
-            case suspend:
+            case yield:
                 parseSuspend();
                 break;
             case continue_:
@@ -3238,7 +3238,7 @@ final class GrParser {
                     skipBlock();
                 }
                 break;
-            case suspend:
+            case yield:
                 checkAdvance();
                 break;
             case return_:
@@ -3299,7 +3299,7 @@ final class GrParser {
     }
 
     private void parseSuspend() {
-        addInstruction(GrOpcode.suspend, 0u);
+        addInstruction(GrOpcode.yield, 0u);
         advance();
     }
 
@@ -3754,7 +3754,7 @@ final class GrParser {
         case boolean:
         case function_:
         case task:
-        case enumeration:
+        case enum_:
             addInstruction(GrOpcode.channel_int, channelSize);
             break;
         case real_:
@@ -3933,8 +3933,8 @@ final class GrParser {
         }
         else {
             /* Without default case, the select statement is a blocking operation until one case is processed.
-             * So, we add a suspend then jump back to the beggining of the statement to evaluate the select statement again. */
-            addInstruction(GrOpcode.suspend);
+             * So, we add a yield then jump back to the beggining of the statement to evaluate the select statement again. */
+            addInstruction(GrOpcode.yield);
             addInstruction(GrOpcode.jump,
                 cast(int)(startJump - currentFunction.instructions.length), true);
         }
@@ -4124,7 +4124,7 @@ final class GrParser {
                 case integer:
                 case function_:
                 case task:
-                case enumeration:
+                case enum_:
                     addInstruction(GrOpcode.length_int);
                     break;
                 case real_:
@@ -4183,7 +4183,7 @@ final class GrParser {
                 case integer:
                 case function_:
                 case task:
-                case enumeration:
+                case enum_:
                     addInstruction(GrOpcode.index2_int);
                     break;
                 case real_:
@@ -4743,7 +4743,7 @@ final class GrParser {
             case integer:
             case real_:
             case string_:
-            case enumeration:
+            case enum_:
                 return dst;
             case class_:
                 string className = src.mangledType;
@@ -4795,7 +4795,7 @@ final class GrParser {
             case real_:
             case string_:
             case internalTuple:
-            case enumeration:
+            case enum_:
                 break;
             case array:
             case class_:
@@ -5018,7 +5018,7 @@ final class GrParser {
         case integer:
         case function_:
         case task:
-        case enumeration:
+        case enum_:
             addInstruction(GrOpcode.array_int, arraySize);
             break;
         case real_:
@@ -5068,7 +5068,7 @@ final class GrParser {
                     case integer:
                     case function_:
                     case task:
-                    case enumeration:
+                    case enum_:
                         addInstruction(GrOpcode.index_int);
                         break;
                     case real_:
@@ -5120,7 +5120,7 @@ final class GrParser {
                 case integer:
                 case function_:
                 case task:
-                case enumeration:
+                case enum_:
                     addInstruction(GrOpcode.index_int);
                     break;
                 case real_:
@@ -5361,7 +5361,7 @@ final class GrParser {
         final switch (type.base) with (GrType.Base) {
         case integer:
         case boolean:
-        case enumeration:
+        case enum_:
             addIntConstant(0);
             break;
         case real_:
@@ -5411,7 +5411,7 @@ final class GrParser {
             case integer:
             case function_:
             case task:
-            case enumeration:
+            case enum_:
                 addInstruction(GrOpcode.array_int, 0);
                 break;
             case real_:
@@ -5452,7 +5452,7 @@ final class GrParser {
             case boolean:
             case function_:
             case task:
-            case enumeration:
+            case enum_:
                 addInstruction(GrOpcode.channel_int, 1);
                 break;
             case real_:
@@ -5500,7 +5500,7 @@ final class GrParser {
             case boolean:
             case function_:
             case task:
-            case enumeration:
+            case enum_:
                 counter.iCount++;
                 break;
             case real_:
@@ -5777,7 +5777,7 @@ final class GrParser {
                             case integer:
                             case function_:
                             case task:
-                            case enumeration:
+                            case enum_:
                                 setInstruction(GrOpcode.index3_int,
                                     cast(int) currentFunction.instructions.length - 1);
                                 break;
@@ -5820,7 +5820,7 @@ final class GrParser {
                         case integer:
                         case function_:
                         case task:
-                        case enumeration:
+                        case enum_:
                             setInstruction(GrOpcode.index2_int,
                                 cast(int) currentFunction.instructions.length - 1);
                             break;
@@ -6323,7 +6323,7 @@ final class GrParser {
         case integer:
         case function_:
         case task:
-        case enumeration:
+        case enum_:
             addInstruction(asCopy ? GrOpcode.fieldLoad2_int : GrOpcode.fieldLoad_int, index);
             break;
         case real_:
@@ -6643,7 +6643,7 @@ final class GrParser {
             }
             checkAdvance();
 
-            returnType = GrType(GrType.Base.enumeration);
+            returnType = GrType(GrType.Base.enum_);
             returnType.mangledType = definition.name;
             addIntConstant(definition.getField(fieldName));
         }

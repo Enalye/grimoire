@@ -57,9 +57,9 @@ class GrData {
         _aliasDefinitions ~= library._aliasDefinitions;
         _abstractClassDefinitions ~= library._abstractClassDefinitions;
         _variableDefinitions ~= library._variableDefinitions;
-        foreach (GrEnumDefinition enumeration; library._enumDefinitions) {
-            enumeration.index = _enumDefinitions.length;
-            _enumDefinitions ~= enumeration;
+        foreach (GrEnumDefinition enum_; library._enumDefinitions) {
+            enum_.index = _enumDefinitions.length;
+            _enumDefinitions ~= enum_;
         }
         const uint libStartIndex = cast(uint) _callbacks.length;
         foreach (GrPrimitive primitive; library._abstractPrimitives) {
@@ -71,7 +71,9 @@ class GrData {
 
         foreach (string name, string alias_; library._aliases) {
             _aliases[name] = alias_;
-            import std.stdio;writeln(name, " -> ", alias_);
+            import std.stdio;
+
+            writeln(name, " -> ", alias_);
         }
     }
 
@@ -119,7 +121,7 @@ class GrData {
         enumDef.isPublic = isPublic;
         _enumDefinitions ~= enumDef;
 
-        GrType stType = GrType.Base.enumeration;
+        GrType stType = GrType.Base.enum_;
         stType.mangledType = name;
         return stType;
     }

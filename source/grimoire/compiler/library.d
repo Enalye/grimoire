@@ -64,7 +64,7 @@ class GrLibrary {
         final switch (type.base) with (GrType.Base) {
         case boolean:
         case integer:
-        case enumeration:
+        case enum_:
         case real_:
         case string_:
             break;
@@ -79,33 +79,33 @@ class GrLibrary {
         case internalTuple:
         case reference:
             throw new Exception(
-                    "can't initialize library variable of type `" ~ grGetPrettyType(type) ~ "`");
+                "can't initialize library variable of type `" ~ grGetPrettyType(type) ~ "`");
         }
         static if (isIntegral!T) {
-            if (type.base != GrType.Base.integer && type.base != GrType.Base.enumeration)
+            if (type.base != GrType.Base.integer && type.base != GrType.Base.enum_)
                 throw new Exception(
-                        "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
+                    "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
                         type) ~ "`");
             variable.ivalue = cast(int) defaultValue;
         }
         else static if (is(T == bool)) {
             if (type.base != GrType.Base.boolean)
                 throw new Exception(
-                        "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
+                    "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
                         type) ~ "`");
             variable.ivalue = defaultValue ? 1 : 0;
         }
         else static if (isFloatingPoint!T) {
             if (type.base != GrType.Base.real_)
                 throw new Exception(
-                        "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
+                    "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
                         type) ~ "`");
             variable.rvalue = cast(float) defaultValue;
         }
         static if (is(T == string)) {
             if (type.base != GrType.Base.string_)
                 throw new Exception(
-                        "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
+                    "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
                         type) ~ "`");
             variable.svalue = defaultValue;
         }
@@ -113,23 +113,23 @@ class GrLibrary {
         _variableDefinitions ~= variable;
     }
 
-    /// Define an enumeration
+    /// Define an enum
     GrType addEnum(string name, string[] fields) {
-        GrEnumDefinition enumeration = new GrEnumDefinition;
-        enumeration.name = name;
-        enumeration.fields = fields;
-        enumeration.isPublic = true;
-        _enumDefinitions ~= enumeration;
+        GrEnumDefinition enum_ = new GrEnumDefinition;
+        enum_.name = name;
+        enum_.fields = fields;
+        enum_.isPublic = true;
+        _enumDefinitions ~= enum_;
 
-        GrType type = GrType.Base.enumeration;
+        GrType type = GrType.Base.enum_;
         type.mangledType = name;
         return type;
     }
 
     /// Define a class type.
     GrType addClass(string name, string[] fields, GrType[] signature,
-            string[] templateVariables = [], string parent = "",
-            GrType[] parentTemplateSignature = []) {
+        string[] templateVariables = [], string parent = "",
+        GrType[] parentTemplateSignature = []) {
         if (fields.length != signature.length)
             throw new Exception("class signature mismatch");
         GrClassDefinition class_ = new GrClassDefinition;
@@ -168,7 +168,7 @@ class GrLibrary {
 
     /// Define an opaque pointer type.
     GrType addForeign(string name, string[] templateVariables = [],
-            string parent = "", GrType[] parentTemplateSignature = []) {
+        string parent = "", GrType[] parentTemplateSignature = []) {
         if (name == parent)
             throw new Exception("`" ~ name ~ "` can't be its own parent");
         GrAbstractForeignDefinition foreign = new GrAbstractForeignDefinition;
@@ -186,7 +186,7 @@ class GrLibrary {
 
     /// Define a new primitive.
     GrPrimitive addFunction(GrCallback callback, string name,
-            GrType[] inSignature = [], GrType[] outSignature = []) {
+        GrType[] inSignature = [], GrType[] outSignature = []) {
         bool isAbstract;
         foreach (GrType type; inSignature) {
             if (type.isAbstract)
@@ -254,7 +254,7 @@ class GrLibrary {
     The name of the function must be that of the operator like "+", "-", "or", etc.
     */
     GrPrimitive addOperator(GrCallback callback, Operator operator,
-            GrType[] inSignature, GrType outType) {
+        GrType[] inSignature, GrType outType) {
         string name;
         uint signatureSize = 2;
         final switch (operator) with (Operator) {
@@ -357,7 +357,7 @@ class GrLibrary {
     GrPrimitive addOperator(GrCallback callback, string name, GrType[] inSignature, GrType outType) {
         if (inSignature.length > 2uL)
             throw new Exception(
-                    "The operator `" ~ name ~ "` cannot take more than 2 parameters: " ~ grGetPrettyFunctionCall("",
+                "The operator `" ~ name ~ "` cannot take more than 2 parameters: " ~ grGetPrettyFunctionCall("",
                     inSignature));
         return addFunction(callback, "@op_" ~ name, inSignature, [outType]);
     }
@@ -369,7 +369,7 @@ class GrLibrary {
     GrPrimitive addCast(GrCallback callback, GrType srcType, GrType dstType, bool isExplicit = false) {
         auto primitive = addFunction(callback, "@conv", [srcType, dstType], [
                 dstType
-                ]);
+            ]);
         primitive.isExplicit = isExplicit;
         return primitive;
     }

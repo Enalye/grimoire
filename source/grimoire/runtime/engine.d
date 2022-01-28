@@ -14,7 +14,7 @@ import std.typecons : Nullable;
 
 import grimoire.compiler, grimoire.assembly;
 
-import grimoire.runtime.context;
+import grimoire.runtime.task;
 import grimoire.runtime.array;
 import grimoire.runtime.object;
 import grimoire.runtime.channel;
@@ -47,11 +47,11 @@ class GrEngine {
         /// Global object stack.
         GrPtr[] _oglobalStackIn, _oglobalStackOut;
 
-        /// Context array.
-        DynamicIndexedArray!GrContext _contexts, _contextsToSpawn;
+        /// Task array.
+        DynamicIndexedArray!GrTask _tasks, _createdTasks;
 
         /// Global panic state.
-        /// It means that the throwing context didn't handle the exception.
+        /// It means that the throwing task didn't handle the exception.
         bool _isPanicking;
         /// Unhandled panic message.
         string _panicMessage;
@@ -81,7 +81,7 @@ class GrEngine {
     @property {
         /// Check if there is a task currently running.
         bool hasTasks() const {
-            return (_contexts.length + _contextsToSpawn.length) > 0uL;
+            return (_tasks.length + _createdTasks.length) > 0uL;
         }
 
         /// Whether the whole VM has panicked, true if an unhandled error occurred.
@@ -114,9 +114,9 @@ class GrEngine {
     }
 
     private void initialize() {
-        _contexts = new DynamicIndexedArray!GrContext;
-        _contextsToSpawn = new DynamicIndexedArray!GrContext;
-        _contexts.push(new GrContext(this));
+        _tasks = new DynamicIndexedArray!GrTask;
+        _createdTasks = new DynamicIndexedArray!GrTask;
+        _tasks.push(new GrTask(this));
     }
 
     /// Add a new library to the runtime.
@@ -181,28 +181,28 @@ class GrEngine {
 	}
 	---
 	*/
-    GrContext callEvent(string mangledName, Priority priority = Priority.normal) {
+    GrTask callEvent(string mangledName, Priority priority = Priority.normal) {
         const auto event = mangledName in _bytecode.events;
         if (event is null)
             throw new Exception("no event \'" ~ mangledName ~ "\' in script");
-        GrContext context = new GrContext(this);
-        context.pc = *event;
+        GrTask task = new GrTask(this);
+        task.pc = *event;
         final switch (priority) with (Priority) {
         case immediate:
-            _contexts.push(context);
+            _tasks.push(task);
             break;
         case normal:
-            _contextsToSpawn.push(context);
+            _createdTasks.push(task);
             break;
         }
-        return context;
+        return task;
     }
 
     /**
 	Spawn a new task at an arbitrary address. \
 	The address needs to correspond to the start of a task, else the VM will crash. \
 	*/
-    GrContext callAddress(uint pc) {
+    GrTask callAddress(uint pc) {
         if (pc == 0 || pc >= _bytecode.opcodes.length)
             throw new Exception("address \'" ~ to!string(pc) ~ "\' out of bounds");
 
@@ -212,31 +212,31 @@ class GrEngine {
         if (opcode != GrOpcode.die)
             throw new Exception("the address does not correspond with a task");
 
-        GrContext context = new GrContext(this);
-        context.pc = pc;
-        _contextsToSpawn.push(context);
-        return context;
+        GrTask task = new GrTask(this);
+        task.pc = pc;
+        _createdTasks.push(task);
+        return task;
     }
 
-    package(grimoire) void pushContext(GrContext context) {
-        _contextsToSpawn.push(context);
+    package(grimoire) void pushTask(GrTask task) {
+        _createdTasks.push(task);
     }
 
     /**
     Captures an unhandled error and kill the VM.
     */
     void panic() {
-        _contexts.reset();
+        _tasks.reset();
     }
 
     /**
     Immediately prints a stacktrace to standard output
     */
-    private void generateStackTrace(GrContext context) {
+    private void generateStackTrace(GrTask task) {
         {
             GrStackTrace trace;
-            trace.pc = context.pc;
-            auto func = getFunctionInfo(context.pc);
+            trace.pc = task.pc;
+            auto func = getFunctionInfo(task.pc);
             if (func.isNull) {
                 trace.name = "?";
             }
@@ -257,9 +257,9 @@ class GrEngine {
             _stackTraces ~= trace;
         }
 
-        for (int i = context.stackPos - 1; i >= 0; i--) {
+        for (int i = task.stackPos - 1; i >= 0; i--) {
             GrStackTrace trace;
-            trace.pc = cast(uint)((cast(int) context.callStack[i].retPosition) - 1);
+            trace.pc = cast(uint)((cast(int) task.callStack[i].retPosition) - 1);
             auto func = getFunctionInfo(trace.pc);
             if (func.isNull) {
                 trace.name = "?";
@@ -316,29 +316,29 @@ class GrEngine {
 	If nothing catches the error inside the task, the VM enters in a panic state. \
 	Every tasks will then execute their `defer` statements and be killed.
 	*/
-    void raise(GrContext context, string message) {
-        if (context.isPanicking)
+    void raise(GrTask task, string message) {
+        if (task.isPanicking)
             return;
         //Error message.
         _sglobalStackIn ~= message;
 
-        generateStackTrace(context);
+        generateStackTrace(task);
 
         //We indicate that the task is in a panic state until a catch is found.
-        context.isPanicking = true;
+        task.isPanicking = true;
 
-        context.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
+        task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
     }
 
     /**
 	Marks each task as killed and prevents any new task from spawning.
 	*/
-    private void end() {
-        foreach (task; _contexts) {
+    private void killtasks() {
+        foreach (task; _tasks) {
             task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
             task.isKilled = true;
         }
-        _contextsToSpawn.reset();
+        _createdTasks.reset();
     }
 
     alias getBoolVariable = getVariable!bool;
@@ -506,10 +506,10 @@ class GrEngine {
 
     /// Run the vm until all the contexts are finished or suspended.
     void process() {
-        if (_contextsToSpawn.length) {
-            for (int index = cast(int) _contextsToSpawn.length - 1; index >= 0; index--)
-                _contexts.push(_contextsToSpawn[index]);
-            _contextsToSpawn.reset();
+        if (_createdTasks.length) {
+            for (int index = cast(int) _createdTasks.length - 1; index >= 0; index--)
+                _tasks.push(_createdTasks[index]);
+            _createdTasks.reset();
             import std.algorithm.mutation : swap;
 
             swap(_iglobalStackIn, _iglobalStackOut);
@@ -517,58 +517,64 @@ class GrEngine {
             swap(_sglobalStackIn, _sglobalStackOut);
             swap(_oglobalStackIn, _oglobalStackOut);
         }
-        contextsLabel: for (uint index = 0u; index < _contexts.length; index++) {
-            GrContext context = _contexts.data[index];
-            if (context.blocker) {
-                if (!context.blocker.run())
+        contextsLabel: for (uint index = 0u; index < _tasks.length; index++) {
+            GrTask currentTask = _tasks.data[index];
+            if (currentTask.blocker) {
+                if (!currentTask.blocker.run())
                     continue;
-                context.blocker = null;
+                currentTask.blocker = null;
             }
             while (isRunning) {
-                const uint opcode = _bytecode.opcodes[context.pc];
+                const uint opcode = _bytecode.opcodes[currentTask.pc];
                 final switch (opcode & 0xFF) with (GrOpcode) {
                 case nop:
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case throw_:
-                    if (!context.isPanicking) {
+                    if (!currentTask.isPanicking) {
                         //Error message.
-                        _sglobalStackIn ~= context.sstack[context.sstackPos];
-                        context.sstackPos--;
-                        generateStackTrace(context);
+                        _sglobalStackIn ~= currentTask.sstack[currentTask.sstackPos];
+                        currentTask.sstackPos--;
+                        generateStackTrace(currentTask);
 
                         //We indicate that the task is in a panic state until a catch is found.
-                        context.isPanicking = true;
+                        currentTask.isPanicking = true;
                     }
 
                     //Exception handler found in the current function, just jump.
-                    if (context.callStack[context.stackPos].exceptionHandlers.length) {
-                        context.pc = context.callStack[context.stackPos].exceptionHandlers[$ - 1];
+                    if (currentTask.callStack[currentTask.stackPos].exceptionHandlers.length) {
+                        currentTask.pc = currentTask
+                            .callStack[currentTask.stackPos].exceptionHandlers[$ - 1];
                     }
                     //No exception handler in the current function, unwinding the deferred code, then return.
 
                     //Check for deferred calls as we will exit the current function.
-                    else if (context.callStack[context.stackPos].deferStack.length) {
+                    else if (currentTask.callStack[currentTask.stackPos].deferStack.length) {
                         //Pop the last defer and run it.
-                        context.pc = context.callStack[context.stackPos].deferStack[$ - 1];
-                        context.callStack[context.stackPos].deferStack.length--;
+                        currentTask.pc = currentTask
+                            .callStack[currentTask.stackPos].deferStack[$ - 1];
+                        currentTask.callStack[currentTask.stackPos].deferStack.length--;
                         //The search for an exception handler will be done by Unwind after all defer
                         //has been called for this function.
                     }
-                    else if (context.stackPos) {
-                        //Then returns to the last context, raise will be run again.
-                        context.stackPos--;
-                        context.ilocalsPos -= context.callStack[context.stackPos].ilocalStackSize;
-                        context.rlocalsPos -= context.callStack[context.stackPos].rlocalStackSize;
-                        context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
-                        context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
+                    else if (currentTask.stackPos) {
+                        //Then returns to the last currentTask, raise will be run again.
+                        currentTask.stackPos--;
+                        currentTask.ilocalsPos -= currentTask
+                            .callStack[currentTask.stackPos].ilocalStackSize;
+                        currentTask.rlocalsPos -= currentTask
+                            .callStack[currentTask.stackPos].rlocalStackSize;
+                        currentTask.slocalsPos -= currentTask
+                            .callStack[currentTask.stackPos].slocalStackSize;
+                        currentTask.olocalsPos -= currentTask
+                            .callStack[currentTask.stackPos].olocalStackSize;
 
                         if (_isDebug)
                             _debugProfileEnd();
                     }
                     else {
                         //Kill the others.
-                        end();
+                        killtasks();
 
                         //The VM is now panicking.
                         _isPanicking = true;
@@ -576,1225 +582,1282 @@ class GrEngine {
                         _sglobalStackIn.length--;
 
                         //Every deferred call has been executed, now die.
-                        _contexts.markInternalForRemoval(index);
+                        _tasks.markInternalForRemoval(index);
                         continue contextsLabel;
                     }
                     break;
                 case try_:
-                    context.callStack[context.stackPos].exceptionHandlers ~= context.pc + grGetInstructionSignedValue(
+                    currentTask.callStack[currentTask.stackPos].exceptionHandlers ~= currentTask.pc + grGetInstructionSignedValue(
                         opcode);
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case catch_:
-                    context.callStack[context.stackPos].exceptionHandlers.length--;
-                    if (context.isPanicking) {
-                        context.isPanicking = false;
+                    currentTask.callStack[currentTask.stackPos].exceptionHandlers.length--;
+                    if (currentTask.isPanicking) {
+                        currentTask.isPanicking = false;
                         _stackTraces.length = 0;
-                        context.pc++;
+                        currentTask.pc++;
                     }
                     else {
-                        context.pc += grGetInstructionSignedValue(opcode);
+                        currentTask.pc += grGetInstructionSignedValue(opcode);
                     }
                     break;
                 case task:
-                    GrContext newCoro = new GrContext(this);
+                    GrTask newCoro = new GrTask(this);
                     newCoro.pc = grGetInstructionUnsignedValue(opcode);
-                    _contextsToSpawn.push(newCoro);
-                    context.pc++;
+                    _createdTasks.push(newCoro);
+                    currentTask.pc++;
                     break;
                 case anonymousTask:
-                    GrContext newCoro = new GrContext(this);
-                    newCoro.pc = cast(uint) context.istack[context.istackPos];
-                    context.istackPos--;
-                    _contextsToSpawn.push(newCoro);
-                    context.pc++;
+                    GrTask newCoro = new GrTask(this);
+                    newCoro.pc = cast(uint) currentTask.istack[currentTask.istackPos];
+                    currentTask.istackPos--;
+                    _createdTasks.push(newCoro);
+                    currentTask.pc++;
                     break;
                 case die:
                     //Check for deferred calls.
-                    if (context.callStack[context.stackPos].deferStack.length) {
+                    if (currentTask.callStack[currentTask.stackPos].deferStack.length) {
                         //Pop the last defer and run it.
-                        context.pc = context.callStack[context.stackPos].deferStack[$ - 1];
-                        context.callStack[context.stackPos].deferStack.length--;
+                        currentTask.pc = currentTask
+                            .callStack[currentTask.stackPos].deferStack[$ - 1];
+                        currentTask.callStack[currentTask.stackPos].deferStack.length--;
 
                         //Flag as killed so the entire stack will be unwinded.
-                        context.isKilled = true;
+                        currentTask.isKilled = true;
                     }
-                    else if (context.stackPos) {
-                        //Then returns to the last context.
-                        context.stackPos--;
-                        context.pc = context.callStack[context.stackPos].retPosition;
-                        context.ilocalsPos -= context.callStack[context.stackPos].ilocalStackSize;
-                        context.rlocalsPos -= context.callStack[context.stackPos].rlocalStackSize;
-                        context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
-                        context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
+                    else if (currentTask.stackPos) {
+                        //Then returns to the last currentTask.
+                        currentTask.stackPos--;
+                        currentTask.pc = currentTask.callStack[currentTask.stackPos].retPosition;
+                        currentTask.ilocalsPos -= currentTask
+                            .callStack[currentTask.stackPos].ilocalStackSize;
+                        currentTask.rlocalsPos -= currentTask
+                            .callStack[currentTask.stackPos].rlocalStackSize;
+                        currentTask.slocalsPos -= currentTask
+                            .callStack[currentTask.stackPos].slocalStackSize;
+                        currentTask.olocalsPos -= currentTask
+                            .callStack[currentTask.stackPos].olocalStackSize;
 
                         //Flag as killed so the entire stack will be unwinded.
-                        context.isKilled = true;
+                        currentTask.isKilled = true;
                     }
                     else {
                         //No need to flag if the call stack is empty without any deferred statement.
-                        _contexts.markInternalForRemoval(index);
+                        _tasks.markInternalForRemoval(index);
                         continue contextsLabel;
                     }
                     break;
                 case quit:
-                    end();
+                    killtasks();
                     continue contextsLabel;
-                case suspend:
-                    context.pc++;
+                case yield:
+                    currentTask.pc++;
                     continue contextsLabel;
                 case new_:
-                    context.ostackPos++;
-                    if (context.ostackPos == context.ostack.length)
-                        context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(GrPtr) new GrObject(
+                    currentTask.ostackPos++;
+                    if (currentTask.ostackPos == currentTask.ostack.length)
+                        currentTask.ostack.length *= 2;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) new GrObject(
                         _bytecode.classes[grGetInstructionUnsignedValue(opcode)]);
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case channel_int:
-                    context.ostackPos++;
-                    if (context.ostackPos == context.ostack.length)
-                        context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(GrPtr) new GrIntChannel(
+                    currentTask.ostackPos++;
+                    if (currentTask.ostackPos == currentTask.ostack.length)
+                        currentTask.ostack.length *= 2;
+                    currentTask.ostack[currentTask.ostackPos] = cast(
+                        GrPtr) new GrIntChannel(
                         grGetInstructionUnsignedValue(opcode));
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case channel_real:
-                    context.ostackPos++;
-                    if (context.ostackPos == context.ostack.length)
-                        context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(GrPtr) new GrRealChannel(
+                    currentTask.ostackPos++;
+                    if (currentTask.ostackPos == currentTask.ostack.length)
+                        currentTask.ostack.length *= 2;
+                    currentTask.ostack[currentTask.ostackPos] = cast(
+                        GrPtr) new GrRealChannel(
                         grGetInstructionUnsignedValue(opcode));
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case channel_string:
-                    context.ostackPos++;
-                    if (context.ostackPos == context.ostack.length)
-                        context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(GrPtr) new GrStringChannel(
+                    currentTask.ostackPos++;
+                    if (currentTask.ostackPos == currentTask.ostack.length)
+                        currentTask.ostack.length *= 2;
+                    currentTask.ostack[currentTask.ostackPos] = cast(
+                        GrPtr) new GrStringChannel(
                         grGetInstructionUnsignedValue(opcode));
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case channel_object:
-                    context.ostackPos++;
-                    if (context.ostackPos == context.ostack.length)
-                        context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(GrPtr) new GrObjectChannel(
+                    currentTask.ostackPos++;
+                    if (currentTask.ostackPos == currentTask.ostack.length)
+                        currentTask.ostack.length *= 2;
+                    currentTask.ostack[currentTask.ostackPos] = cast(
+                        GrPtr) new GrObjectChannel(
                         grGetInstructionUnsignedValue(opcode));
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case send_int:
-                    GrIntChannel chan = cast(GrIntChannel) context.ostack[context.ostackPos];
+                    GrIntChannel chan = cast(GrIntChannel) currentTask
+                        .ostack[currentTask.ostackPos];
                     if (!chan.isOwned) {
-                        if (context.isEvaluatingChannel) {
-                            context.restoreState();
-                            context.isLocked = true;
-                            context.isEvaluatingChannel = false;
-                            context.pc = context.selectPositionJump;
+                        if (currentTask.isEvaluatingChannel) {
+                            currentTask.restoreState();
+                            currentTask.isLocked = true;
+                            currentTask.isEvaluatingChannel = false;
+                            currentTask.pc = currentTask.selectPositionJump;
                         }
                         else {
-                            context.istackPos--;
-                            context.ostackPos--;
-                            raise(context, "ChannelError");
+                            currentTask.istackPos--;
+                            currentTask.ostackPos--;
+                            raise(currentTask, "ChannelError");
                         }
                     }
                     else if (chan.canSend) {
-                        context.isLocked = false;
-                        chan.send(context.istack[context.istackPos]);
-                        context.ostackPos--;
-                        context.pc++;
+                        currentTask.isLocked = false;
+                        chan.send(currentTask.istack[currentTask.istackPos]);
+                        currentTask.ostackPos--;
+                        currentTask.pc++;
                     }
                     else {
-                        context.isLocked = true;
-                        if (context.isEvaluatingChannel) {
-                            context.restoreState();
-                            context.isEvaluatingChannel = false;
-                            context.pc = context.selectPositionJump;
+                        currentTask.isLocked = true;
+                        if (currentTask.isEvaluatingChannel) {
+                            currentTask.restoreState();
+                            currentTask.isEvaluatingChannel = false;
+                            currentTask.pc = currentTask.selectPositionJump;
                         }
                         else
                             continue contextsLabel;
                     }
                     break;
                 case send_real:
-                    GrRealChannel chan = cast(GrRealChannel) context.ostack[context.ostackPos];
+                    GrRealChannel chan = cast(GrRealChannel) currentTask
+                        .ostack[currentTask.ostackPos];
                     if (!chan.isOwned) {
-                        if (context.isEvaluatingChannel) {
-                            context.restoreState();
-                            context.isLocked = true;
-                            context.isEvaluatingChannel = false;
-                            context.pc = context.selectPositionJump;
+                        if (currentTask.isEvaluatingChannel) {
+                            currentTask.restoreState();
+                            currentTask.isLocked = true;
+                            currentTask.isEvaluatingChannel = false;
+                            currentTask.pc = currentTask.selectPositionJump;
                         }
                         else {
-                            context.rstackPos--;
-                            context.ostackPos--;
-                            raise(context, "ChannelError");
+                            currentTask.rstackPos--;
+                            currentTask.ostackPos--;
+                            raise(currentTask, "ChannelError");
                         }
                     }
                     else if (chan.canSend) {
-                        context.isLocked = false;
-                        chan.send(context.rstack[context.rstackPos]);
-                        context.ostackPos--;
-                        context.pc++;
+                        currentTask.isLocked = false;
+                        chan.send(currentTask.rstack[currentTask.rstackPos]);
+                        currentTask.ostackPos--;
+                        currentTask.pc++;
                     }
                     else {
-                        context.isLocked = true;
-                        if (context.isEvaluatingChannel) {
-                            context.restoreState();
-                            context.isEvaluatingChannel = false;
-                            context.pc = context.selectPositionJump;
+                        currentTask.isLocked = true;
+                        if (currentTask.isEvaluatingChannel) {
+                            currentTask.restoreState();
+                            currentTask.isEvaluatingChannel = false;
+                            currentTask.pc = currentTask.selectPositionJump;
                         }
                         else
                             continue contextsLabel;
                     }
                     break;
                 case send_string:
-                    GrStringChannel chan = cast(GrStringChannel) context.ostack[context.ostackPos];
+                    GrStringChannel chan = cast(GrStringChannel) currentTask
+                        .ostack[currentTask.ostackPos];
                     if (!chan.isOwned) {
-                        if (context.isEvaluatingChannel) {
-                            context.restoreState();
-                            context.isLocked = true;
-                            context.isEvaluatingChannel = false;
-                            context.pc = context.selectPositionJump;
+                        if (currentTask.isEvaluatingChannel) {
+                            currentTask.restoreState();
+                            currentTask.isLocked = true;
+                            currentTask.isEvaluatingChannel = false;
+                            currentTask.pc = currentTask.selectPositionJump;
                         }
                         else {
-                            context.sstackPos--;
-                            context.ostackPos--;
-                            raise(context, "ChannelError");
+                            currentTask.sstackPos--;
+                            currentTask.ostackPos--;
+                            raise(currentTask, "ChannelError");
                         }
                     }
                     else if (chan.canSend) {
-                        context.isLocked = false;
-                        chan.send(context.sstack[context.sstackPos]);
-                        context.ostackPos--;
-                        context.pc++;
+                        currentTask.isLocked = false;
+                        chan.send(currentTask.sstack[currentTask.sstackPos]);
+                        currentTask.ostackPos--;
+                        currentTask.pc++;
                     }
                     else {
-                        context.isLocked = true;
-                        if (context.isEvaluatingChannel) {
-                            context.restoreState();
-                            context.isEvaluatingChannel = false;
-                            context.pc = context.selectPositionJump;
+                        currentTask.isLocked = true;
+                        if (currentTask.isEvaluatingChannel) {
+                            currentTask.restoreState();
+                            currentTask.isEvaluatingChannel = false;
+                            currentTask.pc = currentTask.selectPositionJump;
                         }
                         else
                             continue contextsLabel;
                     }
                     break;
                 case send_object:
-                    GrObjectChannel chan = cast(GrObjectChannel) context
-                        .ostack[context.ostackPos - 1];
+                    GrObjectChannel chan = cast(GrObjectChannel) currentTask
+                        .ostack[currentTask.ostackPos - 1];
                     if (!chan.isOwned) {
-                        if (context.isEvaluatingChannel) {
-                            context.restoreState();
-                            context.isLocked = true;
-                            context.isEvaluatingChannel = false;
-                            context.pc = context.selectPositionJump;
+                        if (currentTask.isEvaluatingChannel) {
+                            currentTask.restoreState();
+                            currentTask.isLocked = true;
+                            currentTask.isEvaluatingChannel = false;
+                            currentTask.pc = currentTask.selectPositionJump;
                         }
                         else {
-                            context.ostackPos -= 2;
-                            raise(context, "ChannelError");
+                            currentTask.ostackPos -= 2;
+                            raise(currentTask, "ChannelError");
                         }
                     }
                     else if (chan.canSend) {
-                        context.isLocked = false;
-                        chan.send(context.ostack[context.ostackPos]);
-                        context.ostack[context.ostackPos - 1] = context.ostack[context.ostackPos];
-                        context.ostackPos--;
-                        context.pc++;
+                        currentTask.isLocked = false;
+                        chan.send(currentTask.ostack[currentTask.ostackPos]);
+                        currentTask.ostack[currentTask.ostackPos - 1] = currentTask
+                            .ostack[currentTask.ostackPos];
+                        currentTask.ostackPos--;
+                        currentTask.pc++;
                     }
                     else {
-                        context.isLocked = true;
-                        if (context.isEvaluatingChannel) {
-                            context.restoreState();
-                            context.isEvaluatingChannel = false;
-                            context.pc = context.selectPositionJump;
+                        currentTask.isLocked = true;
+                        if (currentTask.isEvaluatingChannel) {
+                            currentTask.restoreState();
+                            currentTask.isEvaluatingChannel = false;
+                            currentTask.pc = currentTask.selectPositionJump;
                         }
                         else
                             continue contextsLabel;
                     }
                     break;
                 case receive_int:
-                    GrIntChannel chan = cast(GrIntChannel) context.ostack[context.ostackPos];
+                    GrIntChannel chan = cast(GrIntChannel) currentTask
+                        .ostack[currentTask.ostackPos];
                     if (!chan.isOwned) {
-                        if (context.isEvaluatingChannel) {
-                            context.restoreState();
-                            context.isLocked = true;
-                            context.isEvaluatingChannel = false;
-                            context.pc = context.selectPositionJump;
+                        if (currentTask.isEvaluatingChannel) {
+                            currentTask.restoreState();
+                            currentTask.isLocked = true;
+                            currentTask.isEvaluatingChannel = false;
+                            currentTask.pc = currentTask.selectPositionJump;
                         }
                         else {
-                            context.ostackPos--;
-                            raise(context, "ChannelError");
+                            currentTask.ostackPos--;
+                            raise(currentTask, "ChannelError");
                         }
                     }
                     else if (chan.canReceive) {
-                        context.isLocked = false;
-                        context.istackPos++;
-                        if (context.istackPos == context.istack.length)
-                            context.istack.length *= 2;
-                        context.istack[context.istackPos] = chan.receive();
-                        context.ostackPos--;
-                        context.pc++;
+                        currentTask.isLocked = false;
+                        currentTask.istackPos++;
+                        if (currentTask.istackPos == currentTask.istack.length)
+                            currentTask.istack.length *= 2;
+                        currentTask.istack[currentTask.istackPos] = chan.receive();
+                        currentTask.ostackPos--;
+                        currentTask.pc++;
                     }
                     else {
                         chan.setReceiverReady();
-                        context.isLocked = true;
-                        if (context.isEvaluatingChannel) {
-                            context.restoreState();
-                            context.isEvaluatingChannel = false;
-                            context.pc = context.selectPositionJump;
+                        currentTask.isLocked = true;
+                        if (currentTask.isEvaluatingChannel) {
+                            currentTask.restoreState();
+                            currentTask.isEvaluatingChannel = false;
+                            currentTask.pc = currentTask.selectPositionJump;
                         }
                         else
                             continue contextsLabel;
                     }
                     break;
                 case receive_real:
-                    GrRealChannel chan = cast(GrRealChannel) context.ostack[context.ostackPos];
+                    GrRealChannel chan = cast(GrRealChannel) currentTask
+                        .ostack[currentTask.ostackPos];
                     if (!chan.isOwned) {
-                        if (context.isEvaluatingChannel) {
-                            context.restoreState();
-                            context.isLocked = true;
-                            context.isEvaluatingChannel = false;
-                            context.pc = context.selectPositionJump;
+                        if (currentTask.isEvaluatingChannel) {
+                            currentTask.restoreState();
+                            currentTask.isLocked = true;
+                            currentTask.isEvaluatingChannel = false;
+                            currentTask.pc = currentTask.selectPositionJump;
                         }
                         else {
-                            context.ostackPos--;
-                            raise(context, "ChannelError");
+                            currentTask.ostackPos--;
+                            raise(currentTask, "ChannelError");
                         }
                     }
                     else if (chan.canReceive) {
-                        context.isLocked = false;
-                        context.rstackPos++;
-                        if (context.rstackPos == context.rstack.length)
-                            context.rstack.length *= 2;
-                        context.rstack[context.rstackPos] = chan.receive();
-                        context.ostackPos--;
-                        context.pc++;
+                        currentTask.isLocked = false;
+                        currentTask.rstackPos++;
+                        if (currentTask.rstackPos == currentTask.rstack.length)
+                            currentTask.rstack.length *= 2;
+                        currentTask.rstack[currentTask.rstackPos] = chan.receive();
+                        currentTask.ostackPos--;
+                        currentTask.pc++;
                     }
                     else {
                         chan.setReceiverReady();
-                        context.isLocked = true;
-                        if (context.isEvaluatingChannel) {
-                            context.restoreState();
-                            context.isEvaluatingChannel = false;
-                            context.pc = context.selectPositionJump;
+                        currentTask.isLocked = true;
+                        if (currentTask.isEvaluatingChannel) {
+                            currentTask.restoreState();
+                            currentTask.isEvaluatingChannel = false;
+                            currentTask.pc = currentTask.selectPositionJump;
                         }
                         else
                             continue contextsLabel;
                     }
                     break;
                 case receive_string:
-                    GrStringChannel chan = cast(GrStringChannel) context.ostack[context.ostackPos];
+                    GrStringChannel chan = cast(GrStringChannel) currentTask
+                        .ostack[currentTask.ostackPos];
                     if (!chan.isOwned) {
-                        if (context.isEvaluatingChannel) {
-                            context.restoreState();
-                            context.isLocked = true;
-                            context.isEvaluatingChannel = false;
-                            context.pc = context.selectPositionJump;
+                        if (currentTask.isEvaluatingChannel) {
+                            currentTask.restoreState();
+                            currentTask.isLocked = true;
+                            currentTask.isEvaluatingChannel = false;
+                            currentTask.pc = currentTask.selectPositionJump;
                         }
                         else {
-                            context.ostackPos--;
-                            raise(context, "ChannelError");
+                            currentTask.ostackPos--;
+                            raise(currentTask, "ChannelError");
                         }
                     }
                     else if (chan.canReceive) {
-                        context.isLocked = false;
-                        context.sstackPos++;
-                        if (context.sstackPos == context.sstack.length)
-                            context.sstack.length *= 2;
-                        context.sstack[context.sstackPos] = chan.receive();
-                        context.ostackPos--;
-                        context.pc++;
+                        currentTask.isLocked = false;
+                        currentTask.sstackPos++;
+                        if (currentTask.sstackPos == currentTask.sstack.length)
+                            currentTask.sstack.length *= 2;
+                        currentTask.sstack[currentTask.sstackPos] = chan.receive();
+                        currentTask.ostackPos--;
+                        currentTask.pc++;
                     }
                     else {
                         chan.setReceiverReady();
-                        context.isLocked = true;
-                        if (context.isEvaluatingChannel) {
-                            context.restoreState();
-                            context.isEvaluatingChannel = false;
-                            context.pc = context.selectPositionJump;
+                        currentTask.isLocked = true;
+                        if (currentTask.isEvaluatingChannel) {
+                            currentTask.restoreState();
+                            currentTask.isEvaluatingChannel = false;
+                            currentTask.pc = currentTask.selectPositionJump;
                         }
                         else
                             continue contextsLabel;
                     }
                     break;
                 case receive_object:
-                    GrObjectChannel chan = cast(GrObjectChannel) context.ostack[context.ostackPos];
+                    GrObjectChannel chan = cast(GrObjectChannel) currentTask
+                        .ostack[currentTask.ostackPos];
                     if (!chan.isOwned) {
-                        if (context.isEvaluatingChannel) {
-                            context.restoreState();
-                            context.isLocked = true;
-                            context.isEvaluatingChannel = false;
-                            context.pc = context.selectPositionJump;
+                        if (currentTask.isEvaluatingChannel) {
+                            currentTask.restoreState();
+                            currentTask.isLocked = true;
+                            currentTask.isEvaluatingChannel = false;
+                            currentTask.pc = currentTask.selectPositionJump;
                         }
                         else {
-                            context.ostackPos--;
-                            raise(context, "ChannelError");
+                            currentTask.ostackPos--;
+                            raise(currentTask, "ChannelError");
                         }
                     }
                     else if (chan.canReceive) {
-                        context.isLocked = false;
-                        context.ostack[context.ostackPos] = chan.receive();
-                        context.pc++;
+                        currentTask.isLocked = false;
+                        currentTask.ostack[currentTask.ostackPos] = chan.receive();
+                        currentTask.pc++;
                     }
                     else {
                         chan.setReceiverReady();
-                        context.isLocked = true;
-                        if (context.isEvaluatingChannel) {
-                            context.restoreState();
-                            context.isEvaluatingChannel = false;
-                            context.pc = context.selectPositionJump;
+                        currentTask.isLocked = true;
+                        if (currentTask.isEvaluatingChannel) {
+                            currentTask.restoreState();
+                            currentTask.isEvaluatingChannel = false;
+                            currentTask.pc = currentTask.selectPositionJump;
                         }
                         else
                             continue contextsLabel;
                     }
                     break;
                 case startSelectChannel:
-                    context.pushState();
-                    context.pc++;
+                    currentTask.pushState();
+                    currentTask.pc++;
                     break;
                 case endSelectChannel:
-                    context.popState();
-                    context.pc++;
+                    currentTask.popState();
+                    currentTask.pc++;
                     break;
                 case tryChannel:
-                    if (context.isEvaluatingChannel)
-                        raise(context, "SelectError");
-                    context.isEvaluatingChannel = true;
-                    context.selectPositionJump = context.pc + grGetInstructionSignedValue(opcode);
-                    context.pc++;
+                    if (currentTask.isEvaluatingChannel)
+                        raise(currentTask, "SelectError");
+                    currentTask.isEvaluatingChannel = true;
+                    currentTask.selectPositionJump = currentTask.pc + grGetInstructionSignedValue(
+                        opcode);
+                    currentTask.pc++;
                     break;
                 case checkChannel:
-                    if (!context.isEvaluatingChannel)
-                        raise(context, "SelectError");
-                    context.isEvaluatingChannel = false;
-                    context.restoreState();
-                    context.pc++;
+                    if (!currentTask.isEvaluatingChannel)
+                        raise(currentTask, "SelectError");
+                    currentTask.isEvaluatingChannel = false;
+                    currentTask.restoreState();
+                    currentTask.pc++;
                     break;
                 case shiftStack_int:
-                    context.istackPos += grGetInstructionSignedValue(opcode);
-                    context.pc++;
+                    currentTask.istackPos += grGetInstructionSignedValue(opcode);
+                    currentTask.pc++;
                     break;
                 case shiftStack_real:
-                    context.rstackPos += grGetInstructionSignedValue(opcode);
-                    context.pc++;
+                    currentTask.rstackPos += grGetInstructionSignedValue(opcode);
+                    currentTask.pc++;
                     break;
                 case shiftStack_string:
-                    context.sstackPos += grGetInstructionSignedValue(opcode);
-                    context.pc++;
+                    currentTask.sstackPos += grGetInstructionSignedValue(opcode);
+                    currentTask.pc++;
                     break;
                 case shiftStack_object:
-                    context.ostackPos += grGetInstructionSignedValue(opcode);
-                    context.pc++;
+                    currentTask.ostackPos += grGetInstructionSignedValue(opcode);
+                    currentTask.pc++;
                     break;
                 case localStore_int:
-                    context.ilocals[context.ilocalsPos + grGetInstructionUnsignedValue(
-                            opcode)] = context.istack[context.istackPos];
-                    context.istackPos--;
-                    context.pc++;
+                    currentTask.ilocals[currentTask.ilocalsPos + grGetInstructionUnsignedValue(
+                            opcode)] = currentTask.istack[currentTask.istackPos];
+                    currentTask.istackPos--;
+                    currentTask.pc++;
                     break;
                 case localStore_real:
-                    context.rlocals[context.rlocalsPos + grGetInstructionUnsignedValue(
-                            opcode)] = context.rstack[context.rstackPos];
-                    context.rstackPos--;
-                    context.pc++;
+                    currentTask.rlocals[currentTask.rlocalsPos + grGetInstructionUnsignedValue(
+                            opcode)] = currentTask.rstack[currentTask.rstackPos];
+                    currentTask.rstackPos--;
+                    currentTask.pc++;
                     break;
                 case localStore_string:
-                    context.slocals[context.slocalsPos + grGetInstructionUnsignedValue(
-                            opcode)] = context.sstack[context.sstackPos];
-                    context.sstackPos--;
-                    context.pc++;
+                    currentTask.slocals[currentTask.slocalsPos + grGetInstructionUnsignedValue(
+                            opcode)] = currentTask.sstack[currentTask.sstackPos];
+                    currentTask.sstackPos--;
+                    currentTask.pc++;
                     break;
                 case localStore_object:
-                    context.olocals[context.olocalsPos + grGetInstructionUnsignedValue(
-                            opcode)] = context.ostack[context.ostackPos];
-                    context.ostackPos--;
-                    context.pc++;
+                    currentTask.olocals[currentTask.olocalsPos + grGetInstructionUnsignedValue(
+                            opcode)] = currentTask.ostack[currentTask.ostackPos];
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case localStore2_int:
-                    context.ilocals[context.ilocalsPos + grGetInstructionUnsignedValue(
-                            opcode)] = context.istack[context.istackPos];
-                    context.pc++;
+                    currentTask.ilocals[currentTask.ilocalsPos + grGetInstructionUnsignedValue(
+                            opcode)] = currentTask.istack[currentTask.istackPos];
+                    currentTask.pc++;
                     break;
                 case localStore2_real:
-                    context.rlocals[context.rlocalsPos + grGetInstructionUnsignedValue(
-                            opcode)] = context.rstack[context.rstackPos];
-                    context.pc++;
+                    currentTask.rlocals[currentTask.rlocalsPos + grGetInstructionUnsignedValue(
+                            opcode)] = currentTask.rstack[currentTask.rstackPos];
+                    currentTask.pc++;
                     break;
                 case localStore2_string:
-                    context.slocals[context.slocalsPos + grGetInstructionUnsignedValue(
-                            opcode)] = context.sstack[context.sstackPos];
-                    context.pc++;
+                    currentTask.slocals[currentTask.slocalsPos + grGetInstructionUnsignedValue(
+                            opcode)] = currentTask.sstack[currentTask.sstackPos];
+                    currentTask.pc++;
                     break;
                 case localStore2_object:
-                    context.olocals[context.olocalsPos + grGetInstructionUnsignedValue(
-                            opcode)] = context.ostack[context.ostackPos];
-                    context.pc++;
+                    currentTask.olocals[currentTask.olocalsPos + grGetInstructionUnsignedValue(
+                            opcode)] = currentTask.ostack[currentTask.ostackPos];
+                    currentTask.pc++;
                     break;
                 case localLoad_int:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos]
-                        = context.ilocals[context.ilocalsPos + grGetInstructionUnsignedValue(
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos]
+                        = currentTask.ilocals[currentTask.ilocalsPos + grGetInstructionUnsignedValue(
                                 opcode)];
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case localLoad_real:
-                    context.rstackPos++;
-                    if (context.rstackPos == context.rstack.length)
-                        context.rstack.length *= 2;
-                    context.rstack[context.rstackPos]
-                        = context.rlocals[context.rlocalsPos + grGetInstructionUnsignedValue(
+                    currentTask.rstackPos++;
+                    if (currentTask.rstackPos == currentTask.rstack.length)
+                        currentTask.rstack.length *= 2;
+                    currentTask.rstack[currentTask.rstackPos]
+                        = currentTask.rlocals[currentTask.rlocalsPos + grGetInstructionUnsignedValue(
                                 opcode)];
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case localLoad_string:
-                    context.sstackPos++;
-                    if (context.sstackPos == context.sstack.length)
-                        context.sstack.length *= 2;
-                    context.sstack[context.sstackPos]
-                        = context.slocals[context.slocalsPos + grGetInstructionUnsignedValue(
+                    currentTask.sstackPos++;
+                    if (currentTask.sstackPos == currentTask.sstack.length)
+                        currentTask.sstack.length *= 2;
+                    currentTask.sstack[currentTask.sstackPos]
+                        = currentTask.slocals[currentTask.slocalsPos + grGetInstructionUnsignedValue(
                                 opcode)];
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case localLoad_object:
-                    context.ostackPos++;
-                    if (context.ostackPos == context.ostack.length)
-                        context.ostack.length *= 2;
-                    context.ostack[context.ostackPos]
-                        = context.olocals[context.olocalsPos + grGetInstructionUnsignedValue(
+                    currentTask.ostackPos++;
+                    if (currentTask.ostackPos == currentTask.ostack.length)
+                        currentTask.ostack.length *= 2;
+                    currentTask.ostack[currentTask.ostackPos]
+                        = currentTask.olocals[currentTask.olocalsPos + grGetInstructionUnsignedValue(
                                 opcode)];
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case globalStore_int:
-                    _iglobals[grGetInstructionUnsignedValue(opcode)] = context
-                        .istack[context.istackPos];
-                    context.istackPos--;
-                    context.pc++;
+                    _iglobals[grGetInstructionUnsignedValue(opcode)] = currentTask
+                        .istack[currentTask.istackPos];
+                    currentTask.istackPos--;
+                    currentTask.pc++;
                     break;
                 case globalStore_real:
-                    _rglobals[grGetInstructionUnsignedValue(opcode)] = context
-                        .rstack[context.rstackPos];
-                    context.rstackPos--;
-                    context.pc++;
+                    _rglobals[grGetInstructionUnsignedValue(opcode)] = currentTask
+                        .rstack[currentTask.rstackPos];
+                    currentTask.rstackPos--;
+                    currentTask.pc++;
                     break;
                 case globalStore_string:
-                    _sglobals[grGetInstructionUnsignedValue(opcode)] = context
-                        .sstack[context.sstackPos];
-                    context.sstackPos--;
-                    context.pc++;
+                    _sglobals[grGetInstructionUnsignedValue(opcode)] = currentTask
+                        .sstack[currentTask.sstackPos];
+                    currentTask.sstackPos--;
+                    currentTask.pc++;
                     break;
                 case globalStore_object:
-                    _oglobals[grGetInstructionUnsignedValue(opcode)] = context
-                        .ostack[context.ostackPos];
-                    context.ostackPos--;
-                    context.pc++;
+                    _oglobals[grGetInstructionUnsignedValue(opcode)] = currentTask
+                        .ostack[currentTask.ostackPos];
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case globalStore2_int:
-                    _iglobals[grGetInstructionUnsignedValue(opcode)] = context
-                        .istack[context.istackPos];
-                    context.pc++;
+                    _iglobals[grGetInstructionUnsignedValue(opcode)] = currentTask
+                        .istack[currentTask.istackPos];
+                    currentTask.pc++;
                     break;
                 case globalStore2_real:
-                    _rglobals[grGetInstructionUnsignedValue(opcode)] = context
-                        .rstack[context.rstackPos];
-                    context.pc++;
+                    _rglobals[grGetInstructionUnsignedValue(opcode)] = currentTask
+                        .rstack[currentTask.rstackPos];
+                    currentTask.pc++;
                     break;
                 case globalStore2_string:
-                    _sglobals[grGetInstructionUnsignedValue(opcode)] = context
-                        .sstack[context.sstackPos];
-                    context.pc++;
+                    _sglobals[grGetInstructionUnsignedValue(opcode)] = currentTask
+                        .sstack[currentTask.sstackPos];
+                    currentTask.pc++;
                     break;
                 case globalStore2_object:
-                    _oglobals[grGetInstructionUnsignedValue(opcode)] = context
-                        .ostack[context.ostackPos];
-                    context.pc++;
+                    _oglobals[grGetInstructionUnsignedValue(opcode)] = currentTask
+                        .ostack[currentTask.ostackPos];
+                    currentTask.pc++;
                     break;
                 case globalLoad_int:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = _iglobals[grGetInstructionUnsignedValue(
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = _iglobals[grGetInstructionUnsignedValue(
                             opcode)];
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case globalLoad_real:
-                    context.rstackPos++;
-                    if (context.rstackPos == context.rstack.length)
-                        context.rstack.length *= 2;
-                    context.rstack[context.rstackPos] = _rglobals[grGetInstructionUnsignedValue(
+                    currentTask.rstackPos++;
+                    if (currentTask.rstackPos == currentTask.rstack.length)
+                        currentTask.rstack.length *= 2;
+                    currentTask.rstack[currentTask.rstackPos] = _rglobals[grGetInstructionUnsignedValue(
                             opcode)];
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case globalLoad_string:
-                    context.sstackPos++;
-                    if (context.sstackPos == context.sstack.length)
-                        context.sstack.length *= 2;
-                    context.sstack[context.sstackPos] = _sglobals[grGetInstructionUnsignedValue(
+                    currentTask.sstackPos++;
+                    if (currentTask.sstackPos == currentTask.sstack.length)
+                        currentTask.sstack.length *= 2;
+                    currentTask.sstack[currentTask.sstackPos] = _sglobals[grGetInstructionUnsignedValue(
                             opcode)];
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case globalLoad_object:
-                    context.ostackPos++;
-                    if (context.ostackPos == context.ostack.length)
-                        context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = _oglobals[grGetInstructionUnsignedValue(
+                    currentTask.ostackPos++;
+                    if (currentTask.ostackPos == currentTask.ostack.length)
+                        currentTask.ostack.length *= 2;
+                    currentTask.ostack[currentTask.ostackPos] = _oglobals[grGetInstructionUnsignedValue(
                             opcode)];
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case refStore_int:
-                    *(cast(GrInt*) context.ostack[context.ostackPos]) = context
-                        .istack[context.istackPos];
-                    context.ostackPos--;
-                    context.istackPos--;
-                    context.pc++;
+                    *(cast(GrInt*) currentTask.ostack[currentTask.ostackPos]) = currentTask
+                        .istack[currentTask.istackPos];
+                    currentTask.ostackPos--;
+                    currentTask.istackPos--;
+                    currentTask.pc++;
                     break;
                 case refStore_real:
-                    *(cast(GrReal*) context.ostack[context.ostackPos]) = context
-                        .rstack[context.rstackPos];
-                    context.ostackPos--;
-                    context.rstackPos--;
-                    context.pc++;
+                    *(cast(GrReal*) currentTask.ostack[currentTask.ostackPos]) = currentTask
+                        .rstack[currentTask.rstackPos];
+                    currentTask.ostackPos--;
+                    currentTask.rstackPos--;
+                    currentTask.pc++;
                     break;
                 case refStore_string:
-                    *(cast(GrString*) context.ostack[context.ostackPos]) = context
-                        .sstack[context.sstackPos];
-                    context.ostackPos--;
-                    context.sstackPos--;
-                    context.pc++;
+                    *(cast(GrString*) currentTask.ostack[currentTask.ostackPos]) = currentTask
+                        .sstack[currentTask.sstackPos];
+                    currentTask.ostackPos--;
+                    currentTask.sstackPos--;
+                    currentTask.pc++;
                     break;
                 case refStore_object:
-                    *(cast(GrPtr*) context.ostack[context.ostackPos - 1]) = context
-                        .ostack[context.ostackPos];
-                    context.ostackPos -= 2;
-                    context.pc++;
+                    *(cast(GrPtr*) currentTask.ostack[currentTask.ostackPos - 1]) = currentTask
+                        .ostack[currentTask.ostackPos];
+                    currentTask.ostackPos -= 2;
+                    currentTask.pc++;
                     break;
                 case refStore2_int:
-                    *(cast(GrInt*) context.ostack[context.ostackPos]) = context
-                        .istack[context.istackPos];
-                    context.ostackPos--;
-                    context.pc++;
+                    *(cast(GrInt*) currentTask.ostack[currentTask.ostackPos]) = currentTask
+                        .istack[currentTask.istackPos];
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case refStore2_real:
-                    *(cast(GrReal*) context.ostack[context.ostackPos]) = context
-                        .rstack[context.rstackPos];
-                    context.ostackPos--;
-                    context.pc++;
+                    *(cast(GrReal*) currentTask.ostack[currentTask.ostackPos]) = currentTask
+                        .rstack[currentTask.rstackPos];
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case refStore2_string:
-                    *(cast(GrString*) context.ostack[context.ostackPos]) = context
-                        .sstack[context.sstackPos];
-                    context.ostackPos--;
-                    context.pc++;
+                    *(cast(GrString*) currentTask.ostack[currentTask.ostackPos]) = currentTask
+                        .sstack[currentTask.sstackPos];
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case refStore2_object:
-                    *(cast(GrPtr*) context.ostack[context.ostackPos - 1]) = context
-                        .ostack[context.ostackPos];
-                    context.ostack[context.ostackPos - 1] = context.ostack[context.ostackPos];
-                    context.ostackPos--;
-                    context.pc++;
+                    *(cast(GrPtr*) currentTask.ostack[currentTask.ostackPos - 1]) = currentTask
+                        .ostack[currentTask.ostackPos];
+                    currentTask.ostack[currentTask.ostackPos - 1] = currentTask
+                        .ostack[currentTask.ostackPos];
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case fieldStore_int:
-                    (cast(GrField) context.ostack[context.ostackPos]).ivalue
-                        = context.istack[context.istackPos];
-                    context.istackPos += grGetInstructionSignedValue(opcode);
-                    context.ostackPos--;
-                    context.pc++;
+                    (cast(GrField) currentTask.ostack[currentTask.ostackPos]).ivalue
+                        = currentTask.istack[currentTask.istackPos];
+                    currentTask.istackPos += grGetInstructionSignedValue(opcode);
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case fieldStore_real:
-                    (cast(GrField) context.ostack[context.ostackPos]).rvalue
-                        = context.rstack[context.rstackPos];
-                    context.rstackPos += grGetInstructionSignedValue(opcode);
-                    context.ostackPos--;
-                    context.pc++;
+                    (cast(GrField) currentTask.ostack[currentTask.ostackPos]).rvalue
+                        = currentTask.rstack[currentTask.rstackPos];
+                    currentTask.rstackPos += grGetInstructionSignedValue(opcode);
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case fieldStore_string:
-                    (cast(GrField) context.ostack[context.ostackPos]).svalue
-                        = context.sstack[context.sstackPos];
-                    context.sstackPos += grGetInstructionSignedValue(opcode);
-                    context.ostackPos--;
-                    context.pc++;
+                    (cast(GrField) currentTask.ostack[currentTask.ostackPos]).svalue
+                        = currentTask.sstack[currentTask.sstackPos];
+                    currentTask.sstackPos += grGetInstructionSignedValue(opcode);
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case fieldStore_object:
-                    context.ostackPos--;
-                    (cast(GrField) context.ostack[context.ostackPos]).ovalue
-                        = context.ostack[context.ostackPos + 1];
-                    context.ostack[context.ostackPos] = context.ostack[context.ostackPos + 1];
-                    context.ostackPos += grGetInstructionSignedValue(opcode);
-                    context.pc++;
+                    currentTask.ostackPos--;
+                    (cast(GrField) currentTask.ostack[currentTask.ostackPos]).ovalue
+                        = currentTask.ostack[currentTask.ostackPos + 1];
+                    currentTask.ostack[currentTask.ostackPos] = currentTask
+                        .ostack[currentTask.ostackPos + 1];
+                    currentTask.ostackPos += grGetInstructionSignedValue(opcode);
+                    currentTask.pc++;
                     break;
                 case fieldLoad:
-                    if (!context.ostack[context.ostackPos]) {
-                        raise(context, "NullError");
+                    if (!currentTask.ostack[currentTask.ostackPos]) {
+                        raise(currentTask, "NullError");
                         break;
                     }
-                    context.ostack[context.ostackPos] = cast(GrPtr)((cast(GrObject) context.ostack[context.ostackPos])
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr)(
+                        (cast(GrObject) currentTask.ostack[currentTask.ostackPos])
                             ._fields[grGetInstructionUnsignedValue(opcode)]);
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case fieldLoad2:
-                    context.ostackPos++;
-                    if (context.ostackPos == context.ostack.length)
-                        context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(GrPtr)(
-                        (cast(GrObject) context.ostack[context.ostackPos - 1])
+                    currentTask.ostackPos++;
+                    if (currentTask.ostackPos == currentTask.ostack.length)
+                        currentTask.ostack.length *= 2;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr)(
+                        (cast(GrObject) currentTask.ostack[currentTask.ostackPos - 1])
                             ._fields[grGetInstructionUnsignedValue(opcode)]);
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case fieldLoad_int:
-                    if (!context.ostack[context.ostackPos]) {
-                        raise(context, "NullError");
+                    if (!currentTask.ostack[currentTask.ostackPos]) {
+                        raise(currentTask, "NullError");
                         break;
                     }
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = (cast(GrObject) context.ostack[context.ostackPos])
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = (
+                        cast(GrObject) currentTask.ostack[currentTask.ostackPos])
                         ._fields[grGetInstructionUnsignedValue(opcode)].ivalue;
-                    context.ostackPos--;
-                    context.pc++;
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case fieldLoad_real:
-                    if (!context.ostack[context.ostackPos]) {
-                        raise(context, "NullError");
+                    if (!currentTask.ostack[currentTask.ostackPos]) {
+                        raise(currentTask, "NullError");
                         break;
                     }
-                    context.rstackPos++;
-                    if (context.rstackPos == context.rstack.length)
-                        context.rstack.length *= 2;
-                    context.rstack[context.rstackPos] = (cast(GrObject) context.ostack[context.ostackPos])
+                    currentTask.rstackPos++;
+                    if (currentTask.rstackPos == currentTask.rstack.length)
+                        currentTask.rstack.length *= 2;
+                    currentTask.rstack[currentTask.rstackPos] = (
+                        cast(GrObject) currentTask.ostack[currentTask.ostackPos])
                         ._fields[grGetInstructionUnsignedValue(opcode)].rvalue;
-                    context.ostackPos--;
-                    context.pc++;
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case fieldLoad_string:
-                    if (!context.ostack[context.ostackPos]) {
-                        raise(context, "NullError");
+                    if (!currentTask.ostack[currentTask.ostackPos]) {
+                        raise(currentTask, "NullError");
                         break;
                     }
-                    context.sstackPos++;
-                    if (context.sstackPos == context.sstack.length)
-                        context.sstack.length *= 2;
-                    context.sstack[context.sstackPos] = (cast(GrObject) context.ostack[context.ostackPos])
+                    currentTask.sstackPos++;
+                    if (currentTask.sstackPos == currentTask.sstack.length)
+                        currentTask.sstack.length *= 2;
+                    currentTask.sstack[currentTask.sstackPos] = (
+                        cast(GrObject) currentTask.ostack[currentTask.ostackPos])
                         ._fields[grGetInstructionUnsignedValue(opcode)].svalue;
-                    context.ostackPos--;
-                    context.pc++;
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case fieldLoad_object:
-                    if (!context.ostack[context.ostackPos]) {
-                        raise(context, "NullError");
+                    if (!currentTask.ostack[currentTask.ostackPos]) {
+                        raise(currentTask, "NullError");
                         break;
                     }
-                    context.ostack[context.ostackPos] = (cast(GrObject) context.ostack[context.ostackPos])
+                    currentTask.ostack[currentTask.ostackPos] = (
+                        cast(GrObject) currentTask.ostack[currentTask.ostackPos])
                         ._fields[grGetInstructionUnsignedValue(opcode)].ovalue;
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case fieldLoad2_int:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    GrField field = (cast(GrObject) context.ostack[context.ostackPos])
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    GrField field = (cast(GrObject) currentTask.ostack[currentTask.ostackPos])
                         ._fields[grGetInstructionUnsignedValue(opcode)];
-                    context.istack[context.istackPos] = field.ivalue;
-                    context.ostack[context.ostackPos] = cast(GrPtr) field;
-                    context.pc++;
+                    currentTask.istack[currentTask.istackPos] = field.ivalue;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) field;
+                    currentTask.pc++;
                     break;
                 case fieldLoad2_real:
-                    context.rstackPos++;
-                    if (context.rstackPos == context.rstack.length)
-                        context.rstack.length *= 2;
-                    GrField field = (cast(GrObject) context.ostack[context.ostackPos])
+                    currentTask.rstackPos++;
+                    if (currentTask.rstackPos == currentTask.rstack.length)
+                        currentTask.rstack.length *= 2;
+                    GrField field = (cast(GrObject) currentTask.ostack[currentTask.ostackPos])
                         ._fields[grGetInstructionUnsignedValue(opcode)];
-                    context.rstack[context.rstackPos] = field.rvalue;
-                    context.ostack[context.ostackPos] = cast(GrPtr) field;
-                    context.pc++;
+                    currentTask.rstack[currentTask.rstackPos] = field.rvalue;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) field;
+                    currentTask.pc++;
                     break;
                 case fieldLoad2_string:
-                    context.sstackPos++;
-                    if (context.sstackPos == context.sstack.length)
-                        context.sstack.length *= 2;
-                    GrField field = (cast(GrObject) context.ostack[context.ostackPos])
+                    currentTask.sstackPos++;
+                    if (currentTask.sstackPos == currentTask.sstack.length)
+                        currentTask.sstack.length *= 2;
+                    GrField field = (cast(GrObject) currentTask.ostack[currentTask.ostackPos])
                         ._fields[grGetInstructionUnsignedValue(opcode)];
-                    context.sstack[context.sstackPos] = field.svalue;
-                    context.ostack[context.ostackPos] = cast(GrPtr) field;
-                    context.pc++;
+                    currentTask.sstack[currentTask.sstackPos] = field.svalue;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) field;
+                    currentTask.pc++;
                     break;
                 case fieldLoad2_object:
-                    context.ostackPos++;
-                    if (context.ostackPos == context.ostack.length)
-                        context.ostack.length *= 2;
-                    GrField field = (cast(GrObject) context.ostack[context.ostackPos - 1])
+                    currentTask.ostackPos++;
+                    if (currentTask.ostackPos == currentTask.ostack.length)
+                        currentTask.ostack.length *= 2;
+                    GrField field = (cast(GrObject) currentTask.ostack[currentTask.ostackPos - 1])
                         ._fields[grGetInstructionUnsignedValue(opcode)];
-                    context.ostack[context.ostackPos] = field.ovalue;
-                    context.ostack[context.ostackPos - 1] = cast(GrPtr) field;
-                    context.pc++;
+                    currentTask.ostack[currentTask.ostackPos] = field.ovalue;
+                    currentTask.ostack[currentTask.ostackPos - 1] = cast(GrPtr) field;
+                    currentTask.pc++;
                     break;
                 case const_int:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = _bytecode.iconsts[grGetInstructionUnsignedValue(
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = _bytecode.iconsts[grGetInstructionUnsignedValue(
                             opcode)];
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case const_real:
-                    context.rstackPos++;
-                    if (context.rstackPos == context.rstack.length)
-                        context.rstack.length *= 2;
-                    context.rstack[context.rstackPos] = _bytecode.rconsts[grGetInstructionUnsignedValue(
+                    currentTask.rstackPos++;
+                    if (currentTask.rstackPos == currentTask.rstack.length)
+                        currentTask.rstack.length *= 2;
+                    currentTask.rstack[currentTask.rstackPos] = _bytecode.rconsts[grGetInstructionUnsignedValue(
                             opcode)];
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case const_bool:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = grGetInstructionUnsignedValue(opcode);
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = grGetInstructionUnsignedValue(
+                        opcode);
+                    currentTask.pc++;
                     break;
                 case const_string:
-                    context.sstackPos++;
-                    if (context.sstackPos == context.sstack.length)
-                        context.sstack.length *= 2;
-                    context.sstack[context.sstackPos] = _bytecode.sconsts[grGetInstructionUnsignedValue(
+                    currentTask.sstackPos++;
+                    if (currentTask.sstackPos == currentTask.sstack.length)
+                        currentTask.sstack.length *= 2;
+                    currentTask.sstack[currentTask.sstackPos] = _bytecode.sconsts[grGetInstructionUnsignedValue(
                             opcode)];
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case const_meta:
                     _meta = _bytecode.sconsts[grGetInstructionUnsignedValue(opcode)];
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case const_null:
-                    context.ostackPos++;
-                    if (context.ostackPos == context.ostack.length)
-                        context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = null;
-                    context.pc++;
+                    currentTask.ostackPos++;
+                    if (currentTask.ostackPos == currentTask.ostack.length)
+                        currentTask.ostack.length *= 2;
+                    currentTask.ostack[currentTask.ostackPos] = null;
+                    currentTask.pc++;
                     break;
                 case globalPush_int:
                     const uint nbParams = grGetInstructionUnsignedValue(opcode);
                     for (uint i = 1u; i <= nbParams; i++)
-                        _iglobalStackOut ~= context.istack[(context.istackPos - nbParams) + i];
-                    context.istackPos -= nbParams;
-                    context.pc++;
+                        _iglobalStackOut ~= currentTask.istack[(
+                                currentTask.istackPos - nbParams) + i];
+                    currentTask.istackPos -= nbParams;
+                    currentTask.pc++;
                     break;
                 case globalPush_real:
                     const uint nbParams = grGetInstructionUnsignedValue(opcode);
                     for (uint i = 1u; i <= nbParams; i++)
-                        _fglobalStackOut ~= context.rstack[(context.rstackPos - nbParams) + i];
-                    context.rstackPos -= nbParams;
-                    context.pc++;
+                        _fglobalStackOut ~= currentTask.rstack[(
+                                currentTask.rstackPos - nbParams) + i];
+                    currentTask.rstackPos -= nbParams;
+                    currentTask.pc++;
                     break;
                 case globalPush_string:
                     const uint nbParams = grGetInstructionUnsignedValue(opcode);
                     for (uint i = 1u; i <= nbParams; i++)
-                        _sglobalStackOut ~= context.sstack[(context.sstackPos - nbParams) + i];
-                    context.sstackPos -= nbParams;
-                    context.pc++;
+                        _sglobalStackOut ~= currentTask.sstack[(
+                                currentTask.sstackPos - nbParams) + i];
+                    currentTask.sstackPos -= nbParams;
+                    currentTask.pc++;
                     break;
                 case globalPush_object:
                     const uint nbParams = grGetInstructionUnsignedValue(opcode);
                     for (uint i = 1u; i <= nbParams; i++)
-                        _oglobalStackOut ~= context.ostack[(context.ostackPos - nbParams) + i];
-                    context.ostackPos -= nbParams;
-                    context.pc++;
+                        _oglobalStackOut ~= currentTask.ostack[(
+                                currentTask.ostackPos - nbParams) + i];
+                    currentTask.ostackPos -= nbParams;
+                    currentTask.pc++;
                     break;
                 case globalPop_int:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = _iglobalStackIn[$ - 1];
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = _iglobalStackIn[$ - 1];
                     _iglobalStackIn.length--;
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case globalPop_real:
-                    context.rstackPos++;
-                    if (context.rstackPos == context.rstack.length)
-                        context.rstack.length *= 2;
-                    context.rstack[context.rstackPos] = _fglobalStackIn[$ - 1];
+                    currentTask.rstackPos++;
+                    if (currentTask.rstackPos == currentTask.rstack.length)
+                        currentTask.rstack.length *= 2;
+                    currentTask.rstack[currentTask.rstackPos] = _fglobalStackIn[$ - 1];
                     _fglobalStackIn.length--;
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case globalPop_string:
-                    context.sstackPos++;
-                    if (context.sstackPos == context.sstack.length)
-                        context.sstack.length *= 2;
-                    context.sstack[context.sstackPos] = _sglobalStackIn[$ - 1];
+                    currentTask.sstackPos++;
+                    if (currentTask.sstackPos == currentTask.sstack.length)
+                        currentTask.sstack.length *= 2;
+                    currentTask.sstack[currentTask.sstackPos] = _sglobalStackIn[$ - 1];
                     _sglobalStackIn.length--;
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case globalPop_object:
-                    context.ostackPos++;
-                    if (context.ostackPos == context.ostack.length)
-                        context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = _oglobalStackIn[$ - 1];
+                    currentTask.ostackPos++;
+                    if (currentTask.ostackPos == currentTask.ostack.length)
+                        currentTask.ostack.length *= 2;
+                    currentTask.ostack[currentTask.ostackPos] = _oglobalStackIn[$ - 1];
                     _oglobalStackIn.length--;
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case equal_int:
-                    context.istackPos--;
-                    context.istack[context.istackPos] = context.istack[context.istackPos]
-                        == context.istack[context.istackPos + 1];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.istack[currentTask.istackPos] = currentTask.istack[currentTask.istackPos]
+                        == currentTask.istack[currentTask.istackPos + 1];
+                    currentTask.pc++;
                     break;
                 case equal_real:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = context.rstack[context.rstackPos - 1]
-                        == context.rstack[context.rstackPos];
-                    context.rstackPos -= 2;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = currentTask.rstack[currentTask.rstackPos - 1]
+                        == currentTask.rstack[currentTask.rstackPos];
+                    currentTask.rstackPos -= 2;
+                    currentTask.pc++;
                     break;
                 case equal_string:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = context.sstack[context.sstackPos - 1]
-                        == context.sstack[context.sstackPos];
-                    context.sstackPos -= 2;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = currentTask.sstack[currentTask.sstackPos - 1]
+                        == currentTask.sstack[currentTask.sstackPos];
+                    currentTask.sstackPos -= 2;
+                    currentTask.pc++;
                     break;
                 case notEqual_int:
-                    context.istackPos--;
-                    context.istack[context.istackPos] = context.istack[context.istackPos]
-                        != context.istack[context.istackPos + 1];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.istack[currentTask.istackPos] = currentTask.istack[currentTask.istackPos]
+                        != currentTask.istack[currentTask.istackPos + 1];
+                    currentTask.pc++;
                     break;
                 case notEqual_real:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = context.rstack[context.rstackPos - 1]
-                        != context.rstack[context.rstackPos];
-                    context.rstackPos -= 2;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = currentTask.rstack[currentTask.rstackPos - 1]
+                        != currentTask.rstack[currentTask.rstackPos];
+                    currentTask.rstackPos -= 2;
+                    currentTask.pc++;
                     break;
                 case notEqual_string:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = context.sstack[context.sstackPos - 1]
-                        != context.sstack[context.sstackPos];
-                    context.sstackPos -= 2;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = currentTask.sstack[currentTask.sstackPos - 1]
+                        != currentTask.sstack[currentTask.sstackPos];
+                    currentTask.sstackPos -= 2;
+                    currentTask.pc++;
                     break;
                 case greaterOrEqual_int:
-                    context.istackPos--;
-                    context.istack[context.istackPos] = context.istack[context.istackPos]
-                        >= context.istack[context.istackPos + 1];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.istack[currentTask.istackPos] = currentTask.istack[currentTask.istackPos]
+                        >= currentTask.istack[currentTask.istackPos + 1];
+                    currentTask.pc++;
                     break;
                 case greaterOrEqual_real:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = context.rstack[context.rstackPos - 1]
-                        >= context.rstack[context.rstackPos];
-                    context.rstackPos -= 2;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = currentTask.rstack[currentTask.rstackPos - 1]
+                        >= currentTask.rstack[currentTask.rstackPos];
+                    currentTask.rstackPos -= 2;
+                    currentTask.pc++;
                     break;
                 case lesserOrEqual_int:
-                    context.istackPos--;
-                    context.istack[context.istackPos] = context.istack[context.istackPos]
-                        <= context.istack[context.istackPos + 1];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.istack[currentTask.istackPos] = currentTask.istack[currentTask.istackPos]
+                        <= currentTask.istack[currentTask.istackPos + 1];
+                    currentTask.pc++;
                     break;
                 case lesserOrEqual_real:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = context.rstack[context.rstackPos - 1]
-                        <= context.rstack[context.rstackPos];
-                    context.rstackPos -= 2;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = currentTask.rstack[currentTask.rstackPos - 1]
+                        <= currentTask.rstack[currentTask.rstackPos];
+                    currentTask.rstackPos -= 2;
+                    currentTask.pc++;
                     break;
                 case greater_int:
-                    context.istackPos--;
-                    context.istack[context.istackPos] = context.istack[context.istackPos]
-                        > context.istack[context.istackPos + 1];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.istack[currentTask.istackPos] = currentTask.istack[currentTask.istackPos]
+                        > currentTask.istack[currentTask.istackPos + 1];
+                    currentTask.pc++;
                     break;
                 case greater_real:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = context.rstack[context.rstackPos - 1]
-                        > context.rstack[context.rstackPos];
-                    context.rstackPos -= 2;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = currentTask.rstack[currentTask.rstackPos - 1]
+                        > currentTask.rstack[currentTask.rstackPos];
+                    currentTask.rstackPos -= 2;
+                    currentTask.pc++;
                     break;
                 case lesser_int:
-                    context.istackPos--;
-                    context.istack[context.istackPos] = context.istack[context.istackPos]
-                        < context.istack[context.istackPos + 1];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.istack[currentTask.istackPos] = currentTask.istack[currentTask.istackPos]
+                        < currentTask.istack[currentTask.istackPos + 1];
+                    currentTask.pc++;
                     break;
                 case lesser_real:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = context.rstack[context.rstackPos - 1]
-                        < context.rstack[context.rstackPos];
-                    context.rstackPos -= 2;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = currentTask.rstack[currentTask.rstackPos - 1]
+                        < currentTask.rstack[currentTask.rstackPos];
+                    currentTask.rstackPos -= 2;
+                    currentTask.pc++;
                     break;
                 case isNonNull_object:
-                    context.istackPos++;
-                    context.istack[context.istackPos] = (context.ostack[context.ostackPos]!is null);
-                    context.ostackPos--;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    currentTask.istack[currentTask.istackPos] = (
+                        currentTask.ostack[currentTask.ostackPos]!is null);
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case and_int:
-                    context.istackPos--;
-                    context.istack[context.istackPos] = context.istack[context.istackPos]
-                        && context.istack[context.istackPos + 1];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.istack[currentTask.istackPos] = currentTask.istack[currentTask.istackPos]
+                        && currentTask.istack[currentTask.istackPos + 1];
+                    currentTask.pc++;
                     break;
                 case or_int:
-                    context.istackPos--;
-                    context.istack[context.istackPos] = context.istack[context.istackPos]
-                        || context.istack[context.istackPos + 1];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.istack[currentTask.istackPos] = currentTask.istack[currentTask.istackPos]
+                        || currentTask.istack[currentTask.istackPos + 1];
+                    currentTask.pc++;
                     break;
                 case not_int:
-                    context.istack[context.istackPos] = !context.istack[context.istackPos];
-                    context.pc++;
+                    currentTask.istack[currentTask.istackPos] = !currentTask
+                        .istack[currentTask.istackPos];
+                    currentTask.pc++;
                     break;
                 case add_int:
-                    context.istackPos--;
-                    context.istack[context.istackPos] += context.istack[context.istackPos + 1];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.istack[currentTask.istackPos] += currentTask
+                        .istack[currentTask.istackPos + 1];
+                    currentTask.pc++;
                     break;
                 case add_real:
-                    context.rstackPos--;
-                    context.rstack[context.rstackPos] += context.rstack[context.rstackPos + 1];
-                    context.pc++;
+                    currentTask.rstackPos--;
+                    currentTask.rstack[currentTask.rstackPos] += currentTask
+                        .rstack[currentTask.rstackPos + 1];
+                    currentTask.pc++;
                     break;
                 case concatenate_string:
-                    context.sstackPos--;
-                    context.sstack[context.sstackPos] ~= context.sstack[context.sstackPos + 1];
-                    context.pc++;
+                    currentTask.sstackPos--;
+                    currentTask.sstack[currentTask.sstackPos] ~= currentTask
+                        .sstack[currentTask.sstackPos + 1];
+                    currentTask.pc++;
                     break;
                 case substract_int:
-                    context.istackPos--;
-                    context.istack[context.istackPos] -= context.istack[context.istackPos + 1];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.istack[currentTask.istackPos] -= currentTask
+                        .istack[currentTask.istackPos + 1];
+                    currentTask.pc++;
                     break;
                 case substract_real:
-                    context.rstackPos--;
-                    context.rstack[context.rstackPos] -= context.rstack[context.rstackPos + 1];
-                    context.pc++;
+                    currentTask.rstackPos--;
+                    currentTask.rstack[currentTask.rstackPos] -= currentTask
+                        .rstack[currentTask.rstackPos + 1];
+                    currentTask.pc++;
                     break;
                 case multiply_int:
-                    context.istackPos--;
-                    context.istack[context.istackPos] *= context.istack[context.istackPos + 1];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.istack[currentTask.istackPos] *= currentTask
+                        .istack[currentTask.istackPos + 1];
+                    currentTask.pc++;
                     break;
                 case multiply_real:
-                    context.rstackPos--;
-                    context.rstack[context.rstackPos] *= context.rstack[context.rstackPos + 1];
-                    context.pc++;
+                    currentTask.rstackPos--;
+                    currentTask.rstack[currentTask.rstackPos] *= currentTask
+                        .rstack[currentTask.rstackPos + 1];
+                    currentTask.pc++;
                     break;
                 case divide_int:
-                    if (context.istack[context.istackPos] == 0) {
-                        raise(context, "ZeroDivisionError");
+                    if (currentTask.istack[currentTask.istackPos] == 0) {
+                        raise(currentTask, "ZeroDivisionError");
                         break;
                     }
-                    context.istackPos--;
-                    context.istack[context.istackPos] /= context.istack[context.istackPos + 1];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.istack[currentTask.istackPos] /= currentTask
+                        .istack[currentTask.istackPos + 1];
+                    currentTask.pc++;
                     break;
                 case divide_real:
-                    if (context.rstack[context.rstackPos] == 0f) {
-                        raise(context, "ZeroDivisionError");
+                    if (currentTask.rstack[currentTask.rstackPos] == 0f) {
+                        raise(currentTask, "ZeroDivisionError");
                         break;
                     }
-                    context.rstackPos--;
-                    context.rstack[context.rstackPos] /= context.rstack[context.rstackPos + 1];
-                    context.pc++;
+                    currentTask.rstackPos--;
+                    currentTask.rstack[currentTask.rstackPos] /= currentTask
+                        .rstack[currentTask.rstackPos + 1];
+                    currentTask.pc++;
                     break;
                 case remainder_int:
-                    if (context.istack[context.istackPos] == 0) {
-                        raise(context, "ZeroDivisionError");
+                    if (currentTask.istack[currentTask.istackPos] == 0) {
+                        raise(currentTask, "ZeroDivisionError");
                         break;
                     }
-                    context.istackPos--;
-                    context.istack[context.istackPos] %= context.istack[context.istackPos + 1];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.istack[currentTask.istackPos] %= currentTask
+                        .istack[currentTask.istackPos + 1];
+                    currentTask.pc++;
                     break;
                 case remainder_real:
-                    if (context.rstack[context.rstackPos] == 0f) {
-                        raise(context, "ZeroDivisionError");
+                    if (currentTask.rstack[currentTask.rstackPos] == 0f) {
+                        raise(currentTask, "ZeroDivisionError");
                         break;
                     }
-                    context.rstackPos--;
-                    context.rstack[context.rstackPos] %= context.rstack[context.rstackPos + 1];
-                    context.pc++;
+                    currentTask.rstackPos--;
+                    currentTask.rstack[currentTask.rstackPos] %= currentTask
+                        .rstack[currentTask.rstackPos + 1];
+                    currentTask.pc++;
                     break;
                 case negative_int:
-                    context.istack[context.istackPos] = -context.istack[context.istackPos];
-                    context.pc++;
+                    currentTask.istack[currentTask.istackPos] = -currentTask
+                        .istack[currentTask.istackPos];
+                    currentTask.pc++;
                     break;
                 case negative_real:
-                    context.rstack[context.rstackPos] = -context.rstack[context.rstackPos];
-                    context.pc++;
+                    currentTask.rstack[currentTask.rstackPos] = -currentTask
+                        .rstack[currentTask.rstackPos];
+                    currentTask.pc++;
                     break;
                 case increment_int:
-                    context.istack[context.istackPos]++;
-                    context.pc++;
+                    currentTask.istack[currentTask.istackPos]++;
+                    currentTask.pc++;
                     break;
                 case increment_real:
-                    context.rstack[context.rstackPos] += 1f;
-                    context.pc++;
+                    currentTask.rstack[currentTask.rstackPos] += 1f;
+                    currentTask.pc++;
                     break;
                 case decrement_int:
-                    context.istack[context.istackPos]--;
-                    context.pc++;
+                    currentTask.istack[currentTask.istackPos]--;
+                    currentTask.pc++;
                     break;
                 case decrement_real:
-                    context.rstack[context.rstackPos] -= 1f;
-                    context.pc++;
+                    currentTask.rstack[currentTask.rstackPos] -= 1f;
+                    currentTask.pc++;
                     break;
                 case copy_int:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = context.istack[context.istackPos - 1];
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = currentTask
+                        .istack[currentTask.istackPos - 1];
+                    currentTask.pc++;
                     break;
                 case copy_real:
-                    context.rstackPos++;
-                    if (context.rstackPos == context.rstack.length)
-                        context.rstack.length *= 2;
-                    context.rstack[context.rstackPos] = context.rstack[context.rstackPos - 1];
-                    context.pc++;
+                    currentTask.rstackPos++;
+                    if (currentTask.rstackPos == currentTask.rstack.length)
+                        currentTask.rstack.length *= 2;
+                    currentTask.rstack[currentTask.rstackPos] = currentTask
+                        .rstack[currentTask.rstackPos - 1];
+                    currentTask.pc++;
                     break;
                 case copy_string:
-                    context.sstackPos++;
-                    if (context.sstackPos == context.sstack.length)
-                        context.sstack.length *= 2;
-                    context.sstack[context.sstackPos] = context.sstack[context.sstackPos - 1];
-                    context.pc++;
+                    currentTask.sstackPos++;
+                    if (currentTask.sstackPos == currentTask.sstack.length)
+                        currentTask.sstack.length *= 2;
+                    currentTask.sstack[currentTask.sstackPos] = currentTask
+                        .sstack[currentTask.sstackPos - 1];
+                    currentTask.pc++;
                     break;
                 case copy_object:
-                    context.ostackPos++;
-                    if (context.ostackPos == context.ostack.length)
-                        context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = context.ostack[context.ostackPos - 1];
-                    context.pc++;
+                    currentTask.ostackPos++;
+                    if (currentTask.ostackPos == currentTask.ostack.length)
+                        currentTask.ostack.length *= 2;
+                    currentTask.ostack[currentTask.ostackPos] = currentTask
+                        .ostack[currentTask.ostackPos - 1];
+                    currentTask.pc++;
                     break;
                 case swap_int:
-                    swapAt(context.istack, context.istackPos - 1, context.istackPos);
-                    context.pc++;
+                    swapAt(currentTask.istack, currentTask.istackPos - 1, currentTask.istackPos);
+                    currentTask.pc++;
                     break;
                 case swap_real:
-                    swapAt(context.rstack, context.rstackPos - 1, context.rstackPos);
-                    context.pc++;
+                    swapAt(currentTask.rstack, currentTask.rstackPos - 1, currentTask.rstackPos);
+                    currentTask.pc++;
                     break;
                 case swap_string:
-                    swapAt(context.sstack, context.sstackPos - 1, context.sstackPos);
-                    context.pc++;
+                    swapAt(currentTask.sstack, currentTask.sstackPos - 1, currentTask.sstackPos);
+                    currentTask.pc++;
                     break;
                 case swap_object:
-                    swapAt(context.ostack, context.ostackPos - 1, context.ostackPos);
-                    context.pc++;
+                    swapAt(currentTask.ostack, currentTask.ostackPos - 1, currentTask.ostackPos);
+                    currentTask.pc++;
                     break;
                 case setupIterator:
-                    if (context.istack[context.istackPos] < 0)
-                        context.istack[context.istackPos] = 0;
-                    context.istack[context.istackPos]++;
-                    context.pc++;
+                    if (currentTask.istack[currentTask.istackPos] < 0)
+                        currentTask.istack[currentTask.istackPos] = 0;
+                    currentTask.istack[currentTask.istackPos]++;
+                    currentTask.pc++;
                     break;
                 case return_:
                     //If another task was killed by an exception,
-                    //we might end up there if the task has just been spawned.
-                    if (context.stackPos < 0 && context.isKilled) {
-                        _contexts.markInternalForRemoval(index);
+                    //we might killtasks up there if the task has just been spawned.
+                    if (currentTask.stackPos < 0 && currentTask.isKilled) {
+                        _tasks.markInternalForRemoval(index);
                         continue contextsLabel;
                     }
                     //Check for deferred calls.
-                    else if (context.callStack[context.stackPos].deferStack.length) {
+                    else if (currentTask.callStack[currentTask.stackPos].deferStack.length) {
                         //Pop the last defer and run it.
-                        context.pc = context.callStack[context.stackPos].deferStack[$ - 1];
-                        context.callStack[context.stackPos].deferStack.length--;
+                        currentTask.pc = currentTask
+                            .callStack[currentTask.stackPos].deferStack[$ - 1];
+                        currentTask.callStack[currentTask.stackPos].deferStack.length--;
                     }
                     else {
-                        //Then returns to the last context.
-                        context.stackPos--;
-                        context.pc = context.callStack[context.stackPos].retPosition;
-                        context.ilocalsPos -= context.callStack[context.stackPos].ilocalStackSize;
-                        context.rlocalsPos -= context.callStack[context.stackPos].rlocalStackSize;
-                        context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
-                        context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
+                        //Then returns to the last currentTask.
+                        currentTask.stackPos--;
+                        currentTask.pc = currentTask.callStack[currentTask.stackPos].retPosition;
+                        currentTask.ilocalsPos -= currentTask
+                            .callStack[currentTask.stackPos].ilocalStackSize;
+                        currentTask.rlocalsPos -= currentTask
+                            .callStack[currentTask.stackPos].rlocalStackSize;
+                        currentTask.slocalsPos -= currentTask
+                            .callStack[currentTask.stackPos].slocalStackSize;
+                        currentTask.olocalsPos -= currentTask
+                            .callStack[currentTask.stackPos].olocalStackSize;
                     }
                     break;
                 case unwind:
                     //If another task was killed by an exception,
-                    //we might end up there if the task has just been spawned.
-                    if (context.stackPos < 0) {
-                        _contexts.markInternalForRemoval(index);
+                    //we might killtasks up there if the task has just been spawned.
+                    if (currentTask.stackPos < 0) {
+                        _tasks.markInternalForRemoval(index);
                         continue contextsLabel;
                     }
                     //Check for deferred calls.
-                    else if (context.callStack[context.stackPos].deferStack.length) {
+                    else if (currentTask.callStack[currentTask.stackPos].deferStack.length) {
                         //Pop the next defer and run it.
-                        context.pc = context.callStack[context.stackPos].deferStack[$ - 1];
-                        context.callStack[context.stackPos].deferStack.length--;
+                        currentTask.pc = currentTask
+                            .callStack[currentTask.stackPos].deferStack[$ - 1];
+                        currentTask.callStack[currentTask.stackPos].deferStack.length--;
                     }
-                    else if (context.isKilled) {
-                        if (context.stackPos) {
-                            //Then returns to the last context without modifying the pc.
-                            context.stackPos--;
-                            context.ilocalsPos
-                                -= context.callStack[context.stackPos].ilocalStackSize;
-                            context.rlocalsPos
-                                -= context.callStack[context.stackPos].rlocalStackSize;
-                            context.slocalsPos
-                                -= context.callStack[context.stackPos].slocalStackSize;
-                            context.olocalsPos
-                                -= context.callStack[context.stackPos].olocalStackSize;
+                    else if (currentTask.isKilled) {
+                        if (currentTask.stackPos) {
+                            //Then returns to the last currentTask without modifying the pc.
+                            currentTask.stackPos--;
+                            currentTask.ilocalsPos
+                                -= currentTask.callStack[currentTask.stackPos].ilocalStackSize;
+                            currentTask.rlocalsPos
+                                -= currentTask.callStack[currentTask.stackPos].rlocalStackSize;
+                            currentTask.slocalsPos
+                                -= currentTask.callStack[currentTask.stackPos].slocalStackSize;
+                            currentTask.olocalsPos
+                                -= currentTask.callStack[currentTask.stackPos].olocalStackSize;
 
                             if (_isDebug)
                                 _debugProfileEnd();
                         }
                         else {
                             //Every deferred call has been executed, now die.
-                            _contexts.markInternalForRemoval(index);
+                            _tasks.markInternalForRemoval(index);
                             continue contextsLabel;
                         }
                     }
-                    else if (context.isPanicking) {
+                    else if (currentTask.isPanicking) {
                         //An exception has been raised without any try/catch inside the function.
                         //So all deferred code is run here before searching in the parent function.
-                        if (context.stackPos) {
-                            //Then returns to the last context without modifying the pc.
-                            context.stackPos--;
-                            context.ilocalsPos
-                                -= context.callStack[context.stackPos].ilocalStackSize;
-                            context.rlocalsPos
-                                -= context.callStack[context.stackPos].rlocalStackSize;
-                            context.slocalsPos
-                                -= context.callStack[context.stackPos].slocalStackSize;
-                            context.olocalsPos
-                                -= context.callStack[context.stackPos].olocalStackSize;
+                        if (currentTask.stackPos) {
+                            //Then returns to the last currentTask without modifying the pc.
+                            currentTask.stackPos--;
+                            currentTask.ilocalsPos
+                                -= currentTask.callStack[currentTask.stackPos].ilocalStackSize;
+                            currentTask.rlocalsPos
+                                -= currentTask.callStack[currentTask.stackPos].rlocalStackSize;
+                            currentTask.slocalsPos
+                                -= currentTask.callStack[currentTask.stackPos].slocalStackSize;
+                            currentTask.olocalsPos
+                                -= currentTask.callStack[currentTask.stackPos].olocalStackSize;
 
                             if (_isDebug)
                                 _debugProfileEnd();
 
                             //Exception handler found in the current function, just jump.
-                            if (context.callStack[context.stackPos].exceptionHandlers.length) {
-                                context.pc
-                                    = context.callStack[context.stackPos].exceptionHandlers[$ - 1];
+                            if (
+                                currentTask.callStack[currentTask.stackPos]
+                                .exceptionHandlers.length) {
+                                currentTask.pc
+                                    = currentTask.callStack[currentTask.stackPos].exceptionHandlers[$ - 1];
                             }
                         }
                         else {
                             //Kill the others.
-                            foreach (task; _contexts) {
-                                task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
-                                task.isKilled = true;
+                            foreach (otherTask; _tasks) {
+                                otherTask.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
+                                otherTask.isKilled = true;
                             }
-                            _contextsToSpawn.reset();
+                            _createdTasks.reset();
 
                             //The VM is now panicking.
                             _isPanicking = true;
@@ -1802,531 +1865,561 @@ class GrEngine {
                             _sglobalStackIn.length--;
 
                             //Every deferred call has been executed, now die.
-                            _contexts.markInternalForRemoval(index);
+                            _tasks.markInternalForRemoval(index);
                             continue contextsLabel;
                         }
                     }
                     else {
-                        //Then returns to the last context.
-                        context.stackPos--;
-                        context.pc = context.callStack[context.stackPos].retPosition;
-                        context.ilocalsPos -= context.callStack[context.stackPos].ilocalStackSize;
-                        context.rlocalsPos -= context.callStack[context.stackPos].rlocalStackSize;
-                        context.slocalsPos -= context.callStack[context.stackPos].slocalStackSize;
-                        context.olocalsPos -= context.callStack[context.stackPos].olocalStackSize;
+                        //Then returns to the last currentTask.
+                        currentTask.stackPos--;
+                        currentTask.pc = currentTask.callStack[currentTask.stackPos].retPosition;
+                        currentTask.ilocalsPos -= currentTask
+                            .callStack[currentTask.stackPos].ilocalStackSize;
+                        currentTask.rlocalsPos -= currentTask
+                            .callStack[currentTask.stackPos].rlocalStackSize;
+                        currentTask.slocalsPos -= currentTask
+                            .callStack[currentTask.stackPos].slocalStackSize;
+                        currentTask.olocalsPos -= currentTask
+                            .callStack[currentTask.stackPos].olocalStackSize;
 
                         if (_isDebug)
                             _debugProfileEnd();
                     }
                     break;
                 case defer:
-                    context.callStack[context.stackPos].deferStack ~= context.pc + grGetInstructionSignedValue(
+                    currentTask.callStack[currentTask.stackPos].deferStack ~= currentTask.pc + grGetInstructionSignedValue(
                         opcode);
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 case localStack_int:
                     const auto istackSize = grGetInstructionUnsignedValue(opcode);
-                    context.callStack[context.stackPos].ilocalStackSize = istackSize;
-                    if ((context.ilocalsPos + istackSize) >= context.ilocalsLimit)
-                        context.doubleIntLocalsStackSize(context.ilocalsPos + istackSize);
-                    context.pc++;
+                    currentTask.callStack[currentTask.stackPos].ilocalStackSize = istackSize;
+                    if ((currentTask.ilocalsPos + istackSize) >= currentTask.ilocalsLimit)
+                        currentTask.doubleIntLocalsStackSize(currentTask.ilocalsPos + istackSize);
+                    currentTask.pc++;
                     break;
                 case localStack_real:
                     const auto fstackSize = grGetInstructionUnsignedValue(opcode);
-                    context.callStack[context.stackPos].rlocalStackSize = fstackSize;
-                    if ((context.rlocalsPos + fstackSize) >= context.rlocalsLimit)
-                        context.doubleRealLocalsStackSize(context.rlocalsPos + fstackSize);
-                    context.pc++;
+                    currentTask.callStack[currentTask.stackPos].rlocalStackSize = fstackSize;
+                    if ((currentTask.rlocalsPos + fstackSize) >= currentTask.rlocalsLimit)
+                        currentTask.doubleRealLocalsStackSize(currentTask.rlocalsPos + fstackSize);
+                    currentTask.pc++;
                     break;
                 case localStack_string:
                     const auto sstackSize = grGetInstructionUnsignedValue(opcode);
-                    context.callStack[context.stackPos].slocalStackSize = sstackSize;
-                    if ((context.slocalsPos + sstackSize) >= context.slocalsLimit)
-                        context.doubleStringLocalsStackSize(context.slocalsPos + sstackSize);
-                    context.pc++;
+                    currentTask.callStack[currentTask.stackPos].slocalStackSize = sstackSize;
+                    if ((currentTask.slocalsPos + sstackSize) >= currentTask.slocalsLimit)
+                        currentTask.doubleStringLocalsStackSize(currentTask.slocalsPos + sstackSize);
+                    currentTask.pc++;
                     break;
                 case localStack_object:
                     const auto ostackSize = grGetInstructionUnsignedValue(opcode);
-                    context.callStack[context.stackPos].olocalStackSize = ostackSize;
-                    if ((context.olocalsPos + ostackSize) >= context.olocalsLimit)
-                        context.doubleObjectLocalsStackSize(context.olocalsPos + ostackSize);
-                    context.pc++;
+                    currentTask.callStack[currentTask.stackPos].olocalStackSize = ostackSize;
+                    if ((currentTask.olocalsPos + ostackSize) >= currentTask.olocalsLimit)
+                        currentTask.doubleObjectLocalsStackSize(currentTask.olocalsPos + ostackSize);
+                    currentTask.pc++;
                     break;
                 case call:
-                    if ((context.stackPos + 1) >= context.callStackLimit)
-                        context.doubleCallStackSize();
-                    context.ilocalsPos += context.callStack[context.stackPos].ilocalStackSize;
-                    context.rlocalsPos += context.callStack[context.stackPos].rlocalStackSize;
-                    context.slocalsPos += context.callStack[context.stackPos].slocalStackSize;
-                    context.olocalsPos += context.callStack[context.stackPos].olocalStackSize;
-                    context.callStack[context.stackPos].retPosition = context.pc + 1u;
-                    context.stackPos++;
-                    context.pc = grGetInstructionUnsignedValue(opcode);
+                    if ((currentTask.stackPos + 1) >= currentTask.callStackLimit)
+                        currentTask.doubleCallStackSize();
+                    currentTask.ilocalsPos += currentTask
+                        .callStack[currentTask.stackPos].ilocalStackSize;
+                    currentTask.rlocalsPos += currentTask
+                        .callStack[currentTask.stackPos].rlocalStackSize;
+                    currentTask.slocalsPos += currentTask
+                        .callStack[currentTask.stackPos].slocalStackSize;
+                    currentTask.olocalsPos += currentTask
+                        .callStack[currentTask.stackPos].olocalStackSize;
+                    currentTask.callStack[currentTask.stackPos].retPosition = currentTask.pc + 1u;
+                    currentTask.stackPos++;
+                    currentTask.pc = grGetInstructionUnsignedValue(opcode);
                     break;
                 case anonymousCall:
-                    if ((context.stackPos + 1) >= context.callStackLimit)
-                        context.doubleCallStackSize();
-                    context.ilocalsPos += context.callStack[context.stackPos].ilocalStackSize;
-                    context.rlocalsPos += context.callStack[context.stackPos].rlocalStackSize;
-                    context.slocalsPos += context.callStack[context.stackPos].slocalStackSize;
-                    context.olocalsPos += context.callStack[context.stackPos].olocalStackSize;
-                    context.callStack[context.stackPos].retPosition = context.pc + 1u;
-                    context.stackPos++;
-                    context.pc = cast(uint) context.istack[context.istackPos];
-                    context.istackPos--;
+                    if ((currentTask.stackPos + 1) >= currentTask.callStackLimit)
+                        currentTask.doubleCallStackSize();
+                    currentTask.ilocalsPos += currentTask
+                        .callStack[currentTask.stackPos].ilocalStackSize;
+                    currentTask.rlocalsPos += currentTask
+                        .callStack[currentTask.stackPos].rlocalStackSize;
+                    currentTask.slocalsPos += currentTask
+                        .callStack[currentTask.stackPos].slocalStackSize;
+                    currentTask.olocalsPos += currentTask
+                        .callStack[currentTask.stackPos].olocalStackSize;
+                    currentTask.callStack[currentTask.stackPos].retPosition = currentTask.pc + 1u;
+                    currentTask.stackPos++;
+                    currentTask.pc = cast(uint) currentTask.istack[currentTask.istackPos];
+                    currentTask.istackPos--;
                     break;
                 case primitiveCall:
-                    _calls[grGetInstructionUnsignedValue(opcode)].call(context);
-                    context.pc++;
-                    if (context.blocker)
+                    _calls[grGetInstructionUnsignedValue(opcode)].call(currentTask);
+                    currentTask.pc++;
+                    if (currentTask.blocker)
                         continue contextsLabel;
                     break;
                 case jump:
-                    context.pc += grGetInstructionSignedValue(opcode);
+                    currentTask.pc += grGetInstructionSignedValue(opcode);
                     break;
                 case jumpEqual:
-                    if (context.istack[context.istackPos])
-                        context.pc++;
+                    if (currentTask.istack[currentTask.istackPos])
+                        currentTask.pc++;
                     else
-                        context.pc += grGetInstructionSignedValue(opcode);
-                    context.istackPos--;
+                        currentTask.pc += grGetInstructionSignedValue(opcode);
+                    currentTask.istackPos--;
                     break;
                 case jumpNotEqual:
-                    if (context.istack[context.istackPos])
-                        context.pc += grGetInstructionSignedValue(opcode);
+                    if (currentTask.istack[currentTask.istackPos])
+                        currentTask.pc += grGetInstructionSignedValue(opcode);
                     else
-                        context.pc++;
-                    context.istackPos--;
+                        currentTask.pc++;
+                    currentTask.istackPos--;
                     break;
                 case array_int:
                     GrIntArray ary = new GrIntArray;
                     const auto arySize = grGetInstructionUnsignedValue(opcode);
                     for (int i = arySize - 1; i >= 0; i--)
-                        ary.data ~= context.istack[context.istackPos - i];
-                    context.istackPos -= arySize;
-                    context.ostackPos++;
-                    if (context.ostackPos == context.ostack.length)
-                        context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(GrPtr) ary;
-                    context.pc++;
+                        ary.data ~= currentTask.istack[currentTask.istackPos - i];
+                    currentTask.istackPos -= arySize;
+                    currentTask.ostackPos++;
+                    if (currentTask.ostackPos == currentTask.ostack.length)
+                        currentTask.ostack.length *= 2;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) ary;
+                    currentTask.pc++;
                     break;
                 case array_real:
                     GrRealArray ary = new GrRealArray;
                     const auto arySize = grGetInstructionUnsignedValue(opcode);
                     for (int i = arySize - 1; i >= 0; i--)
-                        ary.data ~= context.rstack[context.rstackPos - i];
-                    context.rstackPos -= arySize;
-                    context.ostackPos++;
-                    if (context.ostackPos == context.ostack.length)
-                        context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(GrPtr) ary;
-                    context.pc++;
+                        ary.data ~= currentTask.rstack[currentTask.rstackPos - i];
+                    currentTask.rstackPos -= arySize;
+                    currentTask.ostackPos++;
+                    if (currentTask.ostackPos == currentTask.ostack.length)
+                        currentTask.ostack.length *= 2;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) ary;
+                    currentTask.pc++;
                     break;
                 case array_string:
                     GrStringArray ary = new GrStringArray;
                     const auto arySize = grGetInstructionUnsignedValue(opcode);
                     for (int i = arySize - 1; i >= 0; i--)
-                        ary.data ~= context.sstack[context.sstackPos - i];
-                    context.sstackPos -= arySize;
-                    context.ostackPos++;
-                    if (context.ostackPos == context.ostack.length)
-                        context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(GrPtr) ary;
-                    context.pc++;
+                        ary.data ~= currentTask.sstack[currentTask.sstackPos - i];
+                    currentTask.sstackPos -= arySize;
+                    currentTask.ostackPos++;
+                    if (currentTask.ostackPos == currentTask.ostack.length)
+                        currentTask.ostack.length *= 2;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) ary;
+                    currentTask.pc++;
                     break;
                 case array_object:
                     GrObjectArray ary = new GrObjectArray;
                     const auto arySize = grGetInstructionUnsignedValue(opcode);
                     for (int i = arySize - 1; i >= 0; i--)
-                        ary.data ~= context.ostack[context.ostackPos - i];
-                    context.ostackPos -= arySize;
-                    context.ostackPos++;
-                    if (context.ostackPos == context.ostack.length)
-                        context.ostack.length *= 2;
-                    context.ostack[context.ostackPos] = cast(GrPtr) ary;
-                    context.pc++;
+                        ary.data ~= currentTask.ostack[currentTask.ostackPos - i];
+                    currentTask.ostackPos -= arySize;
+                    currentTask.ostackPos++;
+                    if (currentTask.ostackPos == currentTask.ostack.length)
+                        currentTask.ostack.length *= 2;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) ary;
+                    currentTask.pc++;
                     break;
                 case index_int:
-                    GrIntArray ary = cast(GrIntArray) context.ostack[context.ostackPos];
-                    auto idx = context.istack[context.istackPos];
+                    GrIntArray ary = cast(GrIntArray) currentTask.ostack[currentTask.ostackPos];
+                    auto idx = currentTask.istack[currentTask.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "IndexError");
+                        raise(currentTask, "IndexError");
                         break;
                     }
-                    context.ostack[context.ostackPos] = &ary.data[idx];
-                    context.istackPos--;
-                    context.pc++;
+                    currentTask.ostack[currentTask.ostackPos] = &ary.data[idx];
+                    currentTask.istackPos--;
+                    currentTask.pc++;
                     break;
                 case index_real:
-                    GrRealArray ary = cast(GrRealArray) context.ostack[context.ostackPos];
-                    auto idx = context.istack[context.istackPos];
+                    GrRealArray ary = cast(GrRealArray) currentTask.ostack[currentTask.ostackPos];
+                    auto idx = currentTask.istack[currentTask.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "IndexError");
+                        raise(currentTask, "IndexError");
                         break;
                     }
-                    context.ostack[context.ostackPos] = &ary.data[idx];
-                    context.istackPos--;
-                    context.pc++;
+                    currentTask.ostack[currentTask.ostackPos] = &ary.data[idx];
+                    currentTask.istackPos--;
+                    currentTask.pc++;
                     break;
                 case index_string:
-                    GrStringArray ary = cast(GrStringArray) context.ostack[context.ostackPos];
-                    auto idx = context.istack[context.istackPos];
+                    GrStringArray ary = cast(GrStringArray) currentTask
+                        .ostack[currentTask.ostackPos];
+                    auto idx = currentTask.istack[currentTask.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "IndexError");
+                        raise(currentTask, "IndexError");
                         break;
                     }
-                    context.ostack[context.ostackPos] = &ary.data[idx];
-                    context.istackPos--;
-                    context.pc++;
+                    currentTask.ostack[currentTask.ostackPos] = &ary.data[idx];
+                    currentTask.istackPos--;
+                    currentTask.pc++;
                     break;
                 case index_object:
-                    GrObjectArray ary = cast(GrObjectArray) context.ostack[context.ostackPos];
-                    auto idx = context.istack[context.istackPos];
+                    GrObjectArray ary = cast(GrObjectArray) currentTask
+                        .ostack[currentTask.ostackPos];
+                    auto idx = currentTask.istack[currentTask.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "IndexError");
+                        raise(currentTask, "IndexError");
                         break;
                     }
-                    context.ostack[context.ostackPos] = &ary.data[idx];
-                    context.istackPos--;
-                    context.pc++;
+                    currentTask.ostack[currentTask.ostackPos] = &ary.data[idx];
+                    currentTask.istackPos--;
+                    currentTask.pc++;
                     break;
                 case index2_int:
-                    GrIntArray ary = cast(GrIntArray) context.ostack[context.ostackPos];
-                    auto idx = context.istack[context.istackPos];
+                    GrIntArray ary = cast(GrIntArray) currentTask.ostack[currentTask.ostackPos];
+                    auto idx = currentTask.istack[currentTask.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "IndexError");
+                        raise(currentTask, "IndexError");
                         break;
                     }
-                    context.istack[context.istackPos] = ary.data[idx];
-                    context.ostackPos--;
-                    context.pc++;
+                    currentTask.istack[currentTask.istackPos] = ary.data[idx];
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case index2_real:
-                    GrRealArray ary = cast(GrRealArray) context.ostack[context.ostackPos];
-                    auto idx = context.istack[context.istackPos];
+                    GrRealArray ary = cast(GrRealArray) currentTask.ostack[currentTask.ostackPos];
+                    auto idx = currentTask.istack[currentTask.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "IndexError");
+                        raise(currentTask, "IndexError");
                         break;
                     }
-                    context.rstackPos++;
-                    if (context.rstackPos == context.rstack.length)
-                        context.rstack.length *= 2;
-                    context.istackPos--;
-                    context.ostackPos--;
-                    context.rstack[context.rstackPos] = ary.data[idx];
-                    context.pc++;
+                    currentTask.rstackPos++;
+                    if (currentTask.rstackPos == currentTask.rstack.length)
+                        currentTask.rstack.length *= 2;
+                    currentTask.istackPos--;
+                    currentTask.ostackPos--;
+                    currentTask.rstack[currentTask.rstackPos] = ary.data[idx];
+                    currentTask.pc++;
                     break;
                 case index2_string:
-                    GrStringArray ary = cast(GrStringArray) context.ostack[context.ostackPos];
-                    auto idx = context.istack[context.istackPos];
+                    GrStringArray ary = cast(GrStringArray) currentTask
+                        .ostack[currentTask.ostackPos];
+                    auto idx = currentTask.istack[currentTask.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "IndexError");
+                        raise(currentTask, "IndexError");
                         break;
                     }
-                    context.sstackPos++;
-                    if (context.sstackPos == context.sstack.length)
-                        context.sstack.length *= 2;
-                    context.istackPos--;
-                    context.ostackPos--;
-                    context.sstack[context.sstackPos] = ary.data[idx];
-                    context.pc++;
+                    currentTask.sstackPos++;
+                    if (currentTask.sstackPos == currentTask.sstack.length)
+                        currentTask.sstack.length *= 2;
+                    currentTask.istackPos--;
+                    currentTask.ostackPos--;
+                    currentTask.sstack[currentTask.sstackPos] = ary.data[idx];
+                    currentTask.pc++;
                     break;
                 case index2_object:
-                    GrObjectArray ary = cast(GrObjectArray) context.ostack[context.ostackPos];
-                    auto idx = context.istack[context.istackPos];
+                    GrObjectArray ary = cast(GrObjectArray) currentTask
+                        .ostack[currentTask.ostackPos];
+                    auto idx = currentTask.istack[currentTask.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "IndexError");
+                        raise(currentTask, "IndexError");
                         break;
                     }
-                    context.istackPos--;
-                    context.ostack[context.ostackPos] = ary.data[idx];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.ostack[currentTask.ostackPos] = ary.data[idx];
+                    currentTask.pc++;
                     break;
                 case index3_int:
-                    GrIntArray ary = cast(GrIntArray) context.ostack[context.ostackPos];
-                    auto idx = context.istack[context.istackPos];
+                    GrIntArray ary = cast(GrIntArray) currentTask.ostack[currentTask.ostackPos];
+                    auto idx = currentTask.istack[currentTask.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "IndexError");
+                        raise(currentTask, "IndexError");
                         break;
                     }
-                    context.istack[context.istackPos] = ary.data[idx];
-                    context.ostack[context.ostackPos] = &ary.data[idx];
-                    context.pc++;
+                    currentTask.istack[currentTask.istackPos] = ary.data[idx];
+                    currentTask.ostack[currentTask.ostackPos] = &ary.data[idx];
+                    currentTask.pc++;
                     break;
                 case index3_real:
-                    GrRealArray ary = cast(GrRealArray) context.ostack[context.ostackPos];
-                    auto idx = context.istack[context.istackPos];
+                    GrRealArray ary = cast(GrRealArray) currentTask.ostack[currentTask.ostackPos];
+                    auto idx = currentTask.istack[currentTask.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "IndexError");
+                        raise(currentTask, "IndexError");
                         break;
                     }
-                    context.istackPos--;
-                    context.rstackPos++;
-                    context.rstack[context.rstackPos] = ary.data[idx];
-                    context.ostack[context.ostackPos] = &ary.data[idx];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.rstackPos++;
+                    currentTask.rstack[currentTask.rstackPos] = ary.data[idx];
+                    currentTask.ostack[currentTask.ostackPos] = &ary.data[idx];
+                    currentTask.pc++;
                     break;
                 case index3_string:
-                    GrStringArray ary = cast(GrStringArray) context.ostack[context.ostackPos];
-                    auto idx = context.istack[context.istackPos];
+                    GrStringArray ary = cast(GrStringArray) currentTask
+                        .ostack[currentTask.ostackPos];
+                    auto idx = currentTask.istack[currentTask.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "IndexError");
+                        raise(currentTask, "IndexError");
                         break;
                     }
-                    context.istackPos--;
-                    context.sstackPos++;
-                    context.sstack[context.sstackPos] = ary.data[idx];
-                    context.ostack[context.ostackPos] = &ary.data[idx];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.sstackPos++;
+                    currentTask.sstack[currentTask.sstackPos] = ary.data[idx];
+                    currentTask.ostack[currentTask.ostackPos] = &ary.data[idx];
+                    currentTask.pc++;
                     break;
                 case index3_object:
-                    GrObjectArray ary = cast(GrObjectArray) context.ostack[context.ostackPos];
-                    auto idx = context.istack[context.istackPos];
+                    GrObjectArray ary = cast(GrObjectArray) currentTask
+                        .ostack[currentTask.ostackPos];
+                    auto idx = currentTask.istack[currentTask.istackPos];
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(context, "IndexError");
+                        raise(currentTask, "IndexError");
                         break;
                     }
-                    context.istackPos--;
-                    context.ostack[context.ostackPos] = &ary.data[idx];
-                    context.ostackPos++;
-                    context.ostack[context.ostackPos] = ary.data[idx];
-                    context.pc++;
+                    currentTask.istackPos--;
+                    currentTask.ostack[currentTask.ostackPos] = &ary.data[idx];
+                    currentTask.ostackPos++;
+                    currentTask.ostack[currentTask.ostackPos] = ary.data[idx];
+                    currentTask.pc++;
                     break;
                 case length_int:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = cast(int)(
-                        (cast(GrIntArray) context.ostack[context.ostackPos]).data.length);
-                    context.ostackPos--;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = cast(int)(
+                        (cast(GrIntArray) currentTask.ostack[currentTask.ostackPos]).data.length);
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case length_real:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = cast(int)(
-                        (cast(GrRealArray) context.ostack[context.ostackPos]).data.length);
-                    context.ostackPos--;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = cast(int)(
+                        (cast(GrRealArray) currentTask.ostack[currentTask.ostackPos]).data.length);
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case length_string:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = cast(int)(
-                        (cast(GrStringArray) context.ostack[context.ostackPos]).data.length);
-                    context.ostackPos--;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = cast(int)(
+                        (cast(GrStringArray) currentTask.ostack[currentTask.ostackPos]).data.length);
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case length_object:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = cast(int)(
-                        (cast(GrObjectArray) context.ostack[context.ostackPos]).data.length);
-                    context.ostackPos--;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = cast(int)(
+                        (cast(GrObjectArray) currentTask.ostack[currentTask.ostackPos]).data.length);
+                    currentTask.ostackPos--;
+                    currentTask.pc++;
                     break;
                 case concatenate_intArray:
                     GrIntArray nArray = new GrIntArray;
-                    context.ostackPos--;
-                    nArray.data = (cast(GrIntArray) context.ostack[context.ostackPos])
-                        .data ~ (cast(GrIntArray) context.ostack[context.ostackPos + 1]).data;
-                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
-                    context.pc++;
+                    currentTask.ostackPos--;
+                    nArray.data = (cast(GrIntArray) currentTask.ostack[currentTask.ostackPos])
+                        .data ~ (cast(GrIntArray) currentTask.ostack[currentTask.ostackPos + 1])
+                        .data;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) nArray;
+                    currentTask.pc++;
                     break;
                 case concatenate_realArray:
                     GrRealArray nArray = new GrRealArray;
-                    context.ostackPos--;
-                    nArray.data = (cast(GrRealArray) context.ostack[context.ostackPos])
-                        .data ~ (cast(GrRealArray) context.ostack[context.ostackPos + 1]).data;
-                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
-                    context.pc++;
+                    currentTask.ostackPos--;
+                    nArray.data = (cast(GrRealArray) currentTask.ostack[currentTask.ostackPos])
+                        .data ~ (cast(GrRealArray) currentTask.ostack[currentTask.ostackPos + 1])
+                        .data;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) nArray;
+                    currentTask.pc++;
                     break;
                 case concatenate_stringArray:
                     GrStringArray nArray = new GrStringArray;
-                    context.ostackPos--;
-                    nArray.data = (cast(GrStringArray) context.ostack[context.ostackPos])
-                        .data ~ (cast(GrStringArray) context.ostack[context.ostackPos + 1]).data;
-                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
-                    context.pc++;
+                    currentTask.ostackPos--;
+                    nArray.data = (cast(GrStringArray) currentTask.ostack[currentTask.ostackPos])
+                        .data ~ (cast(GrStringArray) currentTask.ostack[currentTask.ostackPos + 1])
+                        .data;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) nArray;
+                    currentTask.pc++;
                     break;
                 case concatenate_objectArray:
                     GrObjectArray nArray = new GrObjectArray;
-                    context.ostackPos--;
-                    nArray.data = (cast(GrObjectArray) context.ostack[context.ostackPos])
-                        .data ~ (cast(GrObjectArray) context.ostack[context.ostackPos + 1]).data;
-                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
-                    context.pc++;
+                    currentTask.ostackPos--;
+                    nArray.data = (cast(GrObjectArray) currentTask.ostack[currentTask.ostackPos])
+                        .data ~ (cast(GrObjectArray) currentTask.ostack[currentTask.ostackPos + 1])
+                        .data;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) nArray;
+                    currentTask.pc++;
                     break;
                 case append_int:
                     GrIntArray nArray = new GrIntArray;
-                    nArray.data = (cast(GrIntArray) context.ostack[context.ostackPos])
-                        .data ~ context.istack[context.istackPos];
-                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
-                    context.istackPos--;
-                    context.pc++;
+                    nArray.data = (cast(GrIntArray) currentTask.ostack[currentTask.ostackPos])
+                        .data ~ currentTask.istack[currentTask.istackPos];
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) nArray;
+                    currentTask.istackPos--;
+                    currentTask.pc++;
                     break;
                 case append_real:
                     GrRealArray nArray = new GrRealArray;
-                    nArray.data = (cast(GrRealArray) context.ostack[context.ostackPos])
-                        .data ~ context.rstack[context.rstackPos];
-                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
-                    context.rstackPos--;
-                    context.pc++;
+                    nArray.data = (cast(GrRealArray) currentTask.ostack[currentTask.ostackPos])
+                        .data ~ currentTask.rstack[currentTask.rstackPos];
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) nArray;
+                    currentTask.rstackPos--;
+                    currentTask.pc++;
                     break;
                 case append_string:
                     GrStringArray nArray = new GrStringArray;
-                    nArray.data = (cast(GrStringArray) context.ostack[context.ostackPos])
-                        .data ~ context.sstack[context.sstackPos];
-                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
-                    context.sstackPos--;
-                    context.pc++;
+                    nArray.data = (cast(GrStringArray) currentTask.ostack[currentTask.ostackPos])
+                        .data ~ currentTask.sstack[currentTask.sstackPos];
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) nArray;
+                    currentTask.sstackPos--;
+                    currentTask.pc++;
                     break;
                 case append_object:
                     GrObjectArray nArray = new GrObjectArray;
-                    context.ostackPos--;
-                    nArray.data = (cast(GrObjectArray) context.ostack[context.ostackPos])
-                        .data ~ context.ostack[context.ostackPos + 1];
-                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
-                    context.pc++;
+                    currentTask.ostackPos--;
+                    nArray.data = (cast(GrObjectArray) currentTask.ostack[currentTask.ostackPos])
+                        .data ~ currentTask.ostack[currentTask.ostackPos + 1];
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) nArray;
+                    currentTask.pc++;
                     break;
                 case prepend_int:
                     GrIntArray nArray = new GrIntArray;
-                    nArray.data = context.istack[context.istackPos] ~ (
-                        cast(GrIntArray) context.ostack[context.ostackPos]).data;
-                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
-                    context.istackPos--;
-                    context.pc++;
+                    nArray.data = currentTask.istack[currentTask.istackPos] ~ (
+                        cast(GrIntArray) currentTask.ostack[currentTask.ostackPos]).data;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) nArray;
+                    currentTask.istackPos--;
+                    currentTask.pc++;
                     break;
                 case prepend_real:
                     GrRealArray nArray = new GrRealArray;
-                    nArray.data = context.rstack[context.rstackPos] ~ (
-                        cast(GrRealArray) context.ostack[context.ostackPos]).data;
-                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
-                    context.rstackPos--;
-                    context.pc++;
+                    nArray.data = currentTask.rstack[currentTask.rstackPos] ~ (
+                        cast(GrRealArray) currentTask.ostack[currentTask.ostackPos]).data;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) nArray;
+                    currentTask.rstackPos--;
+                    currentTask.pc++;
                     break;
                 case prepend_string:
                     GrStringArray nArray = new GrStringArray;
-                    nArray.data = context.sstack[context.sstackPos] ~ (
-                        cast(GrStringArray) context.ostack[context.ostackPos]).data;
-                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
-                    context.sstackPos--;
-                    context.pc++;
+                    nArray.data = currentTask.sstack[currentTask.sstackPos] ~ (
+                        cast(GrStringArray) currentTask.ostack[currentTask.ostackPos]).data;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) nArray;
+                    currentTask.sstackPos--;
+                    currentTask.pc++;
                     break;
                 case prepend_object:
                     GrObjectArray nArray = new GrObjectArray;
-                    context.ostackPos--;
-                    nArray.data = context.ostack[context.ostackPos] ~ (
+                    currentTask.ostackPos--;
+                    nArray.data = currentTask.ostack[currentTask.ostackPos] ~ (
                         cast(
-                            GrObjectArray) context.ostack[context.ostackPos + 1]).data;
-                    context.ostack[context.ostackPos] = cast(GrPtr) nArray;
-                    context.pc++;
+                            GrObjectArray) currentTask.ostack[currentTask.ostackPos + 1]).data;
+                    currentTask.ostack[currentTask.ostackPos] = cast(GrPtr) nArray;
+                    currentTask.pc++;
                     break;
                 case equal_intArray:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = (cast(GrIntArray) context.ostack[context.ostackPos - 1])
-                        .data == (cast(GrIntArray) context.ostack[context.ostackPos]).data;
-                    context.ostackPos -= 2;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = (cast(
+                            GrIntArray) currentTask.ostack[currentTask.ostackPos - 1])
+                        .data == (cast(GrIntArray) currentTask.ostack[currentTask.ostackPos]).data;
+                    currentTask.ostackPos -= 2;
+                    currentTask.pc++;
                     break;
                 case equal_realArray:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = (cast(GrRealArray) context.ostack[context.ostackPos - 1])
-                        .data == (cast(GrRealArray) context.ostack[context.ostackPos]).data;
-                    context.ostackPos -= 2;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = (cast(
+                            GrRealArray) currentTask.ostack[currentTask.ostackPos - 1])
+                        .data == (cast(GrRealArray) currentTask.ostack[currentTask.ostackPos]).data;
+                    currentTask.ostackPos -= 2;
+                    currentTask.pc++;
                     break;
                 case equal_stringArray:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = (cast(GrStringArray) context.ostack[context.ostackPos - 1])
-                        .data == (cast(GrStringArray) context.ostack[context.ostackPos]).data;
-                    context.ostackPos -= 2;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = (cast(
+                            GrStringArray) currentTask.ostack[currentTask.ostackPos - 1])
+                        .data == (cast(GrStringArray) currentTask.ostack[currentTask.ostackPos])
+                        .data;
+                    currentTask.ostackPos -= 2;
+                    currentTask.pc++;
                     break;
                 case notEqual_intArray:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = (cast(GrIntArray) context.ostack[context.ostackPos - 1])
-                        .data != (cast(GrIntArray) context.ostack[context.ostackPos]).data;
-                    context.ostackPos -= 2;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = (cast(
+                            GrIntArray) currentTask.ostack[currentTask.ostackPos - 1])
+                        .data != (cast(GrIntArray) currentTask.ostack[currentTask.ostackPos]).data;
+                    currentTask.ostackPos -= 2;
+                    currentTask.pc++;
                     break;
                 case notEqual_realArray:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = (cast(GrRealArray) context.ostack[context.ostackPos - 1])
-                        .data != (cast(GrRealArray) context.ostack[context.ostackPos]).data;
-                    context.ostackPos -= 2;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = (cast(
+                            GrRealArray) currentTask.ostack[currentTask.ostackPos - 1])
+                        .data != (cast(GrRealArray) currentTask.ostack[currentTask.ostackPos]).data;
+                    currentTask.ostackPos -= 2;
+                    currentTask.pc++;
                     break;
                 case notEqual_stringArray:
-                    context.istackPos++;
-                    if (context.istackPos == context.istack.length)
-                        context.istack.length *= 2;
-                    context.istack[context.istackPos] = (cast(GrStringArray) context.ostack[context.ostackPos - 1])
-                        .data != (cast(GrStringArray) context.ostack[context.ostackPos]).data;
-                    context.ostackPos -= 2;
-                    context.pc++;
+                    currentTask.istackPos++;
+                    if (currentTask.istackPos == currentTask.istack.length)
+                        currentTask.istack.length *= 2;
+                    currentTask.istack[currentTask.istackPos] = (cast(
+                            GrStringArray) currentTask.ostack[currentTask.ostackPos - 1])
+                        .data != (cast(GrStringArray) currentTask.ostack[currentTask.ostackPos])
+                        .data;
+                    currentTask.ostackPos -= 2;
+                    currentTask.pc++;
                     break;
                 case debugProfileBegin:
-                    _debugProfileBegin(opcode, context.pc);
-                    context.pc++;
+                    _debugProfileBegin(opcode, currentTask.pc);
+                    currentTask.pc++;
                     break;
                 case debugProfileEnd:
                     _debugProfileEnd();
-                    context.pc++;
+                    currentTask.pc++;
                     break;
                 }
             }
         }
-        _contexts.sweepMarkedData();
+        _tasks.sweepMarkedData();
     }
 
     /// Create a new object.

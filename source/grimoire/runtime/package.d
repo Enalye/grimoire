@@ -7,7 +7,7 @@ module grimoire.runtime;
 
 public {
     import grimoire.runtime.engine;
-    import grimoire.runtime.context;
+    import grimoire.runtime.task;
     import grimoire.runtime.array;
     import grimoire.runtime.object;
     import grimoire.runtime.channel;

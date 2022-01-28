@@ -215,7 +215,7 @@ final class GrCompiler {
             case integer:
             case function_:
             case task:
-            case enumeration:
+            case enum_:
             case channel:
                 variable.typeMask = 0x1;
                 variable.ivalue = variableDef.isInitialized ? variableDef.ivalue : 0;
@@ -272,7 +272,7 @@ final class GrCompiler {
                 case integer:
                 case function_:
                 case task:
-                case enumeration:
+                case enum_:
                     bytecode.primitives[id].parameters ~= 0x10000 | (
                         bytecode.primitives[id].iparams & 0xFFFF);
                     bytecode.primitives[id].iparams++;
