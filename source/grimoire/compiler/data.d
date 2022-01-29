@@ -604,7 +604,7 @@ class GrData {
     */
     private string getPrimitiveDisplayById(uint id) {
         if (id >= _primitives.length)
-            throw new Exception("Invalid primitive id");
+            throw new Exception("invalid primitive id");
         return getPrettyPrimitive(_primitives[id]);
     }
 
@@ -613,7 +613,7 @@ class GrData {
 
         string result = primitive.name;
         auto nbParameters = primitive.inSignature.length;
-        if (primitive.name == "@conv")
+        if (primitive.name == "@as")
             nbParameters = 1;
         result ~= "(";
         for (int i; i < nbParameters; i++) {

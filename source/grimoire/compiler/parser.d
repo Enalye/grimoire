@@ -2835,11 +2835,11 @@ final class GrParser {
         string name;
         bool isConversion;
         if (get().type == GrLexeme.Type.as) {
-            name = "@conv";
+            name = "@as";
             isConversion = true;
         }
         else if (get().type == GrLexeme.Type.identifier) {
-            if (get().svalue == "opérateur" || get().svalue == "operator") {
+            if (get().svalue == "operator") {
                 advance();
                 if (get().isOverridableOperator()) {
                     name = "@op_" ~ getPrettyLexemeType(get().type);
@@ -4835,7 +4835,7 @@ final class GrParser {
         GrType resultType = GrType.Base.void_;
 
         //as opposed to other functions, we need the return type (rightType) to be part of the signature.
-        string name = "@conv";
+        string name = "@as";
         GrType[] signature = [leftType, rightType];
 
         //GrPrimitive check

@@ -330,7 +330,7 @@ class GrEngine {
     /**
 	Marks each task as killed and prevents any new task from spawning.
 	*/
-    private void killtasks() {
+    private void killTasks() {
         foreach (task; _tasks) {
             task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
             task.isKilled = true;
@@ -573,7 +573,7 @@ class GrEngine {
                     }
                     else {
                         //Kill the others.
-                        killtasks();
+                        killTasks();
 
                         //The VM is now panicking.
                         _isPanicking = true;
@@ -648,7 +648,7 @@ class GrEngine {
                     }
                     break;
                 case quit:
-                    killtasks();
+                    killTasks();
                     continue tasksLabel;
                 case yield:
                     currentTask.pc++;
@@ -1762,7 +1762,7 @@ class GrEngine {
                     break;
                 case return_:
                     //If another task was killed by an exception,
-                    //we might killtasks up there if the task has just been spawned.
+                    //we might killTasks up there if the task has just been spawned.
                     if (currentTask.stackPos < 0 && currentTask.isKilled) {
                         _tasks = _tasks.remove(index);
                         continue tasksLabel;
@@ -1790,7 +1790,7 @@ class GrEngine {
                     break;
                 case unwind:
                     //If another task was killed by an exception,
-                    //we might killtasks up there if the task has just been spawned.
+                    //we might killTasks up there if the task has just been spawned.
                     if (currentTask.stackPos < 0) {
                         _tasks = _tasks.remove(index);
                         continue tasksLabel;
