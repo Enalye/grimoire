@@ -649,9 +649,11 @@ class GrEngine {
                     break;
                 case quit:
                     killTasks();
+                    index++;
                     continue tasksLabel;
                 case yield:
                     currentTask.pc++;
+                    index++;
                     continue tasksLabel;
                 case new_:
                     currentTask.ostackPos++;
@@ -726,8 +728,10 @@ class GrEngine {
                             currentTask.isEvaluatingChannel = false;
                             currentTask.pc = currentTask.selectPositionJump;
                         }
-                        else
+                        else {
+                            index++;
                             continue tasksLabel;
+                        }
                     }
                     break;
                 case send_real:
@@ -759,8 +763,10 @@ class GrEngine {
                             currentTask.isEvaluatingChannel = false;
                             currentTask.pc = currentTask.selectPositionJump;
                         }
-                        else
+                        else {
+                            index++;
                             continue tasksLabel;
+                        }
                     }
                     break;
                 case send_string:
@@ -792,8 +798,10 @@ class GrEngine {
                             currentTask.isEvaluatingChannel = false;
                             currentTask.pc = currentTask.selectPositionJump;
                         }
-                        else
+                        else {
+                            index++;
                             continue tasksLabel;
+                        }
                     }
                     break;
                 case send_object:
@@ -826,8 +834,10 @@ class GrEngine {
                             currentTask.isEvaluatingChannel = false;
                             currentTask.pc = currentTask.selectPositionJump;
                         }
-                        else
+                        else {
+                            index++;
                             continue tasksLabel;
+                        }
                     }
                     break;
                 case receive_int:
@@ -862,8 +872,10 @@ class GrEngine {
                             currentTask.isEvaluatingChannel = false;
                             currentTask.pc = currentTask.selectPositionJump;
                         }
-                        else
+                        else {
+                            index++;
                             continue tasksLabel;
+                        }
                     }
                     break;
                 case receive_real:
@@ -898,8 +910,10 @@ class GrEngine {
                             currentTask.isEvaluatingChannel = false;
                             currentTask.pc = currentTask.selectPositionJump;
                         }
-                        else
+                        else {
+                            index++;
                             continue tasksLabel;
+                        }
                     }
                     break;
                 case receive_string:
@@ -934,8 +948,10 @@ class GrEngine {
                             currentTask.isEvaluatingChannel = false;
                             currentTask.pc = currentTask.selectPositionJump;
                         }
-                        else
+                        else {
+                            index++;
                             continue tasksLabel;
+                        }
                     }
                     break;
                 case receive_object:
@@ -966,8 +982,10 @@ class GrEngine {
                             currentTask.isEvaluatingChannel = false;
                             currentTask.pc = currentTask.selectPositionJump;
                         }
-                        else
+                        else {
+                            index++;
                             continue tasksLabel;
+                        }
                     }
                     break;
                 case startSelectChannel:
@@ -1952,8 +1970,10 @@ class GrEngine {
                 case primitiveCall:
                     _calls[grGetInstructionUnsignedValue(opcode)].call(currentTask);
                     currentTask.pc++;
-                    if (currentTask.blocker)
+                    if (currentTask.blocker) {
+                        index++;
                         continue tasksLabel;
+                    }
                     break;
                 case jump:
                     currentTask.pc += grGetInstructionSignedValue(opcode);
