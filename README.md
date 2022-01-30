@@ -10,13 +10,13 @@ Hope you have fun with this project !
 What it looks like:
 ```cpp
 //Hello World
-action main {
-    trace("Hello World!");
+event main {
+    print("Hello World!");
 }
 ```
 ```cpp
 //Invert a string
-action main {
+event main() {
     assert("Hello World !":invert == "! dlroW olleH");
 }
 
@@ -29,7 +29,7 @@ function invert(string str) (string) {
 ```
 ```cpp
 //Fibonacci
-action fib {
+event fib() {
     assert(
         function(int n) (int) {
             if(n < 2) return n;
@@ -111,11 +111,11 @@ engine.addLibrary(stdlib);
 engine.load(bytecode);
 ```
 
-You can then spawn any action like this:
+You can then spawn any event like this:
 ```d
-auto mangledName = grMangleComposite("myAction", [grString]);
-if(engine.hasAction(mangledName)) {
-    GrContext context = engine.callAction(mangledName);
+auto mangledName = grMangleComposite("myEvent", [grString]);
+if(engine.hasEvent(mangledName)) {
+    GrContext context = engine.callEvent(mangledName);
     context.setString("Hello World!");
 }
 ```
@@ -123,9 +123,9 @@ But be aware that every function/task/event are mangled with their signature, so
 
 If the event has parameters, you must push them into the context with the `setXX` functions.
 
-To run the virtual machine, just call the process function (check if there's any task(Coroutine) running though):
+To run the virtual machine, just call the process function (and check if there's any task(Coroutine) currently running):
 ```d
-while(engine.hasCoroutines)
+while(engine.hasTasks)
     engine.process();
 ```
 The program will run until all tasks are finished, if you want them to run only for one step, replace the `while` with `if`.
