@@ -211,8 +211,8 @@ final class GrCompiler {
             GrBytecode.Variable variable;
             variable.index = variableDef.register;
             final switch (variableDef.type.base) with (GrType.Base) {
-            case boolean:
-            case integer:
+            case bool_:
+            case int_:
             case function_:
             case task:
             case enum_:
@@ -268,8 +268,8 @@ final class GrCompiler {
                 const GrType type = inSignature[i];
                 bytecode.primitives[id].inSignature ~= grMangle(type);
                 final switch (type.base) with (GrType.Base) {
-                case boolean:
-                case integer:
+                case bool_:
+                case int_:
                 case function_:
                 case task:
                 case enum_:

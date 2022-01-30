@@ -48,13 +48,13 @@ GrType[] grUnmangleSignature(string mangledSignature) {
             currentType.base = GrType.Base.void_;
             break;
         case 'i':
-            currentType.base = GrType.Base.integer;
+            currentType.base = GrType.Base.int_;
             break;
         case 'r':
             currentType.base = GrType.Base.real_;
             break;
         case 'b':
-            currentType.base = GrType.Base.boolean;
+            currentType.base = GrType.Base.bool_;
             break;
         case 's':
             currentType.base = GrType.Base.string_;
@@ -193,13 +193,13 @@ string grMangle(GrType type) {
     case null_:
         mangledName ~= "0";
         break;
-    case integer:
+    case int_:
         mangledName ~= "i";
         break;
     case real_:
         mangledName ~= "r";
         break;
-    case boolean:
+    case bool_:
         mangledName ~= "b";
         break;
     case string_:
@@ -252,13 +252,13 @@ GrType grUnmangle(string mangledSignature) {
             currentType.base = GrType.Base.void_;
             break;
         case 'i':
-            currentType.base = GrType.Base.integer;
+            currentType.base = GrType.Base.int_;
             break;
         case 'r':
             currentType.base = GrType.Base.real_;
             break;
         case 'b':
-            currentType.base = GrType.Base.boolean;
+            currentType.base = GrType.Base.bool_;
             break;
         case 's':
             currentType.base = GrType.Base.string_;

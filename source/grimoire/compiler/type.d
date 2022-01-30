@@ -26,9 +26,9 @@ struct GrType {
     enum Base {
         void_,
         null_,
-        integer,
+        int_,
         real_,
-        boolean,
+        bool_,
         string_,
         array,
         function_,
@@ -99,11 +99,11 @@ struct GrType {
 /// No type
 const GrType grVoid = GrType(GrType.Base.void_);
 /// Integer
-const GrType grInt = GrType(GrType.Base.integer);
+const GrType grInt = GrType(GrType.Base.int_);
 /// Real
 const GrType grReal = GrType(GrType.Base.real_);
 /// Bool
-const GrType grBool = GrType(GrType.Base.boolean);
+const GrType grBool = GrType(GrType.Base.bool_);
 /// String
 const GrType grString = GrType(GrType.Base.string_);
 /// Int array
@@ -170,7 +170,7 @@ GrType grAny(string name, bool function(GrType, GrAnyData) predicate = (a, b) =>
 
 /// The type is handled by a int based register
 bool grIsKindOfInt(GrType.Base type) {
-    return type == GrType.Base.integer || type == GrType.Base.boolean
+    return type == GrType.Base.int_ || type == GrType.Base.bool_
         || type == GrType.Base.function_ || type == GrType.Base.task || type == GrType
         .Base.enum_;
 }
@@ -522,8 +522,8 @@ package class GrFunction {
 
     private void freeRegister(GrVariable variable) {
         final switch (variable.type.base) with (GrType.Base) {
-        case integer:
-        case boolean:
+        case int_:
+        case bool_:
         case function_:
         case task:
         case enum_:

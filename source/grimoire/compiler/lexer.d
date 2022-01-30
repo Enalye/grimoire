@@ -81,9 +81,9 @@ struct GrLexeme {
         increment,
         decrement,
         identifier,
-        integer,
+        int_,
         real_,
-        boolean,
+        bool_,
         string_,
         null_,
         public_,
@@ -91,7 +91,7 @@ struct GrLexeme {
         event,
         class_,
         enum_,
-        instance,
+        template_,
         new_,
         copy,
         send,
@@ -111,6 +111,7 @@ struct GrLexeme {
         switch_,
         select,
         case_,
+        default_,
         while_,
         do_,
         until,
@@ -490,7 +491,7 @@ package final class GrLexer {
             lex.rvalue = to!GrReal(buffer);
         }
         else {
-            lex.type = GrLexeme.Type.integer;
+            lex.type = GrLexeme.Type.int_;
             lex.ivalue = to!GrInt(buffer);
         }
         _lexemes ~= lex;
@@ -887,8 +888,8 @@ package final class GrLexer {
         case "enum":
             lex.type = GrLexeme.Type.enum_;
             break;
-        case "instance":
-            lex.type = GrLexeme.Type.instance;
+        case "template":
+            lex.type = GrLexeme.Type.template_;
             break;
         case "if":
             lex.type = GrLexeme.Type.if_;
@@ -907,6 +908,9 @@ package final class GrLexer {
             break;
         case "case":
             lex.type = GrLexeme.Type.case_;
+            break;
+        case "default":
+            lex.type = GrLexeme.Type.default_;
             break;
         case "while":
             lex.type = GrLexeme.Type.while_;
@@ -1000,13 +1004,13 @@ package final class GrLexer {
             lex.isType = false;
             break;
         case "true":
-            lex.type = GrLexeme.Type.boolean;
+            lex.type = GrLexeme.Type.bool_;
             lex.isKeyword = false;
             lex.isLiteral = true;
             lex.bvalue = true;
             break;
         case "false":
-            lex.type = GrLexeme.Type.boolean;
+            lex.type = GrLexeme.Type.bool_;
             lex.isKeyword = false;
             lex.isLiteral = true;
             lex.bvalue = false;
@@ -1217,10 +1221,10 @@ private immutable string[] _prettyLexemeTypeTable = [
     "==", "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->",
     "=>", "~", "!", "++", "--", "identifier", "const_int",
     "const_float", "const_bool", "const_string", "null", "public",
-    "type", "event", "class", "enum", "instance", "new", "copy",
+    "type", "event", "class", "enum", "template", "new", "copy",
     "send", "receive", "int", "real", "bool", "string", "array",
     "channel", "function", "task", "let", "if", "unless", "else",
-    "switch", "select", "case", "while", "do", "until", "for",
+    "switch", "select", "case", "default", "while", "do", "until", "for",
     "loop", "return", "self", "die", "exit", "yield", "break", "continue"
 ];
 

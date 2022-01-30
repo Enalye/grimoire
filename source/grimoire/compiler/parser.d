@@ -229,8 +229,8 @@ final class GrParser {
 
     private void setVariableRegister(GrVariable variable) {
         final switch (variable.type.base) with (GrType.Base) {
-        case integer:
-        case boolean:
+        case int_:
+        case bool_:
         case function_:
         case task:
         case enum_:
@@ -471,8 +471,8 @@ final class GrParser {
                 logError(format(getError(Error.cantUseTypeAsParam),
                         getPrettyType(type)), getError(Error.invalidParamType));
                 break;
-            case integer:
-            case boolean:
+            case int_:
+            case bool_:
             case function_:
             case task:
             case enum_:
@@ -934,8 +934,8 @@ final class GrParser {
             const GrType subType = grUnmangle(leftType.mangledType);
             convertType(rightType, subType, fileId);
             final switch (subType.base) with (GrType.Base) {
-            case integer:
-            case boolean:
+            case int_:
+            case bool_:
             case enum_:
             case function_:
             case task:
@@ -966,8 +966,8 @@ final class GrParser {
             const GrType subType = grUnmangle(rightType.mangledType);
             convertType(leftType, subType, fileId);
             final switch (subType.base) with (GrType.Base) {
-            case integer:
-            case boolean:
+            case int_:
+            case bool_:
             case enum_:
             case function_:
             case task:
@@ -1003,7 +1003,7 @@ final class GrParser {
             convertType(leftType, rightType, fileId);
             resultType = addInternalOperator(lexType, rightType, true);
         }
-        else if (leftType.base == GrType.Base.integer && rightType.base == GrType.Base.real_) {
+        else if (leftType.base == GrType.Base.int_ && rightType.base == GrType.Base.real_) {
             // Special case, we need to convert int to real, then swap the 2 values when needed.
             convertType(leftType, rightType, fileId);
             resultType = addInternalOperator(lexType, rightType, true);
@@ -1078,7 +1078,7 @@ final class GrParser {
             case not:
                 addInstruction(GrOpcode.isNonNull_object);
                 addInstruction(GrOpcode.not_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             default:
                 break;
             }
@@ -1087,90 +1087,90 @@ final class GrParser {
             switch (lexType) with (GrLexeme.Type) {
             case equal:
                 addInstruction(GrOpcode.equal_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case notEqual:
                 addInstruction(GrOpcode.notEqual_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case greater:
                 addInstruction(GrOpcode.greater_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case greaterOrEqual:
                 addInstruction(GrOpcode.greaterOrEqual_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case lesser:
                 addInstruction(GrOpcode.lesser_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case lesserOrEqual:
                 addInstruction(GrOpcode.lesserOrEqual_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             default:
                 break;
             }
             break;
-        case boolean:
+        case bool_:
             switch (lexType) with (GrLexeme.Type) {
             case and:
                 addInstruction(GrOpcode.and_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case or:
                 addInstruction(GrOpcode.or_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case not:
                 addInstruction(GrOpcode.not_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             default:
                 break;
             }
             break;
-        case integer:
+        case int_:
             switch (lexType) with (GrLexeme.Type) {
             case add:
                 addInstruction(GrOpcode.add_int);
-                return GrType(GrType.Base.integer);
+                return GrType(GrType.Base.int_);
             case substract:
                 addInstruction(GrOpcode.substract_int);
-                return GrType(GrType.Base.integer);
+                return GrType(GrType.Base.int_);
             case multiply:
                 addInstruction(GrOpcode.multiply_int);
-                return GrType(GrType.Base.integer);
+                return GrType(GrType.Base.int_);
             case divide:
                 addInstruction(GrOpcode.divide_int);
-                return GrType(GrType.Base.integer);
+                return GrType(GrType.Base.int_);
             case remainder:
                 addInstruction(GrOpcode.remainder_int);
-                return GrType(GrType.Base.integer);
+                return GrType(GrType.Base.int_);
             case minus:
                 addInstruction(GrOpcode.negative_int);
-                return GrType(GrType.Base.integer);
+                return GrType(GrType.Base.int_);
             case plus:
-                return GrType(GrType.Base.integer);
+                return GrType(GrType.Base.int_);
             case increment:
                 addInstruction(GrOpcode.increment_int);
-                return GrType(GrType.Base.integer);
+                return GrType(GrType.Base.int_);
             case decrement:
                 addInstruction(GrOpcode.decrement_int);
-                return GrType(GrType.Base.integer);
+                return GrType(GrType.Base.int_);
             case equal:
                 addInstruction(GrOpcode.equal_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case notEqual:
                 addInstruction(GrOpcode.notEqual_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case greater:
                 addInstruction(GrOpcode.greater_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case greaterOrEqual:
                 addInstruction(GrOpcode.greaterOrEqual_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case lesser:
                 addInstruction(GrOpcode.lesser_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case lesserOrEqual:
                 addInstruction(GrOpcode.lesserOrEqual_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case not:
                 addInstruction(GrOpcode.not_int);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             default:
                 break;
             }
@@ -1211,34 +1211,34 @@ final class GrParser {
                 return GrType(GrType.Base.real_);
             case equal:
                 addInstruction(GrOpcode.equal_real);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case notEqual:
                 addInstruction(GrOpcode.notEqual_real);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case greater:
                 if (isSwapped)
                     addInstruction(GrOpcode.lesserOrEqual_real);
                 else
                     addInstruction(GrOpcode.greater_real);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case greaterOrEqual:
                 if (isSwapped)
                     addInstruction(GrOpcode.lesser_real);
                 else
                     addInstruction(GrOpcode.greaterOrEqual_real);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case lesser:
                 if (isSwapped)
                     addInstruction(GrOpcode.greaterOrEqual_real);
                 else
                     addInstruction(GrOpcode.lesser_real);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case lesserOrEqual:
                 if (isSwapped)
                     addInstruction(GrOpcode.greater_real);
                 else
                     addInstruction(GrOpcode.lesserOrEqual_real);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             default:
                 break;
             }
@@ -1252,10 +1252,10 @@ final class GrParser {
                 return GrType(GrType.Base.string_);
             case equal:
                 addInstruction(GrOpcode.equal_string);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             case notEqual:
                 addInstruction(GrOpcode.notEqual_string);
-                return GrType(GrType.Base.boolean);
+                return GrType(GrType.Base.bool_);
             default:
                 break;
             }
@@ -1265,8 +1265,8 @@ final class GrParser {
             case equal:
                 const GrType subType = grUnmangle(varType.mangledType);
                 final switch (subType.base) with (GrType.Base) {
-                case integer:
-                case boolean:
+                case int_:
+                case bool_:
                 case enum_:
                 case function_:
                 case task:
@@ -1292,8 +1292,8 @@ final class GrParser {
             case notEqual:
                 const GrType subType = grUnmangle(varType.mangledType);
                 final switch (subType.base) with (GrType.Base) {
-                case integer:
-                case boolean:
+                case int_:
+                case bool_:
                 case enum_:
                 case function_:
                 case task:
@@ -1319,8 +1319,8 @@ final class GrParser {
             case concatenate:
                 const GrType subType = grUnmangle(varType.mangledType);
                 final switch (subType.base) with (GrType.Base) {
-                case integer:
-                case boolean:
+                case int_:
+                case bool_:
                 case enum_:
                 case function_:
                 case task:
@@ -1354,8 +1354,8 @@ final class GrParser {
             case send:
                 GrType channelType = grUnmangle(varType.mangledType);
                 final switch (channelType.base) with (GrType.Base) {
-                case integer:
-                case boolean:
+                case int_:
+                case bool_:
                 case function_:
                 case task:
                 case enum_:
@@ -1383,8 +1383,8 @@ final class GrParser {
             case receive:
                 GrType channelType = grUnmangle(varType.mangledType);
                 final switch (channelType.base) with (GrType.Base) {
-                case integer:
-                case boolean:
+                case int_:
+                case bool_:
                 case function_:
                 case task:
                 case enum_:
@@ -1429,8 +1429,8 @@ final class GrParser {
         if (variable.type.base == GrType.Base.reference) {
             valueType = convertType(valueType, grUnmangle(variable.type.mangledType), fileId);
             final switch (valueType.base) with (GrType.Base) {
-            case boolean:
-            case integer:
+            case bool_:
+            case int_:
             case function_:
             case task:
             case channel:
@@ -1483,8 +1483,8 @@ final class GrParser {
 
         if (variable.isField) {
             final switch (variable.type.base) with (GrType.Base) {
-            case boolean:
-            case integer:
+            case bool_:
+            case int_:
             case function_:
             case task:
             case enum_:
@@ -1512,8 +1512,8 @@ final class GrParser {
         }
         else if (variable.isGlobal) {
             final switch (variable.type.base) with (GrType.Base) {
-            case boolean:
-            case integer:
+            case bool_:
+            case int_:
             case function_:
             case task:
             case enum_:
@@ -1545,8 +1545,8 @@ final class GrParser {
         }
         else {
             final switch (variable.type.base) with (GrType.Base) {
-            case boolean:
-            case integer:
+            case bool_:
+            case int_:
             case function_:
             case task:
             case enum_:
@@ -1605,8 +1605,8 @@ final class GrParser {
         }
         else if (variable.isGlobal) {
             final switch (variable.type.base) with (GrType.Base) {
-            case boolean:
-            case integer:
+            case bool_:
+            case int_:
             case function_:
             case task:
             case enum_:
@@ -1664,8 +1664,8 @@ final class GrParser {
                 logError(getError(Error.locVarUsedNotAssigned), getError(Error.varNotInit));
 
             final switch (variable.type.base) with (GrType.Base) {
-            case boolean:
-            case integer:
+            case bool_:
+            case int_:
             case function_:
             case task:
             case enum_:
@@ -1931,7 +1931,7 @@ final class GrParser {
                 skipDeclaration();
                 break;
             case alias_:
-            case instance:
+            case template_:
             default:
                 skipExpression();
                 break;
@@ -1962,7 +1962,7 @@ final class GrParser {
             case enum_:
                 skipDeclaration();
                 break;
-            case instance:
+            case template_:
             default:
                 skipExpression();
                 break;
@@ -2006,7 +2006,7 @@ final class GrParser {
             case autoType:
             case identifier:
             case alias_:
-            case instance:
+            case template_:
                 skipExpression();
                 break;
             default:
@@ -2036,8 +2036,8 @@ final class GrParser {
             case class_:
                 skipDeclaration();
                 break;
-            case instance:
-                parseInstanceDeclaration(isPublic);
+            case template_:
+                parseTemplateDeclaration(isPublic);
                 break;
             case taskType:
                 if (get(1).type != GrLexeme.Type.identifier && get(1).type != GrLexeme.Type.lesser)
@@ -2465,7 +2465,7 @@ final class GrParser {
 
         switch (lex.type) with (GrLexeme.Type) {
         case integerType:
-            currentType.base = GrType.Base.integer;
+            currentType.base = GrType.Base.int_;
             checkAdvance();
             break;
         case realType:
@@ -2473,7 +2473,7 @@ final class GrParser {
             checkAdvance();
             break;
         case booleanType:
-            currentType.base = GrType.Base.boolean;
+            currentType.base = GrType.Base.bool_;
             checkAdvance();
             break;
         case stringType:
@@ -2534,8 +2534,8 @@ final class GrParser {
             logError(format(getError(Error.xNotValidType), getPrettyType(type)), format(
                     getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get().type)));
             break;
-        case integer:
-        case boolean:
+        case int_:
+        case bool_:
         case function_:
         case task:
         case enum_:
@@ -2567,8 +2567,8 @@ final class GrParser {
             logError(format(getError(Error.xNotValidType), getPrettyType(type)), format(
                     getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get().type)));
             break;
-        case integer:
-        case boolean:
+        case int_:
+        case bool_:
         case function_:
         case task:
         case enum_:
@@ -2604,8 +2604,8 @@ final class GrParser {
                         getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(
                         get().type)));
                 break;
-            case integer:
-            case boolean:
+            case int_:
+            case bool_:
             case function_:
             case task:
             case enum_:
@@ -2885,7 +2885,7 @@ final class GrParser {
         skipBlock();
     }
 
-    private void parseInstanceDeclaration(bool isPublic) {
+    private void parseTemplateDeclaration(bool isPublic) {
         checkAdvance();
         if (get().type != GrLexeme.Type.lesser)
             logError(getError(Error.missingTemplateSignature),
@@ -3596,13 +3596,13 @@ final class GrParser {
         if (get().isType) {
             switch (get().type) with (GrLexeme.Type) {
             case integerType:
-                returnType = GrType(GrType.Base.integer);
+                returnType = GrType(GrType.Base.int_);
                 break;
             case realType:
                 returnType = GrType(GrType.Base.real_);
                 break;
             case booleanType:
-                returnType = GrType(GrType.Base.boolean);
+                returnType = GrType(GrType.Base.bool_);
                 break;
             case stringType:
                 returnType = GrType(GrType.Base.string_);
@@ -3738,7 +3738,7 @@ final class GrParser {
         if (lex.type == GrLexeme.Type.comma) {
             checkAdvance();
             lex = get();
-            if (lex.type != GrLexeme.Type.integer)
+            if (lex.type != GrLexeme.Type.int_)
                 logError(getError(Error.chanSizeMustBePositive),
                     format(getError(Error.expectedIntFoundX), getPrettyLexemeType(get().type)));
             channelSize = lex.ivalue > int.max ? 1 : cast(int) lex.ivalue;
@@ -3761,8 +3761,8 @@ final class GrParser {
         channelType.mangledType = grMangleSignature([subType]);
 
         final switch (subType.base) with (GrType.Base) {
-        case integer:
-        case boolean:
+        case int_:
+        case bool_:
         case function_:
         case task:
         case enum_:
@@ -3818,46 +3818,45 @@ final class GrParser {
         uint jumpPosition, casePosition, defaultCasePosition, defaultCaseKeywordPosition;
         bool hasCase, hasDefaultCase;
 
-        while (get().type == GrLexeme.Type.case_) {
+        while (get().type == GrLexeme.Type.case_ || get().type == GrLexeme.Type.default_) {
             casePosition = current;
+            if (get().type == GrLexeme.Type.default_) {
+                advance();
+                if (hasDefaultCase)
+                    logError(format(getError(Error.onlyOneDefaultCasePerX), getPrettyLexemeType(GrLexeme.Type.switch_)),
+                        getError(Error.defaultCaseAlreadyDef), "",
+                        casePosition - current, getError(Error.prevDefaultCaseDef),
+                        defaultCaseKeywordPosition);
+                hasDefaultCase = true;
+                defaultCasePosition = current;
+                defaultCaseKeywordPosition = casePosition;
+                skipBlock();
+                continue;
+            }
             advance();
             if (get().type != GrLexeme.Type.leftParenthesis)
                 logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexeme.Type.case_)),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
                         GrLexeme.Type.leftParenthesis), getPrettyLexemeType(get().type)));
             advance();
-            if (get().type == GrLexeme.Type.rightParenthesis) {
-                if (hasDefaultCase)
-                    logError(format(getError(Error.onlyOneDefaultCasePerX), getPrettyLexemeType(GrLexeme.Type.switch_)),
-                        getError(Error.defaultCaseAlreadyDef), "",
-                        casePosition - current, getError(Error.prevDefaultCaseDef),
-                        defaultCaseKeywordPosition);
-                advance();
-                hasDefaultCase = true;
-                defaultCasePosition = current;
-                defaultCaseKeywordPosition = casePosition;
-                skipBlock();
-            }
-            else {
-                hasCase = true;
-                addGetInstruction(switchVar);
-                GrType caseType = parseSubExpression().type;
-                addBinaryOperator(GrLexeme.Type.equal, switchType, caseType, fileId);
-                advance();
+            hasCase = true;
+            addGetInstruction(switchVar);
+            GrType caseType = parseSubExpression().type;
+            addBinaryOperator(GrLexeme.Type.equal, switchType, caseType, fileId);
+            advance();
 
-                jumpPosition = cast(uint) currentFunction.instructions.length;
-                //Jumps to if(0).
-                addInstruction(GrOpcode.jumpEqual);
+            jumpPosition = cast(uint) currentFunction.instructions.length;
+            //Jumps to if(0).
+            addInstruction(GrOpcode.jumpEqual);
 
-                parseBlock(true);
+            parseBlock(true);
 
-                exitJumps ~= cast(uint) currentFunction.instructions.length;
-                addInstruction(GrOpcode.jump);
+            exitJumps ~= cast(uint) currentFunction.instructions.length;
+            addInstruction(GrOpcode.jump);
 
-                //Jumps to if(0).
-                setInstruction(GrOpcode.jumpEqual, jumpPosition,
-                    cast(int)(currentFunction.instructions.length - jumpPosition), true);
-            }
+            //Jumps to if(0).
+            setInstruction(GrOpcode.jumpEqual, jumpPosition,
+                cast(int)(currentFunction.instructions.length - jumpPosition), true);
         }
 
         if (hasDefaultCase) {
@@ -3894,44 +3893,42 @@ final class GrParser {
         uint startJump = cast(uint) currentFunction.instructions.length;
 
         addInstruction(GrOpcode.startSelectChannel);
-        while (get().type == GrLexeme.Type.case_) {
+        while (get().type == GrLexeme.Type.case_ || get().type == GrLexeme.Type.default_) {
             casePosition = current;
+            if (get().type == GrLexeme.Type.default_) {
+                advance();
+                if (hasDefaultCase)
+                    logError(format(getError(Error.onlyOneDefaultCasePerX), getPrettyLexemeType(GrLexeme.Type.select)),
+                        getError(Error.defaultCaseAlreadyDef), "",
+                        casePosition - current, getError(Error.prevDefaultCaseDef),
+                        defaultCaseKeywordPosition);
+                hasDefaultCase = true;
+                defaultCasePosition = current;
+                defaultCaseKeywordPosition = casePosition;
+                skipBlock();
+                continue;
+            }
             advance();
             if (get().type != GrLexeme.Type.leftParenthesis)
                 logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexeme.Type.case_)),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
                         GrLexeme.Type.leftParenthesis), getPrettyLexemeType(get().type)));
             advance();
+            hasCase = true;
+            jumpPosition = cast(uint) currentFunction.instructions.length;
+            addInstruction(GrOpcode.tryChannel);
+            parseSubExpression();
+            advance();
 
-            if (get().type == GrLexeme.Type.rightParenthesis) {
-                if (hasDefaultCase)
-                    logError(format(getError(Error.onlyOneDefaultCasePerX), getPrettyLexemeType(GrLexeme.Type.select)),
-                        getError(Error.defaultCaseAlreadyDef), "",
-                        casePosition - current, getError(Error.prevDefaultCaseDef),
-                        defaultCaseKeywordPosition);
-                advance();
-                hasDefaultCase = true;
-                defaultCasePosition = current;
-                defaultCaseKeywordPosition = casePosition;
-                skipBlock();
-            }
-            else {
-                hasCase = true;
-                jumpPosition = cast(uint) currentFunction.instructions.length;
-                addInstruction(GrOpcode.tryChannel);
-                parseSubExpression();
-                advance();
+            addInstruction(GrOpcode.checkChannel);
 
-                addInstruction(GrOpcode.checkChannel);
+            parseBlock(true);
 
-                parseBlock(true);
+            exitJumps ~= cast(uint) currentFunction.instructions.length;
+            addInstruction(GrOpcode.jump);
 
-                exitJumps ~= cast(uint) currentFunction.instructions.length;
-                addInstruction(GrOpcode.jump);
-
-                setInstruction(GrOpcode.tryChannel, jumpPosition,
-                    cast(int)(currentFunction.instructions.length - jumpPosition), true);
-            }
+            setInstruction(GrOpcode.tryChannel, jumpPosition,
+                cast(int)(currentFunction.instructions.length - jumpPosition), true);
         }
 
         if (hasDefaultCase) {
@@ -4131,8 +4128,8 @@ final class GrParser {
 
                 addSetInstruction(array, fileId, containerType, true);
                 final switch (subType.base) with (GrType.Base) {
-                case boolean:
-                case integer:
+                case bool_:
+                case int_:
                 case function_:
                 case task:
                 case enum_:
@@ -4176,11 +4173,11 @@ final class GrParser {
                 advance();
                 uint blockPosition = cast(uint) currentFunction.instructions.length;
 
-                addGetInstruction(iterator, GrType(GrType.Base.integer));
+                addGetInstruction(iterator, GrType(GrType.Base.int_));
                 addInstruction(GrOpcode.decrement_int);
                 addSetInstruction(iterator, fileId);
 
-                addGetInstruction(iterator, GrType(GrType.Base.integer));
+                addGetInstruction(iterator, GrType(GrType.Base.int_));
                 uint jumpPosition = cast(uint) currentFunction.instructions.length;
                 addInstruction(GrOpcode.jumpEqual);
 
@@ -4190,8 +4187,8 @@ final class GrParser {
                 addInstruction(GrOpcode.increment_int);
                 addSetInstruction(index, fileId, grVoid, true);
                 final switch (subType.base) with (GrType.Base) {
-                case boolean:
-                case integer:
+                case bool_:
+                case int_:
                 case function_:
                 case task:
                 case enum_:
@@ -4495,7 +4492,7 @@ final class GrParser {
             }
 
             /* Init */
-            iterator = registerSpecialVariable("it", GrType(GrType.Base.integer));
+            iterator = registerSpecialVariable("it", GrType(GrType.Base.int_));
 
             //Init counter
             GrType type = parseSubExpression().type;
@@ -4750,8 +4747,8 @@ final class GrParser {
             case null_:
                 break;
             case void_:
-            case boolean:
-            case integer:
+            case bool_:
+            case int_:
             case real_:
             case string_:
             case enum_:
@@ -4796,13 +4793,13 @@ final class GrParser {
             logError(format(getError(Error.expectedXFoundY), getPrettyType(dst), getPrettyType(src)),
                 getError(Error.mismatchedTypes), "", -1);
 
-        if (dst.base == GrType.Base.boolean) {
+        if (dst.base == GrType.Base.bool_) {
             final switch (src.base) with (GrType.Base) {
             case function_:
             case task:
             case void_:
-            case boolean:
-            case integer:
+            case bool_:
+            case int_:
             case real_:
             case string_:
             case internalTuple:
@@ -5025,8 +5022,8 @@ final class GrParser {
         }
 
         final switch (subType.base) with (GrType.Base) {
-        case boolean:
-        case integer:
+        case bool_:
+        case int_:
         case function_:
         case task:
         case enum_:
@@ -5075,8 +5072,8 @@ final class GrParser {
                 case array:
                     const GrType subType = grUnmangle(arrayType.mangledType);
                     final switch (subType.base) with (GrType.Base) {
-                    case boolean:
-                    case integer:
+                    case bool_:
+                    case int_:
                     case function_:
                     case task:
                     case enum_:
@@ -5127,8 +5124,8 @@ final class GrParser {
             case array:
                 const GrType subType = grUnmangle(arrayType.mangledType);
                 final switch (subType.base) with (GrType.Base) {
-                case boolean:
-                case integer:
+                case bool_:
+                case int_:
                 case function_:
                 case task:
                 case enum_:
@@ -5370,8 +5367,8 @@ final class GrParser {
 
     private void addDefaultValue(GrType type, uint fileId) {
         final switch (type.base) with (GrType.Base) {
-        case integer:
-        case boolean:
+        case int_:
+        case bool_:
         case enum_:
             addIntConstant(0);
             break;
@@ -5418,8 +5415,8 @@ final class GrParser {
                 logError(getError(Error.arrayCanOnlyContainOneTypeOfVal), getError(Error.conflictingArraySignature),
                     format(getError(Error.tryUsingXInstead), getPrettyType(grArray(subTypes[0]))));
             final switch (subTypes[0].base) with (GrType.Base) {
-            case boolean:
-            case integer:
+            case bool_:
+            case int_:
             case function_:
             case task:
             case enum_:
@@ -5459,8 +5456,8 @@ final class GrParser {
                 logError(getError(Error.channelCanOnlyContainOneTypeOfVal), getError(Error.conflictingChannelSignature),
                     format(getError(Error.tryUsingXInstead), getPrettyType(grChannel(subTypes[0]))));
             final switch (subTypes[0].base) with (GrType.Base) {
-            case integer:
-            case boolean:
+            case int_:
+            case bool_:
             case function_:
             case task:
             case enum_:
@@ -5507,8 +5504,8 @@ final class GrParser {
         TypeCounter counter;
         void countSubTypes(GrType type, ref TypeCounter counter) {
             final switch (type.base) with (GrType.Base) {
-            case integer:
-            case boolean:
+            case int_:
+            case bool_:
             case function_:
             case task:
             case enum_:
@@ -5784,8 +5781,8 @@ final class GrParser {
                             || nextLexeme.type == GrLexeme.Type.increment
                             || nextLexeme.type == GrLexeme.Type.decrement) {
                             final switch (currentType.base) with (GrType.Base) {
-                            case boolean:
-                            case integer:
+                            case bool_:
+                            case int_:
                             case function_:
                             case task:
                             case enum_:
@@ -5827,8 +5824,8 @@ final class GrParser {
                     }
                     else {
                         final switch (currentType.base) with (GrType.Base) {
-                        case boolean:
-                        case integer:
+                        case bool_:
+                        case int_:
                         case function_:
                         case task:
                         case enum_:
@@ -5870,8 +5867,8 @@ final class GrParser {
                     hasValue = true;
                 }
                 break;
-            case integer:
-                currentType = GrType(GrType.Base.integer);
+            case int_:
+                currentType = GrType(GrType.Base.int_);
                 addIntConstant(lex.ivalue);
                 hasValue = true;
                 typeStack ~= currentType;
@@ -5884,8 +5881,8 @@ final class GrParser {
                 typeStack ~= currentType;
                 checkAdvance();
                 break;
-            case boolean:
-                currentType = GrType(GrType.Base.boolean);
+            case bool_:
+                currentType = GrType(GrType.Base.bool_);
                 addBoolConstant(lex.bvalue);
                 hasValue = true;
                 typeStack ~= currentType;
@@ -6330,8 +6327,8 @@ final class GrParser {
 
     private void addLoadFieldInstruction(GrType type, uint index, bool asCopy) {
         final switch (type.base) with (GrType.Base) {
-        case boolean:
-        case integer:
+        case bool_:
+        case int_:
         case function_:
         case task:
         case enum_:
@@ -6365,8 +6362,8 @@ final class GrParser {
 
         GrVariable functionId;
         if (type.base == GrType.Base.function_) {
-            functionId = registerSpecialVariable("anon", GrType(GrType.Base.integer));
-            addSetInstruction(functionId, fileId, GrType(GrType.Base.integer));
+            functionId = registerSpecialVariable("anon", GrType(GrType.Base.int_));
+            addSetInstruction(functionId, fileId, GrType(GrType.Base.int_));
         }
         else if (type.base != GrType.Base.task) {
             logError(format(getError(Error.xNotCallable), getPrettyType(type)),
@@ -6445,7 +6442,7 @@ final class GrParser {
         GrType retTypes = grPackTuple(grUnmangleSignature(type.mangledReturnType));
 
         if (type.base == GrType.Base.function_) {
-            addGetInstruction(functionId, GrType(GrType.Base.integer));
+            addGetInstruction(functionId, GrType(GrType.Base.int_));
         }
 
         if (type.base == GrType.Base.function_)
@@ -7039,7 +7036,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.expected1ParamFoundX: "expected 1 parameter, found %s parameter",
                 Error.expected1ParamFoundXs: "expected 1 parameter, found %s parameters",
                 Error.missingCurlyBraces: "missing curly braces",
-                Error.expectedIntFoundX: "expected integer, found `%s`",
+                Error.expectedIntFoundX: "expected int_, found `%s`",
                 Error.deferInsideDefer: "`defer` inside another `defer`",
                 Error.cantDeferInsideDefer: "can't `defer` inside another `defer`",
                 Error.xInsideDefer: "`%s` inside a defer",
@@ -7049,7 +7046,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.continueOutsideLoop: "`continue` outside of a loop",
                 Error.cantContinueOutsideLoop: "can't `continue` outside of a loop",
                 Error.xNotValidRetType: "`%s` is not a valid return type",
-                Error.chanSizeMustBePositive: "a channel size must be a positive integer value",
+                Error.chanSizeMustBePositive: "a channel size must be a positive int_ value",
                 Error.missingCommaOrRightParenthesisInsideChanSignature: "missing `,` or `)` inside channel signature",
                 Error.missingParenthesesAfterChanSignature: "missing parentheses after the channel signature",
                 Error.chanSizeMustBeOneOrHigher: "the channel size must be one or higher",
@@ -7075,8 +7072,8 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.forCantIterateOverX: "for can't iterate over a `%s`",
                 Error.cantEvalArityUnknownCompound: "can't evaluate the arity of an unknown compound",
                 Error.arityEvalError: "arity evaluation error",
-                Error.typeOfIteratorMustBeIntNotX: "the type of the iterator must be an integer, not `%s`",
-                Error.iteratorMustBeInt: "the iterator must be an integer",
+                Error.typeOfIteratorMustBeIntNotX: "the type of the iterator must be an int_, not `%s`",
+                Error.iteratorMustBeInt: "the iterator must be an int_",
                 Error.mismatchedNumRetVal: "mismatched number of return values",
                 Error.expectedXRetValFoundY: "expected %s return value, found %s",
                 Error.expectedXRetValsFoundY: "expected %s return values, found %s",
@@ -7097,7 +7094,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.indexesShouldBeSeparatedByComma: "indexes should be separated by a comma",
                 Error.missingVal: "missing value",
                 Error.expectedIndexFoundComma: "an index is expected, found `,`",
-                Error.expectedIntFoundNothing: "expected integer, found nothing",
+                Error.expectedIntFoundNothing: "expected int_, found nothing",
                 Error.noValToConv: "no value to convert",
                 Error.expectedVarFoundX: "expected variable, found `%s`",
                 Error.missingVar: "missing variable",

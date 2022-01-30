@@ -68,7 +68,7 @@ else {
   - [Operators](#operators)
 
 - Compound types:
-  - [Lists](#lists)
+  - [Arrays](#arrays)
   - [Enumerations](#enumerations)
   - [Classes](#classes)
   - [Channels](#channels)
@@ -189,10 +189,10 @@ All variables are initialized, if you don't assign anything, it'll have its defa
 ## Basic Types
 They're only a handful of basic type recognised by grimoire.
 * Integer declared with **int** ex: 2 (Default value: 0)
-* Realing number declared with **real** ex: 2.35f (Default value: 0f)
+* Floating point number declared with **real** ex: 2.35f (Default value: 0f)
 * Boolean declared with **bool** ex: true, false (Default value: false)
 * String declared with **string** ex: "Hello" (Default value: "")
-* [List](#lists) (Default value: [])
+* [Array](#arrays) (Default value: [])
 * [Function](#functions) (Default value: empty function)
 * [Task](#tasks) (Default value: empty task)
 * [Channel](#channels) (Default value: size 1 channel)
@@ -229,14 +229,17 @@ event main {
 
 ### Public or private
 A global variable is only visible from its own file by default.
-To access it from another file, you have to declare it as public with the keyword "public".
+To access it from another file, you have to declare it as public with the keyword `public`.
 ```cpp
 public int globalVar; //Now you can use it from another file.
 ```
 
-The same is true for declared types.
+The same is true for declared types, or even classes’ fields. 
 ```cpp
-public class A {} //The class is visible globally.
+public class A { //The class is visible globally.
+    public int a; //a is visible globally.
+    int b; //b is only visible in the file.
+}
 ```
 
 ## Declaration List
@@ -280,8 +283,8 @@ Here:
 
 ## If/Else/Unless
 
-`if` is a keyword that allows you to runs a portion of code only if its condition is true, `unless` do the opposite.
-You can combine it with optionals `else if` or `else unless` to do the same thing, only if the previous ones aren't run.
+`if` is a keyword that allows you to run a portion of code only if its condition is verified, `unless` do the opposite.
+You can combine it with optional `else if` or `else unless` to do the same thing, only if the previous ones aren't run.
 Finally you can add an optional `else` that is run *only* if others are not run.
 
 Exemple:
@@ -434,14 +437,14 @@ while(i < 10)
 
 ## For
 
-`for` loops are yet another kind of loop that will automatically iterate on an list of values.
+`for` loops are yet another kind of loop that will automatically iterate on an array of values.
 For instance:
 ```cpp
 for(i, [1, 2, 3, 4]) {
 	print(i);
 }
 ```
-Here, the for statement will take each value of the list, then assign them to the variable "i" specified.
+Here, the for statement will take each value of the array, then assign them to the variable "i" specified.
 
 The variable can be already declared, or declared inside the for statement like this:
 
@@ -455,7 +458,7 @@ for(int i, [1, 2]) {}
 ```
 If no type is specified, or declared as let, the variable will be automatically declared as `var`.
 
-The variable type must be convertible from the list's values, or it will raise a runtime error.
+The variable type must be convertible from the array's values, or it will raise a runtime error.
 
 ### Iterators
 
@@ -752,38 +755,38 @@ Overridable operators are:
 
 * * *
 
-# Lists
+# Arrays
 
-List are a collection of a single type of value.
+Array are a collection of a single type of value.
 
-The type of an list is `list()` with the type of its content inside the parenthesis:
+The type of an array is `array()` with the type of its content inside the parenthesis:
 ```cpp
-list(int) myCollection = [1, 2, 3];
+array(int) myCollection = [1, 2, 3];
 ```
 
-By default, a new list has the type of its first element.
-So, `[1, 2, 3]` will be an `list(int)`.
+By default, a new array has the type of its first element.
+So, `[1, 2, 3]` will be an `array(int)`.
 
-You can write it explicitly by preceding the list with its type: `list(int)[1, 2, 3]`
+You can write it explicitly by preceding the array with its type: `array(int)[1, 2, 3]`
 
-If your new list is empty `[]`, you **have** to write the type explicitly else compilation will fail: `list(string)[]`.
+If your new array is empty `[]`, you **have** to write the type explicitly else compilation will fail: `array(string)[]`.
 
-To access an list element, the list index (from 0) in written between brackets:
+To access an array element, the array index (from 0) in written between brackets:
 ```cpp
-let a = [10, 20, 30][1]; //New list, then immediately take the index 1 of [10, 20, 30], which is 20
+let a = [10, 20, 30][1]; //New array, then immediately take the index 1 of [10, 20, 30], which is 20
 
-let b = [[1, 2, 3], [11, 12, 13], [21, 22, 23]]; //New list
+let b = [[1, 2, 3], [11, 12, 13], [21, 22, 23]]; //New array
 let c = b[1][2]; //Here we access the element at index 1 -> [21, 22, 23], the element at index 2 -> 23
 let d = b[1, 2]; //Same as above in a nicer syntax
 ```
 
-When accessing an list element, you can also modify it:
+When accessing an array element, you can also modify it:
 ```cpp
 let a = [11, 12, 13];
 a[0] = 9; //a now has [9, 12, 13]
 ```
 
-List and list indexes are passed by references, that mean manipulating list do not make copies.
+Array and array indexes are passed by references, that mean manipulating array do not make copies.
 ```cpp
 let a = [1, 2, [3, 4]];
 let b = a[2]; //b is now a reference to the 3rd value of a
@@ -792,7 +795,7 @@ b[0] = 9;
 print(a); //Prints [1, 2, [9, 4]]
 ```
 
-You can concatenate values into an list by using the concatenation operator ~
+You can concatenate values into an array by using the concatenation operator ~
 ```cpp
 let a = 1 ~ [2, 3, 4] ~ [5, 6] ~ 7; //a is now [1, 2, 3, 4, 5, 6, 7]
 ```
@@ -1106,16 +1109,16 @@ The predicate takes 2 parameters:
 - A `GrType` of the provided value,
 - The context of the checker containing the defined generic types.
 
-Exemple of a primitive that can define a `push` function for every type of list that uses integers.
-It takes an list and a value that matches the type held by the list, and returns the list itself.
+Exemple of a primitive that can define a `push` function for every type of array that uses integers.
+It takes an array and a value that matches the type held by the array, and returns the array itself.
 ```d
 library.addFunction(&_push, "push", [
     grAny("A",   // We declare a generic type called "A"
 	(type, data) {
-		if (type.baseType != GrBaseType.list_) // This type must be an list
+		if (type.baseType != GrType.Base.array) // This type must be an array
 			return false;
 		const GrType subType = grUnmangle(type.mangledType); // The subType is mangled
-		data.set("T", subType);  // We define the other generic type (called "T") with the subtype of the list
+		data.set("T", subType);  // We define the other generic type (called "T") with the subtype of the array
 		return grIsKindOfInt(subType.baseType); // We check is the baseType is good for us.
 	}), grAny("T")], // "T" is already defined above, so the types must match.
 	[grAny("A")]   // "A" is already defined above, it must be of the same type. Putting any predicate here is useless.

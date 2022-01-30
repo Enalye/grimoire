@@ -15,11 +15,11 @@ string grGetPrettyType(GrType variableType) {
         return "void";
     case null_:
         return "null";
-    case integer:
+    case int_:
         return "int";
     case real_:
         return "real";
-    case boolean:
+    case bool_:
         return "bool";
     case string_:
         return "string";

@@ -501,7 +501,7 @@ class GrEngine {
         }
     }
 
-    /// Run the vm until all the contexts are finished or suspended.
+    /// Run the vm until all the tasks are finished or suspended.
     void process() {
         import std.algorithm.mutation : remove, swap;
 
@@ -553,11 +553,11 @@ class GrEngine {
                         currentTask.pc = currentTask
                             .callStack[currentTask.stackPos].deferStack[$ - 1];
                         currentTask.callStack[currentTask.stackPos].deferStack.length--;
-                        //The search for an exception handler will be done by Unwind after all defer
+                        //The search for an exception handler will be done by unwind after all defer
                         //has been called for this function.
                     }
                     else if (currentTask.stackPos) {
-                        //Then returns to the last currentTask, raise will be run again.
+                        //Then returns to the last task, raise will be run again.
                         currentTask.stackPos--;
                         currentTask.ilocalsPos -= currentTask
                             .callStack[currentTask.stackPos].ilocalStackSize;
@@ -626,7 +626,7 @@ class GrEngine {
                         currentTask.isKilled = true;
                     }
                     else if (currentTask.stackPos) {
-                        //Then returns to the last currentTask.
+                        //Then returns to the last task.
                         currentTask.stackPos--;
                         currentTask.pc = currentTask.callStack[currentTask.stackPos].retPosition;
                         currentTask.ilocalsPos -= currentTask

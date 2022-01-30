@@ -62,8 +62,8 @@ class GrLibrary {
         variable.isConstant = isConstant;
 
         final switch (type.base) with (GrType.Base) {
-        case boolean:
-        case integer:
+        case bool_:
+        case int_:
         case enum_:
         case real_:
         case string_:
@@ -82,14 +82,14 @@ class GrLibrary {
                 "can't initialize library variable of type `" ~ grGetPrettyType(type) ~ "`");
         }
         static if (isIntegral!T) {
-            if (type.base != GrType.Base.integer && type.base != GrType.Base.enum_)
+            if (type.base != GrType.Base.int_ && type.base != GrType.Base.enum_)
                 throw new Exception(
                     "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
                         type) ~ "`");
             variable.ivalue = cast(int) defaultValue;
         }
         else static if (is(T == bool)) {
-            if (type.base != GrType.Base.boolean)
+            if (type.base != GrType.Base.bool_)
                 throw new Exception(
                     "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
                         type) ~ "`");
