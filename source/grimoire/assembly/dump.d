@@ -125,7 +125,7 @@ string grDump(GrBytecode bytecode) {
         else if (op == GrOpcode.const_real)
             line ~= to!string(bytecode.rconsts[grGetInstructionUnsignedValue(opcode)]);
         else if (op == GrOpcode.const_bool)
-            line ~= (grGetInstructionUnsignedValue(opcode) ? "vrai" : "faux");
+            line ~= (grGetInstructionUnsignedValue(opcode) ? "true" : "false");
         else if (op == GrOpcode.const_string || op == GrOpcode.const_meta || op == GrOpcode
             .debugProfileBegin)
             line ~= "\"" ~ to!string(bytecode.sconsts[grGetInstructionUnsignedValue(opcode)]) ~ "\"";

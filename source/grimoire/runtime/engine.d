@@ -519,8 +519,10 @@ class GrEngine {
         tasksLabel: for (uint index = 0u; index < _tasks.length;) {
             GrTask currentTask = _tasks[index];
             if (currentTask.blocker) {
-                if (!currentTask.blocker.run())
+                if (!currentTask.blocker.run()) {
+                    index++;
                     continue;
+                }
                 currentTask.blocker = null;
             }
             while (isRunning) {
