@@ -115,8 +115,8 @@ You can then spawn any event like this:
 ```d
 auto mangledName = grMangleComposite("myEvent", [grString]);
 if(engine.hasEvent(mangledName)) {
-    GrContext context = engine.callEvent(mangledName);
-    context.setString("Hello World!");
+    GrTask task = engine.callEvent(mangledName);
+    task.setString("Hello World!");
 }
 ```
 But be aware that every function/task/event are mangled with their signature, so use `grMangleComposite` to generate the  correct function's name.
@@ -133,7 +133,7 @@ The program will run until all tasks are finished, if you want them to run only 
 You can then check if there are any unhandled errors that went through the VM (Caught exceptions won't trigger that).
 ```d
 if(engine.isPanicking)
-    writeln("Unhandled Exception: " ~ engine.panicMessage);
+    writeln("unhandled exception: " ~ engine.panicMessage);
 ```
 
 
