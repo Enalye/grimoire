@@ -108,7 +108,7 @@ Exemple of valid identifiers:
 ## Reserved words
 
 The following are keyword used by the language, they cannot be used as identifier (variables, functions, etc):
-`import`, `public`, `alias`, `event`, `class`, `enum`, `template`, `if`, `unless`, `else`, `switch`, `select`, `case`, `while`, `do`, `until`, `for`, `loop`, `return`, `self`, `die`, `exit`, `yield`, `break`, `continue`, `as`, `try`, `catch`, `throw`, `defer`, `void`, `task`, `function`, `int`, `real`, `bool`, `string`, `array`, `channel`, `new`, `let`, `true`, `false`, `null`, `not`, `and`, `or`, `bit_not`, `bit_and`, `bit_or`, `bit_xor`.
+`import`, `public`, `alias`, `event`, `class`, `enum`, `template`, `if`, `unless`, `else`, `switch`, `select`, `case`, `default`, `while`, `do`, `until`, `for`, `loop`, `return`, `self`, `die`, `exit`, `yield`, `break`, `continue`, `as`, `try`, `catch`, `throw`, `defer`, `void`, `task`, `function`, `int`, `real`, `bool`, `string`, `array`, `channel`, `new`, `let`, `true`, `false`, `null`, `not`, `and`, `or`, `bit_not`, `bit_and`, `bit_or`, `bit_xor`.
 
 ## Comments
 
@@ -328,7 +328,7 @@ event main {
 ```cpp
 let i = "Hello";
 switch(i)
-case() { // Default case if others aren't valid.
+default { // Default case if others aren't valid.
 	print("I don't know what he said");
 }
 case("Hey") {
@@ -341,7 +341,7 @@ case("Hello") {
 
 Contrary to `if` statement, cases can be put in any order, and will check equality between the switch value and each cases value.
 
-A `case` without value is considered to be a default case like the `else` above, you can only have one default case per switch statement.
+A `default` is an optional statement that behave a bit like the `else` statement above, you can only have one default case per switch statement.
 
 ## Select statement
 
@@ -352,7 +352,7 @@ select
 case( /* channel operation  */ ) {
 
 }
-case() {
+default {
 	/* run if the one above is blocked */
 }
 ```
@@ -368,7 +368,7 @@ case(myValue = <- myChannel) { // Receive operation
 case(myOtherChannel <- "Hello") { // Send operation
 	print("Sent Hello");
 }
-case() {
+default {
 	// Run if no one else can run.
 	// If it's not present, select will blocking until one of the case is non-blocking.
 	print("Did nothing");

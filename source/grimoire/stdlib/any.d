@@ -84,7 +84,7 @@ package(grimoire.stdlib) void grLoadStdLibAny(GrLibrary library) {
     library.addCast(&_to_f, anyType, grReal);
     library.addCast(&_to_s, anyType, grString);
 
-    library.addFunction(&_trace, "trace", [anyType]);
+    library.addFunction(&_print, "print", [anyType]);
 
     // Operators
     /*static foreach (op; ["+", "-"]) {
@@ -265,7 +265,7 @@ private void _to_i2(GrCall call) {
     }
 }
 
-private void _trace(GrCall call) {
+private void _print(GrCall call) {
     Any any = call.getForeign!(Any)(0);
     if (!any) {
         _stdOut("null(any)");
