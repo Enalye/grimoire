@@ -17,8 +17,6 @@ import grimoire.stdlib.string;
 import grimoire.stdlib.channel;
 import grimoire.stdlib.log;
 import grimoire.stdlib.math;
-import grimoire.stdlib.vec2;
-import grimoire.stdlib.color;
 import grimoire.stdlib.test;
 import grimoire.stdlib.time;
 import grimoire.stdlib.typecast;
@@ -37,8 +35,6 @@ GrLibrary grLoadStdLibrary() {
     grLoadStdLibString(library);
     grLoadStdLibChannel(library);
     grLoadStdLibMath(library);
-    grLoadStdLibVec2(library);
-    grLoadStdLibColor(library);
     grLoadStdLibTest(library);
     grLoadStdLibTime(library);
     grLoadStdLibTypecast(library);

@@ -10,7 +10,7 @@ import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibTime(GrLibrary library) {
-    library.addFunction(&_clock, "clock", [], [grInt]);
+    library.addFunction(&_time, "time", [], [grInt]);
 
     library.addFunction(&_wait, "wait", [grInt]);
     library.addFunction(&_sleep, "sleep", [grInt]);
@@ -25,7 +25,7 @@ package(grimoire.stdlib) void grLoadStdLibTime(GrLibrary library) {
     library.addFunction(&_hours_f, "hours", [grReal], [grInt]);
 }
 
-private void _clock(GrCall call) {
+private void _time(GrCall call) {
     call.setInt(cast(GrInt)(Clock.currStdTime / 10_000));
 }
 

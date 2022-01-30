@@ -38,14 +38,14 @@ private {
 }
 
 /// Iterator
-private final class IterHashMap(T) {
+private final class HashMapIterator(T) {
     Tuple!(GrString, T)[] pairs;
     size_t index;
 }
 
 package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
     library.addForeign("HashMap", ["T"]);
-    library.addForeign("IterHashMap", ["T"]);
+    library.addForeign("HashMapIterator", ["T"]);
 
     static foreach (t; ["Int", "Real", "String", "Object"]) {
         mixin("GrType any" ~ t ~ "HashMap = grAny(\"M\", (type, data) {
@@ -85,7 +85,7 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
                 if(subType.base != GrType.Base.class_)
                     return false;
                 auto pairType = grUnmangleComposite(subType.mangledType);
-                if(pairType.name != \"Pair\" || pairType.signature.length != 2 || pairType.signature[0].base != GrType.Base.string_)
+                if(pairType.name != \"pair\" || pairType.signature.length != 2 || pairType.signature[0].base != GrType.Base.string_)
                     return false;
                 data.set(\"M\", grGetForeignType(\"HashMap\", [pairType.signature[1]]));
                 return true;
@@ -126,11 +126,11 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
                 ~ "\", \"remove\", [any" ~ t ~ "HashMap, grString]);
 
             library.addFunction(&_byKeys_!\""
-                ~ t ~ "\", \"byKeys\", [any" ~ t
+                ~ t ~ "\", \"keys\", [any" ~ t
                 ~ "HashMap], [grStringArray]);
 
             library.addFunction(&_byValues_!\""
-                ~ t ~ "\", \"byValues\", [any" ~ t ~ "HashMap], [any"
+                ~ t ~ "\", \"values\", [any" ~ t ~ "HashMap], [any"
                 ~ t ~ "Array]);
 
             library.addFunction(&_each_!\""
@@ -143,7 +143,7 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
                     return false;
                 if(subType.signature.length != 1)
                     return false;
-                data.set(\"R\", grGetForeignType(\"IterHashMap\", subType.signature));
+                data.set(\"R\", grGetForeignType(\"HashMapIterator\", subType.signature));
                 return grIsKindOf"
                 ~ t ~ "(subType.signature[0].base);
             })
@@ -155,9 +155,9 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
                 if (type.base != GrType.Base.foreign)
                     return false;
                 auto result = grUnmangleComposite(type.mangledType);
-                if(result.signature.length != 1 || result.name != \"IterHashMap\")
+                if(result.signature.length != 1 || result.name != \"HashMapIterator\")
                     return false;
-                data.set(\"T\", grGetClassType(\"Pair\", [grString, result.signature[0]]));
+                data.set(\"T\", grGetClassType(\"pair\", [grString, result.signature[0]]));
                 return grIsKindOf"
                 ~ t ~ "(result.signature[0].base);
                     })
@@ -190,12 +190,12 @@ private void _makeByPairs_(string t)(GrCall call) {
     for (size_t i; i < pairs.data.length; ++i) {
         GrObject pair = cast(GrObject) pairs.data[i];
         static if (t == "Object") {
-            auto value = pair.getPtr("second");
+            auto value = pair.getPtr("value");
         }
         else {
-            mixin("auto value = pair.get" ~ t ~ "(\"second\");");
+            mixin("auto value = pair.get" ~ t ~ "(\"value\");");
         }
-        hashmap.data[pair.getString("first")] = value;
+        hashmap.data[pair.getString("key")] = value;
     }
     call.setForeign(hashmap);
 }
@@ -324,16 +324,16 @@ private void _each_(string t)(GrCall call) {
         return;
     }
     static if (t == "Int") {
-        IterHashMap!(GrInt) iter = new IterHashMap!(GrInt);
+        HashMapIterator!(GrInt) iter = new HashMapIterator!(GrInt);
     }
     else static if (t == "Real") {
-        IterHashMap!(GrReal) iter = new IterHashMap!(GrReal);
+        HashMapIterator!(GrReal) iter = new HashMapIterator!(GrReal);
     }
     else static if (t == "String") {
-        IterHashMap!(GrString) iter = new IterHashMap!(GrString);
+        HashMapIterator!(GrString) iter = new HashMapIterator!(GrString);
     }
     else static if (t == "Object") {
-        IterHashMap!(GrPtr) iter = new IterHashMap!(GrPtr);
+        HashMapIterator!(GrPtr) iter = new HashMapIterator!(GrPtr);
     }
     foreach (pair; hashmap.data.byKeyValue()) {
         iter.pairs ~= tuple(pair.key, pair.value);
@@ -343,16 +343,16 @@ private void _each_(string t)(GrCall call) {
 
 private void _next_(string t)(GrCall call) {
     static if (t == "Int") {
-        IterHashMap!(GrInt) iter = call.getForeign!(IterHashMap!(GrInt))(0);
+        HashMapIterator!(GrInt) iter = call.getForeign!(HashMapIterator!(GrInt))(0);
     }
     else static if (t == "Real") {
-        IterHashMap!(GrReal) iter = call.getForeign!(IterHashMap!(GrReal))(0);
+        HashMapIterator!(GrReal) iter = call.getForeign!(HashMapIterator!(GrReal))(0);
     }
     else static if (t == "String") {
-        IterHashMap!(GrString) iter = call.getForeign!(IterHashMap!(GrString))(0);
+        HashMapIterator!(GrString) iter = call.getForeign!(HashMapIterator!(GrString))(0);
     }
     else static if (t == "Object") {
-        IterHashMap!(GrPtr) iter = call.getForeign!(IterHashMap!(GrPtr))(0);
+        HashMapIterator!(GrPtr) iter = call.getForeign!(HashMapIterator!(GrPtr))(0);
     }
     if (!iter) {
         call.raise("NullError");
@@ -365,27 +365,27 @@ private void _next_(string t)(GrCall call) {
     }
     call.setBool(true);
     static if (t == "Int") {
-        GrObject obj = new GrObject(["first", "second"]);
-        obj.setString("first", iter.pairs[iter.index][0]);
-        obj.setInt("second", iter.pairs[iter.index][1]);
+        GrObject obj = new GrObject(["key", "value"]);
+        obj.setString("key", iter.pairs[iter.index][0]);
+        obj.setInt("value", iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     else static if (t == "Real") {
-        GrObject obj = new GrObject(["first", "second"]);
-        obj.setString("first", iter.pairs[iter.index][0]);
-        obj.setReal("second", iter.pairs[iter.index][1]);
+        GrObject obj = new GrObject(["key", "value"]);
+        obj.setString("key", iter.pairs[iter.index][0]);
+        obj.setReal("value", iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     else static if (t == "String") {
-        GrObject obj = new GrObject(["first", "second"]);
-        obj.setString("first", iter.pairs[iter.index][0]);
-        obj.setString("second", iter.pairs[iter.index][1]);
+        GrObject obj = new GrObject(["key", "value"]);
+        obj.setString("key", iter.pairs[iter.index][0]);
+        obj.setString("value", iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     else static if (t == "Object") {
-        GrObject obj = new GrObject(["first", "second"]);
-        obj.setString("first", iter.pairs[iter.index][0]);
-        obj.setPtr("second", iter.pairs[iter.index][1]);
+        GrObject obj = new GrObject(["key", "value"]);
+        obj.setString("key", iter.pairs[iter.index][0]);
+        obj.setPtr("value", iter.pairs[iter.index][1]);
         call.setObject(obj);
     }
     iter.index++;

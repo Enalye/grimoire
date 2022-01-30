@@ -43,7 +43,7 @@ package void grLoadStdLibSystem(GrLibrary library) {
             ], [grAny("T")]);
     }
 
-    library.addFunction(&_typeOf, "typeOf", [grAny("T")], [grString]);
+    library.addFunction(&_typeOf, "typeof", [grAny("T")], [grString]);
 }
 
 private void _swap_2_(string t1, string t2)(GrCall call) {

@@ -11,41 +11,41 @@ import grimoire.stdlib.util;
 
 package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library) {
     library.addForeign("RangeIterator", ["T"]);
-    GrType rangeIterIntType = grGetForeignType("RangeIterator", [grInt]);
-    GrType rangeIterRealType = grGetForeignType("RangeIterator", [grReal]);
+    GrType rangeIteratorIntType = grGetForeignType("RangeIterator", [grInt]);
+    GrType rangeIteratorRealType = grGetForeignType("RangeIterator", [grReal]);
 
-    library.addFunction(&_range_next_i, "next", [rangeIterIntType], [
+    library.addFunction(&_range_next_i, "next", [rangeIteratorIntType], [
             grBool, grInt
         ]);
-    library.addOperator(&_range_i, GrLibrary.Operator.interval, [grInt, grInt], rangeIterIntType);
+    library.addOperator(&_range_i, GrLibrary.Operator.interval, [grInt, grInt], rangeIteratorIntType);
     library.addFunction(&_range_i, "range", [grInt, grInt], [
-            rangeIterIntType
+            rangeIteratorIntType
         ]);
     library.addFunction(&_range_step_i, "range", [grInt, grInt, grInt], [
-            rangeIterIntType
+            rangeIteratorIntType
         ]);
 
-    library.addFunction(&_range_next_f, "next", [rangeIterRealType], [
+    library.addFunction(&_range_next_f, "next", [rangeIteratorRealType], [
             grBool, grReal
         ]);
     library.addOperator(&_range_f, GrLibrary.Operator.interval, [
             grReal, grReal
-        ], rangeIterRealType);
+        ], rangeIteratorRealType);
     library.addFunction(&_range_f, "range", [grReal, grReal], [
-            rangeIterRealType
+            rangeIteratorRealType
         ]);
     library.addFunction(&_range_step_f, "range", [
             grReal, grReal, grReal
         ],
-        [rangeIterRealType]);
+        [rangeIteratorRealType]);
 }
 
-private final class RangeIter(T) {
+private final class RangeIterator(T) {
     T value, end, step;
 }
 
 private void _range_next_i(GrCall call) {
-    RangeIter!GrInt iter = call.getForeign!(RangeIter!GrInt)(0);
+    RangeIterator!GrInt iter = call.getForeign!(RangeIterator!GrInt)(0);
     if (!iter) {
         call.raise("NullError");
         return;
@@ -61,7 +61,7 @@ private void _range_next_i(GrCall call) {
 }
 
 private void _range_i(GrCall call) {
-    RangeIter!GrInt iter = new RangeIter!GrInt;
+    RangeIterator!GrInt iter = new RangeIterator!GrInt;
     iter.value = call.getInt(0);
     iter.end = call.getInt(1);
     iter.step = iter.value > iter.end ? -1 : 1;
@@ -69,7 +69,7 @@ private void _range_i(GrCall call) {
 }
 
 private void _range_step_i(GrCall call) {
-    RangeIter!GrInt iter = new RangeIter!GrInt;
+    RangeIterator!GrInt iter = new RangeIterator!GrInt;
     iter.value = call.getInt(0);
     iter.end = call.getInt(1);
     iter.step = call.getInt(2);
@@ -80,7 +80,7 @@ private void _range_step_i(GrCall call) {
 }
 
 private void _range_next_f(GrCall call) {
-    RangeIter!GrReal iter = call.getForeign!(RangeIter!GrReal)(0);
+    RangeIterator!GrReal iter = call.getForeign!(RangeIterator!GrReal)(0);
     if (!iter) {
         call.raise("NullError");
         return;
@@ -96,7 +96,7 @@ private void _range_next_f(GrCall call) {
 }
 
 private void _range_f(GrCall call) {
-    RangeIter!GrReal iter = new RangeIter!GrReal;
+    RangeIterator!GrReal iter = new RangeIterator!GrReal;
     iter.value = call.getReal(0);
     iter.end = call.getReal(1);
     iter.step = iter.value > iter.end ? -1f : 1f;
@@ -104,7 +104,7 @@ private void _range_f(GrCall call) {
 }
 
 private void _range_step_f(GrCall call) {
-    RangeIter!GrReal iter = new RangeIter!GrReal;
+    RangeIterator!GrReal iter = new RangeIterator!GrReal;
     iter.value = call.getReal(0);
     iter.end = call.getReal(1);
     iter.step = call.getReal(2);

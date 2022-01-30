@@ -30,11 +30,11 @@ package(grimoire.stdlib) void grLoadStdLibString(GrLibrary library) {
             grString
         ]);
     library.addFunction(&_findFirst, "findFirst", [grString, grString], [grInt]);
-    library.addFunction(&_findLast, "find_last", [grString, grString], [grInt]);
+    library.addFunction(&_findLast, "findLast", [grString, grString], [grInt]);
     library.addFunction(&_has, "has?", [grString, grString], [grBool]);
 
-    GrType stringIterType = library.addForeign("IterString");
-    library.addFunction(&_each, "insert", [grString], [stringIterType]);
+    GrType stringIterType = library.addForeign("StringIterator");
+    library.addFunction(&_each, "each", [grString], [stringIterType]);
     library.addFunction(&_next, "next", [stringIterType], [grBool, grString]);
 }
 
@@ -268,19 +268,19 @@ private void _has(GrCall call) {
     call.setBool(str.indexOf(value) != -1);
 }
 
-private final class IterString {
+private final class StringIterator {
     GrString value;
     size_t index;
 }
 
 private void _each(GrCall call) {
-    IterString iter = new IterString;
+    StringIterator iter = new StringIterator;
     iter.value = call.getString(0);
     call.setForeign(iter);
 }
 
 private void _next(GrCall call) {
-    IterString iter = call.getForeign!(IterString)(0);
+    StringIterator iter = call.getForeign!(StringIterator)(0);
     if (!iter) {
         call.raise("NullError");
         return;
