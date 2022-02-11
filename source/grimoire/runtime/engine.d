@@ -559,7 +559,7 @@ class GrEngine {
                         //has been called for this function.
                     }
                     else if (currentTask.stackPos) {
-                        //Then returns to the last task, raise will be run again.
+                        //Then returns to the last function, raise will be run again.
                         currentTask.stackPos--;
                         currentTask.ilocalsPos -= currentTask
                             .callStack[currentTask.stackPos].ilocalStackSize;
@@ -628,9 +628,8 @@ class GrEngine {
                         currentTask.isKilled = true;
                     }
                     else if (currentTask.stackPos) {
-                        //Then returns to the last task.
+                        //Then returns to the last function without modifying the pc.
                         currentTask.stackPos--;
-                        currentTask.pc = currentTask.callStack[currentTask.stackPos].retPosition;
                         currentTask.ilocalsPos -= currentTask
                             .callStack[currentTask.stackPos].ilocalStackSize;
                         currentTask.rlocalsPos -= currentTask
@@ -1782,7 +1781,7 @@ class GrEngine {
                     break;
                 case return_:
                     //If another task was killed by an exception,
-                    //we might killTasks up there if the task has just been spawned.
+                    //we might end up there if the task has just been spawned.
                     if (currentTask.stackPos < 0 && currentTask.isKilled) {
                         _tasks = _tasks.remove(index);
                         continue tasksLabel;
@@ -1795,7 +1794,7 @@ class GrEngine {
                         currentTask.callStack[currentTask.stackPos].deferStack.length--;
                     }
                     else {
-                        //Then returns to the last currentTask.
+                        //Then returns to the last function.
                         currentTask.stackPos--;
                         currentTask.pc = currentTask.callStack[currentTask.stackPos].retPosition;
                         currentTask.ilocalsPos -= currentTask
@@ -1810,7 +1809,7 @@ class GrEngine {
                     break;
                 case unwind:
                     //If another task was killed by an exception,
-                    //we might killTasks up there if the task has just been spawned.
+                    //we might end up there if the task has just been spawned.
                     if (currentTask.stackPos < 0) {
                         _tasks = _tasks.remove(index);
                         continue tasksLabel;
@@ -1824,7 +1823,7 @@ class GrEngine {
                     }
                     else if (currentTask.isKilled) {
                         if (currentTask.stackPos) {
-                            //Then returns to the last currentTask without modifying the pc.
+                            //Then returns to the last function without modifying the pc.
                             currentTask.stackPos--;
                             currentTask.ilocalsPos
                                 -= currentTask.callStack[currentTask.stackPos].ilocalStackSize;
@@ -1848,7 +1847,7 @@ class GrEngine {
                         //An exception has been raised without any try/catch inside the function.
                         //So all deferred code is run here before searching in the parent function.
                         if (currentTask.stackPos) {
-                            //Then returns to the last currentTask without modifying the pc.
+                            //Then returns to the last function without modifying the pc.
                             currentTask.stackPos--;
                             currentTask.ilocalsPos
                                 -= currentTask.callStack[currentTask.stackPos].ilocalStackSize;
@@ -1889,7 +1888,7 @@ class GrEngine {
                         }
                     }
                     else {
-                        //Then returns to the last currentTask.
+                        //Then returns to the last function.
                         currentTask.stackPos--;
                         currentTask.pc = currentTask.callStack[currentTask.stackPos].retPosition;
                         currentTask.ilocalsPos -= currentTask

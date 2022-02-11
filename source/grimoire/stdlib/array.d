@@ -147,6 +147,29 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
                 ~ t ~ "(result.signature[0].base);
                     })
                 ], [grBool, grAny(\"T\")]);
+            library.addFunction(&_findFirst_!\""
+                ~ t ~ "\", \"findFirst\", [
+                    any"
+                ~ t ~ "Array, grAny(\"T\")
+                ], [grInt]);
+            library.addFunction(&_findLast_!\""
+                ~ t
+                ~ "\", \"findLast\", [
+                    any"
+                ~ t ~ "Array, grAny(\"T\")
+                ], [grInt]);
+            library.addFunction(&_findLast_!\""
+                ~ t ~ "\", \"findLast\", [
+                    any"
+                ~ t
+                ~ "Array, grAny(\"T\")
+                ], [grInt]);
+            library.addFunction(&_has_!\""
+                ~ t
+                ~ "\", \"has?\", [
+                    any"
+                ~ t ~ "Array, grAny(\"T\")
+                ], [grBool]);
             ");
 
         static if (t != "Object") {
@@ -156,29 +179,6 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
                     any"
                     ~ t ~ "Array
                 ], [grAny(\"A\")]);
-            library.addFunction(&_findFirst_!\""
-                    ~ t ~ "\", \"findFirst\", [
-                    any"
-                    ~ t ~ "Array, grAny(\"T\")
-                ], [grInt]);
-            library.addFunction(&_findLast_!\""
-                    ~ t
-                    ~ "\", \"findLast\", [
-                    any"
-                    ~ t ~ "Array, grAny(\"T\")
-                ], [grInt]);
-            library.addFunction(&_findLast_!\""
-                    ~ t ~ "\", \"findLast\", [
-                    any"
-                    ~ t
-                    ~ "Array, grAny(\"T\")
-                ], [grInt]);
-            library.addFunction(&_has_!\""
-                    ~ t
-                    ~ "\", \"has?\", [
-                    any"
-                    ~ t ~ "Array, grAny(\"T\")
-                ], [grBool]);
                 ");
         }
     }
@@ -539,7 +539,12 @@ private void _sort_(string t)(GrCall call) {
 
 private void _findFirst_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
-    mixin("auto value = call.get" ~ t ~ "(1);");
+    static if (t == "Object") {
+        auto value = call.getPtr(1);
+    }
+    else {
+        mixin("auto value = call.get" ~ t ~ "(1);");
+    }
     for (GrInt index; index < array.data.length; ++index) {
         if (array.data[index] == value) {
             call.setInt(index);
@@ -551,7 +556,12 @@ private void _findFirst_(string t)(GrCall call) {
 
 private void _findLast_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
-    mixin("auto value = call.get" ~ t ~ "(1);");
+    static if (t == "Object") {
+        auto value = call.getPtr(1);
+    }
+    else {
+        mixin("auto value = call.get" ~ t ~ "(1);");
+    }
     for (GrInt index = (cast(GrInt) array.data.length) - 1; index > 0; --index) {
         if (array.data[index] == value) {
             call.setInt(index);
@@ -563,7 +573,12 @@ private void _findLast_(string t)(GrCall call) {
 
 private void _has_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array array = call.get" ~ t ~ "Array(0);");
-    mixin("auto value = call.get" ~ t ~ "(1);");
+    static if (t == "Object") {
+        auto value = call.getPtr(1);
+    }
+    else {
+        mixin("auto value = call.get" ~ t ~ "(1);");
+    }
     for (GrInt index; index < array.data.length; ++index) {
         if (array.data[index] == value) {
             call.setBool(true);
