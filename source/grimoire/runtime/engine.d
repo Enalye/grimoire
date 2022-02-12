@@ -324,7 +324,14 @@ class GrEngine {
         //We indicate that the task is in a panic state until a catch is found.
         task.isPanicking = true;
 
-        task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
+        if (task.callStack.length && task.callStack[task.stackPos].exceptionHandlers.length) {
+            //Exception handler found in the current function, just jump.
+            task.pc = task.callStack[task.stackPos].exceptionHandlers[$ - 1];
+        }
+        else {
+            //No exception handler in the current function, unwinding the deferred code, then return.
+            task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
+        }
     }
 
     /**
