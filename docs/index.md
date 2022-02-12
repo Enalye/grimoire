@@ -759,6 +759,7 @@ Overridable operators are:
 
 Array are a collection of a single type of value.
 
+## Creating an array
 The type of an array is `array()` with the type of its content inside the parenthesis:
 ```cpp
 array(int) myCollection = [1, 2, 3];
@@ -769,8 +770,13 @@ So, `[1, 2, 3]` will be an `array(int)`.
 
 You can write it explicitly by preceding the array with its type: `array(int)[1, 2, 3]`
 
-If your new array is empty `[]`, you **have** to write the type explicitly else compilation will fail: `array(string)[]`.
+If your new array is empty `[]`, you **have** to write the type explicitly else compilation will fail: `array(string)[]` or `array(string)`.
 
+To initialize an array with a default size, write the length of the array after its type.
+For exemple a array of 5 integers would be: `array(int, 5)` which is equals to `[0, 0, 0, 0, 0]`
+Another exemple: `array(int, 5)[7, 8, 9]` is equals to `[7, 8, 9, 0, 0]`.
+
+## Indexing an array
 To access an array element, the array index (from 0) in written between brackets:
 ```cpp
 let a = [10, 20, 30][1]; //New array, then immediately take the index 1 of [10, 20, 30], which is 20

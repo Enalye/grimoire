@@ -73,7 +73,7 @@ private string[] instructions = [
     "ret", "unwind", "defer",
     "jmp", "jmp_eq", "jmp_neq",
 
-    "list.i", "list.f", "list.s", "list.o",
+    "array.i", "array.f", "array.s", "array.o",
     "len.i", "len.f", "len.s", "len.o",
     "idx.i", "idx.f", "idx.s", "idx.o",
     "idx2.i", "idx2.f", "idx2.s", "idx2.o",
@@ -89,7 +89,7 @@ private string[] instructions = [
     "dbg_prfbegin", "dbg_prfend"
 ];
 
-/// Dump the bytecode's instruction liste in a pretty format.
+/// Dump the bytecode's instruction list in a pretty format.
 string grDump(GrBytecode bytecode) {
     /*writeln("\n----- VM DUMP ------");
     writeln("iconsts: ", bytecode.iconsts);

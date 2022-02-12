@@ -4972,53 +4972,79 @@ final class GrParser {
         GrType arrayType = GrType(GrType.Base.array);
         GrType subType = grVoid;
         const uint fileId = get().fileId;
+        int arraySize, defaultArraySize;
 
-        //Explicit type like: array(int)[1, 2, 3]
+        //Explicit type like: array(int)[1, 2, 3] or default size like: array(int, 5)
         if (get().type == GrLexeme.Type.arrayType) {
             checkAdvance();
-            string[] temp;
-            auto signature = parseInSignature(temp, true);
-            if (signature.length > 1)
-                logError(getError(Error.arrayCanOnlyContainOneTypeOfVal), getError(Error.conflictingArraySignature),
-                    format(getError(Error.tryUsingXInstead), getPrettyType(grArray(signature[0]))), -1);
-            subType = signature[0];
-            arrayType.mangledType = grMangleSignature(signature);
-            if (subType.base == GrType.Base.void_)
-                logError(format(getError(Error.arrayCantBeOfTypeX), getPrettyType(arrayType)),
-                    getError(Error.invalidArrayType));
+            if (get().type != GrLexeme.Type.leftParenthesis)
+                logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexeme.Type.channelType)),
+                    format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                        GrLexeme.Type.leftParenthesis), getPrettyLexemeType(get().type)));
+            checkAdvance();
+            subType = parseType();
+
+            GrLexeme lex = get();
+            if (lex.type == GrLexeme.Type.comma) {
+                checkAdvance();
+                lex = get();
+                if (lex.type != GrLexeme.Type.int_)
+                    logError(getError(Error.arraySizeMustBePositive),
+                        format(getError(Error.expectedIntFoundX), getPrettyLexemeType(get().type)));
+                defaultArraySize = lex.ivalue > int.max ? 0 : cast(int) lex.ivalue;
+                if (defaultArraySize < 0)
+                    logError(getError(Error.arraySizeMustBeZeroOrHigher),
+                        format(getError(Error.expectedAtLeastSizeOf1FoundX), defaultArraySize));
+                checkAdvance();
+            }
+            else if (lex.type != GrLexeme.Type.rightParenthesis) {
+                logError(getError(Error.missingCommaOrRightParenthesisInsideArraySignature),
+                    format(getError(Error.expectedCommaOrRightParenthesisFoundX), getPrettyLexemeType(get()
+                        .type)));
+            }
+            lex = get();
+            if (lex.type != GrLexeme.Type.rightParenthesis)
+                logError(getError(Error.missingParenthesesAfterArraySignature),
+                    format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                        GrLexeme.Type.rightParenthesis), getPrettyLexemeType(get().type)));
+            checkAdvance();
+            arrayType.mangledType = grMangleSignature([subType]);
         }
 
-        if (get().type != GrLexeme.Type.leftBracket)
-            logError(format(getError(Error.missingBracketsAfterX), getPrettyType(arrayType)),
-                format(getError(Error.expectedXFoundY), getPrettyLexemeType(get().type)));
-        advance();
+        if (get().type == GrLexeme.Type.leftBracket) {
+            advance();
 
-        int arraySize;
-        while (get().type != GrLexeme.Type.rightBracket) {
-            if (subType.base == GrType.Base.void_) {
-                //Implicit type specified by the type of the first element.
-                subType = parseSubExpression(
-                    GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA
-                        | GR_SUBEXPR_EXPECTING_VALUE).type;
-                arrayType.mangledType = grMangleSignature([subType]);
-                if (subType.base == GrType.Base.void_)
-                    logError(format(getError(Error.arrayCantBeOfTypeX), getPrettyType(arrayType)),
-                        getError(Error.invalidArrayType));
-            }
-            else {
-                convertType(parseSubExpression(
-                        GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_EXPECTING_VALUE)
-                        .type, subType, fileId);
-            }
-            arraySize++;
+            while (get().type != GrLexeme.Type.rightBracket) {
+                if (subType.base == GrType.Base.void_) {
+                    //Implicit type specified by the type of the first element.
+                    subType = parseSubExpression(
+                        GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA
+                            | GR_SUBEXPR_EXPECTING_VALUE).type;
+                    arrayType.mangledType = grMangleSignature([subType]);
+                    if (subType.base == GrType.Base.void_)
+                        logError(format(getError(Error.arrayCantBeOfTypeX), getPrettyType(arrayType)),
+                            getError(Error.invalidArrayType));
+                }
+                else {
+                    convertType(parseSubExpression(
+                            GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_EXPECTING_VALUE)
+                            .type, subType, fileId);
+                }
+                arraySize++;
 
-            if (get().type == GrLexeme.Type.rightBracket)
-                break;
-            if (get().type != GrLexeme.Type.comma)
-                logError(getError(Error.indexesShouldBeSeparatedByComma),
-                    format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexeme.Type.comma), getPrettyLexemeType(get().type)));
+                if (get().type == GrLexeme.Type.rightBracket)
+                    break;
+                if (get().type != GrLexeme.Type.comma)
+                    logError(getError(Error.indexesShouldBeSeparatedByComma),
+                        format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                            GrLexeme.Type.comma), getPrettyLexemeType(get().type)));
+                checkAdvance();
+            }
             checkAdvance();
+        }
+
+        for (; arraySize < defaultArraySize; ++arraySize) {
+            addDefaultValue(subType, fileId);
         }
 
         final switch (subType.base) with (GrType.Base) {
@@ -5049,7 +5075,6 @@ final class GrParser {
                 getError(Error.invalidArrayType));
             break;
         }
-        advance();
         return arrayType;
     }
 
@@ -6819,10 +6844,14 @@ final class GrParser {
         cantContinueOutsideLoop,
         xNotValidRetType,
         chanSizeMustBePositive,
+        arraySizeMustBePositive,
         missingCommaOrRightParenthesisInsideChanSignature,
+        missingCommaOrRightParenthesisInsideArraySignature,
         missingParenthesesAfterChanSignature,
+        missingParenthesesAfterArraySignature,
         expectedIntFoundX,
         chanSizeMustBeOneOrHigher,
+        arraySizeMustBeZeroOrHigher,
         expectedAtLeastSizeOf1FoundX,
         expectedCommaOrRightParenthesisFoundX,
         chanCantBeOfTypeX,
@@ -6867,7 +6896,6 @@ final class GrParser {
         unknownField,
         expectedFieldNameFoundX,
         missingField,
-        missingBracketsAfterX,
         indexesShouldBeSeparatedByComma,
         missingVal,
         expectedIndexFoundComma,
@@ -7046,10 +7074,14 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.continueOutsideLoop: "`continue` outside of a loop",
                 Error.cantContinueOutsideLoop: "can't `continue` outside of a loop",
                 Error.xNotValidRetType: "`%s` is not a valid return type",
-                Error.chanSizeMustBePositive: "a channel size must be a positive int_ value",
+                Error.chanSizeMustBePositive: "a channel size must be a positive integer value",
+                Error.arraySizeMustBePositive: "an array size must be a positive integer value",
                 Error.missingCommaOrRightParenthesisInsideChanSignature: "missing `,` or `)` inside channel signature",
+                Error.missingCommaOrRightParenthesisInsideArraySignature: "missing `,` or `)` inside array signature",
                 Error.missingParenthesesAfterChanSignature: "missing parentheses after the channel signature",
+                Error.missingParenthesesAfterArraySignature: "missing parentheses after the array signature",
                 Error.chanSizeMustBeOneOrHigher: "the channel size must be one or higher",
+                Error.arraySizeMustBeZeroOrHigher: "the array size must be zero or higher",
                 Error.expectedAtLeastSizeOf1FoundX: "expected at least a size of 1, found %s",
                 Error.expectedCommaOrRightParenthesisFoundX: "expected `,` or `)`, found `%s`",
                 Error.chanCantBeOfTypeX: "a channel can't be of type `%s`",
@@ -7090,7 +7122,6 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.fieldXNotExist: "the field `%s` doesn't exist",
                 Error.expectedFieldNameFoundX: "expected field name, found `%s`",
                 Error.missingField: "missing field",
-                Error.missingBracketsAfterX: "missing brackets after `%s`",
                 Error.indexesShouldBeSeparatedByComma: "indexes should be separated by a comma",
                 Error.missingVal: "missing value",
                 Error.expectedIndexFoundComma: "an index is expected, found `,`",
@@ -7261,9 +7292,13 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.cantContinueOutsideLoop: "impossible de `continue` en dehors d’une boucle",
                 Error.xNotValidRetType: "`%s` n’est pas un type de retour valide",
                 Error.chanSizeMustBePositive: "la taille d’un canal doit être un entier positif",
+                Error.arraySizeMustBePositive: "la taille d’une liste doit être un entier positif",
                 Error.missingCommaOrRightParenthesisInsideChanSignature: "`,` ou `)` manquant dans la signature du canal",
+                Error.missingCommaOrRightParenthesisInsideArraySignature: "`,` ou `)` manquant dans la signature de la liste",
                 Error.missingParenthesesAfterChanSignature: "parenthèses manquantes après la signature du canal",
+                Error.missingParenthesesAfterArraySignature: "parenthèses manquantes après la signature de la liste",
                 Error.chanSizeMustBeOneOrHigher: "la taille du canal doit être de un ou plus",
+                Error.arraySizeMustBeZeroOrHigher: "la taille d’une liste doit être supérieure à zéro",
                 Error.expectedAtLeastSizeOf1FoundX: "une taille de 1 minimum attendue, %s trouvé",
                 Error.expectedCommaOrRightParenthesisFoundX: "`,` ou `)` attendu, `%s` trouvé",
                 Error.chanCantBeOfTypeX: "un canal ne peut être de type `%s`",
@@ -7304,7 +7339,6 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.fieldXNotExist: "le champ `%s` n’existe pas",
                 Error.expectedFieldNameFoundX: "nom de champ attendu, `%s` trouvé",
                 Error.missingField: "champ manquant",
-                Error.missingBracketsAfterX: "il manque les crochets après `%s`",
                 Error.indexesShouldBeSeparatedByComma: "les index doivent être séparés par une virgule",
                 Error.missingVal: "valeur manquante",
                 Error.expectedIndexFoundComma: "un index est attendu, `,` trouvé",
