@@ -3,11 +3,11 @@
  * License: Zlib
  * Authors: Enalye
  */
-module grimoire.stdlib.test;
+module grimoire.stdlib.error;
 
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibTest(GrLibrary library) {
+package(grimoire.stdlib) void grLoadStdLibError(GrLibrary library) {
     library.addFunction(&_assert, "assert", [grBool]);
     library.addFunction(&_assert_msg, "assert", [grBool, grString]);
     library.addFunction(&_setMeta, "_setMeta", [grString]);

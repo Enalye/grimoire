@@ -1,13 +1,18 @@
 # typecast
-
-Built-in type.
-
+___
 ## Description
 
+Conversion related functions.
 
-## Functions
+## Casts
 
-
-
-## Function Descriptions
-
+|Cast|Input|Output|
+|-|-|-|
+|as|real|int|
+|as|bool|int|
+|as|int|real|
+|as|bool|string|
+|as|int|string|
+|as|real|string|
+|as|array(string)|string|
+|as|string|array(string)|
