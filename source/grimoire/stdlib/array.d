@@ -102,12 +102,12 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
                 ~ t ~ "Array, grInt, grInt
                 ], [grAny(\"A\")]);
             library.addFunction(&_slice_!\""
-                ~ t ~ "\", \"slice!\", [
+                ~ t ~ "\", \"slice\", [
                     any"
                 ~ t ~ "Array, grInt, grInt
                 ], [grAny(\"A\")]);
             library.addFunction(&_slice_copy_!\""
-                ~ t ~ "\", \"slice\", [
+                ~ t ~ "\", \"sliced\", [
                     any"
                 ~ t ~ "Array, grInt, grInt
                 ], [grAny(\"A\")]);
