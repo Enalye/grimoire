@@ -10,34 +10,33 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibChannel(GrLibrary library) {
     static foreach (t; ["Int", "Real", "String", "Object"]) {
-        mixin("GrType any" ~ t ~ "Channel = grAny(\"C\", (type, data) {
-                if (type.base != GrType.Base.channel)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                return grIsKindOf"
-                ~ t ~ "(subType.base);
-            });
+        mixin("GrType " ~ t ~ "ChannelType = grChannel(grAny(\"T\"));
+
+            static if(t == \"Object\") {
+                GrConstraint " ~ t ~ "Constraint = grConstraint(\"Register\", grAny(\"T\"),
+                    [GrType(GrType.Base.null_)]);
+            }
+            else {
+                GrConstraint " ~ t ~ "Constraint = grConstraint(\"Register\", grAny(\"T\"), [gr" ~ t ~ "]);
+            }
+
             library.addFunction(&_size_!\""
                 ~ t ~ "\", \"size\", [
-                    any"
-                ~ t ~ "Channel
-                    ], [grInt]);
+                    " ~ t ~ "ChannelType
+                    ], [grInt], [" ~ t ~ "Constraint]);
             library.addFunction(&_capacity_!\""
                 ~ t ~ "\", \"capacity\", [
-                    any"
-                ~ t ~ "Channel
-                    ], [grInt]);
+                    " ~ t ~ "ChannelType
+                    ], [grInt], [" ~ t ~ "Constraint]);
             library.addFunction(&_empty_!\""
                 ~ t
                 ~ "\", \"empty?\", [
-                    any"
-                ~ t ~ "Channel
-                    ], [grBool]);
+                    " ~ t ~ "ChannelType
+                    ], [grBool], [" ~ t ~ "Constraint]);
             library.addFunction(&_full_!\""
                 ~ t ~ "\", \"full?\", [
-                    any"
-                ~ t ~ "Channel
-                    ], [grBool]);
+                    " ~ t ~ "ChannelType
+                    ], [grBool], [" ~ t ~ "Constraint]);
                     ");
     }
 }

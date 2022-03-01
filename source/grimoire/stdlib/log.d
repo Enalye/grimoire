@@ -19,28 +19,21 @@ package(grimoire.stdlib) void grLoadStdLibLog(GrLibrary library) {
     library.addFunction(&_print_nb, "print", [grBoolArray]);
     library.addFunction(&_print_nr, "print", [grRealArray]);
     library.addFunction(&_print_ns, "print", [grStringArray]);
-    library.addFunction(&_print_enum, "print", [
-            grAny("T", (type, data) { return type.base == GrType.Base.enum_; })
-        ]
-    );
-    library.addFunction(&_print_chan, "print", [
-            grAny("T", (type, data) { return type.base == GrType.Base.channel; })
-        ]
-    );
-    library.addFunction(&_print_func, "print", [
-            grAny("T", (type, data) {
-                return (type.base == GrType.Base.function_) || (type.base == GrType.Base.task);
-            })
-        ]
-    );
-    library.addFunction(&_print_o, "print", [
-            grAny("T", (type, data) { return type.base == GrType.Base.class_; })
-        ]
-    );
-    library.addFunction(&_print_u, "print", [
-            grAny("T", (type, data) { return type.base == GrType.Base.foreign; })
-        ]
-    );
+    library.addFunction(&_print_enum, "print", [grAny("T")], [], [
+            grConstraint("Enum", grAny("T"))
+        ]);
+    library.addFunction(&_print_chan, "print", [grAny("T")], [], [
+            grConstraint("Channel", grAny("T"))
+        ]);
+    library.addFunction(&_print_func, "print", [grAny("T")], [], [
+            grConstraint("Callable", grAny("T"))
+        ]);
+    library.addFunction(&_print_o, "print", [grAny("T")], [], [
+            grConstraint("Class", grAny("T"))
+        ]);
+    library.addFunction(&_print_u, "print", [grAny("T")], [], [
+            grConstraint("Foreign", grAny("T"))
+        ]);
 }
 
 // print

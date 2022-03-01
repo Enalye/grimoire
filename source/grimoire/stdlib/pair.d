@@ -18,17 +18,39 @@ package(grimoire.stdlib) void grLoadStdLibPair(GrLibrary library) {
         static foreach (t2; ["Int", "Real", "String", "Object"]) {
             mixin(
                 "
-            library.addOperator(&_makeKeyValuePair_!(\""
+                GrType "
+                    ~ t1 ~ t2 ~ "ValueType1 = grAny(\"T1\");
+                static if(t1 == \"Object\") {
+                GrConstraint "
+                    ~ t1 ~ t2 ~ "Constraint1 = grConstraint(\"Register\", " ~ t1 ~ t2 ~ "ValueType1,
+                    [GrType(GrType.Base.null_)]);
+                }
+                else {
+                    GrConstraint "
+                    ~ t1 ~ t2 ~ "Constraint1 = grConstraint(\"Register\", " ~ t1 ~ t2 ~ "ValueType1,
+                        [gr" ~ t1 ~ "]);
+                }
+
+                GrType "
+                    ~ t1 ~ t2 ~ "ValueType2 = grAny(\"T2\");
+                static if(t2 == \"Object\") {
+                GrConstraint "
+                    ~ t1 ~ t2 ~ "Constraint2 = grConstraint(\"Register\", " ~ t1 ~ t2 ~ "ValueType2,
+                    [GrType(GrType.Base.null_)]);
+                }
+                else {
+                    GrConstraint "
+                    ~ t1 ~ t2 ~ "Constraint2 = grConstraint(\"Register\", " ~ t1 ~ t2 ~ "ValueType2,
+                    [gr" ~ t2 ~ "]);
+                }
+                
+                library.addOperator(&_makeKeyValuePair_!(\""
                     ~ t1 ~ "\", \"" ~ t2
-                    ~ "\"), GrLibrary.Operator.arrow, [grAny(\"T1\"),
-                    grAny(\"T2\", (t2, data) {
-                        auto t1 = data.get(\"T1\");
-                        data.set(\"P\", grGetClassType(\"pair\", [t1, t2]));
-                        return grIsKindOf"
-                    ~ t1 ~ "(t1.base) && grIsKindOf"
-                    ~ t2 ~ "(t2.base);
-                    })],
-                    grAny(\"P\"));
+                    ~ "\"), GrLibrary.Operator.arrow, [grAny(\"T1\"), grAny(\"T2\")],
+                        grGetClassType(\"pair\", ["
+                    ~ t1 ~ t2 ~ "ValueType1, " ~ t1 ~ t2 ~ "ValueType2]),
+                        ["
+                    ~ t1 ~ t2 ~ "Constraint1, " ~ t1 ~ t2 ~ "Constraint2]);
             ");
         }
     }

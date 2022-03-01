@@ -36,6 +36,8 @@ class GrPrimitive {
     bool isExplicit;
     /// If the primitive has a generic parameter type, it becomes abstract
     bool isAbstract;
+    /// Generic constraints
+    GrConstraint[] constraints;
 
     /// Ctor
     this() {}
@@ -50,5 +52,6 @@ class GrPrimitive {
         index = primitive.index;
         isExplicit = primitive.isExplicit;
         isAbstract = primitive.isAbstract;
+        constraints = primitive.constraints;
     }
 }

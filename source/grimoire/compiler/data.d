@@ -404,10 +404,14 @@ class GrData {
 
     /// Ditto
     package GrPrimitive getAbstractPrimitive(string name, GrType[] signature) {
-        foreach (GrPrimitive primitive; _abstractPrimitives) {
+        __primitiveLoop: foreach (GrPrimitive primitive; _abstractPrimitives) {
             if (primitive.name == name) {
                 _anyData = new GrAnyData;
                 if (isAbstractSignatureCompatible(signature, primitive.inSignature, 0, true)) {
+                    foreach (GrConstraint constraint; primitive.constraints) {
+                        if (!constraint.evaluate(_anyData))
+                            continue __primitiveLoop;
+                    }
                     GrPrimitive reifiedPrimitive = reifyPrimitive(primitive);
                     if (!reifiedPrimitive)
                         continue;
@@ -452,19 +456,21 @@ class GrData {
         // We assume the signature was already validated with `isSignatureCompatible` to be fully compatible with the primitive
         GrPrimitive primitive = new GrPrimitive(templatePrimitive);
         for (int i; i < primitive.inSignature.length; ++i) {
-            if (primitive.inSignature[i].isAny) {
+            primitive.inSignature[i] = reifyType(primitive.inSignature[i]);
+            /*if (primitive.inSignature[i].isAny) {
                 primitive.inSignature[i] = _anyData.get(primitive.inSignature[i].mangledType);
                 if (primitive.inSignature[i].base == GrType.Base.void_)
                     throw new Exception("`" ~ getPrettyPrimitive(primitive) ~ "` can't be reified");
-            }
+            }*/
             checkUnknownClasses(primitive.inSignature[i]);
         }
         for (int i; i < primitive.outSignature.length; ++i) {
-            if (primitive.outSignature[i].isAny) {
+            /+if (primitive.outSignature[i].isAny) {
                 primitive.outSignature[i] = _anyData.get(primitive.outSignature[i].mangledType);
                 if (primitive.outSignature[i].base == GrType.Base.void_)
                     throw new Exception("`" ~ getPrettyPrimitive(primitive) ~ "` can't be reified");
-            }
+            }+/
+            primitive.outSignature[i] = reifyType(primitive.outSignature[i]);
             checkUnknownClasses(primitive.outSignature[i]);
         }
         primitive.mangledName = grMangleComposite(primitive.name, primitive.inSignature);
@@ -473,6 +479,54 @@ class GrData {
             throw new Exception("`" ~ getPrettyPrimitive(primitive) ~ "` is already declared");
         _primitives ~= primitive;
         return primitive;
+    }
+
+    private GrType reifyType(GrType type) {
+        if (type.isAny) {
+            return _anyData.get(type.mangledType);
+        }
+        final switch (type.base) with (GrType.Base) {
+        case int_:
+        case real_:
+        case bool_:
+        case string_:
+            return type;
+        case array:
+        case channel:
+            GrType subType = grUnmangle(type.mangledType);
+            type.mangledType = grMangle(reifyType(subType));
+            return type;
+        case function_:
+            auto composite = grUnmangleComposite(type.mangledType);
+            for (int i; i < composite.signature.length; ++i)
+                composite.signature[i] = reifyType(composite.signature[i]);
+            GrType[] outSignature = grUnmangleSignature(type.mangledReturnType);
+            for (int i; i < outSignature.length; ++i)
+                outSignature[i] = reifyType(outSignature[i]);
+            type.mangledType = grMangleComposite(composite.name, composite.signature);
+            type.mangledReturnType = grMangleSignature(outSignature);
+            return type;
+        case task:
+            auto composite = grUnmangleComposite(type.mangledType);
+            for (int i; i < composite.signature.length; ++i)
+                composite.signature[i] = reifyType(composite.signature[i]);
+            type.mangledType = grMangleComposite(composite.name, composite.signature);
+            return type;
+        case class_:
+        case foreign:
+            auto result = grUnmangleComposite(type.mangledType);
+            for (int i; i < result.signature.length; ++i)
+                result.signature[i] = reifyType(result.signature[i]);
+            type.mangledType = grMangleComposite(result.name, result.signature);
+            return type;
+        case enum_:
+            return type;
+        case void_:
+        case null_:
+        case internalTuple:
+        case reference:
+            return type;
+        }
     }
 
     // Forcing the classes to be reified they aren't already
@@ -547,7 +601,7 @@ class GrData {
         return true;
     }
     /// Ditto
-    private bool isAbstractSignatureCompatible(GrType[] first, GrType[] second, uint fileId, bool isPublic = false) {
+    /+private bool isAbstractSignatureCompatible(GrType[] first, GrType[] second, uint fileId, bool isPublic = false) {
         if (first.length != second.length)
             return false;
         __signatureLoop: for (int i; i < first.length; ++i) {
@@ -597,6 +651,121 @@ class GrData {
             }
         }
         return true;
+    }+/
+    /// Ditto
+    bool isAbstractSignatureCompatible(GrType[] first, GrType[] second, uint fileId, bool isPublic = false) {
+        if (first.length != second.length)
+            return false;
+        __signatureLoop: for (int i; i < first.length; ++i) {
+            if (second[i].isAny) {
+                const GrType registeredType = _anyData.get(second[i].mangledType);
+                if (registeredType.base == GrType.Base.void_) {
+                    _anyData.set(second[i].mangledType, first[i]);
+                }
+                else {
+                    if (registeredType != first[i])
+                        return false;
+                }
+                continue;
+            }
+            final switch (second[i].base) with (GrType.Base) {
+            case int_:
+            case real_:
+            case bool_:
+            case string_:
+                if (first[i].base == second[i].base)
+                    continue;
+                return false;
+            case array:
+            case channel:
+                if (first[i].base != second[i].base)
+                    return false;
+                if (isAbstractSignatureCompatible([
+                        grUnmangle(first[i].mangledType)
+                    ], [grUnmangle(second[i].mangledType)], fileId, isPublic))
+                    continue;
+                return false;
+            case function_:
+                if (first[i].base != second[i].base)
+                    return false;
+                if (!isAbstractSignatureCompatible(
+                        grUnmangleSignature(first[i].mangledType), grUnmangleSignature(
+                        second[i].mangledType), fileId, isPublic))
+                    return false;
+                if (!isAbstractSignatureCompatible(
+                        grUnmangleSignature(first[i].mangledReturnType), grUnmangleSignature(
+                        second[i].mangledReturnType), fileId, isPublic))
+                    return false;
+                continue;
+            case task:
+                if (first[i].base != second[i].base)
+                    return false;
+                if (isAbstractSignatureCompatible(
+                        grUnmangleSignature(first[i].mangledType), grUnmangleSignature(
+                        second[i].mangledType), fileId, isPublic))
+                    continue;
+                return false;
+            case class_:
+                if (first[i].base == GrType.Base.null_)
+                    continue;
+                if (first[i].base != second[i].base)
+                    return false;
+
+                if (!isAbstractSignatureCompatible(grUnmangleComposite(first[i].mangledType)
+                        .signature, grUnmangleComposite(second[i].mangledType)
+                        .signature, fileId, isPublic))
+                    return false;
+
+                for (;;) {
+                    if (grUnmangleComposite(first[i].mangledType)
+                        .name == grUnmangleComposite(second[i].mangledType).name) {
+                        continue __signatureLoop;
+                    }
+                    const GrClassDefinition classType = getClass(first[i].mangledType,
+                        fileId, isPublic);
+                    if (!classType.parent.length)
+                        return false;
+                    first[i].mangledType = classType.parent;
+                }
+                continue;
+            case foreign:
+                if (first[i].base == GrType.Base.null_)
+                    continue;
+                if (first[i].base != second[i].base)
+                    return false;
+
+                if (!isAbstractSignatureCompatible(grUnmangleComposite(first[i].mangledType)
+                        .signature, grUnmangleComposite(second[i].mangledType)
+                        .signature, fileId, isPublic))
+                    return false;
+
+                for (;;) {
+                    if (grUnmangleComposite(first[i].mangledType)
+                        .name == grUnmangleComposite(second[i].mangledType).name) {
+                        continue __signatureLoop;
+                    }
+                    const GrForeignDefinition foreignType = getForeign(first[i].mangledType);
+                    if (!foreignType.parent.length)
+                        return false;
+                    first[i].mangledType = foreignType.parent;
+                }
+                continue;
+            case enum_:
+                if (first[i] != second[i])
+                    return false;
+                continue;
+            case void_:
+            case null_:
+            case internalTuple:
+            case reference:
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void setAnyData(GrAnyData anyData) {
+        _anyData = anyData;
     }
 
     /**

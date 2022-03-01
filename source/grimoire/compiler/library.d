@@ -186,7 +186,8 @@ class GrLibrary {
 
     /// Define a new primitive.
     GrPrimitive addFunction(GrCallback callback, string name,
-        GrType[] inSignature = [], GrType[] outSignature = []) {
+        GrType[] inSignature = [], GrType[] outSignature = [], GrConstraint[] constraints = [
+        ]) {
         bool isAbstract;
         foreach (GrType type; inSignature) {
             if (type.isAbstract)
@@ -210,6 +211,7 @@ class GrLibrary {
         primitive.outSignature = outSignature;
         primitive.name = name;
         primitive.callbackId = cast(int) _callbacks.length;
+        primitive.constraints = constraints;
 
         _callbacks ~= callback;
 
@@ -254,7 +256,7 @@ class GrLibrary {
     The name of the function must be that of the operator like "+", "-", "or", etc.
     */
     GrPrimitive addOperator(GrCallback callback, Operator operator,
-        GrType[] inSignature, GrType outType) {
+        GrType[] inSignature, GrType outType, GrConstraint[] constraints = []) {
         string name;
         uint signatureSize = 2;
         final switch (operator) with (Operator) {
@@ -351,25 +353,27 @@ class GrLibrary {
             throw new Exception("The operator `" ~ name ~ "` must take " ~ to!string(
                     signatureSize) ~ " parameter" ~ (signatureSize > 1
                     ? "s" : "") ~ ": " ~ grGetPrettyFunctionCall("", inSignature));
-        return addOperator(callback, name, inSignature, outType);
+        return addOperator(callback, name, inSignature, outType, constraints);
     }
     /// Ditto
-    GrPrimitive addOperator(GrCallback callback, string name, GrType[] inSignature, GrType outType) {
+    GrPrimitive addOperator(GrCallback callback, string name, GrType[] inSignature, GrType outType, GrConstraint[] constraints = [
+        ]) {
         if (inSignature.length > 2uL)
             throw new Exception(
                 "The operator `" ~ name ~ "` cannot take more than 2 parameters: " ~ grGetPrettyFunctionCall("",
                     inSignature));
-        return addFunction(callback, "@op_" ~ name, inSignature, [outType]);
+        return addFunction(callback, "@op_" ~ name, inSignature, [outType], constraints);
     }
 
     /**
     A cast operator allows to convert from one type to another.
     It have to have only one parameter and return the casted value.
     */
-    GrPrimitive addCast(GrCallback callback, GrType srcType, GrType dstType, bool isExplicit = false) {
+    GrPrimitive addCast(GrCallback callback, GrType srcType, GrType dstType, bool isExplicit = false, GrConstraint[] constraints = [
+        ]) {
         auto primitive = addFunction(callback, "@as", [srcType, dstType], [
                 dstType
-            ]);
+            ], constraints);
         primitive.isExplicit = isExplicit;
         return primitive;
     }
