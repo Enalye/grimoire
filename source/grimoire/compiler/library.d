@@ -10,6 +10,7 @@ import std.conv : to;
 import grimoire.runtime;
 import grimoire.compiler.primitive;
 import grimoire.compiler.type;
+import grimoire.compiler.constraint;
 import grimoire.compiler.mangle;
 import grimoire.compiler.pretty;
 

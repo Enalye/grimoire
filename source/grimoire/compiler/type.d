@@ -11,6 +11,7 @@ import grimoire.runtime;
 import grimoire.assembly;
 import grimoire.compiler.mangle;
 import grimoire.compiler.data;
+import grimoire.compiler.constraint;
 
 /**
 Compiler type definition for Grimoire's type system.
@@ -209,120 +210,6 @@ final class GrAnyData {
     GrType get(string key) {
         return _types.get(key, grVoid);
     }
-}
-
-final class GrConstraint {
-    alias Predicate = bool function(GrType, GrType[]);
-
-    private {
-        Predicate _predicate;
-        GrType _type;
-        GrType[] _parameters;
-    }
-
-    bool evaluate(GrAnyData data) {
-        GrType evalType = _type.isAny ? data.get(_type.mangledType) : _type;
-        GrType[] parameters;
-        foreach (GrType parameter; _parameters) {
-            parameters ~= parameter.isAny ? data.get(parameter.mangledType) : parameter;
-        }
-        return _predicate(evalType, parameters);
-    }
-}
-
-GrConstraint grConstraint(string name, GrType type, GrType[] parameters = [
-    ]) {
-    GrConstraint constraint = new GrConstraint;
-    switch (name) {
-    case "Register":
-        constraint._predicate = &_registerConstraint;
-        break;
-    case "Enum":
-        constraint._predicate = &_enumConstraint;
-        break;
-    case "Channel":
-        constraint._predicate = &_channelConstraint;
-        break;
-    case "Function":
-        constraint._predicate = &_functionConstraint;
-        break;
-    case "Task":
-        constraint._predicate = &_taskConstraint;
-        break;
-    case "Callable":
-        constraint._predicate = &_callableConstraint;
-        break;
-    case "Class":
-        constraint._predicate = &_classConstraint;
-        break;
-    case "Foreign":
-        constraint._predicate = &_foreignConstraint;
-        break;
-    default:
-        throw new Exception("unregistered template constraint");
-    }
-    constraint._type = type;
-    constraint._parameters = parameters;
-    return constraint;
-}
-
-private bool _registerConstraint(GrType type, GrType[] types) {
-    if(types.length != 1)
-        return false;
-    final switch (types[0].base) with (GrType.Base) {
-    case int_:
-    case bool_:
-    case enum_:
-    case function_:
-    case task:
-        return type == GrType.Base.int_ || type == GrType.Base.bool_
-            || type == GrType.Base.function_ || type == GrType.Base.task || type == GrType
-            .Base.enum_;
-    case real_:
-        return type == GrType.Base.real_;
-    case string_:
-        return type == GrType.Base.string_;
-    case array:
-    case channel:
-    case class_:
-    case foreign:
-    case reference:
-    case null_:
-        return type == GrType.Base.class_ || type == GrType.Base.array || type == GrType.Base.foreign
-            || type == GrType.Base.channel || type == GrType.Base.reference || type == GrType
-            .Base.null_;
-    case void_:
-    case internalTuple:
-        return false;
-    }
-}
-
-private bool _enumConstraint(GrType type, GrType[] types) {
-    return type.base == GrType.Base.enum_;
-}
-
-private bool _channelConstraint(GrType type, GrType[] types) {
-    return type.base == GrType.Base.channel;
-}
-
-private bool _functionConstraint(GrType type, GrType[] types) {
-    return type.base == GrType.Base.function_;
-}
-
-private bool _taskConstraint(GrType type, GrType[] types) {
-    return type.base == GrType.Base.task;
-}
-
-private bool _callableConstraint(GrType type, GrType[] types) {
-    return type.base == GrType.Base.function_ || type.base == GrType.Base.task;
-}
-
-private bool _classConstraint(GrType type, GrType[] types) {
-    return type.base == GrType.Base.class_;
-}
-
-private bool _foreignConstraint(GrType type, GrType[] types) {
-    return type.base == GrType.Base.foreign;
 }
 
 /// Pack multiple types as a single one.
@@ -684,6 +571,8 @@ package class GrTemplateFunction {
     uint fileId;
 
     string[] templateVariables;
+
+    GrConstraint[] constraints;
 
     uint lexPosition;
 }

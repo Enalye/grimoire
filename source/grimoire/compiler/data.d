@@ -9,6 +9,7 @@ import std.conv : to;
 import grimoire.runtime;
 import grimoire.compiler.primitive;
 import grimoire.compiler.type;
+import grimoire.compiler.constraint;
 import grimoire.compiler.mangle;
 import grimoire.compiler.library;
 import grimoire.compiler.pretty;
@@ -437,11 +438,15 @@ class GrData {
                     return primitive;
             }
         }
-        foreach (GrPrimitive primitive; _abstractPrimitives) {
+        __primitiveLoop: foreach (GrPrimitive primitive; _abstractPrimitives) {
             if (primitive.name == name) {
                 _anyData = new GrAnyData;
                 if (isAbstractSignatureCompatible(signature, primitive.inSignature, 0, true)) {
                     assert(name.length == 0);
+                    foreach (GrConstraint constraint; primitive.constraints) {
+                        if (!constraint.evaluate(_anyData))
+                            continue __primitiveLoop;
+                    }
                     GrPrimitive reifiedPrimitive = reifyPrimitive(primitive);
                     if (!reifiedPrimitive)
                         continue;
@@ -457,19 +462,9 @@ class GrData {
         GrPrimitive primitive = new GrPrimitive(templatePrimitive);
         for (int i; i < primitive.inSignature.length; ++i) {
             primitive.inSignature[i] = reifyType(primitive.inSignature[i]);
-            /*if (primitive.inSignature[i].isAny) {
-                primitive.inSignature[i] = _anyData.get(primitive.inSignature[i].mangledType);
-                if (primitive.inSignature[i].base == GrType.Base.void_)
-                    throw new Exception("`" ~ getPrettyPrimitive(primitive) ~ "` can't be reified");
-            }*/
             checkUnknownClasses(primitive.inSignature[i]);
         }
         for (int i; i < primitive.outSignature.length; ++i) {
-            /+if (primitive.outSignature[i].isAny) {
-                primitive.outSignature[i] = _anyData.get(primitive.outSignature[i].mangledType);
-                if (primitive.outSignature[i].base == GrType.Base.void_)
-                    throw new Exception("`" ~ getPrettyPrimitive(primitive) ~ "` can't be reified");
-            }+/
             primitive.outSignature[i] = reifyType(primitive.outSignature[i]);
             checkUnknownClasses(primitive.outSignature[i]);
         }
@@ -600,58 +595,6 @@ class GrData {
         }
         return true;
     }
-    /// Ditto
-    /+private bool isAbstractSignatureCompatible(GrType[] first, GrType[] second, uint fileId, bool isPublic = false) {
-        if (first.length != second.length)
-            return false;
-        __signatureLoop: for (int i; i < first.length; ++i) {
-            if (second[i].isAny) {
-                const GrType registeredType = _anyData.get(second[i].mangledType);
-                if (registeredType.base == GrType.Base.void_) {
-                    _anyData.set(second[i].mangledType, first[i]);
-                }
-                else {
-                    if (registeredType != first[i])
-                        return false;
-                }
-                if (!second[i].predicate)
-                    return false;
-                if (!second[i].predicate(first[i], _anyData))
-                    return false;
-                continue;
-            }
-            if (first[i].base == GrType.Base.null_
-                && (second[i].base == GrType.Base.foreign
-                    || second[i].base == GrType.Base.class_))
-                continue;
-            if (first[i].base == GrType.Base.foreign && second[i].base == GrType.Base.foreign) {
-                for (;;) {
-                    if (first[i] == second[i])
-                        continue __signatureLoop;
-                    const GrForeignDefinition foreignType = getForeign(first[i].mangledType);
-                    if (!foreignType.parent.length)
-                        return false;
-                    first[i].mangledType = foreignType.parent;
-                }
-            }
-            else if (first[i].base == GrType.Base.class_
-                && second[i].base == GrType.Base.class_) {
-                for (;;) {
-                    if (first[i] == second[i])
-                        continue __signatureLoop;
-                    const GrClassDefinition classType = getClass(first[i].mangledType,
-                        fileId, isPublic);
-                    if (!classType.parent.length)
-                        return false;
-                    first[i].mangledType = classType.parent;
-                }
-            }
-            else if (first[i] != second[i]) {
-                return false;
-            }
-        }
-        return true;
-    }+/
     /// Ditto
     bool isAbstractSignatureCompatible(GrType[] first, GrType[] second, uint fileId, bool isPublic = false) {
         if (first.length != second.length)

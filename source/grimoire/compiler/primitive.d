@@ -12,6 +12,7 @@ import std.stdio;
 import grimoire.runtime;
 import grimoire.compiler.parser;
 import grimoire.compiler.type;
+import grimoire.compiler.constraint;
 import grimoire.compiler.mangle;
 import grimoire.compiler.data;
 

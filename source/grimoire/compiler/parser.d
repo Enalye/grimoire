@@ -20,6 +20,7 @@ import grimoire.compiler.util;
 import grimoire.compiler.lexer;
 import grimoire.compiler.mangle;
 import grimoire.compiler.type;
+import grimoire.compiler.constraint;
 import grimoire.compiler.primitive;
 import grimoire.compiler.data;
 import grimoire.compiler.pretty;
@@ -615,13 +616,15 @@ final class GrParser {
         if (result.prim)
             return result;
 
-        foreach (GrTemplateFunction temp; templatedFunctions) {
+        __functionLoop: foreach (GrTemplateFunction temp; templatedFunctions) {
             if (temp.name == name && (temp.fileId == fileId || temp.isPublic || isPublic)) {
                 GrAnyData anyData = new GrAnyData;
                 _data.setAnyData(anyData);
-        import std.stdio;writeln(name, " start: ", signature, temp.inSignature);
                 if (_data.isAbstractSignatureCompatible(signature, temp.inSignature, fileId, isPublic)) {
-        import std.stdio;writeln(name, " end");
+                    foreach (GrConstraint constraint; temp.constraints) {
+                        if (!constraint.evaluate(anyData))
+                            continue __functionLoop;
+                    }
                     GrType[] templateSignature;
                     for (int i; i < temp.templateVariables.length; ++i) {
                         templateSignature ~= anyData.get(temp.templateVariables[i]);
@@ -700,11 +703,15 @@ final class GrParser {
             }
         }
 
-        foreach (GrTemplateFunction temp; templatedFunctions) {
+        __functionLoop: foreach (GrTemplateFunction temp; templatedFunctions) {
             if (temp.name == name && (temp.fileId == fileId || temp.isPublic || isPublic)) {
                 GrAnyData anyData = new GrAnyData;
                 _data.setAnyData(anyData);
                 if (_data.isAbstractSignatureCompatible(signature, temp.inSignature, fileId, isPublic)) {
+                    foreach (GrConstraint constraint; temp.constraints) {
+                        if (!constraint.evaluate(anyData))
+                            continue __functionLoop;
+                    }
                     GrType[] templateSignature;
                     for (int i; i < temp.templateVariables.length; ++i) {
                         templateSignature ~= anyData.get(temp.templateVariables[i]);
@@ -2142,9 +2149,9 @@ final class GrParser {
             _data.addTemplateAlias(func.templateVariables[i],
                 func.templateSignature[i], func.fileId, func.isPublic);
         }
-
-        openDeferrableSection();
         current = func.lexPosition;
+        parseWhereStatement(func.templateVariables);
+        openDeferrableSection();
         parseBlock();
         if (func.isTask || func.isEvent) {
             if (!currentFunction.instructions.length
@@ -2471,7 +2478,8 @@ final class GrParser {
                 && _data.isClass(lex.svalue, lex.fileId, false)) {
                 currentType.base = GrType.Base.class_;
                 checkAdvance();
-                currentType.mangledType = grMangleComposite(lex.svalue, parseTemplateSignature(templateVariables));
+                currentType.mangledType = grMangleComposite(lex.svalue, parseTemplateSignature(
+                        templateVariables));
                 if (mustBeType) {
                     GrClassDefinition class_ = getClass(currentType.mangledType, lex.fileId);
                     if (!class_)
@@ -2493,7 +2501,8 @@ final class GrParser {
                 currentType.base = GrType.Base.foreign;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
-                currentType.mangledType = grMangleComposite(lex.svalue, parseTemplateSignature(templateVariables));
+                currentType.mangledType = grMangleComposite(lex.svalue, parseTemplateSignature(
+                        templateVariables));
                 if (mustBeType) {
                     GrForeignDefinition foreign = _data.getForeign(currentType.mangledType);
                     if (!foreign)
@@ -2810,7 +2819,7 @@ final class GrParser {
         return inSignature;
     }
 
-    private GrType[] parseOutSignature() {
+    private GrType[] parseOutSignature(string[] templateVariables = []) {
         GrType[] outSignature;
         if (get().type != GrLexeme.Type.leftParenthesis)
             return outSignature;
@@ -2820,7 +2829,7 @@ final class GrParser {
             return outSignature;
         }
         for (;;) {
-            outSignature ~= parseType();
+            outSignature ~= parseType(true, templateVariables);
 
             const GrLexeme lex = get();
             if (lex.type == GrLexeme.Type.rightParenthesis) {
@@ -2871,13 +2880,10 @@ final class GrParser {
         temp.isPublic = isPublic;
         temp.lexPosition = current;
 
-        if (templateVariables.length)
-            templatedFunctions ~= temp;
-        else
-            instanciatedFunctions ~= parseTemplatedFunctionDeclaration(temp, []);
-
-        if (get().type == GrLexeme.Type.leftParenthesis)
-            skipParenthesis();
+        string[] inputs;
+        temp.inSignature = parseInSignature(inputs, false, templateVariables);
+        temp.constraints = parseWhereStatement(templateVariables);
+        templatedFunctions ~= temp;
         skipBlock();
     }
 
@@ -2925,16 +2931,45 @@ final class GrParser {
         temp.isPublic = isPublic;
         temp.lexPosition = current;
 
-        if (templateVariables.length)
-            templatedFunctions ~= temp;
-        else
-            instanciatedFunctions ~= parseTemplatedFunctionDeclaration(temp, []);
-
         string[] inputs;
         temp.inSignature = parseInSignature(inputs, false, templateVariables);
-        if (get().type == GrLexeme.Type.leftParenthesis)
-            skipParenthesis();
+        temp.outSignature = parseOutSignature(templateVariables);
+        temp.constraints = parseWhereStatement(templateVariables);
+        templatedFunctions ~= temp;
         skipBlock();
+    }
+
+    private GrConstraint[] parseWhereStatement(string[] templateVariables) {
+        GrConstraint[] constraints;
+        if (get().type != GrLexeme.Type.where)
+            return constraints;
+        checkAdvance();
+
+        do {
+            GrType type = parseType(true, templateVariables);
+
+            if (get().type != GrLexeme.Type.colon)
+                logError(getError(Error.missingSemicolonAfterEnumField),
+                    format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                        GrLexeme.Type.colon), getPrettyLexemeType(get().type)));
+            checkAdvance();
+
+            if (get().type != GrLexeme.Type.identifier)
+                logError(getError(Error.missingIdentifier),
+                    format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                        GrLexeme.Type.identifier), getPrettyLexemeType(get().type)));
+
+            GrConstraint.Data constraintData = grGetConstraint(get().svalue);
+            if (!constraintData.predicate)
+                logError(getError(Error.missingIdentifier),
+                    format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                        GrLexeme.Type.identifier), getPrettyLexemeType(get().type)));
+            checkAdvance();
+            GrType[] parameters = parseTemplateSignature(templateVariables);
+            constraints ~= new GrConstraint(constraintData.predicate, constraintData.arity, type, parameters);
+        }
+        while(get().type == GrLexeme.Type.comma);
+        return constraints;
     }
 
     /+private void parseTemplateDeclaration(bool isPublic) {

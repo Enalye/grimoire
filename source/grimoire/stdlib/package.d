@@ -9,6 +9,7 @@ import grimoire.compiler;
 
 public import grimoire.stdlib.util;
 
+import grimoire.stdlib.constraint;
 import grimoire.stdlib.system;
 import grimoire.stdlib.array;
 import grimoire.stdlib.hashmap;
@@ -27,6 +28,7 @@ import grimoire.stdlib.any;
 /// Load the standard library
 GrLibrary grLoadStdLibrary() {
     GrLibrary library = new GrLibrary;
+    grLoadStdLibConstraint();
     grLoadStdLibLog(library);
     grLoadStdLibSystem(library);
     grLoadStdLibArray(library);

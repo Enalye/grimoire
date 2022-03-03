@@ -91,6 +91,7 @@ struct GrLexeme {
         event,
         class_,
         enum_,
+        where,
         new_,
         copy,
         send,
@@ -887,6 +888,9 @@ package final class GrLexer {
         case "enum":
             lex.type = GrLexeme.Type.enum_;
             break;
+        case "where":
+            lex.type = GrLexeme.Type.where;
+            break;
         case "if":
             lex.type = GrLexeme.Type.if_;
             break;
@@ -1217,7 +1221,7 @@ private immutable string[] _prettyLexemeTypeTable = [
     "==", "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->",
     "=>", "~", "!", "++", "--", "identifier", "const_int",
     "const_float", "const_bool", "const_string", "null", "public",
-    "type", "event", "class", "enum", "new", "copy",
+    "type", "event", "class", "enum", "where", "new", "copy",
     "send", "receive", "int", "real", "bool", "string", "array",
     "channel", "function", "task", "let", "if", "unless", "else",
     "switch", "select", "case", "default", "while", "do", "until", "for",
