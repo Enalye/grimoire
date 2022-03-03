@@ -2152,7 +2152,7 @@ final class GrParser {
         current = func.lexPosition;
         parseWhereStatement(func.templateVariables);
         openDeferrableSection();
-        parseBlock();
+        parseBlock(false, true);
         if (func.isTask || func.isEvent) {
             if (!currentFunction.instructions.length
                 || currentFunction.instructions[$ - 1].opcode != GrOpcode.die)
@@ -2884,7 +2884,7 @@ final class GrParser {
         temp.inSignature = parseInSignature(inputs, false, templateVariables);
         temp.constraints = parseWhereStatement(templateVariables);
         templatedFunctions ~= temp;
-        skipBlock();
+        skipBlock(true);
     }
 
     private void parseFunctionDeclaration(bool isPublic) {
@@ -2936,7 +2936,7 @@ final class GrParser {
         temp.outSignature = parseOutSignature(templateVariables);
         temp.constraints = parseWhereStatement(templateVariables);
         templatedFunctions ~= temp;
-        skipBlock();
+        skipBlock(true);
     }
 
     private GrConstraint[] parseWhereStatement(string[] templateVariables) {
@@ -2968,7 +2968,7 @@ final class GrParser {
             GrType[] parameters = parseTemplateSignature(templateVariables);
             constraints ~= new GrConstraint(constraintData.predicate, constraintData.arity, type, parameters);
         }
-        while(get().type == GrLexeme.Type.comma);
+        while (get().type == GrLexeme.Type.comma);
         return constraints;
     }
 
@@ -3120,7 +3120,7 @@ final class GrParser {
     /**
     Parse either multiple lines between `{` and `}` or a single expression.
     */
-    private void parseBlock(bool changeOptimizationBlockLevel = false) {
+    private void parseBlock(bool changeOptimizationBlockLevel = false, bool mustBeMultiline = false) {
         if (changeOptimizationBlockLevel)
             _isAssignationOptimizable = false;
         bool isMultiline;
@@ -3130,6 +3130,11 @@ final class GrParser {
                 logError(getError(Error.eof),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
                         GrLexeme.Type.rightCurlyBrace), getPrettyLexemeType(get().type)));
+        }
+        else if (mustBeMultiline) {
+            logError(getError(Error.missingCurlyBraces),
+                format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                    GrLexeme.Type.leftCurlyBrace), getPrettyLexemeType(get().type)));
         }
         openBlock();
 
@@ -3250,7 +3255,7 @@ final class GrParser {
         return isDecl;
     }
 
-    private void skipBlock() {
+    private void skipBlock(bool mustBeMultiline = false) {
         bool isMultiline;
         if (get().type == GrLexeme.Type.leftCurlyBrace) {
             isMultiline = true;
@@ -3258,6 +3263,11 @@ final class GrParser {
                 logError(getError(Error.eof),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
                         GrLexeme.Type.rightCurlyBrace), getPrettyLexemeType(get().type)));
+        }
+        else if (mustBeMultiline) {
+            logError(getError(Error.missingCurlyBraces),
+                format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                    GrLexeme.Type.leftCurlyBrace), getPrettyLexemeType(get().type)));
         }
         openBlock();
 
