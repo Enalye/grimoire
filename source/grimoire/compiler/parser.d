@@ -2858,7 +2858,7 @@ final class GrParser {
         checkAdvance();
         GrType[] signature = parseInSignature(inputs);
         preBeginFunction(name, get().fileId, signature, inputs, false, [], false, true, true);
-        skipBlock();
+        skipBlock(true);
         preEndFunction();
     }
 
