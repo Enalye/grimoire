@@ -66,3 +66,7 @@ GrConstraint.Data grGetConstraint(string name) {
     GrConstraint.Data* func = name in _constraints;
     return func ? *func : GrConstraint.Data();
 }
+
+string[] grGetAllConstraintsName() {
+    return _constraints.keys;
+}

@@ -2945,80 +2945,52 @@ final class GrParser {
             return constraints;
         checkAdvance();
 
-        do {
+        for(;;) {
             GrType type = parseType(true, templateVariables);
 
             if (get().type != GrLexeme.Type.colon)
-                logError(getError(Error.missingSemicolonAfterEnumField),
+                logError(getError(Error.expectedColonAfterType),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
                         GrLexeme.Type.colon), getPrettyLexemeType(get().type)));
             checkAdvance();
 
             if (get().type != GrLexeme.Type.identifier)
-                logError(getError(Error.missingIdentifier),
+                logError(getError(Error.missingConstraint),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
                         GrLexeme.Type.identifier), getPrettyLexemeType(get().type)));
 
             GrConstraint.Data constraintData = grGetConstraint(get().svalue);
-            if (!constraintData.predicate)
-                logError(getError(Error.missingIdentifier),
-                    format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexeme.Type.identifier), getPrettyLexemeType(get().type)));
+            if (!constraintData.predicate) {
+                const string[] nearestValues = findNearestStrings(get().svalue, grGetAllConstraintsName());
+                string errorNote;
+                if (nearestValues.length) {
+                    foreach (size_t i, const string value; nearestValues) {
+                        errorNote ~= "`" ~ value ~ "`";
+                        if ((i + 1) < nearestValues.length)
+                            errorNote ~= ", ";
+                    }
+                    errorNote ~= ".";
+                }
+                logError(getError(Error.missingConstraint),
+                    format(getError(Error.xIsNotAKnownConstraint), get().svalue),
+                    format(getError(Error.validConstraintsAreX), errorNote));
+            }
             checkAdvance();
             GrType[] parameters = parseTemplateSignature(templateVariables);
             constraints ~= new GrConstraint(constraintData.predicate, constraintData.arity, type, parameters);
+            if (constraintData.arity != parameters.length)
+                logError(format(getError(constraintData.arity > 1 ? Error.constraintTakesXArgsButYWereSupplied
+                        : Error.constraintTakesXArgButYWereSupplied), constraintData.arity, parameters
+                        .length),
+                    format(getError(constraintData.arity > 1 ? Error.expectedXArgsFoundY
+                        : Error.expectedXArgFoundY), constraintData.arity, parameters.length), "", -1);
+
+            if(get().type != GrLexeme.Type.comma)
+                break;
+            advance();
         }
-        while (get().type == GrLexeme.Type.comma);
         return constraints;
     }
-
-    /+private void parseTemplateDeclaration(bool isPublic) {
-        checkAdvance();
-        if (get().type != GrLexeme.Type.lesser)
-            logError(getError(Error.missingTemplateSignature),
-                format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.lesser), getPrettyLexemeType(
-                    get().type)));
-
-        GrType[] templateList = parseTemplateSignature();
-
-        string name;
-        if (get().type == GrLexeme.Type.identifier) {
-            name = get().svalue;
-        }
-        else if (get().isOverridableOperator()) {
-            name = "@op_" ~ getPrettyLexemeType(get().type);
-        }
-        else if (get().isOperator) {
-            logError(format(getError(Error.cantOverrideXOp), getPrettyLexemeType(get()
-                    .type)), getError(Error.opCantBeOverriden));
-        }
-        else {
-            logError(format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get()
-                    .type)), getError(Error.missingIdentifier));
-        }
-
-        const uint fileId = get().fileId;
-        checkAdvance();
-
-        if (!templateList.length)
-            logError(getError(Error.emptyTemplateSignature), getError(
-                    Error.templateSignatureCantBeEmpty), "", -1);
-
-        if (get().type != GrLexeme.Type.semicolon)
-            logError(getError(Error.missingSemicolonAfterTemplateDecl),
-                format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexeme.Type.semicolon), getPrettyLexemeType(get().type)));
-        checkAdvance();
-
-        foreach (GrTemplateFunction temp; templatedFunctions) {
-            if (temp.name == name && (temp.fileId == fileId || temp.isPublic)
-                && temp.templateVariables.length == templateList.length) {
-                GrFunction func = parseTemplatedFunctionDeclaration(temp, templateList);
-                func.isPublic = isPublic;
-                instanciatedFunctions ~= func;
-            }
-        }
-    }+/
 
     private GrFunction parseTemplatedFunctionDeclaration(GrTemplateFunction temp,
         GrType[] templateList) {
@@ -6922,10 +6894,12 @@ final class GrParser {
         eventAlreadyPublic,
         cantOverrideXOp,
         opCantBeOverriden,
-        missingTemplateSignature,
-        emptyTemplateSignature,
-        templateSignatureCantBeEmpty,
-        missingSemicolonAfterTemplateDecl,
+        missingConstraint,
+        xIsNotAKnownConstraint,
+        validConstraintsAreX,
+        expectedColonAfterType,
+        constraintTakesXArgButYWereSupplied,
+        constraintTakesXArgsButYWereSupplied,
         convMustHave1RetVal,
         convMustHave1Param,
         expected1ParamFoundX,
@@ -7152,10 +7126,12 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.eventAlreadyPublic: "event is already public",
                 Error.cantOverrideXOp: "can't override `%s` operator",
                 Error.opCantBeOverriden: "this operator can't be overriden",
-                Error.missingTemplateSignature: "missing template signature",
-                Error.emptyTemplateSignature: "empty template signature",
-                Error.templateSignatureCantBeEmpty: "the template signature can't be empty",
-                Error.missingSemicolonAfterTemplateDecl: "missing semicolon after template declaration",
+                Error.missingConstraint: "missing constraint",
+                Error.xIsNotAKnownConstraint: "`%s` is not a known constraint",
+                Error.validConstraintsAreX: "valid constraints are: %s",
+                Error.expectedColonAfterType: "`:` expected after a type",
+                Error.constraintTakesXArgButYWereSupplied: "the constraint takes %s argument but %s were supplied",
+                Error.constraintTakesXArgsButYWereSupplied: "the constraint takes %s arguments but %s were supplied",
                 Error.convMustHave1RetVal: "a conversion must have only one return value",
                 Error.convMustHave1Param: "a conversion must have only one parameter",
                 Error.expected1ParamFoundX: "expected 1 parameter, found %s parameter",
@@ -7369,10 +7345,12 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.eventAlreadyPublic: "les events sont déjà publiques",
                 Error.cantOverrideXOp: "impossible de surcharger l’opérateur `%s`",
                 Error.opCantBeOverriden: "cet opérateur ne peut être surchargé",
-                Error.missingTemplateSignature: "signature de patron manquante",
-                Error.emptyTemplateSignature: "signature de patron vide",
-                Error.templateSignatureCantBeEmpty: "la signature du patron ne peut être vide",
-                Error.missingSemicolonAfterTemplateDecl: "point-virgule manquant après la déclaration du patron",
+                Error.missingConstraint: "contrainte manquante",
+                Error.xIsNotAKnownConstraint: "`%s` n’est pas une contrainte connue",
+                Error.validConstraintsAreX: "les contraintes valides sont: %s",
+                Error.expectedColonAfterType: "`:` attendu après le type",
+                Error.constraintTakesXArgButYWereSupplied: "cette contrainte prend %s argument mais %s ont été fournis",
+                Error.constraintTakesXArgsButYWereSupplied: "cette contrainte prend %s arguments mais %s ont été fournis",
                 Error.convMustHave1RetVal: "une conversion ne peut avoir qu’une seule valeur de retour",
                 Error.convMustHave1Param: "une conversion ne peut avoir qu’un seul paramètre",
                 Error.expected1ParamFoundX: "1 paramètre attendu, %s paramètre trouvé",
