@@ -21,7 +21,7 @@ ___
 Only use the *add*X() functions ***before*** compilation happen,
 else they won't be linked.
 */
-class GrData {
+final class GrData {
     package(grimoire) {
         /// Opaque pointer types. \
         /// They're pointer only defined by a name. \
@@ -285,7 +285,7 @@ class GrData {
     }
 
     /// Return the class definition.
-    package GrClassDefinition getClass(string mangledName, uint fileId, bool isPublic = false) {
+    GrClassDefinition getClass(string mangledName, uint fileId, bool isPublic = false) {
         import std.algorithm.searching : findSplitBefore;
 
         foreach (class_; _classDefinitions) {
@@ -410,7 +410,7 @@ class GrData {
                 _anyData = new GrAnyData;
                 if (isAbstractSignatureCompatible(signature, primitive.inSignature, 0, true)) {
                     foreach (GrConstraint constraint; primitive.constraints) {
-                        if (!constraint.evaluate(_anyData))
+                        if (!constraint.evaluate(this, _anyData))
                             continue __primitiveLoop;
                     }
                     GrPrimitive reifiedPrimitive = reifyPrimitive(primitive);
@@ -444,7 +444,7 @@ class GrData {
                 if (isAbstractSignatureCompatible(signature, primitive.inSignature, 0, true)) {
                     assert(name.length == 0);
                     foreach (GrConstraint constraint; primitive.constraints) {
-                        if (!constraint.evaluate(_anyData))
+                        if (!constraint.evaluate(this, _anyData))
                             continue __primitiveLoop;
                     }
                     GrPrimitive reifiedPrimitive = reifyPrimitive(primitive);

@@ -5,7 +5,7 @@
  */
 module grimoire.compiler.constraint;
 
-import grimoire.compiler.type;
+import grimoire.compiler.type, grimoire.compiler.data;
 
 private {
     GrConstraint.Data[string] _constraints;
@@ -13,7 +13,7 @@ private {
 
 /// Template function constraint
 final class GrConstraint {
-    alias Predicate = bool function(GrType, GrType[]);
+    alias Predicate = bool function(GrData, GrType, GrType[]);
 
     struct Data {
         Predicate predicate;
@@ -35,13 +35,13 @@ final class GrConstraint {
     }
 
     /// Checks if the types validate the constraint
-    bool evaluate(GrAnyData data) {
-        GrType type = _type.isAny ? data.get(_type.mangledType) : _type;
+    bool evaluate(GrData data, GrAnyData anyData) {
+        GrType type = _type.isAny ? anyData.get(_type.mangledType) : _type;
         GrType[] parameters;
         foreach (GrType parameter; _parameters) {
-            parameters ~= parameter.isAny ? data.get(parameter.mangledType) : parameter;
+            parameters ~= parameter.isAny ? anyData.get(parameter.mangledType) : parameter;
         }
-        return _data.predicate(type, parameters);
+        return _data.predicate(data, type, parameters);
     }
 }
 

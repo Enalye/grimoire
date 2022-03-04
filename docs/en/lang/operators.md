@@ -3,8 +3,8 @@
 Much like custom convertions, you can define your own operators by naming it accordingly.
 You also have to respect the number of inputs the operator uses (1 or 2).
 
-```cpp
-event main {
+```grimoire
+event onLoad() {
     print(3.5 + 2);
 }
 

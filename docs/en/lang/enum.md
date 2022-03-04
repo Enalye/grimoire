@@ -6,7 +6,7 @@ They can only be compared between them and can't do any arithmetic operation.
 ## Definition
 
 They are declared with the keyword enum:
-```cpp
+```grimoire
 enum Color {
 	red;
 	green;
@@ -18,8 +18,8 @@ enum Color {
 
 To access a value, just type the name of the enum with
 the name of the field you want separated with a dot:
-```cpp
-event main {
+```grimoire
+event onLoad() {
 	Color myColor = Color.red;
 
 	switch(myColor)

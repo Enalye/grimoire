@@ -27,8 +27,8 @@ They're only a handful of basic type recognised by grimoire.
 ### Auto Type
 **let** is a special keyword that let the compiler automatically infer the type of a declared variable.
 Example:
-```cpp
-event main {
+```grimoire
+event onLoad() {
   let a = 3.2; //'a' is inferred to be a real type.
   print(a);
 }
@@ -43,10 +43,10 @@ A variable can either be local or global.
 * A local variable is only accessible inside the function/task/etc where it was declared.
 
 Example:
-```cpp
+```grimoire
 int globalVar; //Declared outside of any scope, accessible everywhere.
 
-event main {
+event onLoad() {
   int localVar; //Declared inside the main, only accessible within the main.
 }
 ```
@@ -54,12 +54,12 @@ event main {
 ### Public or private
 A global variable is only visible from its own file by default.
 To access it from another file, you have to declare it as public with the keyword `public`.
-```cpp
+```grimoire
 public int globalVar; //Now you can use it from another file.
 ```
 
 The same is true for declared types, or even classes’ fields. 
-```cpp
+```grimoire
 public class A { //The class is visible globally.
     public int a; //a is visible globally.
     int b; //b is only visible in the file.

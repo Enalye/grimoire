@@ -6,14 +6,14 @@ Task are Grimoire's implementation of coroutines. They are syntaxically similar 
 * A task will only be executed if other tasks are killed or on yield.
 
 Syntax:
-```cpp
+```grimoire
 task doThing() {
   print("3");
   yield
   print("5");
 }
 
-event main {
+event onLoad() {
   print("1");
   doThing();
   print("2");

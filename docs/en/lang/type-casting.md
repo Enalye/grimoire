@@ -7,10 +7,10 @@ You can explicitly cast a value to any type with the keyword `as`, it must be fo
 You can define your own cast by naming a function with `as`.
 It must only have one input and one output.
 
-```cpp
+```grimoire
 class MyClass {}
 
-event main {
+event onLoad() {
     let obj = new MyClass;
     print(obj as string); // Prints "Hello"
 }

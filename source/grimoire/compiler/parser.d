@@ -622,7 +622,7 @@ final class GrParser {
                 _data.setAnyData(anyData);
                 if (_data.isAbstractSignatureCompatible(signature, temp.inSignature, fileId, isPublic)) {
                     foreach (GrConstraint constraint; temp.constraints) {
-                        if (!constraint.evaluate(anyData))
+                        if (!constraint.evaluate(_data, anyData))
                             continue __functionLoop;
                     }
                     GrType[] templateSignature;
@@ -709,7 +709,7 @@ final class GrParser {
                 _data.setAnyData(anyData);
                 if (_data.isAbstractSignatureCompatible(signature, temp.inSignature, fileId, isPublic)) {
                     foreach (GrConstraint constraint; temp.constraints) {
-                        if (!constraint.evaluate(anyData))
+                        if (!constraint.evaluate(_data, anyData))
                             continue __functionLoop;
                     }
                     GrType[] templateSignature;

@@ -2,7 +2,7 @@
 
 You can separate a script between multiple files.
 To import them, use the `import` keyword with your file paths.
-```cpp
+```grimoire
 import "foo/myscript.gr"
 
 // With {} you can specify multiple paths.

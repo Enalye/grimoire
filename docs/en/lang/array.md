@@ -4,7 +4,7 @@ Array are a collection of a single type of value.
 
 ## Creating an array
 The type of an array is `array()` with the type of its content inside the parenthesis:
-```cpp
+```grimoire
 array(int) myCollection = [1, 2, 3];
 ```
 
@@ -21,7 +21,7 @@ Another exemple: `array(int, 5)[7, 8, 9]` is equals to `[7, 8, 9, 0, 0]`.
 
 ## Indexing an array
 To access an array element, the array index (from 0) in written between brackets:
-```cpp
+```grimoire
 let a = [10, 20, 30][1]; //New array, then immediately take the index 1 of [10, 20, 30], which is 20
 
 let b = [[1, 2, 3], [11, 12, 13], [21, 22, 23]]; //New array
@@ -30,13 +30,13 @@ let d = b[1, 2]; //Same as above in a nicer syntax
 ```
 
 When accessing an array element, you can also modify it:
-```cpp
+```grimoire
 let a = [11, 12, 13];
 a[0] = 9; //a now has [9, 12, 13]
 ```
 
 Array and array indexes are passed by references, that mean manipulating array do not make copies.
-```cpp
+```grimoire
 let a = [1, 2, [3, 4]];
 let b = a[2]; //b is now a reference to the 3rd value of a
 b[0] = 9;
@@ -45,6 +45,6 @@ print(a); //Prints [1, 2, [9, 4]]
 ```
 
 You can concatenate values into an array by using the concatenation operator ~
-```cpp
+```grimoire
 let a = 1 ~ [2, 3, 4] ~ [5, 6] ~ 7; //a is now [1, 2, 3, 4, 5, 6, 7]
 ```

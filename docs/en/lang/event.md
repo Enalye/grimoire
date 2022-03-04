@@ -3,7 +3,7 @@
 Events are like tasks that can only be spawned from D.
 
 They are declared like tasks and can only be global:
-```cpp
+```grimoire
 event foo(string msg) {
 	print(msg);
 }

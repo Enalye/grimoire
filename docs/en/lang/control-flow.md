@@ -7,8 +7,8 @@ You can combine it with optional `else if` or `else unless` to do the same thing
 Finally you can add an optional `else` that is run *only* if others are not run.
 
 Exemple:
-```cpp
-event main {
+```grimoire
+event onLoad() {
 	if(5 < 2) {
 		//This code won't run because 5 is never less than 2.
 		print("5 is less than 2 !");
@@ -22,8 +22,8 @@ event main {
 }
 ```
 Another one:
-```cpp
-event main {
+```grimoire
+event onLoad() {
 	let i = 5;
 	if(i > 10) {
 		print("i is more than 10");
@@ -44,7 +44,7 @@ event main {
 
 `switch` let us do comparisons a bit like `if`, but in a more concise manner.
 
-```cpp
+```grimoire
 let i = "Hello";
 switch(i)
 default { // Default case if others aren't valid.
@@ -66,7 +66,7 @@ A `default` is an optional statement that behave a bit like the `else` statement
 
 A select is syntaxically like a switch, but differs in that it doesn't do value comparison, it checks each case for an operation that can process whithout blocking.
 
-```cpp
+```grimoire
 select
 case( /* channel operation  */ ) {
 
@@ -79,7 +79,7 @@ default {
 Each case contains a potentially blocking operation, the first non-blocking operation case is run.
 The default case is optional, but without one, the select statement will be a blocking operation, otherwise the default case will execute when others are blocked.
 
-```cpp
+```grimoire
 select
 case(myValue = <- myChannel) { // Receive operation
 	print("Received " ~ myValue);
@@ -101,7 +101,7 @@ A loop is a structure that can be executed several time, there are two type of l
 ### Infinite loops
 
 Infinite loops are infinite:
-```cpp
+```grimoire
 loop {
 	print("Hello !");
 }
@@ -113,7 +113,7 @@ You may want to add either a `yield` to interrupt the loop each time or add an e
 
 Finite loops, on the other hand, have a finite number of time they will run.
 Contrary to the infinite one, they take an int as a parameter, which indicate the number of loops:
-```cpp
+```grimoire
 loop(10) {
 	// "I loop 10 times !" will only be printed times.
 	print("I loop 10 times !");
@@ -121,7 +121,7 @@ loop(10) {
 ```
 
 You can also specify an iterator, which must be of type `int`.
-```cpp
+```grimoire
 loop(i, 10)
 	print(i); // Prints from 0 to 9
 
@@ -138,7 +138,7 @@ loop(let i, 10)
 
 `while` and `do while` are, akin to loops, statements that can execute their code several time.
 The difference is, they do not have a finite number of loop, instead, they have a condition (like `if` statements).
-```cpp
+```grimoire
 int i = 0;
 while(i < 10) {
 	print(i); // Here, the output is 0, 1, 2, 3, 4, 5, 6, 7, 8 and 9.
@@ -146,7 +146,7 @@ while(i < 10) {
 }
 ```
 `do while` is the same as `while` but the condition is checked after having run the code one time.
-```cpp
+```grimoire
 int i = 11;
 do { //This is garanteed to run at least once, even if the condition is not met.
 	print(i); //Will print "11"
@@ -158,7 +158,7 @@ while(i < 10)
 
 `for` loops are yet another kind of loop that will automatically iterate on an array of values.
 For instance:
-```cpp
+```grimoire
 for(i, [1, 2, 3, 4]) {
 	print(i);
 }
@@ -167,12 +167,12 @@ Here, the for statement will take each value of the array, then assign them to t
 
 The variable can be already declared, or declared inside the for statement like this:
 
-```cpp
+```grimoire
 int i;
 for(i, [1, 2]) {}
 ```
 Or,
-```cpp
+```grimoire
 for(int i, [1, 2]) {}
 ```
 If no type is specified, or declared as let, the variable will be automatically declared as `var`.
@@ -188,7 +188,7 @@ In grimoire, an iterator is defined by the fact that a function that satisfies t
 A function `next` must exists that takes the iterator and returns a `bool` and the current value.
 The `bool` must be false when the iterator has finished iterating, true otherwise.
 
-```cpp
+```grimoire
 // The each() function takes the string and return
 // an IterString object that iterate over the string
 for(i, "Hello World":each) {

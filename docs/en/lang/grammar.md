@@ -16,7 +16,7 @@ Exemple of valid identifiers:
 ## Reserved words
 
 The following are keyword used by the language, they cannot be used as identifier (variables, functions, etc):
-`import`, `public`, `alias`, `event`, `class`, `enum`, `template`, `if`, `unless`, `else`, `switch`, `select`, `case`, `default`, `while`, `do`, `until`, `for`, `loop`, `return`, `self`, `die`, `exit`, `yield`, `break`, `continue`, `as`, `try`, `catch`, `throw`, `defer`, `void`, `task`, `function`, `int`, `real`, `bool`, `string`, `array`, `channel`, `new`, `let`, `true`, `false`, `null`, `not`, `and`, `or`, `bit_not`, `bit_and`, `bit_or`, `bit_xor`.
+`import`, `public`, `alias`, `event`, `class`, `enum`, `where`, `if`, `unless`, `else`, `switch`, `select`, `case`, `default`, `while`, `do`, `until`, `for`, `loop`, `return`, `self`, `die`, `exit`, `yield`, `break`, `continue`, `as`, `try`, `catch`, `throw`, `defer`, `void`, `task`, `function`, `int`, `real`, `bool`, `string`, `array`, `channel`, `new`, `let`, `true`, `false`, `null`, `not`, `and`, `or`, `bit_not`, `bit_and`, `bit_or`, `bit_xor`.
 
 
 

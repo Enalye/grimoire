@@ -2,8 +2,8 @@
 # First Program
 
 Starting with the traditionnal "Hello World" :
-```cpp
-event main {
+```grimoire
+event onLoad() {
   print("Hello World!");
 }
 ```

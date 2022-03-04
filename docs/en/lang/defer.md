@@ -3,7 +3,7 @@
 Code put inside a defer statement, is *garanteed* to be executed at the end of the function/task,
 even if an error is thrown before the end of the scope.
 
-```cpp
+```grimoire
 event main {
 	defer { print("Inside defer !"); }
 	print("Before defer");

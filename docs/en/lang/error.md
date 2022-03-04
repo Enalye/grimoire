@@ -3,14 +3,14 @@
 Error handling in Grimoire is done by throwing and catching errors
 
 To raise an error, simply write:
-```cpp
+```grimoire
 throw "Error";
 ```
 If you do nothing about it, the entire VM will panic, because the current task does nothing to catch it.
 
 So we should probably catch it:
-```cpp
-event main {
+```grimoire
+event onLoad() {
 	try {
 		throw "Error";
 	}
