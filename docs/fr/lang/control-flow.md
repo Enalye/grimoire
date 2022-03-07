@@ -77,97 +77,96 @@ default {
 }
 ```
 
-Each case contains a potentially blocking operation, the first non-blocking operation case is run.
-The default case is optional, but without one, the select statement will be a blocking operation, otherwise the default case will execute when others are blocked.
-
+Chaque cas contient une opération potentiellement bloquante, la première opération qui ne bloque pas est exécuté.
+La cas par défaut est optionnel, mais sans elle, select devient une opération bloquante. Sinon, le cas par défaut est exécuté quand les autres sont bloqués.
 ```grimoire
 select
-case(myValue = <- myChannel) { // Receive operation
-	print("Received " ~ myValue);
+case(myValue = <- myChannel) { // Réception
+	print("Reçu " ~ myValue);
 }
-case(myOtherChannel <- "Hello") { // Send operation
-	print("Sent Hello");
+case(myOtherChannel <- "Salut") { // Envoi
+	print("Envoyé Salut");
 }
 default {
-	// Run if no one else can run.
-	// If it's not present, select will blocking until one of the case is non-blocking.
-	print("Did nothing");
+	// Exécuté si aucun autre cas ne l’est
+    // Si absent, select bloquera jusqu’à ce qu’un des cas ne bloque plus.
+	print("Il se passe rien");
 }
 ```
 
-## Loops
+## Les boucles
 
-A loop is a structure that can be executed several time, there are two type of loops.
+Une boucle est un bout de code qui est exécuté plusieurs fois, il y a plusieurs types de boucles.
 
-### Infinite loops
+### Les boucles infinies
 
-Infinite loops are infinite:
+Les boucles infinies n’ont pas de condition d’arrêt:
 ```grimoire
 loop {
-	print("Hello !");
+	print("Bonsoir !");
 }
 ```
-This script will prompt *"Hello !"* infinitely until the process is killed, be cautious with it.
-You may want to add either a `yield` to interrupt the loop each time or add an exit condition.
+Ce script affichera *"Bonsoir !"* indéfiniement jusqu’à ce que le processus soit tué, soyez vigilant avec ça.
+On préférera l’ajout d’un `yield` pour interrompre la boucle à chaque itération, ou ajouter une condition de sortie.
 
-### Finite loops
+### Les boucles finies
 
-Finite loops, on the other hand, have a finite number of time they will run.
-Contrary to the infinite one, they take an int as a parameter, which indicate the number of loops:
+Les boucles finies ont, pour leur part, un nombre fini d’itérations.
+Contrairement aux boucles infinies, elles prennent un entier en paramètre, qui indique le nombre de fois qu’elles seront exécutées:
 ```grimoire
 loop(10) {
-	// "I loop 10 times !" will only be printed times.
-	print("I loop 10 times !");
+	// "Je boucle 10 fois !" sera affiché seulement 10 fois
+	print("Je boucle 10 fois !");
 }
 ```
 
-You can also specify an iterator, which must be of type `int`.
+On peut également spécifier un itérateur qui sera de type entier.
 ```grimoire
 loop(i, 10)
-	print(i); // Prints from 0 to 9
+	print(i); // Affiche les valeurs de 0 à 9
 
-// Same as above, but we declare i.
+// Pareil qu’au dessus, mais on déclare i explicitement
 loop(int i, 10)
 	print(i);
 
-// Also valid.
+// Aussi valide
 loop(let i, 10)
 	print(i);
 ```
 
-## While/Do While
+## Les boucles While/Do While
 
-`while` and `do while` are, akin to loops, statements that can execute their code several time.
-The difference is, they do not have a finite number of loop, instead, they have a condition (like `if` statements).
+`while` et `do while` sont, comme les boucles, des structures qui exécutent leur code plusieurs fois.
+La différence est qu’elles n’ont pas de nombre déterminé d’itérations.
+Elles ont, en revanche, une condition (comme les `if`).
 ```grimoire
 int i = 0;
 while(i < 10) {
-	print(i); // Here, the output is 0, 1, 2, 3, 4, 5, 6, 7, 8 and 9.
+	print(i); // Ici, ça affichera 0, 1, 2, 3, 4, 5, 6, 7, 8 et 9.
 	i ++;
 }
 ```
-`do while` is the same as `while` but the condition is checked after having run the code one time.
+`do while` est la même que `while` mais la condition n’est vérifié qu’après avoir exécuté le code une fois.
 ```grimoire
 int i = 11;
-do { //This is garanteed to run at least once, even if the condition is not met.
-	print(i); //Will print "11"
+do { //Garantit de s’exécuter au moins une fois, même si la condition n’est pas vérifiée.
+	print(i); //Affichera "11"
 }
 while(i < 10)
 ```
 
-## For
+## La boucle For
 
-`for` loops are yet another kind of loop that will automatically iterate on an array of values.
-For instance:
+Les boucles `for` sont encore un autre type de boucle qui itérera automatiquement sur une liste d’élément ou sur un itérateur.
+Par exemple:
 ```grimoire
 for(i, [1, 2, 3, 4]) {
 	print(i);
 }
 ```
-Here, the for statement will take each value of the array, then assign them to the variable "i" specified.
+Ici, le `for` prend chaque valeur de la liste et l’assigne à la variable `i` spécifiée.
 
-The variable can be already declared, or declared inside the for statement like this:
-
+La variable peut être déjà déclarée, ou déclarée à l’intérieur du `for` comme ceci:
 ```grimoire
 int i;
 for(i, [1, 2]) {}
@@ -176,23 +175,23 @@ Or,
 ```grimoire
 for(int i, [1, 2]) {}
 ```
-If no type is specified, or declared as let, the variable will be automatically declared as `var`.
+Si aucun type n’est spécifié, ou déclaré avec `let`, la variable prendra automatiquement la bonne valeur.
 
-The variable type must be convertible from the array's values, or it will raise a runtime error.
+La variable doit pouvoir se convertir en la valeur de la liste ou de l’itérateur, sinon une erreur surviendra.
 
-### Iterators
+### Les itérateurs
 
-`for` can also iterate on special object or foreign called iterators.
-In grimoire, an iterator is defined by the fact that a function that satisfies this signature exists:
+`for` peut aussi itérer sur des objets ou type étrangers appelés itérateurs.
+En grimoire, un itérateur est défini comme tout objet (ou type étranger) où il existe une fonction particulière `next` telle que:
 > `function next(Iterator) (bool, VALUE)`
 
-A function `next` must exists that takes the iterator and returns a `bool` and the current value.
-The `bool` must be false when the iterator has finished iterating, true otherwise.
+Cette fonction `next` prend l’iterateur en paramètre et retourne un `bool` et la valeur actuelle.
+Le `bool` vaut `false` quand l’intérateur a fini d’itérer, `true` dans le cas contraire.
 
 ```grimoire
-// The each() function takes the string and return
-// an IterString object that iterate over the string
-for(i, "Hello World":each) {
+// La fonction each() prend une chaîne de caratères et retourne
+// un itérateur qui parcourt chaque caractère.
+for(i, "Anticonstitutionnellement":each) {
 	i:print;
 }
 ```

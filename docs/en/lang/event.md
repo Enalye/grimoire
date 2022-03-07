@@ -13,8 +13,8 @@ To spawn this one from D:
 ```d
 auto mangledName = grMangleComposite("foo", [grString]);
 if(vm.hasEvent(mangledName)) {
-    GrContext context = vm.spawnEvent(mangledName);
-	context.setString("Hello World!");
+    GrTask task = vm.callEvent(mangledName);
+	task.setString("Hello World!");
 }
 ```
 Here the process is a little bit special.

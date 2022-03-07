@@ -1,16 +1,16 @@
-# Importing files
+# Importer des fichiers
 
-You can separate a script between multiple files.
-To import them, use the `import` keyword with your file paths.
+Un programme peut être réparti sur plusieurs fichiers.
+Pour les importer, utilisez le mot-clé `import` suivi du chemin relatif du fichier.
 ```grimoire
-import "foo/myscript.gr"
+import "foo/monScript.gr"
 
-// With {} you can specify multiple paths.
+// Avec des accolades {} vous pouvez ajouter plusieurs fichiers à la fois.
 import {
-	"../lib/myotherscript.gr"
-	"C:/MyScripts/script.gr"
+	"../lib/monAutreFichier.gr"
+	"C:/MesScripts/script.gr"
 }
 ```
 
-The path is relative to the file importing it.
-Two import with the same absolute path (i.e. the same file) will be included only once.
+Les chemins sont relatifs au fichier l’important.
+Deux fichiers avec le même chemin absolu (càd le même fichier) ne seront inclus qu’une seule fois.

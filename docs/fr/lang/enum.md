@@ -1,30 +1,29 @@
-# Enumerations
+# Énumérations
 
-Enumerations (or enum) are a set of named constants defined inside a single type.
-They can only be compared between them and can't do any arithmetic operation.
+Les énumérations sont des jeux de constantes définis au sein d’un seul type.
+Elles peuvent seulement être comparés entre-elles et ne peuvent effectuer d’opérations arithmétiques.
 
-## Definition
+## Définition
 
-They are declared with the keyword enum:
+Elles sont déclarés avec le mot-clé `enum`:
 ```grimoire
-enum Color {
-	red;
-	green;
-	blue;
+enum Couleur {
+	rouge;
+	vert;
+	bleu;
 }
 ```
 
-## Accessing a field
+## Accéder à un champ
 
-To access a value, just type the name of the enum with
-the name of the field you want separated with a dot:
+Pour accéder à une valeur, on suit le nom du type d’un point suivi du nom du champ souhaité:
 ```grimoire
 event onLoad() {
-	Color myColor = Color.red;
+	Couleur myColor = Couleur.rouge;
 
 	switch(myColor)
-	case(Color.red) "The color is red !":print;
-	case(Color.green) "The color is green !":print;
-	case(Color.blue) "The color is blue !":print;
+	case(Couleur.rouge) "On est sur du rouge !":print;
+	case(Couleur.vert) "On est sur du vert !":print;
+	case(Couleur.bleu) "On est sur du bleu !":print;
 }
 ```

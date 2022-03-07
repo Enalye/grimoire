@@ -1,14 +1,13 @@
-# Deferred statements
+# Code différé
 
-Code put inside a defer statement, is *garanteed* to be executed at the end of the function/task,
-even if an error is thrown before the end of the scope.
+Un bloc de code mis à l’intérieur d’un `defer` est *garantit* de s’exécuter à la fin d’une fonction ou tâche, et ce même si une erreur est survenu avant la fin.
 
 ```grimoire
-event main {
-	defer { print("Inside defer !"); }
-	print("Before defer");
-	throw "Error";
+event onLoad() {
+	defer { print("Dans le defer !"); }
+	print("Avant le defer");
+	throw "Erreur";
 }
 ```
-Here, the prompt will show "Before defer", then "Inside defer !", even if we raise an error before the end of the scope.
-It's useful for handling resources that need to be freed.
+Dans cet exemple, « Avant le defer » s’affichera puis « Dans le defer ! », même si on lance une erreur avant la fin de la fonction.
+Cette instruction est utile pour garantir la libération des ressources.

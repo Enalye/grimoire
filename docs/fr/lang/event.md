@@ -1,23 +1,23 @@
-# Event functions
+# Événements
 
-Events are like tasks that can only be spawned from D.
+Les événements sont comme des tâches qui sont appelées depuis D.
 
-They are declared like tasks and can only be global:
+Ils se déclarent comme des tâches et sont automatiquement public:
 ```grimoire
 event foo(string msg) {
 	print(msg);
 }
 ```
 
-To spawn this one from D:
+Pour l’appeler depuis D:
 ```d
 auto mangledName = grMangleComposite("foo", [grString]);
 if(vm.hasEvent(mangledName)) {
-    GrContext context = vm.spawnEvent(mangledName);
-	context.setString("Hello World!");
+    GrTask task = vm.callEvent(mangledName);
+	task.setString("Hello World!");
 }
 ```
-Here the process is a little bit special.
-First, we need to know the mangled name (name + signature) of the event with "grMangleComposite".
-Then, we call it.
-If the event has parameters, you absolutely ***must*** push those values to the new context, else the VM will crash.
+Ici, le processus est un peu spécial.
+D’abord, on doit connaître le nom formatté (nom + signature) de l’évenement avec `grMangleComposite`.
+Puis on l’appelle.
+Si l’évenement a des paramètres, on doit ***absolument*** ajouter des valeurs au nouveau contexte, sinon la machine virtuelle plantera.

@@ -1,18 +1,17 @@
 
-# First Program
+# Premier programme
 
-Starting with the traditionnal "Hello World" :
+Commençons avec le traditionnel « Hello World »:
 ```grimoire
 event onLoad() {
   print("Hello World!");
 }
 ```
-The code is composed of the keyword **event**, which allow use to declare a task that can be called from D. Here we name that event `main`.
+Ce code est composé du mot-clé `event` qui permet la déclaration d’une tâche pouvant être appelé depuis D. Ici, on la nomme `onLoad`.
 
-Then we have a left curly brace `{` with a right curly brace `}` some lines after.
-Those curly braces delimit the scope of the statement (here, the **main**).
+Les parenthèses suivantes permette de définir la *signature* de la fonction, comme on ne veut pas de paramètres, on laisse ces parenthèses vides.
 
-Everything inside those curly braces (called a **block**) will be executed when `main` is run.
+Ensuite une paire d’accolades entourent le `print`, elles détourent l’ensemble du code associé à la fonction `onLoad` qui sera exécuté à l’appel de la fonction.
 
-The whole `print("Hello World!");` form a single expression terminated by a semicolon.
-We pass the "Hello World!" string to the **print** primitive which will then display: `Hello World!`.
+La ligne `print("Hello World!");` forme une expression se terminant toujours par un point-virgule.
+On passe la chaîne de caractère « Hello World! » à la primitive `print` qui se chargera de l’afficher.

@@ -1,104 +1,120 @@
 # Variables
 
-Variable can store a value that can be used later.
-A variable is defined by its type and must be declared before use.
+Les variables peuvent stocker une valeur pour être réutilisé plus tard.
+Une variable est défini par son type et doit être déclaré avant tout usage.
 
 `int a = 0;`
-Here we created a variable **a** of type **int** initialized with the value **0**.
+Ici, on déclare une variable **a** de type **int** initialisée avec la valeur **0**.
 
-If we print the content of the variable with 'print(a)'. The prompt will display **0**.
+Si on affiche le contenu de la variable avec 'print(a)', on verra **0** d’affiché.
 
-All variables are initialized, if you don't assign anything, it'll have its default value.
+Toutes les variables sont initialisée, si on ne leur assigne rien, ils auront leur valeur par défaut.
 
-## Basic Types
-They're only a handful of basic type recognised by grimoire.
-* Integer declared with **int** ex: 2 (Default value: 0)
-* Floating point number declared with **real** ex: 2.35f (Default value: 0f)
-* Boolean declared with **bool** ex: true, false (Default value: false)
-* String declared with **string** ex: "Hello" (Default value: "")
-* [Array](#arrays) (Default value: [])
-* [Function](#functions) (Default value: empty function)
-* [Task](#tasks) (Default value: empty task)
-* [Channel](#channels) (Default value: size 1 channel)
-* [Class](#classes) (Default value: null)
-* [Foreign](#foreign-types) (Default value: null)
-* [Enumerations](#enumerations) (Default value: the first value)
+## Types Basiques
+Les types de bases en Grimoire peuvent se répartir dans ces différentes catégories:
+* Les entiers déclarés avec **int** ex: 2 (Valeur par défaut: 0)
+* Les nombres décimaux déclarés avec **real** ex: 2.35f (Valeur par défaut: 0f)
+* Les booléens déclarés avec **bool** ex: true, false (Valeur par défaut: false)
+* Les chaînes de caractères déclarés avec **string** ex: "Coucou" (Valeur par défaut: "")
+* [Les listes](#arrays) (Valeur par défaut: [])
+* [Les fonctions](#functions) (Valeur par défaut: fonction vide)
+* [Les tâches](#tasks) (Valeur par défaut: tâche vide)
+* [Les canaux](#channels) (Valeur par défaut: canal d’une taille de 1)
+* [Les classes](#classes) (Valeur par défaut: null)
+* [Les types étrangers](#foreign-types) (Valeur par défaut: null)
+* [Les énumérations](#enumerations) (Valeur par défaut: la première valeur)
 
-### Auto Type
-**let** is a special keyword that let the compiler automatically infer the type of a declared variable.
-Example:
+### Type Automatique
+`let` est un mot-clé se substituant à un type et permettant au compilateur d’inférer automatiquement le type d’une variable déclarée.
+Exemple:
 ```grimoire
 event onLoad() {
-  let a = 3.2; //'a' is inferred to be a real type.
-  print(a);
+    let a = 3.2; //'a' est automatiquement déclaré comme réel.
+    print(a);
 }
 ```
-let can only be used on variable declaration and cannot be part of a function signature because it's not a type !
+`let` peut seulement être utilisé lors d’une déclaration de variable et ne peut faire partie de la signature d’une fonction car ce n’est pas un type !
 
-Variables declared this way **must** be initialized.
+Les variables déclarées par ce biais **doivent** être initialisées.
 
-## Scope
-A variable can either be local or global.
-* A global variable is declared outside of any function/task/etc and is accessible in everywhere in every file.
-* A local variable is only accessible inside the function/task/etc where it was declared.
+## Portée
+Une variable peut-être soit locale soit globale.
+* Une variable globale est déclarée en dehors de toute fonction/tâche/etc et est accessible globalement.
+* Une variable locale n’est accessible que dans le bloc dans lequel il a été défini.
 
 Example:
 ```grimoire
-int globalVar; //Declared outside of any scope, accessible everywhere.
+int globalVar; //Déclaré globalement, accessible partout.
 
 event onLoad() {
-  int localVar; //Declared inside the main, only accessible within the main.
+    int localVar; //Declaré dans le onLoad, accessible uniquement dans onLoad.
 }
 ```
 
-### Public or private
-A global variable is only visible from its own file by default.
-To access it from another file, you have to declare it as public with the keyword `public`.
-```grimoire
-public int globalVar; //Now you can use it from another file.
-```
+### Redéclaration
+Une même variable locale peut être redéclarée autant de fois que nécessaire avec n’importe quel type, les règles de portée de cette nouvelle déclaration s’applique toujours comme indiqué ci-dessus.
 
-The same is true for declared types, or even classes’ fields. 
 ```grimoire
-public class A { //The class is visible globally.
-    public int a; //a is visible globally.
-    int b; //b is only visible in the file.
+event onLoad() {
+    int x = 5;
+    x:print; //Affiche 5
+    string x = "Bonjour";
+    x:print; // Affiche « Bonjour »
+
+    {
+        real x = 1.2;
+        x:print; // Affiche 1.2
+    }
+    x:print; // Affiche « Bonjour »
 }
 ```
 
-## Declaration List
+### Public et privé
+Une variable globale n’est par défaut visible que depuis son propre fichier.
+Pour y accéder depuis un autre fichier, on doit le déclarer en public avec le mot-clé `public`:
+```grimoire
+public int variableGlobale; //Utilisable depuis un autre fichier
+```
 
-You can also declare multiple variables at once separating each identifier with a comma.
+Ce principe s’applique également pour les types déclarés et les champs des classes.
+```grimoire
+public class A { //La classe est visible globalement
+    public int a; //a est visible globalement
+    int b; //b n’est visible que depuis ce fichier
+}
+```
+
+## Liste de Déclaration
+
+On peut déclarer plusieurs variable d’un même type en séparant chaque identifieur d’une virgule:
 > `int a, b;`
 
-Initialization will be done in the same order:
+L’initialisation des variables se fait dans l’ordre de déclaration:
 > `int a, b = 2, 3;`
-Here *a = 2* and *b = 3*.
+Ici *a vaut 2* et *b vaut 3*.
 
-If there is not enough values to assign, the other variable will be assigned the last value:
+S’il n’y a pas assez de valeurs à assigner, les autres variables seront affublées de la dernière valeur:
 > `int a, b, c = 2, 3;`
-Here *a = 2*, *b = 3*, *c = 3*.
+Ici *a vaut 2*, *b vaut 3* et *c vaut 3*.
 
-You can skip one or more values by leaving a blank comma, it'll then copy the last value:
-
+On peut passer outre une ou plusieurs valeurs en laissant des virgules vides, ça copiera la dernière valeur:
 > `int a, b, c = 12,, 5;`
-Both *a* and *b* are equal to *12* while *c* is equal to 5.
+*a* et *b* valent tout deux *12* alors que *c* vaut 5.
 
 > `int a, b, c, d = 12,,, 5;`
-Both *a*, *b*, and *c* are equal to *12* while *c* is equal to 5.
+*a*, *b* et *c* valent tous *12* pendant que *c* vaut 5.
 
-The first value cannot be blank, you **can't** do this:
+En revanche, la première valeur ne peut être manquante, ceci est illégal:
 > `int a, b, c = , 5, 2;`
 
+Chaque variable d’une liste d’initialisation sont du même type.
+Ex: `int a, b = 2, "Coucou"` déclenchera une erreur ca *b* s’attend à un **entier** et on lui passe une **chaîne de caractère**.
 
-Every variable on the same initialization list must be of the same type.
-Ex: `int a, b = 2, "Hi"` will raise an error because *b* is expected to be **int** and you are passing a **string**.
-
-But you can use **let** to initialize automatically different types :
-> `let a, b, c, d = 1, 2.3, "Hi!";`
+Il y a tout de même un moyen de déclarer des variables de types différents grâce à `let`:
+> `let a, b, c, d = 1, 2.3, "Coucou!";`
 
 Here:
-* *a = 1* and is of type **int**,
-* *b = 2.3* and is of type **real**,
-* *c = "Hi!"* and is of type **string**,
-* *d = "Hi!"* and is of type **string**.
+* *a vaut 1* et est de type **int**,
+* *b vaut 2.3* et est de type **real**,
+* *c vaut "Hi!"* et est de type **string**,
+* *d vaut "Hi!"* et est de type **string**.

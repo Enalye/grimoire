@@ -1,22 +1,22 @@
 - [Introduction](/fr/lang/intro)
 
-- Basics:
-  - [Syntax de base](/fr/lang/grammar)
+- Les Basiques:
+  - [Syntaxe de base](/fr/lang/grammar)
   - [Premier programme](/fr/lang/first-program)
   - [Importation de fichiers](/fr/lang/import)
   - [Variables](/fr/lang/variable)
   - [Structures de contrôle](/fr/lang/control-flow)
 
-- Functions:
+- Fonctions:
   - [Déclaration](/fr/lang/function)
   - [Tâches](/fr/lang/task)
   - [Généricité](/fr/lang/template-function)
   - [Fonctions et tâches anonymes](/fr/lang/anonymous-function)
   - [Événements](/fr/lang/event)
   - [Conversion de type](/fr/lang/type-casting)
-  - [Operateurs](/fr/lang/operators)
+  - [Opérateurs](/fr/lang/operators)
 
-- Compound types:
+- Types composés:
   - [Listes](/fr/lang/array)
   - [Énumérations](/fr/lang/enum)
   - [Classes](/fr/lang/class)

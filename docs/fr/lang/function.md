@@ -1,32 +1,34 @@
-# Functions
+# Fonctions
 
-Like any other language, functions behave the same. They are declared like this:
+Une fonction est un morceau de code qui peut être appelé depuis un autre endroit.
+Elles se déclarent comme ceci:
 ```grimoire
-function myFunction() {}
+function maFonction() {}
 ```
-Here, the function myFunction takes no parameter, returns nothing and do nothing, which is boring..
+Ici, on définit une fonction appelé `maFonction` qui ne prend ni ne retourne de valeur.
 
-Here is a function that takes 2 int, and returns the sum of them
+Là, on définit une fonction prennant deux entiers et retournant leur somme:
 ```grimoire
-function add(int a, int b) (int) {
+function additionne(int a, int b) (int) {
   return a + b;
 }
 ```
-The return type is always put after the parenthesis inside another pair of parenthesis. If there is no return type, you can put empty parenthesis `()` or nothing.
-If there is no return value, you can use return alone to exit the function anywhere.
+Les types de retour sont toujours mis entre parenthèses après la signature. S’il n’y a pas de type de retour, les parenthèses vides `()` deviennent optionnels.
+
+Sans type de retour, le `return` peut être utilisé sans valeur.
 ```grimoire
 function foo(int n) {
   if(n == 0) {
-    print("n is equal to 0");
-    return
+    print("n est égal à 0");
+    return;
   }
-  print("n is different from 0");
+  print("n est différent de 0");
 }
 ```
 
-A function can have multiple return values, the types returned must correspond to the signature of the function.
+Une fonction peut avoir plusieurs types de retour, le `return` doit retourner les valeurs du bon type et dans le bon ordre.
 ```grimoire
 function foo() (int, string, bool) {
-	return 5, "Hello", false;
+	return 5, "Coucou", false;
 }
 ```

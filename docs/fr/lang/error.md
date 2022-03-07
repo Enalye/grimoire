@@ -1,22 +1,22 @@
-# Error Handling
+# Gestion d’erreur
 
-Error handling in Grimoire is done by throwing and catching errors
+La gestion d’erreur se fait par l’envoi et la réception d’erreurs.
 
-To raise an error, simply write:
+Pour lancer une erreur, on notera:
 ```grimoire
-throw "Error";
+throw "Erreur";
 ```
-If you do nothing about it, the entire VM will panic, because the current task does nothing to catch it.
+Si l’on ne fait rien, la machine virtuelle paniquera car l’erreur se propagera sans jamais être attrapée.
 
-So we should probably catch it:
+On entoure donc l’erreur d’un bloc `try` suivi d’un `catch` optionnel pour gérer l’erreur:
 ```grimoire
 event onLoad() {
 	try {
-		throw "Error";
+		throw "Erreur";
 	}
 	catch(e) {
-		print("I caught " ~ e);
+		print("J’ai attrapé: " ~ e);
 	}
 }
 ```
-And everything is fine.
+Et l’exécution de la tâche peut se poursuivre normalement.

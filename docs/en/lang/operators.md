@@ -41,9 +41,9 @@ Overridable operators are:
 | `<-` | Receive | Prefix unary operator |
 | `<-` | Send | Binary operator |
 | `&`, `bit_and` | Bitwise And | Binary operator |
-| `|`, `bit_or` | Bitwise Or | Binary operator |
+| `\|`, `bit_or` | Bitwise Or | Binary operator |
 | `^`, `bit_xor` | Bitwise Xor | Binary operator |
 | `~`, `bit_not` | Bitwise Not | Prefix unary operator |
 | `&&`, `and` | Logical And | Binary operator |
-| `||`, `or` | Logical Or | Binary operator |
+| `\|\|`, `or` | Logical Or | Binary operator |
 | `!`, `not` | Logical Not | Prefix unary operator |
