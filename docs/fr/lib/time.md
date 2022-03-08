@@ -2,11 +2,11 @@
 ___
 ## Description
 
-Time related functions.
+Fonctions liées au temps.
 
-## Functions
+## Fonctions
 
-|Function|Input|Output|
+|Fonction|Entrée|Sortie|
 |-|-|-|
 |[hours](#hours_i)|int duration|int|
 |[hours](#hours_r)|real duration|int|
@@ -18,7 +18,7 @@ Time related functions.
 |[time](#time)||int|
 |[wait](#wait)|int steps||
 
-## Function Descriptions
+## Description des fonctions
 
 <a id="hours_i"></a>
 - hours ( int duration ) ( int )

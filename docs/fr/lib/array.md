@@ -1,14 +1,14 @@
 # array
 
-Built-in type.
+Type de base.
 
 ## Description
 
-An array is a list of values of the same type that can be stored together.
+Une array est une liste de valeur d’un même type pouvant être stockées ensemble.
 
-## Functions
+## Fonctions
 
-|Function|Input|Output|
+|Fonction|Entrée|Sortie|
 |-|-|-|
 |[clear](#clear)|[array](#array)(T) this|[array](#array)(T)|
 |[copy](#copy)|[array](#array)(T) this|[array](#array)(T)|
@@ -37,156 +37,156 @@ An array is a list of values of the same type that can be stored together.
 |[sliced](#sliced)|[array](#array)(T) this, int startIndex, int endIndex|[array](#array)(T)|
 |[unshift](#unshift)|[array](#array)(T) this, T value|[array](#array)(T)|
 
-## Function Descriptions
+## Description des fonctions
 
 <a id="clear"></a>
 - clear ( [array](#array)(T) this ) ( [array](#array)(T) )
 
-Empty the array.
+Vide la liste.
 ___
 
 <a id="copy"></a>
 - copy ( [array](#array)(T) this ) ( [array](#array)(T) )
 
-Returns a copy of the array.
+Retourne une copie de la liste.
 ___
 
 <a id="each"></a>
 - each ( [array](#array)(T) this ) ( [ArrayIterator](#arrayiterator) )
 
-Returns an iterator that iterate through each element.
+Retourne un itérateur itérant à travers chaque élément.
 ___
 
 <a id="empty"></a>
 - empty? ( [array](#array)(T) this ) ( bool )
 
-Returns `true` if the array has no element.
+Returne `true` si la liste ne contient rien.
 ___
 
 <a id="fill"></a>
 - fill ( [array](#array)(T) this, T value ) ( [array](#array)(T) )
 
-Replace the content of the array with `value`.
+Remplace le contenu de la liste par `value`.
 ___
 
 <a id="findFirst"></a>
 - findFirst ( [array](#array)(T) this, T value ) ( int )
 
-If `value` is found inside the array, returns the index of the first element found, otherwise -1 is returned.
+Si `value` est trouvé dans la liste, returne l’index du premier élement trouvé, sinon -1 est retourné.
 ___
 
 <a id="findLast"></a>
 - findLast ( [array](#array)(T) this, T value ) ( int )
 
-If `value` is found inside the array, returns the index of the last element found, otherwise -1 is returned.
+Si `value` est trouvé dans la liste, returne l’index du dernier élement trouvé, sinon -1 est retourné.
 ___
 
 <a id="first"></a>
 - first ( [array](#array)(T) this ) ( T )
 
-Returns the first element of the array.
+Retourne le premier élément de la liste.
 ___
 
 <a id="has"></a>
 - has? ( [array](#array)(T) this, T value ) ( bool )
 
-Returns `true` if the `value` is found inside the array.
+Returne `true` si `value` est trouvé dans la liste.
 ___
 
 <a id="insert"></a>
 - insert ( [array](#array)(T) this, int index, T value ) ( [array](#array)(T) )
 
-Insert the `value` to the array at the specified `index`.
+Insère `value` dans la liste à l’`index` spécifié.
 ___
 
 <a id="last"></a>
 - last ( [array](#array)(T) this ) ( T )
 
-Returns the last element of the array.
+Returne le dernier élément de la liste.
 ___
 
 <a id="pop_1"></a>
 - pop ( [array](#array)(T) this ) ( T )
 
-Remove the last element from the array.
+Retire le dernier élément de la liste et les retourne.
 ___
 
 <a id="pop_2"></a>
 - pop ( [array](#array)(T) this, int count ) ( [array](#array)(T) )
 
-Remove the last `count` element from the array.
+Retire `count` éléments de la liste et les retourne.
 ___
 
 <a id="push"></a>
 - push ( [array](#array)(T) this, [array](#array] value ) ( [array](#array)(T) )
 
-Append the `value` at the end of the array.
+Ajoute `value` en fin de liste.
 ___
 
 <a id="remove"></a>
 - remove ( [array](#array)(T) this, int index ) ( [array](#array)(T) )
 
-Delete the element at `index`.
+Retire l’élément à l’`index` spécifié.
 ___
 
 <a id="remove"></a>
 - remove ( [array](#array)(T) this, int startIndex, int endIndex ) ( [array](#array)(T) )
 
-Delete the elements between `startIndex` and `endIndex` included.
+Retire les éléments de `startIndex` à `endIndex` inclus.
 ___
 
 <a id="reverse"></a>
 - reverse ( [array](#array)(T) this ) ( [array](#array)(T) )
 
-Invert the array.
+Inverse la liste.
 ___
 
 <a id="shift_1"></a>
 - shift ( [array](#array)(T) this ) ( [array](#array)(T) )
 
-Remove the first element from the array.
+Retire le premier élément de la liste.
 ___
 
 <a id="shift_2"></a>
 - shift ( [array](#array)(T) this, int count ) ( [array](#array)(T) )
 
-Remove the first `count` element from the array.
+Retire les premiers `count` éléments de la liste.
 ___
 
 <a id="slice"></a>
 - slice ( [array](#array)(T) this, int startIndex, int endIndex ) ( [array](#array)(T) )
 
-Returns the array from `startIndex` to `endIndex` included.
+Retourne une portion de la liste de `startIndex` jusqu’à `endIndex` inclus.
 ___
 
 <a id="split"></a>
-- split ( [array](#array)(T) this, T value ) ( [array](#array)(T) )
+- split ( [array](#array)(T) this, T index ) ( [array](#array)(T) )
 
-Remove the first `count` element from the array.
+Coupe la liste en deux à l’`index` indiqué.
 ___
 
 <a id="unshift"></a>
 - unshift ( [array](#array)(T) this, T value ) ( [array](#array)(T) )
 
-Prepend the `value` at the beginning of the array.
+Ajoute `value` en début de liste.
 ___
 
 # ArrayIterator
 
 ## Description
 
-Provides a way to iterate through an array.
+Fournit un moyen d’itérer sur les éléments d’une liste.
 
-## Functions
+## Fonctions
 
-|Function|Input|Output|
+|Fonction|Entrée|Sortie|
 |-|-|-|
 |[next](#next)|[ArrayIterator](#arrayiterator)\<T\> this|bool, T|
 
-## Function Descriptions
+## Description des fonctions
 
 <a id="next"></a>
 - next ( [ArrayIterator](#arrayiterator)\<T\> ) ( bool, T )
 
-Advance the iterator to the next element.
-Returns `true` while the iterator hasn't reach the end and the current element.
+Avance l’itérateur à l’élément suivant.
+Retourne `true` tant que l’itérateur n’a pas atteint la fin de la liste et retourne l’élément actuel.

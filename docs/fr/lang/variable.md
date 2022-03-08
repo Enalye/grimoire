@@ -113,7 +113,7 @@ Ex: `int a, b = 2, "Coucou"` déclenchera une erreur ca *b* s’attend à un **e
 Il y a tout de même un moyen de déclarer des variables de types différents grâce à `let`:
 > `let a, b, c, d = 1, 2.3, "Coucou!";`
 
-Here:
+Ce qui donne:
 * *a vaut 1* et est de type **int**,
 * *b vaut 2.3* et est de type **real**,
 * *c vaut "Hi!"* et est de type **string**,

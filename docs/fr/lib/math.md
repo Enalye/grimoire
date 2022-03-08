@@ -1,16 +1,16 @@
 # math
 
-Math related functions.
+Fonctions liées aux maths.
 
-## Constants
+## Constantes
 
-|Constant|Type|
+|Constante|Type|
 |-|-|
 |PI|real|
 
-## Functions
+## Fonctions
 
-|Function|Input|Output|
+|Fonction|Entrée|Sortie|
 |-|-|-|
 |abs|int s|real|
 |abs|real s|real|
@@ -19,8 +19,8 @@ Math related functions.
 |atan|real s|real|
 |atan2|real a, real b|real|
 |ceil|real s|real|
-|clamp|int value, int min, int max|int|
-|clamp|real value, real min, real max|real|
+|clamp|int valeur, int min, int max|int|
+|clamp|real valeur, real min, real max|real|
 |cos|real s|real|
 |deg|real radians|real|
 |even?|real s|bool|
@@ -40,8 +40,8 @@ Math related functions.
 |odd?|real s|bool|
 |positive?|int s|bool|
 |positive?|real s|bool|
-|rad|real degrees|real|
-|rlerp|real min, real max, real value|real|
+|rad|real degrés|real|
+|rlerp|real min, real max, real valeur|real|
 |round|real s|real|
 |rand||real|
 |rand|int min, int max|int|
@@ -53,4 +53,4 @@ Math related functions.
 |zero?|int s|bool|
 |zero?|real s|bool|
 
-## Function Descriptions
+## Description des fonctions

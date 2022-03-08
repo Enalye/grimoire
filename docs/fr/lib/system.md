@@ -1,18 +1,18 @@
 # system
-___
+
 ## Description
 
-Basic functions.
+Functions basiques.
 
-## Functions
+## Fonctions
 
-|Function|Input|Output|
+|Fonction|Entrée|Sortie|
 |-|-|-|
 |[swap](#swap)|T a, T b|T, T|
 |[cond](#cond)|bool check, T a, T b|T|
 
 
-## Function Descriptions
+## Description des fonctions
 
 <a id="swap"></a>
 - swap ( T a, T b ) ( T, T )

@@ -1,4 +1,4 @@
-- [Standard Library](fr/lib/)
+- [Bibliothèque Standard](fr/lib/)
     - [array](fr/lib/array)
     - [bitmanip](fr/lib/bitmanip)
     - [channel](fr/lib/channel)
@@ -12,7 +12,7 @@
     - [system](fr/lib/system)
     - [time](fr/lib/time)
     - [typecast](fr/lib/typecast)
-- [Magia Library](fr/lib/magia)
+- [Bibliothèque de Magia](fr/lib/magia)
     - [color](fr/lib/color)
     - [vec2](fr/lib/vec2)
 

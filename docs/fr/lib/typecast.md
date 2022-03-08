@@ -2,11 +2,11 @@
 ___
 ## Description
 
-Conversion related functions.
+Fonctions de conversion.
 
 ## Casts
 
-|Cast|Input|Output|
+|Cast|Entrée|Sortie|
 |-|-|-|
 |as|real|int|
 |as|bool|int|

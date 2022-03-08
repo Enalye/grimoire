@@ -1,21 +1,21 @@
 # vec2
 
-Vector used for 2D math.
+Vecteur utilisé pour la géométrie en 2 dimensions.
 
 ## Description
 
-A pair of real values that can represents a single point of a direction in a 2 dimensional space.
+Une paire de valeurs réelles représentant un point ou une direction dans un espace à 2 dimensions.
 
-## Fields
+## Champs
 
-|Field|Type|
+|Champ|Type|
 |-|-|
 |x|real|
 |y|real|
 
-## Functions
+## Fonctions
 
-|Function|Input|Output|
+|Fonction|Entrée|Sortie|
 |-|-|-|
 |[vec2](#vec2_0)||[vec2](#vec2)|
 |[vec2](#vec2_1)|real x|[vec2](#vec2)|
@@ -56,7 +56,7 @@ A pair of real values that can represents a single point of a direction in a 2 d
 
 ---
 
-## Function Descriptions
+## Description des fonctions
 
 <a id="vec2_0"></a>
 - vec2 ( ) ( [vec2](#vec2) )

@@ -1,14 +1,14 @@
 # string
 
-Built-in type.
+Type de base.
 
 ## Description
 
-Type that can hold UTF-8 characters.
+Type pouvant contenir des caractères UTF-8.
 
-## Functions
+## Fonctions
 
-|Function|Input|Output|
+|Fonction|Entrée|Sortie|
 |-|-|-|
 |[each](#each)|[string](#string)|[StringIterator](#stringiterator)|
 |[empty?](#empty)|[string](#string) this|bool|
@@ -30,7 +30,7 @@ Type that can hold UTF-8 characters.
 |[split](#split)|[string](#string)(T) this, T value|[array](/fr/lib/array#array)([string](#string)))|
 |[unshift](#unshift)|[string](#string) this, [string](#string) value|[string](#string)|
 
-## Function Descriptions
+## Description des fonctions
 
 <a id="each"></a>
 - each ( [string](#string) this ) ( [StringIterator](#stringiterator) )
@@ -152,13 +152,13 @@ ___
 
 Provides a way to iterate through an array.
 
-## Functions
+## Fonctions
 
-|Function|Input|Output|
+|Fonction|Entrée|Sortie|
 |-|-|-|
 |[next](#next)|[StringIterator](#stringiterator) this|bool, [string](#string)|
 
-## Function Descriptions
+## Description des fonctions
 
 <a id="next"></a>
 - next ( [StringIterator](#stringiterator) ) ( bool, [string](#string) )

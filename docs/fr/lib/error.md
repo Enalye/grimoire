@@ -2,15 +2,15 @@
 
 ## Description
 
-Functions to help with error-handling.
+Fonctions pour aider la gestion d’erreur.
 
-## Functions
+## Fonctions
 
-|Function|Input|Output|
+|Fonction|Entrée|Sortie|
 |-|-|-|
 |assert|bool value||
 |assert|bool value, string message||
 |\_setMeta|string value||
 
-## Function Descriptions
+## Description des fonctions
 

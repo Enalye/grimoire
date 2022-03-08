@@ -1,5 +1,5 @@
 # Magia
 
-Magia is an upcoming 3D game engine in development by JonathKane (the best) and Enalye that uses Grimoire as a scripting language.
+Magia est un futur moteur 3D de jeu en développement par JonathKane (le boss) et Enalye qui se base sur Grimoire en tant que langage de script.
 
-This documentation lists the related types and functions associated with Magia.
+Cette documentation liste les types et fonctions associés à Magia.

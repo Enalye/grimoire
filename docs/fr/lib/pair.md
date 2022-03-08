@@ -2,18 +2,18 @@
 ___
 ## Description
 
-Pair of key/value
+Paire de clé/valeur.
 
-## Fields
+## Champs
 
-|Field|Type|
+|Champ|Type|
 |-|-|
 |key|T1|
 |value|T2|
 
-## Operators
+## Opérateurs
 
-|Operator|Input|Output|
+|Operator|Entrée|Sortie|
 |-|-|-|
 |=>|T1 key, T2 value|Pair\<T1, T2\>|
 

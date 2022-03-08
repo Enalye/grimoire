@@ -1,42 +1,42 @@
 # channel
 
-Built-in type.
+Type de base.
 
 ## Description
 
-A channel is a way of communication and synchronization between tasks.
+Un canal est un moyen de communication et de synchronisation entre tâches.
 
-## Functions
+## Fonctions
 
-|Function|Input|Output|
+|Fonction|Entrée|Sortie|
 |-|-|-|
 |[size](#size)|[channel](#channel)(T) this|int|
 |[capacity](#capacity)|[channel](#channel)(T) this|int|
 |[empty?](#empty)|[channel](#channel)(T) this|bool|
 |[full?](#full)|[channel](#channel)(T) this|bool|
 
-## Function Descriptions
+## Description des fonctions
 
 <a id="size"></a>
 - size ( [channel](#channel)(T) this ) ( int )
 
-Returns the current size of the channel.
+Retourne la taille actuelle du canal.
 ___
 
 <a id="capacity"></a>
 - capacity ( [channel](#channel)(T) this ) ( int )
 
-Returns the maximum capacity of the channel.
+Retourne la capacité maximal du canal.
 ___
 
 <a id="empty"></a>
 - empty? ( [channel](#channel)(T) this ) ( bool )
 
-Returns `true` when the channel holds no value.
+Returne `true` si le canal ne contient rien.
 ___
 
 <a id="full"></a>
 - full? ( [channel](#channel)(T) this ) ( bool )
 
-Returns `true` when the channel has reach its maximum capacity.
+Returne `true` si le canal a atteint sa capacité maximale.
 ___

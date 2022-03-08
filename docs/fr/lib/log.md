@@ -2,11 +2,11 @@
 
 ## Description
 
-Outputs values.
+Fonctions d’affichage d’information.
 
-## Functions
+## Fonctions
 
-|Function|Input|Output|
+|Fonction|Entrée|Sortie|
 |-|-|-|
 |print|int value||
 |print|bool value||
@@ -18,5 +18,5 @@ Outputs values.
 |print|[array](/fr/lib/array#array)([string](/fr/lib/string#string)) value||
 |print|T value||
 
-## Function Descriptions
+## Description des fonctions
 

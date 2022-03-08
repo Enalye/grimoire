@@ -2,123 +2,123 @@
 # HashMap\<T\>
 ## Description
 
-Dictionary that associates values by keys.
+Dictionnaire associant des valeurs par clés.
 
-## Functions
+## Fonctions
 
-|Function|Input|Output|
+|Fonction|Entrée|Sortie|
 |-|-|-|
-|[HashMap](#hashmap_1)|[array](/fr/lib/array#array)(string) keys, [array](/fr/lib/array#array)(T) values|[HashMap](#hashmap)\<T\>|
+|[HashMap](#hashmap_1)|[array](/fr/lib/array#array)(string) clés, [array](/fr/lib/array#array)(T) valeurs|[HashMap](#hashmap)\<T\>|
 |[HashMap](#hashmap_2)|[array](/fr/lib/array#array)([Pair](/fr/lib/pair#pair)\<[string](/fr/lib/string#string), T\>) pairs|[HashMap](#hashmap)\<T\>|
-|[clear](#clear)|[HashMap](#hashmap)\<T\> this|[HashMap](#hashmap)\<T\>|
-|[copy](#copy)|[HashMap](#hashmap)\<T\> this|[HashMap](#hashmap)\<T\>|
-|[each](#each)|[HashMap](#hashmap)\<T\> this|[HashMapIterator](#hashmapiterator)\<T\>|
-|[empty?](#empty)|[HashMap](#hashmap)\<T\> this|bool|
-|[get](#get)|[HashMap](#hashmap)\<T\> this, [string](/fr/lib/string#string) key|T|
-|[has?](#has)|[HashMap](#hashmap)\<T\> this, [string](/fr/lib/string#string) key|bool|
-|[keys](#keys)|[HashMap](#hashmap)\<T\> this|[array](/fr/lib/array#array)([string](/fr/lib/string#string))|
-|[remove](#remove)|[HashMap](#hashmap)\<T\> this, [string](/fr/lib/string#string) key||
-|[set](#set)|[HashMap](#hashmap)\<T\> this, [string](/fr/lib/string#string) key, T value||
-|[size](#size)|[HashMap](#hashmap)\<T\> this|int|
-|[values](#values)|[HashMap](#hashmap)\<T\> this|[array](/fr/lib/array#array)(T)|
+|[clear](#clear)|[HashMap](#hashmap)\<T\> hashmap|[HashMap](#hashmap)\<T\>|
+|[copy](#copy)|[HashMap](#hashmap)\<T\> hashmap|[HashMap](#hashmap)\<T\>|
+|[each](#each)|[HashMap](#hashmap)\<T\> hashmap|[HashMapIterator](#hashmapiterator)\<T\>|
+|[empty?](#empty)|[HashMap](#hashmap)\<T\> hashmap|bool|
+|[get](#get)|[HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé|T|
+|[has?](#has)|[HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé|bool|
+|[keys](#keys)|[HashMap](#hashmap)\<T\> hashmap|[array](/fr/lib/array#array)([string](/fr/lib/string#string))|
+|[remove](#remove)|[HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé||
+|[set](#set)|[HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé, T valeur||
+|[size](#size)|[HashMap](#hashmap)\<T\> hashmap|int|
+|[values](#values)|[HashMap](#hashmap)\<T\> hashmap|[array](/fr/lib/array#array)(T)|
 
-## Function Descriptions
+## Description des fonctions
 
 <a id="hashmap_1"></a>
-- HashMap ( [array](/fr/lib/array#array)(string) keys, [array](/fr/lib/array#array)(T) values ) ( [HashMap](#hashmap)\<T\> )
+- HashMap ( [array](/fr/lib/array#array)(string) clés, [array](/fr/lib/array#array)(T) valeurs ) ( [HashMap](#hashmap)\<T\> )
 
-Returns a new HashMap by associating each key with its corresponding value.
-`keys` and `values` sizes must match.
+Returne une nouvelle HashMap en associant chaque clé avec sa valeur correspondante.
+La taille de `clés` et de `valeurs` doivent correspondre.
 ___
 
 <a id="hashmap_2"></a>
-- HashMap ( [array](/fr/lib/array#array)([Pair](/fr/lib/pair#pair)\<[string](/fr/lib/string#string), T\>) pairs ) ( [HashMap](#hashmap)\<T\> )
+- HashMap ( [array](/fr/lib/array#array)([Pair](/fr/lib/pair#pair)\<[string](/fr/lib/string#string), T\>) paires ) ( [HashMap](#hashmap)\<T\> )
 
-Returns a new HashMap with `pairs`.
+Returne une nouvelle HashMap à partir des `paires`.
 ___
 
 <a id="clear"></a>
-- clear ( [HashMap](#hashmap)\<T\> this ) ( [HashMap](#hashmap)\<T\> )
+- clear ( [HashMap](#hashmap)\<T\> hashmap ) ( [HashMap](#hashmap)\<T\> )
 
-Empty the HashMap.
+Vide l’HashMap.
 ___
 
 <a id="copy"></a>
-- copy ( [HashMap](#hashmap)\<T\> this ) ( [HashMap](#hashmap)\<T\> )
+- copy ( [HashMap](#hashmap)\<T\> hashmap ) ( [HashMap](#hashmap)\<T\> )
 
-Returns a copy of the HashMap.
+Returne une copie de l’HashMap.
 ___
 
 <a id="each"></a>
-- each ( [HashMap](#hashmap)\<T\> this ) ( [HashMapIterator](#hashmapiterator)\<T\> )
+- each ( [HashMap](#hashmap)\<T\> hashmap ) ( [HashMapIterator](#hashmapiterator)\<T\> )
 
-Returns an iterator that iterate through each key/value pairs.
+Returne un itérateur permettant d’itérer sur chaque paire de clés/valeurs.
 ___
 
 <a id="empty"></a>
-- empty? ( [HashMap](#hashmap)\<T\> this ) ( bool )
+- empty? ( [HashMap](#hashmap)\<T\> hashmap ) ( bool )
 
-Returns `true` if the HashMap has no item.
+Returne `true` si l’HashMap ne contient rien.
 ___
 
 <a id="get"></a>
-- get ( [HashMap](#hashmap)\<T\> this, [string](/fr/lib/string#string) key ) ( T )
+- get ( [HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé ) ( T )
 
-Returns the value associated with the specified `key`.
+Returns the valeur associated with the specified `clé`.
 ___
 
 <a id="has"></a>
-- has? ( [HashMap](#hashmap)\<T\> this, [string](/fr/lib/string#string) key ) ( bool )
+- has? ( [HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé ) ( bool )
 
-Returns `true` if the `key` exists inside the HashMap.
+Returns `true` if the `clé` exists inside the HashMap.
 ___
 
 <a id="keys"></a>
-- keys ( [HashMap](#hashmap)\<T\> this ) ( [array](/fr/lib/array#array)([string](/fr/lib/string#string)) )
+- keys ( [HashMap](#hashmap)\<T\> hashmap ) ( [array](/fr/lib/array#array)([string](/fr/lib/string#string)) )
 
-Returns the list of all keys.
+Returns the list of all clés.
 ___
 
 <a id="remove"></a>
-- remove ( [HashMap](#hashmap)\<T\> this, [string](/fr/lib/string#string) key ) ( [HashMap](#hashmap)\<T\> )
+- remove ( [HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé ) ( [HashMap](#hashmap)\<T\> )
 
-Delete the entry `key`.
+Delete the entry `clé`.
 ___
 
 <a id="set"></a>
-- set ( [HashMap](#hashmap)\<T\> this, [string](/fr/lib/string#string) key, T value ) ( [HashMap](#hashmap)\<T\> )
+- set ( [HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé, T valeur ) ( [HashMap](#hashmap)\<T\> )
 
-Adds the specified `key` and `value` to the HashMap.
+Adds the specified `clé` and `valeur` to the HashMap.
 ___
 
 <a id="size"></a>
-- size ( [HashMap](#hashmap)\<T\> this ) ( int )
+- size ( [HashMap](#hashmap)\<T\> hashmap ) ( int )
 
 Returns the number of elements in the HashMap.
 ___
 
 <a id="values"></a>
-- values ( [HashMap](#hashmap)\<T\> this ) ( [array](/fr/lib/array#array)(T) )
+- values ( [HashMap](#hashmap)\<T\> hashmap ) ( [array](/fr/lib/array#array)(T) )
 
-Returns the list of all values.
+Returns the list of all valeurs.
 ___
 
 <a id="hashmapiterator"></a>
 # HashMapIterator\<T\>
 ## Description
 
-Provides a way to iterate through a hashmap.
+Fournit un moyen d’itérer sur une HashMap.
 
-## Functions
+## Fonctions
 
-|Function|Input|Output|
+|Fonction|Entrée|Sortie|
 |-|-|-|
-|[next](#next)|[HashMapIterator](#hashmapiterator)\<T\> this|bool, T|
+|[next](#next)|[HashMapIterator](#hashmapiterator)\<T\> iterateur|bool, T|
 
-## Function Descriptions
+## Description des fonctions
 
 <a id="next"></a>
-- next ( [HashMapIterator](#hashmapiterator)\<T\> ) ( bool, T )
+- next ( [HashMapIterator](#hashmapiterator)\<T\> iterateur ) ( bool, T )
 
-Advance the iterator to the next element.
-Returns `true` while the iterator hasn't reach the end and the current element.
+Advance l’itérateur à l’élément suivant.
+Retourne `true` tant que l’itérateur n’a pas atteint la fin de la liste et retourne l’élément actuel.

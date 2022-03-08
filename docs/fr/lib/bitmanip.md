@@ -2,10 +2,10 @@
 
 ## Description
 
-Operations to make bitwise manimulations.
+Opérations pour effectuer des opérations binaires
 
-## Functions
+## Fonctions
 
 
 
-## Function Descriptions
+## Description des fonctions

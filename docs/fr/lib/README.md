@@ -1,3 +1,3 @@
-# Grimoire Standard Library
+# Bibliothèque Standard de Grimoire
 
-The standard library is a set of basic types and functions embedded with Grimoire.
+La bibliothèque standard est un ensemble de types et fonctions basiques intégrés dans Grimoire.

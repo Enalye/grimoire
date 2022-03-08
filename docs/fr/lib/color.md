@@ -1,13 +1,12 @@
 # color
 
-Built-in type.
 
 ## Description
 
 
-## Functions
+## Fonctions
 
 
 
-## Function Descriptions
+## Description des fonctions
 
