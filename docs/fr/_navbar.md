@@ -1,0 +1,3 @@
+- Langue
+  - [:fr: Français](/fr/)
+  - [:uk: English](/en/)

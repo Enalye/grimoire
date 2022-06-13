@@ -12,6 +12,7 @@ import std.stdio;
 import grimoire.runtime;
 import grimoire.compiler.parser;
 import grimoire.compiler.type;
+import grimoire.compiler.constraint;
 import grimoire.compiler.mangle;
 import grimoire.compiler.data;
 
@@ -36,6 +37,8 @@ class GrPrimitive {
     bool isExplicit;
     /// If the primitive has a generic parameter type, it becomes abstract
     bool isAbstract;
+    /// Generic constraints
+    GrConstraint[] constraints;
 
     /// Ctor
     this() {}
@@ -50,5 +53,6 @@ class GrPrimitive {
         index = primitive.index;
         isExplicit = primitive.isExplicit;
         isAbstract = primitive.isAbstract;
+        constraints = primitive.constraints;
     }
 }

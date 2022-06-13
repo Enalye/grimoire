@@ -1,0 +1,2 @@
+- [:fr: Documentation française](/fr/)
+- [:uk: English documentation](/en/)

@@ -48,120 +48,73 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
     library.addForeign("HashMapIterator", ["T"]);
 
     static foreach (t; ["Int", "Real", "String", "Object"]) {
-        mixin("GrType any" ~ t ~ "HashMap = grAny(\"M\", (type, data) {
-                if (type.base != GrType.Base.foreign)
-                    return false;
-                auto subType = grUnmangleComposite(type.mangledType);
-                if(subType.name != \"HashMap\")
-                    return false;
-                if(subType.signature.length != 1)
-                    return false;
-                data.set(\"T\", subType.signature[0]);
-                data.set(\"A\", grArray(subType.signature[0]));
-                return grIsKindOf"
-                ~ t
-                ~ "(subType.signature[0].base);
-            });
+        mixin("
+            GrType " ~ t ~ "ValueType = grAny(\"T\");
+            GrType " ~ t ~ "HashMapType = grGetClassType(\"HashMap\", [" ~ t ~ "ValueType]);
+            GrType " ~ t ~ "PairType = grGetClassType(\"pair\", [grString, " ~ t ~ "ValueType]);
+            GrType " ~ t ~ "ArrayType = grArray(" ~ t ~ "ValueType);
 
-            GrType any"
-                ~ t ~ "Array = grAny(\"A\", (type, data) {
-                if (type.base != GrType.Base.array)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                data.set(\"M\", grGetForeignType(\"HashMap\", [subType]));
-                return grIsKindOf"
-                ~ t ~ "(subType.base);
-            });
+            GrType " ~ t ~ "IteratorType = grGetForeignType(\"HashMapIterator\", [" ~ t ~ "ValueType]);
+            static if(t == \"Object\") {
+                GrConstraint " ~ t ~ "Constraint = grConstraint(\"Register\", " ~ t ~ "ValueType,
+                    [GrType(GrType.Base.null_)]);
+            }
+            else {
+                GrConstraint " ~ t ~ "Constraint = grConstraint(\"Register\", " ~ t ~ "ValueType, [gr" ~ t ~ "]);
+            }
 
             library.addFunction(&_make_!\""
-                ~ t ~ "\", \"HashMap\", [grStringArray, any" ~ t
-                ~ "Array], [grAny(\"M\")]);
+                ~ t ~ "\", \"HashMap\", [grStringArray, " ~ t
+                ~ "ArrayType], [" ~ t ~ "HashMapType], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_makeByPairs_!\""
-                ~ t ~ "\", \"HashMap\", [grAny(\"T\", (type, data) {
-                if (type.base != GrType.Base.array)
-                    return false;
-                const GrType subType = grUnmangle(type.mangledType);
-                if(subType.base != GrType.Base.class_)
-                    return false;
-                auto pairType = grUnmangleComposite(subType.mangledType);
-                if(pairType.name != \"pair\" || pairType.signature.length != 2 || pairType.signature[0].base != GrType.Base.string_)
-                    return false;
-                data.set(\"M\", grGetForeignType(\"HashMap\", [pairType.signature[1]]));
-                return true;
-                })], [grAny(\"M\")]);
+                ~ t ~ "\", \"HashMap\", [" ~ t ~ "PairType],
+                [" ~ t ~ "HashMapType], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_copy_!\""
-                ~ t ~ "\", \"copy\", [any" ~ t ~ "HashMap], [grAny(\"M\")]);
+                ~ t ~ "\", \"copy\", [" ~ t ~ "HashMapType], [" ~ t ~ "HashMapType], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_size_!\""
-                ~ t ~ "\", \"size\", [any"
-                ~ t ~ "HashMap], [grInt]);
+                ~ t ~ "\", \"size\", ["
+                ~ t ~ "HashMapType], [grInt], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_empty_!\""
-                ~ t ~ "\", \"empty?\", [
-                any"
-                ~ t ~ "HashMap
-            ], [grBool]);
+                ~ t ~ "\", \"empty?\", [" ~ t ~ "HashMapType], [grBool], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_clear_!\""
-                ~ t ~ "\", \"clear\", [
-                any"
-                ~ t ~ "HashMap
-            ], [grAny(\"M\")]);
+                ~ t ~ "\", \"clear\", [" ~ t ~ "HashMapType
+            ], [" ~ t ~ "HashMapType], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_set_!\""
                 ~ t
-                ~ "\", \"set\", [any" ~ t ~ "HashMap, grString, grAny(\"T\")]);
+                ~ "\", \"set\", [" ~ t ~ "HashMapType, grString, " ~ t ~ "ValueType], [], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_get_!\""
                 ~ t
-                ~ "\", \"get\", [any" ~ t ~ "HashMap, grString], [grBool, grAny(\"T\")]);
+                ~ "\", \"get\", [" ~ t ~ "HashMapType, grString], [grBool, " ~ t ~ "ValueType], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_has_!\""
-                ~ t ~ "\", \"has?\", [any" ~ t ~ "HashMap, grString], [grBool]);
+                ~ t ~ "\", \"has?\", [" ~ t ~ "HashMapType, grString], [grBool], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_remove_!\""
                 ~ t
-                ~ "\", \"remove\", [any" ~ t ~ "HashMap, grString]);
+                ~ "\", \"remove\", [" ~ t ~ "HashMapType, grString], [], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_byKeys_!\""
-                ~ t ~ "\", \"keys\", [any" ~ t
-                ~ "HashMap], [grStringArray]);
+                ~ t ~ "\", \"keys\", [" ~ t ~ "HashMapType], [grStringArray], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_byValues_!\""
-                ~ t ~ "\", \"values\", [any" ~ t ~ "HashMap], [any"
-                ~ t ~ "Array]);
+                ~ t ~ "\", \"values\", [" ~ t ~ "HashMapType], ["
+                ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_each_!\""
-                ~ t ~ "\", \"each\", [
-                    grAny(\"A\", (type, data) {
-                if (type.base != GrType.Base.foreign)
-                    return false;
-                auto subType = grUnmangleComposite(type.mangledType);
-                if(subType.name != \"HashMap\")
-                    return false;
-                if(subType.signature.length != 1)
-                    return false;
-                data.set(\"R\", grGetForeignType(\"HashMapIterator\", subType.signature));
-                return grIsKindOf"
-                ~ t ~ "(subType.signature[0].base);
-            })
-                ], [grAny(\"R\")]);
+                ~ t ~ "\", \"each\", [" ~ t ~ "HashMapType
+                ], [" ~ t ~ "IteratorType], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_next_!\""
                 ~ t ~ "\", \"next\", [
-                    grAny(\"R\", (type, data) {
-                if (type.base != GrType.Base.foreign)
-                    return false;
-                auto result = grUnmangleComposite(type.mangledType);
-                if(result.signature.length != 1 || result.name != \"HashMapIterator\")
-                    return false;
-                data.set(\"T\", grGetClassType(\"pair\", [grString, result.signature[0]]));
-                return grIsKindOf"
-                ~ t ~ "(result.signature[0].base);
-                    })
-                ], [grBool, grAny(\"T\")]);
+                    " ~ t ~ "IteratorType
+                ], [grBool, " ~ t ~ "PairType], [" ~ t ~ "Constraint]);
             ");
     }
 

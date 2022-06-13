@@ -8,6 +8,7 @@ module grimoire.compiler;
 public {
 	import grimoire.compiler.util;
 	import grimoire.compiler.type;
+	import grimoire.compiler.constraint;
 	import grimoire.compiler.compiler;
 	import grimoire.compiler.lexer;
 	import grimoire.compiler.parser;

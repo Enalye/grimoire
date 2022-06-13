@@ -32,12 +32,11 @@ string grMangleSignature(GrType[] signature) {
 /// Reverse the mangling operation for a signature.
 GrType[] grUnmangleSignature(string mangledSignature) {
     GrType[] unmangledSignature;
-
     int i;
     while (i < mangledSignature.length) {
         //Type separator
         if (mangledSignature[i] != '$') {
-            throw new Exception("Invalid unmangle signature mangling format, missing $");
+            throw new Exception("invalid unmangle signature mangling format, missing $");
         }
         i++;
 
@@ -46,6 +45,24 @@ GrType[] grUnmangleSignature(string mangledSignature) {
         switch (mangledSignature[i]) {
         case '*':
             currentType.base = GrType.Base.void_;
+            break;
+        case '?':
+            currentType.base = GrType.Base.void_;
+            currentType.isAny = true;
+            string templateName;
+            if ((i + 2) >= mangledSignature.length)
+                throw new Exception("invalid unmangle mangling format in template variable");
+            i++;
+            if (mangledSignature[i] != '(')
+                throw new Exception("invalid unmangle mangling format in template variable");
+            i++;
+            while (mangledSignature[i] != ')') {
+                templateName ~= mangledSignature[i];
+                i++;
+                if (i >= mangledSignature.length)
+                    throw new Exception("invalid unmangle mangling format in template variable");
+            }
+            currentType.mangledType = templateName;
             break;
         case 'i':
             currentType.base = GrType.Base.int_;
@@ -68,30 +85,30 @@ GrType[] grUnmangleSignature(string mangledSignature) {
             currentType.base = GrType.Base.enum_;
             string enumName;
             if ((i + 2) >= mangledSignature.length)
-                throw new Exception("Invalid mangling format");
+                throw new Exception("invalid mangling format");
             i++;
             if (mangledSignature[i] != '(')
-                throw new Exception("Invalid mangling format");
+                throw new Exception("invalid mangling format");
             i++;
             while (mangledSignature[i] != ')') {
                 enumName ~= mangledSignature[i];
                 i++;
                 if (i >= mangledSignature.length)
-                    throw new Exception("Invalid mangling format");
+                    throw new Exception("invalid mangling format");
             }
             currentType.mangledType = enumName;
             break;
         case 'p':
             currentType.base = GrType.Base.class_;
             if ((i + 2) >= mangledSignature.length)
-                throw new Exception("Invalid mangling format");
+                throw new Exception("invalid mangling format");
             i++;
             currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             break;
         case 'u':
             currentType.base = GrType.Base.foreign;
             if ((i + 2) >= mangledSignature.length)
-                throw new Exception("Invalid mangling format");
+                throw new Exception("invalid mangling format");
             i++;
             currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             break;
@@ -161,7 +178,7 @@ string grUnmangleBlock(string mangledSignature, ref int i) {
     string subString;
     int blockCount = 1;
     if (i >= mangledSignature.length || mangledSignature[i] != '(')
-        throw new Exception("Invalid subType mangling format, missing (");
+        throw new Exception("invalid subType mangling format, missing (");
     i++;
 
     for (; i < mangledSignature.length; i++) {
@@ -180,12 +197,16 @@ string grUnmangleBlock(string mangledSignature, ref int i) {
         }
         subString ~= mangledSignature[i];
     }
-    throw new Exception("Invalid subType mangling format, missing )");
+    throw new Exception("invalid subType mangling format, missing )");
 }
 
 /// Mangling operation for a single type.
 string grMangle(GrType type) {
     string mangledName = "$";
+    if(type.isAny) {
+        mangledName ~= "?(" ~ type.mangledType ~ ")";
+        return mangledName;
+    }
     final switch (type.base) with (GrType.Base) {
     case void_:
         mangledName ~= "*";
@@ -243,13 +264,31 @@ GrType grUnmangle(string mangledSignature) {
     if (i < mangledSignature.length) {
         //Type separator
         if (mangledSignature[i] != '$')
-            throw new Exception("Invalid unmangle mangling format, missing $");
+            throw new Exception("invalid unmangle mangling format, missing $");
         i++;
 
         //Value
         switch (mangledSignature[i]) {
         case '*':
             currentType.base = GrType.Base.void_;
+            break;
+        case '?':
+            currentType.base = GrType.Base.void_;
+            currentType.isAny = true;
+            string templateName;
+            if ((i + 2) >= mangledSignature.length)
+                throw new Exception("invalid unmangle mangling format in template variable");
+            i++;
+            if (mangledSignature[i] != '(')
+                throw new Exception("invalid unmangle mangling format in template variable");
+            i++;
+            while (mangledSignature[i] != ')') {
+                templateName ~= mangledSignature[i];
+                i++;
+                if (i >= mangledSignature.length)
+                    throw new Exception("invalid unmangle mangling format in template variable");
+            }
+            currentType.mangledType = templateName;
             break;
         case 'i':
             currentType.base = GrType.Base.int_;
@@ -273,16 +312,16 @@ GrType grUnmangle(string mangledSignature) {
             currentType.base = GrType.Base.enum_;
             string enumName;
             if ((i + 2) >= mangledSignature.length)
-                throw new Exception("Invalid unmangle mangling format in struct");
+                throw new Exception("invalid unmangle mangling format in enum");
             i++;
             if (mangledSignature[i] != '(')
-                throw new Exception("Invalid unmangle mangling format in struct");
+                throw new Exception("invalid unmangle mangling format in enum");
             i++;
             while (mangledSignature[i] != ')') {
                 enumName ~= mangledSignature[i];
                 i++;
                 if (i >= mangledSignature.length)
-                    throw new Exception("Invalid unmangle mangling format in struct");
+                    throw new Exception("invalid unmangle mangling format in enum");
             }
             currentType.mangledType = enumName;
             break;
@@ -290,16 +329,16 @@ GrType grUnmangle(string mangledSignature) {
             currentType.base = GrType.Base.class_;
             string structName;
             if ((i + 2) >= mangledSignature.length)
-                throw new Exception("Invalid unmangle mangling format in struct");
+                throw new Exception("invalid unmangle mangling format in struct");
             i++;
             if (mangledSignature[i] != '(')
-                throw new Exception("Invalid unmangle mangling format in struct");
+                throw new Exception("invalid unmangle mangling format in struct");
             i++;
             while (mangledSignature[i] != ')') {
                 structName ~= mangledSignature[i];
                 i++;
                 if (i >= mangledSignature.length)
-                    throw new Exception("Invalid unmangle mangling format in struct");
+                    throw new Exception("invalid unmangle mangling format in struct");
             }
             currentType.mangledType = structName;
             break;
@@ -307,16 +346,16 @@ GrType grUnmangle(string mangledSignature) {
             currentType.base = GrType.Base.foreign;
             string foreignName;
             if ((i + 2) >= mangledSignature.length)
-                throw new Exception("Invalid unmangle mangling format in foreign");
+                throw new Exception("invalid unmangle mangling format in foreign");
             i++;
             if (mangledSignature[i] != '(')
-                throw new Exception("Invalid unmangle mangling format in foreign");
+                throw new Exception("invalid unmangle mangling format in foreign");
             i++;
             while (mangledSignature[i] != ')') {
                 foreignName ~= mangledSignature[i];
                 i++;
                 if (i >= mangledSignature.length)
-                    throw new Exception("Invalid unmangle mangling format in foreign");
+                    throw new Exception("invalid unmangle mangling format in foreign");
             }
             currentType.mangledType = foreignName;
             break;

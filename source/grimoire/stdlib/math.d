@@ -12,17 +12,20 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
     library.addVariable("PI", grReal, PI, true);
 
-    library.addFunction(&_min_f, "min", [grReal, grReal], [grReal]);
+    library.addFunction(&_min_r, "min", [grReal, grReal], [grReal]);
     library.addFunction(&_min_i, "min", [grInt, grInt], [grInt]);
-    library.addFunction(&_max_f, "max", [grReal, grReal], [grReal]);
+    library.addFunction(&_max_r, "max", [grReal, grReal], [grReal]);
     library.addFunction(&_max_i, "max", [grInt, grInt], [grInt]);
 
-    library.addFunction(&_clamp, "clamp", [grReal, grReal, grReal], [
+    library.addFunction(&_clamp_r, "clamp", [grReal, grReal, grReal], [
             grReal
+        ]);
+    library.addFunction(&_clamp_i, "clamp", [grInt, grInt, grInt], [
+            grInt
         ]);
 
     library.addFunction(&_rand01, "rand", [], [grReal]);
-    library.addFunction(&_rand_f, "rand", [grReal, grReal], [grReal]);
+    library.addFunction(&_rand_r, "rand", [grReal, grReal], [grReal]);
     library.addFunction(&_rand_i, "rand", [grInt, grInt], [grInt]);
 
     library.addFunction(&_deg, "deg", [grReal], [grReal]);
@@ -42,7 +45,7 @@ package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
     library.addFunction(&_log10, "log10", [grReal], [grReal]);
     library.addFunction(&_sqrt, "sqrt", [grReal], [grReal]);
     library.addOperator(&_pow_i, GrLibrary.Operator.power, [grInt, grInt], grInt);
-    library.addOperator(&_pow_f, GrLibrary.Operator.power, [grReal, grReal], grReal);
+    library.addOperator(&_pow_r, GrLibrary.Operator.power, [grReal, grReal], grReal);
 
     library.addFunction(&_lerp, "lerp", [grReal, grReal, grReal], [grReal]);
     library.addFunction(&_rlerp, "rlerp", [grReal, grReal, grReal], [
@@ -50,23 +53,23 @@ package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
         ]);
 
     library.addFunction(&_abs_i, "abs", [grInt], [grInt]);
-    library.addFunction(&_abs_f, "abs", [grReal], [grReal]);
+    library.addFunction(&_abs_r, "abs", [grReal], [grReal]);
     library.addFunction(&_floor, "floor", [grReal], [grReal]);
     library.addFunction(&_ceil, "ceil", [grReal], [grReal]);
     library.addFunction(&_round, "round", [grReal], [grReal]);
     library.addFunction(&_truncate, "truncate", [grReal], [grReal]);
     library.addFunction(&_positive_i, "positive?", [grInt], [grBool]);
-    library.addFunction(&_positive_f, "positive?", [grReal], [grBool]);
+    library.addFunction(&_positive_r, "positive?", [grReal], [grBool]);
     library.addFunction(&_negative_i, "negative?", [grInt], [grBool]);
-    library.addFunction(&_negative_f, "negative?", [grReal], [grBool]);
+    library.addFunction(&_negative_r, "negative?", [grReal], [grBool]);
     library.addFunction(&_zero_i, "zero?", [grInt], [grBool]);
-    library.addFunction(&_zero_f, "zero?", [grReal], [grBool]);
+    library.addFunction(&_zero_r, "zero?", [grReal], [grBool]);
     library.addFunction(&_nan, "invalid?", [grReal], [grBool]);
     library.addFunction(&_even, "even?", [grInt], [grBool]);
     library.addFunction(&_odd, "odd?", [grInt], [grBool]);
 }
 
-private void _min_f(GrCall call) {
+private void _min_r(GrCall call) {
     const GrReal a = call.getReal(0);
     const GrReal b = call.getReal(1);
     call.setReal(a < b ? a : b);
@@ -78,7 +81,7 @@ private void _min_i(GrCall call) {
     call.setInt(a < b ? a : b);
 }
 
-private void _max_f(GrCall call) {
+private void _max_r(GrCall call) {
     const GrReal a = call.getReal(0);
     const GrReal b = call.getReal(1);
     call.setReal(a > b ? a : b);
@@ -90,15 +93,19 @@ private void _max_i(GrCall call) {
     call.setInt(a > b ? a : b);
 }
 
-private void _clamp(GrCall call) {
+private void _clamp_r(GrCall call) {
     call.setReal(clamp(call.getReal(0), call.getReal(1), call.getReal(2)));
+}
+
+private void _clamp_i(GrCall call) {
+    call.setInt(clamp(call.getInt(0), call.getInt(1), call.getInt(2)));
 }
 
 private void _rand01(GrCall call) {
     call.setReal(uniform01());
 }
 
-private void _rand_f(GrCall call) {
+private void _rand_r(GrCall call) {
     const GrReal a = call.getReal(0);
     const GrReal b = call.getReal(1);
     if (a < b)
@@ -176,7 +183,7 @@ private void _pow_i(GrCall call) {
     call.setInt(pow(call.getInt(0), call.getInt(1)));
 }
 
-private void _pow_f(GrCall call) {
+private void _pow_r(GrCall call) {
     call.setReal(pow(call.getReal(0), call.getReal(1)));
 }
 
@@ -202,7 +209,7 @@ private void _abs_i(GrCall call) {
     call.setInt(abs(call.getInt(0)));
 }
 
-private void _abs_f(GrCall call) {
+private void _abs_r(GrCall call) {
     call.setReal(abs(call.getReal(0)));
 }
 
@@ -226,7 +233,7 @@ private void _positive_i(GrCall call) {
     call.setBool(call.getInt(0) > 0);
 }
 
-private void _positive_f(GrCall call) {
+private void _positive_r(GrCall call) {
     call.setBool(call.getReal(0) > 0);
 }
 
@@ -234,7 +241,7 @@ private void _negative_i(GrCall call) {
     call.setBool(call.getInt(0) < 0);
 }
 
-private void _negative_f(GrCall call) {
+private void _negative_r(GrCall call) {
     call.setBool(call.getReal(0) < 0);
 }
 
@@ -242,7 +249,7 @@ private void _zero_i(GrCall call) {
     call.setBool(call.getInt(0) == 0);
 }
 
-private void _zero_f(GrCall call) {
+private void _zero_r(GrCall call) {
     call.setBool(call.getReal(0) == 0);
 }
 

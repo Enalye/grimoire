@@ -20,6 +20,7 @@ import grimoire.compiler.util;
 import grimoire.compiler.lexer;
 import grimoire.compiler.mangle;
 import grimoire.compiler.type;
+import grimoire.compiler.constraint;
 import grimoire.compiler.primitive;
 import grimoire.compiler.data;
 import grimoire.compiler.pretty;
@@ -615,6 +616,34 @@ final class GrParser {
         if (result.prim)
             return result;
 
+        __functionLoop: foreach (GrTemplateFunction temp; templatedFunctions) {
+            if (temp.name == name && (temp.fileId == fileId || temp.isPublic || isPublic)) {
+                GrAnyData anyData = new GrAnyData;
+                _data.setAnyData(anyData);
+                if (_data.isAbstractSignatureCompatible(signature, temp.inSignature, fileId, isPublic)) {
+                    foreach (GrConstraint constraint; temp.constraints) {
+                        if (!constraint.evaluate(_data, anyData))
+                            continue __functionLoop;
+                    }
+                    GrType[] templateSignature;
+                    for (int i; i < temp.templateVariables.length; ++i) {
+                        templateSignature ~= anyData.get(temp.templateVariables[i]);
+                    }
+                    GrFunction func = parseTemplatedFunctionDeclaration(temp, templateSignature);
+                    functionsQueue ~= func;
+
+                    functionStack ~= currentFunction;
+                    currentFunction = func;
+                    generateFunctionInputs();
+                    currentFunction = functionStack[$ - 1];
+                    functionStack.length--;
+
+                    result.func = func;
+                    return result;
+                }
+            }
+        }
+
         return result;
     }
 
@@ -661,6 +690,33 @@ final class GrParser {
         foreach (GrFunction func; instanciatedFunctions) {
             if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
                 if (_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic)) {
+                    functionsQueue ~= func;
+
+                    functionStack ~= currentFunction;
+                    currentFunction = func;
+                    generateFunctionInputs();
+                    currentFunction = functionStack[$ - 1];
+                    functionStack.length--;
+
+                    return func;
+                }
+            }
+        }
+
+        __functionLoop: foreach (GrTemplateFunction temp; templatedFunctions) {
+            if (temp.name == name && (temp.fileId == fileId || temp.isPublic || isPublic)) {
+                GrAnyData anyData = new GrAnyData;
+                _data.setAnyData(anyData);
+                if (_data.isAbstractSignatureCompatible(signature, temp.inSignature, fileId, isPublic)) {
+                    foreach (GrConstraint constraint; temp.constraints) {
+                        if (!constraint.evaluate(_data, anyData))
+                            continue __functionLoop;
+                    }
+                    GrType[] templateSignature;
+                    for (int i; i < temp.templateVariables.length; ++i) {
+                        templateSignature ~= anyData.get(temp.templateVariables[i]);
+                    }
+                    GrFunction func = parseTemplatedFunctionDeclaration(temp, templateSignature);
                     functionsQueue ~= func;
 
                     functionStack ~= currentFunction;
@@ -1931,7 +1987,6 @@ final class GrParser {
                 skipDeclaration();
                 break;
             case alias_:
-            case template_:
             default:
                 skipExpression();
                 break;
@@ -1962,7 +2017,6 @@ final class GrParser {
             case enum_:
                 skipDeclaration();
                 break;
-            case template_:
             default:
                 skipExpression();
                 break;
@@ -2006,7 +2060,6 @@ final class GrParser {
             case autoType:
             case identifier:
             case alias_:
-            case template_:
                 skipExpression();
                 break;
             default:
@@ -2035,9 +2088,6 @@ final class GrParser {
             case enum_:
             case class_:
                 skipDeclaration();
-                break;
-            case template_:
-                parseTemplateDeclaration(isPublic);
                 break;
             case taskType:
                 if (get(1).type != GrLexeme.Type.identifier && get(1).type != GrLexeme.Type.lesser)
@@ -2099,10 +2149,10 @@ final class GrParser {
             _data.addTemplateAlias(func.templateVariables[i],
                 func.templateSignature[i], func.fileId, func.isPublic);
         }
-
-        openDeferrableSection();
         current = func.lexPosition;
-        parseBlock();
+        parseWhereStatement(func.templateVariables);
+        openDeferrableSection();
+        parseBlock(false, true);
         if (func.isTask || func.isEvent) {
             if (!currentFunction.instructions.length
                 || currentFunction.instructions[$ - 1].opcode != GrOpcode.die)
@@ -2404,11 +2454,20 @@ final class GrParser {
         }
     }
 
-    private GrType parseType(bool mustBeType = true) {
+    private GrType parseType(bool mustBeType = true, string[] templateVariables = [
+        ]) {
         GrType currentType = GrType.Base.void_;
 
         GrLexeme lex = get();
         if (!lex.isType) {
+            if (lex.type == GrLexeme.Type.identifier) {
+                foreach (tempVar; templateVariables) {
+                    if (tempVar == lex.svalue) {
+                        checkAdvance();
+                        return grAny(lex.svalue);
+                    }
+                }
+            }
             if (lex.type == GrLexeme.Type.identifier
                 && _data.isTypeAlias(lex.svalue, lex.fileId, false)) {
                 currentType = _data.getTypeAlias(lex.svalue, lex.fileId).type;
@@ -2419,7 +2478,8 @@ final class GrParser {
                 && _data.isClass(lex.svalue, lex.fileId, false)) {
                 currentType.base = GrType.Base.class_;
                 checkAdvance();
-                currentType.mangledType = grMangleComposite(lex.svalue, parseTemplateSignature());
+                currentType.mangledType = grMangleComposite(lex.svalue, parseTemplateSignature(
+                        templateVariables));
                 if (mustBeType) {
                     GrClassDefinition class_ = getClass(currentType.mangledType, lex.fileId);
                     if (!class_)
@@ -2441,7 +2501,8 @@ final class GrParser {
                 currentType.base = GrType.Base.foreign;
                 currentType.mangledType = lex.svalue;
                 checkAdvance();
-                currentType.mangledType = grMangleComposite(lex.svalue, parseTemplateSignature());
+                currentType.mangledType = grMangleComposite(lex.svalue, parseTemplateSignature(
+                        templateVariables));
                 if (mustBeType) {
                     GrForeignDefinition foreign = _data.getForeign(currentType.mangledType);
                     if (!foreign)
@@ -2484,7 +2545,7 @@ final class GrParser {
             currentType.base = GrType.Base.array;
             checkAdvance();
             string[] temp;
-            auto signature = parseInSignature(temp, true);
+            auto signature = parseInSignature(temp, true, templateVariables);
             if (signature.length > 1) {
                 logError(getError(Error.arrayCanOnlyContainOneTypeOfVal), getError(Error.conflictingArraySignature),
                     format(getError(Error.tryUsingXInstead), getPrettyType(grArray(signature[0]))), -1);
@@ -2499,20 +2560,20 @@ final class GrParser {
             currentType.base = GrType.Base.function_;
             checkAdvance();
             string[] temp;
-            currentType.mangledType = grMangleSignature(parseInSignature(temp, true));
+            currentType.mangledType = grMangleSignature(parseInSignature(temp, true, templateVariables));
             currentType.mangledReturnType = grMangleSignature(parseOutSignature());
             break;
         case taskType:
             currentType.base = GrType.Base.task;
             checkAdvance();
             string[] temp;
-            currentType.mangledType = grMangleSignature(parseInSignature(temp, true));
+            currentType.mangledType = grMangleSignature(parseInSignature(temp, true, templateVariables));
             break;
         case channelType:
             currentType.base = GrType.Base.channel;
             checkAdvance();
             string[] temp;
-            GrType[] signature = parseInSignature(temp, true);
+            GrType[] signature = parseInSignature(temp, true, templateVariables);
             if (signature.length != 1)
                 logError(getError(Error.channelCanOnlyContainOneTypeOfVal), getError(Error.conflictingChannelSignature),
                     format(getError(Error.tryUsingXInstead), getPrettyType(grChannel(signature[0]))), -1);
@@ -2672,7 +2733,7 @@ final class GrParser {
         return variables;
     }
 
-    private GrType[] parseTemplateSignature() {
+    private GrType[] parseTemplateSignature(string[] templateVariables = []) {
         GrType[] signature;
         if (get().type != GrLexeme.Type.lesser)
             return signature;
@@ -2682,7 +2743,7 @@ final class GrParser {
             return signature;
         }
         for (;;) {
-            signature ~= parseType();
+            signature ~= parseType(true, templateVariables);
 
             const GrLexeme lex = get();
             if (lex.type == GrLexeme.Type.greater) {
@@ -2698,7 +2759,8 @@ final class GrParser {
         return signature;
     }
 
-    private GrType[] parseInSignature(ref string[] inputVariables, bool asType = false) {
+    private GrType[] parseInSignature(ref string[] inputVariables, bool asType = false, string[] templateVariables = [
+        ]) {
         GrType[] inSignature;
 
         if (get().type != GrLexeme.Type.leftParenthesis)
@@ -2714,8 +2776,7 @@ final class GrParser {
             if (startLoop && lex.type == GrLexeme.Type.rightParenthesis)
                 break;
             startLoop = false;
-
-            inSignature ~= parseType();
+            inSignature ~= parseType(true, templateVariables);
 
             //If we want to know whether it's a type or an anon, we can't throw exceptions.
             if (isTypeChecking) {
@@ -2758,7 +2819,7 @@ final class GrParser {
         return inSignature;
     }
 
-    private GrType[] parseOutSignature() {
+    private GrType[] parseOutSignature(string[] templateVariables = []) {
         GrType[] outSignature;
         if (get().type != GrLexeme.Type.leftParenthesis)
             return outSignature;
@@ -2768,7 +2829,7 @@ final class GrParser {
             return outSignature;
         }
         for (;;) {
-            outSignature ~= parseType();
+            outSignature ~= parseType(true, templateVariables);
 
             const GrLexeme lex = get();
             if (lex.type == GrLexeme.Type.rightParenthesis) {
@@ -2797,7 +2858,7 @@ final class GrParser {
         checkAdvance();
         GrType[] signature = parseInSignature(inputs);
         preBeginFunction(name, get().fileId, signature, inputs, false, [], false, true, true);
-        skipBlock();
+        skipBlock(true);
         preEndFunction();
     }
 
@@ -2819,14 +2880,11 @@ final class GrParser {
         temp.isPublic = isPublic;
         temp.lexPosition = current;
 
-        if (templateVariables.length)
-            templatedFunctions ~= temp;
-        else
-            instanciatedFunctions ~= parseTemplatedFunctionDeclaration(temp, []);
-
-        if (get().type == GrLexeme.Type.leftParenthesis)
-            skipParenthesis();
-        skipBlock();
+        string[] inputs;
+        temp.inSignature = parseInSignature(inputs, false, templateVariables);
+        temp.constraints = parseWhereStatement(templateVariables);
+        templatedFunctions ~= temp;
+        skipBlock(true);
     }
 
     private void parseFunctionDeclaration(bool isPublic) {
@@ -2873,64 +2931,65 @@ final class GrParser {
         temp.isPublic = isPublic;
         temp.lexPosition = current;
 
-        if (templateVariables.length)
-            templatedFunctions ~= temp;
-        else
-            instanciatedFunctions ~= parseTemplatedFunctionDeclaration(temp, []);
-
-        if (get().type == GrLexeme.Type.leftParenthesis)
-            skipParenthesis();
-        if (get().type == GrLexeme.Type.leftParenthesis)
-            skipParenthesis();
-        skipBlock();
+        string[] inputs;
+        temp.inSignature = parseInSignature(inputs, false, templateVariables);
+        temp.outSignature = parseOutSignature(templateVariables);
+        temp.constraints = parseWhereStatement(templateVariables);
+        templatedFunctions ~= temp;
+        skipBlock(true);
     }
 
-    private void parseTemplateDeclaration(bool isPublic) {
-        checkAdvance();
-        if (get().type != GrLexeme.Type.lesser)
-            logError(getError(Error.missingTemplateSignature),
-                format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.lesser), getPrettyLexemeType(
-                    get().type)));
-
-        GrType[] templateList = parseTemplateSignature();
-
-        string name;
-        if (get().type == GrLexeme.Type.identifier) {
-            name = get().svalue;
-        }
-        else if (get().isOverridableOperator()) {
-            name = "@op_" ~ getPrettyLexemeType(get().type);
-        }
-        else if (get().isOperator) {
-            logError(format(getError(Error.cantOverrideXOp), getPrettyLexemeType(get()
-                    .type)), getError(Error.opCantBeOverriden));
-        }
-        else {
-            logError(format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get()
-                    .type)), getError(Error.missingIdentifier));
-        }
-
-        const uint fileId = get().fileId;
+    private GrConstraint[] parseWhereStatement(string[] templateVariables) {
+        GrConstraint[] constraints;
+        if (get().type != GrLexeme.Type.where)
+            return constraints;
         checkAdvance();
 
-        if (!templateList.length)
-            logError(getError(Error.emptyTemplateSignature), getError(
-                    Error.templateSignatureCantBeEmpty), "", -1);
+        for(;;) {
+            GrType type = parseType(true, templateVariables);
 
-        if (get().type != GrLexeme.Type.semicolon)
-            logError(getError(Error.missingSemicolonAfterTemplateDecl),
-                format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                    GrLexeme.Type.semicolon), getPrettyLexemeType(get().type)));
-        checkAdvance();
+            if (get().type != GrLexeme.Type.colon)
+                logError(getError(Error.expectedColonAfterType),
+                    format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                        GrLexeme.Type.colon), getPrettyLexemeType(get().type)));
+            checkAdvance();
 
-        foreach (GrTemplateFunction temp; templatedFunctions) {
-            if (temp.name == name && (temp.fileId == fileId || temp.isPublic)
-                && temp.templateVariables.length == templateList.length) {
-                GrFunction func = parseTemplatedFunctionDeclaration(temp, templateList);
-                func.isPublic = isPublic;
-                instanciatedFunctions ~= func;
+            if (get().type != GrLexeme.Type.identifier)
+                logError(getError(Error.missingConstraint),
+                    format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                        GrLexeme.Type.identifier), getPrettyLexemeType(get().type)));
+
+            GrConstraint.Data constraintData = grGetConstraint(get().svalue);
+            if (!constraintData.predicate) {
+                const string[] nearestValues = findNearestStrings(get().svalue, grGetAllConstraintsName());
+                string errorNote;
+                if (nearestValues.length) {
+                    foreach (size_t i, const string value; nearestValues) {
+                        errorNote ~= "`" ~ value ~ "`";
+                        if ((i + 1) < nearestValues.length)
+                            errorNote ~= ", ";
+                    }
+                    errorNote ~= ".";
+                }
+                logError(getError(Error.missingConstraint),
+                    format(getError(Error.xIsNotAKnownConstraint), get().svalue),
+                    format(getError(Error.validConstraintsAreX), errorNote));
             }
+            checkAdvance();
+            GrType[] parameters = parseTemplateSignature(templateVariables);
+            constraints ~= new GrConstraint(constraintData.predicate, constraintData.arity, type, parameters);
+            if (constraintData.arity != parameters.length)
+                logError(format(getError(constraintData.arity > 1 ? Error.constraintTakesXArgsButYWereSupplied
+                        : Error.constraintTakesXArgButYWereSupplied), constraintData.arity, parameters
+                        .length),
+                    format(getError(constraintData.arity > 1 ? Error.expectedXArgsFoundY
+                        : Error.expectedXArgFoundY), constraintData.arity, parameters.length), "", -1);
+
+            if(get().type != GrLexeme.Type.comma)
+                break;
+            advance();
         }
+        return constraints;
     }
 
     private GrFunction parseTemplatedFunctionDeclaration(GrTemplateFunction temp,
@@ -3033,7 +3092,7 @@ final class GrParser {
     /**
     Parse either multiple lines between `{` and `}` or a single expression.
     */
-    private void parseBlock(bool changeOptimizationBlockLevel = false) {
+    private void parseBlock(bool changeOptimizationBlockLevel = false, bool mustBeMultiline = false) {
         if (changeOptimizationBlockLevel)
             _isAssignationOptimizable = false;
         bool isMultiline;
@@ -3043,6 +3102,11 @@ final class GrParser {
                 logError(getError(Error.eof),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
                         GrLexeme.Type.rightCurlyBrace), getPrettyLexemeType(get().type)));
+        }
+        else if (mustBeMultiline) {
+            logError(getError(Error.missingCurlyBraces),
+                format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                    GrLexeme.Type.leftCurlyBrace), getPrettyLexemeType(get().type)));
         }
         openBlock();
 
@@ -3163,7 +3227,7 @@ final class GrParser {
         return isDecl;
     }
 
-    private void skipBlock() {
+    private void skipBlock(bool mustBeMultiline = false) {
         bool isMultiline;
         if (get().type == GrLexeme.Type.leftCurlyBrace) {
             isMultiline = true;
@@ -3171,6 +3235,11 @@ final class GrParser {
                 logError(getError(Error.eof),
                     format(getError(Error.expectedXFoundY), getPrettyLexemeType(
                         GrLexeme.Type.rightCurlyBrace), getPrettyLexemeType(get().type)));
+        }
+        else if (mustBeMultiline) {
+            logError(getError(Error.missingCurlyBraces),
+                format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                    GrLexeme.Type.leftCurlyBrace), getPrettyLexemeType(get().type)));
         }
         openBlock();
 
@@ -4972,53 +5041,79 @@ final class GrParser {
         GrType arrayType = GrType(GrType.Base.array);
         GrType subType = grVoid;
         const uint fileId = get().fileId;
+        int arraySize, defaultArraySize;
 
-        //Explicit type like: array(int)[1, 2, 3]
+        //Explicit type like: array(int)[1, 2, 3] or default size like: array(int, 5)
         if (get().type == GrLexeme.Type.arrayType) {
             checkAdvance();
-            string[] temp;
-            auto signature = parseInSignature(temp, true);
-            if (signature.length > 1)
-                logError(getError(Error.arrayCanOnlyContainOneTypeOfVal), getError(Error.conflictingArraySignature),
-                    format(getError(Error.tryUsingXInstead), getPrettyType(grArray(signature[0]))), -1);
-            subType = signature[0];
-            arrayType.mangledType = grMangleSignature(signature);
-            if (subType.base == GrType.Base.void_)
-                logError(format(getError(Error.arrayCantBeOfTypeX), getPrettyType(arrayType)),
-                    getError(Error.invalidArrayType));
+            if (get().type != GrLexeme.Type.leftParenthesis)
+                logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexeme.Type.channelType)),
+                    format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                        GrLexeme.Type.leftParenthesis), getPrettyLexemeType(get().type)));
+            checkAdvance();
+            subType = parseType();
+
+            GrLexeme lex = get();
+            if (lex.type == GrLexeme.Type.comma) {
+                checkAdvance();
+                lex = get();
+                if (lex.type != GrLexeme.Type.int_)
+                    logError(getError(Error.arraySizeMustBePositive),
+                        format(getError(Error.expectedIntFoundX), getPrettyLexemeType(get().type)));
+                defaultArraySize = lex.ivalue > int.max ? 0 : cast(int) lex.ivalue;
+                if (defaultArraySize < 0)
+                    logError(getError(Error.arraySizeMustBeZeroOrHigher),
+                        format(getError(Error.expectedAtLeastSizeOf1FoundX), defaultArraySize));
+                checkAdvance();
+            }
+            else if (lex.type != GrLexeme.Type.rightParenthesis) {
+                logError(getError(Error.missingCommaOrRightParenthesisInsideArraySignature),
+                    format(getError(Error.expectedCommaOrRightParenthesisFoundX), getPrettyLexemeType(get()
+                        .type)));
+            }
+            lex = get();
+            if (lex.type != GrLexeme.Type.rightParenthesis)
+                logError(getError(Error.missingParenthesesAfterArraySignature),
+                    format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                        GrLexeme.Type.rightParenthesis), getPrettyLexemeType(get().type)));
+            checkAdvance();
+            arrayType.mangledType = grMangleSignature([subType]);
         }
 
-        if (get().type != GrLexeme.Type.leftBracket)
-            logError(format(getError(Error.missingBracketsAfterX), getPrettyType(arrayType)),
-                format(getError(Error.expectedXFoundY), getPrettyLexemeType(get().type)));
-        advance();
+        if (get().type == GrLexeme.Type.leftBracket) {
+            advance();
 
-        int arraySize;
-        while (get().type != GrLexeme.Type.rightBracket) {
-            if (subType.base == GrType.Base.void_) {
-                //Implicit type specified by the type of the first element.
-                subType = parseSubExpression(
-                    GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA
-                        | GR_SUBEXPR_EXPECTING_VALUE).type;
-                arrayType.mangledType = grMangleSignature([subType]);
-                if (subType.base == GrType.Base.void_)
-                    logError(format(getError(Error.arrayCantBeOfTypeX), getPrettyType(arrayType)),
-                        getError(Error.invalidArrayType));
-            }
-            else {
-                convertType(parseSubExpression(
-                        GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_EXPECTING_VALUE)
-                        .type, subType, fileId);
-            }
-            arraySize++;
+            while (get().type != GrLexeme.Type.rightBracket) {
+                if (subType.base == GrType.Base.void_) {
+                    //Implicit type specified by the type of the first element.
+                    subType = parseSubExpression(
+                        GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA
+                            | GR_SUBEXPR_EXPECTING_VALUE).type;
+                    arrayType.mangledType = grMangleSignature([subType]);
+                    if (subType.base == GrType.Base.void_)
+                        logError(format(getError(Error.arrayCantBeOfTypeX), getPrettyType(arrayType)),
+                            getError(Error.invalidArrayType));
+                }
+                else {
+                    convertType(parseSubExpression(
+                            GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_EXPECTING_VALUE)
+                            .type, subType, fileId);
+                }
+                arraySize++;
 
-            if (get().type == GrLexeme.Type.rightBracket)
-                break;
-            if (get().type != GrLexeme.Type.comma)
-                logError(getError(Error.indexesShouldBeSeparatedByComma),
-                    format(getError(Error.expectedXFoundY), getPrettyLexemeType(
-                        GrLexeme.Type.comma), getPrettyLexemeType(get().type)));
+                if (get().type == GrLexeme.Type.rightBracket)
+                    break;
+                if (get().type != GrLexeme.Type.comma)
+                    logError(getError(Error.indexesShouldBeSeparatedByComma),
+                        format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                            GrLexeme.Type.comma), getPrettyLexemeType(get().type)));
+                checkAdvance();
+            }
             checkAdvance();
+        }
+
+        for (; arraySize < defaultArraySize; ++arraySize) {
+            addDefaultValue(subType, fileId);
         }
 
         final switch (subType.base) with (GrType.Base) {
@@ -5049,7 +5144,6 @@ final class GrParser {
                 getError(Error.invalidArrayType));
             break;
         }
-        advance();
         return arrayType;
     }
 
@@ -6800,10 +6894,12 @@ final class GrParser {
         eventAlreadyPublic,
         cantOverrideXOp,
         opCantBeOverriden,
-        missingTemplateSignature,
-        emptyTemplateSignature,
-        templateSignatureCantBeEmpty,
-        missingSemicolonAfterTemplateDecl,
+        missingConstraint,
+        xIsNotAKnownConstraint,
+        validConstraintsAreX,
+        expectedColonAfterType,
+        constraintTakesXArgButYWereSupplied,
+        constraintTakesXArgsButYWereSupplied,
         convMustHave1RetVal,
         convMustHave1Param,
         expected1ParamFoundX,
@@ -6819,10 +6915,14 @@ final class GrParser {
         cantContinueOutsideLoop,
         xNotValidRetType,
         chanSizeMustBePositive,
+        arraySizeMustBePositive,
         missingCommaOrRightParenthesisInsideChanSignature,
+        missingCommaOrRightParenthesisInsideArraySignature,
         missingParenthesesAfterChanSignature,
+        missingParenthesesAfterArraySignature,
         expectedIntFoundX,
         chanSizeMustBeOneOrHigher,
+        arraySizeMustBeZeroOrHigher,
         expectedAtLeastSizeOf1FoundX,
         expectedCommaOrRightParenthesisFoundX,
         chanCantBeOfTypeX,
@@ -6867,7 +6967,6 @@ final class GrParser {
         unknownField,
         expectedFieldNameFoundX,
         missingField,
-        missingBracketsAfterX,
         indexesShouldBeSeparatedByComma,
         missingVal,
         expectedIndexFoundComma,
@@ -7027,10 +7126,12 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.eventAlreadyPublic: "event is already public",
                 Error.cantOverrideXOp: "can't override `%s` operator",
                 Error.opCantBeOverriden: "this operator can't be overriden",
-                Error.missingTemplateSignature: "missing template signature",
-                Error.emptyTemplateSignature: "empty template signature",
-                Error.templateSignatureCantBeEmpty: "the template signature can't be empty",
-                Error.missingSemicolonAfterTemplateDecl: "missing semicolon after template declaration",
+                Error.missingConstraint: "missing constraint",
+                Error.xIsNotAKnownConstraint: "`%s` is not a known constraint",
+                Error.validConstraintsAreX: "valid constraints are: %s",
+                Error.expectedColonAfterType: "`:` expected after a type",
+                Error.constraintTakesXArgButYWereSupplied: "the constraint takes %s argument but %s were supplied",
+                Error.constraintTakesXArgsButYWereSupplied: "the constraint takes %s arguments but %s were supplied",
                 Error.convMustHave1RetVal: "a conversion must have only one return value",
                 Error.convMustHave1Param: "a conversion must have only one parameter",
                 Error.expected1ParamFoundX: "expected 1 parameter, found %s parameter",
@@ -7046,10 +7147,14 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.continueOutsideLoop: "`continue` outside of a loop",
                 Error.cantContinueOutsideLoop: "can't `continue` outside of a loop",
                 Error.xNotValidRetType: "`%s` is not a valid return type",
-                Error.chanSizeMustBePositive: "a channel size must be a positive int_ value",
+                Error.chanSizeMustBePositive: "a channel size must be a positive integer value",
+                Error.arraySizeMustBePositive: "an array size must be a positive integer value",
                 Error.missingCommaOrRightParenthesisInsideChanSignature: "missing `,` or `)` inside channel signature",
+                Error.missingCommaOrRightParenthesisInsideArraySignature: "missing `,` or `)` inside array signature",
                 Error.missingParenthesesAfterChanSignature: "missing parentheses after the channel signature",
+                Error.missingParenthesesAfterArraySignature: "missing parentheses after the array signature",
                 Error.chanSizeMustBeOneOrHigher: "the channel size must be one or higher",
+                Error.arraySizeMustBeZeroOrHigher: "the array size must be zero or higher",
                 Error.expectedAtLeastSizeOf1FoundX: "expected at least a size of 1, found %s",
                 Error.expectedCommaOrRightParenthesisFoundX: "expected `,` or `)`, found `%s`",
                 Error.chanCantBeOfTypeX: "a channel can't be of type `%s`",
@@ -7090,7 +7195,6 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.fieldXNotExist: "the field `%s` doesn't exist",
                 Error.expectedFieldNameFoundX: "expected field name, found `%s`",
                 Error.missingField: "missing field",
-                Error.missingBracketsAfterX: "missing brackets after `%s`",
                 Error.indexesShouldBeSeparatedByComma: "indexes should be separated by a comma",
                 Error.missingVal: "missing value",
                 Error.expectedIndexFoundComma: "an index is expected, found `,`",
@@ -7241,10 +7345,12 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.eventAlreadyPublic: "les events sont déjà publiques",
                 Error.cantOverrideXOp: "impossible de surcharger l’opérateur `%s`",
                 Error.opCantBeOverriden: "cet opérateur ne peut être surchargé",
-                Error.missingTemplateSignature: "signature de patron manquante",
-                Error.emptyTemplateSignature: "signature de patron vide",
-                Error.templateSignatureCantBeEmpty: "la signature du patron ne peut être vide",
-                Error.missingSemicolonAfterTemplateDecl: "point-virgule manquant après la déclaration du patron",
+                Error.missingConstraint: "contrainte manquante",
+                Error.xIsNotAKnownConstraint: "`%s` n’est pas une contrainte connue",
+                Error.validConstraintsAreX: "les contraintes valides sont: %s",
+                Error.expectedColonAfterType: "`:` attendu après le type",
+                Error.constraintTakesXArgButYWereSupplied: "cette contrainte prend %s argument mais %s ont été fournis",
+                Error.constraintTakesXArgsButYWereSupplied: "cette contrainte prend %s arguments mais %s ont été fournis",
                 Error.convMustHave1RetVal: "une conversion ne peut avoir qu’une seule valeur de retour",
                 Error.convMustHave1Param: "une conversion ne peut avoir qu’un seul paramètre",
                 Error.expected1ParamFoundX: "1 paramètre attendu, %s paramètre trouvé",
@@ -7261,9 +7367,13 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.cantContinueOutsideLoop: "impossible de `continue` en dehors d’une boucle",
                 Error.xNotValidRetType: "`%s` n’est pas un type de retour valide",
                 Error.chanSizeMustBePositive: "la taille d’un canal doit être un entier positif",
+                Error.arraySizeMustBePositive: "la taille d’une liste doit être un entier positif",
                 Error.missingCommaOrRightParenthesisInsideChanSignature: "`,` ou `)` manquant dans la signature du canal",
+                Error.missingCommaOrRightParenthesisInsideArraySignature: "`,` ou `)` manquant dans la signature de la liste",
                 Error.missingParenthesesAfterChanSignature: "parenthèses manquantes après la signature du canal",
+                Error.missingParenthesesAfterArraySignature: "parenthèses manquantes après la signature de la liste",
                 Error.chanSizeMustBeOneOrHigher: "la taille du canal doit être de un ou plus",
+                Error.arraySizeMustBeZeroOrHigher: "la taille d’une liste doit être supérieure à zéro",
                 Error.expectedAtLeastSizeOf1FoundX: "une taille de 1 minimum attendue, %s trouvé",
                 Error.expectedCommaOrRightParenthesisFoundX: "`,` ou `)` attendu, `%s` trouvé",
                 Error.chanCantBeOfTypeX: "un canal ne peut être de type `%s`",
@@ -7304,7 +7414,6 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.fieldXNotExist: "le champ `%s` n’existe pas",
                 Error.expectedFieldNameFoundX: "nom de champ attendu, `%s` trouvé",
                 Error.missingField: "champ manquant",
-                Error.missingBracketsAfterX: "il manque les crochets après `%s`",
                 Error.indexesShouldBeSeparatedByComma: "les index doivent être séparés par une virgule",
                 Error.missingVal: "valeur manquante",
                 Error.expectedIndexFoundComma: "un index est attendu, `,` trouvé",

@@ -25,16 +25,16 @@ package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library) {
             rangeIteratorIntType
         ]);
 
-    library.addFunction(&_range_next_f, "next", [rangeIteratorRealType], [
+    library.addFunction(&_range_next_r, "next", [rangeIteratorRealType], [
             grBool, grReal
         ]);
-    library.addOperator(&_range_f, GrLibrary.Operator.interval, [
+    library.addOperator(&_range_r, GrLibrary.Operator.interval, [
             grReal, grReal
         ], rangeIteratorRealType);
-    library.addFunction(&_range_f, "range", [grReal, grReal], [
+    library.addFunction(&_range_r, "range", [grReal, grReal], [
             rangeIteratorRealType
         ]);
-    library.addFunction(&_range_step_f, "range", [
+    library.addFunction(&_range_step_r, "range", [
             grReal, grReal, grReal
         ],
         [rangeIteratorRealType]);
@@ -79,7 +79,7 @@ private void _range_step_i(GrCall call) {
     call.setForeign(iter);
 }
 
-private void _range_next_f(GrCall call) {
+private void _range_next_r(GrCall call) {
     RangeIterator!GrReal iter = call.getForeign!(RangeIterator!GrReal)(0);
     if (!iter) {
         call.raise("NullError");
@@ -95,7 +95,7 @@ private void _range_next_f(GrCall call) {
     iter.value += iter.step;
 }
 
-private void _range_f(GrCall call) {
+private void _range_r(GrCall call) {
     RangeIterator!GrReal iter = new RangeIterator!GrReal;
     iter.value = call.getReal(0);
     iter.end = call.getReal(1);
@@ -103,7 +103,7 @@ private void _range_f(GrCall call) {
     call.setForeign(iter);
 }
 
-private void _range_step_f(GrCall call) {
+private void _range_step_r(GrCall call) {
     RangeIterator!GrReal iter = new RangeIterator!GrReal;
     iter.value = call.getReal(0);
     iter.end = call.getReal(1);

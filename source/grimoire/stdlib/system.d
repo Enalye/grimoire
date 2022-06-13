@@ -9,38 +9,45 @@ import grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 package void grLoadStdLibSystem(GrLibrary library) {
+    GrConstraint constraint1, constraint2;
     static foreach (t1; ["Int", "Real", "String", "Ptr"]) {
         static foreach (t2; ["Int", "Real", "String", "Ptr"]) {
+            static if (t1 == "Ptr") {
+                constraint1 = grConstraint("Register", grAny("T1"), [
+                        GrType(GrType.Base.null_)
+                    ]);
+            }
+            else {
+                mixin("constraint1 = grConstraint(\"Register\", grAny(\"T1\"), [gr" ~ t1 ~ "]);");
+            }
+
+            static if (t2 == "Ptr") {
+                constraint2 = grConstraint("Register", grAny("T2"), [
+                        GrType(GrType.Base.null_)
+                    ]);
+            }
+            else {
+                mixin("constraint2 = grConstraint(\"Register\", grAny(\"T2\"), [gr" ~ t2 ~ "]);");
+            }
+
             library.addFunction(&_swap_2_!(t1, t2), "swap", [
-                    grAny("1", (type, data) {
-                        static if (t1 == "Ptr") {
-                            return grIsKindOfObject(type.base);
-                        }
-                        else {
-                            mixin("return grIsKindOf" ~ t1 ~ "(type.base);");
-                        }
-                    }), grAny("2", (type, data) {
-                        static if (t2 == "Ptr") {
-                            return grIsKindOfObject(type.base);
-                        }
-                        else {
-                            mixin("return grIsKindOf" ~ t2 ~ "(type.base);");
-                        }
-                    })
-                ], [grAny("2"), grAny("1")]);
+                    grAny("T1"), grAny("T2")
+                ], [grAny("T2"), grAny("T1")], [constraint1, constraint2]);
         }
     }
     static foreach (t; ["Int", "Real", "String", "Ptr"]) {
+        static if (t == "Ptr") {
+            constraint1 = grConstraint("Register", grAny("T1"), [
+                    GrType(GrType.Base.null_)
+                ]);
+        }
+        else {
+            mixin("constraint1 = grConstraint(\"Register\", grAny(\"T1\"), [gr" ~ t ~ "]);");
+        }
+
         library.addFunction(&_cond_!t, "cond", [
-                grBool, grAny("T", (type, data) {
-                    static if (t == "Ptr") {
-                        return grIsKindOfObject(type.base);
-                    }
-                    else {
-                        mixin("return grIsKindOf" ~ t ~ "(type.base);");
-                    }
-                }), grAny("T")
-            ], [grAny("T")]);
+                grBool, grAny("T1"), grAny("T1")
+            ], [grAny("T1")], [constraint1]);
     }
 
     library.addFunction(&_typeOf, "typeof", [grAny("T")], [grString]);

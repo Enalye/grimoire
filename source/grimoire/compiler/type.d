@@ -11,6 +11,7 @@ import grimoire.runtime;
 import grimoire.assembly;
 import grimoire.compiler.mangle;
 import grimoire.compiler.data;
+import grimoire.compiler.constraint;
 
 /**
 Compiler type definition for Grimoire's type system.
@@ -53,8 +54,6 @@ struct GrType {
     /// Is the type abstract ?
     /// An abstract type cannot be used in signatures.
     bool isAbstract;
-    /// Predicate to validate any type
-    bool function(GrType, GrAnyData) predicate;
 
     /// Init as a basic type.
     this(Base base_) {
@@ -158,13 +157,12 @@ GrType grTask(GrType[] signature) {
     return GrType(GrType.Base.task, grMangleSignature(signature));
 }
 
-/// Special type the matches another type with a predicate.
-GrType grAny(string name, bool function(GrType, GrAnyData) predicate = (a, b) => true) {
+/// Temporary type for template functions.
+GrType grAny(string name) {
     GrType type;
     type.base = GrType.Base.void_;
     type.mangledType = name;
     type.isAny = true;
-    type.predicate = predicate;
     return type;
 }
 
@@ -573,6 +571,8 @@ package class GrTemplateFunction {
     uint fileId;
 
     string[] templateVariables;
+
+    GrConstraint[] constraints;
 
     uint lexPosition;
 }
