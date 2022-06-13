@@ -645,6 +645,7 @@ class GrEngine {
                     }
                     else {
                         //No need to flag if the call stack is empty without any deferred statement.
+                        currentTask.isKilled = true;
                         _tasks = _tasks.remove(index);
                         continue tasksLabel;
                     }
