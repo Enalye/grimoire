@@ -2256,6 +2256,14 @@ final class GrParser {
             logError(format(getError(Error.nameXDefMultipleTimes), className),
                 format(getError(Error.xAlreadyDecl), className));
         _data.registerClass(className, fileId, isPublic, templateVariables, declPosition);
+
+        if (get(1).type != GrLexeme.Type.leftCurlyBrace) {
+            checkAdvance();
+            logError(getError(Error.classHaveNoBody),
+                format(getError(Error.expectedXFoundY), getPrettyLexemeType(
+                    GrLexeme.Type.leftCurlyBrace), getPrettyLexemeType(get().type)));
+        }
+
         skipDeclaration();
     }
 
