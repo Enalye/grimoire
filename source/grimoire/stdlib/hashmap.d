@@ -73,10 +73,10 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
             library.addConstructor(&_new_!\""
                 ~ t ~ "\", " ~ t ~ "HashMapType, [], [" ~ t ~ "Constraint]);
 
-            library.addFunction(&_newByArray_!\""
+            library.addConstructor(&_newByArray_!\""
                 ~ t ~ "\", " ~ t ~ "HashMapType, [grStringArray, " ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
 
-            library.addFunction(&_newByPairs_!\""
+            library.addConstructor(&_newByPairs_!\""
                 ~ t ~ "\", " ~ t ~ "HashMapType, [" ~ t ~ "PairType], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_copy_!\""
