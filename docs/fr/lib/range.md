@@ -3,16 +3,16 @@
 ## Description
 
 
-## Functions
+## Fonctions
 
-|Function|Input|Output|
+|Fonction|Entrée|Sortie|
 |-|-|-|
 |[range](#range_i2)|int from, int to|[RangeIterator](#rangeiterator)\<int\>|
 |[range](#range_r2)|real from, real to|[RangeIterator](#rangeiterator)\<real\>|
 |[range](#range_i3)|int from, int to, int step|[RangeIterator](#rangeiterator)\<int\>|
 |[range](#range_r3)|real from, real to, real step|[RangeIterator](#rangeiterator)\<real\>|
 
-## Function Descriptions
+## Description des fonctions
 
 <a id="range_i2"></a>
 - range ( int from, int to ) ( [RangeIterator](#rangeiterator)\<int\> )
@@ -40,14 +40,14 @@ ___
 
 # RangeIterator
 
-## Functions
+## Fonctions
 
-|Function|Input|Output|
+|Fonction|Entrée|Sortie|
 |-|-|-|
 |[next](#next_i)|[RangeIterator](#rangeiterator)\<int\> this|bool, int|
 |[next](#next_r)|[RangeIterator](#rangeiterator)\<real\> this|bool, real|
 
-## Function Descriptions
+## Description des fonctions
 
 <a id="next_i"></a>
 - next ( [RangeIterator](#rangeiterator)\<int\> ) ( bool, T )

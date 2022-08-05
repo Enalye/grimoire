@@ -72,9 +72,6 @@ final class GrData {
 
         foreach (string name, string alias_; library._aliases) {
             _aliases[name] = alias_;
-            import std.stdio;
-
-            writeln(name, " -> ", alias_);
         }
     }
 
@@ -727,6 +724,8 @@ final class GrData {
         auto nbParameters = primitive.inSignature.length;
         if (primitive.name == "@as")
             nbParameters = 1;
+        else if (primitive.name == "@new")
+            nbParameters--;
         result ~= "(";
         for (int i; i < nbParameters; i++) {
             result ~= grGetPrettyType(primitive.inSignature[i]);

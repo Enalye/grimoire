@@ -44,7 +44,7 @@ package(grimoire.stdlib) void grLoadStdLibPair(GrLibrary library) {
                     [gr" ~ t2 ~ "]);
                 }
                 
-                library.addOperator(&_makeKeyValuePair_!(\""
+                library.addOperator(&_newKeyValuePair_!(\""
                     ~ t1 ~ "\", \"" ~ t2
                     ~ "\"), GrLibrary.Operator.arrow, [grAny(\"T1\"), grAny(\"T2\")],
                         grGetClassType(\"pair\", ["
@@ -56,7 +56,7 @@ package(grimoire.stdlib) void grLoadStdLibPair(GrLibrary library) {
     }
 }
 
-private void _makeKeyValuePair_(string t1, string t2)(GrCall call) {
+private void _newKeyValuePair_(string t1, string t2)(GrCall call) {
     GrObject obj = call.createObject(grUnmangle(call.getOutType(0)).mangledType);
     static if (t1 == "Int") {
         obj.setInt("key", call.getInt(0));

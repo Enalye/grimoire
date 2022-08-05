@@ -143,9 +143,22 @@ string grGetPrettyFunctionCall(string mangledName) {
     string name = mangledName[0 .. index];
     mangledName = mangledName[index .. $];
 
-    string result = to!string(name) ~ "(";
-    int i;
+    string result;
     auto inSignature = grUnmangleSignature(mangledName);
+
+    if (name == "@new") {
+        result = "new ";
+        if (inSignature.length) {
+            result ~= grGetPrettyType(inSignature[$ - 1]);
+            inSignature.length--;
+        }
+        result ~= "(";
+    }
+    else {
+        result = to!string(name) ~ "(";
+    }
+
+    int i;
     foreach (type; inSignature) {
         result ~= grGetPrettyType(type);
         if ((i + 2) <= inSignature.length)
@@ -159,7 +172,19 @@ string grGetPrettyFunctionCall(string mangledName) {
 /// Displayable format for a mangled string of format: function$signature \
 /// Return signature is not used.
 string grGetPrettyFunctionCall(string name, GrType[] signature) {
-    string result = to!string(name) ~ "(";
+    string result;
+    if (name == "@new") {
+        result = "new ";
+        if (signature.length) {
+            result ~= grGetPrettyType(signature[$ - 1]);
+            signature.length--;
+        }
+        result ~= "(";
+    }
+    else {
+        result = to!string(name) ~ "(";
+    }
+
     int i;
     foreach (type; signature) {
         result ~= grGetPrettyType(type);

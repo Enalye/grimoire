@@ -264,6 +264,8 @@ final class GrCompiler {
             GrType[] inSignature = _data._primitives[id].inSignature;
             if (_data._primitives[id].name == "@as")
                 inSignature.length = 1;
+            else if (_data._primitives[id].name == "@new")
+                inSignature.length --;
             for (size_t i; i < inSignature.length; ++i) {
                 const GrType type = inSignature[i];
                 bytecode.primitives[id].inSignature ~= grMangle(type);

@@ -357,8 +357,9 @@ class GrLibrary {
         return addOperator(callback, name, inSignature, outType, constraints);
     }
     /// Ditto
-    GrPrimitive addOperator(GrCallback callback, string name, GrType[] inSignature, GrType outType, GrConstraint[] constraints = [
-        ]) {
+    GrPrimitive addOperator(GrCallback callback,
+        string name, GrType[] inSignature, GrType outType,
+        GrConstraint[] constraints = []) {
         if (inSignature.length > 2uL)
             throw new Exception(
                 "The operator `" ~ name ~ "` cannot take more than 2 parameters: " ~ grGetPrettyFunctionCall("",
@@ -368,24 +369,47 @@ class GrLibrary {
 
     /**
     A cast operator allows to convert from one type to another.
-    It have to have only one parameter and return the casted value.
+    It must have only one parameter and return the casted value.
     */
-    GrPrimitive addCast(GrCallback callback, GrType srcType, GrType dstType, bool isExplicit = false, GrConstraint[] constraints = [
-        ]) {
-        auto primitive = addFunction(callback, "@as", [srcType, dstType], [
-                dstType
-            ], constraints);
+    GrPrimitive addCast(GrCallback callback,
+        GrType srcType, GrType dstType, bool isExplicit = false,
+        GrConstraint[] constraints = []) {
+        auto primitive = addFunction(callback, "@as",
+            [srcType, dstType], [dstType], constraints);
         primitive.isExplicit = isExplicit;
+        return primitive;
+    }
+
+    /**
+    Define a function that will be called with the `new` operation.
+    It must return the defined type.
+    */
+    GrPrimitive addConstructor(GrCallback callback,
+        GrType newType, GrType[] inSignature, GrConstraint[] constraints = []) {
+        auto primitive = addFunction(callback, "@new",
+            inSignature ~ [newType], [newType], constraints);
         return primitive;
     }
 
     private string getPrettyPrimitive(GrPrimitive primitive) {
         import std.conv : to;
 
-        string result = primitive.name;
         auto nbParameters = primitive.inSignature.length;
-        if (primitive.name == "@as")
+        string result;
+        if (primitive.name == "@new") {
+            result ~= "new ";
+            if (nbParameters > 0) {
+                result ~= grGetPrettyType(primitive.inSignature[$ - 1]);
+                nbParameters--;
+            }
+        }
+        else if (primitive.name == "@as") {
+            result ~= "as";
             nbParameters = 1;
+        }
+        else {
+            result ~= primitive.name;
+        }
         result ~= "(";
         for (int i; i < nbParameters; i++) {
             result ~= grGetPrettyType(primitive.inSignature[i]);

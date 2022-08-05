@@ -2896,6 +2896,9 @@ final class GrParser {
             name = "@as";
             isConversion = true;
         }
+        else if (get().type == GrLexeme.Type.new_) {
+            name = "@new";
+        }
         else if (get().type == GrLexeme.Type.identifier) {
             if (get().svalue == "operator") {
                 advance();
@@ -2934,6 +2937,8 @@ final class GrParser {
         string[] inputs;
         temp.inSignature = parseInSignature(inputs, false, templateVariables);
         temp.outSignature = parseOutSignature(templateVariables);
+        if (name == "@as" || name == "@new")
+            temp.inSignature ~= temp.outSignature;
         temp.constraints = parseWhereStatement(templateVariables);
         templatedFunctions ~= temp;
         skipBlock(true);
@@ -2945,7 +2950,7 @@ final class GrParser {
             return constraints;
         checkAdvance();
 
-        for(;;) {
+        for (;;) {
             GrType type = parseType(true, templateVariables);
 
             if (get().type != GrLexeme.Type.colon)
@@ -2985,7 +2990,7 @@ final class GrParser {
                     format(getError(constraintData.arity > 1 ? Error.expectedXArgsFoundY
                         : Error.expectedXArgFoundY), constraintData.arity, parameters.length), "", -1);
 
-            if(get().type != GrLexeme.Type.comma)
+            if (get().type != GrLexeme.Type.comma)
                 break;
             advance();
         }
@@ -4923,8 +4928,8 @@ final class GrParser {
         //GrFunction check
         if (resultType.base == GrType.Base.void_) {
             if (matching.func) {
-                const GrType[] outSignature = addFunctionCall(matching.func, fileId);
-                if (outSignature.length != 1uL) {
+                addFunctionCall(matching.func, fileId);
+                if (matching.func.outSignature.length != 1uL) {
                     logError(getError(Error.opMustHave1RetVal),
                         format(getError(matching.func.outSignature.length > 1 ? Error.expectedXRetValsFoundY
                             : Error.expectedXRetValFoundY), 1, matching.func.outSignature.length));
@@ -4947,84 +4952,150 @@ final class GrParser {
                     get()
                     .type)), getError(Error.missingIdentifier));
         uint fileId = get().fileId;
-        GrType classType = parseType(true);
-        if (classType.base != GrType.Base.class_)
-            logError(format(getError(Error.xNotClassType), getPrettyType(classType)),
-                getError(Error.invalidType), "", -1);
-        GrClassDefinition class_ = getClass(classType.mangledType, fileId);
-        if (!class_)
-            logError(format(getError(Error.xNotDecl),
-                    getPrettyType(classType)), getError(Error.unknownClass), "", -1);
-        addInstruction(GrOpcode.new_, cast(uint) class_.index);
-
-        bool[] initFields;
-        uint[] lexPositions;
-        initFields.length = class_.fields.length;
-        lexPositions.length = class_.fields.length;
+        GrType objectType = parseType(true);
 
         // Init
         if (get().type == GrLexeme.Type.leftCurlyBrace) {
-            checkAdvance();
-            while (!isEnd()) {
-                if (get().type == GrLexeme.Type.rightCurlyBrace) {
-                    checkAdvance();
-                    break;
-                }
-                else if (get().type == GrLexeme.Type.identifier) {
-                    const string fieldName = get().svalue;
-                    checkAdvance();
-                    bool hasField = false;
-                    for (int i; i < class_.fields.length; ++i) {
-                        if (class_.fields[i] == fieldName) {
-                            hasField = true;
+            switch (objectType.base) with (GrType.Base) {
+            case class_:
+                GrClassDefinition class_ = getClass(objectType.mangledType, fileId);
+                if (!class_)
+                    logError(format(getError(Error.xNotDecl),
+                            getPrettyType(objectType)), getError(Error.unknownClass), "", -1);
+                addInstruction(GrOpcode.new_, cast(uint) class_.index);
 
-                            if (initFields[i])
-                                logError(format(getError(Error.fieldXInitMultipleTimes), fieldName),
-                                    format(getError(Error.xAlreadyInit), fieldName),
-                                    "", -1, getError(Error.prevInit), lexPositions[i] - 1);
+                bool[] initFields;
+                uint[] lexPositions;
+                initFields.length = class_.fields.length;
+                lexPositions.length = class_.fields.length;
 
-                            initFields[i] = true;
-                            lexPositions[i] = current;
-
-                            GrVariable fieldLValue = new GrVariable;
-                            fieldLValue.isInitialized = false;
-                            fieldLValue.isField = true;
-                            fieldLValue.type = class_.signature[i];
-                            fieldLValue.register = i;
-                            fieldLValue.fileId = get().fileId;
-                            fieldLValue.lexPosition = current;
-                            addInstruction(GrOpcode.fieldLoad2, fieldLValue.register);
-                            parseAssignList([fieldLValue], true);
-                            break;
-                        }
+                checkAdvance();
+                while (!isEnd()) {
+                    if (get().type == GrLexeme.Type.rightCurlyBrace) {
+                        checkAdvance();
+                        break;
                     }
-                    if (!hasField)
-                        logError(format(getError(Error.fieldXNotExist), fieldName), getError(
-                                Error.unknownField));
+                    else if (get().type == GrLexeme.Type.identifier) {
+                        const string fieldName = get().svalue;
+                        checkAdvance();
+                        bool hasField = false;
+                        for (int i; i < class_.fields.length; ++i) {
+                            if (class_.fields[i] == fieldName) {
+                                hasField = true;
+
+                                if (initFields[i])
+                                    logError(format(getError(Error.fieldXInitMultipleTimes), fieldName),
+                                        format(getError(Error.xAlreadyInit), fieldName),
+                                        "", -1, getError(Error.prevInit), lexPositions[i] - 1);
+
+                                initFields[i] = true;
+                                lexPositions[i] = current;
+
+                                GrVariable fieldLValue = new GrVariable;
+                                fieldLValue.isInitialized = false;
+                                fieldLValue.isField = true;
+                                fieldLValue.type = class_.signature[i];
+                                fieldLValue.register = i;
+                                fieldLValue.fileId = get().fileId;
+                                fieldLValue.lexPosition = current;
+                                addInstruction(GrOpcode.fieldLoad2, fieldLValue.register);
+                                parseAssignList([fieldLValue], true);
+                                break;
+                            }
+                        }
+                        if (!hasField)
+                            logError(format(getError(Error.fieldXNotExist), fieldName), getError(
+                                    Error.unknownField));
+                    }
+                    else {
+                        logError(format(getError(Error.expectedFieldNameFoundX), getPrettyLexemeType(get()
+                                .type)), getError(Error.missingField));
+                    }
+                }
+
+                for (int i; i < class_.fields.length; ++i) {
+                    if (initFields[i])
+                        continue;
+                    GrVariable fieldLValue = new GrVariable;
+                    fieldLValue.isInitialized = false;
+                    fieldLValue.isField = true;
+                    fieldLValue.type = class_.signature[i];
+                    fieldLValue.register = i;
+                    fieldLValue.fileId = get().fileId;
+                    fieldLValue.lexPosition = current;
+                    addInstruction(GrOpcode.fieldLoad2, fieldLValue.register);
+                    addDefaultValue(fieldLValue.type, fileId);
+                    addSetInstruction(fieldLValue, fileId, fieldLValue.type);
+                }
+                break;
+            case foreign:
+            default:
+                logError(format(getError(Error.xNotClassType), getPrettyType(objectType)),
+                    getError(Error.invalidType), "", -1);
+                break;
+            }
+        }
+        else {
+            GrType[] signature;
+            if (get().type == GrLexeme.Type.leftParenthesis) {
+                advance();
+                if (get().type == GrLexeme.Type.rightParenthesis) {
+                    advance();
                 }
                 else {
-                    logError(format(getError(Error.expectedFieldNameFoundX), getPrettyLexemeType(get()
-                            .type)), getError(Error.missingField));
+                    for (;;) {
+                        auto type = parseSubExpression(
+                            GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_PARENTHESIS
+                                | GR_SUBEXPR_EXPECTING_VALUE).type;
+                        if (type.base == GrType.Base.internalTuple) {
+                            auto types = grUnpackTuple(type);
+                            if (types.length)
+                                signature ~= types;
+                            else
+                                logError(getError(Error.exprYieldsNoVal),
+                                    getError(Error.expectedValFoundNothing));
+                        }
+                        else
+                            signature ~= type;
+
+                        if (get().type == GrLexeme.Type.rightParenthesis) {
+                            advance();
+                            break;
+                        }
+                        advance();
+                    }
                 }
+            }
+            signature ~= objectType;
+
+            //GrPrimitive call.
+            auto matching = getFirstMatchingFuncOrPrim("@new", signature, fileId);
+            if (matching.prim) {
+                addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+                if (matching.prim.outSignature.length != 1uL || matching.prim.outSignature[0] != objectType) {
+                    logError(getError(Error.opMustHave1RetVal),
+                        format(getError(matching.prim.outSignature.length > 1 ? Error.expectedXRetValsFoundY
+                            : Error.expectedXRetValFoundY), 1, matching
+                            .prim.outSignature.length));
+                }
+            }
+            else if (matching.func) {
+                //GrFunction/Task call.
+                addFunctionCall(matching.func, fileId);
+                if (matching.func.outSignature.length != 1uL || matching.func.outSignature[0] != objectType) {
+                    logError(getError(Error.opMustHave1RetVal),
+                        format(getError(matching.func.outSignature.length > 1 ? Error.expectedXRetValsFoundY
+                            : Error.expectedXRetValFoundY), 1, matching
+                            .func.outSignature.length));
+                }
+            }
+            else {
+                logError(format(getError(Error.xNotDecl), getPrettyFunctionCall("@new",
+                        signature)), getError(Error.unknownFunc), "", -1);
             }
         }
 
-        for (int i; i < class_.fields.length; ++i) {
-            if (initFields[i])
-                continue;
-            GrVariable fieldLValue = new GrVariable;
-            fieldLValue.isInitialized = false;
-            fieldLValue.isField = true;
-            fieldLValue.type = class_.signature[i];
-            fieldLValue.register = i;
-            fieldLValue.fileId = get().fileId;
-            fieldLValue.lexPosition = current;
-            addInstruction(GrOpcode.fieldLoad2, fieldLValue.register);
-            addDefaultValue(fieldLValue.type, fileId);
-            addSetInstruction(fieldLValue, fileId, fieldLValue.type);
-        }
-
-        return classType;
+        return objectType;
     }
 
     /**

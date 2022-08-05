@@ -49,27 +49,35 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
 
     static foreach (t; ["Int", "Real", "String", "Object"]) {
         mixin("
-            GrType " ~ t ~ "ValueType = grAny(\"T\");
-            GrType " ~ t ~ "HashMapType = grGetClassType(\"HashMap\", [" ~ t ~ "ValueType]);
-            GrType " ~ t ~ "PairType = grGetClassType(\"pair\", [grString, " ~ t ~ "ValueType]);
-            GrType " ~ t ~ "ArrayType = grArray(" ~ t ~ "ValueType);
+            GrType "
+                ~ t ~ "ValueType = grAny(\"T\");
+            GrType "
+                ~ t ~ "HashMapType = grGetForeignType(\"HashMap\", [" ~ t ~ "ValueType]);
+            GrType "
+                ~ t ~ "PairType = grGetClassType(\"pair\", [grString, " ~ t ~ "ValueType]);
+            GrType "
+                ~ t ~ "ArrayType = grArray(" ~ t ~ "ValueType);
 
-            GrType " ~ t ~ "IteratorType = grGetForeignType(\"HashMapIterator\", [" ~ t ~ "ValueType]);
+            GrType "
+                ~ t ~ "IteratorType = grGetForeignType(\"HashMapIterator\", [" ~ t ~ "ValueType]);
             static if(t == \"Object\") {
-                GrConstraint " ~ t ~ "Constraint = grConstraint(\"Register\", " ~ t ~ "ValueType,
+                GrConstraint "
+                ~ t ~ "Constraint = grConstraint(\"Register\", " ~ t ~ "ValueType,
                     [GrType(GrType.Base.null_)]);
             }
             else {
-                GrConstraint " ~ t ~ "Constraint = grConstraint(\"Register\", " ~ t ~ "ValueType, [gr" ~ t ~ "]);
+                GrConstraint "
+                ~ t ~ "Constraint = grConstraint(\"Register\", " ~ t ~ "ValueType, [gr" ~ t ~ "]);
             }
 
-            library.addFunction(&_make_!\""
-                ~ t ~ "\", \"HashMap\", [grStringArray, " ~ t
-                ~ "ArrayType], [" ~ t ~ "HashMapType], [" ~ t ~ "Constraint]);
+            library.addConstructor(&_new_!\""
+                ~ t ~ "\", " ~ t ~ "HashMapType, [], [" ~ t ~ "Constraint]);
 
-            library.addFunction(&_makeByPairs_!\""
-                ~ t ~ "\", \"HashMap\", [" ~ t ~ "PairType],
-                [" ~ t ~ "HashMapType], [" ~ t ~ "Constraint]);
+            library.addFunction(&_newByArray_!\""
+                ~ t ~ "\", " ~ t ~ "HashMapType, [grStringArray, " ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
+
+            library.addFunction(&_newByPairs_!\""
+                ~ t ~ "\", " ~ t ~ "HashMapType, [" ~ t ~ "PairType], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_copy_!\""
                 ~ t ~ "\", \"copy\", [" ~ t ~ "HashMapType], [" ~ t ~ "HashMapType], [" ~ t ~ "Constraint]);
@@ -83,7 +91,8 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
 
             library.addFunction(&_clear_!\""
                 ~ t ~ "\", \"clear\", [" ~ t ~ "HashMapType
-            ], [" ~ t ~ "HashMapType], [" ~ t ~ "Constraint]);
+            ], ["
+                ~ t ~ "HashMapType], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_set_!\""
                 ~ t
@@ -109,12 +118,15 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
 
             library.addFunction(&_each_!\""
                 ~ t ~ "\", \"each\", [" ~ t ~ "HashMapType
-                ], [" ~ t ~ "IteratorType], [" ~ t ~ "Constraint]);
+                ], ["
+                ~ t ~ "IteratorType], [" ~ t ~ "Constraint]);
 
             library.addFunction(&_next_!\""
                 ~ t ~ "\", \"next\", [
-                    " ~ t ~ "IteratorType
-                ], [grBool, " ~ t ~ "PairType], [" ~ t ~ "Constraint]);
+                    "
+                ~ t ~ "IteratorType
+                ], [grBool, "
+                ~ t ~ "PairType], [" ~ t ~ "Constraint]);
             ");
     }
 
@@ -131,13 +143,18 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
     library.addFunction(&_print_!"string", "print", [stringHashMap]);
 }
 
-private void _make_(string t)(GrCall call) {
+private void _new_(string t)(GrCall call) {
+    mixin(t ~ "HashMap hashmap = new " ~ t ~ "HashMap;");
+    call.setForeign(hashmap);
+}
+
+private void _newByArray_(string t)(GrCall call) {
     mixin(t ~ "HashMap hashmap = new " ~ t ~ "HashMap(call.getStringArray(0).data, call.get"
             ~ t ~ "Array(1).data);");
     call.setForeign(hashmap);
 }
 
-private void _makeByPairs_(string t)(GrCall call) {
+private void _newByPairs_(string t)(GrCall call) {
     mixin(t ~ "HashMap hashmap = new " ~ t ~ "HashMap;");
     GrObjectArray pairs = call.getObjectArray(0);
     for (size_t i; i < pairs.data.length; ++i) {
