@@ -21,7 +21,7 @@ import grimoire.compiler.type;
     The return type is not conserved in the mangled form as its not part of its signature.
     But function. passed as parameters have theirs.
 */
-string grMangleSignature(GrType[] signature) {
+string grMangleSignature(const GrType[] signature) {
     string mangledName;
     foreach (type; signature) {
         mangledName ~= grMangle(type);
@@ -30,7 +30,7 @@ string grMangleSignature(GrType[] signature) {
 }
 
 /// Reverse the mangling operation for a signature.
-GrType[] grUnmangleSignature(string mangledSignature) {
+GrType[] grUnmangleSignature(const string mangledSignature) {
     GrType[] unmangledSignature;
     int i;
     while (i < mangledSignature.length) {
@@ -150,13 +150,13 @@ GrType[] grUnmangleSignature(string mangledSignature) {
     The return type is not conserved in the mangled form as its not part of its signature.
     But function. passed as parameters have theirs.
 */
-string grMangleComposite(string name, GrType[] signature) {
+string grMangleComposite(string name, const GrType[] signature) {
     return name ~ grMangleSignature(signature);
 }
 
 /// Reverses the grMangleComposite operation.
 /// Returns a struct containing the name and the signature.
-auto grUnmangleComposite(string mangledSignature) {
+auto grUnmangleComposite(const string mangledSignature) {
     struct UnmangleCompositeResult {
         string name;
         GrType[] signature;
@@ -174,7 +174,7 @@ auto grUnmangleComposite(string mangledSignature) {
 }
 
 /// Reverse the mangling operation for a function passed as a parameter.
-string grUnmangleBlock(string mangledSignature, ref int i) {
+string grUnmangleBlock(const string mangledSignature, ref int i) {
     string subString;
     int blockCount = 1;
     if (i >= mangledSignature.length || mangledSignature[i] != '(')
@@ -201,7 +201,7 @@ string grUnmangleBlock(string mangledSignature, ref int i) {
 }
 
 /// Mangling operation for a single type.
-string grMangle(GrType type) {
+string grMangle(const GrType type) {
     string mangledName = "$";
     if(type.isAny) {
         mangledName ~= "?(" ~ type.mangledType ~ ")";
@@ -257,7 +257,7 @@ string grMangle(GrType type) {
 }
 
 /// Reverse the mangling operation for a single type.
-GrType grUnmangle(string mangledSignature) {
+GrType grUnmangle(const string mangledSignature) {
     GrType currentType = GrType.Base.void_;
 
     int i;

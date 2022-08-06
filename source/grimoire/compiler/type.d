@@ -202,18 +202,18 @@ final class GrAnyData {
     }
 
     /// Define a new type
-    void set(string key, GrType type) {
+    void set(const string key, GrType type) {
         _types[key] = type;
     }
 
     /// Fetch an already defined type
-    GrType get(string key) {
+    GrType get(const string key) const {
         return _types.get(key, grVoid);
     }
 }
 
 /// Pack multiple types as a single one.
-package GrType grPackTuple(GrType[] types) {
+package GrType grPackTuple(const GrType[] types) {
     const string mangledName = grMangleSignature(types);
     GrType type = GrType.Base.internalTuple;
     type.mangledType = mangledName;
@@ -276,7 +276,7 @@ final class GrAbstractForeignDefinition {
 }
 
 /// Create a foreign GrType for the type system.
-GrType grGetForeignType(string name, GrType[] signature = []) {
+GrType grGetForeignType(string name, const GrType[] signature = []) {
     GrType type = GrType.Base.foreign;
     type.mangledType = grMangleComposite(name, signature);
     return type;
@@ -323,7 +323,7 @@ final class GrEnumDefinition {
     uint fileId;
 
     /// Does the field name exists ?
-    bool hasField(string name) const {
+    bool hasField(const string name) const {
         foreach (field; fields) {
             if (field == name)
                 return true;
@@ -332,7 +332,7 @@ final class GrEnumDefinition {
     }
 
     /// Returns the value of the field
-    int getField(string name) const {
+    int getField(const string name) const {
         import std.conv : to;
 
         int fieldIndex = 0;
@@ -346,7 +346,7 @@ final class GrEnumDefinition {
 }
 
 /// Create a GrType of enum for the type system.
-GrType grGetEnumType(string name) {
+GrType grGetEnumType(const string name) {
     GrType stType = GrType.Base.enum_;
     stType.mangledType = name;
     return stType;
@@ -398,7 +398,7 @@ final class GrClassDefinition {
 }
 
 /// Create a GrType of class for the type system.
-GrType grGetClassType(string name, GrType[] signature = []) {
+GrType grGetClassType(const string name, const GrType[] signature = []) {
     GrType stType = GrType.Base.class_;
     stType.mangledType = grMangleComposite(name, signature);
     return stType;
@@ -518,7 +518,7 @@ package class GrFunction {
         scopes.length--;
     }
 
-    private void freeRegister(GrVariable variable) {
+    private void freeRegister(const GrVariable variable) {
         final switch (variable.type.base) with (GrType.Base) {
         case int_:
         case bool_:
@@ -549,7 +549,7 @@ package class GrFunction {
 }
 
 /// Get the type of the function.
-GrType grGetFunctionAsType(GrFunction func) {
+GrType grGetFunctionAsType(const GrFunction func) {
     GrType type = func.isTask ? GrType.Base.task : GrType.Base.function_;
     type.mangledType = grMangleSignature(func.inSignature);
     type.mangledReturnType = grMangleSignature(func.outSignature);

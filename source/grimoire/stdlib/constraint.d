@@ -26,7 +26,7 @@ package(grimoire.stdlib) void grLoadStdLibConstraint() {
     grAddConstraint("Extends", &_extends, 1);
 }
 
-private bool _register(GrData, GrType type, GrType[] types) {
+private bool _register(GrData, GrType type, const GrType[] types) {
     if (types.length != 1)
         return false;
     final switch (types[0].base) with (GrType.Base) {
@@ -57,39 +57,39 @@ private bool _register(GrData, GrType type, GrType[] types) {
     }
 }
 
-private bool _enum(GrData, GrType type, GrType[]) {
+private bool _enum(GrData, GrType type, const GrType[]) {
     return type.base == GrType.Base.enum_;
 }
 
-private bool _channel(GrData, GrType type, GrType[]) {
+private bool _channel(GrData, GrType type, const GrType[]) {
     return type.base == GrType.Base.channel;
 }
 
-private bool _function(GrData, GrType type, GrType[]) {
+private bool _function(GrData, GrType type, const GrType[]) {
     return type.base == GrType.Base.function_;
 }
 
-private bool _task(GrData, GrType type, GrType[]) {
+private bool _task(GrData, GrType type, const GrType[]) {
     return type.base == GrType.Base.task;
 }
 
-private bool _callable(GrData, GrType type, GrType[]) {
+private bool _callable(GrData, GrType type, const GrType[]) {
     return type.base == GrType.Base.function_ || type.base == GrType.Base.task;
 }
 
-private bool _class(GrData, GrType type, GrType[]) {
+private bool _class(GrData, GrType type, const GrType[]) {
     return type.base == GrType.Base.class_;
 }
 
-private bool _foreign(GrData, GrType type, GrType[]) {
+private bool _foreign(GrData, GrType type, const GrType[]) {
     return type.base == GrType.Base.foreign;
 }
 
-private bool _numeric(GrData, GrType type, GrType[]) {
+private bool _numeric(GrData, GrType type, const GrType[]) {
     return type.base == GrType.Base.int_ || type.base == GrType.Base.real_;
 }
 
-private bool _notnullable(GrData, GrType type, GrType[]) {
+private bool _notnullable(GrData, GrType type, const GrType[]) {
     final switch (type.base) with (GrType.Base) {
     case bool_:
     case int_:
@@ -111,7 +111,7 @@ private bool _notnullable(GrData, GrType type, GrType[]) {
     }
 }
 
-private bool _nullable(GrData, GrType type, GrType[]) {
+private bool _nullable(GrData, GrType type, const GrType[]) {
     final switch (type.base) with (GrType.Base) {
     case bool_:
     case int_:
@@ -133,39 +133,41 @@ private bool _nullable(GrData, GrType type, GrType[]) {
     }
 }
 
-private bool _is(GrData, GrType type, GrType[] types) {
+private bool _is(GrData, GrType type, const GrType[] types) {
     return type == types[0];
 }
 
-private bool _not(GrData, GrType type, GrType[] types) {
+private bool _not(GrData, GrType type, const GrType[] types) {
     return type != types[0];
 }
 
-private bool _base(GrData data, GrType type, GrType[] types) {
+private bool _base(GrData data, GrType type, const GrType[] types) {
     if (type.base == GrType.Base.foreign && types[0].base == GrType.Base.foreign) {
+        GrType baseType = types[0];
         for (;;) {
-            if (type == types[0])
+            if (type == baseType)
                 return true;
-            const GrForeignDefinition foreignType = data.getForeign(types[0].mangledType);
+            const GrForeignDefinition foreignType = data.getForeign(baseType.mangledType);
             if (!foreignType.parent.length)
                 return false;
-            types[0].mangledType = foreignType.parent;
+            baseType.mangledType = foreignType.parent;
         }
     }
     else if (type.base == GrType.Base.class_ && types[0].base == GrType.Base.class_) {
+        GrType baseType = types[0];
         for (;;) {
-            if (type == types[0])
+            if (type == baseType)
                 return true;
-            const GrClassDefinition classType = data.getClass(types[0].mangledType, 0, true);
+            const GrClassDefinition classType = data.getClass(baseType.mangledType, 0, true);
             if (!classType.parent.length)
                 return false;
-            types[0].mangledType = classType.parent;
+            baseType.mangledType = classType.parent;
         }
     }
     return false;
 }
 
-private bool _extends(GrData data, GrType type, GrType[] types) {
+private bool _extends(GrData data, GrType type, const GrType[] types) {
     if (type.base == GrType.Base.foreign && types[0].base == GrType.Base.foreign) {
         for (;;) {
             if (type == types[0])

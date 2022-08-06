@@ -30,7 +30,7 @@ final class GrObject {
         GrField[] _fields;
 
         /// Build from definition
-        this(GrClassBuilder class_) {
+        this(const GrClassBuilder class_) {
             _fields.length = class_.fields.length;
             for (size_t index; index < _fields.length; ++index) {
                 _fields[index] = new GrField;
@@ -40,7 +40,7 @@ final class GrObject {
     }
 
     /// Build from raw fields
-    this(string[] fields_) {
+    this(const string[] fields_) {
         _fields.length = fields_.length;
         for (size_t index; index < _fields.length; ++index) {
             _fields[index] = new GrField;
@@ -54,72 +54,72 @@ final class GrObject {
     alias getString = getField!GrString;
     alias getPtr = getField!GrPtr;
 
-    int getInt32(string fieldName) {
+    int getInt32(const string fieldName) {
         return cast(int) getField!GrInt(fieldName);
     }
 
-    long getInt64(string fieldName) {
+    long getInt64(const string fieldName) {
         return cast(long) getField!GrInt(fieldName);
     }
 
-    real getReal32(string fieldName) {
+    real getReal32(const string fieldName) {
         return cast(real) getField!GrReal(fieldName);
     }
 
-    double getReal64(string fieldName) {
+    double getReal64(const string fieldName) {
         return cast(double) getField!GrReal(fieldName);
     }
 
-    GrObject getObject(string fieldName) {
+    GrObject getObject(const string fieldName) {
         return cast(GrObject) getField!GrPtr(fieldName);
     }
 
-    GrArray!T getArray(T)(string fieldName) {
+    GrArray!T getArray(T)(const string fieldName) {
         return cast(GrArray!T) getField!GrPtr(fieldName);
     }
 
-    GrIntArray getIntArray(string fieldName) {
+    GrIntArray getIntArray(const string fieldName) {
         return cast(GrIntArray) getField!GrPtr(fieldName);
     }
 
-    GrRealArray getRealArray(string fieldName) {
+    GrRealArray getRealArray(const string fieldName) {
         return cast(GrRealArray) getField!GrPtr(fieldName);
     }
 
-    GrStringArray getStringArray(string fieldName) {
+    GrStringArray getStringArray(const string fieldName) {
         return cast(GrStringArray) getField!GrPtr(fieldName);
     }
 
-    GrObjectArray getObjectArray(string fieldName) {
+    GrObjectArray getObjectArray(const string fieldName) {
         return cast(GrObjectArray) getField!GrPtr(fieldName);
     }
 
-    GrIntChannel getIntChannel(string fieldName) {
+    GrIntChannel getIntChannel(const string fieldName) {
         return cast(GrIntChannel) getField!GrPtr(fieldName);
     }
 
-    GrRealChannel getRealChannel(string fieldName) {
+    GrRealChannel getRealChannel(const string fieldName) {
         return cast(GrRealChannel) getField!GrPtr(fieldName);
     }
 
-    GrStringChannel getStringChannel(string fieldName) {
+    GrStringChannel getStringChannel(const string fieldName) {
         return cast(GrStringChannel) getField!GrPtr(fieldName);
     }
 
-    GrObjectChannel getObjectChannel(string fieldName) {
+    GrObjectChannel getObjectChannel(const string fieldName) {
         return cast(GrObjectChannel) getField!GrPtr(fieldName);
     }
 
-    T getEnum(T)(string fieldName) {
+    T getEnum(T)(const string fieldName) {
         return cast(T) getField!GrInt(fieldName);
     }
 
-    T getForeign(T)(string fieldName) {
+    T getForeign(T)(const string fieldName) {
         // We cast to object first to avoid a crash when casting to a parent class
         return cast(T) cast(Object) getField!GrPtr(fieldName);
     }
 
-    private T getField(T)(string fieldName) {
+    private T getField(T)(const string fieldName) {
         for (size_t index; index < _fields.length; ++index) {
             if (_fields[index].name == fieldName) {
                 static if (is(T == GrInt))
@@ -145,71 +145,71 @@ final class GrObject {
     alias setString = setField!GrString;
     alias setPtr = setField!GrPtr;
 
-    void setInt32(string fieldName, int value) {
+    void setInt32(const string fieldName, int value) {
         setField!GrInt(fieldName, cast(GrInt) value);
     }
 
-    void setInt64(string fieldName, long value) {
+    void setInt64(const string fieldName, long value) {
         setField!GrInt(fieldName, cast(GrInt) value);
     }
 
-    void setReal32(string fieldName, real value) {
+    void setReal32(const string fieldName, real value) {
         setField!GrReal(fieldName, cast(GrReal) value);
     }
 
-    void setReal64(string fieldName, double value) {
+    void setReal64(const string fieldName, double value) {
         setField!GrReal(fieldName, cast(GrReal) value);
     }
 
-    void setObject(string fieldName, GrObject value) {
+    void setObject(const string fieldName, GrObject value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setArray(T)(string fieldName, GrArray!T value) {
+    void setArray(T)(const string fieldName, GrArray!T value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setIntArray(string fieldName, GrIntArray value) {
+    void setIntArray(const string fieldName, GrIntArray value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setRealArray(string fieldName, GrRealArray value) {
+    void setRealArray(const string fieldName, GrRealArray value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setStringArray(string fieldName, GrStringArray value) {
+    void setStringArray(const string fieldName, GrStringArray value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setObjectArray(string fieldName, GrObjectArray value) {
+    void setObjectArray(const string fieldName, GrObjectArray value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setIntChannel(string fieldName, GrIntChannel value) {
+    void setIntChannel(const string fieldName, GrIntChannel value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setRealChannel(string fieldName, GrRealChannel value) {
+    void setRealChannel(const string fieldName, GrRealChannel value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setStringChannel(string fieldName, GrStringChannel value) {
+    void setStringChannel(const string fieldName, GrStringChannel value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setObjectChannel(string fieldName, GrObjectChannel value) {
+    void setObjectChannel(const string fieldName, GrObjectChannel value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setEnum(T)(string fieldName, T value) {
+    void setEnum(T)(const string fieldName, T value) {
         setField!GrInt(fieldName, cast(GrInt) value);
     }
 
-    void setForeign(T)(string fieldName, T value) {
+    void setForeign(T)(const string fieldName, T value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    private T setField(T)(string fieldName, T value) {
+    private T setField(T)(const string fieldName, T value) {
         for (size_t index; index < _fields.length; ++index) {
             if (_fields[index].name == fieldName) {
                 static if (is(T == GrInt))

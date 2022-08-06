@@ -90,7 +90,7 @@ private string[] instructions = [
 ];
 
 /// Dump the bytecode's instruction list in a pretty format.
-string grDump(GrBytecode bytecode) {
+string grDump(const GrBytecode bytecode) {
     /*writeln("\n----- VM DUMP ------");
     writeln("iconsts: ", bytecode.iconsts);
     writeln("rconsts: ", bytecode.rconsts);

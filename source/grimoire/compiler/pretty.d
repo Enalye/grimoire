@@ -9,7 +9,7 @@ import std.conv : to;
 import grimoire.compiler.util, grimoire.compiler.type, grimoire.compiler.mangle;
 
 /// Convert a type into a pretty format for display.
-string grGetPrettyType(GrType variableType) {
+string grGetPrettyType(const GrType variableType) {
     final switch (variableType.base) with (GrType.Base) {
     case void_:
         return "void";
@@ -130,7 +130,7 @@ string grGetPrettyType(GrType variableType) {
 
 /// Displayable format for a mangled string of format: function$signature \
 /// Return signature is not used.
-string grGetPrettyFunctionCall(string mangledName) {
+string grGetPrettyFunctionCall(const string mangledName) {
     import std.string : indexOf;
 
     int index = cast(int) indexOf(mangledName, '$');
@@ -140,11 +140,9 @@ string grGetPrettyFunctionCall(string mangledName) {
     if (index < 0)
         return to!string(mangledName) ~ "()";
 
-    string name = mangledName[0 .. index];
-    mangledName = mangledName[index .. $];
-
     string result;
-    auto inSignature = grUnmangleSignature(mangledName);
+    const string name = mangledName[0 .. index];
+    auto inSignature = grUnmangleSignature(mangledName[index .. $]);
 
     if (name == "@new") {
         result = "new ";
@@ -155,7 +153,7 @@ string grGetPrettyFunctionCall(string mangledName) {
         result ~= "(";
     }
     else {
-        result = to!string(name) ~ "(";
+        result = name ~ "(";
     }
 
     int i;
@@ -171,8 +169,9 @@ string grGetPrettyFunctionCall(string mangledName) {
 
 /// Displayable format for a mangled string of format: function$signature \
 /// Return signature is not used.
-string grGetPrettyFunctionCall(string name, GrType[] signature) {
+string grGetPrettyFunctionCall(const string name, const GrType[] inSignature) {
     string result;
+    GrType[] signature = inSignature.dup;
     if (name == "@new") {
         result = "new ";
         if (signature.length) {
@@ -197,7 +196,7 @@ string grGetPrettyFunctionCall(string name, GrType[] signature) {
 }
 
 /// Prettify a function.
-string grGetPrettyFunction(string name, GrType[] inSignature, GrType[] outSignature) {
+string grGetPrettyFunction(const string name, const GrType[] inSignature, const GrType[] outSignature) {
     string result = to!string(name) ~ "(";
     int i;
     foreach (type; inSignature) {
@@ -221,6 +220,6 @@ string grGetPrettyFunction(string name, GrType[] inSignature, GrType[] outSignat
 }
 
 /// Ditto
-string grGetPrettyFunction(GrFunction func) {
+string grGetPrettyFunction(const GrFunction func) {
     return grGetPrettyFunction(func.name, func.inSignature, func.outSignature);
 }

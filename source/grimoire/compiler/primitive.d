@@ -44,15 +44,17 @@ class GrPrimitive {
     this() {}
 
     /// Ditto
-    this(GrPrimitive primitive) {
+    this(const GrPrimitive primitive) {
         callbackId = primitive.callbackId;
-        inSignature = primitive.inSignature;
-        outSignature = primitive.outSignature;
+        inSignature = primitive.inSignature.dup;
+        outSignature = primitive.outSignature.dup;
         name = primitive.name;
         mangledName = primitive.mangledName;
         index = primitive.index;
         isExplicit = primitive.isExplicit;
         isAbstract = primitive.isAbstract;
-        constraints = primitive.constraints;
+        foreach (const GrConstraint constraint; primitive.constraints) {
+            constraints ~= new GrConstraint(constraint);
+        }
     }
 }

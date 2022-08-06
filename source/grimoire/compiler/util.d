@@ -21,7 +21,7 @@ enum GrLocale {
 }
 
 /// Search for strings that somewhat ressemble the base value
-package string[] findNearestStrings(string baseValue, const(string[]) ary, size_t distance = 0) {
+package string[] findNearestStrings(const string baseValue, const(string[]) ary, size_t distance = 0) {
     struct WeightedValue {
         size_t weight;
         string value;

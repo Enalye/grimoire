@@ -13,7 +13,7 @@ private {
 
 /// Template function constraint
 final class GrConstraint {
-    alias Predicate = bool function(GrData, GrType, GrType[]);
+    alias Predicate = bool function(GrData, GrType, const GrType[]);
 
     struct Data {
         Predicate predicate;
@@ -23,19 +23,26 @@ final class GrConstraint {
     package {
         Data _data;
         GrType _type;
-        GrType[] _parameters;
+        const GrType[] _parameters;
     }
 
     /// Ctor
-    this(Predicate predicate, uint arity, GrType type, GrType[] parameters) {
+    this(Predicate predicate, uint arity, GrType type, const GrType[] parameters) {
         _data.predicate = predicate;
         _data.arity = arity;
         _type = type;
         _parameters = parameters;
     }
 
+    this(const GrConstraint constraint) {
+        _data.predicate = constraint._data.predicate;
+        _data.arity = constraint._data.arity;
+        _type = constraint._type;
+        _parameters = constraint._parameters.dup;
+    }
+
     /// Checks if the types validate the constraint
-    bool evaluate(GrData data, GrAnyData anyData) {
+    bool evaluate(GrData data, const GrAnyData anyData) {
         GrType type = _type.isAny ? anyData.get(_type.mangledType) : _type;
         GrType[] parameters;
         foreach (GrType parameter; _parameters) {
@@ -46,7 +53,7 @@ final class GrConstraint {
 }
 
 /// Setup a constraint object from a registered constraint
-GrConstraint grConstraint(string name, GrType type, GrType[] parameters = []) {
+GrConstraint grConstraint(const string name, GrType type, const GrType[] parameters = []) {
     GrConstraint.Data data = grGetConstraint(name);
     if (!data.predicate)
         throw new Exception("unregistered template constraint");
@@ -54,7 +61,7 @@ GrConstraint grConstraint(string name, GrType type, GrType[] parameters = []) {
 }
 
 /// Register a new constraint
-void grAddConstraint(string name, GrConstraint.Predicate predicate, uint arity) {
+void grAddConstraint(const string name, GrConstraint.Predicate predicate, uint arity) {
     GrConstraint.Data data;
     data.predicate = predicate;
     data.arity = arity;
@@ -62,11 +69,11 @@ void grAddConstraint(string name, GrConstraint.Predicate predicate, uint arity) 
 }
 
 /// Fetch a registered constraint
-GrConstraint.Data grGetConstraint(string name) {
+GrConstraint.Data grGetConstraint(const string name) {
     GrConstraint.Data* func = name in _constraints;
     return func ? *func : GrConstraint.Data();
 }
 
-string[] grGetAllConstraintsName() {
+const(string[]) grGetAllConstraintsName() {
     return _constraints.keys;
 }
