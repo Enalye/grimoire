@@ -8,8 +8,9 @@ Dictionnaire associant des valeurs par clés.
 
 |Fonction|Entrée|Sortie|
 |-|-|-|
-|[HashMap](#hashmap_1)|[array](/fr/lib/array#array)(string) clés, [array](/fr/lib/array#array)(T) valeurs|[HashMap](#hashmap)\<T\>|
-|[HashMap](#hashmap_2)|[array](/fr/lib/array#array)([Pair](/fr/lib/pair#pair)\<[string](/fr/lib/string#string), T\>) pairs|[HashMap](#hashmap)\<T\>|
+|[new](#new)||[HashMap](#hashmap)\<T\>|
+|[new](#new_arrays)|[array](/fr/lib/array#array)(string) clés, [array](/fr/lib/array#array)(T) valeurs|[HashMap](#hashmap)\<T\>|
+|[new](#new_pairs)|[array](/fr/lib/array#array)([Pair](/fr/lib/pair#pair)\<[string](/fr/lib/string#string), T\>) pairs|[HashMap](#hashmap)\<T\>|
 |[clear](#clear)|[HashMap](#hashmap)\<T\> hashmap|[HashMap](#hashmap)\<T\>|
 |[copy](#copy)|[HashMap](#hashmap)\<T\> hashmap|[HashMap](#hashmap)\<T\>|
 |[each](#each)|[HashMap](#hashmap)\<T\> hashmap|[HashMapIterator](#hashmapiterator)\<T\>|
@@ -24,17 +25,23 @@ Dictionnaire associant des valeurs par clés.
 
 ## Description des fonctions
 
-<a id="hashmap_1"></a>
-- HashMap ( [array](/fr/lib/array#array)(string) clés, [array](/fr/lib/array#array)(T) valeurs ) ( [HashMap](#hashmap)\<T\> )
+<a id="new"></a>
+- new ( ) ( [HashMap](#hashmap)\<T\> )
 
-Returne une nouvelle HashMap en associant chaque clé avec sa valeur correspondante.
+Crée une HashMap vide.
+___
+
+<a id="new_arrays"></a>
+- new ( [array](/fr/lib/array#array)(string) clés, [array](/fr/lib/array#array)(T) valeurs ) ( [HashMap](#hashmap)\<T\> )
+
+Crée une nouvelle HashMap en associant chaque clé avec sa valeur correspondante.
 La taille de `clés` et de `valeurs` doivent correspondre.
 ___
 
-<a id="hashmap_2"></a>
-- HashMap ( [array](/fr/lib/array#array)([Pair](/fr/lib/pair#pair)\<[string](/fr/lib/string#string), T\>) paires ) ( [HashMap](#hashmap)\<T\> )
+<a id="new_pairs"></a>
+- new ( [array](/fr/lib/array#array)([Pair](/fr/lib/pair#pair)\<[string](/fr/lib/string#string), T\>) paires ) ( [HashMap](#hashmap)\<T\> )
 
-Returne une nouvelle HashMap à partir des `paires`.
+Crée une nouvelle HashMap à partir des `paires`.
 ___
 
 <a id="clear"></a>

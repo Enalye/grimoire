@@ -6086,114 +6086,225 @@ final class GrParser {
                 typeStack ~= currentType;
                 break;
             case period:
-                if (currentType.base != GrType.Base.class_)
-                    logError(format(getError(Error.cantAccessFieldOnTypeX), getPrettyType(currentType)),
-                        format(getError(Error.expectedClassFoundX), getPrettyType(currentType)));
                 checkAdvance();
-                if (get().type != GrLexeme.Type.identifier)
-                    logError(format(getError(Error.expectedFieldNameFoundX), getPrettyLexemeType(get()
-                            .type)), getError(Error.missingField));
-                const string identifier = get().svalue;
-                checkAdvance();
-                GrClassDefinition class_ = getClass(currentType.mangledType, get().fileId);
-                if (!class_)
-                    logError(format(getError(Error.xNotDecl),
-                            getPrettyType(currentType)), getError(Error.unknownType));
-                const auto nbFields = class_.signature.length;
-                bool hasField;
-                for (int i; i < nbFields; i++) {
-                    if (identifier == class_.fields[i]) {
-                        if ((class_.fieldsInfo[i].fileId != fileId)
-                            && !class_.fieldsInfo[i].isPublic)
-                            logError(format(getError(Error.xOnTypeYIsPrivate), identifier, getPrettyType(
-                                    currentType)),
-                                getError(Error.privateField), "", -1);
-                        hasField = true;
-                        currentType = class_.signature[i];
-                        currentType.isField = true;
-                        GrVariable fieldLValue = new GrVariable;
-                        fieldLValue.isInitialized = true;
-                        fieldLValue.isField = true;
-                        fieldLValue.type = currentType;
-                        fieldLValue.register = i;
-                        fieldLValue.fileId = get().fileId;
-                        fieldLValue.lexPosition = current;
+                if (currentType.base == GrType.Base.foreign) {
+                    if (get().type != GrLexeme.Type.identifier)
+                        logError(format(getError(Error.expectedFieldNameFoundX), getPrettyLexemeType(get()
+                                .type)), getError(Error.missingField));
+                    const string propertyName = get().svalue;
+                    checkAdvance();
+                    GrForeignDefinition foreign = _data.getForeign(currentType.mangledType);
+                    if (!foreign)
+                        logError(format(getError(Error.xNotDecl),
+                                getPrettyType(currentType)), getError(Error.unknownType));
 
-                        if (requireLValue(get().type)) {
-                            if (hadLValue)
-                                lvalues[$ - 1] = fieldLValue;
+                    GrType[] signature = [currentType];
+                    string callbackName;
+                    switch (get().type) with (GrLexeme.Type) {
+                    case assign:
+                        checkAdvance();
+                        GrType subType = parseSubExpression(
+                            GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_PARENTHESIS
+                                | GR_SUBEXPR_EXPECTING_VALUE | GR_SUBEXPR_TERMINATE_SEMICOLON).type;
+                        if (subType.base == GrType.Base.internalTuple) {
+                            auto types = grUnpackTuple(subType);
+                            if (types.length)
+                                signature ~= types;
                             else
-                                lvalues ~= fieldLValue;
+                                logError(getError(Error.exprYieldsNoVal),
+                                    getError(Error.expectedValFoundNothing));
                         }
-
-                        if (hadValue)
-                            typeStack[$ - 1] = currentType;
                         else
-                            typeStack ~= currentType;
-
-                        hasValue = true;
-                        hadValue = false;
-                        hasLValue = true;
-                        hadLValue = false;
-
-                        switch (get().type) with (GrLexeme.Type) {
-                        case period:
-                            addInstruction(GrOpcode.fieldLoad_object, fieldLValue.register);
-                            break;
-                        case assign:
-                            addInstruction(GrOpcode.fieldLoad, fieldLValue.register);
-                            break;
-                        case increment:
-                        case decrement:
-                        case bitwiseAndAssign: .. case powerAssign:
-                            addLoadFieldInstruction(currentType, fieldLValue.register, true);
-                            break;
-                        case leftParenthesis:
-                            lvalues.length--;
-                            addLoadFieldInstruction(currentType, fieldLValue.register, false);
-                            currentType = parseAnonymousCall(typeStack[$ - 1]);
-                            //Unpack function value for 1 or less return values
-                            //Multiples values are left as a tuple for parseExpressionList()
-                            if (currentType.base == GrType.Base.internalTuple) {
-                                auto types = grUnpackTuple(currentType);
-                                if (!types.length)
-                                    currentType = grVoid;
-                                else if (types.length == 1uL)
-                                    currentType = types[0];
-                            }
-                            if (currentType.base == GrType.Base.void_) {
-                                typeStack.length--;
-                            }
-                            else {
-                                hadValue = false;
-                                hasValue = true;
-                                typeStack[$ - 1] = currentType;
-                            }
-                            break;
-                        case comma:
-                            if (isExpectingLValue)
-                                goto case assign;
-                            goto default;
-                        default:
-                            addLoadFieldInstruction(currentType, fieldLValue.register, false);
-                            break;
-                        }
+                            signature ~= subType;
+                        if (!callbackName.length)
+                            callbackName = propertyName ~ "@set";
+                        break;
+                    case increment:
+                        checkAdvance();
+                        callbackName = propertyName ~ "@inc";
+                        break;
+                    case decrement:
+                        checkAdvance();
+                        callbackName = propertyName ~ "@dec";
+                        break;
+                    case addAssign:
+                        callbackName = propertyName ~ "@add";
+                        goto case assign;
+                    case substractAssign:
+                        callbackName = propertyName ~ "@sub";
+                        goto case assign;
+                    case multiplyAssign:
+                        callbackName = propertyName ~ "@mul";
+                        goto case assign;
+                    case divideAssign:
+                        callbackName = propertyName ~ "@div";
+                        goto case assign;
+                    case concatenateAssign:
+                        callbackName = propertyName ~ "@cat";
+                        goto case assign;
+                    case remainderAssign:
+                        callbackName = propertyName ~ "@rem";
+                        goto case assign;
+                    case powerAssign:
+                        callbackName = propertyName ~ "@pow";
+                        goto case assign;
+                    case andAssign:
+                        callbackName = propertyName ~ "@and";
+                        goto case assign;
+                    case orAssign:
+                        callbackName = propertyName ~ "@or";
+                        goto case assign;
+                    case bitwiseAndAssign:
+                        callbackName = propertyName ~ "@bitadd";
+                        goto case assign;
+                    case bitwiseOrAssign:
+                        callbackName = propertyName ~ "@bitor";
+                        goto case assign;
+                    case bitwiseXorAssign:
+                        callbackName = propertyName ~ "@bitxor";
+                        goto case assign;
+                    default:
+                        callbackName = propertyName ~ "@get";
                         break;
                     }
-                }
-                if (!hasField) {
-                    const string[] nearestValues = findNearestStrings(identifier, class_.fields);
-                    string errorNote;
-                    if (nearestValues.length) {
-                        foreach (size_t i, const string value; nearestValues) {
-                            errorNote ~= "`" ~ value ~ "`";
-                            if ((i + 1) < nearestValues.length)
-                                errorNote ~= ", ";
-                        }
-                        errorNote ~= ".";
+
+                    //GrPrimitive call.
+                    GrType returnType;
+                    auto matching = getFirstMatchingFuncOrPrim(callbackName, signature, fileId);
+                    if (matching.prim) {
+                        addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+                        returnType = grPackTuple(matching.prim.outSignature);
                     }
-                    logError(format(getError(Error.noFieldXOnTypeY), identifier, getPrettyType(currentType)),
-                        getError(Error.unknownField), format(getError(Error.availableFieldsAreX), errorNote), -1);
+                    else if (matching.func) {
+                        //GrFunction call.
+                        returnType = grPackTuple(addFunctionCall(matching.func, fileId));
+                    }
+                    else {
+                        logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(callbackName,
+                                signature)), getError(Error.unknownFunc), "", -1);
+                    }
+                    currentType = returnType;
+
+                    if (hadValue)
+                        typeStack[$ - 1] = currentType;
+                    else
+                        typeStack ~= currentType;
+
+                    hasValue = true;
+                    hadValue = false;
+                    hasLValue = false;
+                    hadLValue = false;
+                }
+                else if (currentType.base == GrType.Base.class_) {
+                    if (get().type != GrLexeme.Type.identifier)
+                        logError(format(getError(Error.expectedFieldNameFoundX), getPrettyLexemeType(get()
+                                .type)), getError(Error.missingField));
+                    const string identifier = get().svalue;
+                    checkAdvance();
+                    GrClassDefinition class_ = getClass(currentType.mangledType, get().fileId);
+                    if (!class_)
+                        logError(format(getError(Error.xNotDecl),
+                                getPrettyType(currentType)), getError(Error.unknownType));
+                    const auto nbFields = class_.signature.length;
+                    bool hasField;
+                    for (int i; i < nbFields; i++) {
+                        if (identifier == class_.fields[i]) {
+                            if ((class_.fieldsInfo[i].fileId != fileId)
+                                && !class_.fieldsInfo[i].isPublic)
+                                logError(format(getError(Error.xOnTypeYIsPrivate), identifier, getPrettyType(
+                                        currentType)),
+                                    getError(Error.privateField), "", -1);
+                            hasField = true;
+                            currentType = class_.signature[i];
+                            currentType.isField = true;
+                            GrVariable fieldLValue = new GrVariable;
+                            fieldLValue.isInitialized = true;
+                            fieldLValue.isField = true;
+                            fieldLValue.type = currentType;
+                            fieldLValue.register = i;
+                            fieldLValue.fileId = get().fileId;
+                            fieldLValue.lexPosition = current;
+
+                            if (requireLValue(get().type)) {
+                                if (hadLValue)
+                                    lvalues[$ - 1] = fieldLValue;
+                                else
+                                    lvalues ~= fieldLValue;
+                            }
+
+                            if (hadValue)
+                                typeStack[$ - 1] = currentType;
+                            else
+                                typeStack ~= currentType;
+
+                            hasValue = true;
+                            hadValue = false;
+                            hasLValue = true;
+                            hadLValue = false;
+
+                            switch (get().type) with (GrLexeme.Type) {
+                            case period:
+                                addInstruction(GrOpcode.fieldLoad_object, fieldLValue.register);
+                                break;
+                            case assign:
+                                addInstruction(GrOpcode.fieldLoad, fieldLValue.register);
+                                break;
+                            case increment:
+                            case decrement:
+                            case bitwiseAndAssign: .. case powerAssign:
+                                addLoadFieldInstruction(currentType, fieldLValue.register, true);
+                                break;
+                            case leftParenthesis:
+                                lvalues.length--;
+                                addLoadFieldInstruction(currentType, fieldLValue.register, false);
+                                currentType = parseAnonymousCall(typeStack[$ - 1]);
+                                //Unpack function value for 1 or less return values
+                                //Multiples values are left as a tuple for parseExpressionList()
+                                if (currentType.base == GrType.Base.internalTuple) {
+                                    auto types = grUnpackTuple(currentType);
+                                    if (!types.length)
+                                        currentType = grVoid;
+                                    else if (types.length == 1uL)
+                                        currentType = types[0];
+                                }
+                                if (currentType.base == GrType.Base.void_) {
+                                    typeStack.length--;
+                                }
+                                else {
+                                    hadValue = false;
+                                    hasValue = true;
+                                    typeStack[$ - 1] = currentType;
+                                }
+                                break;
+                            case comma:
+                                if (isExpectingLValue)
+                                    goto case assign;
+                                goto default;
+                            default:
+                                addLoadFieldInstruction(currentType, fieldLValue.register, false);
+                                break;
+                            }
+                            break;
+                        }
+                    }
+                    if (!hasField) {
+                        const string[] nearestValues = findNearestStrings(identifier, class_.fields);
+                        string errorNote;
+                        if (nearestValues.length) {
+                            foreach (size_t i, const string value; nearestValues) {
+                                errorNote ~= "`" ~ value ~ "`";
+                                if ((i + 1) < nearestValues.length)
+                                    errorNote ~= ", ";
+                            }
+                            errorNote ~= ".";
+                        }
+                        logError(format(getError(Error.noFieldXOnTypeY), identifier, getPrettyType(currentType)),
+                            getError(Error.unknownField), format(getError(Error.availableFieldsAreX), errorNote), -1);
+                    }
+                }
+                else {
+                    logError(format(getError(Error.cantAccessFieldOnTypeX), getPrettyType(currentType)),
+                        format(getError(Error.expectedClassFoundX), getPrettyType(currentType)));
                 }
                 break;
             case colon:

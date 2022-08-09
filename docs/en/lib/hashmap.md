@@ -8,8 +8,9 @@ Dictionary that associates values by keys.
 
 |Function|Input|Output|
 |-|-|-|
-|[HashMap](#hashmap_1)|[array](/en/lib/array#array)(string) keys, [array](/en/lib/array#array)(T) values|[HashMap](#hashmap)\<T\>|
-|[HashMap](#hashmap_2)|[array](/en/lib/array#array)([Pair](/en/lib/pair#pair)\<[string](/en/lib/string#string), T\>) pairs|[HashMap](#hashmap)\<T\>|
+|[new](#new)||[HashMap](#hashmap)\<T\>|
+|[new](#new_arrays)|[array](/en/lib/array#array)(string) keys, [array](/en/lib/array#array)(T) values|[HashMap](#hashmap)\<T\>|
+|[new](#new_pairs)|[array](/en/lib/array#array)([Pair](/en/lib/pair#pair)\<[string](/en/lib/string#string), T\>) pairs|[HashMap](#hashmap)\<T\>|
 |[clear](#clear)|[HashMap](#hashmap)\<T\> this|[HashMap](#hashmap)\<T\>|
 |[copy](#copy)|[HashMap](#hashmap)\<T\> this|[HashMap](#hashmap)\<T\>|
 |[each](#each)|[HashMap](#hashmap)\<T\> this|[HashMapIterator](#hashmapiterator)\<T\>|
@@ -24,17 +25,23 @@ Dictionary that associates values by keys.
 
 ## Function Descriptions
 
-<a id="hashmap_1"></a>
-- HashMap ( [array](/en/lib/array#array)(string) keys, [array](/en/lib/array#array)(T) values ) ( [HashMap](#hashmap)\<T\> )
+<a id="new"></a>
+- new ( ) ( [HashMap](#hashmap)\<T\> )
 
-Returns a new HashMap by associating each key with its corresponding value.
+Create an empty HashMap.
+___
+
+<a id="new_arrays"></a>
+- new ( [array](/en/lib/array#array)(string) keys, [array](/en/lib/array#array)(T) values ) ( [HashMap](#hashmap)\<T\> )
+
+Create a new HashMap by associating each key with its corresponding value.
 `keys` and `values` sizes must match.
 ___
 
-<a id="hashmap_2"></a>
-- HashMap ( [array](/en/lib/array#array)([Pair](/en/lib/pair#pair)\<[string](/en/lib/string#string), T\>) pairs ) ( [HashMap](#hashmap)\<T\> )
+<a id="new_pairs"></a>
+- new ( [array](/en/lib/array#array)([Pair](/en/lib/pair#pair)\<[string](/en/lib/string#string), T\>) pairs ) ( [HashMap](#hashmap)\<T\> )
 
-Returns a new HashMap with `pairs`.
+Create a new HashMap with `pairs`.
 ___
 
 <a id="clear"></a>

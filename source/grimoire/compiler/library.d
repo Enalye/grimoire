@@ -385,10 +385,44 @@ class GrLibrary {
     It must return the defined type.
     */
     GrPrimitive addConstructor(GrCallback callback,
-        GrType newType, GrType[] inSignature, GrConstraint[] constraints = []) {
+        GrType newType, GrType[] inSignature = [],
+        GrConstraint[] constraints = []) {
         auto primitive = addFunction(callback, "@new",
             inSignature ~ [newType], [newType], constraints);
         return primitive;
+    }
+
+    /**
+    Define functions that access and modify a foreign’s property.
+    */
+    GrPrimitive[] addProperty(GrCallback[] callbacks,
+        string name, GrType foreignType,
+        GrType[] signature = [],
+        GrConstraint[] constraints = []) {
+        GrPrimitive[] primitives;
+        const string[] operations = [
+            "@get", "@set", "@inc", "@dec", "@add", "@sub", "@mul", "@div", "@cat",
+            "@rem", "@pow", "@and", "@or", "@bitand", "@bitor", "@bitxor"
+        ];
+        assert(callbacks.length <= operations.length,
+            "the number of callbacks of the property `" ~ name ~
+                "` of the type `" ~ grGetPrettyType(
+                    foreignType) ~ "` exceed the number of operations");
+        int i;
+        foreach (GrCallback callback; callbacks) {
+            if (callback) {
+                if (i == 0 || i == 2 || i == 3) {
+                    primitives ~= addFunction(callback, name ~ operations[i],
+                        [foreignType], signature, constraints);
+                }
+                else {
+                    primitives ~= addFunction(callback, name ~ operations[i],
+                        [foreignType] ~ signature, signature, constraints);
+                }
+            }
+            i++;
+        }
+        return primitives;
     }
 
     private string getPrettyPrimitive(GrPrimitive primitive) {
