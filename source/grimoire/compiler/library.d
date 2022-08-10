@@ -395,32 +395,22 @@ class GrLibrary {
     /**
     Define functions that access and modify a foreign’s property.
     */
-    GrPrimitive[] addProperty(GrCallback[] callbacks,
+    GrPrimitive[] addProperty(GrCallback getCallback, GrCallback setCallback,
         string name, GrType foreignType,
-        GrType[] signature = [],
-        GrConstraint[] constraints = []) {
+        GrType propertyType, GrConstraint[] constraints = []) {
         GrPrimitive[] primitives;
-        const string[] operations = [
-            "@get", "@set", "@inc", "@dec", "@add", "@sub", "@mul", "@div", "@cat",
-            "@rem", "@pow", "@and", "@or", "@bitand", "@bitor", "@bitxor"
-        ];
-        assert(callbacks.length <= operations.length,
+        /*assert(callbacks.length <= operations.length,
             "the number of callbacks of the property `" ~ name ~
                 "` of the type `" ~ grGetPrettyType(
-                    foreignType) ~ "` exceed the number of operations");
-        int i;
-        foreach (GrCallback callback; callbacks) {
-            if (callback) {
-                if (i == 0 || i == 2 || i == 3) {
-                    primitives ~= addFunction(callback, name ~ operations[i],
-                        [foreignType], signature, constraints);
-                }
-                else {
-                    primitives ~= addFunction(callback, name ~ operations[i],
-                        [foreignType] ~ signature, signature, constraints);
-                }
-            }
-            i++;
+                    foreignType) ~ "` exceed the number of operations");*/
+
+        if (getCallback) {
+            primitives ~= addFunction(getCallback, name ~ "@get",
+                [foreignType], [propertyType], constraints);
+        }
+        if (setCallback) {
+            primitives ~= addFunction(setCallback, name ~ "@set",
+                [foreignType, propertyType], [propertyType], constraints);
         }
         return primitives;
     }

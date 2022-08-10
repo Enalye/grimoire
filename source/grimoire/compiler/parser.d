@@ -6099,9 +6099,30 @@ final class GrParser {
                                 getPrettyType(currentType)), getError(Error.unknownType));
 
                     GrType[] signature = [currentType];
-                    string callbackName;
-                    switch (get().type) with (GrLexeme.Type) {
-                    case assign:
+
+                    GrLexeme.Type operatorType = get().type;
+
+                    if (requireLValue(operatorType)) {
+                        addInstruction(GrOpcode.copy_object);
+                    }
+
+                    if (operatorType != GrLexeme.Type.assign) {
+                        const string callbackName = propertyName ~ "@get";
+                        auto matching = getFirstMatchingFuncOrPrim(callbackName, signature, fileId);
+                        if (matching.prim) {
+                            addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+                            currentType = matching.prim.outSignature[0];
+                        }
+                        else {
+                            logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(callbackName,
+                                    signature)), getError(Error.unknownFunc), "", -1);
+                        }
+                    }
+
+                    bool isSet;
+                    if (operatorType >= GrLexeme.Type.assign && operatorType <= GrLexeme
+                        .Type.powerAssign) {
+                        isSet = true;
                         checkAdvance();
                         GrType subType = parseSubExpression(
                             GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_PARENTHESIS
@@ -6116,79 +6137,43 @@ final class GrParser {
                         }
                         else
                             signature ~= subType;
-                        if (!callbackName.length)
-                            callbackName = propertyName ~ "@set";
-                        break;
-                    case increment:
+
+                        if (operatorType != GrLexeme.Type.assign) {
+                            import std.stdio;
+
+                            writeln(currentType, ", ", subType);
+                            currentType = addBinaryOperator(
+                                operatorType - (
+                                    GrLexeme.Type.bitwiseAndAssign - GrLexeme.Type.bitwiseAnd),
+                                currentType, subType, fileId);
+                        }
+                    }
+                    else if (operatorType == GrLexeme.Type.increment || operatorType == GrLexeme
+                        .Type.decrement) {
+                        isSet = true;
                         checkAdvance();
-                        callbackName = propertyName ~ "@inc";
-                        break;
-                    case decrement:
-                        checkAdvance();
-                        callbackName = propertyName ~ "@dec";
-                        break;
-                    case addAssign:
-                        callbackName = propertyName ~ "@add";
-                        goto case assign;
-                    case substractAssign:
-                        callbackName = propertyName ~ "@sub";
-                        goto case assign;
-                    case multiplyAssign:
-                        callbackName = propertyName ~ "@mul";
-                        goto case assign;
-                    case divideAssign:
-                        callbackName = propertyName ~ "@div";
-                        goto case assign;
-                    case concatenateAssign:
-                        callbackName = propertyName ~ "@cat";
-                        goto case assign;
-                    case remainderAssign:
-                        callbackName = propertyName ~ "@rem";
-                        goto case assign;
-                    case powerAssign:
-                        callbackName = propertyName ~ "@pow";
-                        goto case assign;
-                    case andAssign:
-                        callbackName = propertyName ~ "@and";
-                        goto case assign;
-                    case orAssign:
-                        callbackName = propertyName ~ "@or";
-                        goto case assign;
-                    case bitwiseAndAssign:
-                        callbackName = propertyName ~ "@bitadd";
-                        goto case assign;
-                    case bitwiseOrAssign:
-                        callbackName = propertyName ~ "@bitor";
-                        goto case assign;
-                    case bitwiseXorAssign:
-                        callbackName = propertyName ~ "@bitxor";
-                        goto case assign;
-                    default:
-                        callbackName = propertyName ~ "@get";
-                        break;
+                        currentType = addUnaryOperator(operatorType, currentType, fileId);
                     }
 
-                    //GrPrimitive call.
-                    GrType returnType;
-                    auto matching = getFirstMatchingFuncOrPrim(callbackName, signature, fileId);
-                    if (matching.prim) {
-                        addInstruction(GrOpcode.primitiveCall, matching.prim.index);
-                        returnType = grPackTuple(matching.prim.outSignature);
-                    }
-                    else if (matching.func) {
-                        //GrFunction call.
-                        returnType = grPackTuple(addFunctionCall(matching.func, fileId));
-                    }
-                    else {
-                        logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(callbackName,
-                                signature)), getError(Error.unknownFunc), "", -1);
-                    }
-                    currentType = returnType;
+                    if (isSet) {
+                        GrType returnType;
+                        const string callbackName = propertyName ~ "@set";
+                        auto matching = getFirstMatchingFuncOrPrim(callbackName, signature, fileId);
+                        if (matching.prim) {
+                            addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+                            returnType = grPackTuple(matching.prim.outSignature);
+                        }
+                        else {
+                            logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(callbackName,
+                                    signature)), getError(Error.unknownFunc), "", -1);
+                        }
+                        currentType = returnType;
 
-                    if (hadValue)
-                        typeStack[$ - 1] = currentType;
-                    else
-                        typeStack ~= currentType;
+                        if (hadValue)
+                            typeStack[$ - 1] = currentType;
+                        else
+                            typeStack ~= currentType;
+                    }
 
                     hasValue = true;
                     hadValue = false;
@@ -7477,11 +7462,11 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.prevDefPrim: "`%s` est déjà défini en tant que primitive",
                 Error.alreadyDef: "`%s` est déjà défini",
                 Error.cantDefVarOfTypeX: "impossible définir une variable du type %s",
-                Error.cantUseTypeAsParam: "impossible d'utiliser `%s` comme type de paramètre",
+                Error.cantUseTypeAsParam: "impossible d’utiliser `%s` comme type de paramètre",
                 Error.opMustHave1RetVal: "un operateur ne doit avoir qu'une valeur de retour",
                 Error.expected1RetValFoundX: "1 valeur de retour attendue, %s valeur trouvée",
                 Error.expected1RetValFoundXs: "1 valeur de retour attendue, %s valeurs trouvées",
-                Error.cantUseOpOnMultipleVal: "impossible d'utiliser un opérateur sur plusieurs valeurs",
+                Error.cantUseOpOnMultipleVal: "impossible d’utiliser un opérateur sur plusieurs valeurs",
                 Error.exprYieldsMultipleVal: "l’expression délivre plusieurs valeurs",
                 Error.noXUnaryOpDefForY: "il n’y a pas d’opérateur unaire `%s` défini pour `%s`",
                 Error.noXBinaryOpDefForYAndZ: "il n’y pas d’opérateur binaire `%s` défini pour `%s` et `%s`",
