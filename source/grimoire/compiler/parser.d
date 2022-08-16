@@ -6139,17 +6139,14 @@ final class GrParser {
                             signature ~= subType;
 
                         if (operatorType != GrLexeme.Type.assign) {
-                            import std.stdio;
-
-                            writeln(currentType, ", ", subType);
                             currentType = addBinaryOperator(
                                 operatorType - (
                                     GrLexeme.Type.bitwiseAndAssign - GrLexeme.Type.bitwiseAnd),
                                 currentType, subType, fileId);
                         }
                     }
-                    else if (operatorType == GrLexeme.Type.increment || operatorType == GrLexeme
-                        .Type.decrement) {
+                    else if (operatorType == GrLexeme.Type.increment ||
+                        operatorType == GrLexeme.Type.decrement) {
                         isSet = true;
                         checkAdvance();
                         currentType = addUnaryOperator(operatorType, currentType, fileId);
