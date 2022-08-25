@@ -19,19 +19,19 @@ package(grimoire.stdlib) void grLoadStdLibLog(GrLibrary library) {
     library.addFunction(&_print_nb, "print", [grBoolArray]);
     library.addFunction(&_print_nr, "print", [grRealArray]);
     library.addFunction(&_print_ns, "print", [grStringArray]);
-    library.addFunction(&_print_enum, "print", [grAny("T")], [], [
+    library.addFunction(&_print_enum, "print", [grAny("T", true)], [], [
             grConstraint("Enum", grAny("T"))
         ]);
-    library.addFunction(&_print_chan, "print", [grAny("T")], [], [
+    library.addFunction(&_print_chan, "print", [grAny("T", true)], [], [
             grConstraint("Channel", grAny("T"))
         ]);
-    library.addFunction(&_print_func, "print", [grAny("T")], [], [
+    library.addFunction(&_print_func, "print", [grAny("T", true)], [], [
             grConstraint("Callable", grAny("T"))
         ]);
-    library.addFunction(&_print_o, "print", [grAny("T")], [], [
+    library.addFunction(&_print_o, "print", [grAny("T", true)], [], [
             grConstraint("Class", grAny("T"))
         ]);
-    library.addFunction(&_print_u, "print", [grAny("T")], [], [
+    library.addFunction(&_print_u, "print", [grAny("T", true)], [], [
             grConstraint("Foreign", grAny("T"))
         ]);
 }

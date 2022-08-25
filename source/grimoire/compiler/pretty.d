@@ -10,21 +10,36 @@ import grimoire.compiler.util, grimoire.compiler.type, grimoire.compiler.mangle;
 
 /// Convert a type into a pretty format for display.
 string grGetPrettyType(const GrType variableType) {
+    string result;
+
+    if (variableType.isPure) {
+        result ~= "pure ";
+    }
+    if (variableType.isConst) {
+        result ~= "const ";
+    }
+
     final switch (variableType.base) with (GrType.Base) {
     case void_:
-        return "void";
+        result ~= "void";
+        break;
     case null_:
-        return "null";
+        result ~= "null";
+        break;
     case int_:
-        return "int";
+        result ~= "int";
+        break;
     case real_:
-        return "real";
+        result ~= "real";
+        break;
     case bool_:
-        return "bool";
+        result ~= "bool";
+        break;
     case string_:
-        return "string";
+        result ~= "string";
+        break;
     case array:
-        string result = "array(";
+        result ~= "array(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach (parameter; parameters) {
@@ -34,9 +49,9 @@ string grGetPrettyType(const GrType variableType) {
             i++;
         }
         result ~= ")";
-        return result;
+        break;
     case channel:
-        string result = "channel(";
+        result ~= "channel(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach (parameter; parameters) {
@@ -46,11 +61,12 @@ string grGetPrettyType(const GrType variableType) {
             i++;
         }
         result ~= ")";
-        return result;
+        break;
     case enum_:
-        return to!string(variableType.mangledType);
+        result ~= to!string(variableType.mangledType);
+        break;
     case function_:
-        string result = "function(";
+        result ~= "function(";
         int i;
         auto inSignature = grUnmangleSignature(variableType.mangledType);
         foreach (type; inSignature) {
@@ -69,9 +85,9 @@ string grGetPrettyType(const GrType variableType) {
                 result ~= ", ";
             i++;
         }
-        return result;
+        break;
     case task:
-        string result = "task(";
+        result ~= "task(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach (parameter; parameters) {
@@ -81,9 +97,9 @@ string grGetPrettyType(const GrType variableType) {
             i++;
         }
         result ~= ")";
-        return result;
+        break;
     case reference:
-        string result = "ref(";
+        result ~= "ref(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach (parameter; parameters) {
@@ -93,13 +109,13 @@ string grGetPrettyType(const GrType variableType) {
             i++;
         }
         result ~= ")";
-        return result;
+        break;
     case foreign:
     case class_:
         import std.algorithm.searching : findSplitBefore;
 
         const mangledTuple = findSplitBefore(variableType.mangledType, "$");
-        string result = mangledTuple[0];
+        result ~= mangledTuple[0];
         GrType[] templateTypes = grUnmangleSignature(mangledTuple[1]);
         if (templateTypes.length) {
             result ~= "<";
@@ -112,9 +128,9 @@ string grGetPrettyType(const GrType variableType) {
             }
             result ~= ">";
         }
-        return result;
+        break;
     case internalTuple:
-        string result = "(";
+        result ~= "(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach (parameter; parameters) {
@@ -124,8 +140,9 @@ string grGetPrettyType(const GrType variableType) {
             i++;
         }
         result ~= ")";
-        return result;
+        break;
     }
+    return result;
 }
 
 /// Displayable format for a mangled string of format: function$signature \

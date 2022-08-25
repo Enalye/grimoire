@@ -15,124 +15,99 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
     static foreach (t; ["Int", "Real", "String", "Object"]) {
         mixin("
             GrType " ~ t ~ "ValueType = grAny(\"T\");
+            GrType pure" ~ t ~ "ValueType = grAny(\"T\", true);
             GrType " ~ t ~ "ArrayType = grArray(" ~ t ~ "ValueType);
-            GrType " ~ t ~ "IteratorType = grGetForeignType(\"ArrayIterator\", [" ~ t ~ "ValueType]);
+            GrType pure" ~ t ~ "ArrayType = grArray(" ~ t ~ "ValueType, true);
+            GrType " ~ t ~ "IteratorType = grGetForeignType(\"ArrayIterator\", [" ~
+                t ~ "ValueType]);
             static if(t == \"Object\") {
                 GrConstraint " ~ t ~ "Constraint = grConstraint(\"Register\", " ~ t ~ "ValueType,
                     [GrType(GrType.Base.null_)]);
             }
             else {
-                GrConstraint " ~ t ~ "Constraint = grConstraint(\"Register\", " ~ t ~ "ValueType, [gr" ~ t ~ "]);
+                GrConstraint " ~ t ~ "Constraint = grConstraint(\"Register\", " ~
+                t ~ "ValueType, [gr" ~ t ~ "]);
             }
-            library.addFunction(&_copy_!\""
-                ~ t ~ "\", \"copy\", [" ~ t ~ "ArrayType], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_size_!\""
-                ~ t ~ "\", \"size\", [" ~ t ~ "ArrayType], [grInt], [" ~ t ~ "Constraint]);
-            library.addFunction(&_resize_!\""
-                ~ t ~ "\", \"resize\", [
+            library.addFunction(&_copy_!\"" ~ t ~ "\", \"copy\", [pure" ~ t ~
+                "ArrayType], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
+            library.addFunction(&_size_!\"" ~ t ~ "\", \"size\", [pure" ~ t ~
+                "ArrayType], [grInt], [" ~ t ~ "Constraint]);
+            library.addFunction(&_resize_!\"" ~ t ~ "\", \"resize\", [
                 " ~ t ~ "ArrayType, grInt
             ], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_empty_!\""
-                ~ t ~ "\", \"empty?\", [
-                " ~ t ~ "ArrayType
+            library.addFunction(&_empty_!\"" ~ t ~ "\", \"empty?\", [
+                pure" ~ t ~ "ArrayType
             ], [grBool], [" ~ t ~ "Constraint]);
-            library.addFunction(&_fill_!\""
-                ~ t ~ "\", \"fill\", [
+            library.addFunction(&_fill_!\"" ~ t ~ "\", \"fill\", [
                 " ~ t ~ "ArrayType, " ~ t ~ "ValueType
             ], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_clear_!\""
-                ~ t ~ "\", \"clear\", [
+            library.addFunction(&_clear_!\"" ~ t ~ "\", \"clear\", [
                 " ~ t ~ "ArrayType
             ], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_unshift_!\""
-                ~ t ~ "\", \"unshift\", [
+            library.addFunction(&_unshift_!\"" ~ t ~ "\", \"unshift\", [
                     " ~ t ~ "ArrayType, " ~ t ~ "ValueType
                 ], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_push_!\""
-                ~ t
-                ~ "\", \"push\", [
+            library.addFunction(&_push_!\"" ~ t ~ "\", \"push\", [
                     " ~ t ~ "ArrayType, " ~ t ~ "ValueType
                 ], [" ~ t ~ "ValueType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_shift_!\""
-                ~ t ~ "\", \"shift\", [
+            library.addFunction(&_shift_!\"" ~ t ~ "\", \"shift\", [
                     " ~ t ~ "ArrayType
                 ], [" ~ t ~ "ValueType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_pop_!\""
-                ~ t
-                ~ "\", \"pop\", [
+            library.addFunction(&_pop_!\"" ~ t ~ "\", \"pop\", [
                     " ~ t ~ "ArrayType
                 ], [" ~ t ~ "ValueType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_shift1_!\""
-                ~ t ~ "\", \"shift\", [
+            library.addFunction(&_shift1_!\"" ~ t ~ "\", \"shift\", [
                     " ~ t ~ "ArrayType, grInt
                 ], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_pop1_!\""
-                ~ t ~ "\", \"pop\", [
+            library.addFunction(&_pop1_!\"" ~ t ~ "\", \"pop\", [
                     " ~ t ~ "ArrayType, grInt
                 ], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_first_!\""
-                ~ t ~ "\", \"first\", [
-                " ~ t ~ "ArrayType
+            library.addFunction(&_first_!\"" ~ t ~ "\", \"first\", [
+                pure" ~ t ~ "ArrayType
             ], [" ~ t ~ "ValueType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_last_!\""
-                ~ t ~ "\", \"last\", [
-                    " ~ t ~ "ArrayType
+            library.addFunction(&_last_!\"" ~ t ~ "\", \"last\", [
+                    pure" ~ t ~ "ArrayType
                 ], [" ~ t ~ "ValueType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_remove_!\""
-                ~ t ~ "\", \"remove\", [
+            library.addFunction(&_remove_!\"" ~ t ~ "\", \"remove\", [
                     " ~ t ~ "ArrayType, grInt
                 ], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_remove2_!\""
-                ~ t ~ "\", \"remove\", [
+            library.addFunction(&_remove2_!\"" ~ t ~ "\", \"remove\", [
                     " ~ t ~ "ArrayType, grInt, grInt
                 ], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_slice_!\""
-                ~ t ~ "\", \"slice\", [
+            library.addFunction(&_slice_!\"" ~ t ~ "\", \"slice\", [
                     " ~ t ~ "ArrayType, grInt, grInt
                 ], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_slice_copy_!\""
-                ~ t ~ "\", \"sliced\", [
-                    " ~ t ~ "ArrayType, grInt, grInt
+            library.addFunction(&_slice_copy_!\"" ~ t ~ "\", \"sliced\", [
+                    pure" ~ t ~ "ArrayType, grInt, grInt
                 ], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_reverse_!\""
-                ~ t
-                ~ "\", \"reverse\", [
-                    " ~ t ~ "ArrayType
+            library.addFunction(&_reverse_!\"" ~ t ~ "\", \"reverse\", [
+                    pure" ~ t ~ "ArrayType
                 ], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_insert_!\""
-                ~ t ~ "\", \"insert\", [
+            library.addFunction(&_insert_!\"" ~ t ~ "\", \"insert\", [
                     " ~ t ~ "ArrayType, grInt, " ~ t ~ "ValueType
                 ], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_each_!\""
-                ~ t ~ "\", \"each\", [" ~ t ~ "ArrayType], [" ~ t ~ "IteratorType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_next_!\""
-                ~ t ~ "\", \"next\", [
+            library.addFunction(&_each_!\"" ~ t ~ "\", \"each\", [" ~ t ~
+                "ArrayType], [" ~ t ~ "IteratorType], [" ~ t ~ "Constraint]);
+            library.addFunction(&_next_!\"" ~ t ~ "\", \"next\", [
                     " ~ t ~ "IteratorType
                 ], [grBool, " ~ t ~ "ValueType], [" ~ t ~ "Constraint]);
-            library.addFunction(&_findFirst_!\""
-                ~ t ~ "\", \"findFirst\", [
-                    " ~ t ~ "ArrayType, " ~ t ~ "ValueType
+            library.addFunction(&_findFirst_!\"" ~ t ~ "\", \"findFirst\", [
+                    pure" ~ t ~ "ArrayType, pure" ~ t ~ "ValueType
                 ], [grInt], [" ~ t ~ "Constraint]);
-            library.addFunction(&_findLast_!\""
-                ~ t
-                ~ "\", \"findLast\", [
-                    " ~ t ~ "ArrayType, " ~ t ~ "ValueType
+            library.addFunction(&_findLast_!\"" ~ t ~ "\", \"findLast\", [
+                    pure" ~ t ~ "ArrayType, pure" ~ t ~ "ValueType
                 ], [grInt], [" ~ t ~ "Constraint]);
-            library.addFunction(&_findLast_!\""
-                ~ t ~ "\", \"findLast\", [
-                    " ~ t ~ "ArrayType, " ~ t ~ "ValueType
+            library.addFunction(&_findLast_!\"" ~ t ~ "\", \"findLast\", [
+                    pure" ~ t ~ "ArrayType, pure" ~ t ~ "ValueType
                 ], [grInt], [" ~ t ~ "Constraint]);
-            library.addFunction(&_has_!\""
-                ~ t
-                ~ "\", \"has?\", [
-                    " ~ t ~ "ArrayType, " ~ t ~ "ValueType
+            library.addFunction(&_has_!\"" ~ t ~ "\", \"has?\", [
+                    pure" ~ t ~ "ArrayType, pure" ~ t ~ "ValueType
                 ], [grBool], [" ~ t ~ "Constraint]);
             ");
 
         static if (t != "Object") {
             mixin("
-            library.addFunction(&_sort_!\""
-                    ~ t ~ "\", \"sort\", [
+            library.addFunction(&_sort_!\"" ~ t ~ "\", \"sort\", [
                     " ~ t ~ "ArrayType
                 ], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
                 ");
@@ -142,10 +117,8 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
 
 private void _copy_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array copy = new Gr" ~ t ~ "Array;
-        copy.data = call.get"
-            ~ t ~ "Array(0).data.dup;
-        call.set"
-            ~ t ~ "Array(copy);");
+        copy.data = call.get" ~ t ~ "Array(0).data.dup;
+        call.set" ~ t ~ "Array(copy);");
 }
 
 private void _size_(string t)(GrCall call) {

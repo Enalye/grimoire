@@ -11,6 +11,7 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 package(grimoire.stdlib) void grLoadStdLibChannel(GrLibrary library) {
     static foreach (t; ["Int", "Real", "String", "Object"]) {
         mixin("GrType " ~ t ~ "ChannelType = grChannel(grAny(\"T\"));
+            GrType pure" ~ t ~ "ChannelType = grChannel(grAny(\"T\"), true);
 
             static if(t == \"Object\") {
                 GrConstraint " ~ t ~ "Constraint = grConstraint(\"Register\", grAny(\"T\"),
@@ -22,20 +23,20 @@ package(grimoire.stdlib) void grLoadStdLibChannel(GrLibrary library) {
 
             library.addFunction(&_size_!\""
                 ~ t ~ "\", \"size\", [
-                    " ~ t ~ "ChannelType
+                    pure" ~ t ~ "ChannelType
                     ], [grInt], [" ~ t ~ "Constraint]);
             library.addFunction(&_capacity_!\""
                 ~ t ~ "\", \"capacity\", [
-                    " ~ t ~ "ChannelType
+                    pure" ~ t ~ "ChannelType
                     ], [grInt], [" ~ t ~ "Constraint]);
             library.addFunction(&_empty_!\""
                 ~ t
                 ~ "\", \"empty?\", [
-                    " ~ t ~ "ChannelType
+                    pure" ~ t ~ "ChannelType
                     ], [grBool], [" ~ t ~ "Constraint]);
             library.addFunction(&_full_!\""
                 ~ t ~ "\", \"full?\", [
-                    " ~ t ~ "ChannelType
+                    pure" ~ t ~ "ChannelType
                     ], [grBool], [" ~ t ~ "Constraint]);
                     ");
     }

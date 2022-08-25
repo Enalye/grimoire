@@ -49,84 +49,69 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
 
     static foreach (t; ["Int", "Real", "String", "Object"]) {
         mixin("
-            GrType "
-                ~ t ~ "ValueType = grAny(\"T\");
-            GrType "
-                ~ t ~ "HashMapType = grGetForeignType(\"HashMap\", [" ~ t ~ "ValueType]);
-            GrType "
-                ~ t ~ "PairType = grGetClassType(\"pair\", [grString, " ~ t ~ "ValueType]);
-            GrType "
-                ~ t ~ "ArrayType = grArray(" ~ t ~ "ValueType);
+            GrType " ~ t ~ "ValueType = grAny(\"T\");
+            GrType " ~ t ~ "HashMapType = grGetForeignType(\"HashMap\", [" ~ t ~ "ValueType]);
+            GrType pure" ~ t ~ "HashMapType = grGetForeignType(\"HashMap\", [" ~
+                t ~ "ValueType], true);
+            GrType " ~ t ~ "PairType = grGetClassType(\"pair\", [grString, " ~ t ~ "ValueType]);
+            GrType " ~ t ~ "ArrayType = grArray(" ~ t ~ "ValueType);
 
-            GrType "
-                ~ t ~ "IteratorType = grGetForeignType(\"HashMapIterator\", [" ~ t ~ "ValueType]);
+            GrType " ~ t ~ "IteratorType = grGetForeignType(\"HashMapIterator\", [" ~
+                t ~ "ValueType]);
             static if(t == \"Object\") {
-                GrConstraint "
-                ~ t ~ "Constraint = grConstraint(\"Register\", " ~ t ~ "ValueType,
+                GrConstraint " ~ t ~ "Constraint = grConstraint(\"Register\", " ~ t ~ "ValueType,
                     [GrType(GrType.Base.null_)]);
             }
             else {
-                GrConstraint "
-                ~ t ~ "Constraint = grConstraint(\"Register\", " ~ t ~ "ValueType, [gr" ~ t ~ "]);
+                GrConstraint " ~ t ~ "Constraint = grConstraint(\"Register\", " ~
+                t ~ "ValueType, [gr" ~ t ~ "]);
             }
 
-            library.addConstructor(&_new_!\""
-                ~ t ~ "\", " ~ t ~ "HashMapType, [], [" ~ t ~ "Constraint]);
+            library.addConstructor(&_new_!\"" ~ t ~ "\", " ~ t ~
+                "HashMapType, [], [" ~ t ~ "Constraint]);
 
-            library.addConstructor(&_newByArray_!\""
-                ~ t ~ "\", " ~ t ~ "HashMapType, [grStringArray, " ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
+            library.addConstructor(&_newByArray_!\"" ~ t ~ "\", " ~ t ~
+                "HashMapType, [grStringArray, " ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
 
-            library.addConstructor(&_newByPairs_!\""
-                ~ t ~ "\", " ~ t ~ "HashMapType, [" ~ t ~ "PairType], [" ~ t ~ "Constraint]);
+            library.addConstructor(&_newByPairs_!\"" ~ t ~ "\", " ~ t ~
+                "HashMapType, [" ~ t ~ "PairType], [" ~ t ~ "Constraint]);
 
-            library.addFunction(&_copy_!\""
-                ~ t ~ "\", \"copy\", [" ~ t ~ "HashMapType], [" ~ t ~ "HashMapType], [" ~ t ~ "Constraint]);
+            library.addFunction(&_copy_!\"" ~ t ~ "\", \"copy\", [" ~ t ~
+                "HashMapType], [" ~ t ~ "HashMapType], [" ~ t ~ "Constraint]);
 
-            library.addFunction(&_size_!\""
-                ~ t ~ "\", \"size\", ["
-                ~ t ~ "HashMapType], [grInt], [" ~ t ~ "Constraint]);
+            library.addFunction(&_size_!\"" ~ t ~ "\", \"size\", [pure" ~ t ~
+                "HashMapType], [grInt], [" ~ t ~ "Constraint]);
 
-            library.addFunction(&_empty_!\""
-                ~ t ~ "\", \"empty?\", [" ~ t ~ "HashMapType], [grBool], [" ~ t ~ "Constraint]);
+            library.addFunction(&_empty_!\"" ~ t ~ "\", \"empty?\", [pure" ~ t ~
+                "HashMapType], [grBool], [" ~ t ~ "Constraint]);
 
-            library.addFunction(&_clear_!\""
-                ~ t ~ "\", \"clear\", [" ~ t ~ "HashMapType
-            ], ["
-                ~ t ~ "HashMapType], [" ~ t ~ "Constraint]);
+            library.addFunction(&_clear_!\"" ~ t ~ "\", \"clear\", [" ~ t ~ "HashMapType
+            ], [" ~ t ~ "HashMapType], [" ~ t ~ "Constraint]);
 
-            library.addFunction(&_set_!\""
-                ~ t
-                ~ "\", \"set\", [" ~ t ~ "HashMapType, grString, " ~ t ~ "ValueType], [], [" ~ t ~ "Constraint]);
+            library.addFunction(&_set_!\"" ~ t ~ "\", \"set\", [" ~ t ~
+                "HashMapType, grString, " ~ t ~ "ValueType], [], [" ~ t ~ "Constraint]);
 
-            library.addFunction(&_get_!\""
-                ~ t
-                ~ "\", \"get\", [" ~ t ~ "HashMapType, grString], [grBool, " ~ t ~ "ValueType], [" ~ t ~ "Constraint]);
+            library.addFunction(&_get_!\"" ~ t ~ "\", \"get\", [pure" ~ t ~
+                "HashMapType, grString], [grBool, " ~ t ~ "ValueType], [" ~ t ~ "Constraint]);
 
-            library.addFunction(&_has_!\""
-                ~ t ~ "\", \"has?\", [" ~ t ~ "HashMapType, grString], [grBool], [" ~ t ~ "Constraint]);
+            library.addFunction(&_has_!\"" ~ t ~ "\", \"has?\", [pure" ~ t ~
+                "HashMapType, grString], [grBool], [" ~ t ~ "Constraint]);
 
-            library.addFunction(&_remove_!\""
-                ~ t
-                ~ "\", \"remove\", [" ~ t ~ "HashMapType, grString], [], [" ~ t ~ "Constraint]);
+            library.addFunction(&_remove_!\"" ~ t ~ "\", \"remove\", [" ~ t ~
+                "HashMapType, grString], [], [" ~ t ~ "Constraint]);
 
-            library.addFunction(&_byKeys_!\""
-                ~ t ~ "\", \"keys\", [" ~ t ~ "HashMapType], [grStringArray], [" ~ t ~ "Constraint]);
+            library.addFunction(&_byKeys_!\"" ~ t ~ "\", \"keys\", [" ~ t ~
+                "HashMapType], [grStringArray], [" ~ t ~ "Constraint]);
 
-            library.addFunction(&_byValues_!\""
-                ~ t ~ "\", \"values\", [" ~ t ~ "HashMapType], ["
-                ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
+            library.addFunction(&_byValues_!\"" ~ t ~ "\", \"values\", [" ~ t ~
+                "HashMapType], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
 
-            library.addFunction(&_each_!\""
-                ~ t ~ "\", \"each\", [" ~ t ~ "HashMapType
-                ], ["
-                ~ t ~ "IteratorType], [" ~ t ~ "Constraint]);
+            library.addFunction(&_each_!\"" ~ t ~ "\", \"each\", [" ~ t ~ "HashMapType
+                ], [" ~ t ~ "IteratorType], [" ~ t ~ "Constraint]);
 
-            library.addFunction(&_next_!\""
-                ~ t ~ "\", \"next\", [
-                    "
-                ~ t ~ "IteratorType
-                ], [grBool, "
-                ~ t ~ "PairType], [" ~ t ~ "Constraint]);
+            library.addFunction(&_next_!\"" ~ t ~ "\", \"next\", [
+                    " ~ t ~ "IteratorType
+                ], [grBool, " ~ t ~ "PairType], [" ~ t ~ "Constraint]);
             ");
     }
 
@@ -149,8 +134,8 @@ private void _new_(string t)(GrCall call) {
 }
 
 private void _newByArray_(string t)(GrCall call) {
-    mixin(t ~ "HashMap hashmap = new " ~ t ~ "HashMap(call.getStringArray(0).data, call.get"
-            ~ t ~ "Array(1).data);");
+    mixin(t ~ "HashMap hashmap = new " ~ t ~
+            "HashMap(call.getStringArray(0).data, call.get" ~ t ~ "Array(1).data);");
     call.setForeign(hashmap);
 }
 

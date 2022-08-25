@@ -54,16 +54,22 @@ struct GrType {
     /// Is the type abstract ?
     /// An abstract type cannot be used in signatures.
     bool isAbstract;
+    /// Can we modify its value ?
+    bool isConst;
+    /// Can we modify the referenced value ?
+    bool isPure;
 
     /// Init as a basic type.
-    this(Base base_) {
+    this(Base base_, bool isPure = false) {
         base = base_;
+        isPure = isPure;
     }
 
     /// Compound type.
-    this(Base base_, string mangledType_) {
+    this(Base base_, string mangledType_, bool isPure = false) {
         base = base_;
         mangledType = mangledType_;
+        isPure = isPure;
     }
 
     /// Only assign a simple type (base).
@@ -83,8 +89,8 @@ struct GrType {
             return false;
         if (base == GrType.Base.function_ || base == GrType.Base.task)
             return mangledType == v.mangledType && mangledReturnType == v.mangledReturnType;
-        if (base == GrType.Base.foreign || base == GrType.Base.class_
-            || base == GrType.Base.enum_ || base == GrType.Base.array)
+        if (base == GrType.Base.foreign || base == GrType.Base.class_ ||
+            base == GrType.Base.enum_ || base == GrType.Base.array)
             return mangledType == v.mangledType;
         return true;
     }
@@ -104,44 +110,76 @@ const GrType grReal = GrType(GrType.Base.real_);
 /// Bool
 const GrType grBool = GrType(GrType.Base.bool_);
 /// String
-const GrType grString = GrType(GrType.Base.string_);
+const GrType grString = GrType(GrType.Base.string_, false);
+/// Ditto
+const GrType grPureString = GrType(GrType.Base.string_, true);
 /// Int array
-const GrType grIntArray = GrType(GrType.Base.array, grMangleSignature([grInt]));
+const GrType grIntArray = GrType(GrType.Base.array, grMangleSignature([grInt]), false);
+/// Ditto
+const GrType grPureIntArray = GrType(GrType.Base.array, grMangleSignature([
+        grInt
+    ]), true);
 /// Real array
-const GrType grRealArray = GrType(GrType.Base.array, grMangleSignature([
-            grReal
-        ]));
+const GrType grRealArray = GrType(GrType.Base.array, grMangleSignature([grReal]), false);
+/// Ditto
+const GrType grPureRealArray = GrType(GrType.Base.array, grMangleSignature([
+        grReal
+    ]), true);
 /// Bool array
-const GrType grBoolArray = GrType(GrType.Base.array, grMangleSignature([grBool]));
+const GrType grBoolArray = GrType(GrType.Base.array, grMangleSignature([grBool]), false);
+/// Ditto
+const GrType grPureBoolArray = GrType(GrType.Base.array, grMangleSignature([
+        grBool
+    ]), true);
 /// String array
 const GrType grStringArray = GrType(GrType.Base.array, grMangleSignature([
         grString
-    ]));
+    ]), false);
+/// Ditto
+const GrType grPureStringArray = GrType(GrType.Base.array, grMangleSignature([
+        grString
+    ]), true);
 /// Int channel
 const GrType grIntChannel = GrType(GrType.Base.channel, grMangleSignature([
         grInt
-    ]));
+    ]), false);
+/// Ditto
+const GrType grPureIntChannel = GrType(GrType.Base.channel, grMangleSignature([
+        grInt
+    ]), true);
 /// Real channel
 const GrType grRealChannel = GrType(GrType.Base.channel, grMangleSignature([
         grReal
-    ]));
+    ]), false);
+/// Ditto
+const GrType grPureRealChannel = GrType(GrType.Base.channel, grMangleSignature([
+        grReal
+    ]), true);
 /// Bool channel
 const GrType grBoolChannel = GrType(GrType.Base.channel, grMangleSignature([
         grBool
-    ]));
+    ]), false);
+/// Ditto
+const GrType grPureBoolChannel = GrType(GrType.Base.channel, grMangleSignature([
+        grBool
+    ]), true);
 /// String channel
 const GrType grStringChannel = GrType(GrType.Base.channel, grMangleSignature([
         grString
-    ]));
+    ]), false);
+/// Ditto
+const GrType grPureStringChannel = GrType(GrType.Base.channel, grMangleSignature([
+        grString
+    ]), true);
 
 /// Returns a GrType of type array and of `subType` subtype.
-GrType grArray(GrType subType) {
-    return GrType(GrType.Base.array, grMangleSignature([subType]));
+GrType grArray(GrType subType, bool isPure = false) {
+    return GrType(GrType.Base.array, grMangleSignature([subType]), isPure);
 }
 
 /// Returns a GrType of type channel and of `subType` subtype.
-GrType grChannel(GrType subType) {
-    return GrType(GrType.Base.channel, grMangleSignature([subType]));
+GrType grChannel(GrType subType, bool isPure = false) {
+    return GrType(GrType.Base.channel, grMangleSignature([subType]), isPure);
 }
 
 /// Returns a GrType of type function with given signatures.
@@ -158,19 +196,19 @@ GrType grTask(GrType[] signature) {
 }
 
 /// Temporary type for template functions.
-GrType grAny(string name) {
+GrType grAny(string name, bool isPure = false) {
     GrType type;
     type.base = GrType.Base.void_;
     type.mangledType = name;
     type.isAny = true;
+    type.isPure = isPure;
     return type;
 }
 
 /// The type is handled by a int based register
 bool grIsKindOfInt(GrType.Base type) {
-    return type == GrType.Base.int_ || type == GrType.Base.bool_
-        || type == GrType.Base.function_ || type == GrType.Base.task || type == GrType
-        .Base.enum_;
+    return type == GrType.Base.int_ || type == GrType.Base.bool_ ||
+        type == GrType.Base.function_ || type == GrType.Base.task || type == GrType.Base.enum_;
 }
 
 /// The type is handled by a real based register
@@ -185,9 +223,9 @@ bool grIsKindOfString(GrType.Base type) {
 
 /// The type is handled by a ptr based register
 bool grIsKindOfObject(GrType.Base type) {
-    return type == GrType.Base.class_ || type == GrType.Base.array || type == GrType.Base.foreign
-        || type == GrType.Base.channel || type == GrType.Base.reference || type == GrType
-        .Base.null_;
+    return type == GrType.Base.class_ || type == GrType.Base.array ||
+        type == GrType.Base.foreign || type == GrType.Base.channel ||
+        type == GrType.Base.reference || type == GrType.Base.null_;
 }
 
 /// Context for any validation
@@ -243,8 +281,6 @@ package class GrVariable {
     bool isInitialized;
     /// Is the type to be infered automatically ? (e.g. the `let` keyword).
     bool isAuto;
-    /// Can we modify its value ?
-    bool isConstant;
     /// Its unique name inside its scope (function based scope).
     string name;
     /// Is the variable visible from other files ? (Global only)
@@ -276,9 +312,10 @@ final class GrAbstractForeignDefinition {
 }
 
 /// Create a foreign GrType for the type system.
-GrType grGetForeignType(string name, const GrType[] signature = []) {
+GrType grGetForeignType(string name, const GrType[] signature = [], bool isPure = false) {
     GrType type = GrType.Base.foreign;
     type.mangledType = grMangleComposite(name, signature);
+    type.isPure = isPure;
     return type;
 }
 
@@ -398,10 +435,11 @@ final class GrClassDefinition {
 }
 
 /// Create a GrType of class for the type system.
-GrType grGetClassType(const string name, const GrType[] signature = []) {
-    GrType stType = GrType.Base.class_;
-    stType.mangledType = grMangleComposite(name, signature);
-    return stType;
+GrType grGetClassType(const string name, const GrType[] signature = [], bool isPure = false) {
+    GrType type = GrType.Base.class_;
+    type.mangledType = grMangleComposite(name, signature);
+    type.isPure = isPure;
+    return type;
 }
 
 /// Define a variable defined from a library
@@ -418,8 +456,6 @@ final class GrVariableDefinition {
     GrReal rvalue;
     /// String init value
     GrString svalue;
-    /// Can the variable be mutated in script ?
-    bool isConstant;
     /// Register.
     uint register;
 }

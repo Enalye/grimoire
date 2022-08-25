@@ -20,10 +20,10 @@ package(grimoire.stdlib) void grLoadStdLibTypecast(GrLibrary library) {
     library.addCast(&typecast_b2s, grBool, grString);
     library.addCast(&typecast_i2s, grInt, grString);
     library.addCast(&typecast_r2s, grReal, grString);
-    library.addCast(&typecast_as2s, grStringArray, grString);
+    library.addCast(&typecast_as2s, grPureStringArray, grString);
 
     //As string array
-    library.addCast(&typecast_s2as, grString, grStringArray);
+    library.addCast(&typecast_s2as, grPureString, grStringArray);
 }
 
 //As int

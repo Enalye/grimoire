@@ -9,6 +9,7 @@ import grimoire.compiler;
 import grimoire.stdlib.util;
 
 package(grimoire.stdlib) void grLoadStdLibConstraint() {
+    grAddConstraint("Pure", &_pure, 0);
     grAddConstraint("Register", &_register, 1);
     grAddConstraint("Enum", &_enum, 0);
     grAddConstraint("Channel", &_channel, 0);
@@ -24,6 +25,10 @@ package(grimoire.stdlib) void grLoadStdLibConstraint() {
     grAddConstraint("Not", &_not, 1);
     grAddConstraint("Base", &_base, 1);
     grAddConstraint("Extends", &_extends, 1);
+}
+
+private bool _pure(GrData, GrType type, const GrType[]) {
+    return type.isPure;
 }
 
 private bool _register(GrData, GrType type, const GrType[] types) {

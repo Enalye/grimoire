@@ -11,27 +11,27 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 package(grimoire.stdlib) void grLoadStdLibString(GrLibrary library) {
-    library.addFunction(&_empty, "empty?", [grString], [grBool]);
-    library.addFunction(&_unshift, "unshift", [grString, grString], [grString]);
-    library.addFunction(&_push, "push", [grString, grString], [grString]);
-    library.addFunction(&_shift, "shift", [grString], [grString]);
-    library.addFunction(&_pop, "pop", [grString], [grString]);
-    library.addFunction(&_shift1, "shift", [grString, grInt], [grString]);
-    library.addFunction(&_pop1, "pop", [grString, grInt], [grString]);
-    library.addFunction(&_first, "first", [grString], [grString]);
-    library.addFunction(&_last, "last", [grString], [grString]);
-    library.addFunction(&_remove, "remove", [grString, grInt], [grString]);
-    library.addFunction(&_remove2, "remove", [grString, grInt, grInt], [
+    library.addFunction(&_empty, "empty?", [grPureString], [grBool]);
+    library.addFunction(&_unshift, "unshift", [grPureString, grString], [grString]);
+    library.addFunction(&_push, "push", [grPureString, grString], [grString]);
+    library.addFunction(&_shift, "shift", [grPureString], [grString]);
+    library.addFunction(&_pop, "pop", [grPureString], [grString]);
+    library.addFunction(&_shift1, "shift", [grPureString, grInt], [grString]);
+    library.addFunction(&_pop1, "pop", [grPureString, grInt], [grString]);
+    library.addFunction(&_first, "first", [grPureString], [grString]);
+    library.addFunction(&_last, "last", [grPureString], [grString]);
+    library.addFunction(&_remove, "remove", [grPureString, grInt], [grString]);
+    library.addFunction(&_remove2, "remove", [grPureString, grInt, grInt], [
             grString
         ]);
-    library.addFunction(&_slice, "slice", [grString, grInt, grInt], [grString]);
-    library.addFunction(&_reverse, "reverse", [grString], [grString]);
-    library.addFunction(&_insert, "insert", [grString, grInt, grString], [
+    library.addFunction(&_slice, "slice", [grPureString, grInt, grInt], [grString]);
+    library.addFunction(&_reverse, "reverse", [grPureString], [grString]);
+    library.addFunction(&_insert, "insert", [grPureString, grInt, grPureString], [
             grString
         ]);
-    library.addFunction(&_findFirst, "findFirst", [grString, grString], [grInt]);
-    library.addFunction(&_findLast, "findLast", [grString, grString], [grInt]);
-    library.addFunction(&_has, "has?", [grString, grString], [grBool]);
+    library.addFunction(&_findFirst, "findFirst", [grPureString, grPureString], [grInt]);
+    library.addFunction(&_findLast, "findLast", [grPureString, grPureString], [grInt]);
+    library.addFunction(&_has, "has?", [grPureString, grPureString], [grBool]);
 
     GrType stringIterType = library.addForeign("StringIterator");
     library.addFunction(&_each, "each", [grString], [stringIterType]);

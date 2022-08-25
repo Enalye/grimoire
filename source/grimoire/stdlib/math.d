@@ -10,7 +10,7 @@ import std.algorithm.comparison : clamp;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
-    library.addVariable("PI", grReal, PI, true);
+    library.addVariable("PI", grReal, PI); //@ TODO: const
 
     library.addFunction(&_min_r, "min", [grReal, grReal], [grReal]);
     library.addFunction(&_min_i, "min", [grInt, grInt], [grInt]);
