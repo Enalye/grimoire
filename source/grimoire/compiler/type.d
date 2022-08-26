@@ -480,7 +480,7 @@ package class GrFunction {
     /// Ditto
     Scope[] scopes;
 
-    uint[] iregisterAvailables, rregisterAvailables, sregisterAvailables, oregisterAvailables;
+    uint[] registerAvailables;
 
     /// All the function instructions.
     GrInstruction[] instructions;
@@ -501,8 +501,8 @@ package class GrFunction {
     GrFunction anonParent;
     uint position, anonReference;
 
-    uint nbIntegerParameters, nbRealParameters, nbStringParameters, nbObjectParameters;
-    uint ilocalsCount, flocalsCount, slocalsCount, olocalsCount;
+    uint nbParameters;
+    uint localsCount;
 
     GrDeferrableSection[] deferrableSections;
     GrDeferBlock[] registeredDeferBlocks;
@@ -561,19 +561,13 @@ package class GrFunction {
         case function_:
         case task:
         case enum_:
-            iregisterAvailables ~= variable.register;
-            break;
         case real_:
-            rregisterAvailables ~= variable.register;
-            break;
         case string_:
-            sregisterAvailables ~= variable.register;
-            break;
         case array:
         case class_:
         case foreign:
         case channel:
-            oregisterAvailables ~= variable.register;
+            registerAvailables ~= variable.register;
             break;
         case internalTuple:
         case reference:

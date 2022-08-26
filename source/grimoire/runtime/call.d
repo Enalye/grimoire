@@ -8,8 +8,8 @@ module grimoire.runtime.call;
 import std.conv : to;
 import grimoire.assembly;
 import grimoire.compiler;
-import grimoire.runtime.task, grimoire.runtime.array,
-grimoire.runtime.object, grimoire.runtime.channel;
+import grimoire.runtime.task, grimoire.runtime.array, grimoire.runtime.object,
+    grimoire.runtime.channel;
 
 /// Primitive type.
 alias GrCallback = void function(GrCall);
@@ -21,8 +21,8 @@ final class GrCall {
         GrCallback _callback;
 
         uint[] _parameters;
-        int _iparams, _rparams, _sparams, _oparams;
-        int _iresults, _rresults, _sresults, _oresults;
+        int _params;
+        int _results;
         bool _isInitialized;
         string[] _inSignature, _outSignature;
     }
@@ -44,10 +44,7 @@ final class GrCall {
 
         _parameters = primRef.parameters.dup;
 
-        _iparams = cast(int) primRef.iparams;
-        _rparams = cast(int) primRef.fparams;
-        _sparams = cast(int) primRef.sparams;
-        _oparams = cast(int) primRef.oparams;
+        _params = cast(int) primRef.params;
 
         _inSignature = primRef.inSignature.dup;
         _outSignature = primRef.outSignature.dup;
@@ -55,19 +52,13 @@ final class GrCall {
 
     /// The actual runtime call to the primitive.
     void call(GrTask task) {
-        _iresults = 0;
-        _rresults = 0;
-        _sresults = 0;
-        _oresults = 0;
+        _results = 0;
         _hasError = false;
         _task = task;
 
         _callback(this);
 
-        _task.istackPos -= (_iparams - _iresults);
-        _task.rstackPos -= (_rparams - _rresults);
-        _task.sstackPos -= (_sparams - _sresults);
-        _task.ostackPos -= (_oparams - _oresults);
+        _task.stackFramePos -= (_params - _results);
 
         if (_hasError)
             dispatchError();
@@ -153,37 +144,37 @@ final class GrCall {
     }
 
     private T getParameter(T)(uint index)
-    in (index < _parameters.length, "parameter index `" ~ to!string(
-            index) ~ "` exceeds the number of parameters") {
+    in (index < _parameters.length,
+        "parameter index `" ~ to!string(index) ~ "` exceeds the number of parameters") {
         static if (is(T == GrInt)) {
             if ((_parameters[index] & 0x10000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not an int");
-            return _task.istack[(_task.istackPos - _iparams) + (_parameters[index] & 0xFFFF)
-                + 1];
+            return _task.stack[(_task.stackPos - _params) + (_parameters[index] & 0xFFFF) + 1]
+                .ivalue;
         }
         else static if (is(T == GrBool)) {
             if ((_parameters[index] & 0x10000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not a bool");
-            return _task.istack[(_task.istackPos - _iparams) + (
-                    _parameters[index] & 0xFFFF) + 1] > 0;
+            return _task.stack[(_task.stackPos - _params) + (
+                    _parameters[index] & 0xFFFF) + 1].ivalue > 0;
         }
         else static if (is(T == GrReal)) {
             if ((_parameters[index] & 0x20000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not a GrReal");
-            return _task.rstack[(_task.rstackPos - _rparams) + (_parameters[index] & 0xFFFF)
-                + 1];
+            return _task.stack[(_task.stackPos - _params) + (_parameters[index] & 0xFFFF) + 1]
+                .rvalue;
         }
         else static if (is(T == GrString)) {
             if ((_parameters[index] & 0x40000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not a string");
-            return _task.sstack[(_task.sstackPos - _sparams) + (_parameters[index] & 0xFFFF)
-                + 1];
+            return _task.stack[(_task.stackPos - _params) + (_parameters[index] & 0xFFFF) + 1]
+                .svalue;
         }
         else static if (is(T == GrPtr)) {
             if ((_parameters[index] & 0x80000) == 0)
                 throw new Exception("parameter " ~ to!string(index) ~ " is not an object");
-            return _task.ostack[(_task.ostackPos - _oparams) + (_parameters[index] & 0xFFFF)
-                + 1];
+            return _task.stack[(_task.stackPos - _params) + (_parameters[index] & 0xFFFF) + 1]
+                .ovalue;
         }
     }
 
@@ -259,39 +250,39 @@ final class GrCall {
 
     private void setResult(T)(T value) {
         static if (is(T == GrInt)) {
-            _iresults++;
-            const size_t idx = (_task.istackPos - _iparams) + _iresults;
-            if (idx >= _task.istack.length)
-                _task.istack.length *= 2;
-            _task.istack[idx] = value;
+            _results++;
+            const size_t idx = (_task.stackPos - _params) + _results;
+            if (idx >= _task.stack.length)
+                _task.stack.length *= 2;
+            _task.stack[idx].ivalue = value;
         }
         else static if (is(T == GrBool)) {
-            _iresults++;
-            const size_t idx = (_task.istackPos - _iparams) + _iresults;
-            if (idx >= _task.istack.length)
-                _task.istack.length *= 2;
-            _task.istack[idx] = value ? 1 : 0;
+            _results++;
+            const size_t idx = (_task.stackPos - _params) + _results;
+            if (idx >= _task.stack.length)
+                _task.stack.length *= 2;
+            _task.stack[idx].bvalue = value ? 1 : 0;
         }
         else static if (is(T == GrReal)) {
-            _rresults++;
-            const size_t idx = (_task.rstackPos - _rparams) + _rresults;
-            if (idx >= _task.rstack.length)
-                _task.rstack.length *= 2;
-            _task.rstack[idx] = value;
+            _results++;
+            const size_t idx = (_task.stackPos - _params) + _results;
+            if (idx >= _task.stack.length)
+                _task.stack.length *= 2;
+            _task.stack[idx].rvalue = value;
         }
         else static if (is(T == GrString)) {
-            _sresults++;
-            const size_t idx = (_task.sstackPos - _sparams) + _sresults;
-            if (idx >= _task.sstack.length)
-                _task.sstack.length *= 2;
-            _task.sstack[idx] = value;
+            _results++;
+            const size_t idx = (_task.stackPos - _params) + _results;
+            if (idx >= _task.stack.length)
+                _task.stack.length *= 2;
+            _task.stack[idx].svalue = value;
         }
         else static if (is(T == GrPtr)) {
-            _oresults++;
-            const size_t idx = (_task.ostackPos - _oparams) + _oresults;
-            if (idx >= _task.ostack.length)
-                _task.ostack.length *= 2;
-            _task.ostack[idx] = value;
+            _results++;
+            const size_t idx = (_task.stackPos - _params) + _results;
+            if (idx >= _task.stack.length)
+                _task.stack.length *= 2;
+            _task.stack[idx].ovalue = value;
         }
     }
 

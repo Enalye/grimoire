@@ -13,6 +13,30 @@ alias GrReal = double;
 alias GrString = string;
 alias GrPtr = void*;
 
+union GrValue {
+    GrBool bvalue;
+    GrInt ivalue;
+    GrReal rvalue;
+    GrString svalue;
+    GrPtr ovalue;
+
+    this(GrInt value) {
+        ivalue = value;
+    }
+
+    this(GrReal value) {
+        rvalue = value;
+    }
+    
+    this(GrString value) {
+        svalue = value;
+    }
+
+    this(GrPtr value) {
+        ovalue = value;
+    }
+}
+
 /// Stack trace
 struct GrStackTrace {
     /// Where the error was raised inside this function

@@ -232,7 +232,7 @@ final class GrBytecode {
             /// Callback index
             int index;
             /// Parameters
-            uint iparams, fparams, sparams, oparams;
+            uint params;
             /// Ditto
             uint[] parameters;
             /// Signature
@@ -271,14 +271,8 @@ final class GrBytecode {
         /// All the classes.
         GrClassBuilder[] classes;
 
-        /// Number of int based global variables declared.
-        uint iglobalsCount;
-        /// Number of real based global variables declared.
-        uint rglobalsCount;
-        /// Number of string based global variables declared.
-        uint sglobalsCount;
-        /// Number of ptr based global variables declared.
-        uint oglobalsCount;
+        /// Number of global variables declared.
+        uint globalsCount;
 
         /// global event functions.
         /// Their name are in a mangled state.
@@ -304,10 +298,7 @@ final class GrBytecode {
         sconsts = bytecode.sconsts;
         primitives = bytecode.primitives;
         classes = bytecode.classes;
-        iglobalsCount = bytecode.iglobalsCount;
-        rglobalsCount = bytecode.rglobalsCount;
-        sglobalsCount = bytecode.sglobalsCount;
-        oglobalsCount = bytecode.oglobalsCount;
+        globalsCount = bytecode.globalsCount;
         events = bytecode.events;
         variables = bytecode.variables;
         symbols = bytecode.symbols.dup; //@TODO: change the shallow copy
@@ -343,10 +334,7 @@ final class GrBytecode {
         buffer.append!uint(cast(uint) sconsts.length);
         buffer.append!uint(cast(uint) opcodes.length);
 
-        buffer.append!uint(iglobalsCount);
-        buffer.append!uint(rglobalsCount);
-        buffer.append!uint(sglobalsCount);
-        buffer.append!uint(oglobalsCount);
+        buffer.append!uint(globalsCount);
 
         buffer.append!uint(cast(uint) events.length);
         buffer.append!uint(cast(uint) primitives.length);
@@ -371,10 +359,7 @@ final class GrBytecode {
 
         foreach (primitive; primitives) {
             buffer.append!uint(cast(uint) primitive.index);
-            buffer.append!uint(primitive.iparams);
-            buffer.append!uint(primitive.fparams);
-            buffer.append!uint(primitive.sparams);
-            buffer.append!uint(primitive.oparams);
+            buffer.append!uint(primitive.params);
 
             buffer.append!uint(cast(uint) primitive.inSignature.length);
             buffer.append!uint(cast(uint) primitive.outSignature.length);
@@ -444,10 +429,7 @@ final class GrBytecode {
         sconsts.length = buffer.read!uint();
         opcodes.length = buffer.read!uint();
 
-        iglobalsCount = buffer.read!uint();
-        rglobalsCount = buffer.read!uint();
-        sglobalsCount = buffer.read!uint();
-        oglobalsCount = buffer.read!uint();
+        globalsCount = buffer.read!uint();
 
         const uint eventsCount = buffer.read!uint();
         primitives.length = buffer.read!uint();
@@ -480,10 +462,7 @@ final class GrBytecode {
 
         for (size_t i; i < primitives.length; ++i) {
             primitives[i].index = buffer.read!uint();
-            primitives[i].iparams = buffer.read!uint();
-            primitives[i].fparams = buffer.read!uint();
-            primitives[i].sparams = buffer.read!uint();
-            primitives[i].oparams = buffer.read!uint();
+            primitives[i].params = buffer.read!uint();
 
             const uint inParamsCount = buffer.read!uint();
             const uint outParamsCount = buffer.read!uint();

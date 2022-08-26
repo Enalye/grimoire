@@ -56,14 +56,8 @@ final class GrParser {
 
         bool isTypeChecking;
 
-        /// Number of int based global variables declared.
-        uint iglobalsCount;
-        /// Number of real based global variables declared.
-        uint rglobalsCount;
-        /// Number of string based global variables declared.
-        uint sglobalsCount;
-        /// Number of ptr based global variables declared.
-        uint oglobalsCount;
+        /// Number of global variables declared.
+        uint globalsCount;
 
         GrLocale _locale;
     }
@@ -235,69 +229,24 @@ final class GrParser {
         case function_:
         case task:
         case enum_:
-            if (variable.isGlobal) {
-                variable.register = iglobalsCount;
-                iglobalsCount++;
-            }
-            else {
-                if (currentFunction.iregisterAvailables.length) {
-                    variable.register = currentFunction.iregisterAvailables[$ - 1];
-                    currentFunction.iregisterAvailables.length--;
-                }
-                else {
-                    variable.register = currentFunction.ilocalsCount;
-                    currentFunction.ilocalsCount++;
-                }
-            }
-            break;
         case real_:
-            if (variable.isGlobal) {
-                variable.register = rglobalsCount;
-                rglobalsCount++;
-            }
-            else {
-                if (currentFunction.rregisterAvailables.length) {
-                    variable.register = currentFunction.rregisterAvailables[$ - 1];
-                    currentFunction.rregisterAvailables.length--;
-                }
-                else {
-                    variable.register = currentFunction.flocalsCount;
-                    currentFunction.flocalsCount++;
-                }
-            }
-            break;
         case string_:
-            if (variable.isGlobal) {
-                variable.register = sglobalsCount;
-                sglobalsCount++;
-            }
-            else {
-                if (currentFunction.sregisterAvailables.length) {
-                    variable.register = currentFunction.sregisterAvailables[$ - 1];
-                    currentFunction.sregisterAvailables.length--;
-                }
-                else {
-                    variable.register = currentFunction.slocalsCount;
-                    currentFunction.slocalsCount++;
-                }
-            }
-            break;
         case array:
         case class_:
         case foreign:
         case channel:
             if (variable.isGlobal) {
-                variable.register = oglobalsCount;
-                oglobalsCount++;
+                variable.register = globalsCount;
+                globalsCount++;
             }
             else {
-                if (currentFunction.oregisterAvailables.length) {
-                    variable.register = currentFunction.oregisterAvailables[$ - 1];
-                    currentFunction.oregisterAvailables.length--;
+                if (currentFunction.registerAvailables.length) {
+                    variable.register = currentFunction.registerAvailables[$ - 1];
+                    currentFunction.registerAvailables.length--;
                 }
                 else {
-                    variable.register = currentFunction.olocalsCount;
-                    currentFunction.olocalsCount++;
+                    variable.register = currentFunction.localsCount;
+                    currentFunction.localsCount++;
                 }
             }
             break;
@@ -424,23 +373,8 @@ final class GrParser {
             addInstructionInFront(GrOpcode.debugProfileBegin, index);
         }
 
-        if (currentFunction.ilocalsCount > 0) {
-            addInstructionInFront(GrOpcode.localStack_int, currentFunction.ilocalsCount);
-            prependInstructionCount++;
-        }
-
-        if (currentFunction.flocalsCount > 0) {
-            addInstructionInFront(GrOpcode.localStack_real, currentFunction.flocalsCount);
-            prependInstructionCount++;
-        }
-
-        if (currentFunction.slocalsCount > 0) {
-            addInstructionInFront(GrOpcode.localStack_string, currentFunction.slocalsCount);
-            prependInstructionCount++;
-        }
-
-        if (currentFunction.olocalsCount > 0) {
-            addInstructionInFront(GrOpcode.localStack_object, currentFunction.olocalsCount);
+        if (currentFunction.localsCount > 0) {
+            addInstructionInFront(GrOpcode.localStack_int, currentFunction.localsCount);
             prependInstructionCount++;
         }
 
@@ -477,26 +411,14 @@ final class GrParser {
             case function_:
             case task:
             case enum_:
-                currentFunction.nbIntegerParameters++;
-                if (currentFunction.isTask)
-                    addInstruction(GrOpcode.globalPop_int, 0u);
-                break;
             case real_:
-                currentFunction.nbRealParameters++;
-                if (currentFunction.isTask)
-                    addInstruction(GrOpcode.globalPop_real, 0u);
-                break;
             case string_:
-                currentFunction.nbStringParameters++;
-                if (currentFunction.isTask)
-                    addInstruction(GrOpcode.globalPop_string, 0u);
-                break;
             case class_:
             case array:
             case foreign:
             case channel:
             case reference:
-                currentFunction.nbObjectParameters++;
+                currentFunction.nbParameters++;
                 if (currentFunction.isTask)
                     addInstruction(GrOpcode.globalPop_object, 0u);
                 break;
@@ -1875,14 +1797,8 @@ final class GrParser {
         if (func) {
             call.functionToCall = func;
             if (func.isTask) {
-                if (func.nbIntegerParameters > 0)
-                    addInstruction(GrOpcode.globalPush_int, func.nbIntegerParameters);
-                if (func.nbRealParameters > 0)
-                    addInstruction(GrOpcode.globalPush_real, func.nbRealParameters);
-                if (func.nbStringParameters > 0)
-                    addInstruction(GrOpcode.globalPush_string, func.nbStringParameters);
-                if (func.nbObjectParameters > 0)
-                    addInstruction(GrOpcode.globalPush_object, func.nbObjectParameters);
+                if (func.nbParameters > 0)
+                    addInstruction(GrOpcode.globalPush_int, func.nbParameters);
             }
 
             call.position = cast(uint) currentFunction.instructions.length;
@@ -1909,14 +1825,8 @@ final class GrParser {
 
         call.functionToCall = func;
         if (func.isTask) {
-            if (func.nbIntegerParameters > 0)
-                addInstruction(GrOpcode.globalPush_int, func.nbIntegerParameters);
-            if (func.nbRealParameters > 0)
-                addInstruction(GrOpcode.globalPush_real, func.nbRealParameters);
-            if (func.nbStringParameters > 0)
-                addInstruction(GrOpcode.globalPush_string, func.nbStringParameters);
-            if (func.nbObjectParameters > 0)
-                addInstruction(GrOpcode.globalPush_object, func.nbObjectParameters);
+            if (func.nbParameters > 0)
+                addInstruction(GrOpcode.globalPush_int, func.nbParameters);
         }
 
         call.position = cast(uint) currentFunction.instructions.length;

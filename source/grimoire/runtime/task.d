@@ -29,20 +29,17 @@ Used when we need to restore the task to a previous state.
 */
 struct GrTaskState {
     /// Current expression stack top
-    int istackPos, /// Ditto
-        rstackPos, /// Ditto
-        sstackPos, /// Ditto
-        ostackPos;
+    int stackPos;
 
     /// Callstack
     GrStackFrame stackFrame;
 
     /// Stack frame pointer for the current function.
     /// Each function takes 2 integer: the return pc, and the local variable size.
-    uint stackPos;
+    uint stackFramePos;
 
-    /// Local variables: Access with Xlocals[XlocalsPos + variableIndex]
-    uint ilocalsPos, rlocalsPos, slocalsPos, olocalsPos;
+    /// Local variables: Access with locals[localsPos + variableIndex]
+    uint localsPos;
 }
 
 /**
@@ -62,46 +59,31 @@ final class GrTask {
         engine = engine_;
         setupCallStack(4);
         setupStack(8);
-        setupLocals(2, 2, 2, 2);
+        setupLocals(2);
     }
 
     /// Parent engine where the task is running.
     GrEngine engine;
 
     /// Local variables
-    GrInt[] ilocals;
-    /// Ditto
-    GrReal[] rlocals;
-    /// Ditto
-    GrString[] slocals;
-    /// Ditto
-    GrPtr[] olocals;
+    GrValue[] locals;
 
     /// Callstack
     GrStackFrame[] callStack;
 
     /// Expression stack.
-    GrInt[] istack;
-    /// Ditto
-    GrReal[] rstack;
-    /// Ditto
-    GrString[] sstack;
-    /// Ditto
-    GrPtr[] ostack;
+    GrValue[] stack;
 
     /// Operation pointer.
     uint pc;
-    /// Local variables: Access with Xlocals[XlocalsPos + variableIndex]
-    uint ilocalsPos, rlocalsPos, slocalsPos, olocalsPos;
+    /// Local variables: Access with locals[localsPos + variableIndex]
+    uint localsPos;
     /// Stack frame pointer for the current function.
     /// Each function takes 2 integer: the return pc, and the local variable size.
-    uint stackPos;
+    uint stackFramePos;
 
     /// Current expression stack top
-    int istackPos = -1, /// Ditto
-        rstackPos = -1, /// Ditto
-        sstackPos = -1, /// Ditto
-        ostackPos = -1;
+    int stackPos = -1;
 
     /// Kill state, unwind the call stack and call all registered deferred statements.
     bool isKilled;
@@ -129,7 +111,7 @@ final class GrTask {
     /// Current callstack max depth.
     uint callStackLimit;
     /// Current max local variable available.
-    uint ilocalsLimit, rlocalsLimit, slocalsLimit, olocalsLimit;
+    uint localsLimit;
 
     /// Initialize the call stacks.
     void setupCallStack(uint size) {
@@ -139,22 +121,13 @@ final class GrTask {
 
     /// Initialize the expression stacks.
     void setupStack(uint size) {
-        istack = new GrInt[size];
-        rstack = new GrReal[size];
-        sstack = new GrString[size];
-        ostack = new GrPtr[size];
+        stack = new GrValue[size];
     }
 
     /// Initialize the local variable stacks.
-    void setupLocals(uint isize, uint fsize, uint ssize, uint osize) {
-        ilocalsLimit = isize;
-        rlocalsLimit = fsize;
-        slocalsLimit = ssize;
-        olocalsLimit = osize;
-        ilocals = new GrInt[ilocalsLimit];
-        rlocals = new GrReal[rlocalsLimit];
-        slocals = new GrString[slocalsLimit];
-        olocals = new GrPtr[olocalsLimit];
+    void setupLocals(uint size) {
+        localsLimit = size;
+        locals = new GrValue[localsLimit];
     }
 
     /// Double the current callstack size.
@@ -165,30 +138,30 @@ final class GrTask {
 
     /// Double the current integer locals stacks' size.
     void doubleIntLocalsStackSize(uint localsStackSize) {
-        while (localsStackSize >= ilocalsLimit)
-            ilocalsLimit <<= 1;
-        ilocals.length = ilocalsLimit;
+        while (localsStackSize >= localsLimit)
+            localsLimit <<= 1;
+        locals.length = localsLimit;
     }
 
     /// Double the current real locals stacks' size.
     void doubleRealLocalsStackSize(uint localsStackSize) {
-        while (localsStackSize >= rlocalsLimit)
-            rlocalsLimit <<= 1;
-        rlocals.length = rlocalsLimit;
+        while (localsStackSize >= localsLimit)
+            localsLimit <<= 1;
+        locals.length = localsLimit;
     }
 
     /// Double the current string locals stacks' size.
     void doubleStringLocalsStackSize(uint localsStackSize) {
-        while (localsStackSize >= slocalsLimit)
-            slocalsLimit <<= 1;
-        slocals.length = slocalsLimit;
+        while (localsStackSize >= localsLimit)
+            localsLimit <<= 1;
+        locals.length = localsLimit;
     }
 
     /// Double the current object locals stacks' size.
     void doubleObjectLocalsStackSize(uint localsStackSize) {
-        while (localsStackSize >= olocalsLimit)
-            olocalsLimit <<= 1;
-        olocals.length = olocalsLimit;
+        while (localsStackSize >= localsLimit)
+            localsLimit <<= 1;
+        locals.length = localsLimit;
     }
 
     alias setBool = setValue!GrBool;
@@ -263,40 +236,40 @@ final class GrTask {
 
     private void setValue(T)(T value) {
         static if (is(T == GrInt)) {
-            istackPos++;
-            istack[istackPos] = value;
+            stackPos++;
+            stack[stackPos].ivalue = value;
         }
         else static if (is(T == GrBool)) {
-            istackPos++;
-            istack[istackPos] = value;
+            stackPos++;
+            stack[stackPos].ivalue = value;
         }
         else static if (is(T == GrReal)) {
-            rstackPos++;
-            rstack[rstackPos] = value;
+            stackPos++;
+            stack[stackPos].rvalue = value;
         }
         else static if (is(T == GrString)) {
-            sstackPos++;
-            sstack[sstackPos] = value;
+            stackPos++;
+            stack[stackPos].svalue = value;
         }
         else static if (is(T == GrPtr)) {
-            ostackPos++;
-            ostack[ostackPos] = value;
+            stackPos++;
+            stack[stackPos].ovalue = value;
         }
     }
 
     /// Register the current state of the task
     void pushState() {
         GrTaskState state;
-        state.istackPos = istackPos;
-        state.rstackPos = rstackPos;
-        state.sstackPos = sstackPos;
-        state.ostackPos = ostackPos;
         state.stackPos = stackPos;
-        state.stackFrame = callStack[stackPos];
-        state.ilocalsPos = ilocalsPos;
-        state.rlocalsPos = rlocalsPos;
-        state.slocalsPos = slocalsPos;
-        state.olocalsPos = olocalsPos;
+        state.stackPos = stackPos;
+        state.stackPos = stackPos;
+        state.stackPos = stackPos;
+        state.stackFramePos = stackFramePos;
+        state.stackFrame = callStack[stackFramePos];
+        state.localsPos = localsPos;
+        state.localsPos = localsPos;
+        state.localsPos = localsPos;
+        state.localsPos = localsPos;
         states ~= state;
     }
 
@@ -305,16 +278,16 @@ final class GrTask {
         if (!states.length)
             throw new Exception("Fatal error: pop task state");
         GrTaskState state = states[$ - 1];
-        istackPos = state.istackPos;
-        rstackPos = state.rstackPos;
-        sstackPos = state.sstackPos;
-        ostackPos = state.ostackPos;
         stackPos = state.stackPos;
-        ilocalsPos = state.ilocalsPos;
-        rlocalsPos = state.rlocalsPos;
-        slocalsPos = state.slocalsPos;
-        olocalsPos = state.olocalsPos;
-        callStack[stackPos] = state.stackFrame;
+        stackPos = state.stackPos;
+        stackPos = state.stackPos;
+        stackPos = state.stackPos;
+        stackFramePos = state.stackFramePos;
+        localsPos = state.localsPos;
+        localsPos = state.localsPos;
+        localsPos = state.localsPos;
+        localsPos = state.localsPos;
+        callStack[stackFramePos] = state.stackFrame;
     }
 
     /// Remove last state of the task
@@ -337,10 +310,10 @@ final class GrTask {
         import std.conv : to;
 
         string result = "Task Dump:";
-        result ~= "\nfstack: " ~ to!string(rstack[0 .. (rstackPos + 1)]);
-        result ~= "\nistack: " ~ to!string(istack[0 .. (istackPos + 1)]);
-        result ~= "\nsstack: " ~ to!string(sstack[0 .. (sstackPos + 1)]);
-        result ~= "\nostack: " ~ to!string(ostack[0 .. (ostackPos + 1)]);
+        result ~= "\nfstack: " ~ to!string(stack[0 .. (stackPos + 1)]);
+        result ~= "\nistack: " ~ to!string(stack[0 .. (stackPos + 1)]);
+        result ~= "\nsstack: " ~ to!string(stack[0 .. (stackPos + 1)]);
+        result ~= "\nostack: " ~ to!string(stack[0 .. (stackPos + 1)]);
         return result;
     }
 }

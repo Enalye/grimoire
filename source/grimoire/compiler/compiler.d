@@ -202,10 +202,7 @@ final class GrCompiler {
         bytecode.sconsts = parser.sconsts;
 
         //Global variables.
-        bytecode.iglobalsCount = parser.iglobalsCount;
-        bytecode.rglobalsCount = parser.rglobalsCount;
-        bytecode.sglobalsCount = parser.sglobalsCount;
-        bytecode.oglobalsCount = parser.oglobalsCount;
+        bytecode.globalsCount = parser.globalsCount;
 
         foreach (variableDef; _data._variableDefinitions) {
             GrBytecode.Variable variable;
@@ -276,26 +273,26 @@ final class GrCompiler {
                 case task:
                 case enum_:
                     bytecode.primitives[id].parameters ~= 0x10000 | (
-                        bytecode.primitives[id].iparams & 0xFFFF);
-                    bytecode.primitives[id].iparams++;
+                        bytecode.primitives[id].params & 0xFFFF);
+                    bytecode.primitives[id].params++;
                     break;
                 case real_:
                     bytecode.primitives[id].parameters ~= 0x20000 | (
-                        bytecode.primitives[id].fparams & 0xFFFF);
-                    bytecode.primitives[id].fparams++;
+                        bytecode.primitives[id].params & 0xFFFF);
+                    bytecode.primitives[id].params++;
                     break;
                 case string_:
                     bytecode.primitives[id].parameters ~= 0x40000 | (
-                        bytecode.primitives[id].sparams & 0xFFFF);
-                    bytecode.primitives[id].sparams++;
+                        bytecode.primitives[id].params & 0xFFFF);
+                    bytecode.primitives[id].params++;
                     break;
                 case array:
                 case class_:
                 case foreign:
                 case channel:
                     bytecode.primitives[id].parameters ~= 0x80000 | (
-                        bytecode.primitives[id].oparams & 0xFFFF);
-                    bytecode.primitives[id].oparams++;
+                        bytecode.primitives[id].params & 0xFFFF);
+                    bytecode.primitives[id].params++;
                     break;
                 case void_:
                 case internalTuple:
