@@ -17,7 +17,6 @@ void main() {
         SetConsoleOutputCP(65_001);
     }
     try {
-        writeln(GrEngine.sizeof);
         bool testBytecode = false;
         const GrLocale locale = GrLocale.fr_FR;
         auto startTime = MonoTime.currTime();

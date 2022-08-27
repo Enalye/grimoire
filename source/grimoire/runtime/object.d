@@ -15,12 +15,7 @@ so you need to check with its type definition.
 */
 package final class GrField {
     string name;
-    union {
-        GrInt ivalue;
-        GrReal rvalue;
-        GrString svalue;
-        GrPtr ovalue;
-    }
+    GrValue value;
 }
 
 /// Object value in Grimoire runtime.
@@ -123,15 +118,15 @@ final class GrObject {
         for (size_t index; index < _fields.length; ++index) {
             if (_fields[index].name == fieldName) {
                 static if (is(T == GrInt))
-                    return _fields[index].ivalue;
+                    return _fields[index].value.ivalue;
                 else static if (is(T == GrBool))
-                    return cast(T) _fields[index].ivalue;
+                    return cast(T) _fields[index].value.ivalue;
                 else static if (is(T == GrReal))
-                    return _fields[index].rvalue;
+                    return _fields[index].value.rvalue;
                 else static if (is(T == GrString))
-                    return _fields[index].svalue;
+                    return _fields[index].value.svalue;
                 else static if (is(T == GrPtr))
-                    return _fields[index].ovalue;
+                    return _fields[index].value.ovalue;
                 else
                     static assert(false, "Invalid field type");
             }
@@ -213,15 +208,15 @@ final class GrObject {
         for (size_t index; index < _fields.length; ++index) {
             if (_fields[index].name == fieldName) {
                 static if (is(T == GrInt))
-                    return _fields[index].ivalue = cast(int) value;
+                    return _fields[index].value.ivalue = cast(int) value;
                 else static if (is(T == GrBool))
-                    return _fields[index].ivalue = value;
+                    return _fields[index].value.ivalue = value;
                 else static if (is(T == GrReal))
-                    return _fields[index].rvalue = value;
+                    return _fields[index].value.rvalue = value;
                 else static if (is(T == GrString))
-                    return _fields[index].svalue = value;
+                    return _fields[index].value.svalue = value;
                 else static if (is(T == GrPtr))
-                    return _fields[index].ovalue = value;
+                    return _fields[index].value.ovalue = value;
                 else
                     static assert(false, "Invalid field type");
             }

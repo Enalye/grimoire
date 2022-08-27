@@ -14,7 +14,7 @@ Represents a single function task in the callStack.
 */
 struct GrStackFrame {
     /// Size of the locals in the calling function.
-    uint ilocalStackSize, rlocalStackSize, slocalStackSize, olocalStackSize;
+    uint localStackSize;
     /// PC to jumps back to.
     uint retPosition;
     /// All current function deferred blocks.
@@ -137,28 +137,7 @@ final class GrTask {
     }
 
     /// Double the current integer locals stacks' size.
-    void doubleIntLocalsStackSize(uint localsStackSize) {
-        while (localsStackSize >= localsLimit)
-            localsLimit <<= 1;
-        locals.length = localsLimit;
-    }
-
-    /// Double the current real locals stacks' size.
-    void doubleRealLocalsStackSize(uint localsStackSize) {
-        while (localsStackSize >= localsLimit)
-            localsLimit <<= 1;
-        locals.length = localsLimit;
-    }
-
-    /// Double the current string locals stacks' size.
-    void doubleStringLocalsStackSize(uint localsStackSize) {
-        while (localsStackSize >= localsLimit)
-            localsLimit <<= 1;
-        locals.length = localsLimit;
-    }
-
-    /// Double the current object locals stacks' size.
-    void doubleObjectLocalsStackSize(uint localsStackSize) {
+    void doubleLocalsStackSize(uint localsStackSize) {
         while (localsStackSize >= localsLimit)
             localsLimit <<= 1;
         locals.length = localsLimit;
@@ -261,14 +240,8 @@ final class GrTask {
     void pushState() {
         GrTaskState state;
         state.stackPos = stackPos;
-        state.stackPos = stackPos;
-        state.stackPos = stackPos;
-        state.stackPos = stackPos;
         state.stackFramePos = stackFramePos;
         state.stackFrame = callStack[stackFramePos];
-        state.localsPos = localsPos;
-        state.localsPos = localsPos;
-        state.localsPos = localsPos;
         state.localsPos = localsPos;
         states ~= state;
     }
@@ -279,13 +252,7 @@ final class GrTask {
             throw new Exception("Fatal error: pop task state");
         GrTaskState state = states[$ - 1];
         stackPos = state.stackPos;
-        stackPos = state.stackPos;
-        stackPos = state.stackPos;
-        stackPos = state.stackPos;
         stackFramePos = state.stackFramePos;
-        localsPos = state.localsPos;
-        localsPos = state.localsPos;
-        localsPos = state.localsPos;
         localsPos = state.localsPos;
         callStack[stackFramePos] = state.stackFrame;
     }

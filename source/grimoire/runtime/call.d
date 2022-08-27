@@ -58,7 +58,7 @@ final class GrCall {
 
         _callback(this);
 
-        _task.stackFramePos -= (_params - _results);
+        _task.stackPos -= (_params - _results);
 
         if (_hasError)
             dispatchError();
