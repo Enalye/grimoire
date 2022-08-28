@@ -14,7 +14,6 @@ alias GrString = string;
 alias GrPtr = void*;
 
 union GrValue {
-    GrBool bvalue;
     GrInt ivalue;
     GrReal rvalue;
     GrString svalue;

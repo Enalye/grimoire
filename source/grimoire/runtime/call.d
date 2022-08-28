@@ -261,7 +261,7 @@ final class GrCall {
             const size_t idx = (_task.stackPos - _params) + _results;
             if (idx >= _task.stack.length)
                 _task.stack.length *= 2;
-            _task.stack[idx].bvalue = value ? 1 : 0;
+            _task.stack[idx].ivalue = value ? 1 : 0;
         }
         else static if (is(T == GrReal)) {
             _results++;

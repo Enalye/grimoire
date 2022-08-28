@@ -413,8 +413,6 @@ final class GrData {
                             continue __primitiveLoop;
                     }
                     GrPrimitive reifiedPrimitive = reifyPrimitive(primitive);
-                    writeln(signature, " -> ", primitive.inSignature, " -> ",
-                        reifiedPrimitive.inSignature);
                     if (!reifiedPrimitive)
                         continue;
                     return reifiedPrimitive;
