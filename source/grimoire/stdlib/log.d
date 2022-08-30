@@ -108,7 +108,7 @@ private void _print_enum(GrCall call) {
 
 private void _print_chan(GrCall call) {
     string name = grGetPrettyType(grUnmangle(call.getInType(0)));
-    auto channel = call.getIntChannel(0);
+    auto channel = call.getChannel(0);
     _stdOut(name ~ " {" ~ to!string(channel.capacity) ~ "}");
 }
 

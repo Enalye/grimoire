@@ -13,19 +13,18 @@ import grimoire.assembly.bytecode;
 
 private string[] instructions = [
     "nop", "throw", "try", "catch", "kill", "exit", "yield", "task", "atask",
-    "new", "chan.i", "chan.f", "chan.s", "chan.o", "snd.i", "snd.f", "snd.s",
-    "snd.o", "rcv.i", "rcv.f", "rcv.s", "rcv.o", "select_start", "select_end",
-    "chan_try", "chan_check", "shift", "lstore", "lstore2", "lload", "gstore",
-    "gstore2", "gload", "rstore", "rstore2", "frstore", "frload", "frload2",
-    "fload", "fload2", "const.i", "const.f", "const.b", "const.s", "meta",
-    "null", "gpush", "gpop", "eq.i", "eq.f", "eq.s", "neq.i", "neq.f", "neq.s",
-    "geq.i", "geq.f", "leq.i", "leq.f", "gt.i", "gt.f", "lt.i", "lt.f",
-    "nnull.o", "and.i", "or.i", "not.i", "cat.s", "add.i", "add.f", "sub.i",
-    "sub.f", "mul.i", "mul.f", "div.i", "div.f", "rem.i", "rem.f", "neg.i",
-    "neg.f", "inc.i", "inc.f", "dec.i", "dec.f", "copy", "swap", "setup_it",
-    "local", "call", "acall", "pcall", "ret", "unwind", "defer", "jmp",
-    "jmp_eq", "jmp_neq", "array", "len", "idx", "idx2", "idx3", "cat.n",
-    "append", "prepend", "eq.n", "neq.n", "dbg_prfbegin", "dbg_prfend"
+    "new", "chan", "snd", "rcv", "select_start", "select_end", "chan_try",
+    "chan_check", "shift", "lstore", "lstore2", "lload", "gstore", "gstore2",
+    "gload", "rstore", "rstore2", "frstore", "frload", "frload2", "fload",
+    "fload2", "const.i", "const.f", "const.b", "const.s", "meta", "null",
+    "gpush", "gpop", "eq.i", "eq.f", "eq.s", "neq.i", "neq.f", "neq.s", "geq.i",
+    "geq.f", "leq.i", "leq.f", "gt.i", "gt.f", "lt.i", "lt.f", "nnull.o",
+    "and.i", "or.i", "not.i", "cat.s", "add.i", "add.f", "sub.i", "sub.f", "mul.i",
+    "mul.f", "div.i", "div.f", "rem.i", "rem.f", "neg.i", "neg.f", "inc.i",
+    "inc.f", "dec.i", "dec.f", "copy", "swap", "setup_it", "local", "call",
+    "acall", "pcall", "ret", "unwind", "defer", "jmp", "jmp_eq", "jmp_neq",
+    "array", "len", "idx", "idx2", "idx3", "cat.n", "append", "prepend",
+    "eq.n", "neq.n", "dbg_prfbegin", "dbg_prfend"
 ];
 
 /// Dump the bytecode's instruction list in a pretty format.
@@ -45,8 +44,8 @@ string grDump(const GrBytecode bytecode) {
         if ((op == GrOpcode.task) || (op >= GrOpcode.localStore &&
                 op <= GrOpcode.localLoad) || (op >= GrOpcode.globalStore && op <= GrOpcode.globalLoad) ||
             op == GrOpcode.globalPush || (op >= GrOpcode.localStack && op <= GrOpcode.call) ||
-            (op == GrOpcode.new_) || (op >= GrOpcode.fieldRefLoad && op <= GrOpcode.fieldLoad2) ||
-            (op >= GrOpcode.channel_int && op <= GrOpcode.channel_object) || (op == GrOpcode.array))
+            (op == GrOpcode.new_) || (op >= GrOpcode.fieldRefLoad &&
+                op <= GrOpcode.fieldLoad2) || (op == GrOpcode.channel) || (op == GrOpcode.array))
             line ~= to!string(grGetInstructionUnsignedValue(opcode));
         else if (op == GrOpcode.fieldRefStore)
             line ~= to!string(grGetInstructionSignedValue(opcode));

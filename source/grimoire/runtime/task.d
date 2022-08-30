@@ -173,19 +173,7 @@ final class GrTask {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
-    void setIntChannel(GrIntChannel value) {
-        setValue!GrPtr(cast(GrPtr) value);
-    }
-
-    void setRealChannel(GrRealChannel value) {
-        setValue!GrPtr(cast(GrPtr) value);
-    }
-
-    void setStringChannel(GrStringChannel value) {
-        setValue!GrPtr(cast(GrPtr) value);
-    }
-
-    void setObjectChannel(GrObjectChannel value) {
+    void setChannel(GrChannel value) {
         setValue!GrPtr(cast(GrPtr) value);
     }
 

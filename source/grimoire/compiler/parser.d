@@ -541,7 +541,8 @@ final class GrParser {
 
         foreach (GrFunction func; functions) {
             if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
-                if (_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic)) {
+                if (_data.isSignatureCompatible(signature, func.inSignature,
+                        false, fileId, isPublic)) {
                     result.func = func;
                     assertSignaturePurity(result.func.inSignature);
                     return result;
@@ -550,7 +551,8 @@ final class GrParser {
         }
         foreach (GrFunction func; functionsQueue) {
             if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
-                if (_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic)) {
+                if (_data.isSignatureCompatible(signature, func.inSignature,
+                        false, fileId, isPublic)) {
                     result.func = func;
                     assertSignaturePurity(result.func.inSignature);
                     return result;
@@ -560,7 +562,8 @@ final class GrParser {
 
         foreach (GrFunction func; instanciatedFunctions) {
             if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
-                if (_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic)) {
+                if (_data.isSignatureCompatible(signature, func.inSignature,
+                        false, fileId, isPublic)) {
                     functionsQueue ~= func;
 
                     functionStack ~= currentFunction;
@@ -586,8 +589,8 @@ final class GrParser {
             if (temp.name == name && (temp.fileId == fileId || temp.isPublic || isPublic)) {
                 GrAnyData anyData = new GrAnyData;
                 _data.setAnyData(anyData);
-                if (_data.isAbstractSignatureCompatible(signature,
-                        temp.inSignature, fileId, isPublic)) {
+                if (_data.isSignatureCompatible(signature, temp.inSignature,
+                        true, fileId, isPublic)) {
                     foreach (GrConstraint constraint; temp.constraints) {
                         if (!constraint.evaluate(_data, anyData))
                             continue __functionLoop;
@@ -625,7 +628,8 @@ final class GrParser {
         }
         foreach (GrFunction func; functions) {
             if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
-                if (_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic))
+                if (_data.isSignatureCompatible(signature, func.inSignature,
+                        false, fileId, isPublic))
                     return func;
             }
         }
@@ -637,7 +641,8 @@ final class GrParser {
         }
         foreach (GrFunction func; functionsQueue) {
             if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
-                if (_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic))
+                if (_data.isSignatureCompatible(signature, func.inSignature,
+                        false, fileId, isPublic))
                     return func;
             }
         }
@@ -657,7 +662,8 @@ final class GrParser {
         }
         foreach (GrFunction func; instanciatedFunctions) {
             if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
-                if (_data.isSignatureCompatible(signature, func.inSignature, fileId, isPublic)) {
+                if (_data.isSignatureCompatible(signature, func.inSignature,
+                        false, fileId, isPublic)) {
                     functionsQueue ~= func;
 
                     functionStack ~= currentFunction;
@@ -675,8 +681,8 @@ final class GrParser {
             if (temp.name == name && (temp.fileId == fileId || temp.isPublic || isPublic)) {
                 GrAnyData anyData = new GrAnyData;
                 _data.setAnyData(anyData);
-                if (_data.isAbstractSignatureCompatible(signature,
-                        temp.inSignature, fileId, isPublic)) {
+                if (_data.isSignatureCompatible(signature, temp.inSignature,
+                        true, fileId, isPublic)) {
                     foreach (GrConstraint constraint; temp.constraints) {
                         if (!constraint.evaluate(_data, anyData))
                             continue __functionLoop;
@@ -736,7 +742,7 @@ final class GrParser {
         }
         foreach (GrFunction func; anonymousFunctions) {
             if (func.name == name) {
-                if (_data.isSignatureCompatible(signature, func.inSignature, fileId))
+                if (_data.isSignatureCompatible(signature, func.inSignature, false, fileId))
                     return func;
             }
         }
@@ -1253,63 +1259,11 @@ final class GrParser {
         case channel:
             switch (lexType) with (GrLexeme.Type) {
             case send:
-                GrType channelType = grUnmangle(varType.mangledType);
-                final switch (channelType.base) with (GrType.Base) {
-                case int_:
-                case bool_:
-                case function_:
-                case task:
-                case enum_:
-                    addInstruction(GrOpcode.send_int);
-                    return channelType;
-                case real_:
-                    addInstruction(GrOpcode.send_real);
-                    return channelType;
-                case string_:
-                    addInstruction(GrOpcode.send_string);
-                    return channelType;
-                case class_:
-                case array:
-                case foreign:
-                case channel:
-                    addInstruction(GrOpcode.send_object);
-                    return channelType;
-                case void_:
-                case null_:
-                case internalTuple:
-                case reference:
-                    break;
-                }
-                break;
+                addInstruction(GrOpcode.send);
+                return grUnmangle(varType.mangledType);
             case receive:
-                GrType channelType = grUnmangle(varType.mangledType);
-                final switch (channelType.base) with (GrType.Base) {
-                case int_:
-                case bool_:
-                case function_:
-                case task:
-                case enum_:
-                    addInstruction(GrOpcode.receive_int);
-                    return channelType;
-                case real_:
-                    addInstruction(GrOpcode.receive_real);
-                    return channelType;
-                case string_:
-                    addInstruction(GrOpcode.receive_string);
-                    return channelType;
-                case class_:
-                case array:
-                case foreign:
-                case channel:
-                    addInstruction(GrOpcode.receive_object);
-                    return channelType;
-                case void_:
-                case null_:
-                case internalTuple:
-                case reference:
-                    break;
-                }
-                break;
+                addInstruction(GrOpcode.receive);
+                return grUnmangle(varType.mangledType);
             default:
                 break;
             }
@@ -3595,20 +3549,14 @@ final class GrParser {
         case function_:
         case task:
         case enum_:
-            addInstruction(GrOpcode.channel_int, channelSize);
-            break;
         case real_:
-            addInstruction(GrOpcode.channel_real, channelSize);
-            break;
         case string_:
-            addInstruction(GrOpcode.channel_string, channelSize);
-            break;
         case class_:
         case array:
         case foreign:
         case channel:
         case reference:
-            addInstruction(GrOpcode.channel_object, channelSize);
+            addInstruction(GrOpcode.channel, channelSize);
             break;
         case void_:
         case null_:
@@ -5346,20 +5294,14 @@ final class GrParser {
             case function_:
             case task:
             case enum_:
-                addInstruction(GrOpcode.channel_int, 1);
-                break;
             case real_:
-                addInstruction(GrOpcode.channel_real, 1);
-                break;
             case string_:
-                addInstruction(GrOpcode.channel_string, 1);
-                break;
             case class_:
             case array:
             case foreign:
             case channel:
             case reference:
-                addInstruction(GrOpcode.channel_object, 1);
+                addInstruction(GrOpcode.channel, 1);
                 break;
             case void_:
             case null_:

@@ -344,20 +344,8 @@ class GrEngine {
         return cast(GrArray) getVariable!(GrPtr)(name);
     }
 
-    GrIntChannel getIntChannelVariable(string name) {
-        return cast(GrIntChannel) getVariable!(GrPtr)(name);
-    }
-
-    GrRealChannel getRealChannelVariable(string name) {
-        return cast(GrRealChannel) getVariable!(GrPtr)(name);
-    }
-
-    GrStringChannel getStringChannelVariable(string name) {
-        return cast(GrStringChannel) getVariable!(GrPtr)(name);
-    }
-
-    GrObjectChannel getObjectChannelVariable(string name) {
-        return cast(GrObjectChannel) getVariable!(GrPtr)(name);
+    GrChannel getChannelVariable(string name) {
+        return cast(GrChannel) getVariable!(GrPtr)(name);
     }
 
     T getEnumVariable(T)(string name) {
@@ -414,19 +402,7 @@ class GrEngine {
         setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
-    void setIntChannelVariable(string name, GrIntChannel value) {
-        setVariable!(GrPtr)(name, cast(GrPtr) value);
-    }
-
-    void setRealChannelVariable(string name, GrRealChannel value) {
-        setVariable!(GrPtr)(name, cast(GrPtr) value);
-    }
-
-    void setStringChannelVariable(string name, GrStringChannel value) {
-        setVariable!(GrPtr)(name, cast(GrPtr) value);
-    }
-
-    void setObjectChannelVariable(string name, GrObjectChannel value) {
+    void setChannelVariable(string name, GrChannel value) {
         setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
@@ -478,9 +454,6 @@ class GrEngine {
                 _tasks ~= task;
             _createdTasks.length = 0;
 
-            swap(_globalStackIn, _globalStackOut);
-            swap(_globalStackIn, _globalStackOut);
-            swap(_globalStackIn, _globalStackOut);
             swap(_globalStackIn, _globalStackOut);
         }
 
@@ -622,148 +595,16 @@ class GrEngine {
                         _bytecode.classes[grGetInstructionUnsignedValue(opcode)]);
                     currentTask.pc++;
                     break;
-                case channel_int:
+                case channel:
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
                     currentTask.stack[currentTask.stackPos].ovalue = cast(
-                        GrPtr) new GrIntChannel(grGetInstructionUnsignedValue(opcode));
+                        GrPtr) new GrChannel(grGetInstructionUnsignedValue(opcode));
                     currentTask.pc++;
                     break;
-                case channel_real:
-                    currentTask.stackPos++;
-                    if (currentTask.stackPos == currentTask.stack.length)
-                        currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos].ovalue = cast(
-                        GrPtr) new GrRealChannel(grGetInstructionUnsignedValue(opcode));
-                    currentTask.pc++;
-                    break;
-                case channel_string:
-                    currentTask.stackPos++;
-                    if (currentTask.stackPos == currentTask.stack.length)
-                        currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos].ovalue = cast(
-                        GrPtr) new GrStringChannel(grGetInstructionUnsignedValue(opcode));
-                    currentTask.pc++;
-                    break;
-                case channel_object:
-                    currentTask.stackPos++;
-                    if (currentTask.stackPos == currentTask.stack.length)
-                        currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos].ovalue = cast(
-                        GrPtr) new GrObjectChannel(grGetInstructionUnsignedValue(opcode));
-                    currentTask.pc++;
-                    break;
-                case send_int:
-                    GrIntChannel chan = cast(GrIntChannel) currentTask
-                        .stack[currentTask.stackPos].ovalue;
-                    if (!chan.isOwned) {
-                        if (currentTask.isEvaluatingChannel) {
-                            currentTask.restoreState();
-                            currentTask.isLocked = true;
-                            currentTask.isEvaluatingChannel = false;
-                            currentTask.pc = currentTask.selectPositionJump;
-                        }
-                        else {
-                            currentTask.stackPos -= 2;
-                            raise(currentTask, "ChannelError");
-                        }
-                    }
-                    else if (chan.canSend) {
-                        currentTask.isLocked = false;
-                        chan.send(currentTask.stack[currentTask.stackPos].ivalue);
-                        currentTask.stack[currentTask.stackPos - 1] =
-                            currentTask.stack[currentTask.stackPos];
-                        currentTask.stackPos--;
-                        currentTask.pc++;
-                    }
-                    else {
-                        currentTask.isLocked = true;
-                        if (currentTask.isEvaluatingChannel) {
-                            currentTask.restoreState();
-                            currentTask.isEvaluatingChannel = false;
-                            currentTask.pc = currentTask.selectPositionJump;
-                        }
-                        else {
-                            index++;
-                            continue tasksLabel;
-                        }
-                    }
-                    break;
-                case send_real:
-                    GrRealChannel chan = cast(GrRealChannel) currentTask
-                        .stack[currentTask.stackPos].ovalue;
-                    if (!chan.isOwned) {
-                        if (currentTask.isEvaluatingChannel) {
-                            currentTask.restoreState();
-                            currentTask.isLocked = true;
-                            currentTask.isEvaluatingChannel = false;
-                            currentTask.pc = currentTask.selectPositionJump;
-                        }
-                        else {
-                            currentTask.stackPos -= 2;
-                            raise(currentTask, "ChannelError");
-                        }
-                    }
-                    else if (chan.canSend) {
-                        currentTask.isLocked = false;
-                        chan.send(currentTask.stack[currentTask.stackPos].rvalue);
-                        currentTask.stack[currentTask.stackPos - 1] =
-                            currentTask.stack[currentTask.stackPos];
-                        currentTask.stackPos--;
-                        currentTask.pc++;
-                    }
-                    else {
-                        currentTask.isLocked = true;
-                        if (currentTask.isEvaluatingChannel) {
-                            currentTask.restoreState();
-                            currentTask.isEvaluatingChannel = false;
-                            currentTask.pc = currentTask.selectPositionJump;
-                        }
-                        else {
-                            index++;
-                            continue tasksLabel;
-                        }
-                    }
-                    break;
-                case send_string:
-                    GrStringChannel chan = cast(GrStringChannel) currentTask
-                        .stack[currentTask.stackPos].ovalue;
-                    if (!chan.isOwned) {
-                        if (currentTask.isEvaluatingChannel) {
-                            currentTask.restoreState();
-                            currentTask.isLocked = true;
-                            currentTask.isEvaluatingChannel = false;
-                            currentTask.pc = currentTask.selectPositionJump;
-                        }
-                        else {
-                            currentTask.stackPos -= 2;
-                            raise(currentTask, "ChannelError");
-                        }
-                    }
-                    else if (chan.canSend) {
-                        currentTask.isLocked = false;
-                        chan.send(currentTask.stack[currentTask.stackPos].svalue);
-                        currentTask.stack[currentTask.stackPos - 1] =
-                            currentTask.stack[currentTask.stackPos];
-                        currentTask.stackPos--;
-                        currentTask.pc++;
-                    }
-                    else {
-                        currentTask.isLocked = true;
-                        if (currentTask.isEvaluatingChannel) {
-                            currentTask.restoreState();
-                            currentTask.isEvaluatingChannel = false;
-                            currentTask.pc = currentTask.selectPositionJump;
-                        }
-                        else {
-                            index++;
-                            continue tasksLabel;
-                        }
-                    }
-                    break;
-                case send_object:
-                    GrObjectChannel chan = cast(GrObjectChannel) currentTask
+                case send:
+                    GrChannel chan = cast(GrChannel) currentTask
                         .stack[currentTask.stackPos - 1].ovalue;
                     if (!chan.isOwned) {
                         if (currentTask.isEvaluatingChannel) {
@@ -779,7 +620,7 @@ class GrEngine {
                     }
                     else if (chan.canSend) {
                         currentTask.isLocked = false;
-                        chan.send(currentTask.stack[currentTask.stackPos].ovalue);
+                        chan.send(currentTask.stack[currentTask.stackPos]);
                         currentTask.stack[currentTask.stackPos - 1] =
                             currentTask.stack[currentTask.stackPos];
                         currentTask.stackPos--;
@@ -798,9 +639,8 @@ class GrEngine {
                         }
                     }
                     break;
-                case receive_int:
-                    GrIntChannel chan = cast(GrIntChannel) currentTask
-                        .stack[currentTask.stackPos].ovalue;
+                case receive:
+                    GrChannel chan = cast(GrChannel) currentTask.stack[currentTask.stackPos].ovalue;
                     if (!chan.isOwned) {
                         if (currentTask.isEvaluatingChannel) {
                             currentTask.restoreState();
@@ -815,109 +655,7 @@ class GrEngine {
                     }
                     else if (chan.canReceive) {
                         currentTask.isLocked = false;
-                        currentTask.stack[currentTask.stackPos].ivalue = chan.receive();
-                        currentTask.pc++;
-                    }
-                    else {
-                        chan.setReceiverReady();
-                        currentTask.isLocked = true;
-                        if (currentTask.isEvaluatingChannel) {
-                            currentTask.restoreState();
-                            currentTask.isEvaluatingChannel = false;
-                            currentTask.pc = currentTask.selectPositionJump;
-                        }
-                        else {
-                            index++;
-                            continue tasksLabel;
-                        }
-                    }
-                    break;
-                case receive_real:
-                    GrRealChannel chan = cast(GrRealChannel) currentTask
-                        .stack[currentTask.stackPos].ovalue;
-                    if (!chan.isOwned) {
-                        if (currentTask.isEvaluatingChannel) {
-                            currentTask.restoreState();
-                            currentTask.isLocked = true;
-                            currentTask.isEvaluatingChannel = false;
-                            currentTask.pc = currentTask.selectPositionJump;
-                        }
-                        else {
-                            currentTask.stackPos--;
-                            raise(currentTask, "ChannelError");
-                        }
-                    }
-                    else if (chan.canReceive) {
-                        currentTask.isLocked = false;
-                        currentTask.stack[currentTask.stackPos].rvalue = chan.receive();
-                        currentTask.pc++;
-                    }
-                    else {
-                        chan.setReceiverReady();
-                        currentTask.isLocked = true;
-                        if (currentTask.isEvaluatingChannel) {
-                            currentTask.restoreState();
-                            currentTask.isEvaluatingChannel = false;
-                            currentTask.pc = currentTask.selectPositionJump;
-                        }
-                        else {
-                            index++;
-                            continue tasksLabel;
-                        }
-                    }
-                    break;
-                case receive_string:
-                    GrStringChannel chan = cast(GrStringChannel) currentTask
-                        .stack[currentTask.stackPos].ovalue;
-                    if (!chan.isOwned) {
-                        if (currentTask.isEvaluatingChannel) {
-                            currentTask.restoreState();
-                            currentTask.isLocked = true;
-                            currentTask.isEvaluatingChannel = false;
-                            currentTask.pc = currentTask.selectPositionJump;
-                        }
-                        else {
-                            currentTask.stackPos--;
-                            raise(currentTask, "ChannelError");
-                        }
-                    }
-                    else if (chan.canReceive) {
-                        currentTask.isLocked = false;
-                        currentTask.stack[currentTask.stackPos].svalue = chan.receive();
-                        currentTask.pc++;
-                    }
-                    else {
-                        chan.setReceiverReady();
-                        currentTask.isLocked = true;
-                        if (currentTask.isEvaluatingChannel) {
-                            currentTask.restoreState();
-                            currentTask.isEvaluatingChannel = false;
-                            currentTask.pc = currentTask.selectPositionJump;
-                        }
-                        else {
-                            index++;
-                            continue tasksLabel;
-                        }
-                    }
-                    break;
-                case receive_object:
-                    GrObjectChannel chan = cast(GrObjectChannel) currentTask
-                        .stack[currentTask.stackPos].ovalue;
-                    if (!chan.isOwned) {
-                        if (currentTask.isEvaluatingChannel) {
-                            currentTask.restoreState();
-                            currentTask.isLocked = true;
-                            currentTask.isEvaluatingChannel = false;
-                            currentTask.pc = currentTask.selectPositionJump;
-                        }
-                        else {
-                            currentTask.stackPos--;
-                            raise(currentTask, "ChannelError");
-                        }
-                    }
-                    else if (chan.canReceive) {
-                        currentTask.isLocked = false;
-                        currentTask.stack[currentTask.stackPos].ovalue = chan.receive();
+                        currentTask.stack[currentTask.stackPos] = chan.receive();
                         currentTask.pc++;
                     }
                     else {

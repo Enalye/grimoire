@@ -7,20 +7,15 @@ module grimoire.runtime.channel;
 
 import grimoire.assembly;
 
-alias GrIntChannel = GrChannel!GrInt;
-alias GrRealChannel = GrChannel!GrReal;
-alias GrStringChannel = GrChannel!GrString;
-alias GrObjectChannel = GrChannel!GrPtr;
-
 /**
 A pipe that allow synchronised communication between coroutines.
 */
-final class GrChannel(T) {
+final class GrChannel {
     /// The channel is active.
     bool isOwned = true;
 
     private {
-        T[] _buffer;
+        GrValue[] _buffer;
         uint _size, _capacity;
         bool _isReceiverReady;
     }
@@ -80,7 +75,7 @@ final class GrChannel(T) {
     }
 
     /// Always check canSend() before.
-    void send()(auto ref T value) {
+    void send()(auto ref GrValue value) {
         if (_size == _capacity || (_capacity == 1u && !_isReceiverReady))
             throw new Exception("Attempt to write on a full channel");
         _buffer ~= value;
@@ -88,10 +83,10 @@ final class GrChannel(T) {
     }
 
     /// Always check canReceive() before.
-    T receive() {
+    GrValue receive() {
         if (_size == 0)
             throw new Exception("Attempt to read an empty channel");
-        T value = _buffer[0];
+        GrValue value = _buffer[0];
         _buffer = _buffer[1 .. $];
         _size--;
         _isReceiverReady = false;

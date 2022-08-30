@@ -383,13 +383,13 @@ final class GrData {
     package GrPrimitive getCompatiblePrimitive(const string name, const GrType[] signature) {
         foreach (GrPrimitive primitive; _primitives) {
             if (primitive.name == name) {
-                if (isSignatureCompatible(signature, primitive.inSignature, 0, true))
+                if (isSignatureCompatible(signature, primitive.inSignature, false, 0, true))
                     return primitive;
             }
         }
         foreach (GrPrimitive primitive; _abstractPrimitives) {
             if (primitive.name == name) {
-                if (isSignatureCompatible(signature, primitive.inSignature, 0, true)) {
+                if (isSignatureCompatible(signature, primitive.inSignature, false, 0, true)) {
                     GrPrimitive reifiedPrimitive = reifyPrimitive(primitive);
                     if (!reifiedPrimitive)
                         continue;
@@ -405,9 +405,7 @@ final class GrData {
         __primitiveLoop: foreach (GrPrimitive primitive; _abstractPrimitives) {
             if (primitive.name == name) {
                 _anyData = new GrAnyData;
-                if (isAbstractSignatureCompatible(signature, primitive.inSignature, 0, true)) {
-                    import std.stdio;
-
+                if (isSignatureCompatible(signature, primitive.inSignature, true, 0, true)) {
                     foreach (GrConstraint constraint; primitive.constraints) {
                         if (!constraint.evaluate(this, _anyData))
                             continue __primitiveLoop;
@@ -440,7 +438,7 @@ final class GrData {
         __primitiveLoop: foreach (GrPrimitive primitive; _abstractPrimitives) {
             if (primitive.name == name) {
                 _anyData = new GrAnyData;
-                if (isAbstractSignatureCompatible(signature, primitive.inSignature, 0, true)) {
+                if (isSignatureCompatible(signature, primitive.inSignature, true, 0, true)) {
                     assert(name.length == 0);
                     foreach (GrConstraint constraint; primitive.constraints) {
                         if (!constraint.evaluate(this, _anyData))
@@ -561,49 +559,15 @@ final class GrData {
     }
 
     /// Check if the first signature match or can be upgraded (by inheritance) to the second one.
-    package bool isSignatureCompatible(const GrType[] first, const GrType[] second,
-        uint fileId, bool isPublic = false) {
-        if (first.length != second.length)
-            return false;
-        __signatureLoop: for (int i; i < first.length; ++i) {
-            if (first[i].base == GrType.Base.null_ &&
-                (second[i].base == GrType.Base.foreign || second[i].base == GrType.Base.class_))
-                continue;
-            if (first[i].base == GrType.Base.foreign && second[i].base == GrType.Base.foreign) {
-                string foreignName = first[i].mangledType;
-                for (;;) {
-                    if (first[i] == second[i])
-                        continue __signatureLoop;
-                    const GrForeignDefinition foreignType = getForeign(foreignName);
-                    if (!foreignType.parent.length)
-                        return false;
-                    foreignName = foreignType.parent;
-                }
-            }
-            else if (first[i].base == GrType.Base.class_ && second[i].base == GrType.Base.class_) {
-                string className = first[i].mangledType;
-                for (;;) {
-                    if (first[i] == second[i])
-                        continue __signatureLoop;
-                    const GrClassDefinition classType = getClass(className, fileId, isPublic);
-                    if (!classType.parent.length)
-                        return false;
-                    className = classType.parent;
-                }
-            }
-            else if (first[i] != second[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-    /// Ditto
-    bool isAbstractSignatureCompatible(const GrType[] first, const GrType[] second,
-        uint fileId, bool isPublic = false) {
+    bool isSignatureCompatible(const GrType[] first, const GrType[] second,
+        bool isAbstract, uint fileId, bool isPublic = false) {
         if (first.length != second.length)
             return false;
         __signatureLoop: for (int i; i < first.length; ++i) {
             if (second[i].isAny) {
+                if (!isAbstract)
+                    return false;
+
                 const GrType registeredType = _anyData.get(second[i].mangledType);
                 if (registeredType.base == GrType.Base.void_) {
                     _anyData.set(second[i].mangledType, first[i]);
@@ -626,36 +590,35 @@ final class GrData {
             case channel:
                 if (first[i].base != second[i].base)
                     return false;
-                if (isAbstractSignatureCompatible([
-                        grUnmangle(first[i].mangledType)
-                    ], [grUnmangle(second[i].mangledType)], fileId, isPublic))
+                if (isSignatureCompatible([grUnmangle(first[i].mangledType)],
+                        [grUnmangle(second[i].mangledType)], isAbstract, fileId, isPublic))
                     continue;
                 return false;
             case function_:
                 if (first[i].base != second[i].base)
                     return false;
-                if (!isAbstractSignatureCompatible(grUnmangleSignature(first[i].mangledType),
-                        grUnmangleSignature(second[i].mangledType), fileId, isPublic))
+                if (!isSignatureCompatible(grUnmangleSignature(first[i].mangledType),
+                        grUnmangleSignature(second[i].mangledType), isAbstract, fileId, isPublic))
                     return false;
-                if (!isAbstractSignatureCompatible(grUnmangleSignature(first[i].mangledReturnType),
-                        grUnmangleSignature(second[i].mangledReturnType), fileId, isPublic))
+                if (!isSignatureCompatible(grUnmangleSignature(first[i].mangledReturnType),
+                        grUnmangleSignature(second[i].mangledReturnType),
+                        isAbstract, fileId, isPublic))
                     return false;
                 continue;
             case task:
                 if (first[i].base != second[i].base)
                     return false;
-                if (isAbstractSignatureCompatible(grUnmangleSignature(first[i].mangledType),
-                        grUnmangleSignature(second[i].mangledType), fileId, isPublic))
+                if (isSignatureCompatible(grUnmangleSignature(first[i].mangledType),
+                        grUnmangleSignature(second[i].mangledType), isAbstract, fileId, isPublic))
                     continue;
                 return false;
             case class_:
-                if (first[i].base == GrType.Base.null_)
-                    continue;
                 if (first[i].base != second[i].base)
                     return false;
 
-                if (!isAbstractSignatureCompatible(grUnmangleComposite(first[i].mangledType).signature,
-                        grUnmangleComposite(second[i].mangledType).signature, fileId, isPublic))
+                if (!isSignatureCompatible(grUnmangleComposite(first[i].mangledType).signature,
+                        grUnmangleComposite(second[i].mangledType).signature,
+                        isAbstract, fileId, isPublic))
                     return false;
 
                 string className = first[i].mangledType;
@@ -671,13 +634,12 @@ final class GrData {
                 }
                 continue;
             case foreign:
-                if (first[i].base == GrType.Base.null_)
-                    continue;
                 if (first[i].base != second[i].base)
                     return false;
 
-                if (!isAbstractSignatureCompatible(grUnmangleComposite(first[i].mangledType).signature,
-                        grUnmangleComposite(second[i].mangledType).signature, fileId, isPublic))
+                if (!isSignatureCompatible(grUnmangleComposite(first[i].mangledType).signature,
+                        grUnmangleComposite(second[i].mangledType).signature,
+                        isAbstract, fileId, isPublic))
                     return false;
 
                 string foreignName = first[i].mangledType;

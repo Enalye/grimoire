@@ -73,20 +73,8 @@ final class GrObject {
         return cast(GrArray) getField!GrPtr(fieldName);
     }
 
-    GrIntChannel getIntChannel(const string fieldName) {
-        return cast(GrIntChannel) getField!GrPtr(fieldName);
-    }
-
-    GrRealChannel getRealChannel(const string fieldName) {
-        return cast(GrRealChannel) getField!GrPtr(fieldName);
-    }
-
-    GrStringChannel getStringChannel(const string fieldName) {
-        return cast(GrStringChannel) getField!GrPtr(fieldName);
-    }
-
-    GrObjectChannel getObjectChannel(const string fieldName) {
-        return cast(GrObjectChannel) getField!GrPtr(fieldName);
+    GrChannel getChannel(const string fieldName) {
+        return cast(GrChannel) getField!GrPtr(fieldName);
     }
 
     T getEnum(T)(const string fieldName) {
@@ -148,19 +136,7 @@ final class GrObject {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setIntChannel(const string fieldName, GrIntChannel value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
-    }
-
-    void setRealChannel(const string fieldName, GrRealChannel value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
-    }
-
-    void setStringChannel(const string fieldName, GrStringChannel value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
-    }
-
-    void setObjectChannel(const string fieldName, GrObjectChannel value) {
+    void setChannel(const string fieldName, GrChannel value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 

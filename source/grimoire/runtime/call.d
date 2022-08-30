@@ -102,20 +102,8 @@ final class GrCall {
         return cast(GrArray) getParameter!GrPtr(index);
     }
 
-    GrIntChannel getIntChannel(uint index) {
-        return cast(GrIntChannel) getParameter!GrPtr(index);
-    }
-
-    GrRealChannel getRealChannel(uint index) {
-        return cast(GrRealChannel) getParameter!GrPtr(index);
-    }
-
-    GrStringChannel getStringChannel(uint index) {
-        return cast(GrStringChannel) getParameter!GrPtr(index);
-    }
-
-    GrObjectChannel getObjectChannel(uint index) {
-        return cast(GrObjectChannel) getParameter!GrPtr(index);
+    GrChannel getChannel(uint index) {
+        return cast(GrChannel) getParameter!GrPtr(index);
     }
 
     T getEnum(T)(uint index) {
@@ -192,19 +180,7 @@ final class GrCall {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
-    void setIntChannel(GrIntChannel value) {
-        setResult!GrPtr(cast(GrPtr) value);
-    }
-
-    void setRealChannel(GrRealChannel value) {
-        setResult!GrPtr(cast(GrPtr) value);
-    }
-
-    void setStringChannel(GrStringChannel value) {
-        setResult!GrPtr(cast(GrPtr) value);
-    }
-
-    void setObjectChannel(GrObjectChannel value) {
+    void setChannel(GrChannel value) {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
@@ -282,20 +258,8 @@ final class GrCall {
         return _task.engine.getArrayVariable(name);
     }
 
-    GrIntChannel getIntChannelVariable(string name) {
-        return _task.engine.getIntChannelVariable(name);
-    }
-
-    GrRealChannel getRealChannelVariable(string name) {
-        return _task.engine.getRealChannelVariable(name);
-    }
-
-    GrStringChannel getStringChannelVariable(string name) {
-        return _task.engine.getStringChannelVariable(name);
-    }
-
-    GrObjectChannel getObjectChannelVariable(string name) {
-        return _task.engine.getObjectChannelVariable(name);
+    GrChannel getChannelVariable(string name) {
+        return _task.engine.getChannelVariable(name);
     }
 
     T getEnumVariable(T)(string name) {
@@ -334,20 +298,8 @@ final class GrCall {
         _task.engine.setArrayVariable(name, value);
     }
 
-    void setIntChannelVariable(string name, GrIntChannel value) {
-        _task.engine.setIntChannelVariable(name, value);
-    }
-
-    void setRealChannelVariable(string name, GrRealChannel value) {
-        _task.engine.setRealChannelVariable(name, value);
-    }
-
-    void setStringChannelVariable(string name, GrStringChannel value) {
-        _task.engine.setStringChannelVariable(name, value);
-    }
-
-    void setObjectChannelVariable(string name, GrObjectChannel value) {
-        _task.engine.setObjectChannelVariable(name, value);
+    void setChannelVariable(string name, GrChannel value) {
+        _task.engine.setChannelVariable(name, value);
     }
 
     void setEnumVariable(T)(string name, T value) {
