@@ -169,23 +169,7 @@ final class GrTask {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
-    void setArray(T)(GrArray!T value) {
-        setValue!GrPtr(cast(GrPtr) value);
-    }
-
-    void setIntArray(GrIntArray value) {
-        setValue!GrPtr(cast(GrPtr) value);
-    }
-
-    void setRealArray(GrRealArray value) {
-        setValue!GrPtr(cast(GrPtr) value);
-    }
-
-    void setStringArray(GrStringArray value) {
-        setValue!GrPtr(cast(GrPtr) value);
-    }
-
-    void setObjectArray(GrObjectArray value) {
+    void setArray(GrArray value) {
         setValue!GrPtr(cast(GrPtr) value);
     }
 

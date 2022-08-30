@@ -98,24 +98,8 @@ final class GrCall {
         return cast(GrObject) getParameter!GrPtr(index);
     }
 
-    GrArray!T getArray(T)(uint index) {
-        return cast(GrArray!T) getParameter!GrPtr(index);
-    }
-
-    GrIntArray getIntArray(uint index) {
-        return cast(GrIntArray) getParameter!GrPtr(index);
-    }
-
-    GrRealArray getRealArray(uint index) {
-        return cast(GrRealArray) getParameter!GrPtr(index);
-    }
-
-    GrStringArray getStringArray(uint index) {
-        return cast(GrStringArray) getParameter!GrPtr(index);
-    }
-
-    GrObjectArray getObjectArray(uint index) {
-        return cast(GrObjectArray) getParameter!GrPtr(index);
+    GrArray getArray(uint index) {
+        return cast(GrArray) getParameter!GrPtr(index);
     }
 
     GrIntChannel getIntChannel(uint index) {
@@ -204,23 +188,7 @@ final class GrCall {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
-    void setArray(T)(GrArray!T value) {
-        setResult!GrPtr(cast(GrPtr) value);
-    }
-
-    void setIntArray(GrIntArray value) {
-        setResult!GrPtr(cast(GrPtr) value);
-    }
-
-    void setRealArray(GrRealArray value) {
-        setResult!GrPtr(cast(GrPtr) value);
-    }
-
-    void setStringArray(GrStringArray value) {
-        setResult!GrPtr(cast(GrPtr) value);
-    }
-
-    void setObjectArray(GrObjectArray value) {
+    void setArray(GrArray value) {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
@@ -310,20 +278,8 @@ final class GrCall {
         return _task.engine.getObjectVariable(name);
     }
 
-    GrIntArray getIntArrayVariable(string name) {
-        return _task.engine.getIntArrayVariable(name);
-    }
-
-    GrRealArray getRealArrayVariable(string name) {
-        return _task.engine.getRealArrayVariable(name);
-    }
-
-    GrStringArray getStringArrayVariable(string name) {
-        return _task.engine.getStringArrayVariable(name);
-    }
-
-    GrObjectArray getObjectArrayVariable(string name) {
-        return _task.engine.getObjectArrayVariable(name);
+    GrArray getArrayVariable(string name) {
+        return _task.engine.getArrayVariable(name);
     }
 
     GrIntChannel getIntChannelVariable(string name) {
@@ -374,20 +330,8 @@ final class GrCall {
         _task.engine.setObjectVariable(name, value);
     }
 
-    void setIntArrayVariable(string name, GrIntArray value) {
-        _task.engine.setIntArrayVariable(name, value);
-    }
-
-    void setRealArrayVariable(string name, GrRealArray value) {
-        _task.engine.setRealArrayVariable(name, value);
-    }
-
-    void setStringArrayVariable(string name, GrStringArray value) {
-        _task.engine.setStringArrayVariable(name, value);
-    }
-
-    void setObjectArrayVariable(string name, GrObjectArray value) {
-        _task.engine.setObjectArrayVariable(name, value);
+    void setArrayVariable(string name, GrArray value) {
+        _task.engine.setArrayVariable(name, value);
     }
 
     void setIntChannelVariable(string name, GrIntChannel value) {

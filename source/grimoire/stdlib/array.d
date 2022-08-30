@@ -10,7 +10,7 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
-    library.addForeign("ArrayIterator", ["T"]);
+    /*library.addForeign("ArrayIterator", ["T"]);
 
     static foreach (t; ["Int", "Real", "String", "Object"]) {
         mixin("
@@ -112,9 +112,9 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
                 ], [" ~ t ~ "ArrayType], [" ~ t ~ "Constraint]);
                 ");
         }
-    }
+    }*/
 }
-
+/+
 private void _copy_(string t)(GrCall call) {
     mixin("Gr" ~ t ~ "Array copy = new Gr" ~ t ~ "Array;
         copy.data = call.get" ~ t ~ "Array(0).data.dup;
@@ -588,3 +588,4 @@ private void _next_(string t)(GrCall call) {
     }
     iter.index++;
 }
++/

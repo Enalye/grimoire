@@ -19,21 +19,16 @@ package(grimoire.stdlib) void grLoadStdLibLog(GrLibrary library) {
     library.addFunction(&_print_nb, "print", [grBoolArray]);
     library.addFunction(&_print_nr, "print", [grRealArray]);
     library.addFunction(&_print_ns, "print", [grStringArray]);
-    library.addFunction(&_print_enum, "print", [grAny("T", true)], [], [
-            grConstraint("Enum", grAny("T"))
-        ]);
-    library.addFunction(&_print_chan, "print", [grAny("T", true)], [], [
-            grConstraint("Channel", grAny("T"))
-        ]);
-    library.addFunction(&_print_func, "print", [grAny("T", true)], [], [
-            grConstraint("Callable", grAny("T"))
-        ]);
-    library.addFunction(&_print_o, "print", [grAny("T", true)], [], [
-            grConstraint("Class", grAny("T"))
-        ]);
-    library.addFunction(&_print_u, "print", [grAny("T", true)], [], [
-            grConstraint("Foreign", grAny("T"))
-        ]);
+    library.addFunction(&_print_enum, "print", [grAny("T", true)], [],
+        [grConstraint("Enum", grAny("T"))]);
+    library.addFunction(&_print_chan, "print", [grAny("T", true)], [],
+        [grConstraint("Channel", grAny("T"))]);
+    library.addFunction(&_print_func, "print", [grAny("T", true)], [],
+        [grConstraint("Callable", grAny("T"))]);
+    library.addFunction(&_print_o, "print", [grAny("T", true)], [],
+        [grConstraint("Class", grAny("T"))]);
+    library.addFunction(&_print_u, "print", [grAny("T", true)], [],
+        [grConstraint("Foreign", grAny("T"))]);
 }
 
 // print
@@ -54,23 +49,55 @@ private void _print_r(GrCall call) {
 }
 
 private void _print_ni(GrCall call) {
-    auto ary = call.getIntArray(0);
-    _stdOut(to!string(ary.data));
+    auto ary = call.getArray(0);
+    string txt = "[";
+    for (int i; i < ary.data.length; ++i) {
+        if (i != 0) {
+            txt ~= ", ";
+        }
+        txt ~= to!string(ary.data[i].ivalue);
+    }
+    txt ~= "]";
+    _stdOut(txt);
 }
 
 private void _print_nb(GrCall call) {
-    auto ary = call.getIntArray(0);
-    _stdOut(to!string(to!(GrBool[])(ary.data)));
+    auto ary = call.getArray(0);
+    string txt = "[";
+    for (int i; i < ary.data.length; ++i) {
+        if (i != 0) {
+            txt ~= ", ";
+        }
+        txt ~= ary.data[i].ivalue > 0 ? "true" : "false";
+    }
+    txt ~= "]";
+    _stdOut(txt);
 }
 
 private void _print_nr(GrCall call) {
-    auto ary = call.getRealArray(0);
-    _stdOut(to!string(ary.data));
+    auto ary = call.getArray(0);
+    string txt = "[";
+    for (int i; i < ary.data.length; ++i) {
+        if (i != 0) {
+            txt ~= ", ";
+        }
+        txt ~= to!string(ary.data[i].rvalue);
+    }
+    txt ~= "]";
+    _stdOut(txt);
 }
 
 private void _print_ns(GrCall call) {
-    auto ary = call.getStringArray(0);
-    _stdOut(to!string(ary.data));
+    auto ary = call.getArray(0);
+    string txt = "[";
+    for (int i; i < ary.data.length; ++i) {
+        if (i != 0) {
+            txt ~= ", ";
+        }
+        txt ~= ary.data[i].svalue;
+    }
+    txt ~= "]";
+    _stdOut(txt);
 }
 
 private void _print_enum(GrCall call) {

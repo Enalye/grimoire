@@ -958,64 +958,14 @@ final class GrParser {
             leftType.base == GrType.Base.array && leftType != rightType) {
             const GrType subType = grUnmangle(leftType.mangledType);
             convertType(rightType, subType, fileId);
-            final switch (subType.base) with (GrType.Base) {
-            case int_:
-            case bool_:
-            case enum_:
-            case function_:
-            case task:
-                addInstruction(GrOpcode.append_int);
-                break;
-            case real_:
-                addInstruction(GrOpcode.append_real);
-                break;
-            case string_:
-                addInstruction(GrOpcode.append_string);
-                break;
-            case class_:
-            case array:
-            case foreign:
-            case channel:
-                addInstruction(GrOpcode.append_object);
-                break;
-            case null_:
-            case void_:
-            case reference:
-            case internalTuple:
-                break;
-            }
+            addInstruction(GrOpcode.append_array);
             resultType = leftType;
         }
         else if (lexType == GrLexeme.Type.concatenate &&
             rightType.base == GrType.Base.array && leftType != rightType) {
             const GrType subType = grUnmangle(rightType.mangledType);
             convertType(leftType, subType, fileId);
-            final switch (subType.base) with (GrType.Base) {
-            case int_:
-            case bool_:
-            case enum_:
-            case function_:
-            case task:
-                addInstruction(GrOpcode.prepend_int);
-                break;
-            case real_:
-                addInstruction(GrOpcode.prepend_real);
-                break;
-            case string_:
-                addInstruction(GrOpcode.prepend_string);
-                break;
-            case class_:
-            case array:
-            case foreign:
-            case channel:
-                addInstruction(GrOpcode.prepend_object);
-                break;
-            case null_:
-            case void_:
-            case reference:
-            case internalTuple:
-                break;
-            }
+            addInstruction(GrOpcode.prepend_array);
             resultType = rightType;
         }
         else if (lexType == GrLexeme.Type.concatenate &&
@@ -1288,87 +1238,13 @@ final class GrParser {
         case array:
             switch (lexType) with (GrLexeme.Type) {
             case equal:
-                const GrType subType = grUnmangle(varType.mangledType);
-                final switch (subType.base) with (GrType.Base) {
-                case int_:
-                case bool_:
-                case enum_:
-                case function_:
-                case task:
-                    addInstruction(GrOpcode.equal_intArray);
-                    return grBool;
-                case real_:
-                    addInstruction(GrOpcode.equal_realArray);
-                    return grBool;
-                case string_:
-                    addInstruction(GrOpcode.equal_stringArray);
-                    return grBool;
-                case null_:
-                case void_:
-                case reference:
-                case internalTuple:
-                case array:
-                case class_:
-                case foreign:
-                case channel:
-                    break;
-                }
+                addInstruction(GrOpcode.equal_array);
                 break;
             case notEqual:
-                const GrType subType = grUnmangle(varType.mangledType);
-                final switch (subType.base) with (GrType.Base) {
-                case int_:
-                case bool_:
-                case enum_:
-                case function_:
-                case task:
-                    addInstruction(GrOpcode.notEqual_intArray);
-                    return grBool;
-                case real_:
-                    addInstruction(GrOpcode.notEqual_realArray);
-                    return grBool;
-                case string_:
-                    addInstruction(GrOpcode.notEqual_stringArray);
-                    return grBool;
-                case null_:
-                case void_:
-                case reference:
-                case internalTuple:
-                case array:
-                case class_:
-                case foreign:
-                case channel:
-                    break;
-                }
+                addInstruction(GrOpcode.notEqual_array);
                 break;
             case concatenate:
-                const GrType subType = grUnmangle(varType.mangledType);
-                final switch (subType.base) with (GrType.Base) {
-                case int_:
-                case bool_:
-                case enum_:
-                case function_:
-                case task:
-                    addInstruction(GrOpcode.concatenate_intArray);
-                    return varType;
-                case real_:
-                    addInstruction(GrOpcode.concatenate_realArray);
-                    return varType;
-                case string_:
-                    addInstruction(GrOpcode.concatenate_stringArray);
-                    return varType;
-                case class_:
-                case array:
-                case foreign:
-                case channel:
-                    addInstruction(GrOpcode.concatenate_objectArray);
-                    return varType;
-                case null_:
-                case void_:
-                case reference:
-                case internalTuple:
-                    break;
-                }
+                addInstruction(GrOpcode.concatenate_array);
                 break;
             default:
                 break;
@@ -4102,20 +3978,14 @@ final class GrParser {
                 case function_:
                 case task:
                 case enum_:
-                    addInstruction(GrOpcode.length_int);
-                    break;
                 case real_:
-                    addInstruction(GrOpcode.length_real);
-                    break;
                 case string_:
-                    addInstruction(GrOpcode.length_string);
-                    break;
                 case array:
                 case class_:
                 case foreign:
                 case channel:
                 case reference:
-                    addInstruction(GrOpcode.length_object);
+                    addInstruction(GrOpcode.length_array);
                     break;
                 case void_:
                 case null_:
@@ -4160,20 +4030,14 @@ final class GrParser {
                 case function_:
                 case task:
                 case enum_:
-                    addInstruction(GrOpcode.index2_int);
-                    break;
                 case real_:
-                    addInstruction(GrOpcode.index2_real);
-                    break;
                 case string_:
-                    addInstruction(GrOpcode.index2_string);
-                    break;
                 case array:
                 case class_:
                 case foreign:
                 case channel:
                 case reference:
-                    addInstruction(GrOpcode.index2_object);
+                    addInstruction(GrOpcode.index2_array);
                     break;
                 case void_:
                 case null_:
@@ -5081,20 +4945,14 @@ final class GrParser {
         case function_:
         case task:
         case enum_:
-            addInstruction(GrOpcode.array_int, arraySize);
-            break;
         case real_:
-            addInstruction(GrOpcode.array_real, arraySize);
-            break;
         case string_:
-            addInstruction(GrOpcode.array_string, arraySize);
-            break;
         case array:
         case class_:
         case foreign:
         case channel:
         case reference:
-            addInstruction(GrOpcode.array_object, arraySize);
+            addInstruction(GrOpcode.array, arraySize);
             break;
         case void_:
         case null_:
@@ -5130,20 +4988,14 @@ final class GrParser {
                     case function_:
                     case task:
                     case enum_:
-                        addInstruction(GrOpcode.index_int);
-                        break;
                     case real_:
-                        addInstruction(GrOpcode.index_real);
-                        break;
                     case string_:
-                        addInstruction(GrOpcode.index_string);
-                        break;
                     case array:
                     case class_:
                     case foreign:
                     case channel:
                     case reference:
-                        addInstruction(GrOpcode.index_object);
+                        addInstruction(GrOpcode.index_array);
                         break;
                     case void_:
                     case null_:
@@ -5177,20 +5029,14 @@ final class GrParser {
                 case function_:
                 case task:
                 case enum_:
-                    addInstruction(GrOpcode.index_int);
-                    break;
                 case real_:
-                    addInstruction(GrOpcode.index_real);
-                    break;
                 case string_:
-                    addInstruction(GrOpcode.index_string);
-                    break;
                 case array:
                 case class_:
                 case foreign:
                 case channel:
                 case reference:
-                    addInstruction(GrOpcode.index_object);
+                    addInstruction(GrOpcode.index_array);
                     break;
                 case void_:
                 case null_:
@@ -5465,20 +5311,14 @@ final class GrParser {
             case function_:
             case task:
             case enum_:
-                addInstruction(GrOpcode.array_int, 0);
-                break;
             case real_:
-                addInstruction(GrOpcode.array_real, 0);
-                break;
             case string_:
-                addInstruction(GrOpcode.array_string, 0);
-                break;
             case array:
             case class_:
             case foreign:
             case channel:
             case reference:
-                addInstruction(GrOpcode.array_object, 0);
+                addInstruction(GrOpcode.array, 0);
                 break;
             case void_:
             case null_:
@@ -5806,23 +5646,14 @@ final class GrParser {
                             case function_:
                             case task:
                             case enum_:
-                                setInstruction(GrOpcode.index3_int,
-                                    cast(int) currentFunction.instructions.length - 1);
-                                break;
                             case real_:
-                                setInstruction(GrOpcode.index3_real,
-                                    cast(int) currentFunction.instructions.length - 1);
-                                break;
                             case string_:
-                                setInstruction(GrOpcode.index3_string,
-                                    cast(int) currentFunction.instructions.length - 1);
-                                break;
                             case array:
                             case class_:
                             case foreign:
                             case channel:
                             case reference:
-                                setInstruction(GrOpcode.index3_object,
+                                setInstruction(GrOpcode.index3_array,
                                     cast(int) currentFunction.instructions.length - 1);
                                 break;
                             case void_:
@@ -5849,23 +5680,14 @@ final class GrParser {
                         case function_:
                         case task:
                         case enum_:
-                            setInstruction(GrOpcode.index2_int,
-                                cast(int) currentFunction.instructions.length - 1);
-                            break;
                         case real_:
-                            setInstruction(GrOpcode.index2_real,
-                                cast(int) currentFunction.instructions.length - 1);
-                            break;
                         case string_:
-                            setInstruction(GrOpcode.index2_string,
-                                cast(int) currentFunction.instructions.length - 1);
-                            break;
                         case array:
                         case class_:
                         case foreign:
                         case channel:
                         case reference:
-                            setInstruction(GrOpcode.index2_object,
+                            setInstruction(GrOpcode.index2_array,
                                 cast(int) currentFunction.instructions.length - 1);
                             break;
                         case void_:

@@ -23,13 +23,9 @@ private string[] instructions = [
     "nnull.o", "and.i", "or.i", "not.i", "cat.s", "add.i", "add.f", "sub.i",
     "sub.f", "mul.i", "mul.f", "div.i", "div.f", "rem.i", "rem.f", "neg.i",
     "neg.f", "inc.i", "inc.f", "dec.i", "dec.f", "copy", "swap", "setup_it",
-    "local", "call", "acall", "pcall", "ret", "unwind", "defer", "jmp", "jmp_eq",
-    "jmp_neq", "array.i", "array.f", "array.s", "array.o", "len.i", "len.f",
-    "len.s", "len.o", "idx.i", "idx.f", "idx.s", "idx.o", "idx2.i", "idx2.f",
-    "idx2.s", "idx2.o", "idx3.i", "idx3.f", "idx3.s", "idx3.o", "cat.ni", "cat.nf",
-    "cat.ns", "cat.no", "append.i", "append.f", "append.s", "append.o",
-    "prepend.i", "prepend.f", "prepend.s", "prepend.o", "eq.ni", "eq.nf",
-    "eq.ns", "neq.ni", "neq.nf", "neq.ns", "dbg_prfbegin", "dbg_prfend"
+    "local", "call", "acall", "pcall", "ret", "unwind", "defer", "jmp",
+    "jmp_eq", "jmp_neq", "array", "len", "idx", "idx2", "idx3", "cat.n",
+    "append", "prepend", "eq.n", "neq.n", "dbg_prfbegin", "dbg_prfend"
 ];
 
 /// Dump the bytecode's instruction list in a pretty format.
@@ -50,8 +46,7 @@ string grDump(const GrBytecode bytecode) {
                 op <= GrOpcode.localLoad) || (op >= GrOpcode.globalStore && op <= GrOpcode.globalLoad) ||
             op == GrOpcode.globalPush || (op >= GrOpcode.localStack && op <= GrOpcode.call) ||
             (op == GrOpcode.new_) || (op >= GrOpcode.fieldRefLoad && op <= GrOpcode.fieldLoad2) ||
-            (op >= GrOpcode.channel_int && op <= GrOpcode.channel_object) ||
-            (op >= GrOpcode.array_int && op <= GrOpcode.array_object))
+            (op >= GrOpcode.channel_int && op <= GrOpcode.channel_object) || (op == GrOpcode.array))
             line ~= to!string(grGetInstructionUnsignedValue(opcode));
         else if (op == GrOpcode.fieldRefStore)
             line ~= to!string(grGetInstructionSignedValue(opcode));

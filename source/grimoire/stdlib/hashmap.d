@@ -9,7 +9,7 @@ import std.typecons : Tuple, tuple;
 import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
-
+/+
 /// HashMap
 private final class HashMap(T) {
     /// Payload
@@ -41,10 +41,10 @@ private {
 private final class HashMapIterator(T) {
     Tuple!(GrString, T)[] pairs;
     size_t index;
-}
+}+/
 
 package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
-    library.addForeign("HashMap", ["T"]);
+    /+library.addForeign("HashMap", ["T"]);
     library.addForeign("HashMapIterator", ["T"]);
 
     static foreach (t; ["Int", "Real", "String", "Object"]) {
@@ -125,17 +125,16 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
     library.addFunction(&_print_!"real", "print", [realHashMap]);
 
     GrType stringHashMap = grGetForeignType("HashMap", [grString]);
-    library.addFunction(&_print_!"string", "print", [stringHashMap]);
+    library.addFunction(&_print_!"string", "print", [stringHashMap]);+/
 }
-
+/+
 private void _new_(string t)(GrCall call) {
     mixin(t ~ "HashMap hashmap = new " ~ t ~ "HashMap;");
     call.setForeign(hashmap);
 }
 
 private void _newByArray_(string t)(GrCall call) {
-    mixin(t ~ "HashMap hashmap = new " ~ t ~
-            "HashMap(call.getStringArray(0).data, call.get" ~ t ~ "Array(1).data);");
+    mixin(t ~ "HashMap hashmap = new " ~ t ~ "HashMap(call.getArray(0), call.getArray(1));");
     call.setForeign(hashmap);
 }
 
@@ -383,3 +382,4 @@ private void _print_(string t)(GrCall call) {
     result ~= "}";
     _stdOut(result);
 }
++/

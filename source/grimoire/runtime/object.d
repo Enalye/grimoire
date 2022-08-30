@@ -69,24 +69,8 @@ final class GrObject {
         return cast(GrObject) getField!GrPtr(fieldName);
     }
 
-    GrArray!T getArray(T)(const string fieldName) {
-        return cast(GrArray!T) getField!GrPtr(fieldName);
-    }
-
-    GrIntArray getIntArray(const string fieldName) {
-        return cast(GrIntArray) getField!GrPtr(fieldName);
-    }
-
-    GrRealArray getRealArray(const string fieldName) {
-        return cast(GrRealArray) getField!GrPtr(fieldName);
-    }
-
-    GrStringArray getStringArray(const string fieldName) {
-        return cast(GrStringArray) getField!GrPtr(fieldName);
-    }
-
-    GrObjectArray getObjectArray(const string fieldName) {
-        return cast(GrObjectArray) getField!GrPtr(fieldName);
+    GrArray getArray(const string fieldName) {
+        return cast(GrArray) getField!GrPtr(fieldName);
     }
 
     GrIntChannel getIntChannel(const string fieldName) {
@@ -160,23 +144,7 @@ final class GrObject {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setArray(T)(const string fieldName, GrArray!T value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
-    }
-
-    void setIntArray(const string fieldName, GrIntArray value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
-    }
-
-    void setRealArray(const string fieldName, GrRealArray value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
-    }
-
-    void setStringArray(const string fieldName, GrStringArray value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
-    }
-
-    void setObjectArray(const string fieldName, GrObjectArray value) {
+    void setArray(const string fieldName, GrArray value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
