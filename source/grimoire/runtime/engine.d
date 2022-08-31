@@ -154,6 +154,10 @@ class GrEngine {
         return (mangledName in _bytecode.events) !is null;
     }
 
+    string[] getEvents() {
+        return _bytecode.events.keys;
+    }
+
     /**
 	Spawn a new task registered as an event. \
 	The event's name must be mangled with its signature.

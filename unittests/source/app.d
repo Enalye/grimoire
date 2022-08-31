@@ -13,7 +13,7 @@ import tester;
 
 void main() {
 	try {
-        testAll();
+        testAll(GrLocale.fr_FR);
     }
 	catch(Exception e) {
 		writeln(e.msg);

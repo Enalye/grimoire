@@ -5,6 +5,8 @@
  */
 module grimoire.compiler.error;
 
+import grimoire.compiler.util;
+
 /// Contains a lot of information about what just happened.
 final class GrError {
     /// From which step the error come from.
@@ -167,13 +169,20 @@ final class GrError {
     }
 
     /// Format the error and prints it.
-    string prettify() {
+    string prettify(GrLocale locale) {
         import std.conv : to;
         import std.algorithm.comparison : clamp;
 
         string report, lineNumber;
 
-        report ~= "\033[0;91merror";
+        final switch (locale) with (GrLocale) {
+        case fr_FR:
+            report ~= "\033[0;91merreur";
+            break;
+        case en_US:
+            report ~= "\033[0;91merror";
+            break;
+        }
         //report ~= "\033[0;93mwarning";
 
         //Error report
@@ -190,7 +199,7 @@ final class GrError {
                 report ~= " ";
 
             report ~= "\033[1;34m->\033[0m " ~ _otherFilePath ~ "(" ~ to!string(
-                    _otherLine) ~ "," ~ to!string(_otherColumn) ~ ")\n";
+                _otherLine) ~ "," ~ to!string(_otherColumn) ~ ")\n";
 
             report ~= "\033[1;36m";
 
@@ -226,7 +235,7 @@ final class GrError {
             report ~= " ";
 
         report ~= "\033[1;34m->\033[0m " ~ _filePath ~ "(" ~ to!string(
-                _line) ~ "," ~ to!string(_column) ~ ")\n";
+            _line) ~ "," ~ to!string(_column) ~ ")\n";
 
         report ~= "\033[1;36m";
 
