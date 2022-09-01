@@ -16,5 +16,5 @@ event index() {
 }
 
 event concatenation() {
-    sleep(10:seconds);
+    //assert(false, "aaaaaa");
 }

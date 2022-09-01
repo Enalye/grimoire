@@ -2864,6 +2864,8 @@ final class GrParser {
         else {
             if (get().type != GrLexeme.Type.semicolon)
                 parseStatement();
+            else if (get().type == GrLexeme.Type.semicolon)
+                checkAdvance();
         }
 
         if (isMultiline) {
@@ -3005,7 +3007,10 @@ final class GrParser {
                 skipBlock();
                 break;
             default:
-                checkAdvance();
+                while (!isEnd() && get().type != GrLexeme.Type.semicolon)
+                    checkAdvance();
+                if (!isEnd() && get().type == GrLexeme.Type.semicolon)
+                    checkAdvance();
                 break;
             }
         }
@@ -3039,7 +3044,10 @@ final class GrParser {
         else {
             if (get().type != GrLexeme.Type.semicolon)
                 skipStatement();
+            else if (get().type == GrLexeme.Type.semicolon)
+                checkAdvance();
         }
+
         closeBlock();
     }
 
@@ -3572,7 +3580,7 @@ final class GrParser {
     switch(SUBEXPR)
     case(SUBEXPR) BLOCK
     case(SUBEXPR) BLOCK
-    case() BLOCK
+    default BLOCK
     ---
     */
     private void parseSwitchStatement() {
@@ -4332,7 +4340,7 @@ final class GrParser {
     private void parseReturnStatement() {
         checkDeferStatement();
         checkAdvance();
-        if (currentFunction.isTask) {
+        if (currentFunction.isTask || currentFunction.isEvent) {
             if (!currentFunction.instructions.length ||
                 currentFunction.instructions[$ - 1].opcode != GrOpcode.die)
                 addDie();
@@ -6605,7 +6613,6 @@ final class GrParser {
             error.otherColumn = otherLex.column;
             error.otherTextLength = otherLex.textLength;
         }
-
         throw new GrParserException(error);
     }
 

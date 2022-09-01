@@ -29,9 +29,9 @@ final class GrChannel {
         until the buffer is full.
         */
         bool canSend() const {
-            if (_capacity == 1u)
+            /*if (_capacity == 1u)
                 return _isReceiverReady && _size < 1u;
-            else
+            else*/
                 return _size < _capacity;
         }
 
@@ -76,7 +76,7 @@ final class GrChannel {
 
     /// Always check canSend() before.
     void send()(auto ref GrValue value) {
-        if (_size == _capacity || (_capacity == 1u && !_isReceiverReady))
+        if (_size == _capacity/* || (_capacity == 1u && !_isReceiverReady)*/)
             throw new Exception("Attempt to write on a full channel");
         _buffer ~= value;
         _size++;
@@ -89,7 +89,7 @@ final class GrChannel {
         GrValue value = _buffer[0];
         _buffer = _buffer[1 .. $];
         _size--;
-        _isReceiverReady = false;
+        //_isReceiverReady = false;
         return value;
     }
 

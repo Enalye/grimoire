@@ -1,0 +1,107 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
+event test_if() {
+    if(true)
+        assert(true);
+    else
+        assert(false);
+
+    if(false)
+        assert(false);
+    else
+        assert(true);
+
+    if(false)
+        assert(false);
+    else if(false)
+        assert(false);
+    else if(true)
+        assert(true);
+    else
+        assert(false);
+}
+
+event test_unless() {
+    unless(true)
+        assert(false);
+    else
+        assert(true);
+
+    unless(false)
+        assert(true);
+    else
+        assert(false);
+
+    unless(true)
+        assert(false);
+    else unless(true)
+        assert(false);
+    else unless(false)
+        assert(true);
+    else
+        assert(false);
+}
+
+event test_while() {
+    int i;
+    while(i < 5)
+        i ++;
+    assert(i == 5);
+
+    
+    int i;
+    do
+        i ++;
+    while(i < 5)
+    assert(i == 5);
+}
+
+event test_until() {
+    int i;
+    until(i >= 5)
+        i ++;
+    assert(i == 5);
+
+    int i;
+    do
+        i ++;
+    until(i >= 5)
+    assert(i == 5);
+}
+
+event test_loop() {
+    int x;
+    loop(5) x ++;
+    assert(x == 5);
+
+    int x;
+    loop(i, 5) x = i;
+    assert(x == 4);
+}
+
+event test_for() {
+    int x;
+    for(int i, [10, 11, 12]) {
+        assert(i == 10 + x);
+        x ++;
+    }
+}
+
+event test_switch() {
+    switch(2)
+    case(0) assert(false);
+    case(1) assert(false);
+    case(2) assert(true);
+    case(3) assert(false);
+    default assert(false);
+
+    switch(12)
+    case(0) assert(false);
+    case(1) assert(false);
+    case(2) assert(false);
+    case(3) assert(false);
+    default assert(true);
+}

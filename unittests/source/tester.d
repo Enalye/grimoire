@@ -5,7 +5,7 @@
  */
 module tester;
 
-import std.stdio, std.file, core.thread, std.path;
+import std.stdio, std.file, core.thread;
 import std.conv : to;
 import std.datetime;
 import grimoire;
@@ -98,15 +98,16 @@ final class UnitTester {
         testSerie.hasCompiled = true;
         testSerie.hasPassed = true;
 
-        _engine = new GrEngine;
-        _engine.addLibrary(_stdlib);
-        _engine.load(bytecode);
-        string[] events = _engine.getEvents();
+        string[] events = bytecode.getEvents();
 
         foreach (string event; events) {
             auto composite = grUnmangleComposite(event);
             if (composite.signature.length)
                 continue;
+
+            _engine = new GrEngine;
+            _engine.addLibrary(_stdlib);
+            _engine.load(bytecode);
 
             TestSerie.SubTest subTest;
             subTest.name = composite.name;
@@ -134,10 +135,10 @@ final class UnitTester {
             else if (_engine.isPanicking) {
                 testSerie.hasPassed = false;
                 subTest.type = TestSerie.SubTest.Type.failure;
-                subTest.comment = "panic: " ~ to!string(_engine.panicMessage) ~ "\n";
+                subTest.comment = "\033[1;91m" ~ to!string(_engine.panicMessage) ~ "\033[0;90m\n";
                 foreach (trace; _engine.stackTraces) {
-                    subTest.comment ~= "[" ~ to!string(
-                        trace.pc) ~ "] in " ~ trace.name ~ " at " ~ trace.file ~ "(" ~ to!string(
+                    subTest.comment ~= "        [" ~ to!string(
+                        trace.pc) ~ "] dans " ~ trace.name ~ " à " ~ trace.file ~ "(" ~ to!string(
                         trace.line) ~ "," ~ to!string(trace.column) ~ ")\n";
                 }
             }
@@ -153,95 +154,4 @@ final class UnitTester {
             _timeout = null;
         }
     }
-}
-
-void testAll(GrLocale locale) {
-    auto files = dirEntries("", "{*.gr}", SpanMode.depth);
-    const auto startTime = MonoTime.currTime();
-    uint totalSuites, successSuites, failedSuites;
-    uint totalTests, successTests, failedTests;
-
-    foreach (file; files) {
-        UnitTester handler = new UnitTester(locale);
-        if (!file.isFile)
-            continue;
-        totalSuites++;
-        string report;
-        UnitTester.TestSerie testSerie = handler.run(file);
-
-        string fileDir = dirName(file);
-        string fileName = baseName(file);
-        if (testSerie.hasPassed) {
-            report ~= "\033[1;102m SUCCÈS \033[0m ";
-            successTests++;
-        }
-        else if (!testSerie.hasCompiled) {
-            report ~= "\033[1;101m ERREUR \033[0m ";
-            failedSuites++;
-        }
-        else {
-            report ~= "\033[1;101m ÉCHEC \033[0m ";
-            failedSuites++;
-        }
-        report ~= fileDir ~ dirSeparator ~ "\033[1m" ~ fileName ~ "\033[0m";
-
-        foreach (ref subTest; testSerie.subTests) {
-            report ~= "\n";
-            totalTests++;
-            final switch (subTest.type) with (UnitTester.TestSerie.SubTest.Type) {
-            case success:
-                report ~= "    \033[1;32m✔ \033[0m" ~ subTest.name;
-                successTests++;
-                break;
-            case failure:
-                report ~= "    \033[1;31m✘ \033[0m" ~ subTest.name;
-                failedTests++;
-                break;
-            case timeout:
-                report ~= "    \033[1;33m✘ \033[0m" ~ subTest.name;
-                failedTests++;
-                break;
-            }
-            report ~= " (" ~ to!string(subTest.time.total!"msecs") ~ "ms)";
-        }
-        if (!testSerie.hasCompiled) {
-            report ~= "\n" ~ testSerie.comment;
-        }
-
-        report ~= "\033[0m";
-        writeln(report);
-        handler.cleanup();
-    }
-
-    auto totalTime = MonoTime.currTime() - startTime;
-
-    string result = "\033[1mSéries: \t";
-    if (successSuites) {
-        result ~= "\033[1;32m" ~ to!string(successSuites) ~ " réussis\033[1m";
-        if (failedSuites) {
-            result ~= ", ";
-        }
-    }
-    if (failedSuites) {
-        result ~= "\033[1;31m" ~ to!string(failedSuites) ~ " échecs\033[0;1m";
-    }
-    result ~= " sur " ~ to!string(totalSuites) ~ "\n";
-    
-
-    result ~= "\033[1mTests:  \t";
-    if (successTests) {
-        result ~= "\033[1;32m" ~ to!string(successTests) ~ " réussis\033[1m";
-        if (failedTests) {
-            result ~= ", ";
-        }
-    }
-    if (failedTests) {
-        result ~= "\033[1;31m" ~ to!string(failedTests) ~ " échecs\033[0;1m";
-    }
-    result ~= " sur " ~ to!string(totalTests) ~ "\n";
-
-    result ~= "Durée:  \t" ~ to!string(totalTime.total!"msecs" / 1_000f) ~ "s\n";
-    result ~= "\033[0m";
-
-    writeln(result);
 }

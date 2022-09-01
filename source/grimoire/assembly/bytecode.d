@@ -226,6 +226,10 @@ final class GrBytecode {
         deserialize(buffer);
     }
 
+    string[] getEvents() {
+        return events.keys;
+    }
+
     /// Save the bytecode to a file.
     void save(string fileName) {
         std.file.write(fileName, serialize());
