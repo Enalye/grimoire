@@ -51,6 +51,7 @@ final class GrParser {
         uint[][] breaksJumps;
         uint[][] continuesJumps;
         uint[] continuesDestinations;
+        bool[] continuesUseYield;
 
         GrLexeme[] lexemes;
 
@@ -3244,8 +3245,9 @@ final class GrParser {
     }
 
     //Continue
-    private void openContinuableSection() {
+    private void openContinuableSection(bool isYieldable) {
         continuesJumps.length++;
+        continuesUseYield ~= isYieldable;
         _isAssignationOptimizable = false;
     }
 
@@ -3257,6 +3259,7 @@ final class GrParser {
         const uint destination = continuesDestinations[$ - 1];
         continuesJumps.length--;
         continuesDestinations.length--;
+        continuesUseYield.length--;
 
         foreach (position; continues)
             setInstruction(GrOpcode.jump, position, cast(int)(destination - position), true);
@@ -3271,6 +3274,8 @@ final class GrParser {
         if (!continuesJumps.length)
             logError(getError(Error.continueOutsideLoop), getError(Error.cantContinueOutsideLoop));
 
+        if (continuesUseYield[$ - 1])
+            addInstruction(GrOpcode.yield);
         continuesJumps[$ - 1] ~= cast(uint) currentFunction.instructions.length;
         addInstruction(GrOpcode.jump);
         advance();
@@ -3745,13 +3750,20 @@ final class GrParser {
 
     /**
     ---
-    while(SUBEXPR)
+    while [yield] (SUBEXPR)
         BLOCK
     ---
     */
     private void parseWhileStatement() {
         const bool isNegative = get().type == GrLexeme.Type.until;
         advance();
+
+        bool isYieldable;
+        if (get().type == GrLexeme.Type.yield) {
+            isYieldable = true;
+            advance();
+        }
+
         if (get().type != GrLexeme.Type.leftParenthesis)
             logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(isNegative ?
                     GrLexeme.Type.until : GrLexeme.Type.while_)), format(getError(Error.expectedXFoundY),
@@ -3760,7 +3772,7 @@ final class GrParser {
 
         /* While is breakable and continuable. */
         openBreakableSection();
-        openContinuableSection();
+        openContinuableSection(isYieldable);
 
         /* Continue jump. */
         setContinuableSectionDestination();
@@ -3775,6 +3787,9 @@ final class GrParser {
         addInstruction(GrOpcode.jumpEqual);
 
         parseBlock(true);
+
+        if (isYieldable)
+            addInstruction(GrOpcode.yield);
 
         addInstruction(GrOpcode.jump,
             cast(int)(blockPosition - currentFunction.instructions.length), true);
@@ -3795,9 +3810,15 @@ final class GrParser {
     private void parseDoWhileStatement() {
         advance();
 
+        bool isYieldable;
+        if (get().type == GrLexeme.Type.yield) {
+            isYieldable = true;
+            advance();
+        }
+
         /* While is breakable and continuable. */
         openBreakableSection();
-        openContinuableSection();
+        openContinuableSection(isYieldable);
 
         uint blockPosition = cast(uint) currentFunction.instructions.length;
 
@@ -3823,6 +3844,9 @@ final class GrParser {
         advance();
         parseSubExpression();
         advance();
+
+        if (isYieldable)
+            addInstruction(GrOpcode.yield);
 
         addInstruction(isNegative ? GrOpcode.jumpEqual : GrOpcode.jumpNotEqual,
             cast(int)(blockPosition - currentFunction.instructions.length), true);
@@ -3892,6 +3916,13 @@ final class GrParser {
     */
     private void parseForStatement() {
         advance();
+
+        bool isYieldable;
+        if (get().type == GrLexeme.Type.yield) {
+            isYieldable = true;
+            advance();
+        }
+
         const uint fileId = get().fileId;
         if (get().type != GrLexeme.Type.leftParenthesis)
             logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexeme.Type.for_)),
@@ -3959,7 +3990,7 @@ final class GrParser {
 
                 /* For is breakable and continuable. */
                 openBreakableSection();
-                openContinuableSection();
+                openContinuableSection(isYieldable);
 
                 /* Continue jump. */
                 setContinuableSectionDestination();
@@ -4006,6 +4037,9 @@ final class GrParser {
                 addSetInstruction(variable, fileId);
 
                 parseBlock(true);
+
+                if (isYieldable)
+                    addInstruction(GrOpcode.yield);
 
                 addInstruction(GrOpcode.jump,
                     cast(int)(blockPosition - currentFunction.instructions.length), true);
@@ -4057,7 +4091,7 @@ final class GrParser {
 
                 /* For is breakable and continuable. */
                 openBreakableSection();
-                openContinuableSection();
+                openContinuableSection(isYieldable);
 
                 /* Continue jump. */
                 setContinuableSectionDestination();
@@ -4076,6 +4110,9 @@ final class GrParser {
                 addInstruction(GrOpcode.jumpEqual);
 
                 parseBlock(true);
+
+                if (isYieldable)
+                    addInstruction(GrOpcode.yield);
 
                 addInstruction(GrOpcode.jump,
                     cast(int)(blockPosition - currentFunction.instructions.length), true);
@@ -4249,6 +4286,13 @@ final class GrParser {
         const uint fileId = get().fileId;
         currentFunction.openScope();
         advance();
+
+        bool isYieldable;
+        if (get().type == GrLexeme.Type.yield) {
+            isYieldable = true;
+            advance();
+        }
+
         if (get().type == GrLexeme.Type.leftParenthesis) {
             const int arity = checkArity();
             advance();
@@ -4265,7 +4309,7 @@ final class GrParser {
                             getPrettyType(customIterator.type)), getError(Error.iteratorMustBeInt));
                 }
 
-                addIntConstant(0);
+                addIntConstant(-1);
                 addSetInstruction(customIterator, fileId);
 
                 if (get().type != GrLexeme.Type.comma)
@@ -4292,7 +4336,7 @@ final class GrParser {
 
         /* For is breakable and continuable. */
         openBreakableSection();
-        openContinuableSection();
+        openContinuableSection(isYieldable);
 
         /* Continue jump. */
         setContinuableSectionDestination();
@@ -4308,15 +4352,18 @@ final class GrParser {
             addGetInstruction(iterator, grInt);
             jumpPosition = cast(uint) currentFunction.instructions.length;
             addInstruction(GrOpcode.jumpEqual);
+
+            if (hasCustomIterator) {
+                addGetInstruction(customIterator, grInt, false);
+                addInstruction(GrOpcode.increment_int);
+                addSetInstruction(customIterator, fileId);
+            }
         }
 
         parseBlock(true);
 
-        if (!isInfinite && hasCustomIterator) {
-            addGetInstruction(customIterator, grInt, false);
-            addInstruction(GrOpcode.increment_int);
-            addSetInstruction(customIterator, fileId);
-        }
+        if (isYieldable)
+            addInstruction(GrOpcode.yield);
 
         addInstruction(GrOpcode.jump,
             cast(int)(blockPosition - currentFunction.instructions.length), true);
