@@ -13,6 +13,7 @@ import grimoire.runtime.task, grimoire.runtime.array, grimoire.runtime.object,
 
 /// Primitive type.
 alias GrCallback = void function(GrCall);
+private GrValue[128] _outputs;
 
 /// Primitive task.
 final class GrCall {
@@ -25,6 +26,7 @@ final class GrCall {
         int _results;
         bool _isInitialized;
         string[] _inSignature, _outSignature;
+        GrValue[] _inputs;
     }
 
     @property {
@@ -56,8 +58,12 @@ final class GrCall {
         _hasError = false;
         _task = task;
 
+        const int stackIndex = (_task.stackPos + 1) - _params;
+        _inputs = _task.stack[stackIndex .. _task.stackPos + 1];
         _callback(this);
 
+        _task.stack.length = stackIndex + _results + 1;
+        _task.stack[stackIndex .. stackIndex + _results] = _outputs[0 .. _results];
         _task.stackPos -= (_params - _results);
 
         if (_hasError)
@@ -72,162 +78,136 @@ final class GrCall {
         return _outSignature[index];
     }
 
+    alias getValue = getParameter!GrValue;
     alias getBool = getParameter!GrBool;
     alias getInt = getParameter!GrInt;
     alias getReal = getParameter!GrReal;
     alias getString = getParameter!GrString;
     alias getPtr = getParameter!GrPtr;
 
-    int getInt32(uint index) {
+    pragma(inline) int getInt32(uint index) {
         return cast(int) getParameter!GrInt(index);
     }
 
-    long getInt64(uint index) {
+    pragma(inline) long getInt64(uint index) {
         return cast(long) getParameter!GrInt(index);
     }
 
-    real getReal32(uint index) {
-        return cast(real) getParameter!GrReal(index);
+    pragma(inline) float getReal32(uint index) {
+        return cast(float) getParameter!GrReal(index);
     }
 
-    double getReal64(uint index) {
+    pragma(inline) double getReal64(uint index) {
         return cast(double) getParameter!GrReal(index);
     }
 
-    GrObject getObject(uint index) {
+    pragma(inline) GrObject getObject(uint index) {
         return cast(GrObject) getParameter!GrPtr(index);
     }
 
-    GrArray getArray(uint index) {
+    pragma(inline) GrArray getArray(uint index) {
         return cast(GrArray) getParameter!GrPtr(index);
     }
 
-    GrChannel getChannel(uint index) {
+    pragma(inline) GrChannel getChannel(uint index) {
         return cast(GrChannel) getParameter!GrPtr(index);
     }
 
-    T getEnum(T)(uint index) {
+    pragma(inline) T getEnum(T)(uint index) {
         return cast(T) getParameter!GrInt(index);
     }
 
-    T getForeign(T)(uint parameter) {
+    pragma(inline) T getForeign(T)(uint parameter) {
         // We cast to object first to avoid a crash when casting to a parent class
         return cast(T) cast(Object) getParameter!GrPtr(parameter);
     }
 
-    private T getParameter(T)(uint index)
+    pragma(inline) private T getParameter(T)(uint index)
     in (index < _parameters.length,
         "parameter index `" ~ to!string(index) ~ "` exceeds the number of parameters") {
-        static if (is(T == GrInt)) {
-            if ((_parameters[index] & 0x10000) == 0)
-                throw new Exception("parameter " ~ to!string(index) ~ " is not an int");
-            return _task.stack[(_task.stackPos - _params) + (_parameters[index] & 0xFFFF) + 1]
-                .ivalue;
+        static if (is(T == GrValue)) {
+            return _inputs[index];
+        }
+        else static if (is(T == GrInt)) {
+            return _inputs[index].ivalue;
         }
         else static if (is(T == GrBool)) {
-            if ((_parameters[index] & 0x10000) == 0)
-                throw new Exception("parameter " ~ to!string(index) ~ " is not a bool");
-            return _task.stack[(_task.stackPos - _params) + (
-                    _parameters[index] & 0xFFFF) + 1].ivalue > 0;
+            return _inputs[index].ivalue > 0;
         }
         else static if (is(T == GrReal)) {
-            if ((_parameters[index] & 0x20000) == 0)
-                throw new Exception("parameter " ~ to!string(index) ~ " is not a GrReal");
-            return _task.stack[(_task.stackPos - _params) + (_parameters[index] & 0xFFFF) + 1]
-                .rvalue;
+            return _inputs[index].rvalue;
         }
         else static if (is(T == GrString)) {
-            if ((_parameters[index] & 0x40000) == 0)
-                throw new Exception("parameter " ~ to!string(index) ~ " is not a string");
-            return _task.stack[(_task.stackPos - _params) + (_parameters[index] & 0xFFFF) + 1]
-                .svalue;
+            return _inputs[index].svalue;
         }
         else static if (is(T == GrPtr)) {
-            if ((_parameters[index] & 0x80000) == 0)
-                throw new Exception("parameter " ~ to!string(index) ~ " is not an object");
-            return _task.stack[(_task.stackPos - _params) + (_parameters[index] & 0xFFFF) + 1]
-                .ovalue;
+            return _inputs[index].ovalue;
         }
     }
 
+    alias setValue = setResult!GrValue;
     alias setBool = setResult!GrBool;
     alias setInt = setResult!GrInt;
     alias setReal = setResult!GrReal;
     alias setString = setResult!GrString;
     alias setPtr = setResult!GrPtr;
 
-    void setInt32(int value) {
+    pragma(inline) void setInt32(int value) {
         setResult!GrInt(cast(GrInt) value);
     }
 
-    void setInt64(long value) {
+    pragma(inline) void setInt64(long value) {
         setResult!GrInt(cast(GrInt) value);
     }
 
-    void setReal32(real value) {
+    pragma(inline) void setReal32(float value) {
         setResult!GrReal(cast(GrReal) value);
     }
 
-    void setReal64(double value) {
+    pragma(inline) void setReal64(double value) {
         setResult!GrReal(cast(GrReal) value);
     }
 
-    void setObject(GrObject value) {
+    pragma(inline) void setObject(GrObject value) {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
-    void setArray(GrArray value) {
+    pragma(inline) void setArray(GrArray value) {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
-    void setChannel(GrChannel value) {
+    pragma(inline) void setChannel(GrChannel value) {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
-    void setEnum(T)(T value) {
+    pragma(inline) void setEnum(T)(T value) {
         setResult!GrInt(cast(GrInt) value);
     }
 
-    void setForeign(T)(T value) {
+    pragma(inline) void setForeign(T)(T value) {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
-    private void setResult(T)(T value) {
-        static if (is(T == GrInt)) {
-            _results++;
-            const size_t idx = (_task.stackPos - _params) + _results;
-            if (idx >= _task.stack.length)
-                _task.stack.length *= 2;
-            _task.stack[idx].ivalue = value;
+    pragma(inline) private void setResult(T)(T value) {
+        static if (is(T == GrValue)) {
+            _outputs[_results] = value;
+        }
+        else static if (is(T == GrInt)) {
+            _outputs[_results].ivalue = value;
         }
         else static if (is(T == GrBool)) {
-            _results++;
-            const size_t idx = (_task.stackPos - _params) + _results;
-            if (idx >= _task.stack.length)
-                _task.stack.length *= 2;
-            _task.stack[idx].ivalue = value ? 1 : 0;
+            _outputs[_results].ivalue = cast(GrInt) value;
         }
         else static if (is(T == GrReal)) {
-            _results++;
-            const size_t idx = (_task.stackPos - _params) + _results;
-            if (idx >= _task.stack.length)
-                _task.stack.length *= 2;
-            _task.stack[idx].rvalue = value;
+            _outputs[_results].rvalue = value;
         }
         else static if (is(T == GrString)) {
-            _results++;
-            const size_t idx = (_task.stackPos - _params) + _results;
-            if (idx >= _task.stack.length)
-                _task.stack.length *= 2;
-            _task.stack[idx].svalue = value;
+            _outputs[_results].svalue = value;
         }
         else static if (is(T == GrPtr)) {
-            _results++;
-            const size_t idx = (_task.stackPos - _params) + _results;
-            if (idx >= _task.stack.length)
-                _task.stack.length *= 2;
-            _task.stack[idx].ovalue = value;
+            _outputs[_results].ovalue = value;
         }
+        _results++;
     }
 
     GrBool getBoolVariable(string name) {

@@ -43,53 +43,56 @@ final class GrObject {
         }
     }
 
-    alias getBool = getField!bool;
+    alias getValue = getField!GrValue;
+    alias getBool = getField!GrBool;
     alias getInt = getField!GrInt;
     alias getReal = getField!GrReal;
     alias getString = getField!GrString;
     alias getPtr = getField!GrPtr;
 
-    int getInt32(const string fieldName) {
+    pragma(inline) int getInt32(const string fieldName) {
         return cast(int) getField!GrInt(fieldName);
     }
 
-    long getInt64(const string fieldName) {
+    pragma(inline) long getInt64(const string fieldName) {
         return cast(long) getField!GrInt(fieldName);
     }
 
-    real getReal32(const string fieldName) {
-        return cast(real) getField!GrReal(fieldName);
+    pragma(inline) float getReal32(const string fieldName) {
+        return cast(float) getField!GrReal(fieldName);
     }
 
-    double getReal64(const string fieldName) {
+    pragma(inline) double getReal64(const string fieldName) {
         return cast(double) getField!GrReal(fieldName);
     }
 
-    GrObject getObject(const string fieldName) {
+    pragma(inline) GrObject getObject(const string fieldName) {
         return cast(GrObject) getField!GrPtr(fieldName);
     }
 
-    GrArray getArray(const string fieldName) {
+    pragma(inline) GrArray getArray(const string fieldName) {
         return cast(GrArray) getField!GrPtr(fieldName);
     }
 
-    GrChannel getChannel(const string fieldName) {
+    pragma(inline) GrChannel getChannel(const string fieldName) {
         return cast(GrChannel) getField!GrPtr(fieldName);
     }
 
-    T getEnum(T)(const string fieldName) {
+    pragma(inline) T getEnum(T)(const string fieldName) {
         return cast(T) getField!GrInt(fieldName);
     }
 
-    T getForeign(T)(const string fieldName) {
+    pragma(inline) T getForeign(T)(const string fieldName) {
         // We cast to object first to avoid a crash when casting to a parent class
         return cast(T) cast(Object) getField!GrPtr(fieldName);
     }
 
-    private T getField(T)(const string fieldName) {
+    pragma(inline) private T getField(T)(const string fieldName) {
         for (size_t index; index < _fields.length; ++index) {
             if (_fields[index].name == fieldName) {
-                static if (is(T == GrInt))
+                static if (is(T == GrValue))
+                    return _fields[index].value;
+                else static if (is(T == GrInt))
                     return _fields[index].value.ivalue;
                 else static if (is(T == GrBool))
                     return cast(T) _fields[index].value.ivalue;
@@ -100,61 +103,64 @@ final class GrObject {
                 else static if (is(T == GrPtr))
                     return _fields[index].value.ovalue;
                 else
-                    static assert(false, "Invalid field type");
+                    static assert(false, "invalid field type `" ~ T.stringof ~ "`");
             }
         }
-        assert(false, "Invalid field name");
+        assert(false, "invalid field name `" ~ fieldName ~ "`");
     }
 
-    alias setBool = setField!bool;
+    alias setValue = setField!GrValue;
+    alias setBool = setField!GrBool;
     alias setInt = setField!GrInt;
     alias setReal = setField!GrReal;
     alias setString = setField!GrString;
     alias setPtr = setField!GrPtr;
 
-    void setInt32(const string fieldName, int value) {
+    pragma(inline) void setInt32(const string fieldName, int value) {
         setField!GrInt(fieldName, cast(GrInt) value);
     }
 
-    void setInt64(const string fieldName, long value) {
+    pragma(inline) void setInt64(const string fieldName, long value) {
         setField!GrInt(fieldName, cast(GrInt) value);
     }
 
-    void setReal32(const string fieldName, real value) {
+    pragma(inline) void setReal32(const string fieldName, float value) {
         setField!GrReal(fieldName, cast(GrReal) value);
     }
 
-    void setReal64(const string fieldName, double value) {
+    pragma(inline) void setReal64(const string fieldName, double value) {
         setField!GrReal(fieldName, cast(GrReal) value);
     }
 
-    void setObject(const string fieldName, GrObject value) {
+    pragma(inline) void setObject(const string fieldName, GrObject value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setArray(const string fieldName, GrArray value) {
+    pragma(inline) void setArray(const string fieldName, GrArray value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setChannel(const string fieldName, GrChannel value) {
+    pragma(inline) void setChannel(const string fieldName, GrChannel value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    void setEnum(T)(const string fieldName, T value) {
+    pragma(inline) void setEnum(T)(const string fieldName, T value) {
         setField!GrInt(fieldName, cast(GrInt) value);
     }
 
-    void setForeign(T)(const string fieldName, T value) {
+    pragma(inline) void setForeign(T)(const string fieldName, T value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    private T setField(T)(const string fieldName, T value) {
+    pragma(inline) private T setField(T)(const string fieldName, T value) {
         for (size_t index; index < _fields.length; ++index) {
             if (_fields[index].name == fieldName) {
-                static if (is(T == GrInt))
-                    return _fields[index].value.ivalue = cast(int) value;
-                else static if (is(T == GrBool))
+                static if (is(T == GrValue))
+                    return _fields[index].value = value;
+                else static if (is(T == GrInt))
                     return _fields[index].value.ivalue = value;
+                else static if (is(T == GrBool))
+                    return _fields[index].value.ivalue = cast(GrInt) value;
                 else static if (is(T == GrReal))
                     return _fields[index].value.rvalue = value;
                 else static if (is(T == GrString))
@@ -162,9 +168,9 @@ final class GrObject {
                 else static if (is(T == GrPtr))
                     return _fields[index].value.ovalue = value;
                 else
-                    static assert(false, "Invalid field type");
+                    static assert(false, "invalid field type `" ~ T.stringof ~ "`");
             }
         }
-        assert(false, "Invalid field name");
+        assert(false, "invalid field name `" ~ fieldName ~ "`");
     }
 }

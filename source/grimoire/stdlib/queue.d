@@ -12,13 +12,6 @@ package(grimoire.stdlib) void grLoadStdLibQueue(GrLibrary library) {
     library.addForeign("Queue", ["T"]);
     library.addForeign("QueueIterator", ["T"]);
 
-    static foreach (t; ["Int", "Real", "String", "Object"]) {
-        mixin("
-        GrType " ~ t ~ "ValueType = grAny(\"T\");
-        GrType " ~ t ~ "QueueType = grGetForeignType(\"Queue\", [" ~ t ~ "ValueType]);
-        
-        
-        
-        ");
-    }
+    GrType valueType = grAny("T");
+    GrType queueType = grGetForeignType("Queue", [valueType]);
 }
