@@ -12,42 +12,42 @@ import grimoire.stdlib.util;
 package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
     library.addForeign("ArrayIterator", ["T"]);
 
-    GrType ValueType = grAny("T");
+    GrType valueType = grAny("T");
     GrType pureValueType = grAny("T", true);
-    GrType ArrayType = grArray(ValueType);
-    GrType pureArrayType = grArray(ValueType, true);
-    GrType IteratorType = grGetForeignType("ArrayIterator", [ValueType]);
+    GrType arrayType = grArray(valueType);
+    GrType pureArrayType = grArray(valueType, true);
+    GrType iteratorType = grGetForeignType("ArrayIterator", [valueType]);
 
-    library.addFunction(&_copy, "copy", [pureArrayType], [ArrayType]);
+    library.addFunction(&_copy, "copy", [pureArrayType], [arrayType]);
     library.addFunction(&_size, "size", [pureArrayType], [grInt]);
-    library.addFunction(&_resize, "resize", [ArrayType, grInt], [ArrayType]);
+    library.addFunction(&_resize, "resize", [arrayType, grInt], [arrayType]);
     library.addFunction(&_empty, "empty?", [pureArrayType], [grBool]);
-    library.addFunction(&_fill, "fill", [ArrayType, ValueType], [ArrayType]);
-    library.addFunction(&_clear, "clear", [ArrayType], [ArrayType]);
-    library.addFunction(&_unshift, "unshift", [ArrayType, ValueType], [
-            ArrayType
+    library.addFunction(&_fill, "fill", [arrayType, valueType], [arrayType]);
+    library.addFunction(&_clear, "clear", [arrayType], [arrayType]);
+    library.addFunction(&_unshift, "unshift", [arrayType, valueType], [
+            arrayType
         ]);
-    library.addFunction(&_push, "push", [ArrayType, ValueType], [ValueType]);
-    library.addFunction(&_shift, "shift", [ArrayType], [ValueType]);
-    library.addFunction(&_pop, "pop", [ArrayType], [ValueType]);
-    library.addFunction(&_shift1, "shift", [ArrayType, grInt], [ArrayType]);
-    library.addFunction(&_pop1, "pop", [ArrayType, grInt], [ArrayType]);
-    library.addFunction(&_first, "first", [pureArrayType], [ValueType]);
-    library.addFunction(&_last, "last", [pureArrayType], [ValueType]);
-    library.addFunction(&_remove, "remove", [ArrayType, grInt], [ArrayType]);
-    library.addFunction(&_remove2, "remove", [ArrayType, grInt, grInt], [
-            ArrayType
+    library.addFunction(&_push, "push", [arrayType, valueType], [valueType]);
+    library.addFunction(&_shift, "shift", [arrayType], [valueType]);
+    library.addFunction(&_pop, "pop", [arrayType], [valueType]);
+    library.addFunction(&_shift1, "shift", [arrayType, grInt], [arrayType]);
+    library.addFunction(&_pop1, "pop", [arrayType, grInt], [arrayType]);
+    library.addFunction(&_first, "first", [pureArrayType], [valueType]);
+    library.addFunction(&_last, "last", [pureArrayType], [valueType]);
+    library.addFunction(&_remove, "remove", [arrayType, grInt], [arrayType]);
+    library.addFunction(&_remove2, "remove", [arrayType, grInt, grInt], [
+            arrayType
         ]);
-    library.addFunction(&_slice, "slice", [ArrayType, grInt, grInt], [ArrayType]);
+    library.addFunction(&_slice, "slice", [arrayType, grInt, grInt], [arrayType]);
     library.addFunction(&_slice_copy, "sliced", [pureArrayType, grInt, grInt], [
-            ArrayType
+            arrayType
         ]);
-    library.addFunction(&_reverse, "reverse", [pureArrayType], [ArrayType]);
-    library.addFunction(&_insert, "insert", [ArrayType, grInt, ValueType], [
-            ArrayType
+    library.addFunction(&_reverse, "reverse", [pureArrayType], [arrayType]);
+    library.addFunction(&_insert, "insert", [arrayType, grInt, valueType], [
+            arrayType
         ]);
-    library.addFunction(&_each, "each", [ArrayType], [IteratorType]);
-    library.addFunction(&_next, "next", [IteratorType], [grBool, ValueType]);
+    library.addFunction(&_each, "each", [arrayType], [iteratorType]);
+    library.addFunction(&_next, "next", [iteratorType], [grBool, valueType]);
     library.addFunction(&_findFirst, "findFirst", [pureArrayType, pureValueType], [
             grInt
         ]);
@@ -59,7 +59,11 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
         ]);
     library.addFunction(&_has, "has?", [pureArrayType, pureValueType], [grBool]);
 
-    library.addFunction(&_sort, "sort", [ArrayType], [ArrayType]);
+    library.addFunction(&_sort_!"int", "sort", [grIntArray], [grIntArray]);
+    library.addFunction(&_sort_!"real", "sort", [grRealArray], [grRealArray]);
+    library.addFunction(&_sort_!"string", "sort", [grStringArray], [
+            grStringArray
+        ]);
 }
 
 private void _copy(GrCall call) {
@@ -353,11 +357,16 @@ private void _insert(GrCall call) {
     call.setArray(array);
 }
 
-private void _sort(GrCall call) {
+private void _sort_(string T)(GrCall call) {
     import std.algorithm.sorting : sort;
 
     GrArray array = call.getArray(0);
-    array.data.sort();
+    static if (T == "int")
+        array.data.sort!((a, b) => a.ivalue < b.ivalue)();
+    else static if (T == "real")
+        array.data.sort!((a, b) => a.rvalue < b.rvalue)();
+    else static if (T == "string")
+        array.data.sort!((a, b) => a.svalue < b.svalue)();
     call.setArray(array);
 }
 

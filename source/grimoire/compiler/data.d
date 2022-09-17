@@ -387,6 +387,7 @@ final class GrData {
                     return primitive;
             }
         }
+        _anyData = new GrAnyData;
         foreach (GrPrimitive primitive; _abstractPrimitives) {
             if (primitive.name == name) {
                 if (isSignatureCompatible(signature, primitive.inSignature, false, 0, true)) {
@@ -460,15 +461,19 @@ final class GrData {
         for (int i; i < primitive.inSignature.length; ++i) {
             primitive.inSignature[i] = reifyType(primitive.inSignature[i]);
             checkUnknownClasses(primitive.inSignature[i]);
+            assert(!primitive.inSignature[i].isAbstract, "the primitive `" ~ grGetPrettyFunction(primitive.name,
+                    primitive.inSignature, primitive.outSignature) ~ "` is abstract");
         }
         for (int i; i < primitive.outSignature.length; ++i) {
             primitive.outSignature[i] = reifyType(primitive.outSignature[i]);
             checkUnknownClasses(primitive.outSignature[i]);
+            assert(!primitive.outSignature[i].isAbstract, "the primitive `" ~ grGetPrettyFunction(primitive.name,
+                    primitive.inSignature, primitive.outSignature) ~ "` is abstract");
         }
         primitive.mangledName = grMangleComposite(primitive.name, primitive.inSignature);
         primitive.index = cast(uint) _primitives.length;
-        if (isPrimitiveDeclared(primitive.mangledName))
-            throw new Exception("`" ~ getPrettyPrimitive(primitive) ~ "` is already declared");
+        assert(!isPrimitiveDeclared(primitive.mangledName),
+            "`" ~ getPrettyPrimitive(primitive) ~ "` is already declared");
         _primitives ~= primitive;
         return primitive;
     }
@@ -476,7 +481,10 @@ final class GrData {
     private GrType reifyType(const GrType type) {
         GrType result = type;
         if (type.isAny) {
+            assert(_anyData, "missing template database");
             result = _anyData.get(type.mangledType);
+            if (result.base == GrType.Base.void_)
+                result.isAbstract = true;
         }
         final switch (type.base) with (GrType.Base) {
         case int_:
@@ -486,30 +494,39 @@ final class GrData {
             break;
         case array:
         case channel:
-            GrType subType = grUnmangle(type.mangledType);
-            result.mangledType = grMangle(reifyType(subType));
+            GrType subType = reifyType(grUnmangle(type.mangledType));
+            result.mangledType = grMangle(subType);
+            result.isAbstract = subType.isAbstract;
             break;
         case function_:
             auto composite = grUnmangleComposite(type.mangledType);
-            for (int i; i < composite.signature.length; ++i)
+            for (int i; i < composite.signature.length; ++i) {
                 composite.signature[i] = reifyType(composite.signature[i]);
+                result.isAbstract |= composite.signature[i].isAbstract;
+            }
             GrType[] outSignature = grUnmangleSignature(type.mangledReturnType);
-            for (int i; i < outSignature.length; ++i)
+            for (int i; i < outSignature.length; ++i) {
                 outSignature[i] = reifyType(outSignature[i]);
+                result.isAbstract |= outSignature[i].isAbstract;
+            }
             result.mangledType = grMangleComposite(composite.name, composite.signature);
             result.mangledReturnType = grMangleSignature(outSignature);
             break;
         case task:
             auto composite = grUnmangleComposite(type.mangledType);
-            for (int i; i < composite.signature.length; ++i)
+            for (int i; i < composite.signature.length; ++i) {
                 composite.signature[i] = reifyType(composite.signature[i]);
+                result.isAbstract |= composite.signature[i].isAbstract;
+            }
             result.mangledType = grMangleComposite(composite.name, composite.signature);
             break;
         case class_:
         case foreign:
             auto temp = grUnmangleComposite(type.mangledType);
-            for (int i; i < temp.signature.length; ++i)
+            for (int i; i < temp.signature.length; ++i) {
                 temp.signature[i] = reifyType(temp.signature[i]);
+                result.isAbstract |= temp.signature[i].isAbstract;
+            }
             result.mangledType = grMangleComposite(temp.name, temp.signature);
             break;
         case enum_:

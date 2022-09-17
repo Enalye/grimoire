@@ -57,7 +57,8 @@ class GrLibrary {
     }
 
     /// Define a variable with a default value
-    void addVariable(T)(string name, GrType type, T defaultValue, bool isPure = false, bool isConst = false) {
+    void addVariable(T)(string name, GrType type, T defaultValue,
+        bool isPure = false, bool isConst = false) {
         GrVariableDefinition variable = new GrVariableDefinition;
         variable.name = name;
         variable.type = type;
@@ -131,8 +132,8 @@ class GrLibrary {
 
     /// Define a class type.
     GrType addClass(string name, string[] fields, GrType[] signature,
-        string[] templateVariables = [], string parent = "",
-        GrType[] parentTemplateSignature = []) {
+        string[] templateVariables = [], string parent = "", GrType[] parentTemplateSignature = [
+        ]) {
         if (fields.length != signature.length)
             throw new Exception("class signature mismatch");
         GrClassDefinition class_ = new GrClassDefinition;
@@ -154,8 +155,12 @@ class GrLibrary {
         }
 
         GrType type = GrType.Base.class_;
-        type.mangledType = name;
-        type.isAbstract = class_.templateVariables.length > 0;
+        GrType[] anySignature;
+        foreach (tmp; templateVariables) {
+            anySignature ~= grAny(tmp);
+        }
+        type.mangledType = grMangleComposite(name, anySignature);
+        //type.isAbstract = class_.templateVariables.length > 0;
         return type;
     }
 
@@ -182,15 +187,18 @@ class GrLibrary {
         _abstractForeignDefinitions ~= foreign;
 
         GrType type = GrType.Base.foreign;
-        type.mangledType = name;
-        type.isAbstract = foreign.templateVariables.length > 0;
+        GrType[] anySignature;
+        foreach (tmp; templateVariables) {
+            anySignature ~= grAny(tmp);
+        }
+        type.mangledType = grMangleComposite(name, anySignature);
+        //type.isAbstract = foreign.templateVariables.length > 0;
         return type;
     }
 
     /// Define a new primitive.
-    GrPrimitive addFunction(GrCallback callback, string name,
-        GrType[] inSignature = [], GrType[] outSignature = [], GrConstraint[] constraints = [
-        ]) {
+    GrPrimitive addFunction(GrCallback callback, string name, GrType[] inSignature = [
+        ], GrType[] outSignature = [], GrConstraint[] constraints = []) {
         bool isAbstract;
         foreach (GrType type; inSignature) {
             if (type.isAbstract)
@@ -354,14 +362,13 @@ class GrLibrary {
         }
         if (inSignature.length != signatureSize)
             throw new Exception("The operator `" ~ name ~ "` must take " ~ to!string(
-                    signatureSize) ~ " parameter" ~ (signatureSize > 1
-                    ? "s" : "") ~ ": " ~ grGetPrettyFunctionCall("", inSignature));
+                    signatureSize) ~ " parameter" ~ (signatureSize > 1 ?
+                    "s" : "") ~ ": " ~ grGetPrettyFunctionCall("", inSignature));
         return addOperator(callback, name, inSignature, outType, constraints);
     }
     /// Ditto
-    GrPrimitive addOperator(GrCallback callback,
-        string name, GrType[] inSignature, GrType outType,
-        GrConstraint[] constraints = []) {
+    GrPrimitive addOperator(GrCallback callback, string name,
+        GrType[] inSignature, GrType outType, GrConstraint[] constraints = []) {
         if (inSignature.length > 2uL)
             throw new Exception(
                 "The operator `" ~ name ~ "` cannot take more than 2 parameters: " ~ grGetPrettyFunctionCall("",
@@ -373,11 +380,11 @@ class GrLibrary {
     A cast operator allows to convert from one type to another.
     It must have only one parameter and return the casted value.
     */
-    GrPrimitive addCast(GrCallback callback,
-        GrType srcType, GrType dstType, bool isExplicit = false,
-        GrConstraint[] constraints = []) {
-        auto primitive = addFunction(callback, "@as",
-            [srcType, dstType], [dstType], constraints);
+    GrPrimitive addCast(GrCallback callback, GrType srcType, GrType dstType,
+        bool isExplicit = false, GrConstraint[] constraints = []) {
+        auto primitive = addFunction(callback, "@as", [srcType, dstType], [
+                dstType
+            ], constraints);
         primitive.isExplicit = isExplicit;
         return primitive;
     }
@@ -386,20 +393,18 @@ class GrLibrary {
     Define a function that will be called with the `new` operation.
     It must return the defined type.
     */
-    GrPrimitive addConstructor(GrCallback callback,
-        GrType newType, GrType[] inSignature = [],
-        GrConstraint[] constraints = []) {
-        auto primitive = addFunction(callback, "@new",
-            inSignature ~ [newType], [newType], constraints);
+    GrPrimitive addConstructor(GrCallback callback, GrType newType,
+        GrType[] inSignature = [], GrConstraint[] constraints = []) {
+        auto primitive = addFunction(callback, "@new", inSignature ~ [newType],
+            [newType], constraints);
         return primitive;
     }
 
     /**
     Define functions that access and modify a foreign’s property.
     */
-    GrPrimitive[] addProperty(GrCallback getCallback, GrCallback setCallback,
-        string name, GrType foreignType,
-        GrType propertyType, GrConstraint[] constraints = []) {
+    GrPrimitive[] addProperty(GrCallback getCallback, GrCallback setCallback, string name,
+        GrType foreignType, GrType propertyType, GrConstraint[] constraints = []) {
         GrPrimitive[] primitives;
         /*assert(callbacks.length <= operations.length,
             "the number of callbacks of the property `" ~ name ~
@@ -407,12 +412,13 @@ class GrLibrary {
                     foreignType) ~ "` exceed the number of operations");*/
 
         if (getCallback) {
-            primitives ~= addFunction(getCallback, name ~ "@get",
-                [foreignType], [propertyType], constraints);
+            primitives ~= addFunction(getCallback, name ~ "@get", [foreignType],
+                [propertyType], constraints);
         }
         if (setCallback) {
-            primitives ~= addFunction(setCallback, name ~ "@set",
-                [foreignType, propertyType], [propertyType], constraints);
+            primitives ~= addFunction(setCallback, name ~ "@set", [
+                    foreignType, propertyType
+                ], [propertyType], constraints);
         }
         return primitives;
     }
