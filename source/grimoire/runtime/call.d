@@ -36,7 +36,7 @@ final class GrCall {
         }
 
         /// Extra type compiler information.
-        string meta() const {
+        GrString meta() const {
             return _task.engine.meta;
         }
     }
@@ -82,7 +82,6 @@ final class GrCall {
     alias getBool = getParameter!GrBool;
     alias getInt = getParameter!GrInt;
     alias getReal = getParameter!GrReal;
-    alias getString = getParameter!GrString;
     alias getPtr = getParameter!GrPtr;
 
     pragma(inline) int getInt32(uint index) {
@@ -103,6 +102,10 @@ final class GrCall {
 
     pragma(inline) GrObject getObject(uint index) {
         return cast(GrObject) getParameter!GrPtr(index);
+    }
+
+    pragma(inline) GrString getString(uint index) {
+        return (cast(GrStringWrapper) getParameter!GrPtr(index)).data;
     }
 
     pragma(inline) GrArray getArray(uint index) {
@@ -137,9 +140,6 @@ final class GrCall {
         else static if (is(T == GrReal)) {
             return _inputs[index].rvalue;
         }
-        else static if (is(T == GrString)) {
-            return _inputs[index].svalue;
-        }
         else static if (is(T == GrPtr)) {
             return _inputs[index].ovalue;
         }
@@ -149,7 +149,6 @@ final class GrCall {
     alias setBool = setResult!GrBool;
     alias setInt = setResult!GrInt;
     alias setReal = setResult!GrReal;
-    alias setString = setResult!GrString;
     alias setPtr = setResult!GrPtr;
 
     pragma(inline) void setInt32(int value) {
@@ -170,6 +169,10 @@ final class GrCall {
 
     pragma(inline) void setObject(GrObject value) {
         setResult!GrPtr(cast(GrPtr) value);
+    }
+
+    pragma(inline) void setString(GrString value) {
+        setResult!GrPtr(cast(GrPtr) new GrStringWrapper(value));
     }
 
     pragma(inline) void setArray(GrArray value) {
@@ -201,7 +204,7 @@ final class GrCall {
         else static if (is(T == GrReal)) {
             _outputs[_results].rvalue = value;
         }
-        else static if (is(T == GrString)) {
+        else static if (is(T == GrStringWrapper)) {
             _outputs[_results].svalue = value;
         }
         else static if (is(T == GrPtr)) {
@@ -222,7 +225,7 @@ final class GrCall {
         return _task.engine.getRealVariable(name);
     }
 
-    GrString getStringVariable(string name) {
+    GrStringWrapper getStringVariable(string name) {
         return _task.engine.getStringVariable(name);
     }
 
@@ -262,7 +265,7 @@ final class GrCall {
         _task.engine.setRealVariable(name, value);
     }
 
-    void setStringVariable(string name, GrString value) {
+    void setStringVariable(string name, GrStringWrapper value) {
         _task.engine.setStringVariable(name, value);
     }
 
@@ -291,16 +294,20 @@ final class GrCall {
     }
 
     private {
-        string _message;
+        GrStringWrapper _message;
         bool _hasError;
     }
 
     /// Does not actually send the error to the task.
     /// Because the stacks would be in an undefined state.
     /// So we wait until the primitive is finished before calling dispatchError().
-    void raise(string message) {
+    void raise(GrStringWrapper message) {
         _message = message;
         _hasError = true;
+    }
+    /// Ditto
+    void raise(GrString message) {
+        raise(new GrStringWrapper(message));
     }
 
     private void dispatchError() {

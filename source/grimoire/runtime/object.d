@@ -47,7 +47,6 @@ final class GrObject {
     alias getBool = getField!GrBool;
     alias getInt = getField!GrInt;
     alias getReal = getField!GrReal;
-    alias getString = getField!GrString;
     alias getPtr = getField!GrPtr;
 
     pragma(inline) int getInt32(const string fieldName) {
@@ -68,6 +67,10 @@ final class GrObject {
 
     pragma(inline) GrObject getObject(const string fieldName) {
         return cast(GrObject) getField!GrPtr(fieldName);
+    }
+
+    pragma(inline) GrString getString(const string fieldName) {
+        return (cast(GrStringWrapper) getField!GrPtr(fieldName)).data;
     }
 
     pragma(inline) GrArray getArray(const string fieldName) {
@@ -98,8 +101,6 @@ final class GrObject {
                     return cast(T) _fields[index].value.ivalue;
                 else static if (is(T == GrReal))
                     return _fields[index].value.rvalue;
-                else static if (is(T == GrString))
-                    return _fields[index].value.svalue;
                 else static if (is(T == GrPtr))
                     return _fields[index].value.ovalue;
                 else
@@ -113,7 +114,6 @@ final class GrObject {
     alias setBool = setField!GrBool;
     alias setInt = setField!GrInt;
     alias setReal = setField!GrReal;
-    alias setString = setField!GrString;
     alias setPtr = setField!GrPtr;
 
     pragma(inline) void setInt32(const string fieldName, int value) {
@@ -134,6 +134,10 @@ final class GrObject {
 
     pragma(inline) void setObject(const string fieldName, GrObject value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
+    }
+
+    pragma(inline) void setString(const string fieldName, GrString value) {
+        setField!GrPtr(fieldName, cast(GrPtr) new GrStringWrapper(value));
     }
 
     pragma(inline) void setArray(const string fieldName, GrArray value) {
@@ -158,15 +162,13 @@ final class GrObject {
                 static if (is(T == GrValue))
                     return _fields[index].value = value;
                 else static if (is(T == GrInt))
-                    return _fields[index].value.ivalue = value;
+                    return _fields[index].value._ivalue = value;
                 else static if (is(T == GrBool))
-                    return _fields[index].value.ivalue = cast(GrInt) value;
+                    return _fields[index].value._ivalue = cast(GrInt) value;
                 else static if (is(T == GrReal))
-                    return _fields[index].value.rvalue = value;
-                else static if (is(T == GrString))
-                    return _fields[index].value.svalue = value;
+                    return _fields[index].value._rvalue = value;
                 else static if (is(T == GrPtr))
-                    return _fields[index].value.ovalue = value;
+                    return _fields[index].value._ovalue = value;
                 else
                     static assert(false, "invalid field type `" ~ T.stringof ~ "`");
             }

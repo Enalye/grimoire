@@ -854,11 +854,11 @@ package final class GrLexer {
                 break;
 
             const dchar symbol = get();
-            if (symbol == '?') {
+            /*if (symbol == '?') {
                 buffer ~= symbol;
                 _current++;
                 break;
-            }
+            }*/
             if (symbol <= '&' || (symbol >= '(' && symbol <= '/') || (symbol >= ':'
                     && symbol <= '@') || (symbol >= '[' && symbol <= '^')
                 || (symbol >= '{' && symbol <= 0x7F))

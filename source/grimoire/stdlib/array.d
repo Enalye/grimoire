@@ -366,7 +366,7 @@ private void _sort_(string T)(GrCall call) {
     else static if (T == "real")
         array.data.sort!((a, b) => a.rvalue < b.rvalue)();
     else static if (T == "string")
-        array.data.sort!((a, b) => a.svalue < b.svalue)();
+        array.data.sort!((a, b) => (cast(GrStringWrapper) a.ovalue).data < (cast(GrStringWrapper) b.ovalue).data)();
     call.setArray(array);
 }
 

@@ -66,6 +66,7 @@ void main() {
         //Benchmark
         writeln("compilation took: \t", compilationTime);
         writeln("execution took: \t", executionTime);
+        writeln("Size of value: ", GrValue.sizeof);
         //writeln("Size of engine: ", GrEngine.classinfo.init.length, " Size of context: ", GrContext.classinfo.init.length);
 
         //writeln(engine.prettifyProfiling());

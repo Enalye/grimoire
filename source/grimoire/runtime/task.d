@@ -7,7 +7,7 @@ module grimoire.runtime.task;
 
 import grimoire.assembly;
 import grimoire.runtime.engine, grimoire.runtime.array,
-grimoire.runtime.channel, grimoire.runtime.object;
+    grimoire.runtime.channel, grimoire.runtime.object;
 
 /**
 Represents a single function task in the callStack.
@@ -146,7 +146,6 @@ final class GrTask {
     alias setBool = setValue!GrBool;
     alias setInt = setValue!GrInt;
     alias setReal = setValue!GrReal;
-    alias setString = setValue!GrString;
     alias setPtr = setValue!GrPtr;
 
     void setInt32(int value) {
@@ -166,6 +165,10 @@ final class GrTask {
     }
 
     void setObject(GrObject value) {
+        setValue!GrPtr(cast(GrPtr) value);
+    }
+
+    void setString(GrString value) {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
@@ -197,10 +200,6 @@ final class GrTask {
         else static if (is(T == GrReal)) {
             stackPos++;
             stack[stackPos].rvalue = value;
-        }
-        else static if (is(T == GrString)) {
-            stackPos++;
-            stack[stackPos].svalue = value;
         }
         else static if (is(T == GrPtr)) {
             stackPos++;

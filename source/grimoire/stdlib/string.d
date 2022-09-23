@@ -43,30 +43,26 @@ private void _empty(GrCall call) {
 }
 
 private void _unshift(GrCall call) {
-    GrString str = call.getString(0);
-    str = call.getString(1) ~ str;
-    call.setString(str);
+    call.setString(call.getString(1) ~ call.getString(0));
 }
 
 private void _push(GrCall call) {
-    GrString str = call.getString(0);
-    str ~= call.getString(1);
-    call.setString(str);
+    call.setString(call.getString(0) ~ call.getString(1));
 }
 
 private void _shift(GrCall call) {
-    GrString str = call.getString(0);
+    string str = call.getString(0);
     if (!str.length) {
-        call.setString(str);
+        call.setString("");
         return;
     }
     call.setString(str[1 .. $]);
 }
 
 private void _pop(GrCall call) {
-    GrString str = call.getString(0);
+    string str = call.getString(0);
     if (!str.length) {
-        call.setString(str);
+        call.setString("");
         return;
     }
     str.length--;

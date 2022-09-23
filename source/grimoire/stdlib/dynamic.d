@@ -13,7 +13,7 @@ private final class Dynamic {
     union {
         GrBool bvalue;
         GrInt ivalue;
-        GrReal fvalue;
+        GrReal rvalue;
         GrString svalue;
         GrPtr ovalue;
     }
@@ -47,7 +47,7 @@ private final class Dynamic {
 
     this(GrReal value_, string typeInfo_) {
         type = Type.real_;
-        fvalue = value_;
+        rvalue = value_;
         typeInfo = typeInfo_;
     }
 
@@ -155,7 +155,7 @@ private void _to_b(GrCall call) {
         call.setBool(dynamic.ivalue != 0);
         return;
     case real_:
-        call.setBool(dynamic.fvalue != .0);
+        call.setBool(dynamic.rvalue != .0);
         return;
     default:
         call.raise("ConvError");
@@ -174,7 +174,7 @@ private void _to_i(GrCall call) {
         call.setInt(dynamic.ivalue);
         return;
     case real_:
-        call.setInt(cast(int) dynamic.fvalue);
+        call.setInt(cast(int) dynamic.rvalue);
         return;
     default:
         call.raise("ConvError");
@@ -193,7 +193,7 @@ private void _to_f(GrCall call) {
         call.setReal(cast(real) dynamic.ivalue);
         return;
     case real_:
-        call.setReal(dynamic.fvalue);
+        call.setReal(dynamic.rvalue);
         return;
     default:
         call.raise("ConvError");
@@ -211,13 +211,13 @@ private void _to_s(GrCall call) {
     }
     switch (dynamic.type) with (Dynamic.Type) {
     case boolean:
-        call.setString(to!GrString(dynamic.bvalue));
+        call.setString(dynamic.bvalue ? "true" : "false");
         return;
     case integer:
-        call.setString(to!GrString(dynamic.ivalue));
+        call.setString(to!string(dynamic.ivalue));
         return;
     case real_:
-        call.setString(to!GrString(dynamic.fvalue));
+        call.setString(to!string(dynamic.rvalue));
         return;
     case string_:
         call.setString(dynamic.svalue);
@@ -269,6 +269,8 @@ private void _to_i2(GrCall call) {
 }
 
 private void _print(GrCall call) {
+    import std.conv : to;
+
     Dynamic dynamic = call.getForeign!(Dynamic)(0);
     if (!dynamic) {
         _stdOut("null(dynamic)");
@@ -282,7 +284,7 @@ private void _print(GrCall call) {
         _stdOut(to!string(dynamic.ivalue));
         break;
     case real_:
-        _stdOut(to!string(dynamic.fvalue));
+        _stdOut(to!string(dynamic.rvalue));
         break;
     case string_:
         _stdOut(dynamic.svalue);
@@ -315,12 +317,12 @@ private void _opUnaryDynamic(string op)(GrCall call) {
     self.type = v.type;
     self.typeInfo = v.typeInfo;
 
-    switch(v.type) with(Dynamic.Type) {
+    switch (v.type) with (Dynamic.Type) {
     case integer:
         mixin("self.ivalue = " ~ op ~ "v.ivalue;");
         break;
     case real_:
-        mixin("self.fvalue = " ~ op ~ "v.fvalue;");
+        mixin("self.rvalue = " ~ op ~ "v.rvalue;");
         break;
     default:
         call.raise("ConvError");
@@ -340,12 +342,12 @@ private void _opBinaryDynamic(string op)(GrCall call) {
     self.type = v1.type;
     self.typeInfo = v1.typeInfo;
 
-    switch(v1.type) with(Dynamic.Type) {
+    switch (v1.type) with (Dynamic.Type) {
     case integer:
         mixin("self.ivalue = v1.ivalue " ~ op ~ "v2.ivalue;");
         break;
     case real_:
-        mixin("self.fvalue = v1.fvalue " ~ op ~ "v2.fvalue;");
+        mixin("self.rvalue = v1.rvalue " ~ op ~ "v2.rvalue;");
         break;
     default:
         call.raise("ConvError");

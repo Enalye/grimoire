@@ -41,12 +41,12 @@ class GrEngine {
         /// It means that the throwing task didn't handle the exception.
         bool _isPanicking;
         /// Unhandled panic message.
-        string _panicMessage;
+        GrString _panicMessage;
         /// Stack traces are generated each time an error is raised.
         GrStackTrace[] _stackTraces;
 
         /// Extra type compiler information.
-        string _meta;
+        GrString _meta;
 
         /// Primitives.
         GrCallback[] _callbacks;
@@ -82,17 +82,17 @@ class GrEngine {
         }
 
         /// The unhandled error message.
-        string panicMessage() const {
+        GrString panicMessage() const {
             return _panicMessage;
         }
 
         /// Extra type compiler information.
-        string meta() const {
+        GrString meta() const {
             return _meta;
         }
         /// Ditto
-        string meta(string newMeta) {
-            return _meta = newMeta;
+        GrString meta(GrString meta_) {
+            return _meta = meta_;
         }
     }
 
@@ -130,13 +130,13 @@ class GrEngine {
             const uint typeMask = globalRef.typeMask;
             const uint index = globalRef.index;
             if (typeMask & 0x1)
-                _globals[index].ivalue = globalRef.ivalue;
+                _globals[index]._ivalue = globalRef.ivalue;
             else if (typeMask & 0x2)
-                _globals[index].rvalue = globalRef.rvalue;
+                _globals[index]._rvalue = globalRef.rvalue;
             else if (typeMask & 0x4)
-                _globals[index].svalue = globalRef.svalue;
+                _globals[index]._ovalue = cast(GrPtr) new GrStringWrapper(globalRef.svalue);
             else if (typeMask & 0x8)
-                _globals[index].ovalue = null;
+                _globals[index]._ovalue = null;
         }
 
         // Index the classes
@@ -302,7 +302,7 @@ class GrEngine {
 	If nothing catches the error inside the task, the VM enters in a panic state. \
 	Every tasks will then execute their `defer` statements and be killed.
 	*/
-    void raise(GrTask task, string message) {
+    void raise(GrTask task, GrStringWrapper message) {
         if (task.isPanicking)
             return;
         //Error message.
@@ -322,6 +322,10 @@ class GrEngine {
             task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
         }
     }
+    /// Ditto
+    void raise(GrTask task, GrString message) {
+        raise(task, new GrStringWrapper(message));
+    }
 
     /**
 	Marks each task as killed and prevents any new task from spawning.
@@ -337,11 +341,14 @@ class GrEngine {
     alias getBoolVariable = getVariable!bool;
     alias getIntVariable = getVariable!GrInt;
     alias getRealVariable = getVariable!GrReal;
-    alias getStringVariable = getVariable!GrString;
     alias getPtrVariable = getVariable!GrPtr;
 
     GrObject getObjectVariable(string name) {
         return cast(GrObject) getVariable!(GrPtr)(name);
+    }
+
+    GrStringWrapper getStringVariable(string name) {
+        return cast(GrStringWrapper) getVariable!(GrPtr)(name);
     }
 
     GrArray getArrayVariable(string name) {
@@ -366,39 +373,29 @@ class GrEngine {
         if (variable is null)
             throw new Exception("no global variable `" ~ name ~ "` defined");
         static if (is(T == GrInt)) {
-            if ((variable.typeMask & 0x1) == 0)
-                throw new Exception("variable `" ~ name ~ "` is not an int");
-            return _globals[variable.index].ivalue;
+            return _globals[variable.index]._ivalue;
         }
         else static if (is(T == GrBool)) {
-            if ((variable.typeMask & 0x1) == 0)
-                throw new Exception("variable `" ~ name ~ "` is not an int");
-            return _globals[variable.index].ivalue > 0;
+            return _globals[variable.index]._ivalue > 0;
         }
         else static if (is(T == GrReal)) {
-            if ((variable.typeMask & 0x2) == 0)
-                throw new Exception("variable `" ~ name ~ "` is not a real");
-            return _globals[variable.index].rvalue;
-        }
-        else static if (is(T == GrString)) {
-            if ((variable.typeMask & 0x4) == 0)
-                throw new Exception("variable `" ~ name ~ "` is not a string");
-            return _globals[variable.index].svalue;
+            return _globals[variable.index]._rvalue;
         }
         else static if (is(T == GrPtr)) {
-            if ((variable.typeMask & 0x8) == 0)
-                throw new Exception("variable `" ~ name ~ "` is not an object");
-            return _globals[variable.index].ovalue;
+            return _globals[variable.index]._ovalue;
         }
     }
 
     alias setBoolVariable = setVariable!GrBool;
     alias setIntVariable = setVariable!GrInt;
     alias setRealVariable = setVariable!GrReal;
-    alias setStringVariable = setVariable!GrString;
     alias setPtrVariable = setVariable!GrPtr;
 
     void setObjectVariable(string name, GrObject value) {
+        setVariable!(GrPtr)(name, cast(GrPtr) value);
+    }
+
+    void setStringVariable(string name, GrStringWrapper value) {
         setVariable!(GrPtr)(name, cast(GrPtr) value);
     }
 
@@ -425,27 +422,27 @@ class GrEngine {
         static if (is(T == GrInt)) {
             if ((variable.typeMask & 0x1) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not an int");
-            _globals[variable.index].ivalue = value;
+            _globals[variable.index]._ivalue = value;
         }
         else static if (is(T == GrBool)) {
             if ((variable.typeMask & 0x1) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not an int");
-            _globals[variable.index].ivalue = value;
+            _globals[variable.index]._ivalue = value;
         }
         else static if (is(T == GrReal)) {
             if ((variable.typeMask & 0x2) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not a real");
-            _globals[variable.index].rvalue = value;
+            _globals[variable.index]._rvalue = value;
         }
-        else static if (is(T == GrString)) {
+        /*else static if (is(T == GrStringWrapper)) {
             if ((variable.typeMask & 0x4) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not a string");
             _globals[variable.index].svalue = value;
-        }
+        }*/
         else static if (is(T == GrPtr)) {
             if ((variable.typeMask & 0x8) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not an object");
-            _globals[variable.index].ovalue = value;
+            _globals[variable.index]._ovalue = value;
         }
     }
 
@@ -519,7 +516,7 @@ class GrEngine {
 
                         //The VM is now panicking.
                         _isPanicking = true;
-                        _panicMessage = _globalStackIn[$ - 1].svalue;
+                        _panicMessage = (cast(GrStringWrapper) _globalStackIn[$ - 1]._ovalue).data;
                         _globalStackIn.length--;
 
                         //Every deferred call has been executed, now die.
@@ -551,7 +548,7 @@ class GrEngine {
                     break;
                 case anonymousTask:
                     GrTask nTask = new GrTask(this);
-                    nTask.pc = cast(uint) currentTask.stack[currentTask.stackPos].ivalue;
+                    nTask.pc = cast(uint) currentTask.stack[currentTask.stackPos]._ivalue;
                     currentTask.stackPos--;
                     _createdTasks ~= nTask;
                     currentTask.pc++;
@@ -595,7 +592,7 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos].ovalue = cast(GrPtr) new GrObject(
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) new GrObject(
                         _bytecode.classes[grGetInstructionUnsignedValue(opcode)]);
                     currentTask.pc++;
                     break;
@@ -603,13 +600,13 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos].ovalue = cast(
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(
                         GrPtr) new GrChannel(grGetInstructionUnsignedValue(opcode));
                     currentTask.pc++;
                     break;
                 case send:
                     GrChannel chan = cast(GrChannel) currentTask
-                        .stack[currentTask.stackPos - 1].ovalue;
+                        .stack[currentTask.stackPos - 1]._ovalue;
                     if (!chan.isOwned) {
                         if (currentTask.isEvaluatingChannel) {
                             currentTask.restoreState();
@@ -619,7 +616,7 @@ class GrEngine {
                         }
                         else {
                             currentTask.stackPos -= 2;
-                            raise(currentTask, "ChannelError");
+                            raise(currentTask, new GrStringWrapper("ChannelError"));
                         }
                     }
                     else if (chan.canSend) {
@@ -644,7 +641,7 @@ class GrEngine {
                     }
                     break;
                 case receive:
-                    GrChannel chan = cast(GrChannel) currentTask.stack[currentTask.stackPos].ovalue;
+                    GrChannel chan = cast(GrChannel) currentTask.stack[currentTask.stackPos]._ovalue;
                     if (!chan.isOwned) {
                         if (currentTask.isEvaluatingChannel) {
                             currentTask.restoreState();
@@ -654,7 +651,7 @@ class GrEngine {
                         }
                         else {
                             currentTask.stackPos--;
-                            raise(currentTask, "ChannelError");
+                            raise(currentTask, new GrStringWrapper("ChannelError"));
                         }
                     }
                     else if (chan.canReceive) {
@@ -686,7 +683,7 @@ class GrEngine {
                     break;
                 case tryChannel:
                     if (currentTask.isEvaluatingChannel)
-                        raise(currentTask, "SelectError");
+                        raise(currentTask, new GrStringWrapper("SelectError"));
                     currentTask.isEvaluatingChannel = true;
                     currentTask.selectPositionJump = currentTask.pc + grGetInstructionSignedValue(
                         opcode);
@@ -694,7 +691,7 @@ class GrEngine {
                     break;
                 case checkChannel:
                     if (!currentTask.isEvaluatingChannel)
-                        raise(currentTask, "SelectError");
+                        raise(currentTask, new GrStringWrapper("SelectError"));
                     currentTask.isEvaluatingChannel = false;
                     currentTask.restoreState();
                     currentTask.pc++;
@@ -743,13 +740,13 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case refStore:
-                    *(cast(GrValue*) currentTask.stack[currentTask.stackPos - 1].ovalue) = currentTask
+                    *(cast(GrValue*) currentTask.stack[currentTask.stackPos - 1]._ovalue) = currentTask
                         .stack[currentTask.stackPos];
                     currentTask.stackPos -= 2;
                     currentTask.pc++;
                     break;
                 case refStore2:
-                    *(cast(GrValue*) currentTask.stack[currentTask.stackPos - 1].ovalue) = currentTask
+                    *(cast(GrValue*) currentTask.stack[currentTask.stackPos - 1]._ovalue) = currentTask
                         .stack[currentTask.stackPos];
                     currentTask.stack[currentTask.stackPos - 1] =
                         currentTask.stack[currentTask.stackPos];
@@ -758,7 +755,7 @@ class GrEngine {
                     break;
                 case fieldRefStore:
                     currentTask.stackPos--;
-                    (cast(GrField) currentTask.stack[currentTask.stackPos].ovalue).value =
+                    (cast(GrField) currentTask.stack[currentTask.stackPos]._ovalue).value =
                         currentTask.stack[currentTask.stackPos + 1];
                     currentTask.stack[currentTask.stackPos] =
                         currentTask.stack[currentTask.stackPos + 1];
@@ -766,12 +763,12 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case fieldRefLoad:
-                    if (!currentTask.stack[currentTask.stackPos].ovalue) {
+                    if (!currentTask.stack[currentTask.stackPos]._ovalue) {
                         raise(currentTask, "NullError");
                         break;
                     }
-                    currentTask.stack[currentTask.stackPos].ovalue = cast(GrPtr)(
-                        (cast(GrObject) currentTask.stack[currentTask.stackPos].ovalue)
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr)(
+                        (cast(GrObject) currentTask.stack[currentTask.stackPos]._ovalue)
                             ._fields[grGetInstructionUnsignedValue(opcode)]);
                     currentTask.pc++;
                     break;
@@ -779,18 +776,18 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos].ovalue = cast(GrPtr)(
-                        (cast(GrObject) currentTask.stack[currentTask.stackPos - 1].ovalue)
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr)(
+                        (cast(GrObject) currentTask.stack[currentTask.stackPos - 1]._ovalue)
                             ._fields[grGetInstructionUnsignedValue(opcode)]);
                     currentTask.pc++;
                     break;
                 case fieldLoad:
-                    if (!currentTask.stack[currentTask.stackPos].ovalue) {
+                    if (!currentTask.stack[currentTask.stackPos]._ovalue) {
                         raise(currentTask, "NullError");
                         break;
                     }
                     currentTask.stack[currentTask.stackPos] = (cast(
-                            GrObject) currentTask.stack[currentTask.stackPos].ovalue)
+                            GrObject) currentTask.stack[currentTask.stackPos]._ovalue)
                         ._fields[grGetInstructionUnsignedValue(opcode)].value;
                     currentTask.pc++;
                     break;
@@ -799,17 +796,17 @@ class GrEngine {
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
                     GrField field = (cast(
-                            GrObject) currentTask.stack[currentTask.stackPos - 1].ovalue)
+                            GrObject) currentTask.stack[currentTask.stackPos - 1]._ovalue)
                         ._fields[grGetInstructionUnsignedValue(opcode)];
                     currentTask.stack[currentTask.stackPos] = field.value;
-                    currentTask.stack[currentTask.stackPos - 1].ovalue = cast(GrPtr) field;
+                    currentTask.stack[currentTask.stackPos - 1]._ovalue = cast(GrPtr) field;
                     currentTask.pc++;
                     break;
                 case const_int:
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos].ivalue = _bytecode.iconsts[grGetInstructionUnsignedValue(
+                    currentTask.stack[currentTask.stackPos]._ivalue = _bytecode.iconsts[grGetInstructionUnsignedValue(
                             opcode)];
                     currentTask.pc++;
                     break;
@@ -817,7 +814,7 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos].rvalue = _bytecode.rconsts[grGetInstructionUnsignedValue(
+                    currentTask.stack[currentTask.stackPos]._rvalue = _bytecode.rconsts[grGetInstructionUnsignedValue(
                             opcode)];
                     currentTask.pc++;
                     break;
@@ -825,7 +822,7 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos].ivalue = grGetInstructionUnsignedValue(
+                    currentTask.stack[currentTask.stackPos]._ivalue = grGetInstructionUnsignedValue(
                         opcode);
                     currentTask.pc++;
                     break;
@@ -833,8 +830,8 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos].svalue = _bytecode.sconsts[grGetInstructionUnsignedValue(
-                            opcode)];
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) new GrStringWrapper(
+                        _bytecode.sconsts[grGetInstructionUnsignedValue(opcode)]);
                     currentTask.pc++;
                     break;
                 case const_meta:
@@ -845,7 +842,7 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos].ovalue = null;
+                    currentTask.stack[currentTask.stackPos]._ovalue = null;
                     currentTask.pc++;
                     break;
                 case globalPush:
@@ -865,230 +862,230 @@ class GrEngine {
                     break;
                 case equal_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue =
-                        currentTask.stack[currentTask.stackPos].ivalue ==
-                        currentTask.stack[currentTask.stackPos + 1].ivalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._ivalue ==
+                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
                 case equal_real:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue =
-                        currentTask.stack[currentTask.stackPos].rvalue ==
-                        currentTask.stack[currentTask.stackPos + 1].rvalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._rvalue ==
+                        currentTask.stack[currentTask.stackPos + 1]._rvalue;
                     currentTask.pc++;
                     break;
                 case equal_string:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue =
-                        currentTask.stack[currentTask.stackPos].svalue ==
-                        currentTask.stack[currentTask.stackPos + 1].svalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue = (cast(
+                            GrStringWrapper) currentTask.stack[currentTask.stackPos]._ovalue).data == (
+                        cast(GrStringWrapper) currentTask.stack[currentTask.stackPos + 1]._ovalue).data;
                     currentTask.pc++;
                     break;
                 case notEqual_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue =
-                        currentTask.stack[currentTask.stackPos].ivalue !=
-                        currentTask.stack[currentTask.stackPos + 1].ivalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._ivalue !=
+                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
                 case notEqual_real:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue =
-                        currentTask.stack[currentTask.stackPos].rvalue !=
-                        currentTask.stack[currentTask.stackPos + 1].rvalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._rvalue !=
+                        currentTask.stack[currentTask.stackPos + 1]._rvalue;
                     currentTask.pc++;
                     break;
                 case notEqual_string:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue =
-                        currentTask.stack[currentTask.stackPos].svalue !=
-                        currentTask.stack[currentTask.stackPos + 1].svalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue = (cast(
+                            GrStringWrapper) currentTask.stack[currentTask.stackPos]._ovalue).data != (
+                        cast(GrStringWrapper) currentTask.stack[currentTask.stackPos + 1]._ovalue).data;
                     currentTask.pc++;
                     break;
                 case greaterOrEqual_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue =
-                        currentTask.stack[currentTask.stackPos].ivalue >=
-                        currentTask.stack[currentTask.stackPos + 1].ivalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._ivalue >=
+                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
                 case greaterOrEqual_real:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue =
-                        currentTask.stack[currentTask.stackPos].rvalue >=
-                        currentTask.stack[currentTask.stackPos + 1].rvalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._rvalue >=
+                        currentTask.stack[currentTask.stackPos + 1]._rvalue;
                     currentTask.pc++;
                     break;
                 case lesserOrEqual_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue =
-                        currentTask.stack[currentTask.stackPos].ivalue <=
-                        currentTask.stack[currentTask.stackPos + 1].ivalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._ivalue <=
+                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
                 case lesserOrEqual_real:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue =
-                        currentTask.stack[currentTask.stackPos].rvalue <=
-                        currentTask.stack[currentTask.stackPos + 1].rvalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._rvalue <=
+                        currentTask.stack[currentTask.stackPos + 1]._rvalue;
                     currentTask.pc++;
                     break;
                 case greater_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue =
-                        currentTask.stack[currentTask.stackPos].ivalue >
-                        currentTask.stack[currentTask.stackPos + 1].ivalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._ivalue >
+                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
                 case greater_real:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue =
-                        currentTask.stack[currentTask.stackPos].rvalue >
-                        currentTask.stack[currentTask.stackPos + 1].rvalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._rvalue >
+                        currentTask.stack[currentTask.stackPos + 1]._rvalue;
                     currentTask.pc++;
                     break;
                 case lesser_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue =
-                        currentTask.stack[currentTask.stackPos].ivalue <
-                        currentTask.stack[currentTask.stackPos + 1].ivalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._ivalue <
+                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
                 case lesser_real:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue =
-                        currentTask.stack[currentTask.stackPos].rvalue <
-                        currentTask.stack[currentTask.stackPos + 1].rvalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._rvalue <
+                        currentTask.stack[currentTask.stackPos + 1]._rvalue;
                     currentTask.pc++;
                     break;
                 case isNonNull_object:
-                    currentTask.stack[currentTask.stackPos].ivalue = (
-                        currentTask.stack[currentTask.stackPos].ovalue !is null);
+                    currentTask.stack[currentTask.stackPos]._ivalue = (
+                        currentTask.stack[currentTask.stackPos]._ovalue !is null);
                     currentTask.pc++;
                     break;
                 case and_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue = currentTask.stack[currentTask.stackPos].ivalue &&
-                        currentTask.stack[currentTask.stackPos + 1].ivalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue = currentTask.stack[currentTask.stackPos]._ivalue &&
+                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
                 case or_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue = currentTask.stack[currentTask.stackPos].ivalue ||
-                        currentTask.stack[currentTask.stackPos + 1].ivalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue = currentTask.stack[currentTask.stackPos]._ivalue ||
+                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
                 case not_int:
-                    currentTask.stack[currentTask.stackPos].ivalue =
-                        !currentTask.stack[currentTask.stackPos].ivalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        !currentTask.stack[currentTask.stackPos]._ivalue;
                     currentTask.pc++;
                     break;
                 case add_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue +=
-                        currentTask.stack[currentTask.stackPos + 1].ivalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue +=
+                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
                 case add_real:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].rvalue +=
-                        currentTask.stack[currentTask.stackPos + 1].rvalue;
+                    currentTask.stack[currentTask.stackPos]._rvalue +=
+                        currentTask.stack[currentTask.stackPos + 1]._rvalue;
                     currentTask.pc++;
                     break;
                 case concatenate_string:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].svalue ~=
-                        currentTask.stack[currentTask.stackPos + 1].svalue;
+                    (cast(GrStringWrapper) currentTask.stack[currentTask.stackPos]._ovalue).append(
+                        cast(GrStringWrapper) currentTask.stack[currentTask.stackPos + 1]._ovalue);
                     currentTask.pc++;
                     break;
                 case substract_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue -=
-                        currentTask.stack[currentTask.stackPos + 1].ivalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue -=
+                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
                 case substract_real:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].rvalue -=
-                        currentTask.stack[currentTask.stackPos + 1].rvalue;
+                    currentTask.stack[currentTask.stackPos]._rvalue -=
+                        currentTask.stack[currentTask.stackPos + 1]._rvalue;
                     currentTask.pc++;
                     break;
                 case multiply_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue *=
-                        currentTask.stack[currentTask.stackPos + 1].ivalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue *=
+                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
                 case multiply_real:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].rvalue *=
-                        currentTask.stack[currentTask.stackPos + 1].rvalue;
+                    currentTask.stack[currentTask.stackPos]._rvalue *=
+                        currentTask.stack[currentTask.stackPos + 1]._rvalue;
                     currentTask.pc++;
                     break;
                 case divide_int:
-                    if (currentTask.stack[currentTask.stackPos].ivalue == 0) {
-                        raise(currentTask, "ZeroDivisionError");
+                    if (currentTask.stack[currentTask.stackPos]._ivalue == 0) {
+                        raise(currentTask, new GrStringWrapper("ZeroDivisionError"));
                         break;
                     }
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue /=
-                        currentTask.stack[currentTask.stackPos + 1].ivalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue /=
+                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
                 case divide_real:
-                    if (currentTask.stack[currentTask.stackPos].rvalue == 0f) {
-                        raise(currentTask, "ZeroDivisionError");
+                    if (currentTask.stack[currentTask.stackPos]._rvalue == 0f) {
+                        raise(currentTask, new GrStringWrapper("ZeroDivisionError"));
                         break;
                     }
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].rvalue /=
-                        currentTask.stack[currentTask.stackPos + 1].rvalue;
+                    currentTask.stack[currentTask.stackPos]._rvalue /=
+                        currentTask.stack[currentTask.stackPos + 1]._rvalue;
                     currentTask.pc++;
                     break;
                 case remainder_int:
-                    if (currentTask.stack[currentTask.stackPos].ivalue == 0) {
-                        raise(currentTask, "ZeroDivisionError");
+                    if (currentTask.stack[currentTask.stackPos]._ivalue == 0) {
+                        raise(currentTask, new GrStringWrapper("ZeroDivisionError"));
                         break;
                     }
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue %=
-                        currentTask.stack[currentTask.stackPos + 1].ivalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue %=
+                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
                 case remainder_real:
-                    if (currentTask.stack[currentTask.stackPos].rvalue == 0f) {
-                        raise(currentTask, "ZeroDivisionError");
+                    if (currentTask.stack[currentTask.stackPos]._rvalue == 0f) {
+                        raise(currentTask, new GrStringWrapper("ZeroDivisionError"));
                         break;
                     }
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].rvalue %=
-                        currentTask.stack[currentTask.stackPos + 1].rvalue;
+                    currentTask.stack[currentTask.stackPos]._rvalue %=
+                        currentTask.stack[currentTask.stackPos + 1]._rvalue;
                     currentTask.pc++;
                     break;
                 case negative_int:
-                    currentTask.stack[currentTask.stackPos].ivalue = -currentTask
-                        .stack[currentTask.stackPos].ivalue;
+                    currentTask.stack[currentTask.stackPos]._ivalue = -currentTask
+                        .stack[currentTask.stackPos]._ivalue;
                     currentTask.pc++;
                     break;
                 case negative_real:
-                    currentTask.stack[currentTask.stackPos].rvalue = -currentTask
-                        .stack[currentTask.stackPos].rvalue;
+                    currentTask.stack[currentTask.stackPos]._rvalue = -currentTask
+                        .stack[currentTask.stackPos]._rvalue;
                     currentTask.pc++;
                     break;
                 case increment_int:
-                    currentTask.stack[currentTask.stackPos].ivalue++;
+                    currentTask.stack[currentTask.stackPos]._ivalue++;
                     currentTask.pc++;
                     break;
                 case increment_real:
-                    currentTask.stack[currentTask.stackPos].rvalue += 1f;
+                    currentTask.stack[currentTask.stackPos]._rvalue += 1f;
                     currentTask.pc++;
                     break;
                 case decrement_int:
-                    currentTask.stack[currentTask.stackPos].ivalue--;
+                    currentTask.stack[currentTask.stackPos]._ivalue--;
                     currentTask.pc++;
                     break;
                 case decrement_real:
-                    currentTask.stack[currentTask.stackPos].rvalue -= 1f;
+                    currentTask.stack[currentTask.stackPos]._rvalue -= 1f;
                     currentTask.pc++;
                     break;
                 case copy:
@@ -1104,9 +1101,9 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case setupIterator:
-                    if (currentTask.stack[currentTask.stackPos].ivalue < 0)
-                        currentTask.stack[currentTask.stackPos].ivalue = 0;
-                    currentTask.stack[currentTask.stackPos].ivalue++;
+                    if (currentTask.stack[currentTask.stackPos]._ivalue < 0)
+                        currentTask.stack[currentTask.stackPos]._ivalue = 0;
+                    currentTask.stack[currentTask.stackPos]._ivalue++;
                     currentTask.pc++;
                     break;
                 case return_:
@@ -1193,7 +1190,7 @@ class GrEngine {
 
                             //The VM is now panicking.
                             _isPanicking = true;
-                            _panicMessage = _globalStackIn[$ - 1].svalue;
+                            _panicMessage = (cast(GrStringWrapper) _globalStackIn[$ - 1]._ovalue).data;
                             _globalStackIn.length--;
 
                             //Every deferred call has been executed, now die.
@@ -1243,7 +1240,7 @@ class GrEngine {
                     currentTask.callStack[currentTask.stackFramePos].retPosition =
                         currentTask.pc + 1u;
                     currentTask.stackFramePos++;
-                    currentTask.pc = cast(uint) currentTask.stack[currentTask.stackPos].ivalue;
+                    currentTask.pc = cast(uint) currentTask.stack[currentTask.stackPos]._ivalue;
                     currentTask.stackPos--;
                     break;
                 case primitiveCall:
@@ -1258,14 +1255,14 @@ class GrEngine {
                     currentTask.pc += grGetInstructionSignedValue(opcode);
                     break;
                 case jumpEqual:
-                    if (currentTask.stack[currentTask.stackPos].ivalue)
+                    if (currentTask.stack[currentTask.stackPos]._ivalue)
                         currentTask.pc++;
                     else
                         currentTask.pc += grGetInstructionSignedValue(opcode);
                     currentTask.stackPos--;
                     break;
                 case jumpNotEqual:
-                    if (currentTask.stack[currentTask.stackPos].ivalue)
+                    if (currentTask.stack[currentTask.stackPos]._ivalue)
                         currentTask.pc += grGetInstructionSignedValue(opcode);
                     else
                         currentTask.pc++;
@@ -1280,31 +1277,31 @@ class GrEngine {
                     currentTask.stackPos -= arySize - 1;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos].ovalue = cast(GrPtr) ary;
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) ary;
                     currentTask.pc++;
                     break;
                 case index_array:
-                    GrArray ary = cast(GrArray) currentTask.stack[currentTask.stackPos - 1].ovalue;
-                    GrInt idx = currentTask.stack[currentTask.stackPos].ivalue;
+                    GrArray ary = cast(GrArray) currentTask.stack[currentTask.stackPos - 1]._ovalue;
+                    GrInt idx = currentTask.stack[currentTask.stackPos]._ivalue;
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(currentTask, "IndexError");
+                        raise(currentTask, new GrStringWrapper("IndexError"));
                         break;
                     }
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ovalue = &ary.data[idx];
+                    currentTask.stack[currentTask.stackPos]._ovalue = &ary.data[idx];
                     currentTask.pc++;
                     break;
                 case index2_array:
-                    GrArray ary = cast(GrArray) currentTask.stack[currentTask.stackPos - 1].ovalue;
-                    GrInt idx = currentTask.stack[currentTask.stackPos].ivalue;
+                    GrArray ary = cast(GrArray) currentTask.stack[currentTask.stackPos - 1]._ovalue;
+                    GrInt idx = currentTask.stack[currentTask.stackPos]._ivalue;
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(currentTask, "IndexError");
+                        raise(currentTask, new GrStringWrapper("IndexError"));
                         break;
                     }
                     currentTask.stackPos--;
@@ -1312,61 +1309,61 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case index3_array:
-                    GrArray ary = cast(GrArray) currentTask.stack[currentTask.stackPos - 1].ovalue;
-                    GrInt idx = currentTask.stack[currentTask.stackPos].ivalue;
+                    GrArray ary = cast(GrArray) currentTask.stack[currentTask.stackPos - 1]._ovalue;
+                    GrInt idx = currentTask.stack[currentTask.stackPos]._ivalue;
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(currentTask, "IndexError");
+                        raise(currentTask, new GrStringWrapper("IndexError"));
                         break;
                     }
-                    currentTask.stack[currentTask.stackPos - 1].ovalue = &ary.data[idx];
+                    currentTask.stack[currentTask.stackPos - 1]._ovalue = &ary.data[idx];
                     currentTask.stack[currentTask.stackPos] = ary.data[idx];
                     currentTask.pc++;
                     break;
                 case length_array:
-                    currentTask.stack[currentTask.stackPos].ivalue = cast(int)(
-                        (cast(GrArray) currentTask.stack[currentTask.stackPos].ovalue).data.length);
+                    currentTask.stack[currentTask.stackPos]._ivalue = cast(int)(
+                        (cast(GrArray) currentTask.stack[currentTask.stackPos]._ovalue).data.length);
                     currentTask.pc++;
                     break;
                 case concatenate_array:
                     GrArray nArray = new GrArray;
                     currentTask.stackPos--;
-                    nArray.data = (cast(GrArray) currentTask.stack[currentTask.stackPos].ovalue)
-                        .data ~ (cast(GrArray) currentTask.stack[currentTask.stackPos + 1].ovalue)
+                    nArray.data = (cast(GrArray) currentTask.stack[currentTask.stackPos]._ovalue)
+                        .data ~ (cast(GrArray) currentTask.stack[currentTask.stackPos + 1]._ovalue)
                         .data;
-                    currentTask.stack[currentTask.stackPos].ovalue = cast(GrPtr) nArray;
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) nArray;
                     currentTask.pc++;
                     break;
                 case append_array:
                     GrArray nArray = new GrArray;
                     currentTask.stackPos--;
-                    nArray.data = (cast(GrArray) currentTask.stack[currentTask.stackPos].ovalue)
+                    nArray.data = (cast(GrArray) currentTask.stack[currentTask.stackPos]._ovalue)
                         .data ~ currentTask.stack[currentTask.stackPos + 1];
-                    currentTask.stack[currentTask.stackPos].ovalue = cast(GrPtr) nArray;
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) nArray;
                     currentTask.pc++;
                     break;
                 case prepend_array:
                     GrArray nArray = new GrArray;
                     currentTask.stackPos--;
                     nArray.data = currentTask.stack[currentTask.stackPos] ~ (cast(
-                            GrArray) currentTask.stack[currentTask.stackPos + 1].ovalue).data;
-                    currentTask.stack[currentTask.stackPos].ovalue = cast(GrPtr) nArray;
+                            GrArray) currentTask.stack[currentTask.stackPos + 1]._ovalue).data;
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) nArray;
                     currentTask.pc++;
                     break;
                 case equal_array:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue = (cast(
-                            GrArray) currentTask.stack[currentTask.stackPos].ovalue).data == (
-                        cast(GrArray) currentTask.stack[currentTask.stackPos + 1].ovalue).data;
+                    currentTask.stack[currentTask.stackPos]._ivalue = (cast(
+                            GrArray) currentTask.stack[currentTask.stackPos]._ovalue).data == (
+                        cast(GrArray) currentTask.stack[currentTask.stackPos + 1]._ovalue).data;
                     currentTask.pc++;
                     break;
                 case notEqual_array:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos].ivalue = (cast(
-                            GrArray) currentTask.stack[currentTask.stackPos].ovalue).data != (
-                        cast(GrArray) currentTask.stack[currentTask.stackPos + 1].ovalue).data;
+                    currentTask.stack[currentTask.stackPos]._ivalue = (cast(
+                            GrArray) currentTask.stack[currentTask.stackPos]._ovalue).data != (
+                        cast(GrArray) currentTask.stack[currentTask.stackPos + 1]._ovalue).data;
                     currentTask.pc++;
                     break;
                 case debugProfileBegin:
