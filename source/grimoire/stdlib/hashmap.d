@@ -17,8 +17,8 @@ private final class HashMap {
 
     /// Ctor
     this(GrArray keys, GrArray values) {
-        for (size_t i; i < keys.data.length; ++i) {
-            data[keys.data[i].getString()] = values.data[i];
+        for (size_t i; i < keys.length; ++i) {
+            data[keys[i].getString()] = values[i];
         }
     }
     /// Ditto
@@ -92,8 +92,8 @@ private void _newByArray(GrCall call) {
 private void _newByPairs(GrCall call) {
     HashMap hashmap = new HashMap;
     GrArray pairs = call.getArray(0);
-    for (size_t i; i < pairs.data.length; ++i) {
-        GrObject pair = cast(GrObject) pairs.data[i].getPtr();
+    for (size_t i; i < pairs.length; ++i) {
+        GrObject pair = cast(GrObject) pairs[i].getPtr();
         hashmap.data[pair.getString("key")] = pair.getValue("value");
     }
     call.setForeign(hashmap);
@@ -193,9 +193,9 @@ private void _byKeys(GrCall call) {
         call.raise("NullError");
         return;
     }
-    GrArray ary = new GrArray;
+    GrArray ary;
     foreach (GrString key; hashmap.data.keys) {
-        ary.data ~= GrValue(key);
+        ary ~= GrValue(key);
     }
     call.setArray(ary);
 }
@@ -206,8 +206,8 @@ private void _byValues(GrCall call) {
         call.raise("NullError");
         return;
     }
-    GrArray ary = new GrArray;
-    ary.data = hashmap.data.values;
+    GrArray ary;
+    ary = hashmap.data.values;
     call.setArray(ary);
 }
 

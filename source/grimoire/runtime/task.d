@@ -6,8 +6,7 @@
 module grimoire.runtime.task;
 
 import grimoire.assembly;
-import grimoire.runtime.engine, grimoire.runtime.array,
-    grimoire.runtime.channel, grimoire.runtime.object;
+import grimoire.runtime.engine, grimoire.runtime.channel, grimoire.runtime.object;
 
 /**
 Represents a single function task in the callStack.

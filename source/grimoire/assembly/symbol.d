@@ -12,11 +12,48 @@ alias GrBool = bool;
 alias GrInt = int;
 alias GrReal = double;
 alias GrString = string;
+alias GrArray = GrValue[];
 alias GrPtr = void*;
 
-package(grimoire) enum GR_NULL = 0xffffUL << 48;
+/// Runtime array, can only hold one subtype.
+package(grimoire) final class GrArrayWrapper {
+    /// Payload
+    private {
+        GrValue[] _data;
+    }
 
-final class GrStringWrapper {
+    this() {
+    }
+
+    this(GrArray value) {
+        _data = value;
+    }
+
+    this(GrInt initialSize) {
+        _data.reserve(initialSize);
+    }
+
+    @property {
+        pragma(inline) GrInt length() {
+            return cast(GrInt) _data.length;
+        }
+
+        pragma(inline) GrArray data() {
+            return _data;
+        }
+
+        pragma(inline) GrArray data(GrArray value) {
+            return _data = value;
+        }
+    }
+
+    pragma(inline) void append(GrValue value) {
+        _data ~= value;
+    }
+}
+
+/// Runtime string
+package(grimoire) final class GrStringWrapper {
     private {
         string _data;
     }
@@ -63,6 +100,8 @@ final class GrStringWrapper {
     }
 }
 
+package(grimoire) enum GR_NULL = 0xffffUL << 48;
+
 struct GrValue {
     package(grimoire) union {
         GrInt _ivalue;
@@ -79,11 +118,11 @@ struct GrValue {
         _rvalue = value;
     }
 
-    this(GrStringWrapper value) {
-        _ovalue = cast(GrPtr) value;
+    this(GrArray value) {
+        _ovalue = cast(GrPtr) new GrArrayWrapper(value);
     }
 
-    this(string value) {
+    this(GrString value) {
         _ovalue = cast(GrPtr) new GrStringWrapper(value);
     }
 

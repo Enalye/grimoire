@@ -15,7 +15,6 @@ import std.typecons : Nullable;
 import grimoire.compiler, grimoire.assembly;
 
 import grimoire.runtime.task;
-import grimoire.runtime.array;
 import grimoire.runtime.object;
 import grimoire.runtime.channel;
 import grimoire.runtime.call;
@@ -302,7 +301,7 @@ class GrEngine {
 	If nothing catches the error inside the task, the VM enters in a panic state. \
 	Every tasks will then execute their `defer` statements and be killed.
 	*/
-    void raise(GrTask task, GrStringWrapper message) {
+    void raise(GrTask task, GrString message) {
         if (task.isPanicking)
             return;
         //Error message.
@@ -322,10 +321,6 @@ class GrEngine {
             task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
         }
     }
-    /// Ditto
-    void raise(GrTask task, GrString message) {
-        raise(task, new GrStringWrapper(message));
-    }
 
     /**
 	Marks each task as killed and prevents any new task from spawning.
@@ -344,19 +339,19 @@ class GrEngine {
     alias getPtrVariable = getVariable!GrPtr;
 
     GrObject getObjectVariable(string name) {
-        return cast(GrObject) getVariable!(GrPtr)(name);
+        return cast(GrObject) getVariable!GrPtr(name);
     }
 
-    GrStringWrapper getStringVariable(string name) {
-        return cast(GrStringWrapper) getVariable!(GrPtr)(name);
+    GrString getStringVariable(string name) {
+        return (cast(GrStringWrapper) getVariable!GrPtr(name)).data;
     }
 
     GrArray getArrayVariable(string name) {
-        return cast(GrArray) getVariable!(GrPtr)(name);
+        return (cast(GrArrayWrapper) getVariable!GrPtr(name)).data;
     }
 
     GrChannel getChannelVariable(string name) {
-        return cast(GrChannel) getVariable!(GrPtr)(name);
+        return cast(GrChannel) getVariable!GrPtr(name);
     }
 
     T getEnumVariable(T)(string name) {
@@ -365,7 +360,7 @@ class GrEngine {
 
     T getForeignVariable(T)(string name) {
         // We cast to object first to avoid a crash when casting to a parent class
-        return cast(T) cast(Object) getVariable!(GrPtr)(name);
+        return cast(T) cast(Object) getVariable!GrPtr(name);
     }
 
     private T getVariable(T)(string name) {
@@ -392,19 +387,19 @@ class GrEngine {
     alias setPtrVariable = setVariable!GrPtr;
 
     void setObjectVariable(string name, GrObject value) {
-        setVariable!(GrPtr)(name, cast(GrPtr) value);
+        setVariable!GrPtr(name, cast(GrPtr) value);
     }
 
-    void setStringVariable(string name, GrStringWrapper value) {
-        setVariable!(GrPtr)(name, cast(GrPtr) value);
+    void setStringVariable(string name, GrString value) {
+        setVariable!GrPtr(name, cast(GrPtr) new GrStringWrapper(value));
     }
 
     void setArrayVariable(string name, GrArray value) {
-        setVariable!(GrPtr)(name, cast(GrPtr) value);
+        setVariable!GrPtr(name, cast(GrPtr) new GrArrayWrapper(value));
     }
 
     void setChannelVariable(string name, GrChannel value) {
-        setVariable!(GrPtr)(name, cast(GrPtr) value);
+        setVariable!GrPtr(name, cast(GrPtr) value);
     }
 
     void setEnumVariable(T)(string name, T value) {
@@ -412,7 +407,7 @@ class GrEngine {
     }
 
     void setForeignVariable(T)(string name, T value) {
-        setVariable!(GrPtr)(name, cast(GrPtr) value);
+        setVariable!GrPtr(name, cast(GrPtr) value);
     }
 
     private void setVariable(T)(string name, T value) {
@@ -616,7 +611,7 @@ class GrEngine {
                         }
                         else {
                             currentTask.stackPos -= 2;
-                            raise(currentTask, new GrStringWrapper("ChannelError"));
+                            raise(currentTask, "ChannelError");
                         }
                     }
                     else if (chan.canSend) {
@@ -641,7 +636,8 @@ class GrEngine {
                     }
                     break;
                 case receive:
-                    GrChannel chan = cast(GrChannel) currentTask.stack[currentTask.stackPos]._ovalue;
+                    GrChannel chan = cast(GrChannel) currentTask
+                        .stack[currentTask.stackPos]._ovalue;
                     if (!chan.isOwned) {
                         if (currentTask.isEvaluatingChannel) {
                             currentTask.restoreState();
@@ -651,7 +647,7 @@ class GrEngine {
                         }
                         else {
                             currentTask.stackPos--;
-                            raise(currentTask, new GrStringWrapper("ChannelError"));
+                            raise(currentTask, "ChannelError");
                         }
                     }
                     else if (chan.canReceive) {
@@ -683,7 +679,7 @@ class GrEngine {
                     break;
                 case tryChannel:
                     if (currentTask.isEvaluatingChannel)
-                        raise(currentTask, new GrStringWrapper("SelectError"));
+                        raise(currentTask, "SelectError");
                     currentTask.isEvaluatingChannel = true;
                     currentTask.selectPositionJump = currentTask.pc + grGetInstructionSignedValue(
                         opcode);
@@ -691,7 +687,7 @@ class GrEngine {
                     break;
                 case checkChannel:
                     if (!currentTask.isEvaluatingChannel)
-                        raise(currentTask, new GrStringWrapper("SelectError"));
+                        raise(currentTask, "SelectError");
                     currentTask.isEvaluatingChannel = false;
                     currentTask.restoreState();
                     currentTask.pc++;
@@ -878,7 +874,8 @@ class GrEngine {
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue = (cast(
                             GrStringWrapper) currentTask.stack[currentTask.stackPos]._ovalue).data == (
-                        cast(GrStringWrapper) currentTask.stack[currentTask.stackPos + 1]._ovalue).data;
+                        cast(GrStringWrapper) currentTask.stack[currentTask.stackPos + 1]._ovalue)
+                        .data;
                     currentTask.pc++;
                     break;
                 case notEqual_int:
@@ -899,7 +896,8 @@ class GrEngine {
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue = (cast(
                             GrStringWrapper) currentTask.stack[currentTask.stackPos]._ovalue).data != (
-                        cast(GrStringWrapper) currentTask.stack[currentTask.stackPos + 1]._ovalue).data;
+                        cast(GrStringWrapper) currentTask.stack[currentTask.stackPos + 1]._ovalue)
+                        .data;
                     currentTask.pc++;
                     break;
                 case greaterOrEqual_int:
@@ -1024,7 +1022,7 @@ class GrEngine {
                     break;
                 case divide_int:
                     if (currentTask.stack[currentTask.stackPos]._ivalue == 0) {
-                        raise(currentTask, new GrStringWrapper("ZeroDivisionError"));
+                        raise(currentTask, "ZeroDivisionError");
                         break;
                     }
                     currentTask.stackPos--;
@@ -1034,7 +1032,7 @@ class GrEngine {
                     break;
                 case divide_real:
                     if (currentTask.stack[currentTask.stackPos]._rvalue == 0f) {
-                        raise(currentTask, new GrStringWrapper("ZeroDivisionError"));
+                        raise(currentTask, "ZeroDivisionError");
                         break;
                     }
                     currentTask.stackPos--;
@@ -1044,7 +1042,7 @@ class GrEngine {
                     break;
                 case remainder_int:
                     if (currentTask.stack[currentTask.stackPos]._ivalue == 0) {
-                        raise(currentTask, new GrStringWrapper("ZeroDivisionError"));
+                        raise(currentTask, "ZeroDivisionError");
                         break;
                     }
                     currentTask.stackPos--;
@@ -1054,7 +1052,7 @@ class GrEngine {
                     break;
                 case remainder_real:
                     if (currentTask.stack[currentTask.stackPos]._rvalue == 0f) {
-                        raise(currentTask, new GrStringWrapper("ZeroDivisionError"));
+                        raise(currentTask, "ZeroDivisionError");
                         break;
                     }
                     currentTask.stackPos--;
@@ -1190,7 +1188,8 @@ class GrEngine {
 
                             //The VM is now panicking.
                             _isPanicking = true;
-                            _panicMessage = (cast(GrStringWrapper) _globalStackIn[$ - 1]._ovalue).data;
+                            _panicMessage = (cast(GrStringWrapper) _globalStackIn[$ - 1]._ovalue)
+                                .data;
                             _globalStackIn.length--;
 
                             //Every deferred call has been executed, now die.
@@ -1269,11 +1268,10 @@ class GrEngine {
                     currentTask.stackPos--;
                     break;
                 case array:
-                    GrArray ary = new GrArray;
                     const GrInt arySize = grGetInstructionUnsignedValue(opcode);
-                    ary.data.reserve(arySize);
+                    GrArrayWrapper ary = new GrArrayWrapper(arySize);
                     for (GrInt i = arySize - 1; i >= 0; i--)
-                        ary.data ~= currentTask.stack[currentTask.stackPos - i];
+                        ary.append(currentTask.stack[currentTask.stackPos - i]);
                     currentTask.stackPos -= arySize - 1;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
@@ -1281,13 +1279,14 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case index_array:
-                    GrArray ary = cast(GrArray) currentTask.stack[currentTask.stackPos - 1]._ovalue;
+                    GrArrayWrapper ary = cast(GrArrayWrapper) currentTask
+                        .stack[currentTask.stackPos - 1]._ovalue;
                     GrInt idx = currentTask.stack[currentTask.stackPos]._ivalue;
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(currentTask, new GrStringWrapper("IndexError"));
+                        raise(currentTask, "IndexError");
                         break;
                     }
                     currentTask.stackPos--;
@@ -1295,13 +1294,14 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case index2_array:
-                    GrArray ary = cast(GrArray) currentTask.stack[currentTask.stackPos - 1]._ovalue;
+                    GrArrayWrapper ary = cast(GrArrayWrapper) currentTask
+                        .stack[currentTask.stackPos - 1]._ovalue;
                     GrInt idx = currentTask.stack[currentTask.stackPos]._ivalue;
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(currentTask, new GrStringWrapper("IndexError"));
+                        raise(currentTask, "IndexError");
                         break;
                     }
                     currentTask.stackPos--;
@@ -1309,13 +1309,14 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case index3_array:
-                    GrArray ary = cast(GrArray) currentTask.stack[currentTask.stackPos - 1]._ovalue;
+                    GrArrayWrapper ary = cast(GrArrayWrapper) currentTask
+                        .stack[currentTask.stackPos - 1]._ovalue;
                     GrInt idx = currentTask.stack[currentTask.stackPos]._ivalue;
                     if (idx < 0) {
                         idx = (cast(int) ary.data.length) + idx;
                     }
                     if (idx >= ary.data.length) {
-                        raise(currentTask, new GrStringWrapper("IndexError"));
+                        raise(currentTask, "IndexError");
                         break;
                     }
                     currentTask.stack[currentTask.stackPos - 1]._ovalue = &ary.data[idx];
@@ -1324,46 +1325,50 @@ class GrEngine {
                     break;
                 case length_array:
                     currentTask.stack[currentTask.stackPos]._ivalue = cast(int)(
-                        (cast(GrArray) currentTask.stack[currentTask.stackPos]._ovalue).data.length);
+                        (cast(GrArrayWrapper) currentTask.stack[currentTask.stackPos]._ovalue)
+                            .data.length);
                     currentTask.pc++;
                     break;
                 case concatenate_array:
-                    GrArray nArray = new GrArray;
+                    GrArrayWrapper nArray = new GrArrayWrapper;
                     currentTask.stackPos--;
-                    nArray.data = (cast(GrArray) currentTask.stack[currentTask.stackPos]._ovalue)
-                        .data ~ (cast(GrArray) currentTask.stack[currentTask.stackPos + 1]._ovalue)
+                    nArray.data = (cast(GrArrayWrapper) currentTask.stack[currentTask.stackPos]._ovalue)
+                        .data ~ (cast(GrArrayWrapper) currentTask.stack[currentTask.stackPos + 1]._ovalue)
                         .data;
                     currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) nArray;
                     currentTask.pc++;
                     break;
                 case append_array:
-                    GrArray nArray = new GrArray;
+                    GrArrayWrapper nArray = new GrArrayWrapper;
                     currentTask.stackPos--;
-                    nArray.data = (cast(GrArray) currentTask.stack[currentTask.stackPos]._ovalue)
+                    nArray.data = (cast(GrArrayWrapper) currentTask.stack[currentTask.stackPos]._ovalue)
                         .data ~ currentTask.stack[currentTask.stackPos + 1];
                     currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) nArray;
                     currentTask.pc++;
                     break;
                 case prepend_array:
-                    GrArray nArray = new GrArray;
+                    GrArrayWrapper nArray = new GrArrayWrapper;
                     currentTask.stackPos--;
                     nArray.data = currentTask.stack[currentTask.stackPos] ~ (cast(
-                            GrArray) currentTask.stack[currentTask.stackPos + 1]._ovalue).data;
+                            GrArrayWrapper) currentTask.stack[currentTask.stackPos + 1]._ovalue)
+                        .data;
                     currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) nArray;
                     currentTask.pc++;
                     break;
                 case equal_array:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue = (cast(
-                            GrArray) currentTask.stack[currentTask.stackPos]._ovalue).data == (
-                        cast(GrArray) currentTask.stack[currentTask.stackPos + 1]._ovalue).data;
+                            GrArrayWrapper) currentTask.stack[currentTask.stackPos]._ovalue).data == (
+                        cast(GrArrayWrapper) currentTask.stack[currentTask.stackPos + 1]._ovalue)
+                        .data;
                     currentTask.pc++;
                     break;
                 case notEqual_array:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue = (cast(
-                            GrArray) currentTask.stack[currentTask.stackPos]._ovalue).data != (
-                        cast(GrArray) currentTask.stack[currentTask.stackPos + 1]._ovalue).data;
+                            GrArrayWrapper) currentTask.stack[currentTask.stackPos]._ovalue).data != (
+                        cast(GrArrayWrapper) currentTask.stack[currentTask.stackPos + 1]._ovalue)
+                        .data;
                     currentTask.pc++;
                     break;
                 case debugProfileBegin:

@@ -57,52 +57,52 @@ private void _print_s(GrCall call) {
 }
 
 private void _print_ni(GrCall call) {
-    auto ary = call.getArray(0);
+    GrArray ary = call.getArray(0);
     string txt = "[";
-    for (int i; i < ary.data.length; ++i) {
+    for (int i; i < ary.length; ++i) {
         if (i != 0) {
             txt ~= ", ";
         }
-        txt ~= to!string(ary.data[i].getInt());
+        txt ~= to!string(ary[i].getInt());
     }
     txt ~= "]";
     _stdOut(txt);
 }
 
 private void _print_nb(GrCall call) {
-    auto ary = call.getArray(0);
+    GrArray ary = call.getArray(0);
     string txt = "[";
-    for (int i; i < ary.data.length; ++i) {
+    for (int i; i < ary.length; ++i) {
         if (i != 0) {
             txt ~= ", ";
         }
-        txt ~= ary.data[i].getBool() ? "true" : "false";
+        txt ~= ary[i].getBool() ? "true" : "false";
     }
     txt ~= "]";
     _stdOut(txt);
 }
 
 private void _print_nr(GrCall call) {
-    auto ary = call.getArray(0);
+    GrArray ary = call.getArray(0);
     string txt = "[";
-    for (int i; i < ary.data.length; ++i) {
+    for (int i; i < ary.length; ++i) {
         if (i != 0) {
             txt ~= ", ";
         }
-        txt ~= to!string(ary.data[i].getReal());
+        txt ~= to!string(ary[i].getReal());
     }
     txt ~= "]";
     _stdOut(txt);
 }
 
 private void _print_ns(GrCall call) {
-    auto ary = call.getArray(0);
+    GrArray ary = call.getArray(0);
     string txt = "[";
-    for (int i; i < ary.data.length; ++i) {
+    for (int i; i < ary.length; ++i) {
         if (i != 0) {
             txt ~= ", ";
         }
-        txt ~= ary.data[i].getString();
+        txt ~= ary[i].getString();
     }
     txt ~= "]";
     _stdOut(txt);

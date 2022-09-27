@@ -8,8 +8,7 @@ module grimoire.runtime.call;
 import std.conv : to;
 import grimoire.assembly;
 import grimoire.compiler;
-import grimoire.runtime.task, grimoire.runtime.array, grimoire.runtime.object,
-    grimoire.runtime.channel;
+import grimoire.runtime.task, grimoire.runtime.object, grimoire.runtime.channel;
 
 /// Primitive type.
 alias GrCallback = void function(GrCall);
@@ -115,7 +114,7 @@ final class GrCall {
     }
 
     pragma(inline) GrArray getArray(uint index) {
-        return cast(GrArray) getParameter!GrPtr(index);
+        return (cast(GrArrayWrapper) getParameter!GrPtr(index)).data;
     }
 
     pragma(inline) GrChannel getChannel(uint index) {
@@ -156,8 +155,8 @@ final class GrCall {
     alias setInt = setResult!GrInt;
     alias setReal = setResult!GrReal;
     alias setPtr = setResult!GrPtr;
-    
-    pragma(inline) void setNull(int value) {
+
+    pragma(inline) void setNull() {
         _outputs[_results].setNull();
     }
 
@@ -186,7 +185,7 @@ final class GrCall {
     }
 
     pragma(inline) void setArray(GrArray value) {
-        setResult!GrPtr(cast(GrPtr) value);
+        setResult!GrPtr(cast(GrPtr) new GrArrayWrapper(value));
     }
 
     pragma(inline) void setChannel(GrChannel value) {
@@ -235,8 +234,12 @@ final class GrCall {
         return _task.engine.getRealVariable(name);
     }
 
-    GrStringWrapper getStringVariable(string name) {
+    GrString getStringVariable(string name) {
         return _task.engine.getStringVariable(name);
+    }
+
+    GrArray getArrayVariable(string name) {
+        return _task.engine.getArrayVariable(name);
     }
 
     GrPtr getPtrVariable(string name) {
@@ -245,10 +248,6 @@ final class GrCall {
 
     GrObject getObjectVariable(string name) {
         return _task.engine.getObjectVariable(name);
-    }
-
-    GrArray getArrayVariable(string name) {
-        return _task.engine.getArrayVariable(name);
     }
 
     GrChannel getChannelVariable(string name) {
@@ -275,8 +274,12 @@ final class GrCall {
         _task.engine.setRealVariable(name, value);
     }
 
-    void setStringVariable(string name, GrStringWrapper value) {
+    void setStringVariable(string name, GrString value) {
         _task.engine.setStringVariable(name, value);
+    }
+
+    void setArrayVariable(string name, GrArray value) {
+        _task.engine.setArrayVariable(name, value);
     }
 
     void setPtrVariable(string name, GrPtr value) {
@@ -285,10 +288,6 @@ final class GrCall {
 
     void setObjectVariable(string name, GrObject value) {
         _task.engine.setObjectVariable(name, value);
-    }
-
-    void setArrayVariable(string name, GrArray value) {
-        _task.engine.setArrayVariable(name, value);
     }
 
     void setChannelVariable(string name, GrChannel value) {
@@ -304,20 +303,16 @@ final class GrCall {
     }
 
     private {
-        GrStringWrapper _message;
+        GrString _message;
         bool _hasError;
     }
 
     /// Does not actually send the error to the task.
     /// Because the stacks would be in an undefined state.
     /// So we wait until the primitive is finished before calling dispatchError().
-    void raise(GrStringWrapper message) {
+    void raise(GrString message) {
         _message = message;
         _hasError = true;
-    }
-    /// Ditto
-    void raise(GrString message) {
-        raise(new GrStringWrapper(message));
     }
 
     private void dispatchError() {
