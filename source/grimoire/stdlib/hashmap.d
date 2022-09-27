@@ -18,7 +18,7 @@ private final class HashMap {
     /// Ctor
     this(GrArray keys, GrArray values) {
         for (size_t i; i < keys.data.length; ++i) {
-            data[keys.data[i].svalue] = values.data[i];
+            data[keys.data[i].getString()] = values.data[i];
         }
     }
     /// Ditto
@@ -93,7 +93,7 @@ private void _newByPairs(GrCall call) {
     HashMap hashmap = new HashMap;
     GrArray pairs = call.getArray(0);
     for (size_t i; i < pairs.data.length; ++i) {
-        GrObject pair = cast(GrObject) pairs.data[i].ovalue;
+        GrObject pair = cast(GrObject) pairs.data[i].getPtr();
         hashmap.data[pair.getString("key")] = pair.getValue("value");
     }
     call.setForeign(hashmap);
@@ -262,13 +262,13 @@ private void _print_(string T)(GrCall call) {
         }
         result ~= "\"" ~ key ~ "\"=>";
         static if (T == "bool")
-            result ~= to!string(cast(GrBool) value.ivalue);
+            result ~= to!string(value.getBool());
         else static if (T == "int")
-            result ~= to!string(value.ivalue);
+            result ~= to!string(value.getInt());
         else static if (T == "real")
-            result ~= to!string(value.rvalue);
+            result ~= to!string(value.getReal());
         else static if (T == "string")
-            result ~= "\"" ~ value.svalue ~ "\"";
+            result ~= "\"" ~ value.getString() ~ "\"";
         else
             static assert(false);
     }

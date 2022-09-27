@@ -80,6 +80,8 @@ struct GrLexeme {
         not,
         increment,
         decrement,
+        optional,
+        optionalOr,
         identifier,
         int_,
         real_,
@@ -834,6 +836,16 @@ package final class GrLexer {
                 _current++;
             }
             break;
+        case '?':
+            lex.type = GrLexeme.Type.optional;
+            if (_current + 1 >= _text.length)
+                break;
+            if (get(1) == '?') {
+                lex.type = GrLexeme.Type.optionalOr;
+                lex._textLength = 2;
+                _current++;
+            }
+            break;
         default:
             raiseError(Error.invalidOp);
         }
@@ -1227,7 +1239,7 @@ private immutable string[] _prettyLexemeTypeTable = [
     "&&=", "||=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+", "-",
     "&", "|", "^", "&&", "||", "+", "-", "*", "/", "~", "%", "**",
     "==", "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->",
-    "=>", "~", "!", "++", "--", "identifier", "const_int",
+    "=>", "~", "!", "++", "--", "?", "??", "identifier", "const_int",
     "const_float", "const_bool", "const_string", "null", "public", "const",
     "pure", "alias", "event", "class", "enum", "where", "new", "copy",
     "send", "receive", "int", "real", "bool", "string", "array",

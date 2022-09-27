@@ -56,7 +56,7 @@ GrType[] grUnmangleSignature(const string mangledSignature) {
         case '*':
             currentType.base = GrType.Base.void_;
             break;
-        case '?':
+        case 'a':
             currentType.base = GrType.Base.void_;
             currentType.isAny = true;
             string templateName;
@@ -85,6 +85,11 @@ GrType[] grUnmangleSignature(const string mangledSignature) {
             break;
         case 's':
             currentType.base = GrType.Base.string_;
+            break;
+        case '?':
+            i++;
+            currentType.base = GrType.Base.optional;
+            currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             break;
         case 'n':
             i++;
@@ -214,7 +219,7 @@ string grUnmangleBlock(const string mangledSignature, ref int i) {
 string grMangle(const GrType type) {
     string mangledName = "$";
     if (type.isAny) {
-        mangledName ~= "?(" ~ type.mangledType ~ ")";
+        mangledName ~= "a(" ~ type.mangledType ~ ")";
         return mangledName;
     }
 
@@ -244,6 +249,9 @@ string grMangle(const GrType type) {
     case string_:
         mangledName ~= "s";
         break;
+    case optional:
+        mangledName ~= "?(" ~ type.mangledType ~ ")";
+        break;
     case array:
         mangledName ~= "n(" ~ type.mangledType ~ ")";
         break;
@@ -269,7 +277,7 @@ string grMangle(const GrType type) {
         mangledName ~= "h(" ~ type.mangledType ~ ")";
         break;
     case internalTuple:
-        throw new Exception("Trying to mangle a tuple. Tuples should not exist here.");
+        assert(false, "trying to mangle a tuple which should not exist here");
     }
     return mangledName;
 }
@@ -299,7 +307,7 @@ GrType grUnmangle(const string mangledSignature) {
         case '*':
             currentType.base = GrType.Base.void_;
             break;
-        case '?':
+        case 'a':
             currentType.base = GrType.Base.void_;
             currentType.isAny = true;
             string templateName;
@@ -328,6 +336,12 @@ GrType grUnmangle(const string mangledSignature) {
             break;
         case 's':
             currentType.base = GrType.Base.string_;
+            break;
+        case '?':
+            i++;
+            currentType.base = GrType.Base.optional;
+            currentType.mangledType = grUnmangleBlock(mangledSignature, i);
+            i++;
             break;
         case 'n':
             i++;

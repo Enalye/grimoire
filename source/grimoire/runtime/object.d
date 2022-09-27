@@ -96,13 +96,13 @@ final class GrObject {
                 static if (is(T == GrValue))
                     return _fields[index].value;
                 else static if (is(T == GrInt))
-                    return _fields[index].value.ivalue;
+                    return _fields[index].value.getInt();
                 else static if (is(T == GrBool))
-                    return cast(T) _fields[index].value.ivalue;
+                    return cast(T) _fields[index].value.getInt();
                 else static if (is(T == GrReal))
-                    return _fields[index].value.rvalue;
+                    return _fields[index].value.getReal();
                 else static if (is(T == GrPtr))
-                    return _fields[index].value.ovalue;
+                    return _fields[index].value.getPtr();
                 else
                     static assert(false, "invalid field type `" ~ T.stringof ~ "`");
             }

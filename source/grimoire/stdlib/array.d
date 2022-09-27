@@ -13,9 +13,9 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
     library.addForeign("ArrayIterator", ["T"]);
 
     GrType valueType = grAny("T");
-    GrType pureValueType = grAny("T", true);
+    GrType pureValueType = grPure(valueType);
     GrType arrayType = grArray(valueType);
-    GrType pureArrayType = grArray(valueType, true);
+    GrType pureArrayType = grPure(arrayType);
     GrType iteratorType = grGetForeignType("ArrayIterator", [valueType]);
 
     library.addFunction(&_copy, "copy", [pureArrayType], [arrayType]);
@@ -362,11 +362,11 @@ private void _sort_(string T)(GrCall call) {
 
     GrArray array = call.getArray(0);
     static if (T == "int")
-        array.data.sort!((a, b) => a.ivalue < b.ivalue)();
+        array.data.sort!((a, b) => a.getInt() < b.getInt())();
     else static if (T == "real")
-        array.data.sort!((a, b) => a.rvalue < b.rvalue)();
+        array.data.sort!((a, b) => a.getReal() < b.getReal())();
     else static if (T == "string")
-        array.data.sort!((a, b) => (cast(GrStringWrapper) a.ovalue).data < (cast(GrStringWrapper) b.ovalue).data)();
+        array.data.sort!((a, b) => a.getString() < b.getString())();
     call.setArray(array);
 }
 

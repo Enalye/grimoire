@@ -191,19 +191,19 @@ final class GrTask {
     private void setValue(T)(T value) {
         static if (is(T == GrInt)) {
             stackPos++;
-            stack[stackPos].ivalue = value;
+            stack[stackPos].setInt(value);
         }
         else static if (is(T == GrBool)) {
             stackPos++;
-            stack[stackPos].ivalue = value;
+            stack[stackPos].setInt(value);
         }
         else static if (is(T == GrReal)) {
             stackPos++;
-            stack[stackPos].rvalue = value;
+            stack[stackPos].setReal(value);
         }
         else static if (is(T == GrPtr)) {
             stackPos++;
-            stack[stackPos].ovalue = value;
+            stack[stackPos].setPtr(value);
         }
     }
 

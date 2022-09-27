@@ -842,7 +842,7 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos]._ovalue = null;
+                    currentTask.stack[currentTask.stackPos].setNull();
                     currentTask.pc++;
                     break;
                 case globalPush:

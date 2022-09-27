@@ -31,6 +31,7 @@ struct GrType {
         real_,
         bool_,
         string_,
+        optional,
         array,
         function_,
         task,
@@ -172,14 +173,19 @@ const GrType grPureStringChannel = GrType(GrType.Base.channel, grMangleSignature
         grString
     ]), true);
 
+/// Make an optional version of the type.
+GrType grOptional(GrType subType) {
+    return GrType(GrType.Base.optional, grMangleSignature([subType]));
+}
+
 /// Returns a GrType of type array and of `subType` subtype.
-GrType grArray(GrType subType, bool isPure = false) {
-    return GrType(GrType.Base.array, grMangleSignature([subType]), isPure);
+GrType grArray(GrType subType) {
+    return GrType(GrType.Base.array, grMangleSignature([subType]));
 }
 
 /// Returns a GrType of type channel and of `subType` subtype.
-GrType grChannel(GrType subType, bool isPure = false) {
-    return GrType(GrType.Base.channel, grMangleSignature([subType]), isPure);
+GrType grChannel(GrType subType) {
+    return GrType(GrType.Base.channel, grMangleSignature([subType]));
 }
 
 /// Returns a GrType of type function with given signatures.
@@ -196,12 +202,23 @@ GrType grTask(GrType[] signature) {
 }
 
 /// Temporary type for template functions.
-GrType grAny(string name, bool isPure = false) {
+GrType grAny(string name) {
     GrType type;
     type.base = GrType.Base.void_;
     type.mangledType = name;
     type.isAny = true;
-    type.isPure = isPure;
+    return type;
+}
+
+/// Make a const version of the type.
+GrType grConst(GrType type) {
+    type.isConst = true;
+    return type;
+}
+
+/// Make a pure version of the type.
+GrType grPure(GrType type) {
+    type.isPure = true;
     return type;
 }
 
@@ -564,6 +581,7 @@ package class GrFunction {
         case real_:
         case string_:
         case array:
+        case optional:
         case class_:
         case foreign:
         case channel:

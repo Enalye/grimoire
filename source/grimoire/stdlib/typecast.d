@@ -56,7 +56,7 @@ private void typecast_r2s(GrCall call) {
 private void typecast_as2s(GrCall call) {
     GrString result;
     foreach (const ref sub; call.getArray(0).data) {
-        result ~= sub.svalue.data;
+        result ~= sub.getString();
     }
     call.setString(result);
 }

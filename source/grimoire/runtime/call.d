@@ -84,6 +84,12 @@ final class GrCall {
     alias getReal = getParameter!GrReal;
     alias getPtr = getParameter!GrPtr;
 
+    pragma(inline) GrBool isNull(uint index)
+    in (index < _parameters.length,
+        "parameter index `" ~ to!string(index) ~ "` exceeds the number of parameters") {
+        return _inputs[index].isNull();
+    }
+
     pragma(inline) int getInt32(uint index) {
         return cast(int) getParameter!GrInt(index);
     }
@@ -132,16 +138,16 @@ final class GrCall {
             return _inputs[index];
         }
         else static if (is(T == GrInt)) {
-            return _inputs[index].ivalue;
+            return _inputs[index].getInt();
         }
         else static if (is(T == GrBool)) {
-            return _inputs[index].ivalue > 0;
+            return _inputs[index].getInt() > 0;
         }
         else static if (is(T == GrReal)) {
-            return _inputs[index].rvalue;
+            return _inputs[index].getReal();
         }
         else static if (is(T == GrPtr)) {
-            return _inputs[index].ovalue;
+            return _inputs[index].getPtr();
         }
     }
 
@@ -150,6 +156,10 @@ final class GrCall {
     alias setInt = setResult!GrInt;
     alias setReal = setResult!GrReal;
     alias setPtr = setResult!GrPtr;
+    
+    pragma(inline) void setNull(int value) {
+        _outputs[_results].setNull();
+    }
 
     pragma(inline) void setInt32(int value) {
         setResult!GrInt(cast(GrInt) value);
@@ -196,19 +206,19 @@ final class GrCall {
             _outputs[_results] = value;
         }
         else static if (is(T == GrInt)) {
-            _outputs[_results].ivalue = value;
+            _outputs[_results].setInt(value);
         }
         else static if (is(T == GrBool)) {
-            _outputs[_results].ivalue = cast(GrInt) value;
+            _outputs[_results].setInt(cast(GrInt) value);
         }
         else static if (is(T == GrReal)) {
-            _outputs[_results].rvalue = value;
+            _outputs[_results].setReal(value);
         }
         else static if (is(T == GrStringWrapper)) {
-            _outputs[_results].svalue = value;
+            _outputs[_results].setString(value);
         }
         else static if (is(T == GrPtr)) {
-            _outputs[_results].ovalue = value;
+            _outputs[_results].setPtr(value);
         }
         _results++;
     }

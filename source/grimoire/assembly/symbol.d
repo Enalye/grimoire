@@ -9,10 +9,12 @@ import std.format, std.file, std.bitmanip, std.array, std.outbuffer;
 import std.conv : to;
 
 alias GrBool = bool;
-alias GrInt = long;
+alias GrInt = int;
 alias GrReal = double;
 alias GrString = string;
 alias GrPtr = void*;
+
+package(grimoire) enum GR_NULL = 0xffffUL << 48;
 
 final class GrStringWrapper {
     private {
@@ -44,7 +46,7 @@ final class GrStringWrapper {
 
     @property {
         GrInt length() {
-            return _data.length;
+            return cast(GrInt) _data.length;
         }
 
         pragma(inline) GrString data() {
@@ -66,9 +68,8 @@ struct GrValue {
         GrInt _ivalue;
         GrReal _rvalue;
         GrPtr _ovalue;
+        ulong _bytes;
     }
-
-    private bool _isNull;
 
     this(GrInt value) {
         _ivalue = value;
@@ -90,41 +91,53 @@ struct GrValue {
         _ovalue = value;
     }
 
+    pragma(inline) void setNull() {
+        _bytes = GR_NULL;
+    }
+
+    pragma(inline) GrBool getBool() {
+        return cast(GrBool) _ivalue;
+    }
+
+    pragma(inline) GrBool setBool(GrBool value) {
+        return _ivalue = cast(GrInt) value;
+    }
+
+    pragma(inline) GrInt getInt() {
+        return _ivalue;
+    }
+
+    pragma(inline) GrInt setInt(GrInt value) {
+        return _ivalue = value;
+    }
+
+    pragma(inline) GrReal getReal() {
+        return _rvalue;
+    }
+
+    pragma(inline) GrReal setReal(GrReal value) {
+        return _rvalue = value;
+    }
+
+    pragma(inline) GrPtr getPtr() {
+        return _ovalue;
+    }
+
+    pragma(inline) GrPtr setPtr(GrPtr value) {
+        return _ovalue = value;
+    }
+
+    pragma(inline) GrString getString() const {
+        return (cast(GrStringWrapper) _ovalue).data;
+    }
+
+    pragma(inline) GrString setString(GrString value) {
+        return (cast(GrStringWrapper) _ovalue).data = value;
+    }
+
     @property {
-        GrStringWrapper svalue() const {
-            return cast(GrStringWrapper) _ovalue;
-        }
-
-        pragma(inline) GrInt ivalue() {
-            return _ivalue;
-        }
-
-        pragma(inline) GrInt ivalue(GrInt value) {
-            return _ivalue = value;
-        }
-
-        pragma(inline) GrReal rvalue() {
-            return _rvalue;
-        }
-
-        pragma(inline) GrReal rvalue(GrReal value) {
-            return _rvalue = value;
-        }
-
-        pragma(inline) GrPtr ovalue() {
-            return _ovalue;
-        }
-
-        pragma(inline) GrPtr ovalue(GrPtr value) {
-            return _ovalue = value;
-        }
-
-        pragma(inline) GrString svalue() {
-            return (cast(GrStringWrapper) _ovalue).data;
-        }
-
-        pragma(inline) GrString svalue(GrString value) {
-            return (cast(GrStringWrapper) _ovalue).data = value;
+        pragma(inline) GrBool isNull() const {
+            return _bytes == GR_NULL;
         }
     }
 }

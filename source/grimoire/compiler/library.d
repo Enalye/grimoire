@@ -72,6 +72,7 @@ class GrLibrary {
         case real_:
         case string_:
             break;
+        case optional:
         case class_:
         case channel:
         case function_:

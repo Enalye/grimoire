@@ -494,6 +494,7 @@ final class GrData {
             break;
         case array:
         case channel:
+        case optional:
             GrType subType = reifyType(grUnmangle(type.mangledType));
             result.mangledType = grMangle(subType);
             result.isAbstract = subType.isAbstract;
@@ -605,6 +606,7 @@ final class GrData {
                 return false;
             case array:
             case channel:
+            case optional:
                 if (first[i].base != second[i].base)
                     return false;
                 if (isSignatureCompatible([grUnmangle(first[i].mangledType)],
