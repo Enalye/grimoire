@@ -956,9 +956,9 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos + 1]._rvalue;
                     currentTask.pc++;
                     break;
-                case isNonNull_object:
-                    currentTask.stack[currentTask.stackPos]._ivalue = (
-                        currentTask.stack[currentTask.stackPos]._ovalue !is null);
+                case checkNull:
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._bytes != GR_NULL;
                     currentTask.pc++;
                     break;
                 case and_int:

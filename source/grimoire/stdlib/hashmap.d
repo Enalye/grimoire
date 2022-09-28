@@ -64,7 +64,7 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
     library.addFunction(&_byKeys, "keys", [hashMapType], [grStringArray]);
     library.addFunction(&_byValues, "values", [hashMapType], [arrayType]);
     library.addFunction(&_each, "each", [hashMapType], [iteratorType]);
-    library.addFunction(&_next, "next", [iteratorType], [grBool, pairType]);
+    library.addFunction(&_next, "next", [iteratorType], [grOptional(pairType)]);
 
     GrType boolHashMap = grGetForeignType("HashMap", [grBool]);
     library.addFunction(&_print_!"bool", "print", [boolHashMap]);
@@ -232,11 +232,9 @@ private void _next(GrCall call) {
         return;
     }
     if (iter.index >= iter.pairs.length) {
-        call.setBool(false);
-        call.setPtr(null);
+        call.setNull();
         return;
     }
-    call.setBool(true);
     GrObject obj = new GrObject(["key", "value"]);
     obj.setString("key", iter.pairs[iter.index][0]);
     obj.setValue("value", iter.pairs[iter.index][1]);

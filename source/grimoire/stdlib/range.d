@@ -15,9 +15,10 @@ package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library) {
     GrType rangeIteratorRealType = grGetForeignType("RangeIterator", [grReal]);
 
     library.addFunction(&_range_next_i, "next", [rangeIteratorIntType], [
-            grBool, grInt
+            grOptional(grInt),
         ]);
-    library.addOperator(&_range_i, GrLibrary.Operator.interval, [grInt, grInt], rangeIteratorIntType);
+    library.addOperator(&_range_i, GrLibrary.Operator.interval, [grInt,
+            grInt], rangeIteratorIntType);
     library.addFunction(&_range_i, "range", [grInt, grInt], [
             rangeIteratorIntType
         ]);
@@ -26,17 +27,14 @@ package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library) {
         ]);
 
     library.addFunction(&_range_next_r, "next", [rangeIteratorRealType], [
-            grBool, grReal
+            grOptional(grReal)
         ]);
-    library.addOperator(&_range_r, GrLibrary.Operator.interval, [
-            grReal, grReal
-        ], rangeIteratorRealType);
+    library.addOperator(&_range_r, GrLibrary.Operator.interval, [grReal,
+            grReal], rangeIteratorRealType);
     library.addFunction(&_range_r, "range", [grReal, grReal], [
             rangeIteratorRealType
         ]);
-    library.addFunction(&_range_step_r, "range", [
-            grReal, grReal, grReal
-        ],
+    library.addFunction(&_range_step_r, "range", [grReal, grReal, grReal],
         [rangeIteratorRealType]);
 }
 
@@ -51,11 +49,9 @@ private void _range_next_i(GrCall call) {
         return;
     }
     if ((iter.step < 0 && iter.value < iter.end) || (iter.step > 0 && iter.value > iter.end)) {
-        call.setBool(false);
-        call.setInt(0);
+        call.setNull();
         return;
     }
-    call.setBool(true);
     call.setInt(iter.value);
     iter.value += iter.step;
 }
@@ -86,11 +82,9 @@ private void _range_next_r(GrCall call) {
         return;
     }
     if ((iter.step < 0f && iter.value < iter.end) || (iter.step > 0f && iter.value > iter.end)) {
-        call.setBool(false);
-        call.setReal(0f);
+        call.setNull();
         return;
     }
-    call.setBool(true);
     call.setReal(iter.value);
     iter.value += iter.step;
 }

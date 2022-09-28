@@ -158,6 +158,7 @@ final class GrCall {
 
     pragma(inline) void setNull() {
         _outputs[_results].setNull();
+        _results++;
     }
 
     pragma(inline) void setInt32(int value) {

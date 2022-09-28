@@ -47,7 +47,7 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
             arrayType
         ]);
     library.addFunction(&_each, "each", [arrayType], [iteratorType]);
-    library.addFunction(&_next, "next", [iteratorType], [grBool, valueType]);
+    library.addFunction(&_next, "next", [iteratorType], [grOptional(valueType)]);
     library.addFunction(&_findFirst, "findFirst", [pureArrayType, pureValueType], [
             grInt
         ]);
@@ -419,11 +419,9 @@ private void _next(GrCall call) {
         return;
     }
     if (iter.index >= iter.array.length) {
-        call.setBool(false);
-        call.setValue(GrValue());
+        call.setNull();
         return;
     }
-    call.setBool(true);
     call.setValue(iter.array[iter.index]);
     iter.index++;
 }

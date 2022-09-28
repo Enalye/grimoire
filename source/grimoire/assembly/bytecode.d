@@ -72,7 +72,7 @@ enum GrOpcode {
     greater_real,
     lesser_int,
     lesser_real,
-    isNonNull_object,
+    checkNull,
 
     and_int,
     or_int,

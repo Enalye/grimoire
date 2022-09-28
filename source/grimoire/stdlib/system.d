@@ -22,7 +22,9 @@ package void grLoadStdLibSystem(GrLibrary library) {
     library.addFunction(&_expectOption, "expect", [optionType, grPureString], [
             grAny("T")
         ]);
-    library.addFunction(&_unwrap, "unwrap", [grBool, grAny("T")], [grAny("T")]);
+    library.addFunction(&_unwrap, "unwrap", [grOptional(grAny("T"))], [
+            grAny("T")
+        ]);
     library.addFunction(&_unwrapOption, "unwrap", [optionType], [grAny("T")]);
     library.addFunction(&_unwrapOr, "unwrapOr", [grBool, grAny("T"), grAny("T")], [
             grAny("T")
@@ -78,10 +80,10 @@ private void _wrap(GrCall call) {
 }
 
 private void _unwrap(GrCall call) {
-    if (call.getBool(0))
-        call.setValue(call.getValue(1));
-    else
+    if (call.isNull(0))
         call.raise("UnwrapError");
+    else
+        call.setValue(call.getValue(0));
 }
 
 private void _unwrapOption(GrCall call) {

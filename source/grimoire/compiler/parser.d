@@ -1057,12 +1057,22 @@ final class GrParser {
 
     private GrType addInternalOperator(GrLexeme.Type lexType, GrType varType, bool isSwapped = false) {
         switch (varType.base) with (GrType.Base) {
+        case optional:
+            switch (lexType) with (GrLexeme.Type) {
+            case not:
+                addInstruction(GrOpcode.checkNull);
+                addInstruction(GrOpcode.not_int);
+                return GrType(GrType.Base.bool_);
+            default:
+                break;
+            }
+            break;
         case class_:
         case foreign:
             switch (lexType) with (GrLexeme.Type) {
             case not:
-                addInstruction(GrOpcode.isNonNull_object);
-                addInstruction(GrOpcode.not_int);
+                addInstruction(GrOpcode.shiftStack, -1);
+                addInstruction(GrOpcode.const_bool, 0);
                 return GrType(GrType.Base.bool_);
             default:
                 break;
@@ -2198,7 +2208,7 @@ final class GrParser {
                     }
                 }
             }
-            if (currentType.base == GrType.Base.void_) {
+            if (!currentType.isAny) {
                 if (lex.type == GrLexeme.Type.identifier &&
                     _data.isTypeAlias(lex.svalue, lex.fileId, false)) {
                     currentType = _data.getTypeAlias(lex.svalue, lex.fileId).type;
@@ -3933,7 +3943,7 @@ final class GrParser {
     }
 
     /**
-    The for statement takes an iterator and a array.
+    The for statement takes an iterator and an array.
     */
     private void parseForStatement() {
         advance();
@@ -4085,20 +4095,20 @@ final class GrParser {
                 GrFunction nextFunc = matching.func;
                 GrPrimitive nextPrim = matching.prim;
                 if (nextPrim) {
-                    if (nextPrim.outSignature.length != 2 || (nextPrim.outSignature.length >= 1 &&
-                            nextPrim.outSignature[0].base != grBool)) {
-                        logError(format(getError(Error.primXMustRetBoolAndVal), getPrettyFunctionCall("next",
+                    if (nextPrim.outSignature.length != 1 ||
+                        nextPrim.outSignature[0].base != GrType.Base.optional) {
+                        logError(format(getError(Error.primXMustRetOptional), getPrettyFunctionCall("next",
                                 [containerType])), getError(Error.signatureMismatch));
                     }
-                    subType = nextPrim.outSignature[1];
+                    subType = grUnmangle(nextPrim.outSignature[0].mangledType);
                 }
                 else if (nextFunc) {
-                    if (nextFunc.outSignature.length != 2 || (nextFunc.outSignature.length >= 1 &&
-                            nextFunc.outSignature[0].base != grBool)) {
-                        logError(format(getError(Error.funcXMustRetBoolAndVal),
+                    if (nextFunc.outSignature.length != 1 ||
+                        nextFunc.outSignature[0].base != GrType.Base.optional) {
+                        logError(format(getError(Error.funcXMustRetOptional),
                                 getPrettyFunction(nextFunc)), getError(Error.signatureMismatch));
                     }
-                    subType = nextFunc.outSignature[1];
+                    subType = grUnmangle(nextFunc.outSignature[0].mangledType);
                 }
                 else {
                     logError(format(getError(Error.xNotDef), getPrettyFunctionCall("next",
@@ -4127,7 +4137,7 @@ final class GrParser {
                     addInstruction(GrOpcode.primitiveCall, nextPrim.index);
                 else
                     addFunctionCall(nextFunc, fileId);
-                addSetInstruction(variable, fileId);
+                addSetInstruction(variable, fileId, grVoid, true);
 
                 uint jumpPosition = cast(uint) currentFunction.instructions.length;
                 addInstruction(GrOpcode.jumpEqual);
@@ -4408,6 +4418,8 @@ final class GrParser {
     ---
     */
     private void parseReturnStatement() {
+        const uint fileId = get().fileId;
+
         checkDeferStatement();
         checkAdvance();
         if (currentFunction.isTask || currentFunction.isEvent) {
@@ -4416,18 +4428,61 @@ final class GrParser {
                 addDie();
         }
         else {
-            auto types = parseExpressionList();
+            GrType[] expressionTypes;
+            for (;;) {
+                if (expressionTypes.length >= currentFunction.outSignature.length) {
+                    logError(getError(Error.expectedXRetValFoundY),
+                        format(getError(currentFunction.outSignature.length > 1 ?
+                            Error.expectedXRetValsFoundY : Error.expectedXRetValFoundY),
+                            currentFunction.outSignature.length, expressionTypes.length),
+                        format(getError(Error.retSignatureOfTypeX),
+                            getPrettyFunctionCall("", currentFunction.outSignature)), -1);
+                }
+                GrType type = parseSubExpression(
+                    GR_SUBEXPR_TERMINATE_SEMICOLON | GR_SUBEXPR_TERMINATE_COMMA |
+                        GR_SUBEXPR_EXPECTING_VALUE).type;
+                if (type.base == GrType.Base.internalTuple) {
+                    auto types = grUnpackTuple(type);
+                    if (types.length) {
+                        foreach (subType; types) {
+                            if (expressionTypes.length >= currentFunction.outSignature.length) {
+                                logError(getError(Error.expectedXRetValFoundY),
+                                    format(getError(currentFunction.outSignature.length > 1 ?
+                                        Error.expectedXRetValsFoundY
+                                        : Error.expectedXRetValFoundY),
+                                        currentFunction.outSignature.length, expressionTypes.length),
+                                    format(getError(Error.retSignatureOfTypeX),
+                                        getPrettyFunctionCall("", currentFunction.outSignature)),
+                                    -1);
+                            }
+                            expressionTypes ~= convertType(subType,
+                                currentFunction.outSignature[expressionTypes.length], fileId);
+                        }
+                    }
+                    else
+                        logError(getError(Error.exprYieldsNoVal),
+                            getError(Error.expectedValFoundNothing));
+                }
+                else if (type.base != GrType.Base.void_) {
+                    expressionTypes ~= convertType(type,
+                        currentFunction.outSignature[expressionTypes.length], fileId);
+                }
+                if (get().type != GrLexeme.Type.comma)
+                    break;
+                checkAdvance();
+            }
+            if (get().type != GrLexeme.Type.semicolon)
+                logError(getError(Error.missingSemicolonAfterExprList), format(getError(Error.expectedXFoundY),
+                        getPrettyLexemeType(GrLexeme.Type.semicolon),
+                        getPrettyLexemeType(get().type)));
+            checkAdvance();
+            
 
             addReturn();
-            if (types.length != currentFunction.outSignature.length) {
-                logError(getError(Error.expectedXRetValFoundY), format(getError(currentFunction.outSignature.length > 1 ?
-                        Error.expectedXRetValsFoundY : Error.expectedXRetValFoundY),
-                        currentFunction.outSignature.length, types.length), format(getError(Error.retSignatureOfTypeX),
-                        getPrettyFunctionCall("", currentFunction.outSignature)), -1);
-            }
-            for (int i; i < types.length; i++) {
-                if (types[i] != currentFunction.outSignature[i])
-                    logError(format(getError(Error.retTypeXNotMatchSignatureY), getPrettyType(types[i]),
+
+            for (int i; i < expressionTypes.length; i++) {
+                if (expressionTypes[i] != currentFunction.outSignature[i])
+                    logError(format(getError(Error.retTypeXNotMatchSignatureY), getPrettyType(expressionTypes[i]),
                             getPrettyType(currentFunction.outSignature[i])), format(getError(Error.expectedXVal),
                             getPrettyType(currentFunction.outSignature[i])),
                         format(getError(Error.retSignatureOfTypeX),
@@ -4638,11 +4693,14 @@ final class GrParser {
             }
         }
 
-        if(dst.base == GrType.Base.optional) {
+        if (dst.base == GrType.Base.optional) {
             if (src.base == GrType.Base.null_)
                 return dst;
 
-            return convertType(src, grUnmangle(dst.mangledType), fileId, noFail, isExplicit);
+            GrType subType = grUnmangle(dst.mangledType);
+
+            if(convertType(src, subType, fileId, noFail, isExplicit).base == subType.base)
+                return dst;
         }
 
         if (src.base == GrType.Base.internalTuple || dst.base == GrType.Base.internalTuple)
@@ -4658,17 +4716,17 @@ final class GrParser {
             case int_:
             case real_:
             case string_:
-            case internalTuple:
             case enum_:
-                break;
-            case optional:
             case array:
             case class_:
             case foreign:
             case channel:
             case reference:
+            case internalTuple:
+                break;
+            case optional:
             case null_:
-                addInstruction(GrOpcode.isNonNull_object);
+                addInstruction(GrOpcode.checkNull);
                 return dst;
             }
         }
@@ -6830,9 +6888,9 @@ final class GrParser {
         varNameExpectedFoundX,
         arrayCantBeOfTypeX,
         invalidArrayType,
-        primXMustRetBoolAndVal,
+        primXMustRetOptional,
         signatureMismatch,
-        funcXMustRetBoolAndVal,
+        funcXMustRetOptional,
         notIterable,
         forCantIterateOverX,
         cantEvalArityUnknownCompound,
@@ -7063,9 +7121,9 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.varNameExpected: "a variable name is expected",
                 Error.varNameExpectedFoundX: "a variable name is expected, found `%s`",
                 Error.arrayCantBeOfTypeX: "a array can't be of type `%s`",
-                Error.primXMustRetBoolAndVal: "the primitive `%s` must return a bool and a value",
+                Error.primXMustRetOptional: "the primitive `%s` must return an optional type",
                 Error.signatureMismatch: "signature mismatch",
-                Error.funcXMustRetBoolAndVal: "the function `%s` must return a bool and a value",
+                Error.funcXMustRetOptional: "the function `%s` must return an optional type",
                 Error.notIterable: "not iterable",
                 Error.forCantIterateOverX: "for can't iterate over a `%s`",
                 Error.cantEvalArityUnknownCompound: "can't evaluate the arity of an unknown compound",
@@ -7285,11 +7343,11 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.varNameExpected: "un nom de variable est attendu",
                 Error.varNameExpectedFoundX: "un nom de variable est attendu, `%s` trouvé",
                 Error.arrayCantBeOfTypeX: "une liste ne peut pas être de type `%s`",
-                Error.primXMustRetBoolAndVal: "la primitive `%s` doit retourner un booléen et une valeur",
+                Error.primXMustRetOptional: "la primitive `%s` doit retourner un type optionnel",
                 Error.signatureMismatch: "la signature ne correspond pas",
-                Error.funcXMustRetBoolAndVal: "la function `%s` doit retourner un booléen et une valeur",
+                Error.funcXMustRetOptional: "la function `%s` doit retourner un type optionnel",
                 Error.notIterable: "non-itérable",
-                Error.forCantIterateOverX: "pour ne peut itérer sur `%s`",
+                Error.forCantIterateOverX: "for ne peut itérer sur `%s`",
                 Error.cantEvalArityUnknownCompound: "impossible de calculer l’arité d’un composé inconnu",
                 Error.arityEvalError: "erreur de calcul d’arité",
                 Error.typeOfIteratorMustBeIntNotX: "le type d’un itérateur doit être un entier, pas `%s`",
