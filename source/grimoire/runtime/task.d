@@ -6,7 +6,12 @@
 module grimoire.runtime.task;
 
 import grimoire.assembly;
-import grimoire.runtime.engine, grimoire.runtime.channel, grimoire.runtime.object;
+
+import grimoire.runtime.engine;
+import grimoire.runtime.value;
+import grimoire.runtime.array;
+import grimoire.runtime.channel;
+import grimoire.runtime.object;
 
 /**
 Represents a single function task in the callStack.
@@ -173,6 +178,10 @@ final class GrTask {
 
     void setArray(GrArray value) {
         setValue!GrPtr(cast(GrPtr) value);
+    }
+
+    void setArray(GrValue[] value) {
+        setValue!GrPtr(cast(GrPtr) new GrArray(value));
     }
 
     void setChannel(GrChannel value) {

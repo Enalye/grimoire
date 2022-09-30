@@ -11,58 +11,71 @@ import grimoire.stdlib.util;
 
 package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
     library.addForeign("ArrayIterator", ["T"]);
+    GrType iteratorType = grGetForeignType("ArrayIterator", [grAny("T")]);
 
-    GrType valueType = grAny("T");
-    GrType pureValueType = grPure(valueType);
-    GrType arrayType = grArray(valueType);
-    GrType pureArrayType = grPure(arrayType);
-    GrType iteratorType = grGetForeignType("ArrayIterator", [valueType]);
+    library.addFunction(&_copy, "copy", [grPure(grArray(grAny("T")))], [
+            grArray(grAny("T"))
+        ]);
+    library.addFunction(&_size, "size", [grPure(grArray(grAny("T")))], [grInt]);
+    library.addFunction(&_resize, "resize", [grArray(grAny("T")), grInt]);
+    library.addFunction(&_isEmpty, "isEmpty", [grPure(grArray(grAny("T")))], [
+            grBool
+        ]);
+    library.addFunction(&_fill, "fill", [grArray(grAny("T")), grAny("T")]);
+    library.addFunction(&_clear, "clear", [grArray(grAny("T"))]);
+    library.addFunction(&_unshift, "unshift", [grArray(grAny("T")), grAny("T")]);
+    library.addFunction(&_push, "push", [grArray(grAny("T")), grAny("T")], [
+            grAny("T")
+        ]);
+    library.addFunction(&_shift, "shift", [grArray(grAny("T"))], [grAny("T")]);
+    library.addFunction(&_pop, "pop", [grArray(grAny("T"))], [grOptional(grAny("T"))]);
+    library.addFunction(&_shift1, "shift", [grArray(grAny("T")), grInt], [
+            grArray(grAny("T"))
+        ]);
+    library.addFunction(&_pop1, "pop", [grArray(grAny("T")), grInt], [
+            grArray(grAny("T"))
+        ]);
+    library.addFunction(&_first, "first", [grPure(grArray(grAny("T")))], [
+            grOptional(grAny("T"))
+        ]);
+    library.addFunction(&_last, "last", [grPure(grArray(grAny("T")))], [
+            grOptional(grAny("T"))
+        ]);
+    library.addFunction(&_remove, "remove", [grArray(grAny("T")), grInt], [
+            grArray(grAny("T"))
+        ]);
+    library.addFunction(&_remove2, "remove", [grArray(grAny("T")), grInt,
+            grInt], [grArray(grAny("T"))]);
+    library.addFunction(&_slice, "slice", [
+            grPure(grArray(grAny("T"))), grInt, grInt
+        ], [grArray(grAny("T"))]);
+    library.addFunction(&_reverse, "reverse", [grPure(grArray(grAny("T")))],
+        [grArray(grAny("T"))]);
+    library.addFunction(&_insert, "insert", [
+            grArray(grAny("T")), grInt, grAny("T")
+        ], [grArray(grAny("T"))]);
+    library.addFunction(&_each, "each", [grArray(grAny("T"))], [iteratorType]);
+    library.addFunction(&_next, "next", [iteratorType], [grOptional(grAny("T"))]);
+    library.addFunction(&_findFirst, "findFirst",
+        [grPure(grArray(grAny("T"))), grPure(grAny("T"))], [grInt]);
+    library.addFunction(&_findLast, "findLast", [
+            grPure(grArray(grAny("T"))), grPure(grAny("T"))
+        ], [grOptional(grInt)]);
+    library.addFunction(&_findLast, "findLast", [
+            grPure(grArray(grAny("T"))), grPure(grAny("T"))
+        ], [grOptional(grInt)]);
+    library.addFunction(&_has, "has", [
+            grPure(grArray(grAny("T"))), grPure(grAny("T"))
+        ], [grBool]);
 
-    library.addFunction(&_copy, "copy", [pureArrayType], [arrayType]);
-    library.addFunction(&_size, "size", [pureArrayType], [grInt]);
-    library.addFunction(&_resize, "resize", [arrayType, grInt], [arrayType]);
-    library.addFunction(&_empty, "empty?", [pureArrayType], [grBool]);
-    library.addFunction(&_fill, "fill", [arrayType, valueType], [arrayType]);
-    library.addFunction(&_clear, "clear", [arrayType], [arrayType]);
-    library.addFunction(&_unshift, "unshift", [arrayType, valueType], [
-            arrayType
+    library.addFunction(&_sort_!"int", "sort", [grArray(grInt)], [
+            grArray(grInt)
         ]);
-    library.addFunction(&_push, "push", [arrayType, valueType], [valueType]);
-    library.addFunction(&_shift, "shift", [arrayType], [valueType]);
-    library.addFunction(&_pop, "pop", [arrayType], [valueType]);
-    library.addFunction(&_shift1, "shift", [arrayType, grInt], [arrayType]);
-    library.addFunction(&_pop1, "pop", [arrayType, grInt], [arrayType]);
-    library.addFunction(&_first, "first", [pureArrayType], [valueType]);
-    library.addFunction(&_last, "last", [pureArrayType], [valueType]);
-    library.addFunction(&_remove, "remove", [arrayType, grInt], [arrayType]);
-    library.addFunction(&_remove2, "remove", [arrayType, grInt, grInt], [
-            arrayType
+    library.addFunction(&_sort_!"real", "sort", [grArray(grReal)], [
+            grArray(grReal)
         ]);
-    library.addFunction(&_slice, "slice", [arrayType, grInt, grInt], [arrayType]);
-    library.addFunction(&_slice_copy, "sliced", [pureArrayType, grInt, grInt], [
-            arrayType
-        ]);
-    library.addFunction(&_reverse, "reverse", [pureArrayType], [arrayType]);
-    library.addFunction(&_insert, "insert", [arrayType, grInt, valueType], [
-            arrayType
-        ]);
-    library.addFunction(&_each, "each", [arrayType], [iteratorType]);
-    library.addFunction(&_next, "next", [iteratorType], [grOptional(valueType)]);
-    library.addFunction(&_findFirst, "findFirst", [pureArrayType, pureValueType], [
-            grInt
-        ]);
-    library.addFunction(&_findLast, "findLast", [pureArrayType, pureValueType], [
-            grInt
-        ]);
-    library.addFunction(&_findLast, "findLast", [pureArrayType, pureValueType], [
-            grInt
-        ]);
-    library.addFunction(&_has, "has?", [pureArrayType, pureValueType], [grBool]);
-
-    library.addFunction(&_sort_!"int", "sort", [grIntArray], [grIntArray]);
-    library.addFunction(&_sort_!"real", "sort", [grRealArray], [grRealArray]);
-    library.addFunction(&_sort_!"string", "sort", [grStringArray], [
-            grStringArray
+    library.addFunction(&_sort_!"string", "sort", [grArray(grString)], [
+            grArray(grString)
         ]);
 }
 
@@ -71,7 +84,7 @@ private void _copy(GrCall call) {
 }
 
 private void _size(GrCall call) {
-    call.setInt(cast(GrInt) call.getArray(0).length);
+    call.setInt(call.getArray(0).size());
 }
 
 private void _resize(GrCall call) {
@@ -81,59 +94,52 @@ private void _resize(GrCall call) {
         call.raise("ArgumentError");
         return;
     }
-    array.length = size;
-    call.setArray(array);
+    array.resize(size);
 }
 
-private void _empty(GrCall call) {
+private void _isEmpty(GrCall call) {
     const GrArray array = call.getArray(0);
-    call.setBool(array.empty);
+    call.setBool(array.isEmpty());
 }
 
 private void _fill(GrCall call) {
     GrArray array = call.getArray(0);
     GrValue value = call.getValue(1);
-    for (size_t index; index < array.length; ++index)
+    for (GrInt index; index < array.size(); ++index)
         array[index] = value;
-    call.setArray(array);
 }
 
 private void _clear(GrCall call) {
     GrArray array = call.getArray(0);
-    array.length = 0;
-    call.setArray(array);
+    array.clear();
 }
 
 private void _unshift(GrCall call) {
     GrArray array = call.getArray(0);
-    array = call.getValue(1) ~ array;
-    call.setArray(array);
+    array.unshift(call.getValue(1));
 }
 
 private void _push(GrCall call) {
     GrArray array = call.getArray(0);
-    array ~= call.getValue(1);
-    call.setArray(array);
+    array.push(call.getValue(1));
 }
 
 private void _shift(GrCall call) {
     GrArray array = call.getArray(0);
-    if (!array.length) {
+    if (!array.size()) {
         call.raise("IndexError");
         return;
     }
-    call.setValue(array[0]);
-    array = array[1 .. $];
+    call.setValue(array.shift());
 }
 
 private void _pop(GrCall call) {
     GrArray array = call.getArray(0);
-    if (!array.length) {
-        call.raise("IndexError");
+    if (array.isEmpty()) {
+        call.setNull();
         return;
     }
-    call.setValue(array[$ - 1]);
-    array.length--;
+    call.setValue(array.pop());
 }
 
 private void _shift1(GrCall call) {
@@ -143,10 +149,7 @@ private void _shift1(GrCall call) {
         call.raise("IndexError");
         return;
     }
-    if (array.length < size) {
-        size = cast(GrInt) array.length;
-    }
-    call.setArray(array[0 .. size]);
+    call.setArray(array.shift(size));
 }
 
 private void _pop1(GrCall call) {
@@ -156,247 +159,95 @@ private void _pop1(GrCall call) {
         call.raise("IndexError");
         return;
     }
-    if (array.length < size) {
-        size = cast(GrInt) array.length;
-    }
-    call.setArray(array[$ - size .. $]);
+    call.setArray(array.pop(size));
 }
 
 private void _first(GrCall call) {
     GrArray array = call.getArray(0);
-    if (!array.length) {
-        call.raise("IndexError");
+    if (!array.size()) {
+        call.setNull();
         return;
     }
-    call.setValue(array[0]);
+    call.setValue(array.first());
 }
 
 private void _last(GrCall call) {
     GrArray array = call.getArray(0);
-    if (!array.length) {
-        call.raise("IndexError");
+    if (!array.size()) {
+        call.setNull();
         return;
     }
-    call.setValue(array[$ - 1]);
+    call.setValue(array.last());
 }
 
 private void _remove(GrCall call) {
     GrArray array = call.getArray(0);
     GrInt index = call.getInt(1);
-    if (index < 0)
-        index = (cast(GrInt) array.length) + index;
-    if (!array.length || index >= array.length || index < 0) {
-        call.setArray(array);
-        return;
-    }
-    if (index + 1 == array.length) {
-        array.length--;
-        call.setArray(array);
-        return;
-    }
-    if (index == 0) {
-        array = array[1 .. $];
-        call.setArray(array);
-        return;
-    }
-    array = array[0 .. index] ~ array[index + 1 .. $];
-    call.setArray(array);
+    array.remove(index);
 }
 
 private void _remove2(GrCall call) {
     GrArray array = call.getArray(0);
     GrInt index1 = call.getInt(1);
     GrInt index2 = call.getInt(2);
-    if (index1 < 0)
-        index1 = (cast(GrInt) array.length) + index1;
-    if (index2 < 0)
-        index2 = (cast(GrInt) array.length) + index2;
-
-    if (index2 < index1) {
-        const GrInt temp = index1;
-        index1 = index2;
-        index2 = temp;
-    }
-
-    if (!array.length || index1 >= array.length || index2 < 0) {
-        call.setArray(array);
-        return;
-    }
-
-    if (index1 < 0)
-        index1 = 0;
-    if (index2 >= array.length)
-        index2 = (cast(GrInt) array.length) - 1;
-
-    if (index1 == 0 && (index2 + 1) == array.length) {
-        array.length = 0;
-        call.setArray(array);
-        return;
-    }
-    if (index1 == 0) {
-        array = array[(index2 + 1) .. $];
-        call.setArray(array);
-        return;
-    }
-    if ((index2 + 1) == array.length) {
-        array = array[0 .. index1];
-        call.setArray(array);
-        return;
-    }
-    array = array[0 .. index1] ~ array[(index2 + 1) .. $];
-    call.setArray(array);
+    array.remove(index1, index2);
 }
 
 private void _slice(GrCall call) {
     GrArray array = call.getArray(0);
     GrInt index1 = call.getInt(1);
     GrInt index2 = call.getInt(2);
-    if (index1 < 0)
-        index1 = (cast(GrInt) array.length) + index1;
-    if (index2 < 0)
-        index2 = (cast(GrInt) array.length) + index2;
-
-    if (index2 < index1) {
-        const GrInt temp = index1;
-        index1 = index2;
-        index2 = temp;
-    }
-
-    if (!array.length || index1 >= array.length || index2 < 0) {
-        array.length = 0;
-        call.setArray(array);
-        return;
-    }
-
-    if (index1 < 0)
-        index1 = 0;
-    if (index2 >= array.length)
-        index2 = (cast(GrInt) array.length - 1);
-
-    if (index1 == 0 && (index2 + 1) == array.length) {
-        call.setArray(array);
-        return;
-    }
-    array = array[index1 .. index2 + 1];
-    call.setArray(array);
-}
-
-private void _slice_copy(GrCall call) {
-    GrArray array = call.getArray(0);
-    GrInt index1 = call.getInt(1);
-    GrInt index2 = call.getInt(2);
-    if (index1 < 0)
-        index1 = (cast(GrInt) array.length) + index1;
-    if (index2 < 0)
-        index2 = (cast(GrInt) array.length) + index2;
-
-    if (index2 < index1) {
-        const GrInt temp = index1;
-        index1 = index2;
-        index2 = temp;
-    }
-
-    if (!array.length || index1 >= array.length || index2 < 0) {
-        call.setArray([]);
-        return;
-    }
-
-    if (index1 < 0)
-        index1 = 0;
-    if (index2 >= array.length)
-        index2 = (cast(GrInt) array.length - 1);
-
-    if (index1 == 0 && (index2 + 1) == array.length) {
-        call.setArray(array);
-    }
-    else {
-        call.setArray(array[index1 .. index2 + 1]);
-    }
+    call.setArray(array.slice(index1, index2));
 }
 
 private void _reverse(GrCall call) {
-    import std.algorithm.mutation : reverse;
-
     GrArray array = call.getArray(0);
-    array = array.reverse;
-    call.setArray(array);
+    call.setArray(array.reverse());
 }
 
 private void _insert(GrCall call) {
     GrArray array = call.getArray(0);
     GrInt index = call.getInt(1);
-    auto value = call.getValue(2);
-
-    if (index < 0)
-        index = (cast(GrInt) array.length) + index;
-    if (!array.length || index >= array.length || index < 0) {
-        call.raise("IndexError");
-        return;
-    }
-    if (index + 1 == array.length) {
-        array = array[0 .. index] ~ value ~ array[$ - 1];
-        call.setArray(array);
-        return;
-    }
-    if (index == 0) {
-        array = value ~ array;
-        call.setArray(array);
-        return;
-    }
-    array = array[0 .. index] ~ value ~ array[index .. $];
-    call.setArray(array);
+    GrValue value = call.getValue(2);
+    array.insert(index, value);
 }
 
 private void _sort_(string T)(GrCall call) {
-    import std.algorithm.sorting : sort;
-
     GrArray array = call.getArray(0);
     static if (T == "int")
-        array.sort!((a, b) => a.getInt() < b.getInt())();
+        array.sortByInt();
     else static if (T == "real")
-        array.sort!((a, b) => a.getReal() < b.getReal())();
+        array.sortByReal();
     else static if (T == "string")
-        array.sort!((a, b) => a.getString() < b.getString())();
-    call.setArray(array);
+        array.sortByString();
 }
 
 private void _findFirst(GrCall call) {
     GrArray array = call.getArray(0);
-    auto value = call.getValue(1);
-
-    for (GrInt index; index < array.length; ++index) {
-        if (array[index] == value) {
-            call.setInt(index);
-            return;
-        }
+    GrValue value = call.getValue(1);
+    GrInt index = array.indexOf(value);
+    if (index == -1) {
+        call.setNull();
+        return;
     }
-    call.setInt(-1);
+    call.setInt(index);
 }
 
 private void _findLast(GrCall call) {
     GrArray array = call.getArray(0);
-    auto value = call.getValue(1);
-
-    for (GrInt index = (cast(GrInt) array.length) - 1; index > 0; --index) {
-        if (array[index] == value) {
-            call.setInt(index);
-            return;
-        }
+    GrValue value = call.getValue(1);
+    GrInt index = array.lastIndexOf(value);
+    if (index == -1) {
+        call.setNull();
+        return;
     }
-    call.setInt(-1);
+    call.setInt(index);
 }
 
 private void _has(GrCall call) {
     GrArray array = call.getArray(0);
-    auto value = call.getValue(1);
-
-    for (GrInt index; index < array.length; ++index) {
-        if (array[index] == value) {
-            call.setBool(true);
-            return;
-        }
-    }
-    call.setBool(false);
+    GrValue value = call.getValue(1);
+    call.setBool(array.contains(value));
 }
 
 private final class ArrayIterator {
@@ -407,7 +258,7 @@ private final class ArrayIterator {
 private void _each(GrCall call) {
     GrArray array = call.getArray(0);
     ArrayIterator iter = new ArrayIterator;
-    iter.array = array.dup;
+    iter.array = array.data.dup;
     call.setForeign(iter);
 }
 

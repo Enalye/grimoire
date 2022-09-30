@@ -6,9 +6,14 @@
 module grimoire.runtime.call;
 
 import std.conv : to;
-import grimoire.assembly;
-import grimoire.compiler;
-import grimoire.runtime.task, grimoire.runtime.object, grimoire.runtime.channel;
+
+import grimoire.assembly, grimoire.compiler;
+
+import grimoire.runtime.task;
+import grimoire.runtime.value;
+import grimoire.runtime.object;
+import grimoire.runtime.array;
+import grimoire.runtime.channel;
 
 /// Primitive type.
 alias GrCallback = void function(GrCall);
@@ -113,8 +118,12 @@ final class GrCall {
         return (cast(GrStringWrapper) getParameter!GrPtr(index)).data;
     }
 
+    pragma(inline) GrStringWrapper getStringObject(uint index) {
+        return cast(GrStringWrapper) getParameter!GrPtr(index);
+    }
+
     pragma(inline) GrArray getArray(uint index) {
-        return (cast(GrArrayWrapper) getParameter!GrPtr(index)).data;
+        return cast(GrArray) getParameter!GrPtr(index);
     }
 
     pragma(inline) GrChannel getChannel(uint index) {
@@ -185,8 +194,16 @@ final class GrCall {
         setResult!GrPtr(cast(GrPtr) new GrStringWrapper(value));
     }
 
+    pragma(inline) void setString(GrStringWrapper value) {
+        setResult!GrPtr(cast(GrPtr) value);
+    }
+
     pragma(inline) void setArray(GrArray value) {
-        setResult!GrPtr(cast(GrPtr) new GrArrayWrapper(value));
+        setResult!GrPtr(cast(GrPtr) value);
+    }
+
+    pragma(inline) void setArray(GrValue[] value) {
+        setResult!GrPtr(cast(GrPtr) new GrArray(value));
     }
 
     pragma(inline) void setChannel(GrChannel value) {
@@ -279,7 +296,7 @@ final class GrCall {
         _task.engine.setStringVariable(name, value);
     }
 
-    void setArrayVariable(string name, GrArray value) {
+    void setArrayVariable(string name, GrValue[] value) {
         _task.engine.setArrayVariable(name, value);
     }
 

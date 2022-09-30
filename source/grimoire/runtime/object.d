@@ -7,6 +7,8 @@ module grimoire.runtime.object;
 
 import grimoire.compiler, grimoire.assembly;
 import grimoire.runtime.channel;
+import grimoire.runtime.value;
+import grimoire.runtime.array;
 
 /**
 A single field of an object. \
@@ -74,7 +76,7 @@ final class GrObject {
     }
 
     pragma(inline) GrArray getArray(const string fieldName) {
-        return (cast(GrArrayWrapper) getField!GrPtr(fieldName)).data;
+        return cast(GrArray) getField!GrPtr(fieldName);
     }
 
     pragma(inline) GrChannel getChannel(const string fieldName) {
@@ -142,6 +144,10 @@ final class GrObject {
 
     pragma(inline) void setArray(const string fieldName, GrArray value) {
         setField!GrPtr(fieldName, cast(GrPtr) value);
+    }
+
+    pragma(inline) void setArray(const string fieldName, GrValue[] value) {
+        setField!GrPtr(fieldName, cast(GrPtr) new GrArray(value));
     }
 
     pragma(inline) void setChannel(const string fieldName, GrChannel value) {

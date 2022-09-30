@@ -11,34 +11,46 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 package(grimoire.stdlib) void grLoadStdLibString(GrLibrary library) {
-    library.addFunction(&_empty, "empty?", [grPureString], [grBool]);
-    library.addFunction(&_unshift, "unshift", [grPureString, grString], [grString]);
-    library.addFunction(&_push, "push", [grPureString, grString], [grString]);
-    library.addFunction(&_shift, "shift", [grPureString], [grString]);
-    library.addFunction(&_pop, "pop", [grPureString], [grString]);
-    library.addFunction(&_shift1, "shift", [grPureString, grInt], [grString]);
-    library.addFunction(&_pop1, "pop", [grPureString, grInt], [grString]);
-    library.addFunction(&_first, "first", [grPureString], [grString]);
-    library.addFunction(&_last, "last", [grPureString], [grString]);
-    library.addFunction(&_remove, "remove", [grPureString, grInt], [grString]);
-    library.addFunction(&_remove2, "remove", [grPureString, grInt, grInt], [
+    library.addFunction(&_isEmpty, "isEmpty", [grPure(grString)], [grBool]);
+    library.addFunction(&_unshift, "unshift", [grPure(grString), grString], [
             grString
         ]);
-    library.addFunction(&_slice, "slice", [grPureString, grInt, grInt], [grString]);
-    library.addFunction(&_reverse, "reverse", [grPureString], [grString]);
-    library.addFunction(&_insert, "insert", [grPureString, grInt, grPureString], [
+    library.addFunction(&_push, "push", [grPure(grString), grString], [grString]);
+    library.addFunction(&_shift, "shift", [grPure(grString)], [grString]);
+    library.addFunction(&_pop, "pop", [grPure(grString)], [grString]);
+    library.addFunction(&_shift1, "shift", [grPure(grString), grInt], [grString]);
+    library.addFunction(&_pop1, "pop", [grPure(grString), grInt], [grString]);
+    library.addFunction(&_first, "first", [grPure(grString)], [grOptional(grString)]);
+    library.addFunction(&_last, "last", [grPure(grString)], [grOptional(grString)]);
+    library.addFunction(&_remove, "remove", [grPure(grString), grInt], [
             grString
         ]);
-    library.addFunction(&_findFirst, "findFirst", [grPureString, grPureString], [grInt]);
-    library.addFunction(&_findLast, "findLast", [grPureString, grPureString], [grInt]);
-    library.addFunction(&_has, "has?", [grPureString, grPureString], [grBool]);
+    library.addFunction(&_remove2, "remove", [grPure(grString), grInt, grInt], [
+            grString
+        ]);
+    library.addFunction(&_slice, "slice", [grPure(grString), grInt, grInt], [
+            grString
+        ]);
+    library.addFunction(&_reverse, "reverse", [grPure(grString)], [grString]);
+    library.addFunction(&_insert, "insert", [
+            grPure(grString), grInt, grPure(grString)
+        ], [grString]);
+    library.addFunction(&_findFirst, "findFirst", [
+            grPure(grString), grPure(grString)
+        ], [grOptional(grInt)]);
+    library.addFunction(&_findLast, "findLast", [
+            grPure(grString), grPure(grString)
+        ], [grOptional(grInt)]);
+    library.addFunction(&_has, "has", [grPure(grString), grPure(grString)], [
+            grBool
+        ]);
 
     GrType stringIterType = library.addForeign("StringIterator");
     library.addFunction(&_each, "each", [grString], [stringIterType]);
     library.addFunction(&_next, "next", [stringIterType], [grOptional(grString)]);
 }
 
-private void _empty(GrCall call) {
+private void _isEmpty(GrCall call) {
     call.setBool(call.getString(0).length == 0);
 }
 
@@ -53,7 +65,7 @@ private void _push(GrCall call) {
 private void _shift(GrCall call) {
     string str = call.getString(0);
     if (!str.length) {
-        call.setString("");
+        call.setNull();
         return;
     }
     call.setString(str[1 .. $]);
@@ -62,7 +74,7 @@ private void _shift(GrCall call) {
 private void _pop(GrCall call) {
     string str = call.getString(0);
     if (!str.length) {
-        call.setString("");
+        call.setNull();
         return;
     }
     str.length--;
@@ -111,7 +123,7 @@ private void _pop1(GrCall call) {
 private void _first(GrCall call) {
     GrString str = call.getString(0);
     if (!str.length) {
-        call.raise("IndexError");
+        call.setNull();
         return;
     }
     call.setString(to!GrString(str[0]));
@@ -120,7 +132,7 @@ private void _first(GrCall call) {
 private void _last(GrCall call) {
     GrString str = call.getString(0);
     if (!str.length) {
-        call.raise("IndexError");
+        call.setNull();
         return;
     }
     call.setString(to!GrString(str[$ - 1]));
@@ -249,13 +261,23 @@ private void _insert(GrCall call) {
 private void _findFirst(GrCall call) {
     GrString str = call.getString(0);
     GrString value = call.getString(1);
-    call.setInt(cast(GrInt) str.indexOf(value));
+    const GrInt result = cast(GrInt) str.indexOf(value);
+    if (result < 0) {
+        call.setNull();
+        return;
+    }
+    call.setInt(result);
 }
 
 private void _findLast(GrCall call) {
     GrString str = call.getString(0);
     GrString value = call.getString(1);
-    call.setInt(cast(GrInt) str.lastIndexOf(value));
+    const GrInt result = cast(GrInt) str.lastIndexOf(value);
+    if (result < 0) {
+        call.setNull();
+        return;
+    }
+    call.setInt(result);
 }
 
 private void _has(GrCall call) {
@@ -277,10 +299,6 @@ private void _each(GrCall call) {
 
 private void _next(GrCall call) {
     StringIterator iter = call.getForeign!(StringIterator)(0);
-    if (!iter) {
-        call.raise("NullError");
-        return;
-    }
     if (iter.index >= iter.value.length) {
         call.setNull();
         return;

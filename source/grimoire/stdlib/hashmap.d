@@ -16,7 +16,7 @@ private final class HashMap {
     GrValue[GrString] data;
 
     /// Ctor
-    this(GrArray keys, GrArray values) {
+    this(GrValue[] keys, GrValue[] values) {
         for (size_t i; i < keys.length; ++i) {
             data[keys[i].getString()] = values[i];
         }
@@ -37,33 +37,32 @@ private final class HashMapIterator {
 }
 
 package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
-    library.addForeign("HashMap", ["T"]);
-    library.addForeign("HashMapIterator", ["T"]);
+    GrType mapType = library.addForeign("HashMap", ["T"]);
+    GrType iteratorType = library.addForeign("HashMapIterator", ["T"]);
 
-    GrType valueType = grAny("T");
-    GrType hashMapType = grGetForeignType("HashMap", [valueType]);
-    GrType pureHashMapType = grGetForeignType("HashMap", [valueType], true);
-    GrType pairType = grGetClassType("pair", [grString, valueType]);
-    GrType arrayType = grArray(valueType);
-    GrType iteratorType = grGetForeignType("HashMapIterator", [valueType]);
+    GrType pairType = grGetClassType("pair", [grString, grAny("T")]);
 
-    library.addConstructor(&_new, hashMapType, []);
-    library.addConstructor(&_newByArray, hashMapType, [grStringArray, arrayType]);
-    library.addConstructor(&_newByPairs, hashMapType, [pairType]);
-    library.addFunction(&_copy, "copy", [hashMapType], [hashMapType]);
-    library.addFunction(&_size, "size", [pureHashMapType], [grInt]);
-    library.addFunction(&_empty, "empty?", [pureHashMapType], [grBool]);
-    library.addFunction(&_clear, "clear", [hashMapType], [hashMapType]);
-    library.addFunction(&_set, "set", [hashMapType, grString, valueType]);
-    library.addFunction(&_get, "get", [pureHashMapType, grString], [valueType]);
-    library.addFunction(&_getOr, "getOr", [pureHashMapType, grString, valueType], [
-            valueType
+    library.addConstructor(&_new, mapType, []);
+    library.addConstructor(&_newByArray, mapType, [
+            grArray(grString), grArray(grAny("T"))
         ]);
-    library.addFunction(&_has, "has?", [pureHashMapType, grString], [grBool]);
-    library.addFunction(&_remove, "remove", [hashMapType, grString]);
-    library.addFunction(&_byKeys, "keys", [hashMapType], [grStringArray]);
-    library.addFunction(&_byValues, "values", [hashMapType], [arrayType]);
-    library.addFunction(&_each, "each", [hashMapType], [iteratorType]);
+    library.addConstructor(&_newByPairs, mapType, [pairType]);
+    library.addFunction(&_copy, "copy", [mapType], [mapType]);
+    library.addFunction(&_size, "size", [grPure(mapType)], [grInt]);
+    library.addFunction(&_empty, "empty", [grPure(mapType)], [grBool]);
+    library.addFunction(&_clear, "clear", [mapType], [mapType]);
+    library.addFunction(&_set, "set", [mapType, grString, grAny("T")]);
+    library.addFunction(&_get, "get", [grPure(mapType), grString], [
+            grOptional(grAny("T"))
+        ]);
+    library.addFunction(&_getOr, "getOr", [
+            grPure(mapType), grString, grAny("T")
+        ], [grAny("T")]);
+    library.addFunction(&_has, "has", [grPure(mapType), grString], [grBool]);
+    library.addFunction(&_remove, "remove", [mapType, grString]);
+    library.addFunction(&_byKeys, "keys", [mapType], [grArray(grString)]);
+    library.addFunction(&_byValues, "values", [mapType], [grArray(grAny("T"))]);
+    library.addFunction(&_each, "each", [mapType], [iteratorType]);
     library.addFunction(&_next, "next", [iteratorType], [grOptional(pairType)]);
 
     GrType boolHashMap = grGetForeignType("HashMap", [grBool]);
@@ -85,13 +84,13 @@ private void _new(GrCall call) {
 }
 
 private void _newByArray(GrCall call) {
-    HashMap hashmap = new HashMap(call.getArray(0), call.getArray(1));
+    HashMap hashmap = new HashMap(call.getArray(0).data, call.getArray(1).data);
     call.setForeign(hashmap);
 }
 
 private void _newByPairs(GrCall call) {
     HashMap hashmap = new HashMap;
-    GrArray pairs = call.getArray(0);
+    GrValue[] pairs = call.getArray(0).data;
     for (size_t i; i < pairs.length; ++i) {
         GrObject pair = cast(GrObject) pairs[i].getPtr();
         hashmap.data[pair.getString("key")] = pair.getValue("value");
@@ -101,59 +100,35 @@ private void _newByPairs(GrCall call) {
 
 private void _copy(GrCall call) {
     HashMap hashmap = call.getForeign!HashMap(0);
-    if (!hashmap) {
-        call.raise("NullError");
-        return;
-    }
     call.setForeign!HashMap(new HashMap(hashmap));
 }
 
 private void _size(GrCall call) {
     HashMap hashmap = call.getForeign!HashMap(0);
-    if (!hashmap) {
-        call.raise("NullError");
-        return;
-    }
     call.setInt(cast(GrInt) hashmap.data.length);
 }
 
 private void _empty(GrCall call) {
     const HashMap hashmap = call.getForeign!HashMap(0);
-    if (!hashmap) {
-        call.raise("NullError");
-        return;
-    }
     call.setBool(hashmap.data.length == 0);
 }
 
 private void _clear(GrCall call) {
     HashMap hashmap = call.getForeign!HashMap(0);
-    if (!hashmap) {
-        call.raise("NullError");
-        return;
-    }
     hashmap.data.clear();
     call.setForeign!HashMap(hashmap);
 }
 
 private void _set(GrCall call) {
     HashMap hashmap = call.getForeign!(HashMap)(0);
-    if (!hashmap) {
-        call.raise("NullError");
-        return;
-    }
     hashmap.data[call.getString(1)] = call.getValue(2);
 }
 
 private void _get(GrCall call) {
     HashMap hashmap = call.getForeign!(HashMap)(0);
-    if (!hashmap) {
-        call.raise("NullError");
-        return;
-    }
     auto p = call.getString(1) in hashmap.data;
     if (p is null) {
-        call.raise("KeyError");
+        call.setNull();
         return;
     }
     call.setValue(*p);
@@ -161,39 +136,23 @@ private void _get(GrCall call) {
 
 private void _getOr(GrCall call) {
     HashMap hashmap = call.getForeign!(HashMap)(0);
-    if (!hashmap) {
-        call.raise("NullError");
-        return;
-    }
     auto p = call.getString(1) in hashmap.data;
     call.setValue(p ? *p : call.getValue(2));
 }
 
 private void _has(GrCall call) {
     HashMap hashmap = call.getForeign!(HashMap)(0);
-    if (!hashmap) {
-        call.raise("NullError");
-        return;
-    }
     call.setBool((call.getString(1) in hashmap.data) !is null);
 }
 
 private void _remove(GrCall call) {
     HashMap hashmap = call.getForeign!(HashMap)(0);
-    if (!hashmap) {
-        call.raise("NullError");
-        return;
-    }
     hashmap.data.remove(call.getString(1));
 }
 
 private void _byKeys(GrCall call) {
     HashMap hashmap = call.getForeign!(HashMap)(0);
-    if (!hashmap) {
-        call.raise("NullError");
-        return;
-    }
-    GrArray ary;
+    GrValue[] ary;
     foreach (GrString key; hashmap.data.keys) {
         ary ~= GrValue(key);
     }
@@ -202,21 +161,13 @@ private void _byKeys(GrCall call) {
 
 private void _byValues(GrCall call) {
     HashMap hashmap = call.getForeign!(HashMap)(0);
-    if (!hashmap) {
-        call.raise("NullError");
-        return;
-    }
-    GrArray ary;
+    GrValue[] ary;
     ary = hashmap.data.values;
     call.setArray(ary);
 }
 
 private void _each(GrCall call) {
     HashMap hashmap = call.getForeign!(HashMap)(0);
-    if (!hashmap) {
-        call.raise("NullError");
-        return;
-    }
     HashMapIterator iter = new HashMapIterator;
     foreach (pair; hashmap.data.byKeyValue()) {
         iter.pairs ~= tuple(pair.key, pair.value);
@@ -227,10 +178,6 @@ private void _each(GrCall call) {
 private void _next(GrCall call) {
     HashMapIterator iter = call.getForeign!HashMapIterator(0);
 
-    if (!iter) {
-        call.raise("NullError");
-        return;
-    }
     if (iter.index >= iter.pairs.length) {
         call.setNull();
         return;
@@ -245,10 +192,6 @@ private void _next(GrCall call) {
 private void _print_(string T)(GrCall call) {
     HashMap hashmap = call.getForeign!HashMap(0);
 
-    if (!hashmap) {
-        call.raise("NullError");
-        return;
-    }
     GrString result = "{";
     bool isFirst = true;
     foreach (key, value; hashmap.data) {

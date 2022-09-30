@@ -6,6 +6,7 @@
 module grimoire.runtime.channel;
 
 import grimoire.assembly;
+import grimoire.runtime.value;
 
 /**
 A pipe that allow synchronised communication between coroutines.

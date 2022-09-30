@@ -20,10 +20,10 @@ package(grimoire.stdlib) void grLoadStdLibTypecast(GrLibrary library) {
     library.addCast(&typecast_b2s, grBool, grString);
     library.addCast(&typecast_i2s, grInt, grString);
     library.addCast(&typecast_r2s, grReal, grString);
-    library.addCast(&typecast_as2s, grPureStringArray, grString);
+    library.addCast(&typecast_as2s, grPure(grArray(grString)), grString);
 
     //As string array
-    library.addCast(&typecast_s2as, grPureString, grStringArray);
+    library.addCast(&typecast_s2as, grPure(grString), grArray(grString));
 }
 
 //As int
@@ -55,7 +55,7 @@ private void typecast_r2s(GrCall call) {
 
 private void typecast_as2s(GrCall call) {
     GrString result;
-    foreach (const ref sub; call.getArray(0)) {
+    foreach (const ref sub; call.getArray(0).data) {
         result ~= sub.getString();
     }
     call.setString(result);
@@ -63,7 +63,7 @@ private void typecast_as2s(GrCall call) {
 
 //As string array
 private void typecast_s2as(GrCall call) {
-    GrArray result;
+    GrValue[] result;
     foreach (const ref sub; call.getString(0)) {
         result ~= GrValue(to!GrString(sub));
     }

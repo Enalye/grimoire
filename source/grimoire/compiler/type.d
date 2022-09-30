@@ -61,16 +61,14 @@ struct GrType {
     bool isPure;
 
     /// Init as a basic type.
-    this(Base base_, bool isPure = false) {
+    this(Base base_) {
         base = base_;
-        isPure = isPure;
     }
 
     /// Compound type.
-    this(Base base_, string mangledType_, bool isPure = false) {
+    this(Base base_, string mangledType_) {
         base = base_;
         mangledType = mangledType_;
-        isPure = isPure;
     }
 
     /// Only assign a simple type (base).
@@ -111,67 +109,7 @@ const GrType grReal = GrType(GrType.Base.real_);
 /// Bool
 const GrType grBool = GrType(GrType.Base.bool_);
 /// String
-const GrType grString = GrType(GrType.Base.string_, false);
-/// Ditto
-const GrType grPureString = GrType(GrType.Base.string_, true);
-/// Int array
-const GrType grIntArray = GrType(GrType.Base.array, grMangleSignature([grInt]), false);
-/// Ditto
-const GrType grPureIntArray = GrType(GrType.Base.array, grMangleSignature([
-        grInt
-    ]), true);
-/// Real array
-const GrType grRealArray = GrType(GrType.Base.array, grMangleSignature([grReal]), false);
-/// Ditto
-const GrType grPureRealArray = GrType(GrType.Base.array, grMangleSignature([
-        grReal
-    ]), true);
-/// Bool array
-const GrType grBoolArray = GrType(GrType.Base.array, grMangleSignature([grBool]), false);
-/// Ditto
-const GrType grPureBoolArray = GrType(GrType.Base.array, grMangleSignature([
-        grBool
-    ]), true);
-/// String array
-const GrType grStringArray = GrType(GrType.Base.array, grMangleSignature([
-        grString
-    ]), false);
-/// Ditto
-const GrType grPureStringArray = GrType(GrType.Base.array, grMangleSignature([
-        grString
-    ]), true);
-/// Int channel
-const GrType grIntChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grInt
-    ]), false);
-/// Ditto
-const GrType grPureIntChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grInt
-    ]), true);
-/// Real channel
-const GrType grRealChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grReal
-    ]), false);
-/// Ditto
-const GrType grPureRealChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grReal
-    ]), true);
-/// Bool channel
-const GrType grBoolChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grBool
-    ]), false);
-/// Ditto
-const GrType grPureBoolChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grBool
-    ]), true);
-/// String channel
-const GrType grStringChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grString
-    ]), false);
-/// Ditto
-const GrType grPureStringChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grString
-    ]), true);
+const GrType grString = GrType(GrType.Base.string_);
 
 /// Make an optional version of the type.
 GrType grOptional(GrType subType) {

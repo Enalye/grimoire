@@ -10,6 +10,7 @@ import grimoire.compiler;
 public import grimoire.stdlib.util;
 
 import grimoire.stdlib.constraint;
+import grimoire.stdlib.optional;
 import grimoire.stdlib.system;
 import grimoire.stdlib.array;
 import grimoire.stdlib.hashmap;
@@ -30,8 +31,9 @@ import grimoire.stdlib.queue;
 GrLibrary grLoadStdLibrary() {
     GrLibrary library = new GrLibrary;
     grLoadStdLibConstraint();
-    grLoadStdLibLog(library);
     grLoadStdLibSystem(library);
+    grLoadStdLibOptional(library);
+    grLoadStdLibLog(library);
     grLoadStdLibArray(library);
     grLoadStdLibHashMap(library);
     grLoadStdLibRange(library);

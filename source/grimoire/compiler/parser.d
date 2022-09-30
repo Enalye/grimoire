@@ -945,12 +945,19 @@ final class GrParser {
         return grVoid;
     }
 
-    private GrType addBinaryOperator(GrLexeme.Type lexType, const GrType leftType,
-        const GrType rightType, uint fileId) {
+    private GrType addBinaryOperator(GrLexeme.Type lexType, GrType leftType,
+        GrType rightType, uint fileId) {
         if (leftType.base == GrType.Base.internalTuple || rightType.base ==
             GrType.Base.internalTuple)
             logError(getError(Error.cantUseOpOnMultipleVal), getError(Error.exprYieldsMultipleVal));
         GrType resultType = GrType.Base.void_;
+
+        if (leftType.base == GrType.Base.optional && rightType.base != GrType.Base.optional) {
+            rightType = grOptional(rightType);
+        }
+        else if (rightType.base == GrType.Base.optional && leftType.base != GrType.Base.optional) {
+            leftType = grOptional(leftType);
+        }
 
         if (leftType.base == GrType.Base.enum_ && rightType.base == GrType.Base.enum_ &&
             leftType.mangledType == rightType.mangledType) {
@@ -990,12 +997,12 @@ final class GrParser {
         }
         else if (leftType.base == GrType.Base.int_ && rightType.base == GrType.Base.real_) {
             // Special case, we need to convert int to real, then swap the 2 values when needed.
+            addInstruction(GrOpcode.swap);
             convertType(leftType, rightType, fileId);
             resultType = addInternalOperator(lexType, rightType, true);
 
             //Check custom operator
             if (resultType.base == GrType.Base.void_) {
-                addInstruction(GrOpcode.swap);
                 resultType = addCustomBinaryOperator(lexType, rightType, rightType, fileId);
             }
         }
@@ -4476,7 +4483,6 @@ final class GrParser {
                         getPrettyLexemeType(GrLexeme.Type.semicolon),
                         getPrettyLexemeType(get().type)));
             checkAdvance();
-            
 
             addReturn();
 
@@ -4699,7 +4705,7 @@ final class GrParser {
 
             GrType subType = grUnmangle(dst.mangledType);
 
-            if(convertType(src, subType, fileId, noFail, isExplicit).base == subType.base)
+            if (convertType(src, subType, fileId, noFail, isExplicit).base == subType.base)
                 return dst;
         }
 
@@ -5836,9 +5842,22 @@ final class GrParser {
             case null_:
                 currentType = GrType(GrType.Base.null_);
                 hasValue = true;
-                typeStack ~= currentType;
                 addInstruction(GrOpcode.const_null);
                 checkAdvance();
+                if (get().type == GrLexeme.Type.leftParenthesis) {
+                    checkAdvance();
+                    GrType subType = parseType();
+                    if (subType.base != GrType.Base.void_)
+                        currentType = grOptional(subType);
+
+                    if (get().type != GrLexeme.Type.rightParenthesis)
+                        logError(getError(Error.missingParenthesesAfterNullSignature),
+                            format(getError(Error.expectedXFoundY),
+                                getPrettyLexemeType(GrLexeme.Type.rightParenthesis),
+                                getPrettyLexemeType(get().type)));
+                    checkAdvance();
+                }
+                typeStack ~= currentType;
                 break;
             case new_:
                 currentType = parseObjectBuilder();
@@ -6868,6 +6887,7 @@ final class GrParser {
         missingCommaOrRightParenthesisInsideArraySignature,
         missingParenthesesAfterChanSignature,
         missingParenthesesAfterArraySignature,
+        missingParenthesesAfterNullSignature,
         expectedIntFoundX,
         chanSizeMustBeOneOrHigher,
         arraySizeMustBeZeroOrHigher,
@@ -7104,6 +7124,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.missingCommaOrRightParenthesisInsideArraySignature: "missing `,` or `)` inside array signature",
                 Error.missingParenthesesAfterChanSignature: "missing parentheses after the channel signature",
                 Error.missingParenthesesAfterArraySignature: "missing parentheses after the array signature",
+                Error.missingParenthesesAfterNullSignature: "missing parentheses after the null signature",
                 Error.chanSizeMustBeOneOrHigher: "the channel size must be one or higher",
                 Error.arraySizeMustBeZeroOrHigher: "the array size must be zero or higher",
                 Error.expectedAtLeastSizeOf1FoundX: "expected at least a size of 1, found %s",
@@ -7326,6 +7347,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.missingCommaOrRightParenthesisInsideArraySignature: "`,` ou `)` manquant dans la signature de la liste",
                 Error.missingParenthesesAfterChanSignature: "parenthèses manquantes après la signature du canal",
                 Error.missingParenthesesAfterArraySignature: "parenthèses manquantes après la signature de la liste",
+                Error.missingParenthesesAfterNullSignature: "parenthèses manquantes après la signature du type nul",
                 Error.chanSizeMustBeOneOrHigher: "la taille du canal doit être de un ou plus",
                 Error.arraySizeMustBeZeroOrHigher: "la taille d’une liste doit être supérieure à zéro",
                 Error.expectedAtLeastSizeOf1FoundX: "une taille de 1 minimum attendue, %s trouvé",
