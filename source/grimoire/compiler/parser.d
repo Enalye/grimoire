@@ -952,14 +952,26 @@ final class GrParser {
             logError(getError(Error.cantUseOpOnMultipleVal), getError(Error.exprYieldsMultipleVal));
         GrType resultType = GrType.Base.void_;
 
-        if (leftType.base == GrType.Base.optional && rightType.base != GrType.Base.optional) {
-            rightType = grOptional(rightType);
-        }
-        else if (rightType.base == GrType.Base.optional && leftType.base != GrType.Base.optional) {
-            leftType = grOptional(leftType);
+        if (lexType != GrLexeme.Type.optionalOr) {
+            if (leftType.base == GrType.Base.optional && rightType.base != GrType.Base.optional) {
+                rightType = grOptional(rightType);
+            }
+            else if (rightType.base == GrType.Base.optional && leftType.base != GrType
+                .Base.optional) {
+                leftType = grOptional(leftType);
+            }
         }
 
-        if (leftType.base == GrType.Base.enum_ && rightType.base == GrType.Base.enum_ &&
+        if (lexType == GrLexeme.Type.optionalOr && leftType.base == GrType.Base.optional) {
+            GrType optionalType = grUnmangle(leftType.mangledType);
+            if (rightType.base == GrType.Base.optional)
+                convertType(rightType, leftType, fileId);
+            else
+                convertType(rightType, optionalType, fileId);
+            addInstruction(GrOpcode.optionalOr);
+            resultType = rightType;
+        }
+        else if (leftType.base == GrType.Base.enum_ && rightType.base == GrType.Base.enum_ &&
             leftType.mangledType == rightType.mangledType) {
             resultType = addInternalOperator(lexType, leftType);
         }
@@ -4527,6 +4539,8 @@ final class GrParser {
     private uint getLeftOperatorPriority(GrLexeme.Type type) {
         switch (type) with (GrLexeme.Type) {
         case assign: .. case powerAssign:
+            return -1;
+        case optionalOr:
             return 0;
         case arrow:
             return 1;
@@ -4588,6 +4602,8 @@ final class GrParser {
         switch (type) with (GrLexeme.Type) {
         case assign: .. case powerAssign:
             return 20;
+        case optionalOr:
+            return 0;
         case arrow:
             return 1;
         case or:
@@ -6224,8 +6240,26 @@ final class GrParser {
             case increment: .. case decrement:
                 isRightUnaryOperator = true;
                 goto case multiply;
+            case optional:
+                if (!hadValue)
+                    logError(format(getError(Error.xMustBePlacedAfterVal),
+                            getPrettyLexemeType(GrLexeme.Type.optional)),
+                        getError(Error.missingVal));
+
+                if (currentType.base != GrType.Base.optional)
+                    logError(getError(Error.expectedOptionalType),
+                        getError(Error.opMustFollowAnOptionalType));
+
+                checkAdvance();
+                currentType = grUnmangle(currentType.mangledType);
+                addInstruction(GrOpcode.optionalAssert);
+
+                hasValue = true;
+                hadValue = false;
+                break;
             case and:
             case or:
+            case optionalOr:
             case multiply:
             case divide:
             case remainder: .. case not:
@@ -7003,7 +7037,9 @@ final class GrParser {
         missingEnumConstantName,
         expectedConstNameAfterEnumType,
         xIsAbstract,
-        xIsAbstractAndCannotBeInstanciated
+        xIsAbstractAndCannotBeInstanciated,
+        expectedOptionalType,
+        opMustFollowAnOptionalType
     }
     // format(getError(Error.), )
     /*
@@ -7149,8 +7185,8 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.forCantIterateOverX: "for can't iterate over a `%s`",
                 Error.cantEvalArityUnknownCompound: "can't evaluate the arity of an unknown compound",
                 Error.arityEvalError: "arity evaluation error",
-                Error.typeOfIteratorMustBeIntNotX: "the type of the iterator must be an int_, not `%s`",
-                Error.iteratorMustBeInt: "the iterator must be an int_",
+                Error.typeOfIteratorMustBeIntNotX: "the type of the iterator must be an `int`, not `%s`",
+                Error.iteratorMustBeInt: "the iterator must be an `int`",
                 Error.mismatchedNumRetVal: "mismatched number of return values",
                 Error.expectedXRetValFoundY: "expected %s return value, found %s",
                 Error.expectedXRetValsFoundY: "expected %s return values, found %s",
@@ -7170,7 +7206,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.indexesShouldBeSeparatedByComma: "indexes should be separated by a comma",
                 Error.missingVal: "missing value",
                 Error.expectedIndexFoundComma: "an index is expected, found `,`",
-                Error.expectedIntFoundNothing: "expected int_, found nothing",
+                Error.expectedIntFoundNothing: "expected `int`, found nothing",
                 Error.noValToConv: "no value to convert",
                 Error.expectedVarFoundX: "expected variable, found `%s`",
                 Error.missingVar: "missing variable",
@@ -7234,7 +7270,9 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.missingEnumConstantName: "missing the enum constant name",
                 Error.expectedConstNameAfterEnumType: "expected a constant name after the enum type",
                 Error.xIsAbstract: "`%s` is abstract",
-                Error.xIsAbstractAndCannotBeInstanciated: "`%s` is abstract and can't be instanciated"
+                Error.xIsAbstractAndCannotBeInstanciated: "`%s` is abstract and can't be instanciated",
+                Error.expectedOptionalType: "`?` expect an optional type",
+                Error.opMustFollowAnOptionalType: "`?` must be placed after the optional to unwrap"
             ],
             [ // fr_FR
                 Error.eofReached: "fin de fichier atteinte",
@@ -7457,7 +7495,9 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.missingEnumConstantName: "nom de la constante d’énumération attendu",
                 Error.expectedConstNameAfterEnumType: "nom de la constante attendue après le type d’énumération",
                 Error.xIsAbstract: "`%s` est abstrait",
-                Error.xIsAbstractAndCannotBeInstanciated: "`%s` est abstrait et ne peut pas être instancié"
+                Error.xIsAbstractAndCannotBeInstanciated: "`%s` est abstrait et ne peut pas être instancié",
+                Error.expectedOptionalType: "`?` nécessite un type optionnel",
+                Error.opMustFollowAnOptionalType: "`?` doit être placé après le type optionnel à déballer"
             ]
         ];
         return messages[_locale][error];

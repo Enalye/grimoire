@@ -967,6 +967,20 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos]._bytes != GR_NULL;
                     currentTask.pc++;
                     break;
+                case optionalAssert:
+                    currentTask.pc++;
+                    if (currentTask.stack[currentTask.stackPos]._bytes == GR_NULL) {
+                        currentTask.pc--;
+                        raise(currentTask, "NullError");
+                    }
+                    break;
+                case optionalOr:
+                    currentTask.stackPos--;
+                    if (currentTask.stack[currentTask.stackPos]._bytes == GR_NULL)
+                        currentTask.stack[currentTask.stackPos] =
+                            currentTask.stack[currentTask.stackPos + 1];
+                    currentTask.pc++;
+                    break;
                 case and_int:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue = currentTask.stack[currentTask.stackPos]._ivalue &&
