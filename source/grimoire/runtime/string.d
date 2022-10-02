@@ -3,28 +3,26 @@
  * License: Zlib
  * Authors: Enalye
  */
-module grimoire.runtime.array;
+module grimoire.runtime.string;
+
+import std.string;
+import std.conv : to;
 
 import grimoire.assembly;
-
 import grimoire.runtime.value;
 
-/// Runtime array, can only hold one subtype.
-final class GrArray {
+/// Runtime string
+final class GrString {
     /// Payload
     package {
-        GrValue[] _data;
+        GrStr _data;
     }
 
     this() {
     }
 
-    this(GrValue[] value) {
+    this(GrStr value) {
         _data = value;
-    }
-
-    this(GrInt initialSize) {
-        _data.reserve(initialSize);
     }
 
     @property {
@@ -36,20 +34,20 @@ final class GrArray {
             return _data.length == 0;
         }
 
-        pragma(inline) GrValue[] data() {
+        pragma(inline) GrStr data() {
             return _data;
         }
     }
 
-    pragma(inline) GrValue opIndex(GrInt index) {
+    /*pragma(inline) GrStr opIndex(GrInt index) {
         return _data[index];
     }
 
-    pragma(inline) GrValue opIndexAssign(GrValue value, GrInt index) {
+    pragma(inline) GrStr opIndexAssign(GrStr value, GrInt index) {
         return _data[index] = value;
-    }
+    }*/
 
-    pragma(inline) void opAssign(GrValue[] values) {
+    pragma(inline) void opAssign(GrStr values) {
         _data = values;
     }
 
@@ -61,48 +59,48 @@ final class GrArray {
         _data.length = size_;
     }
 
-    pragma(inline) GrValue first() {
-        return _data[0];
+    pragma(inline) GrStr first() {
+        return to!GrStr(_data[0]);
     }
 
-    pragma(inline) GrValue last() {
-        return _data[$ - 1];
+    pragma(inline) GrStr last() {
+        return to!GrStr(_data[$ - 1]);
     }
 
-    pragma(inline) void push(GrValue value) {
+    pragma(inline) void push(GrStr value) {
         _data ~= value;
     }
 
-    pragma(inline) GrValue pop() {
-        GrValue value = _data[$ - 1];
+    pragma(inline) GrStr pop() {
+        GrStr value = to!GrStr(_data[$ - 1]);
         _data.length--;
         return value;
     }
 
-    pragma(inline) GrValue[] pop(GrInt size_) {
+    pragma(inline) GrStr pop(GrInt size_) {
         if (_data.length < size_) {
             size_ = cast(GrInt) _data.length;
         }
-        GrValue[] slice = _data[$ - size_ .. $];
+        GrStr slice = _data[$ - size_ .. $];
         _data.length -= size_;
         return slice;
     }
 
-    pragma(inline) void unshift(GrValue value) {
+    pragma(inline) void unshift(GrStr value) {
         _data = value ~ _data;
     }
 
-    pragma(inline) GrValue shift() {
-        GrValue value = _data[0];
+    pragma(inline) GrStr shift() {
+        GrStr value = to!GrStr(_data[0]);
         _data = _data[1 .. $];
         return value;
     }
 
-    pragma(inline) GrValue[] shift(GrInt size_) {
+    pragma(inline) GrStr shift(GrInt size_) {
         if (_data.length < size_) {
             size_ = cast(GrInt) _data.length;
         }
-        GrValue[] slice = _data[0 .. size_];
+        GrStr slice = _data[0 .. size_];
         _data = _data[size_ .. $];
         return slice;
     }
@@ -160,7 +158,7 @@ final class GrArray {
         _data = _data[0 .. index1] ~ _data[(index2 + 1) .. $];
     }
 
-    pragma(inline) GrValue[] slice(GrInt index1, GrInt index2) {
+    pragma(inline) GrStr slice(GrInt index1, GrInt index2) {
         if (index1 < 0)
             index1 = (cast(GrInt) _data.length) + index1;
         if (index2 < 0)
@@ -186,13 +184,13 @@ final class GrArray {
         return _data[index1 .. index2 + 1];
     }
 
-    pragma(inline) GrValue[] reverse() {
+    pragma(inline) GrStr reverse() {
         import std.algorithm.mutation : reverse;
 
-        return _data.reverse();
+        return _data.dup.reverse();
     }
 
-    pragma(inline) void insert(GrInt index, GrValue value) {
+    pragma(inline) void insert(GrInt index, GrStr value) {
         if (index >= _data.length) {
             _data ~= value;
             return;
@@ -211,45 +209,15 @@ final class GrArray {
         _data = _data[0 .. index] ~ value ~ _data[index .. $];
     }
 
-    pragma(inline) void sortByInt() {
-        import std.algorithm.sorting : sort;
-
-        _data.sort!((a, b) => a.getInt() < b.getInt())();
+    pragma(inline) GrInt indexOf(GrStr value) {
+        return cast(GrInt) _data.indexOf(value);
     }
 
-    pragma(inline) void sortByReal() {
-        import std.algorithm.sorting : sort;
-
-        _data.sort!((a, b) => a.getReal() < b.getReal())();
+    pragma(inline) GrInt lastIndexOf(GrStr value) {
+        return cast(GrInt) _data.lastIndexOf(value);
     }
 
-    pragma(inline) void sortByString() {
-        import std.algorithm.sorting : sort;
-
-        _data.sort!((a, b) => a.getString() < b.getString())();
-    }
-
-    pragma(inline) GrInt indexOf(GrValue value) {
-        for (GrInt index; index < _data.length; ++index) {
-            if (_data[index] == value)
-                return index;
-        }
-        return -1;
-    }
-
-    pragma(inline) GrInt lastIndexOf(GrValue value) {
-        for (GrInt index = (cast(GrInt) _data.length) - 1; index > 0; --index) {
-            if (_data[index] == value)
-                return index;
-        }
-        return -1;
-    }
-
-    pragma(inline) GrBool contains(GrValue value) {
-        for (GrInt index; index < _data.length; ++index) {
-            if (_data[index] == value)
-                return true;
-        }
-        return false;
+    pragma(inline) GrBool contains(GrStr value) {
+        return _data.indexOf(value) != -1;
     }
 }

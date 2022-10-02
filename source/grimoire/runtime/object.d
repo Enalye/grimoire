@@ -8,6 +8,7 @@ module grimoire.runtime.object;
 import grimoire.compiler, grimoire.assembly;
 import grimoire.runtime.channel;
 import grimoire.runtime.value;
+import grimoire.runtime.string;
 import grimoire.runtime.array;
 
 /**
@@ -72,11 +73,19 @@ final class GrObject {
     }
 
     pragma(inline) GrString getString(const string fieldName) {
-        return (cast(GrStringWrapper) getField!GrPtr(fieldName)).data;
+        return cast(GrString) getField!GrPtr(fieldName);
+    }
+
+    pragma(inline) GrStr getStringData(const string fieldName) {
+        return (cast(GrString) getField!GrPtr(fieldName)).data;
     }
 
     pragma(inline) GrArray getArray(const string fieldName) {
         return cast(GrArray) getField!GrPtr(fieldName);
+    }
+
+    pragma(inline) GrValue[] getArrayData(const string fieldName) {
+        return (cast(GrArray) getField!GrPtr(fieldName)).data;
     }
 
     pragma(inline) GrChannel getChannel(const string fieldName) {
@@ -138,8 +147,8 @@ final class GrObject {
         setField!GrPtr(fieldName, cast(GrPtr) value);
     }
 
-    pragma(inline) void setString(const string fieldName, GrString value) {
-        setField!GrPtr(fieldName, cast(GrPtr) new GrStringWrapper(value));
+    pragma(inline) void setString(const string fieldName, GrStr value) {
+        setField!GrPtr(fieldName, cast(GrPtr) new GrString(value));
     }
 
     pragma(inline) void setArray(const string fieldName, GrArray value) {

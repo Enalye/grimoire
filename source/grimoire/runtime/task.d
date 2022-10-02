@@ -172,7 +172,7 @@ final class GrTask {
         setValue!GrPtr(cast(GrPtr) value);
     }
 
-    void setString(GrString value) {
+    void setString(GrStr value) {
         setValue!GrPtr(cast(GrPtr) value);
     }
 

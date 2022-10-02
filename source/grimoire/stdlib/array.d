@@ -10,9 +10,6 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
-    library.addForeign("ArrayIterator", ["T"]);
-    GrType iteratorType = grGetForeignType("ArrayIterator", [grAny("T")]);
-
     library.addFunction(&_copy, "copy", [grPure(grArray(grAny("T")))], [
             grArray(grAny("T"))
         ]);
@@ -28,7 +25,9 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
             grAny("T")
         ]);
     library.addFunction(&_shift, "shift", [grArray(grAny("T"))], [grAny("T")]);
-    library.addFunction(&_pop, "pop", [grArray(grAny("T"))], [grOptional(grAny("T"))]);
+    library.addFunction(&_pop, "pop", [grArray(grAny("T"))], [
+            grOptional(grAny("T"))
+        ]);
     library.addFunction(&_shift1, "shift", [grArray(grAny("T")), grInt], [
             grArray(grAny("T"))
         ]);
@@ -53,9 +52,8 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
         [grArray(grAny("T"))]);
     library.addFunction(&_insert, "insert", [
             grArray(grAny("T")), grInt, grAny("T")
-        ], [grArray(grAny("T"))]);
-    library.addFunction(&_each, "each", [grArray(grAny("T"))], [iteratorType]);
-    library.addFunction(&_next, "next", [iteratorType], [grOptional(grAny("T"))]);
+        ]);
+
     library.addFunction(&_findFirst, "findFirst",
         [grPure(grArray(grAny("T"))), grPure(grAny("T"))], [grInt]);
     library.addFunction(&_findLast, "findLast", [
@@ -64,7 +62,7 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
     library.addFunction(&_findLast, "findLast", [
             grPure(grArray(grAny("T"))), grPure(grAny("T"))
         ], [grOptional(grInt)]);
-    library.addFunction(&_has, "has", [
+    library.addFunction(&_contains, "contains", [
             grPure(grArray(grAny("T"))), grPure(grAny("T"))
         ], [grBool]);
 
@@ -77,6 +75,10 @@ package(grimoire.stdlib) void grLoadStdLibArray(GrLibrary library) {
     library.addFunction(&_sort_!"string", "sort", [grArray(grString)], [
             grArray(grString)
         ]);
+
+    GrType iteratorType = library.addForeign("ArrayIterator", ["T"]);
+    library.addFunction(&_each, "each", [grArray(grAny("T"))], [iteratorType]);
+    library.addFunction(&_next, "next", [iteratorType], [grOptional(grAny("T"))]);
 }
 
 private void _copy(GrCall call) {
@@ -127,7 +129,7 @@ private void _push(GrCall call) {
 private void _shift(GrCall call) {
     GrArray array = call.getArray(0);
     if (!array.size()) {
-        call.raise("IndexError");
+        call.setNull();
         return;
     }
     call.setValue(array.shift());
@@ -225,8 +227,8 @@ private void _sort_(string T)(GrCall call) {
 private void _findFirst(GrCall call) {
     GrArray array = call.getArray(0);
     GrValue value = call.getValue(1);
-    GrInt index = array.indexOf(value);
-    if (index == -1) {
+    const GrInt index = array.indexOf(value);
+    if (index < 0) {
         call.setNull();
         return;
     }
@@ -236,15 +238,15 @@ private void _findFirst(GrCall call) {
 private void _findLast(GrCall call) {
     GrArray array = call.getArray(0);
     GrValue value = call.getValue(1);
-    GrInt index = array.lastIndexOf(value);
-    if (index == -1) {
+    const GrInt index = array.lastIndexOf(value);
+    if (index < 0) {
         call.setNull();
         return;
     }
     call.setInt(index);
 }
 
-private void _has(GrCall call) {
+private void _contains(GrCall call) {
     GrArray array = call.getArray(0);
     GrValue value = call.getValue(1);
     call.setBool(array.contains(value));
@@ -264,11 +266,6 @@ private void _each(GrCall call) {
 
 private void _next(GrCall call) {
     ArrayIterator iter = call.getForeign!(ArrayIterator)(0);
-
-    if (!iter) {
-        call.raise("NullError");
-        return;
-    }
     if (iter.index >= iter.array.length) {
         call.setNull();
         return;

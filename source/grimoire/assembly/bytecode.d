@@ -164,7 +164,7 @@ final class GrBytecode {
             /// Realing init value
             GrReal rvalue;
             /// String init value
-            GrString svalue;
+            GrStr svalue;
         }
 
         /// All the instructions.
@@ -177,7 +177,7 @@ final class GrBytecode {
         GrReal[] rconsts;
 
         /// String constants.
-        GrString[] sconsts;
+        GrStr[] sconsts;
 
         /// Callable primitives.
         PrimitiveReference[] primitives;
@@ -239,7 +239,7 @@ final class GrBytecode {
 
     /// Serialize the bytecode into an array.
     ubyte[] serialize() {
-        void writeStr(ref Appender!(ubyte[]) buffer, GrString s) {
+        void writeStr(ref Appender!(ubyte[]) buffer, GrStr s) {
             buffer.append!uint(cast(uint) s.length);
             buffer.put(cast(ubyte[]) s);
         }
@@ -326,8 +326,8 @@ final class GrBytecode {
 
     /// Deserialize the bytecode from an array.
     void deserialize(ubyte[] buffer) {
-        GrString readStr(ref ubyte[] buffer) {
-            GrString s;
+        GrStr readStr(ref ubyte[] buffer) {
+            GrStr s;
             const uint size = buffer.read!uint();
             if (size == 0)
                 return s;

@@ -410,7 +410,7 @@ final class GrVariableDefinition {
     /// Floating init value
     GrReal rvalue;
     /// String init value
-    GrString svalue;
+    GrStr svalue;
     /// Register.
     uint register;
 }

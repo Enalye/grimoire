@@ -12,6 +12,7 @@ import grimoire.assembly, grimoire.compiler;
 import grimoire.runtime.task;
 import grimoire.runtime.value;
 import grimoire.runtime.object;
+import grimoire.runtime.string;
 import grimoire.runtime.array;
 import grimoire.runtime.channel;
 
@@ -40,7 +41,7 @@ final class GrCall {
         }
 
         /// Extra type compiler information.
-        GrString meta() const {
+        GrStr meta() const {
             return _task.engine.meta;
         }
     }
@@ -115,15 +116,19 @@ final class GrCall {
     }
 
     pragma(inline) GrString getString(uint index) {
-        return (cast(GrStringWrapper) getParameter!GrPtr(index)).data;
+        return cast(GrString) getParameter!GrPtr(index);
     }
 
-    pragma(inline) GrStringWrapper getStringObject(uint index) {
-        return cast(GrStringWrapper) getParameter!GrPtr(index);
+    pragma(inline) GrStr getStringData(uint index) {
+        return (cast(GrString) getParameter!GrPtr(index)).data;
     }
 
     pragma(inline) GrArray getArray(uint index) {
         return cast(GrArray) getParameter!GrPtr(index);
+    }
+
+    pragma(inline) GrValue[] getArrayData(uint index) {
+        return (cast(GrArray) getParameter!GrPtr(index)).data;
     }
 
     pragma(inline) GrChannel getChannel(uint index) {
@@ -190,11 +195,11 @@ final class GrCall {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
-    pragma(inline) void setString(GrString value) {
-        setResult!GrPtr(cast(GrPtr) new GrStringWrapper(value));
+    pragma(inline) void setString(GrStr value) {
+        setResult!GrPtr(cast(GrPtr) new GrString(value));
     }
 
-    pragma(inline) void setString(GrStringWrapper value) {
+    pragma(inline) void setString(GrString value) {
         setResult!GrPtr(cast(GrPtr) value);
     }
 
@@ -231,7 +236,7 @@ final class GrCall {
         else static if (is(T == GrReal)) {
             _outputs[_results].setReal(value);
         }
-        else static if (is(T == GrStringWrapper)) {
+        else static if (is(T == GrString)) {
             _outputs[_results].setString(value);
         }
         else static if (is(T == GrPtr)) {
@@ -252,7 +257,7 @@ final class GrCall {
         return _task.engine.getRealVariable(name);
     }
 
-    GrString getStringVariable(string name) {
+    GrStr getStringVariable(string name) {
         return _task.engine.getStringVariable(name);
     }
 
@@ -292,7 +297,7 @@ final class GrCall {
         _task.engine.setRealVariable(name, value);
     }
 
-    void setStringVariable(string name, GrString value) {
+    void setStringVariable(string name, GrStr value) {
         _task.engine.setStringVariable(name, value);
     }
 
@@ -321,7 +326,7 @@ final class GrCall {
     }
 
     private {
-        GrString _message;
+        GrStr _message;
         bool _hasError;
     }
 
@@ -329,6 +334,11 @@ final class GrCall {
     /// Because the stacks would be in an undefined state.
     /// So we wait until the primitive is finished before calling dispatchError().
     void raise(GrString message) {
+        _message = message.data;
+        _hasError = true;
+    }
+    /// Ditto
+    void raise(GrStr message) {
         _message = message;
         _hasError = true;
     }

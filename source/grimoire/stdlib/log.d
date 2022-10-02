@@ -94,14 +94,14 @@ private void _print_rx(GrCall call) {
 }
 
 private void _print_s(GrCall call) {
-    _stdOut(call.getString(0));
+    _stdOut(call.getStringData(0));
 }
 
 private void _print_sx(GrCall call) {
     if (call.isNull(0))
         _stdOut("null");
     else
-        _stdOut(call.getString(0));
+        _stdOut(call.getStringData(0));
 }
 
 private void _print_ni(GrCall call) {
@@ -204,7 +204,7 @@ private void _print_ns(GrCall call) {
         if (i != 0) {
             txt ~= ", ";
         }
-        txt ~= array[i].getString();
+        txt ~= array[i].getStringData();
     }
     txt ~= "]";
     _stdOut(txt);
@@ -222,7 +222,7 @@ private void _print_nsx(GrCall call) {
         if (i != 0) {
             txt ~= ", ";
         }
-        txt ~= array[i].getString();
+        txt ~= array[i].getStringData();
     }
     txt ~= "]";
     _stdOut(txt);

@@ -34,7 +34,7 @@ final class GrParser {
     package {
         GrInt[] iconsts;
         GrReal[] rconsts;
-        GrString[] sconsts;
+        GrStr[] sconsts;
 
         uint scopeLevel;
 
@@ -156,8 +156,8 @@ final class GrParser {
     }
 
     /// Register an string value and returns its id.
-    private uint registerStringConstant(GrString value) {
-        foreach (size_t index, GrString sconst; sconsts) {
+    private uint registerStringConstant(GrStr value) {
+        foreach (size_t index, GrStr sconst; sconsts) {
             if (sconst == value)
                 return cast(uint) index;
         }
@@ -777,11 +777,11 @@ final class GrParser {
         addInstruction(GrOpcode.const_bool, value);
     }
 
-    private void addStringConstant(GrString value) {
+    private void addStringConstant(GrStr value) {
         addInstruction(GrOpcode.const_string, registerStringConstant(value));
     }
 
-    private void addMetaConstant(GrString value) {
+    private void addMetaConstant(GrStr value) {
         addInstruction(GrOpcode.const_meta, registerStringConstant(value));
     }
 
@@ -1663,7 +1663,7 @@ final class GrParser {
         foreach (size_t i, GrReal rvalue; rconsts)
             writeln(".fconst " ~ to!string(rvalue) ~ "\t;" ~ to!string(i));
 
-        foreach (size_t i, GrString svalue; sconsts)
+        foreach (size_t i, GrStr svalue; sconsts)
             writeln(".sconst " ~ to!string(svalue) ~ "\t;" ~ to!string(i));
 
         foreach (GrFunction func; functions) {

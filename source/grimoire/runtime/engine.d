@@ -17,6 +17,7 @@ import grimoire.compiler, grimoire.assembly;
 import grimoire.runtime.task;
 import grimoire.runtime.value;
 import grimoire.runtime.object;
+import grimoire.runtime.string;
 import grimoire.runtime.array;
 import grimoire.runtime.channel;
 import grimoire.runtime.call;
@@ -42,12 +43,12 @@ class GrEngine {
         /// It means that the throwing task didn't handle the exception.
         bool _isPanicking;
         /// Unhandled panic message.
-        GrString _panicMessage;
+        GrStr _panicMessage;
         /// Stack traces are generated each time an error is raised.
         GrStackTrace[] _stackTraces;
 
         /// Extra type compiler information.
-        GrString _meta;
+        GrStr _meta;
 
         /// Primitives.
         GrCallback[] _callbacks;
@@ -83,16 +84,16 @@ class GrEngine {
         }
 
         /// The unhandled error message.
-        GrString panicMessage() const {
+        GrStr panicMessage() const {
             return _panicMessage;
         }
 
         /// Extra type compiler information.
-        GrString meta() const {
+        GrStr meta() const {
             return _meta;
         }
         /// Ditto
-        GrString meta(GrString meta_) {
+        GrStr meta(GrStr meta_) {
             return _meta = meta_;
         }
     }
@@ -135,7 +136,7 @@ class GrEngine {
             else if (typeMask & 0x2)
                 _globals[index]._rvalue = globalRef.rvalue;
             else if (typeMask & 0x4)
-                _globals[index]._ovalue = cast(GrPtr) new GrStringWrapper(globalRef.svalue);
+                _globals[index]._ovalue = cast(GrPtr) new GrString(globalRef.svalue);
             else if (typeMask & 0x8)
                 _globals[index]._ovalue = null;
         }
@@ -303,7 +304,7 @@ class GrEngine {
 	If nothing catches the error inside the task, the VM enters in a panic state. \
 	Every tasks will then execute their `defer` statements and be killed.
 	*/
-    void raise(GrTask task, GrString message) {
+    void raise(GrTask task, GrStr message) {
         if (task.isPanicking)
             return;
         //Error message.
@@ -344,8 +345,8 @@ class GrEngine {
         return cast(GrObject) getVariable!GrPtr(name);
     }
 
-    GrString getStringVariable(string name) {
-        return (cast(GrStringWrapper) getVariable!GrPtr(name)).data;
+    GrStr getStringVariable(string name) {
+        return (cast(GrString) getVariable!GrPtr(name)).data;
     }
 
     GrArray getArrayVariable(string name) {
@@ -392,8 +393,8 @@ class GrEngine {
         setVariable!GrPtr(name, cast(GrPtr) value);
     }
 
-    void setStringVariable(string name, GrString value) {
-        setVariable!GrPtr(name, cast(GrPtr) new GrStringWrapper(value));
+    void setStringVariable(string name, GrStr value) {
+        setVariable!GrPtr(name, cast(GrPtr) new GrString(value));
     }
 
     void setArrayVariable(string name, GrArray value) {
@@ -435,7 +436,7 @@ class GrEngine {
                 throw new Exception("variable `" ~ name ~ "` is not a real");
             _globals[variable.index]._rvalue = value;
         }
-        /*else static if (is(T == GrStringWrapper)) {
+        /*else static if (is(T == GrString)) {
             if ((variable.typeMask & 0x4) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not a string");
             _globals[variable.index].svalue = value;
@@ -517,7 +518,7 @@ class GrEngine {
 
                         //The VM is now panicking.
                         _isPanicking = true;
-                        _panicMessage = (cast(GrStringWrapper) _globalStackIn[$ - 1]._ovalue).data;
+                        _panicMessage = (cast(GrString) _globalStackIn[$ - 1]._ovalue).data;
                         _globalStackIn.length--;
 
                         //Every deferred call has been executed, now die.
@@ -832,7 +833,7 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) new GrStringWrapper(
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) new GrString(
                         _bytecode.sconsts[grGetInstructionUnsignedValue(opcode)]);
                     currentTask.pc++;
                     break;
@@ -879,9 +880,8 @@ class GrEngine {
                 case equal_string:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue = (cast(
-                            GrStringWrapper) currentTask.stack[currentTask.stackPos]._ovalue).data == (
-                        cast(GrStringWrapper) currentTask.stack[currentTask.stackPos + 1]._ovalue)
-                        .data;
+                            GrString) currentTask.stack[currentTask.stackPos]._ovalue).data == (
+                        cast(GrString) currentTask.stack[currentTask.stackPos + 1]._ovalue).data;
                     currentTask.pc++;
                     break;
                 case notEqual_int:
@@ -901,9 +901,8 @@ class GrEngine {
                 case notEqual_string:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue = (cast(
-                            GrStringWrapper) currentTask.stack[currentTask.stackPos]._ovalue).data != (
-                        cast(GrStringWrapper) currentTask.stack[currentTask.stackPos + 1]._ovalue)
-                        .data;
+                            GrString) currentTask.stack[currentTask.stackPos]._ovalue).data != (
+                        cast(GrString) currentTask.stack[currentTask.stackPos + 1]._ovalue).data;
                     currentTask.pc++;
                     break;
                 case greaterOrEqual_int:
@@ -1012,8 +1011,8 @@ class GrEngine {
                     break;
                 case concatenate_string:
                     currentTask.stackPos--;
-                    (cast(GrStringWrapper) currentTask.stack[currentTask.stackPos]._ovalue).append(
-                        cast(GrStringWrapper) currentTask.stack[currentTask.stackPos + 1]._ovalue);
+                    (cast(GrString) currentTask.stack[currentTask.stackPos]._ovalue).push(
+                        (cast(GrString) currentTask.stack[currentTask.stackPos + 1]._ovalue).data);
                     currentTask.pc++;
                     break;
                 case substract_int:
@@ -1208,8 +1207,7 @@ class GrEngine {
 
                             //The VM is now panicking.
                             _isPanicking = true;
-                            _panicMessage = (cast(GrStringWrapper) _globalStackIn[$ - 1]._ovalue)
-                                .data;
+                            _panicMessage = (cast(GrString) _globalStackIn[$ - 1]._ovalue).data;
                             _globalStackIn.length--;
 
                             //Every deferred call has been executed, now die.

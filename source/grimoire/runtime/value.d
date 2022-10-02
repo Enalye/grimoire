@@ -1,6 +1,12 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
 module grimoire.runtime.value;
 
 import grimoire.assembly;
+import grimoire.runtime.string;
 import grimoire.runtime.array;
 
 package(grimoire) enum GR_NULL = 0xffffUL << 48;
@@ -29,8 +35,8 @@ struct GrValue {
         _ovalue = cast(GrPtr) new GrArray(value);
     }
 
-    this(GrString value) {
-        _ovalue = cast(GrPtr) new GrStringWrapper(value);
+    this(GrStr value) {
+        _ovalue = cast(GrPtr) new GrString(value);
     }
 
     this(GrPtr value) {
@@ -45,40 +51,64 @@ struct GrValue {
         return cast(GrBool) _ivalue;
     }
 
-    pragma(inline) GrBool setBool(GrBool value) {
-        return _ivalue = cast(GrInt) value;
+    pragma(inline) void setBool(GrBool value) {
+        _ivalue = cast(GrInt) value;
     }
 
     pragma(inline) GrInt getInt() {
         return _ivalue;
     }
 
-    pragma(inline) GrInt setInt(GrInt value) {
-        return _ivalue = value;
+    pragma(inline) void setInt(GrInt value) {
+        _ivalue = value;
     }
 
     pragma(inline) GrReal getReal() {
         return _rvalue;
     }
 
-    pragma(inline) GrReal setReal(GrReal value) {
-        return _rvalue = value;
+    pragma(inline) void setReal(GrReal value) {
+        _rvalue = value;
     }
 
     pragma(inline) GrPtr getPtr() {
         return _ovalue;
     }
 
-    pragma(inline) GrPtr setPtr(GrPtr value) {
-        return _ovalue = value;
+    pragma(inline) void setPtr(GrPtr value) {
+        _ovalue = value;
     }
 
     pragma(inline) GrString getString() const {
-        return (cast(GrStringWrapper) _ovalue).data;
+        return cast(GrString) _ovalue;
     }
 
-    pragma(inline) GrString setString(GrString value) {
-        return (cast(GrStringWrapper) _ovalue).data = value;
+    pragma(inline) GrStr getStringData() const {
+        return (cast(GrString) _ovalue).data;
+    }
+
+    pragma(inline) void setString(GrString value) {
+        _ovalue = cast(GrPtr) value;
+    }
+
+    pragma(inline) void setString(GrStr value) {
+        (cast(GrString) _ovalue) = value;
+    }
+
+    pragma(inline) GrArray getArray() const {
+        return cast(GrArray) _ovalue;
+    }
+
+    pragma(inline) GrValue[] getArrayData() const {
+        return (cast(GrArray) _ovalue).data;
+    }
+
+    pragma(inline) void setArray(GrArray value) {
+        _ovalue = cast(GrPtr) value;
+    }
+
+    pragma(inline) void setArray(GrValue[] value) {
+        (cast(GrArray) _ovalue) = value;
     }
 
     @property {

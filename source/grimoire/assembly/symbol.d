@@ -11,56 +11,8 @@ import std.conv : to;
 alias GrBool = bool;
 alias GrInt = int;
 alias GrReal = double;
-alias GrString = string;
+alias GrStr = string;
 alias GrPtr = void*;
-
-/// Runtime string
-package(grimoire) final class GrStringWrapper {
-    private {
-        string _data;
-    }
-
-    this() {
-    }
-
-    this(GrBool value) {
-        _data = value ? "true" : "false";
-    }
-
-    this(GrInt value) {
-        _data = to!string(value);
-    }
-
-    this(GrReal value) {
-        _data = to!string(value);
-    }
-
-    this(GrStringWrapper str) {
-        _data = str._data.dup;
-    }
-
-    this(string str) {
-        _data = str;
-    }
-
-    @property {
-        GrInt length() {
-            return cast(GrInt) _data.length;
-        }
-
-        pragma(inline) ref GrString data() {
-            return _data;
-        }
-
-        pragma(inline) ref GrString data(GrString value) {
-            return _data = value;
-        }
-    }
-
-    void append(GrStringWrapper str) {
-        _data ~= str._data;
-    }
-}
 
 /// Stack trace
 struct GrStackTrace {

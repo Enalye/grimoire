@@ -14,7 +14,7 @@ private final class Dynamic {
         GrBool bvalue;
         GrInt ivalue;
         GrReal rvalue;
-        GrString svalue;
+        GrStr svalue;
         GrPtr ovalue;
     }
 
@@ -51,7 +51,7 @@ private final class Dynamic {
         typeInfo = typeInfo_;
     }
 
-    this(GrString value_, string typeInfo_) {
+    this(GrStr value_, string typeInfo_) {
         type = Type.string_;
         svalue = value_;
         typeInfo = typeInfo_;
@@ -130,7 +130,7 @@ private void _from_f(GrCall call) {
 }
 
 private void _from_s(GrCall call) {
-    call.setForeign(new Dynamic(call.getString(0), call.getInType(0)));
+    call.setForeign(new Dynamic(call.getStringData(0), call.getInType(0)));
 }
 
 private void _from_o(GrCall call) {
