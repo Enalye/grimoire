@@ -5709,6 +5709,18 @@ final class GrParser {
                 if (!hadValue)
                     logError(getError(Error.methodCallMustBePlacedAfterVal),
                         getError(Error.missingVal));
+                bool isOptionalCall;
+                uint optionalCallPosition, nbReturnValues;
+                if (get().type == GrLexeme.Type.optional) {
+                    checkAdvance();
+                    if (typeStack[$ - 1].base == GrType.Base.optional) {
+                        typeStack[$ - 1] = grUnmangle(typeStack[$ - 1].mangledType);
+                        currentType = typeStack[$ - 1];
+                        isOptionalCall = true;
+                        optionalCallPosition = cast(uint) currentFunction.instructions.length;
+                        addInstruction(GrOpcode.optionalCall);
+                    }
+                }
                 if (get().type != GrLexeme.Type.identifier)
                     logError(format(getError(Error.expectedFuncNameFoundX),
                             getPrettyLexemeType(get().type)), getError(Error.missingFuncName));
@@ -5724,10 +5736,36 @@ final class GrParser {
                 //Multiples values are left as a tuple for parseExpressionList()
                 if (currentType.base == GrType.Base.internalTuple) {
                     auto types = grUnpackTuple(currentType);
+                    nbReturnValues = cast(uint) types.length;
                     if (!types.length)
                         currentType = grVoid;
                     else if (types.length == 1uL)
-                        currentType = types[0];
+                        currentType = isOptionalCall ? grOptional(types[0]) : types[0];
+                    else if (isOptionalCall) {
+                        for (size_t i; i < types.length; ++i) {
+                            if (types[i].base != GrType.Base.optional)
+                                types[i] = grOptional(types[i]);
+                        }
+                        currentType = grPackTuple(types);
+                    }
+                }
+                else if (isOptionalCall) {
+                    currentType = grOptional(currentType);
+                    nbReturnValues = 1;
+                }
+
+                if (isOptionalCall) {
+                    const uint jumpPosition = cast(uint) currentFunction.instructions.length;
+                    addInstruction(GrOpcode.jump);
+
+                    setInstruction(GrOpcode.optionalCall, optionalCallPosition,
+                        cast(int)(currentFunction.instructions.length - optionalCallPosition), true);
+
+                    for (uint i; i < nbReturnValues; ++i)
+                        addInstruction(GrOpcode.const_null);
+
+                    setInstruction(GrOpcode.jump, jumpPosition,
+                        cast(int)(currentFunction.instructions.length - jumpPosition), true);
                 }
 
                 const auto nextLexeme = get();
@@ -6100,6 +6138,10 @@ final class GrParser {
                     logError(getError(Error.missingParamOnMethodCall),
                         getError(Error.methodCallMustBePlacedAfterVal));
                 checkAdvance();
+                if (get().type == GrLexeme.Type.optional) {
+                    ///@TODO: optional call
+                    checkAdvance();
+                }
                 GrType selfType = currentType;
                 if (get().type != GrLexeme.Type.identifier)
                     logError(format(getError(Error.expectedFuncNameFoundX),

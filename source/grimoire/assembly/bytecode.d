@@ -75,6 +75,7 @@ enum GrOpcode {
     checkNull,
     optionalAssert,
     optionalOr,
+    optionalCall,
 
     and_int,
     or_int,
