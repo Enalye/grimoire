@@ -113,7 +113,10 @@ const GrType grString = GrType(GrType.Base.string_);
 
 /// Make an optional version of the type.
 GrType grOptional(GrType subType) {
-    return GrType(GrType.Base.optional, grMangleSignature([subType]));
+    GrType type = GrType(GrType.Base.optional, grMangleSignature([subType]));
+    type.isPure = subType.isPure;
+    type.isConst = subType.isConst;
+    return type;
 }
 
 /// Returns a GrType of type array and of `subType` subtype.
@@ -244,6 +247,10 @@ package class GrVariable {
     uint fileId;
     /// Position information in case of errors.
     uint lexPosition;
+    /// The variable may be null.
+    bool isOptional;
+    /// Position of the optional instruction.
+    uint optionalPosition;
 }
 
 /// Define an arbitrary D pointer.

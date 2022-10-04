@@ -73,7 +73,7 @@ enum GrOpcode {
     lesser_int,
     lesser_real,
     checkNull,
-    optionalAssert,
+    optionalTry,
     optionalOr,
     optionalCall,
 

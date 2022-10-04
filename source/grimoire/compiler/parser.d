@@ -168,7 +168,7 @@ final class GrParser {
     /// Register a special local variable, used for iterators, etc.
     private GrVariable registerSpecialVariable(string name, GrType type) {
         name = "~" ~ name;
-        GrVariable specialVariable = registerLocalVariable(name, type);
+        GrVariable specialVariable = registerLocalVariable(name, type, false);
         specialVariable.isAuto = false;
         specialVariable.isInitialized = true; //We shortcut this check
         return specialVariable;
@@ -263,7 +263,7 @@ final class GrParser {
     }
 
     /// Register a local variable
-    private GrVariable registerLocalVariable(string name, GrType type) {
+    private GrVariable registerLocalVariable(string name, GrType type, bool isAuto) {
         //Check if declared globally
         assertNoGlobalDeclaration(name, get().fileId, false);
 
@@ -275,7 +275,7 @@ final class GrParser {
         variable.lexPosition = current;
 
         currentFunction.setLocal(variable);
-        if (variable.type.base != GrType.Base.void_)
+        if (!isAuto)
             setVariableRegister(variable);
 
         return variable;
@@ -1344,6 +1344,10 @@ final class GrParser {
         if (variable.isAuto && !variable.isInitialized) {
             variable.isInitialized = true;
             variable.isAuto = false;
+            if (variable.type.base == GrType.Base.optional && valueType.base != GrType
+                .Base.optional)
+                valueType = grOptional(valueType);
+            variable.isOptional = false;
             valueType.isConst = variable.type.isConst;
             valueType.isPure = valueType.isPure || variable.type.isPure;
             variable.type = valueType;
@@ -1375,7 +1379,8 @@ final class GrParser {
             case channel:
             case array:
             case class_:
-                addInstruction(GrOpcode.fieldRefStore, isExpectingValue ? 0 : -1, true);
+                addInstruction(GrOpcode.fieldRefStore, (isExpectingValue ||
+                        variable.isOptional) ? 0 : -1, true);
                 break;
             case void_:
             case null_:
@@ -1433,6 +1438,17 @@ final class GrParser {
                 logError(format(getError(Error.cantAssignToAXVar),
                         getPrettyType(variable.type)), getError(Error.ValNotAssignable));
             }
+        }
+
+        if (variable.isOptional && variable.isField) {
+            if (variable.type.base != GrType.Base.optional)
+                variable.type = grOptional(variable.type);
+
+            setInstruction(GrOpcode.optionalCall, variable.optionalPosition,
+                cast(int)(currentFunction.instructions.length - variable.optionalPosition), true);
+
+            if (!isExpectingValue)
+                addInstruction(GrOpcode.shiftStack, -1, true);
         }
     }
 
@@ -2946,8 +2962,11 @@ final class GrParser {
         if (!isConst && get().type == GrLexeme.Type.const_)
             checkAdvance();
 
-        if (get().type == GrLexeme.Type.let)
+        if (get().type == GrLexeme.Type.let) {
             checkAdvance();
+            if (get().type == GrLexeme.Type.optional)
+                checkAdvance();
+        }
         else
             parseType(false);
         isTypeChecking = false;
@@ -3154,7 +3173,7 @@ final class GrParser {
                 logError(getError(Error.missingIdentifier),
                     format(getError(Error.expectedIdentifierFoundX),
                         getPrettyLexemeType(get().type)));
-            GrVariable errVariable = registerLocalVariable(get().svalue, grString);
+            GrVariable errVariable = registerLocalVariable(get().svalue, grString, false);
 
             advance();
             if (get().type != GrLexeme.Type.rightParenthesis)
@@ -3402,6 +3421,10 @@ final class GrParser {
         if (get().type == GrLexeme.Type.let) {
             isAuto = true;
             checkAdvance();
+            if (get().type == GrLexeme.Type.optional) {
+                checkAdvance();
+                type.base = GrType.Base.optional;
+            }
         }
         else
             type = parseType(true, [], false);
@@ -3421,7 +3444,7 @@ final class GrParser {
             string identifier = get().svalue;
 
             //Registering
-            GrVariable lvalue = registerLocalVariable(identifier, type);
+            GrVariable lvalue = registerLocalVariable(identifier, type, isAuto);
             lvalue.isAuto = isAuto;
             lvalues ~= lvalue;
 
@@ -3950,7 +3973,7 @@ final class GrParser {
             logError(getError(Error.varNameExpected),
                 format(getError(Error.varNameExpectedFoundX), getPrettyLexemeType(get().type)));
 
-        lvalue = registerLocalVariable(identifier.svalue, type);
+        lvalue = registerLocalVariable(identifier.svalue, type, isAuto);
         lvalue.isAuto = isTyped ? isAuto : true;
 
         //A composite type does not need to be initialized.
@@ -4536,7 +4559,7 @@ final class GrParser {
     }
 
     /// The more it is, the less you need parenthesis.
-    private uint getLeftOperatorPriority(GrLexeme.Type type) {
+    private int getLeftOperatorPriority(GrLexeme.Type type) {
         switch (type) with (GrLexeme.Type) {
         case assign: .. case powerAssign:
             return -1;
@@ -4598,7 +4621,7 @@ final class GrParser {
     }
 
     /// The more it is, the less you need parenthesis.
-    private uint getRightOperatorPriority(GrLexeme.Type type) {
+    private int getRightOperatorPriority(GrLexeme.Type type) {
         switch (type) with (GrLexeme.Type) {
         case assign: .. case powerAssign:
             return 20;
@@ -5925,6 +5948,18 @@ final class GrParser {
                 break;
             case period:
                 checkAdvance();
+                bool isOptionalCall;
+                uint optionalCallPosition;
+                if (get().type == GrLexeme.Type.optional) {
+                    checkAdvance();
+                    if (currentType.base == GrType.Base.optional) {
+                        currentType = grUnmangle(typeStack[$ - 1].mangledType);
+                        isOptionalCall = true;
+                        optionalCallPosition = cast(uint) currentFunction.instructions.length;
+                        addInstruction(GrOpcode.optionalCall);
+                    }
+                }
+
                 if (currentType.base == GrType.Base.foreign) {
                     if (get().type != GrLexeme.Type.identifier)
                         logError(format(getError(Error.expectedFieldNameFoundX),
@@ -5940,11 +5975,11 @@ final class GrParser {
 
                     GrLexeme.Type operatorType = get().type;
 
-                    if (requireLValue(operatorType)) {
-                        addInstruction(GrOpcode.copy);
-                    }
-
                     if (operatorType != GrLexeme.Type.assign) {
+                        if (requireLValue(operatorType)) {
+                            addInstruction(GrOpcode.copy);
+                        }
+
                         const string callbackName = propertyName ~ "@get";
                         auto matching = getFirstMatchingFuncOrPrim(callbackName, signature, fileId);
                         if (matching.prim) {
@@ -5987,27 +6022,43 @@ final class GrParser {
                         isSet = true;
                         checkAdvance();
                         currentType = addUnaryOperator(operatorType, currentType, fileId);
+                        signature ~= currentType;
                     }
 
                     if (isSet) {
-                        GrType returnType;
                         const string callbackName = propertyName ~ "@set";
                         auto matching = getFirstMatchingFuncOrPrim(callbackName, signature, fileId);
                         if (matching.prim) {
                             addInstruction(GrOpcode.primitiveCall, matching.prim.index);
-                            returnType = grPackTuple(matching.prim.outSignature);
+                            currentType = grPackTuple(matching.prim.outSignature);
+                            if (currentType.base == GrType.Base.internalTuple) {
+                                GrType[] types = grUnpackTuple(currentType);
+                                if (types.length)
+                                    currentType = types[0];
+                                else
+                                    logError(getError(Error.exprYieldsNoVal),
+                                        getError(Error.expectedValFoundNothing));
+                            }
                         }
                         else {
                             logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(callbackName,
                                     signature)), getError(Error.unknownFunc), "", -1);
                         }
-                        currentType = returnType;
-
-                        if (hadValue)
-                            typeStack[$ - 1] = currentType;
-                        else
-                            typeStack ~= currentType;
                     }
+
+                    if (isOptionalCall) {
+                        if (currentType.base != GrType.Base.optional)
+                            currentType = grOptional(currentType);
+
+                        setInstruction(GrOpcode.optionalCall, optionalCallPosition,
+                            cast(int)(currentFunction.instructions.length - optionalCallPosition),
+                            true);
+                    }
+
+                    if (hadValue)
+                        typeStack[$ - 1] = currentType;
+                    else
+                        typeStack ~= currentType;
 
                     hasValue = true;
                     hadValue = false;
@@ -6037,6 +6088,8 @@ final class GrParser {
 
                             bool isPure = currentType.isPure;
                             currentType = class_.signature[i];
+                            //if (isOptionalCall && currentType.base != GrType.Base.optional)
+                            //    currentType = grOptional(currentType);
                             currentType.isField = true;
                             GrVariable fieldLValue = new GrVariable;
                             fieldLValue.name = identifier;
@@ -6048,6 +6101,8 @@ final class GrParser {
                             fieldLValue.register = i;
                             fieldLValue.fileId = get().fileId;
                             fieldLValue.lexPosition = current;
+                            fieldLValue.isOptional = isOptionalCall;
+                            fieldLValue.optionalPosition = optionalCallPosition;
 
                             if (requireLValue(get().type)) {
                                 if (hadLValue)
@@ -6106,6 +6161,12 @@ final class GrParser {
                                 goto default;
                             default:
                                 addLoadFieldInstruction(currentType, fieldLValue.register, false);
+                                if (isOptionalCall) {
+                                    setInstruction(GrOpcode.optionalCall, optionalCallPosition,
+                                        cast(int)(
+                                            currentFunction.instructions.length -
+                                            optionalCallPosition), true);
+                                }
                                 break;
                             }
                             break;
@@ -6294,7 +6355,7 @@ final class GrParser {
 
                 checkAdvance();
                 currentType = grUnmangle(currentType.mangledType);
-                addInstruction(GrOpcode.optionalAssert);
+                addInstruction(GrOpcode.optionalTry);
 
                 hasValue = true;
                 hadValue = false;
@@ -6320,6 +6381,7 @@ final class GrParser {
                     switch (operator) with (GrLexeme.Type) {
                     case assign:
                         addSetInstruction(lvalues[$ - 1], fileId, currentType, true);
+                        currentType = lvalues[$ - 1].type;
                         lvalues.length--;
                         break;
                     case bitwiseAndAssign: .. case powerAssign:
@@ -6407,6 +6469,7 @@ final class GrParser {
             case assign:
                 addSetInstruction(lvalues[$ - 1], fileId, currentType,
                     isExpectingValue || operatorsStack.length > 1uL);
+                currentType = lvalues[$ - 1].type;
                 lvalues.length--;
 
                 if (operatorsStack.length <= 1uL)

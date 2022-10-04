@@ -966,7 +966,7 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos]._bytes != GR_NULL;
                     currentTask.pc++;
                     break;
-                case optionalAssert:
+                case optionalTry:
                     currentTask.pc++;
                     if (currentTask.stack[currentTask.stackPos]._bytes == GR_NULL) {
                         currentTask.pc--;
