@@ -3370,6 +3370,10 @@ final class GrParser {
         if (get().type == GrLexeme.Type.let) {
             isAuto = true;
             checkAdvance();
+            if (get().type == GrLexeme.Type.optional) {
+                checkAdvance();
+                type.base = GrType.Base.optional;
+            }
         }
         else
             type = parseType(true, [], false);
