@@ -8,6 +8,9 @@ module grimoire.runtime.array;
 import grimoire.assembly;
 
 import grimoire.runtime.value;
+import grimoire.runtime.string;
+import grimoire.runtime.object;
+import grimoire.runtime.channel;
 
 /// Runtime array, can only hold one subtype.
 final class GrArray {
@@ -51,6 +54,81 @@ final class GrArray {
 
     pragma(inline) void opAssign(GrValue[] values) {
         _data = values;
+    }
+
+    pragma(inline) GrValue[] getValues() {
+        return _data;
+    }
+
+    pragma(inline) GrInt[] getInts() {
+        GrInt[] values;
+        foreach (GrValue value; _data)
+            values ~= value.getInt();
+        return values;
+    }
+
+    pragma(inline) GrReal[] getReals() {
+        return cast(GrReal[]) _data;
+    }
+
+    pragma(inline) GrString[] getStrings() {
+        return cast(GrString[]) cast(GrPointer[]) _data;
+    }
+
+    pragma(inline) GrArray[] getArrays() {
+        return cast(GrArray[]) cast(GrPointer[]) _data;
+    }
+
+    pragma(inline) GrChannel[] getChannels() {
+        return cast(GrChannel[]) cast(GrPointer[]) _data;
+    }
+
+    pragma(inline) GrObject[] getObjects() {
+        return cast(GrObject[]) cast(GrPointer[]) _data;
+    }
+
+    pragma(inline) T[] getForeigns(T)() {
+        return cast(T[]) cast(GrPointer[]) _data;
+    }
+
+    pragma(inline) void setValues(GrValue[] values) {
+        _data = values;
+    }
+
+    pragma(inline) void setBools(GrBool[] values) {
+        _data.length = values.length;
+        for (size_t i; i < _data.length; ++i)
+            _data[i].setBool(values[i]);
+    }
+
+    pragma(inline) void setInts(GrInt[] values) {
+        _data.length = values.length;
+        for (size_t i; i < _data.length; ++i)
+            _data[i].setInt(values[i]);
+    }
+
+    pragma(inline) void setReals(GrReal[] values) {
+        _data = cast(GrValue[]) values;
+    }
+
+    pragma(inline) void setStrings(GrString[] values) {
+        _data = cast(GrValue[]) values;
+    }
+
+    pragma(inline) void setArrays(GrArray[] values) {
+        _data = cast(GrValue[]) values;
+    }
+
+    pragma(inline) void setChannels(GrChannel[] values) {
+        _data = cast(GrValue[]) values;
+    }
+
+    pragma(inline) void setObjects(GrObject[] values) {
+        _data = cast(GrValue[]) values;
+    }
+
+    pragma(inline) void setForeigns(T)(T[] values) {
+        _data = cast(GrValue[]) values;
     }
 
     pragma(inline) void clear() {

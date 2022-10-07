@@ -31,10 +31,10 @@ package(grimoire.stdlib) void grLoadStdLibString(GrLibrary library) {
         ]);
     library.addFunction(&_reverse, "reverse", [grPure(grString)], [grString]);
     library.addFunction(&_insert, "insert", [grString, grInt, grPure(grString)]);
-    library.addFunction(&_findFirst, "findFirst", [
+    library.addFunction(&_indexOf, "indexOf", [
             grPure(grString), grPure(grString)
         ], [grOptional(grInt)]);
-    library.addFunction(&_findLast, "findLast", [
+    library.addFunction(&_lastIndexOf, "lastIndexOf", [
             grPure(grString), grPure(grString)
         ], [grOptional(grInt)]);
     library.addFunction(&_contains, "contains", [
@@ -147,7 +147,7 @@ private void _insert(GrCall call) {
     str.insert(index, value);
 }
 
-private void _findFirst(GrCall call) {
+private void _indexOf(GrCall call) {
     GrString str = call.getString(0);
     GrStr value = call.getStringData(1);
     const GrInt result = cast(GrInt) str.indexOf(value);
@@ -158,7 +158,7 @@ private void _findFirst(GrCall call) {
     call.setInt(result);
 }
 
-private void _findLast(GrCall call) {
+private void _lastIndexOf(GrCall call) {
     GrString str = call.getString(0);
     GrStr value = call.getStringData(1);
     const GrInt result = cast(GrInt) str.lastIndexOf(value);

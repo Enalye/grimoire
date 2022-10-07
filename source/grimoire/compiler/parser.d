@@ -2887,7 +2887,7 @@ final class GrParser {
             case die:
                 parseDieStatement();
                 break;
-            case quit:
+            case exit:
                 parseQuitStatement();
                 break;
             case yield:
@@ -3129,7 +3129,7 @@ final class GrParser {
 
     private void parseQuitStatement() {
         if (!currentFunction.instructions.length ||
-            currentFunction.instructions[$ - 1].opcode != GrOpcode.quit)
+            currentFunction.instructions[$ - 1].opcode != GrOpcode.exit)
             addQuit();
         advance();
     }
@@ -4553,13 +4553,13 @@ final class GrParser {
         addInstruction(GrOpcode.die);
     }
 
-    /// Add a `quit` instruction that stops every tasks.
+    /// Add a `exit` instruction that stops every tasks.
     private void addQuit() {
         checkDeferStatement();
         if (_options & GrOption.profile) {
             addInstruction(GrOpcode.debugProfileEnd);
         }
-        addInstruction(GrOpcode.quit);
+        addInstruction(GrOpcode.exit);
     }
 
     /// The more it is, the less you need parenthesis.

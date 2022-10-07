@@ -150,7 +150,7 @@ final class GrTask {
     alias setBool = setValue!GrBool;
     alias setInt = setValue!GrInt;
     alias setReal = setValue!GrReal;
-    alias setPtr = setValue!GrPtr;
+    alias setPtr = setValue!GrPointer;
 
     void setInt32(int value) {
         setValue!GrInt(cast(GrInt) value);
@@ -169,23 +169,23 @@ final class GrTask {
     }
 
     void setObject(GrObject value) {
-        setValue!GrPtr(cast(GrPtr) value);
+        setValue!GrPointer(cast(GrPointer) value);
     }
 
     void setString(GrStr value) {
-        setValue!GrPtr(cast(GrPtr) value);
+        setValue!GrPointer(cast(GrPointer) value);
     }
 
     void setArray(GrArray value) {
-        setValue!GrPtr(cast(GrPtr) value);
+        setValue!GrPointer(cast(GrPointer) value);
     }
 
     void setArray(GrValue[] value) {
-        setValue!GrPtr(cast(GrPtr) new GrArray(value));
+        setValue!GrPointer(cast(GrPointer) new GrArray(value));
     }
 
     void setChannel(GrChannel value) {
-        setValue!GrPtr(cast(GrPtr) value);
+        setValue!GrPointer(cast(GrPointer) value);
     }
 
     void setEnum(T)(T value) {
@@ -193,7 +193,7 @@ final class GrTask {
     }
 
     void setForeign(T)(T value) {
-        setValue!GrPtr(cast(GrPtr) value);
+        setValue!GrPointer(cast(GrPointer) value);
     }
 
     private void setValue(T)(T value) {
@@ -209,7 +209,7 @@ final class GrTask {
             stackPos++;
             stack[stackPos].setReal(value);
         }
-        else static if (is(T == GrPtr)) {
+        else static if (is(T == GrPointer)) {
             stackPos++;
             stack[stackPos].setPtr(value);
         }

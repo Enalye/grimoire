@@ -260,7 +260,10 @@ private final class ArrayIterator {
 private void _each(GrCall call) {
     GrArray array = call.getArray(0);
     ArrayIterator iter = new ArrayIterator;
-    iter.array = array.data.dup;
+    foreach (GrValue element; array.data) {
+        if (!element.isNull)
+            iter.array ~= element;
+    }
     call.setForeign(iter);
 }
 

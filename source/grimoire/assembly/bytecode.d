@@ -15,7 +15,7 @@ enum GrOpcode {
     try_,
     catch_,
     die,
-    quit,
+    exit,
     yield,
     task,
     anonymousTask,

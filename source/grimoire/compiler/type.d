@@ -274,10 +274,9 @@ final class GrAbstractForeignDefinition {
 }
 
 /// Create a foreign GrType for the type system.
-GrType grGetForeignType(string name, const GrType[] signature = [], bool isPure = false) {
+GrType grGetForeignType(string name, const GrType[] signature = []) {
     GrType type = GrType.Base.foreign;
     type.mangledType = grMangleComposite(name, signature);
-    type.isPure = isPure;
     return type;
 }
 
@@ -397,10 +396,9 @@ final class GrClassDefinition {
 }
 
 /// Create a GrType of class for the type system.
-GrType grGetClassType(const string name, const GrType[] signature = [], bool isPure = false) {
+GrType grGetClassType(const string name, const GrType[] signature = []) {
     GrType type = GrType.Base.class_;
     type.mangledType = grMangleComposite(name, signature);
-    type.isPure = isPure;
     return type;
 }
 

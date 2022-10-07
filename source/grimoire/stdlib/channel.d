@@ -13,8 +13,8 @@ package(grimoire.stdlib) void grLoadStdLibChannel(GrLibrary library) {
 
     library.addFunction(&_size, "size", [chanType], [grInt]);
     library.addFunction(&_capacity, "capacity", [chanType], [grInt]);
-    library.addFunction(&_empty, "empty", [chanType], [grBool]);
-    library.addFunction(&_full, "full", [chanType], [grBool]);
+    library.addFunction(&_isEmpty, "isEmpty", [chanType], [grBool]);
+    library.addFunction(&_isFull, "isFull", [chanType], [grBool]);
 }
 
 private void _size(GrCall call) {
@@ -25,10 +25,10 @@ private void _capacity(GrCall call) {
     call.setInt(cast(GrInt) call.getChannel(0).capacity);
 }
 
-private void _empty(GrCall call) {
+private void _isEmpty(GrCall call) {
     call.setBool(call.getChannel(0).isEmpty);
 }
 
-private void _full(GrCall call) {
+private void _isFull(GrCall call) {
     call.setBool(call.getChannel(0).isFull);
 }

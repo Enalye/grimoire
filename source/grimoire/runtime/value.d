@@ -15,7 +15,7 @@ struct GrValue {
     package(grimoire) union {
         GrInt _ivalue;
         GrReal _rvalue;
-        GrPtr _ovalue;
+        GrPointer _ovalue;
         ulong _bytes;
     }
 
@@ -28,18 +28,18 @@ struct GrValue {
     }
 
     this(GrArray value) {
-        _ovalue = cast(GrPtr) value;
+        _ovalue = cast(GrPointer) value;
     }
 
     this(GrValue[] value) {
-        _ovalue = cast(GrPtr) new GrArray(value);
+        _ovalue = cast(GrPointer) new GrArray(value);
     }
 
     this(GrStr value) {
-        _ovalue = cast(GrPtr) new GrString(value);
+        _ovalue = cast(GrPointer) new GrString(value);
     }
 
-    this(GrPtr value) {
+    this(GrPointer value) {
         _ovalue = value;
     }
 
@@ -71,11 +71,11 @@ struct GrValue {
         _rvalue = value;
     }
 
-    pragma(inline) GrPtr getPtr() {
+    pragma(inline) GrPointer getPtr() {
         return _ovalue;
     }
 
-    pragma(inline) void setPtr(GrPtr value) {
+    pragma(inline) void setPtr(GrPointer value) {
         _ovalue = value;
     }
 
@@ -88,7 +88,7 @@ struct GrValue {
     }
 
     pragma(inline) void setString(GrString value) {
-        _ovalue = cast(GrPtr) value;
+        _ovalue = cast(GrPointer) value;
     }
 
     pragma(inline) void setString(GrStr value) {
@@ -104,7 +104,7 @@ struct GrValue {
     }
 
     pragma(inline) void setArray(GrArray value) {
-        _ovalue = cast(GrPtr) value;
+        _ovalue = cast(GrPointer) value;
     }
 
     pragma(inline) void setArray(GrValue[] value) {

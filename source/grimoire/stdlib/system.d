@@ -13,6 +13,10 @@ package void grLoadStdLibSystem(GrLibrary library) {
             grAny("T2"), grAny("T1")
         ]);
 
+    library.addFunction(&_cond, "cond", [grBool, grAny("T"), grAny("T")], [
+            grAny("T")
+        ]);
+
     library.addFunction(&_typeOf, "typeOf", [grAny("T")], [grString]);
 
     library.addFunction(&_test_call, "test_call", [
@@ -20,11 +24,20 @@ package void grLoadStdLibSystem(GrLibrary library) {
         ], [
             grInt, grInt, grInt, grInt, grInt, grInt, grInt, grInt, grInt, grInt
         ]);
+
+    library.addFunction(&_test_2, "test_2", [grArray(grInt)]);
 }
 
 private void _swap_2(GrCall call) {
     call.setValue(call.getValue(1));
     call.setValue(call.getValue(0));
+}
+
+private void _cond(GrCall call) {
+    if (call.getBool(0))
+        call.setValue(call.getValue(1));
+    else
+        call.setValue(call.getValue(2));
 }
 
 private void _typeOf(GrCall call) {
@@ -53,4 +66,10 @@ private void _test_call(GrCall call) {
     call.setInt(v2);
     call.setInt(v1);
     call.setInt(v0);
+}
+
+private void _test_2(GrCall call) {
+    GrInt[] ary = call.getArray(0).getInts();
+    import std.stdio;
+    writeln(ary);
 }

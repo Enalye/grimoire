@@ -15,7 +15,7 @@ private final class Dynamic {
         GrInt ivalue;
         GrReal rvalue;
         GrStr svalue;
-        GrPtr ovalue;
+        GrPointer ovalue;
     }
 
     enum Type {
@@ -57,7 +57,7 @@ private final class Dynamic {
         typeInfo = typeInfo_;
     }
 
-    this(GrPtr value_, string typeInfo_) {
+    this(GrPointer value_, string typeInfo_) {
         type = Type.ptr_;
         ovalue = value_;
         typeInfo = typeInfo_;

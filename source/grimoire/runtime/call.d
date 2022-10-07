@@ -87,7 +87,7 @@ final class GrCall {
     alias getBool = getParameter!GrBool;
     alias getInt = getParameter!GrInt;
     alias getReal = getParameter!GrReal;
-    alias getPtr = getParameter!GrPtr;
+    alias getPtr = getParameter!GrPointer;
 
     pragma(inline) GrBool isNull(uint index)
     in (index < _parameters.length,
@@ -112,27 +112,27 @@ final class GrCall {
     }
 
     pragma(inline) GrObject getObject(uint index) {
-        return cast(GrObject) getParameter!GrPtr(index);
+        return cast(GrObject) getParameter!GrPointer(index);
     }
 
     pragma(inline) GrString getString(uint index) {
-        return cast(GrString) getParameter!GrPtr(index);
+        return cast(GrString) getParameter!GrPointer(index);
     }
 
     pragma(inline) GrStr getStringData(uint index) {
-        return (cast(GrString) getParameter!GrPtr(index)).data;
+        return (cast(GrString) getParameter!GrPointer(index)).data;
     }
 
     pragma(inline) GrArray getArray(uint index) {
-        return cast(GrArray) getParameter!GrPtr(index);
+        return cast(GrArray) getParameter!GrPointer(index);
     }
 
     pragma(inline) GrValue[] getArrayData(uint index) {
-        return (cast(GrArray) getParameter!GrPtr(index)).data;
+        return (cast(GrArray) getParameter!GrPointer(index)).data;
     }
 
     pragma(inline) GrChannel getChannel(uint index) {
-        return cast(GrChannel) getParameter!GrPtr(index);
+        return cast(GrChannel) getParameter!GrPointer(index);
     }
 
     pragma(inline) T getEnum(T)(uint index) {
@@ -141,7 +141,7 @@ final class GrCall {
 
     pragma(inline) T getForeign(T)(uint parameter) {
         // We cast to object first to avoid a crash when casting to a parent class
-        return cast(T) cast(Object) getParameter!GrPtr(parameter);
+        return cast(T) cast(Object) getParameter!GrPointer(parameter);
     }
 
     pragma(inline) private T getParameter(T)(uint index)
@@ -159,7 +159,7 @@ final class GrCall {
         else static if (is(T == GrReal)) {
             return _inputs[index].getReal();
         }
-        else static if (is(T == GrPtr)) {
+        else static if (is(T == GrPointer)) {
             return _inputs[index].getPtr();
         }
     }
@@ -168,7 +168,7 @@ final class GrCall {
     alias setBool = setResult!GrBool;
     alias setInt = setResult!GrInt;
     alias setReal = setResult!GrReal;
-    alias setPtr = setResult!GrPtr;
+    alias setPtr = setResult!GrPointer;
 
     pragma(inline) void setNull() {
         _outputs[_results].setNull();
@@ -192,27 +192,27 @@ final class GrCall {
     }
 
     pragma(inline) void setObject(GrObject value) {
-        setResult!GrPtr(cast(GrPtr) value);
+        setResult!GrPointer(cast(GrPointer) value);
     }
 
     pragma(inline) void setString(GrStr value) {
-        setResult!GrPtr(cast(GrPtr) new GrString(value));
+        setResult!GrPointer(cast(GrPointer) new GrString(value));
     }
 
     pragma(inline) void setString(GrString value) {
-        setResult!GrPtr(cast(GrPtr) value);
+        setResult!GrPointer(cast(GrPointer) value);
     }
 
     pragma(inline) void setArray(GrArray value) {
-        setResult!GrPtr(cast(GrPtr) value);
+        setResult!GrPointer(cast(GrPointer) value);
     }
 
     pragma(inline) void setArray(GrValue[] value) {
-        setResult!GrPtr(cast(GrPtr) new GrArray(value));
+        setResult!GrPointer(cast(GrPointer) new GrArray(value));
     }
 
     pragma(inline) void setChannel(GrChannel value) {
-        setResult!GrPtr(cast(GrPtr) value);
+        setResult!GrPointer(cast(GrPointer) value);
     }
 
     pragma(inline) void setEnum(T)(T value) {
@@ -220,7 +220,7 @@ final class GrCall {
     }
 
     pragma(inline) void setForeign(T)(T value) {
-        setResult!GrPtr(cast(GrPtr) value);
+        setResult!GrPointer(cast(GrPointer) value);
     }
 
     pragma(inline) private void setResult(T)(T value) {
@@ -239,7 +239,7 @@ final class GrCall {
         else static if (is(T == GrString)) {
             _outputs[_results].setString(value);
         }
-        else static if (is(T == GrPtr)) {
+        else static if (is(T == GrPointer)) {
             _outputs[_results].setPtr(value);
         }
         _results++;
@@ -265,7 +265,7 @@ final class GrCall {
         return _task.engine.getArrayVariable(name);
     }
 
-    GrPtr getPtrVariable(string name) {
+    GrPointer getPtrVariable(string name) {
         return _task.engine.getPtrVariable(name);
     }
 
@@ -305,7 +305,7 @@ final class GrCall {
         _task.engine.setArrayVariable(name, value);
     }
 
-    void setPtrVariable(string name, GrPtr value) {
+    void setPtrVariable(string name, GrPointer value) {
         _task.engine.setPtrVariable(name, value);
     }
 

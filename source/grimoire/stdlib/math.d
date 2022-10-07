@@ -53,15 +53,12 @@ package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
     library.addFunction(&_round, "round", [grReal], [grReal]);
     library.addFunction(&_truncate, "truncate", [grReal], [grReal]);
 
-    library.addFunction(&_isPositive_i, "isPositive", [grInt], [grBool]);
-    library.addFunction(&_isPositive_r, "isPositive", [grReal], [grBool]);
-    library.addFunction(&_isNegative_i, "isNegative", [grInt], [grBool]);
-    library.addFunction(&_isNegative_r, "isNegative", [grReal], [grBool]);
-    library.addFunction(&_isZero_i, "isZero", [grInt], [grBool]);
-    library.addFunction(&_isZero_r, "isZero", [grReal], [grBool]);
     library.addFunction(&_isNaN, "isNaN", [grReal], [grBool]);
-    library.addFunction(&_isEven, "isEven", [grInt], [grBool]);
-    library.addFunction(&_isOdd, "isOdd", [grInt], [grBool]);
+
+    library.addFunction(&_approach_i, "approach", [grInt, grInt, grInt], [grInt]);
+    library.addFunction(&_approach_r, "approach", [grReal, grReal, grReal], [
+            grReal
+        ]);
 }
 
 private void _min_r(GrCall call) {
@@ -224,38 +221,24 @@ private void _truncate(GrCall call) {
     call.setReal(trunc(call.getReal(0)));
 }
 
-private void _isPositive_i(GrCall call) {
-    call.setBool(call.getInt(0) > 0);
-}
-
-private void _isPositive_r(GrCall call) {
-    call.setBool(call.getReal(0) > 0);
-}
-
-private void _isNegative_i(GrCall call) {
-    call.setBool(call.getInt(0) < 0);
-}
-
-private void _isNegative_r(GrCall call) {
-    call.setBool(call.getReal(0) < 0);
-}
-
-private void _isZero_i(GrCall call) {
-    call.setBool(call.getInt(0) == 0);
-}
-
-private void _isZero_r(GrCall call) {
-    call.setBool(call.getReal(0) == 0);
-}
-
 private void _isNaN(GrCall call) {
     call.setBool(isNaN(call.getReal(0)));
 }
 
-private void _isEven(GrCall call) {
-    call.setBool(!(call.getInt(0) & 0x1));
+private void _approach_i(GrCall call) {
+    import std.algorithm : min, max;
+
+    const GrInt value = call.getInt(0);
+    const GrInt target = call.getInt(1);
+    const GrInt step = call.getInt(2);
+    call.setInt(value > target ? max(value - step, target) : min(value + step, target));
 }
 
-private void _isOdd(GrCall call) {
-    call.setBool(call.getInt(0) & 0x1);
+private void _approach_r(GrCall call) {
+    import std.algorithm : min, max;
+
+    const GrReal value = call.getReal(0);
+    const GrReal target = call.getReal(1);
+    const GrReal step = call.getReal(2);
+    call.setReal(value > target ? max(value - step, target) : min(value + step, target));
 }

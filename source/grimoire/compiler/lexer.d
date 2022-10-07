@@ -125,7 +125,7 @@ struct GrLexeme {
         return_,
         self,
         die,
-        quit,
+        exit,
         yield,
         break_,
         continue_,
@@ -965,7 +965,7 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.die;
             break;
         case "exit":
-            lex.type = GrLexeme.Type.quit;
+            lex.type = GrLexeme.Type.exit;
             break;
         case "yield":
             lex.type = GrLexeme.Type.yield;

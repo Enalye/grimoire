@@ -12,7 +12,7 @@ import grimoire.compiler;
 import grimoire.assembly.bytecode;
 
 private string[] instructions = [
-    "nop", "throw", "try", "catch", "kill", "exit", "yield", "task", "atask",
+    "nop", "throw", "try", "catch", "die", "exit", "yield", "task", "atask",
     "new", "chan", "snd", "rcv", "select_start", "select_end", "chan_try",
     "chan_check", "shift", "lstore", "lstore2", "lload", "gstore", "gstore2",
     "gload", "rstore", "rstore2", "frstore", "frload", "frload2", "fload",

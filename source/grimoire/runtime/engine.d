@@ -136,7 +136,7 @@ class GrEngine {
             else if (typeMask & 0x2)
                 _globals[index]._rvalue = globalRef.rvalue;
             else if (typeMask & 0x4)
-                _globals[index]._ovalue = cast(GrPtr) new GrString(globalRef.svalue);
+                _globals[index]._ovalue = cast(GrPointer) new GrString(globalRef.svalue);
             else if (typeMask & 0x8)
                 _globals[index]._ovalue = null;
         }
@@ -339,22 +339,22 @@ class GrEngine {
     alias getBoolVariable = getVariable!bool;
     alias getIntVariable = getVariable!GrInt;
     alias getRealVariable = getVariable!GrReal;
-    alias getPtrVariable = getVariable!GrPtr;
+    alias getPtrVariable = getVariable!GrPointer;
 
     GrObject getObjectVariable(string name) {
-        return cast(GrObject) getVariable!GrPtr(name);
+        return cast(GrObject) getVariable!GrPointer(name);
     }
 
     GrStr getStringVariable(string name) {
-        return (cast(GrString) getVariable!GrPtr(name)).data;
+        return (cast(GrString) getVariable!GrPointer(name)).data;
     }
 
     GrArray getArrayVariable(string name) {
-        return cast(GrArray) getVariable!GrPtr(name);
+        return cast(GrArray) getVariable!GrPointer(name);
     }
 
     GrChannel getChannelVariable(string name) {
-        return cast(GrChannel) getVariable!GrPtr(name);
+        return cast(GrChannel) getVariable!GrPointer(name);
     }
 
     T getEnumVariable(T)(string name) {
@@ -363,7 +363,7 @@ class GrEngine {
 
     T getForeignVariable(T)(string name) {
         // We cast to object first to avoid a crash when casting to a parent class
-        return cast(T) cast(Object) getVariable!GrPtr(name);
+        return cast(T) cast(Object) getVariable!GrPointer(name);
     }
 
     private T getVariable(T)(string name) {
@@ -379,7 +379,7 @@ class GrEngine {
         else static if (is(T == GrReal)) {
             return _globals[variable.index]._rvalue;
         }
-        else static if (is(T == GrPtr)) {
+        else static if (is(T == GrPointer)) {
             return _globals[variable.index]._ovalue;
         }
     }
@@ -387,26 +387,26 @@ class GrEngine {
     alias setBoolVariable = setVariable!GrBool;
     alias setIntVariable = setVariable!GrInt;
     alias setRealVariable = setVariable!GrReal;
-    alias setPtrVariable = setVariable!GrPtr;
+    alias setPtrVariable = setVariable!GrPointer;
 
     void setObjectVariable(string name, GrObject value) {
-        setVariable!GrPtr(name, cast(GrPtr) value);
+        setVariable!GrPointer(name, cast(GrPointer) value);
     }
 
     void setStringVariable(string name, GrStr value) {
-        setVariable!GrPtr(name, cast(GrPtr) new GrString(value));
+        setVariable!GrPointer(name, cast(GrPointer) new GrString(value));
     }
 
     void setArrayVariable(string name, GrArray value) {
-        setVariable!GrPtr(name, cast(GrPtr) value);
+        setVariable!GrPointer(name, cast(GrPointer) value);
     }
 
     void setArrayVariable(string name, GrValue[] value) {
-        setVariable!GrPtr(name, cast(GrPtr) new GrArray(value));
+        setVariable!GrPointer(name, cast(GrPointer) new GrArray(value));
     }
 
     void setChannelVariable(string name, GrChannel value) {
-        setVariable!GrPtr(name, cast(GrPtr) value);
+        setVariable!GrPointer(name, cast(GrPointer) value);
     }
 
     void setEnumVariable(T)(string name, T value) {
@@ -414,7 +414,7 @@ class GrEngine {
     }
 
     void setForeignVariable(T)(string name, T value) {
-        setVariable!GrPtr(name, cast(GrPtr) value);
+        setVariable!GrPointer(name, cast(GrPointer) value);
     }
 
     private void setVariable(T)(string name, T value) {
@@ -441,7 +441,7 @@ class GrEngine {
                 throw new Exception("variable `" ~ name ~ "` is not a string");
             _globals[variable.index].svalue = value;
         }*/
-        else static if (is(T == GrPtr)) {
+        else static if (is(T == GrPointer)) {
             if ((variable.typeMask & 0x8) == 0)
                 throw new Exception("variable `" ~ name ~ "` is not an object");
             _globals[variable.index]._ovalue = value;
@@ -582,7 +582,7 @@ class GrEngine {
                         continue tasksLabel;
                     }
                     break;
-                case quit:
+                case exit:
                     killTasks();
                     index++;
                     continue tasksLabel;
@@ -594,7 +594,7 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) new GrObject(
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) new GrObject(
                         _bytecode.classes[grGetInstructionUnsignedValue(opcode)]);
                     currentTask.pc++;
                     break;
@@ -603,7 +603,7 @@ class GrEngine {
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
                     currentTask.stack[currentTask.stackPos]._ovalue = cast(
-                        GrPtr) new GrChannel(grGetInstructionUnsignedValue(opcode));
+                        GrPointer) new GrChannel(grGetInstructionUnsignedValue(opcode));
                     currentTask.pc++;
                     break;
                 case send:
@@ -770,7 +770,7 @@ class GrEngine {
                         raise(currentTask, "NullError");
                         break;
                     }
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr)(
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer)(
                         (cast(GrObject) currentTask.stack[currentTask.stackPos]._ovalue)
                             ._fields[grGetInstructionUnsignedValue(opcode)]);
                     currentTask.pc++;
@@ -779,7 +779,7 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr)(
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer)(
                         (cast(GrObject) currentTask.stack[currentTask.stackPos - 1]._ovalue)
                             ._fields[grGetInstructionUnsignedValue(opcode)]);
                     currentTask.pc++;
@@ -802,7 +802,7 @@ class GrEngine {
                             GrObject) currentTask.stack[currentTask.stackPos - 1]._ovalue)
                         ._fields[grGetInstructionUnsignedValue(opcode)];
                     currentTask.stack[currentTask.stackPos] = field.value;
-                    currentTask.stack[currentTask.stackPos - 1]._ovalue = cast(GrPtr) field;
+                    currentTask.stack[currentTask.stackPos - 1]._ovalue = cast(GrPointer) field;
                     currentTask.pc++;
                     break;
                 case const_int:
@@ -833,7 +833,7 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) new GrString(
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) new GrString(
                         _bytecode.sconsts[grGetInstructionUnsignedValue(opcode)]);
                     currentTask.pc++;
                     break;
@@ -1299,7 +1299,7 @@ class GrEngine {
                     currentTask.stackPos -= arraySize - 1;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) array;
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) array;
                     currentTask.pc++;
                     break;
                 case index_array:
@@ -1354,21 +1354,21 @@ class GrEngine {
                     break;
                 case concatenate_array:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) new GrArray(
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) new GrArray(
                         (cast(GrArray) currentTask.stack[currentTask.stackPos]._ovalue).data ~ (
                             cast(GrArray) currentTask.stack[currentTask.stackPos + 1]._ovalue).data);
                     currentTask.pc++;
                     break;
                 case append_array:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) new GrArray(
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) new GrArray(
                         (cast(GrArray) currentTask.stack[currentTask.stackPos]._ovalue).data ~
                             currentTask.stack[currentTask.stackPos + 1]);
                     currentTask.pc++;
                     break;
                 case prepend_array:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPtr) new GrArray(
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) new GrArray(
                         currentTask.stack[currentTask.stackPos] ~ (cast(
                             GrArray) currentTask.stack[currentTask.stackPos + 1]._ovalue).data);
                     currentTask.pc++;

@@ -9,6 +9,7 @@ import std.typecons : Tuple, tuple;
 import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
+import grimoire.stdlib.pair;
 
 /// HashMap
 private final class HashMap {
@@ -40,7 +41,7 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
     GrType mapType = library.addForeign("HashMap", ["T"]);
     GrType iteratorType = library.addForeign("HashMapIterator", ["T"]);
 
-    GrType pairType = grGetClassType("pair", [grString, grAny("T")]);
+    GrType pairType = grGetForeignType("pair", [grString, grAny("T")]);
 
     library.addConstructor(&_new, mapType, []);
     library.addConstructor(&_newByArray, mapType, [
@@ -49,7 +50,7 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
     library.addConstructor(&_newByPairs, mapType, [pairType]);
     library.addFunction(&_copy, "copy", [mapType], [mapType]);
     library.addFunction(&_size, "size", [grPure(mapType)], [grInt]);
-    library.addFunction(&_empty, "empty", [grPure(mapType)], [grBool]);
+    library.addFunction(&_isEmpty, "isEmpty", [grPure(mapType)], [grBool]);
     library.addFunction(&_clear, "clear", [mapType], [mapType]);
     library.addFunction(&_set, "set", [mapType, grString, grAny("T")]);
     library.addFunction(&_get, "get", [grPure(mapType), grString], [
@@ -90,10 +91,9 @@ private void _newByArray(GrCall call) {
 
 private void _newByPairs(GrCall call) {
     HashMap hashmap = new HashMap;
-    GrValue[] pairs = call.getArray(0).data;
+    GrPair[] pairs = call.getArray(0).getForeigns!GrPair();
     for (size_t i; i < pairs.length; ++i) {
-        GrObject pair = cast(GrObject) pairs[i].getPtr();
-        hashmap.data[pair.getStringData("key")] = pair.getValue("value");
+        hashmap.data[pairs[i].key.getStringData()] = pairs[i].value;
     }
     call.setForeign(hashmap);
 }
@@ -108,7 +108,7 @@ private void _size(GrCall call) {
     call.setInt(cast(GrInt) hashmap.data.length);
 }
 
-private void _empty(GrCall call) {
+private void _isEmpty(GrCall call) {
     const HashMap hashmap = call.getForeign!HashMap(0);
     call.setBool(hashmap.data.length == 0);
 }

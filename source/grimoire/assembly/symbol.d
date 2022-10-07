@@ -12,7 +12,7 @@ alias GrBool = bool;
 alias GrInt = int;
 alias GrReal = double;
 alias GrStr = string;
-alias GrPtr = void*;
+alias GrPointer = void*;
 
 /// Stack trace
 struct GrStackTrace {
