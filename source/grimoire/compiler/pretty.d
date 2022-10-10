@@ -49,8 +49,8 @@ string grGetPrettyType(const GrType variableType) {
         }
         result ~= "?";
         break;
-    case array:
-        result ~= "array(";
+    case list:
+        result ~= "list(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach (parameter; parameters) {

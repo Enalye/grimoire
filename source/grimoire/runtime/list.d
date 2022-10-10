@@ -3,7 +3,7 @@
  * License: Zlib
  * Authors: Enalye
  */
-module grimoire.runtime.array;
+module grimoire.runtime.list;
 
 import grimoire.assembly;
 
@@ -12,8 +12,8 @@ import grimoire.runtime.string;
 import grimoire.runtime.object;
 import grimoire.runtime.channel;
 
-/// Runtime array, can only hold one subtype.
-final class GrArray {
+/// Runtime list, can only hold one subtype.
+final class GrList {
     /// Payload
     package {
         GrValue[] _data;
@@ -38,10 +38,6 @@ final class GrArray {
         pragma(inline) GrBool isEmpty() const {
             return _data.length == 0;
         }
-
-        pragma(inline) GrValue[] data() {
-            return _data;
-        }
     }
 
     pragma(inline) GrValue opIndex(GrInt index) {
@@ -60,10 +56,24 @@ final class GrArray {
         return _data;
     }
 
+    pragma(inline) GrBool[] getBools() {
+        GrBool[] values;
+        foreach (GrValue value; _data)
+            values ~= value.getBool();
+        return values;
+    }
+
     pragma(inline) GrInt[] getInts() {
         GrInt[] values;
         foreach (GrValue value; _data)
             values ~= value.getInt();
+        return values;
+    }
+
+    pragma(inline) T[] getEnums(T)() {
+        T[] values;
+        foreach (GrValue value; _data)
+            values ~= value.getEnum!T();
         return values;
     }
 
@@ -75,8 +85,8 @@ final class GrArray {
         return cast(GrString[]) cast(GrPointer[]) _data;
     }
 
-    pragma(inline) GrArray[] getArrays() {
-        return cast(GrArray[]) cast(GrPointer[]) _data;
+    pragma(inline) GrList[] getLists() {
+        return cast(GrList[]) cast(GrPointer[]) _data;
     }
 
     pragma(inline) GrChannel[] getChannels() {
@@ -107,6 +117,12 @@ final class GrArray {
             _data[i].setInt(values[i]);
     }
 
+    pragma(inline) void setEnums(T)(T[] values) {
+        _data.length = values.length;
+        for (size_t i; i < _data.length; ++i)
+            _data[i].setEnum!T(values[i]);
+    }
+
     pragma(inline) void setReals(GrReal[] values) {
         _data = cast(GrValue[]) values;
     }
@@ -115,7 +131,7 @@ final class GrArray {
         _data = cast(GrValue[]) values;
     }
 
-    pragma(inline) void setArrays(GrArray[] values) {
+    pragma(inline) void setLists(GrList[] values) {
         _data = cast(GrValue[]) values;
     }
 

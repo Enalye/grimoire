@@ -11,7 +11,7 @@ public {
     import grimoire.runtime.value;
     import grimoire.runtime.object;
     import grimoire.runtime.string;
-    import grimoire.runtime.array;
+    import grimoire.runtime.list;
     import grimoire.runtime.channel;
     import grimoire.runtime.call;
 }

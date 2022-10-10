@@ -26,6 +26,6 @@ private void _assert_msg(GrCall call) {
 }
 
 private void _setMeta(GrCall call) {
-    const GrStr value = call.getStringData(0);
+    const GrStringValue value = call.getStringData(0);
     call.task.engine.meta = value;
 }

@@ -25,7 +25,7 @@ package void grLoadStdLibSystem(GrLibrary library) {
             grInt, grInt, grInt, grInt, grInt, grInt, grInt, grInt, grInt, grInt
         ]);
 
-    library.addFunction(&_test_2, "test_2", [grArray(grInt)]);
+    library.addFunction(&_test_2, "test_2", [grList(grInt)]);
 }
 
 private void _swap_2(GrCall call) {
@@ -69,7 +69,7 @@ private void _test_call(GrCall call) {
 }
 
 private void _test_2(GrCall call) {
-    GrInt[] ary = call.getArray(0).getInts();
+    GrInt[] ary = call.getList(0).getInts();
     import std.stdio;
     writeln(ary);
 }

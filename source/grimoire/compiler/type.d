@@ -32,7 +32,7 @@ struct GrType {
         bool_,
         string_,
         optional,
-        array,
+        list,
         function_,
         task,
         class_,
@@ -46,7 +46,7 @@ struct GrType {
     /// General type, basic types only use that while compound types also use mangledType
     /// and mangledReturnType.
     Base base;
-    /// Used for compound types like arrays, functions, etc.
+    /// Used for compound types like lists, functions, etc.
     string mangledType, mangledReturnType;
     /// Is this from an object field ?
     bool isField;
@@ -89,7 +89,7 @@ struct GrType {
         if (base == GrType.Base.function_ || base == GrType.Base.task)
             return mangledType == v.mangledType && mangledReturnType == v.mangledReturnType;
         if (base == GrType.Base.foreign || base == GrType.Base.class_ ||
-            base == GrType.Base.enum_ || base == GrType.Base.array)
+            base == GrType.Base.enum_ || base == GrType.Base.list)
             return mangledType == v.mangledType;
         return true;
     }
@@ -119,9 +119,9 @@ GrType grOptional(GrType subType) {
     return type;
 }
 
-/// Returns a GrType of type array and of `subType` subtype.
-GrType grArray(GrType subType) {
-    return GrType(GrType.Base.array, grMangleSignature([subType]));
+/// Returns a GrType of type list and of `subType` subtype.
+GrType grList(GrType subType) {
+    return GrType(GrType.Base.list, grMangleSignature([subType]));
 }
 
 /// Returns a GrType of type channel and of `subType` subtype.
@@ -181,7 +181,7 @@ bool grIsKindOfString(GrType.Base type) {
 
 /// The type is handled by a ptr based register
 bool grIsKindOfObject(GrType.Base type) {
-    return type == GrType.Base.class_ || type == GrType.Base.array ||
+    return type == GrType.Base.class_ || type == GrType.Base.list ||
         type == GrType.Base.foreign || type == GrType.Base.channel ||
         type == GrType.Base.reference || type == GrType.Base.null_;
 }
@@ -415,7 +415,7 @@ final class GrVariableDefinition {
     /// Floating init value
     GrReal rvalue;
     /// String init value
-    GrStr svalue;
+    GrStringValue svalue;
     /// Register.
     uint register;
 }
@@ -523,7 +523,7 @@ package class GrFunction {
         case enum_:
         case real_:
         case string_:
-        case array:
+        case list:
         case optional:
         case class_:
         case foreign:

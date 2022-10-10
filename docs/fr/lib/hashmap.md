@@ -9,19 +9,19 @@ Dictionnaire associant des valeurs par clés.
 |Fonction|Entrée|Sortie|
 |-|-|-|
 |[new](#new)||[HashMap](#hashmap)\<T\>|
-|[new](#new_arrays)|[array](/fr/lib/array#array)(string) clés, [array](/fr/lib/array#array)(T) valeurs|[HashMap](#hashmap)\<T\>|
-|[new](#new_pairs)|[array](/fr/lib/array#array)([Pair](/fr/lib/pair#pair)\<[string](/fr/lib/string#string), T\>) pairs|[HashMap](#hashmap)\<T\>|
+|[new](#new_lists)|[list](/fr/lib/list#list)(string) clés, [list](/fr/lib/list#list)(T) valeurs|[HashMap](#hashmap)\<T\>|
+|[new](#new_pairs)|[list](/fr/lib/list#list)([Pair](/fr/lib/pair#pair)\<[string](/fr/lib/string#string), T\>) pairs|[HashMap](#hashmap)\<T\>|
 |[clear](#clear)|[HashMap](#hashmap)\<T\> hashmap|[HashMap](#hashmap)\<T\>|
 |[copy](#copy)|[HashMap](#hashmap)\<T\> hashmap|[HashMap](#hashmap)\<T\>|
 |[each](#each)|[HashMap](#hashmap)\<T\> hashmap|[HashMapIterator](#hashmapiterator)\<T\>|
 |[empty?](#empty)|[HashMap](#hashmap)\<T\> hashmap|bool|
 |[get](#get)|[HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé|T|
 |[has?](#has)|[HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé|bool|
-|[keys](#keys)|[HashMap](#hashmap)\<T\> hashmap|[array](/fr/lib/array#array)([string](/fr/lib/string#string))|
+|[keys](#keys)|[HashMap](#hashmap)\<T\> hashmap|[list](/fr/lib/list#list)([string](/fr/lib/string#string))|
 |[remove](#remove)|[HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé||
 |[set](#set)|[HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé, T valeur||
 |[size](#size)|[HashMap](#hashmap)\<T\> hashmap|int|
-|[values](#values)|[HashMap](#hashmap)\<T\> hashmap|[array](/fr/lib/array#array)(T)|
+|[values](#values)|[HashMap](#hashmap)\<T\> hashmap|[list](/fr/lib/list#list)(T)|
 
 ## Description des fonctions
 
@@ -31,15 +31,15 @@ Dictionnaire associant des valeurs par clés.
 Crée une HashMap vide.
 ___
 
-<a id="new_arrays"></a>
-- new ( [array](/fr/lib/array#array)(string) clés, [array](/fr/lib/array#array)(T) valeurs ) ( [HashMap](#hashmap)\<T\> )
+<a id="new_lists"></a>
+- new ( [list](/fr/lib/list#list)(string) clés, [list](/fr/lib/list#list)(T) valeurs ) ( [HashMap](#hashmap)\<T\> )
 
 Crée une nouvelle HashMap en associant chaque clé avec sa valeur correspondante.
 La taille de `clés` et de `valeurs` doivent correspondre.
 ___
 
 <a id="new_pairs"></a>
-- new ( [array](/fr/lib/array#array)([Pair](/fr/lib/pair#pair)\<[string](/fr/lib/string#string), T\>) paires ) ( [HashMap](#hashmap)\<T\> )
+- new ( [list](/fr/lib/list#list)([Pair](/fr/lib/pair#pair)\<[string](/fr/lib/string#string), T\>) paires ) ( [HashMap](#hashmap)\<T\> )
 
 Crée une nouvelle HashMap à partir des `paires`.
 ___
@@ -81,7 +81,7 @@ Returns `true` if the `clé` exists inside the HashMap.
 ___
 
 <a id="keys"></a>
-- keys ( [HashMap](#hashmap)\<T\> hashmap ) ( [array](/fr/lib/array#array)([string](/fr/lib/string#string)) )
+- keys ( [HashMap](#hashmap)\<T\> hashmap ) ( [list](/fr/lib/list#list)([string](/fr/lib/string#string)) )
 
 Returns the list of all clés.
 ___
@@ -105,7 +105,7 @@ Returns the number of elements in the HashMap.
 ___
 
 <a id="values"></a>
-- values ( [HashMap](#hashmap)\<T\> hashmap ) ( [array](/fr/lib/array#array)(T) )
+- values ( [HashMap](#hashmap)\<T\> hashmap ) ( [list](/fr/lib/list#list)(T) )
 
 Returns the list of all valeurs.
 ___

@@ -12,10 +12,10 @@ Fonctions d’affichage d’information.
 |print|bool value||
 |print|real value||
 |print|[string](/fr/lib/string#string) value||
-|print|[array](/fr/lib/array#array)(int) value||
-|print|[array](/fr/lib/array#array)(bool) value||
-|print|[array](/fr/lib/array#array)(real) value||
-|print|[array](/fr/lib/array#array)([string](/fr/lib/string#string)) value||
+|print|[list](/fr/lib/list#list)(int) value||
+|print|[list](/fr/lib/list#list)(bool) value||
+|print|[list](/fr/lib/list#list)(real) value||
+|print|[list](/fr/lib/list#list)([string](/fr/lib/string#string)) value||
 |print|T value||
 
 ## Description des fonctions

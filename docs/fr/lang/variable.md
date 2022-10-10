@@ -16,7 +16,7 @@ Les types de bases en Grimoire peuvent se répartir dans ces différentes catég
 * Les nombres décimaux déclarés avec **real** ex: 2.35f (Valeur par défaut: 0f)
 * Les booléens déclarés avec **bool** ex: true, false (Valeur par défaut: false)
 * Les chaînes de caractères déclarés avec **string** ex: "Coucou" (Valeur par défaut: "")
-* [Les listes](#arrays) (Valeur par défaut: [])
+* [Les listes](#lists) (Valeur par défaut: [])
 * [Les fonctions](#functions) (Valeur par défaut: fonction vide)
 * [Les tâches](#tasks) (Valeur par défaut: tâche vide)
 * [Les canaux](#channels) (Valeur par défaut: canal d’une taille de 1)

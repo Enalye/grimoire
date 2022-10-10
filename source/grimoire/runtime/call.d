@@ -13,7 +13,7 @@ import grimoire.runtime.task;
 import grimoire.runtime.value;
 import grimoire.runtime.object;
 import grimoire.runtime.string;
-import grimoire.runtime.array;
+import grimoire.runtime.list;
 import grimoire.runtime.channel;
 
 /// Primitive type.
@@ -41,7 +41,7 @@ final class GrCall {
         }
 
         /// Extra type compiler information.
-        GrStr meta() const {
+        GrStringValue meta() const {
             return _task.engine.meta;
         }
     }
@@ -87,7 +87,7 @@ final class GrCall {
     alias getBool = getParameter!GrBool;
     alias getInt = getParameter!GrInt;
     alias getReal = getParameter!GrReal;
-    alias getPtr = getParameter!GrPointer;
+    alias getPointer = getParameter!GrPointer;
 
     pragma(inline) GrBool isNull(uint index)
     in (index < _parameters.length,
@@ -119,16 +119,12 @@ final class GrCall {
         return cast(GrString) getParameter!GrPointer(index);
     }
 
-    pragma(inline) GrStr getStringData(uint index) {
+    pragma(inline) GrStringValue getStringData(uint index) {
         return (cast(GrString) getParameter!GrPointer(index)).data;
     }
 
-    pragma(inline) GrArray getArray(uint index) {
-        return cast(GrArray) getParameter!GrPointer(index);
-    }
-
-    pragma(inline) GrValue[] getArrayData(uint index) {
-        return (cast(GrArray) getParameter!GrPointer(index)).data;
+    pragma(inline) GrList getList(uint index) {
+        return cast(GrList) getParameter!GrPointer(index);
     }
 
     pragma(inline) GrChannel getChannel(uint index) {
@@ -160,7 +156,7 @@ final class GrCall {
             return _inputs[index].getReal();
         }
         else static if (is(T == GrPointer)) {
-            return _inputs[index].getPtr();
+            return _inputs[index].getPointer();
         }
     }
 
@@ -168,55 +164,39 @@ final class GrCall {
     alias setBool = setResult!GrBool;
     alias setInt = setResult!GrInt;
     alias setReal = setResult!GrReal;
-    alias setPtr = setResult!GrPointer;
+    alias setPointer = setResult!GrPointer;
 
     pragma(inline) void setNull() {
         _outputs[_results].setNull();
         _results++;
     }
 
-    pragma(inline) void setInt32(int value) {
+    pragma(inline) void setEnum(T)(T value) {
         setResult!GrInt(cast(GrInt) value);
-    }
-
-    pragma(inline) void setInt64(long value) {
-        setResult!GrInt(cast(GrInt) value);
-    }
-
-    pragma(inline) void setReal32(float value) {
-        setResult!GrReal(cast(GrReal) value);
-    }
-
-    pragma(inline) void setReal64(double value) {
-        setResult!GrReal(cast(GrReal) value);
-    }
-
-    pragma(inline) void setObject(GrObject value) {
-        setResult!GrPointer(cast(GrPointer) value);
-    }
-
-    pragma(inline) void setString(GrStr value) {
-        setResult!GrPointer(cast(GrPointer) new GrString(value));
     }
 
     pragma(inline) void setString(GrString value) {
         setResult!GrPointer(cast(GrPointer) value);
     }
 
-    pragma(inline) void setArray(GrArray value) {
+    pragma(inline) void setString(GrStringValue value) {
+        setResult!GrPointer(cast(GrPointer) new GrString(value));
+    }
+
+    pragma(inline) void setList(GrList value) {
         setResult!GrPointer(cast(GrPointer) value);
     }
 
-    pragma(inline) void setArray(GrValue[] value) {
-        setResult!GrPointer(cast(GrPointer) new GrArray(value));
+    pragma(inline) void setList(GrValue[] value) {
+        setResult!GrPointer(cast(GrPointer) new GrList(value));
     }
 
     pragma(inline) void setChannel(GrChannel value) {
         setResult!GrPointer(cast(GrPointer) value);
     }
 
-    pragma(inline) void setEnum(T)(T value) {
-        setResult!GrInt(cast(GrInt) value);
+    pragma(inline) void setObject(GrObject value) {
+        setResult!GrPointer(cast(GrPointer) value);
     }
 
     pragma(inline) void setForeign(T)(T value) {
@@ -240,49 +220,49 @@ final class GrCall {
             _outputs[_results].setString(value);
         }
         else static if (is(T == GrPointer)) {
-            _outputs[_results].setPtr(value);
+            _outputs[_results].setPointer(value);
         }
         _results++;
     }
 
-    GrBool getBoolVariable(string name) {
+    GrBool getBoolVariable(string name) const {
         return _task.engine.getBoolVariable(name);
     }
 
-    GrInt getIntVariable(string name) {
+    GrInt getIntVariable(string name) const {
         return _task.engine.getIntVariable(name);
     }
 
-    GrReal getRealVariable(string name) {
+    T getEnumVariable(T)(string name) const {
+        return cast(T) _task.engine.getEnumVariable(T)(name);
+    }
+
+    GrReal getRealVariable(string name) const {
         return _task.engine.getRealVariable(name);
     }
 
-    GrStr getStringVariable(string name) {
-        return _task.engine.getStringVariable(name);
+    GrPointer getPointerVariable(string name) const {
+        return cast(GrPointer) _task.engine.getPointerVariable(name);
     }
 
-    GrArray getArrayVariable(string name) {
-        return _task.engine.getArrayVariable(name);
+    GrString getStringVariable(string name) const {
+        return cast(GrString) _task.engine.getStringVariable(name);
     }
 
-    GrPointer getPtrVariable(string name) {
-        return _task.engine.getPtrVariable(name);
+    GrList getListVariable(string name) const {
+        return cast(GrList) _task.engine.getListVariable(name);
     }
 
-    GrObject getObjectVariable(string name) {
-        return _task.engine.getObjectVariable(name);
+    GrChannel getChannelVariable(string name) const {
+        return cast(GrChannel) _task.engine.getChannelVariable(name);
     }
 
-    GrChannel getChannelVariable(string name) {
-        return _task.engine.getChannelVariable(name);
+    GrObject getObjectVariable(string name) const {
+        return cast(GrObject) _task.engine.getObjectVariable(name);
     }
 
-    T getEnumVariable(T)(string name) {
-        return _task.engine.getEnumVariable(T)(name);
-    }
-
-    T getForeignVariable(T)(string name) {
-        return _task.engine.getForeignVariable(T)(name);
+    T getForeignVariable(T)(string name) const {
+        return cast(T) _task.engine.getForeignVariable(T)(name);
     }
 
     void setBoolVariable(string name, GrBool value) {
@@ -297,16 +277,16 @@ final class GrCall {
         _task.engine.setRealVariable(name, value);
     }
 
-    void setStringVariable(string name, GrStr value) {
+    void setStringVariable(string name, GrStringValue value) {
         _task.engine.setStringVariable(name, value);
     }
 
-    void setArrayVariable(string name, GrValue[] value) {
-        _task.engine.setArrayVariable(name, value);
+    void setListVariable(string name, GrValue[] value) {
+        _task.engine.setListVariable(name, value);
     }
 
-    void setPtrVariable(string name, GrPointer value) {
-        _task.engine.setPtrVariable(name, value);
+    void setPointerVariable(string name, GrPointer value) {
+        _task.engine.setPointerVariable(name, value);
     }
 
     void setObjectVariable(string name, GrObject value) {
@@ -326,7 +306,7 @@ final class GrCall {
     }
 
     private {
-        GrStr _message;
+        GrStringValue _message;
         bool _hasError;
     }
 
@@ -338,7 +318,7 @@ final class GrCall {
         _hasError = true;
     }
     /// Ditto
-    void raise(GrStr message) {
+    void raise(GrStringValue message) {
         _message = message;
         _hasError = true;
     }

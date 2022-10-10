@@ -13,120 +13,115 @@ import grimoire.runtime.value;
 
 /// Runtime string
 final class GrString {
-    /// Payload
-    package {
-        GrStr _data;
-    }
+    public GrStringValue data;
+
+    alias data this;
 
     this() {
     }
 
-    this(GrStr value) {
-        _data = value;
+    this(GrStringValue value) {
+        data = value;
     }
 
     @property {
         pragma(inline) GrInt size() const {
-            return cast(GrInt) _data.length;
+            return cast(GrInt) data.length;
         }
 
         pragma(inline) GrBool isEmpty() const {
-            return _data.length == 0;
-        }
-
-        pragma(inline) GrStr data() {
-            return _data;
+            return data.length == 0;
         }
     }
 
-    /*pragma(inline) GrStr opIndex(GrInt index) {
-        return _data[index];
+    /*pragma(inline) GrStringValue opIndex(GrInt index) {
+        return data[index];
     }
 
-    pragma(inline) GrStr opIndexAssign(GrStr value, GrInt index) {
-        return _data[index] = value;
+    pragma(inline) GrStringValue opIndexAssign(GrStringValue value, GrInt index) {
+        return data[index] = value;
     }*/
 
-    pragma(inline) void opAssign(GrStr values) {
-        _data = values;
+    pragma(inline) void opAssign(GrStringValue values) {
+        data = values;
     }
 
     pragma(inline) void clear() {
-        _data.length = 0;
+        data.length = 0;
     }
 
     pragma(inline) void resize(GrInt size_) {
-        _data.length = size_;
+        data.length = size_;
     }
 
-    pragma(inline) GrStr first() {
-        return to!GrStr(_data[0]);
+    pragma(inline) GrStringValue first() {
+        return to!GrStringValue(data[0]);
     }
 
-    pragma(inline) GrStr last() {
-        return to!GrStr(_data[$ - 1]);
+    pragma(inline) GrStringValue last() {
+        return to!GrStringValue(data[$ - 1]);
     }
 
-    pragma(inline) void push(GrStr value) {
-        _data ~= value;
+    pragma(inline) void push(GrStringValue value) {
+        data ~= value;
     }
 
-    pragma(inline) GrStr pop() {
-        GrStr value = to!GrStr(_data[$ - 1]);
-        _data.length--;
+    pragma(inline) GrStringValue pop() {
+        GrStringValue value = to!GrStringValue(data[$ - 1]);
+        data.length--;
         return value;
     }
 
-    pragma(inline) GrStr pop(GrInt size_) {
-        if (_data.length < size_) {
-            size_ = cast(GrInt) _data.length;
+    pragma(inline) GrStringValue pop(GrInt size_) {
+        if (data.length < size_) {
+            size_ = cast(GrInt) data.length;
         }
-        GrStr slice = _data[$ - size_ .. $];
-        _data.length -= size_;
+        GrStringValue slice = data[$ - size_ .. $];
+        data.length -= size_;
         return slice;
     }
 
-    pragma(inline) void unshift(GrStr value) {
-        _data = value ~ _data;
+    pragma(inline) void unshift(GrStringValue value) {
+        data = value ~ data;
     }
 
-    pragma(inline) GrStr shift() {
-        GrStr value = to!GrStr(_data[0]);
-        _data = _data[1 .. $];
+    pragma(inline) GrStringValue shift() {
+        GrStringValue value = to!GrStringValue(data[0]);
+        data = data[1 .. $];
         return value;
     }
 
-    pragma(inline) GrStr shift(GrInt size_) {
-        if (_data.length < size_) {
-            size_ = cast(GrInt) _data.length;
+    pragma(inline) GrStringValue shift(GrInt size_) {
+        if (data.length < size_) {
+            size_ = cast(GrInt) data.length;
         }
-        GrStr slice = _data[0 .. size_];
-        _data = _data[size_ .. $];
+        GrStringValue slice = data[0 .. size_];
+        data = data[size_ .. $];
         return slice;
     }
 
     pragma(inline) void remove(GrInt index) {
         if (index < 0)
-            index = (cast(GrInt) _data.length) + index;
-        if (!_data.length || index >= _data.length || index < 0) {
+            index = (cast(GrInt) data.length) + index;
+        if (!data.length || index >= data.length || index < 0) {
             return;
         }
-        if (index + 1 == _data.length) {
-            _data.length--;
+        if (index + 1 == data.length) {
+            data.length--;
             return;
         }
         if (index == 0) {
-            _data = _data[1 .. $];
+            data = data[1 .. $];
             return;
         }
-        _data = _data[0 .. index] ~ _data[index + 1 .. $];
+        data = data[0 .. index] ~ data[index + 1 .. $];
     }
 
     pragma(inline) void remove(GrInt index1, GrInt index2) {
         if (index1 < 0)
-            index1 = (cast(GrInt) _data.length) + index1;
+            index1 = (cast(GrInt) data.length) + index1;
         if (index2 < 0)
-            index2 = (cast(GrInt) _data.length) + index2;
+            index2 = (cast(GrInt) data.length) + index2;
 
         if (index2 < index1) {
             const GrInt temp = index1;
@@ -134,35 +129,35 @@ final class GrString {
             index2 = temp;
         }
 
-        if (!_data.length || index1 >= _data.length || index2 < 0) {
+        if (!data.length || index1 >= data.length || index2 < 0) {
             return;
         }
 
         if (index1 < 0)
             index1 = 0;
-        if (index2 >= _data.length)
-            index2 = (cast(GrInt) _data.length) - 1;
+        if (index2 >= data.length)
+            index2 = (cast(GrInt) data.length) - 1;
 
-        if (index1 == 0 && (index2 + 1) == _data.length) {
-            _data.length = 0;
+        if (index1 == 0 && (index2 + 1) == data.length) {
+            data.length = 0;
             return;
         }
         if (index1 == 0) {
-            _data = _data[(index2 + 1) .. $];
+            data = data[(index2 + 1) .. $];
             return;
         }
-        if ((index2 + 1) == _data.length) {
-            _data = _data[0 .. index1];
+        if ((index2 + 1) == data.length) {
+            data = data[0 .. index1];
             return;
         }
-        _data = _data[0 .. index1] ~ _data[(index2 + 1) .. $];
+        data = data[0 .. index1] ~ data[(index2 + 1) .. $];
     }
 
-    pragma(inline) GrStr slice(GrInt index1, GrInt index2) {
+    pragma(inline) GrStringValue slice(GrInt index1, GrInt index2) {
         if (index1 < 0)
-            index1 = (cast(GrInt) _data.length) + index1;
+            index1 = (cast(GrInt) data.length) + index1;
         if (index2 < 0)
-            index2 = (cast(GrInt) _data.length) + index2;
+            index2 = (cast(GrInt) data.length) + index2;
 
         if (index2 < index1) {
             const GrInt temp = index1;
@@ -170,54 +165,54 @@ final class GrString {
             index2 = temp;
         }
 
-        if (!_data.length || index1 >= _data.length || index2 < 0)
+        if (!data.length || index1 >= data.length || index2 < 0)
             return [];
 
         if (index1 < 0)
             index1 = 0;
-        if (index2 >= _data.length)
-            index2 = (cast(GrInt) _data.length - 1);
+        if (index2 >= data.length)
+            index2 = (cast(GrInt) data.length - 1);
 
-        if (index1 == 0 && (index2 + 1) == _data.length)
-            return _data;
+        if (index1 == 0 && (index2 + 1) == data.length)
+            return data;
 
-        return _data[index1 .. index2 + 1];
+        return data[index1 .. index2 + 1];
     }
 
-    pragma(inline) GrStr reverse() {
+    pragma(inline) GrStringValue reverse() {
         import std.algorithm.mutation : reverse;
 
-        return _data.dup.reverse();
+        return data.dup.reverse();
     }
 
-    pragma(inline) void insert(GrInt index, GrStr value) {
-        if (index >= _data.length) {
-            _data ~= value;
+    pragma(inline) void insert(GrInt index, GrStringValue value) {
+        if (index >= data.length) {
+            data ~= value;
             return;
         }
         if (index < 0)
-            index = (cast(GrInt) _data.length) + index;
+            index = (cast(GrInt) data.length) + index;
 
         if (index <= 0) {
-            _data = value ~ _data;
+            data = value ~ data;
             return;
         }
-        if (index + 1 == _data.length) {
-            _data = _data[0 .. index] ~ value ~ _data[$ - 1];
+        if (index + 1 == data.length) {
+            data = data[0 .. index] ~ value ~ data[$ - 1];
             return;
         }
-        _data = _data[0 .. index] ~ value ~ _data[index .. $];
+        data = data[0 .. index] ~ value ~ data[index .. $];
     }
 
-    pragma(inline) GrInt indexOf(GrStr value) {
-        return cast(GrInt) _data.indexOf(value);
+    pragma(inline) GrInt indexOf(GrStringValue value) {
+        return cast(GrInt) data.indexOf(value);
     }
 
-    pragma(inline) GrInt lastIndexOf(GrStr value) {
-        return cast(GrInt) _data.lastIndexOf(value);
+    pragma(inline) GrInt lastIndexOf(GrStringValue value) {
+        return cast(GrInt) data.lastIndexOf(value);
     }
 
-    pragma(inline) GrBool contains(GrStr value) {
-        return _data.indexOf(value) != -1;
+    pragma(inline) GrBool contains(GrStringValue value) {
+        return data.indexOf(value) != -1;
     }
 }

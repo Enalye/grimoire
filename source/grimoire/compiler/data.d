@@ -492,7 +492,7 @@ final class GrData {
         case bool_:
         case string_:
             break;
-        case array:
+        case list:
         case channel:
         case optional:
             GrType subType = reifyType(grUnmangle(type.mangledType));
@@ -556,7 +556,7 @@ final class GrData {
                 checkUnknownClasses(fieldType);
             }
             break;
-        case array:
+        case list:
         case channel:
             GrType subType = grUnmangle(type.mangledType);
             checkUnknownClasses(subType);
@@ -604,7 +604,7 @@ final class GrData {
                 if (first[i].base == second[i].base)
                     continue;
                 return false;
-            case array:
+            case list:
             case channel:
             case optional:
                 if (first[i].base != second[i].base)

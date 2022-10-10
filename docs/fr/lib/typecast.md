@@ -14,5 +14,5 @@ Fonctions de conversion.
 |as|bool|string|
 |as|int|string|
 |as|real|string|
-|as|array(string)|string|
-|as|string|array(string)|
+|as|list(string)|string|
+|as|string|list(string)|

@@ -114,18 +114,18 @@ enum GrOpcode {
     jumpEqual,
     jumpNotEqual,
 
-    array,
-    length_array,
-    index_array,
-    index2_array,
-    index3_array,
+    list,
+    length_list,
+    index_list,
+    index2_list,
+    index3_list,
 
-    concatenate_array,
-    append_array,
-    prepend_array,
+    concatenate_list,
+    append_list,
+    prepend_list,
 
-    equal_array,
-    notEqual_array,
+    equal_list,
+    notEqual_list,
 
     debugProfileBegin,
     debugProfileEnd
@@ -165,7 +165,7 @@ final class GrBytecode {
             /// Realing init value
             GrReal rvalue;
             /// String init value
-            GrStr svalue;
+            GrStringValue svalue;
         }
 
         /// All the instructions.
@@ -178,7 +178,7 @@ final class GrBytecode {
         GrReal[] rconsts;
 
         /// String constants.
-        GrStr[] sconsts;
+        GrStringValue[] sconsts;
 
         /// Callable primitives.
         PrimitiveReference[] primitives;
@@ -238,9 +238,9 @@ final class GrBytecode {
         std.file.write(fileName, serialize());
     }
 
-    /// Serialize the bytecode into an array.
+    /// Serialize the bytecode into an list.
     ubyte[] serialize() {
-        void writeStr(ref Appender!(ubyte[]) buffer, GrStr s) {
+        void writeStr(ref Appender!(ubyte[]) buffer, GrStringValue s) {
             buffer.append!uint(cast(uint) s.length);
             buffer.put(cast(ubyte[]) s);
         }
@@ -325,10 +325,10 @@ final class GrBytecode {
         deserialize(cast(ubyte[]) std.file.read(fileName));
     }
 
-    /// Deserialize the bytecode from an array.
+    /// Deserialize the bytecode from an list.
     void deserialize(ubyte[] buffer) {
-        GrStr readStr(ref ubyte[] buffer) {
-            GrStr s;
+        GrStringValue readStr(ref ubyte[] buffer) {
+            GrStringValue s;
             const uint size = buffer.read!uint();
             if (size == 0)
                 return s;

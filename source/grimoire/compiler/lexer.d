@@ -105,7 +105,7 @@ struct GrLexeme {
         realType,
         booleanType,
         stringType,
-        arrayType,
+        listType,
         channelType,
         functionType,
         taskType,
@@ -198,7 +198,7 @@ struct GrLexeme {
     GrBool bvalue;
 
     /// Can either describe a literal value like `"myString"` or an identifier.
-    GrStr svalue;
+    GrStringValue svalue;
 
     /// Returns the entire _line from where the token is located.
     string getLine() {
@@ -1015,8 +1015,8 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.stringType;
             lex.isType = true;
             break;
-        case "array":
-            lex.type = GrLexeme.Type.arrayType;
+        case "list":
+            lex.type = GrLexeme.Type.listType;
             lex.isType = true;
             break;
         case "channel":
@@ -1250,7 +1250,7 @@ private immutable string[] _prettyLexemeTypeTable = [
     "++", "--", "identifier", "const_int", "const_float", "const_bool",
     "const_string", "null", "public", "const", "pure", "alias", "event",
     "class", "enum", "where", "new", "copy", "send", "receive", "int", "real",
-    "bool", "string", "array", "channel", "function", "task", "let", "if",
+    "bool", "string", "list", "channel", "function", "task", "let", "if",
     "unless", "else", "switch", "select", "case", "default", "while", "do",
     "until", "for", "loop", "return", "self", "die", "exit", "yield", "break",
     "continue"

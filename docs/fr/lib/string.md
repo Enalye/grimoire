@@ -27,7 +27,7 @@ Type pouvant contenir des caractères UTF-8.
 |[shift](#shift_1)|[string](#string) this|[string](#string)|
 |[shift](#shift_2)|[string](#string) this, int count|[string](#string)|
 |[slice](#slice)|[string](#string) this, int startIndex, int endIndex|[string](#string)|
-|[split](#split)|[string](#string)(T) this, T value|[array](/fr/lib/array#array)([string](#string)))|
+|[split](#split)|[string](#string)(T) this, T value|[list](/fr/lib/list#list)([string](#string)))|
 |[unshift](#unshift)|[string](#string) this, [string](#string) value|[string](#string)|
 
 ## Description des fonctions
@@ -141,7 +141,7 @@ Remove the first `count` element from the string.
 ___
 
 <a id="unshift"></a>
-- unshift ( [string](#string) this, [string](#string) value ) ( [array](/fr/lib/array#array)([string](#string)) )
+- unshift ( [string](#string) this, [string](#string) value ) ( [list](/fr/lib/list#list)([string](#string)) )
 
 Prepend the `value` at the beginning of the string.
 ___
@@ -150,7 +150,7 @@ ___
 
 ## Description
 
-Provides a way to iterate through an array.
+Provides a way to iterate through an list.
 
 ## Fonctions
 

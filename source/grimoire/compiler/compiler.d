@@ -224,7 +224,7 @@ final class GrCompiler {
                 variable.typeMask = 0x4;
                 variable.svalue = variableDef.isInitialized ? variableDef.svalue : "";
                 break;
-            case array:
+            case list:
             case class_:
             case foreign:
             case channel:
@@ -287,7 +287,7 @@ final class GrCompiler {
                         bytecode.primitives[id].params & 0xFFFF);
                     bytecode.primitives[id].params++;
                     break;
-                case array:
+                case list:
                 case class_:
                 case foreign:
                 case channel:

@@ -12,7 +12,7 @@ public import grimoire.stdlib.util;
 import grimoire.stdlib.constraint;
 import grimoire.stdlib.optional;
 import grimoire.stdlib.system;
-import grimoire.stdlib.array;
+import grimoire.stdlib.list;
 import grimoire.stdlib.hashmap;
 import grimoire.stdlib.range;
 import grimoire.stdlib.string;
@@ -34,7 +34,7 @@ GrLibrary grLoadStdLibrary() {
     grLoadStdLibSystem(library);
     grLoadStdLibOptional(library);
     grLoadStdLibLog(library);
-    grLoadStdLibArray(library);
+    grLoadStdLibList(library);
     grLoadStdLibHashMap(library);
     grLoadStdLibRange(library);
     grLoadStdLibString(library);

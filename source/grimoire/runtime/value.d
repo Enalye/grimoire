@@ -7,7 +7,9 @@ module grimoire.runtime.value;
 
 import grimoire.assembly;
 import grimoire.runtime.string;
-import grimoire.runtime.array;
+import grimoire.runtime.list;
+import grimoire.runtime.object;
+import grimoire.runtime.channel;
 
 package(grimoire) enum GR_NULL = 0xffffUL << 48;
 
@@ -27,15 +29,15 @@ struct GrValue {
         _rvalue = value;
     }
 
-    this(GrArray value) {
+    this(GrList value) {
         _ovalue = cast(GrPointer) value;
     }
 
     this(GrValue[] value) {
-        _ovalue = cast(GrPointer) new GrArray(value);
+        _ovalue = cast(GrPointer) new GrList(value);
     }
 
-    this(GrStr value) {
+    this(GrStringValue value) {
         _ovalue = cast(GrPointer) new GrString(value);
     }
 
@@ -43,77 +45,101 @@ struct GrValue {
         _ovalue = value;
     }
 
+    @property {
+        pragma(inline) GrBool isNull() const {
+            return _bytes == GR_NULL;
+        }
+    }
+
     pragma(inline) void setNull() {
         _bytes = GR_NULL;
     }
 
-    pragma(inline) GrBool getBool() {
+    pragma(inline) GrBool getBool() const {
         return cast(GrBool) _ivalue;
     }
 
-    pragma(inline) void setBool(GrBool value) {
-        _ivalue = cast(GrInt) value;
-    }
-
-    pragma(inline) GrInt getInt() {
+    pragma(inline) GrInt getInt() const {
         return _ivalue;
     }
 
-    pragma(inline) void setInt(GrInt value) {
-        _ivalue = value;
+    pragma(inline) T getEnum(T)() const {
+        return cast(T) _ivalue;
     }
 
-    pragma(inline) GrReal getReal() {
+    pragma(inline) GrReal getReal() const {
         return _rvalue;
     }
 
-    pragma(inline) void setReal(GrReal value) {
-        _rvalue = value;
-    }
-
-    pragma(inline) GrPointer getPtr() {
-        return _ovalue;
-    }
-
-    pragma(inline) void setPtr(GrPointer value) {
-        _ovalue = value;
+    pragma(inline) GrPointer getPointer() const {
+        return cast(GrPointer) _ovalue;
     }
 
     pragma(inline) GrString getString() const {
         return cast(GrString) _ovalue;
     }
 
-    pragma(inline) GrStr getStringData() const {
-        return (cast(GrString) _ovalue).data;
+    pragma(inline) GrList getList() const {
+        return cast(GrList) _ovalue;
+    }
+
+    pragma(inline) GrChannel getChannel() const {
+        return cast(GrChannel) _ovalue;
+    }
+
+    pragma(inline) GrObject getObject() const {
+        return cast(GrObject) _ovalue;
+    }
+
+    pragma(inline) T getForeign(T)() const {
+        return cast(T) _ovalue;
+    }
+
+    pragma(inline) void setBool(GrBool value) {
+        _ivalue = cast(GrInt) value;
+    }
+
+    pragma(inline) void setInt(GrInt value) {
+        _ivalue = value;
+    }
+
+    pragma(inline) void setEnum(T)(T value) {
+        _ivalue = cast(GrInt) value;
+    }
+
+    pragma(inline) void setReal(GrReal value) {
+        _rvalue = value;
+    }
+
+    pragma(inline) void setPointer(GrPointer value) {
+        _ovalue = value;
     }
 
     pragma(inline) void setString(GrString value) {
         _ovalue = cast(GrPointer) value;
     }
 
-    pragma(inline) void setString(GrStr value) {
+    pragma(inline) void setString(GrStringValue value) {
         (cast(GrString) _ovalue) = value;
     }
 
-    pragma(inline) GrArray getArray() const {
-        return cast(GrArray) _ovalue;
-    }
-
-    pragma(inline) GrValue[] getArrayData() const {
-        return (cast(GrArray) _ovalue).data;
-    }
-
-    pragma(inline) void setArray(GrArray value) {
+    pragma(inline) void setList(GrList value) {
         _ovalue = cast(GrPointer) value;
     }
 
-    pragma(inline) void setArray(GrValue[] value) {
-        (cast(GrArray) _ovalue) = value;
+    pragma(inline) void setList(GrValue[] value) {
+        _ovalue = cast(GrPointer) new GrList(value);
     }
 
-    @property {
-        pragma(inline) GrBool isNull() const {
-            return _bytes == GR_NULL;
-        }
+    pragma(inline) void setChannel(GrChannel value) {
+        _ovalue = cast(GrPointer) value;
+    }
+
+    pragma(inline) void setObject(GrObject value) {
+        _ovalue = cast(GrPointer) value;
+    }
+
+    pragma(inline) void setForeign(T)(T value) {
+        _ovalue = cast(GrPointer) value;
     }
 }

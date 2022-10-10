@@ -19,21 +19,21 @@ package(grimoire.stdlib) void grLoadStdLibLog(GrLibrary library) {
     library.addFunction(&_print_rx, "print", [grOptional(grReal)]);
     library.addFunction(&_print_s, "print", [grString]);
     library.addFunction(&_print_sx, "print", [grOptional(grString)]);
-    library.addFunction(&_print_ni, "print", [grPure(grArray(grInt))]);
+    library.addFunction(&_print_ni, "print", [grPure(grList(grInt))]);
     library.addFunction(&_print_nix, "print", [
-            grPure(grOptional(grArray(grInt)))
+            grPure(grOptional(grList(grInt)))
         ]);
-    library.addFunction(&_print_nb, "print", [grPure(grArray(grBool))]);
+    library.addFunction(&_print_nb, "print", [grPure(grList(grBool))]);
     library.addFunction(&_print_nbx, "print", [
-            grPure(grOptional(grArray(grBool)))
+            grPure(grOptional(grList(grBool)))
         ]);
-    library.addFunction(&_print_nr, "print", [grPure(grArray(grReal))]);
+    library.addFunction(&_print_nr, "print", [grPure(grList(grReal))]);
     library.addFunction(&_print_nrx, "print", [
-            grPure(grOptional(grArray(grReal)))
+            grPure(grOptional(grList(grReal)))
         ]);
-    library.addFunction(&_print_ns, "print", [grPure(grArray(grString))]);
+    library.addFunction(&_print_ns, "print", [grPure(grList(grString))]);
     library.addFunction(&_print_nsx, "print", [
-            grPure(grOptional(grArray(grString)))
+            grPure(grOptional(grList(grString)))
         ]);
     library.addFunction(&_print_enum, "print", [grPure(grAny("T"))], [],
         [grConstraint("Enum", grAny("T"))]);
@@ -105,13 +105,13 @@ private void _print_sx(GrCall call) {
 }
 
 private void _print_ni(GrCall call) {
-    GrArray array = call.getArray(0);
+    GrList list = call.getList(0);
     string txt = "[";
-    for (int i; i < array.size(); ++i) {
+    for (int i; i < list.size(); ++i) {
         if (i != 0) {
             txt ~= ", ";
         }
-        txt ~= to!string(array[i].getInt());
+        txt ~= to!string(list[i].getInt());
     }
     txt ~= "]";
     _stdOut(txt);
@@ -123,26 +123,26 @@ private void _print_nix(GrCall call) {
         return;
     }
 
-    GrArray array = call.getArray(0);
+    GrList list = call.getList(0);
     string txt = "[";
-    for (int i; i < array.size(); ++i) {
+    for (int i; i < list.size(); ++i) {
         if (i != 0) {
             txt ~= ", ";
         }
-        txt ~= to!string(array[i].getInt());
+        txt ~= to!string(list[i].getInt());
     }
     txt ~= "]";
     _stdOut(txt);
 }
 
 private void _print_nb(GrCall call) {
-    GrArray array = call.getArray(0);
+    GrList list = call.getList(0);
     string txt = "[";
-    for (int i; i < array.size(); ++i) {
+    for (int i; i < list.size(); ++i) {
         if (i != 0) {
             txt ~= ", ";
         }
-        txt ~= array[i].getBool() ? "true" : "false";
+        txt ~= list[i].getBool() ? "true" : "false";
     }
     txt ~= "]";
     _stdOut(txt);
@@ -154,26 +154,26 @@ private void _print_nbx(GrCall call) {
         return;
     }
 
-    GrArray array = call.getArray(0);
+    GrList list = call.getList(0);
     string txt = "[";
-    for (int i; i < array.size(); ++i) {
+    for (int i; i < list.size(); ++i) {
         if (i != 0) {
             txt ~= ", ";
         }
-        txt ~= array[i].getBool() ? "true" : "false";
+        txt ~= list[i].getBool() ? "true" : "false";
     }
     txt ~= "]";
     _stdOut(txt);
 }
 
 private void _print_nr(GrCall call) {
-    GrArray array = call.getArray(0);
+    GrList list = call.getList(0);
     string txt = "[";
-    for (int i; i < array.size(); ++i) {
+    for (int i; i < list.size(); ++i) {
         if (i != 0) {
             txt ~= ", ";
         }
-        txt ~= to!string(array[i].getReal());
+        txt ~= to!string(list[i].getReal());
     }
     txt ~= "]";
     _stdOut(txt);
@@ -185,26 +185,26 @@ private void _print_nrx(GrCall call) {
         return;
     }
 
-    GrArray array = call.getArray(0);
+    GrList list = call.getList(0);
     string txt = "[";
-    for (int i; i < array.size(); ++i) {
+    for (int i; i < list.size(); ++i) {
         if (i != 0) {
             txt ~= ", ";
         }
-        txt ~= to!string(array[i].getReal());
+        txt ~= to!string(list[i].getReal());
     }
     txt ~= "]";
     _stdOut(txt);
 }
 
 private void _print_ns(GrCall call) {
-    GrArray array = call.getArray(0);
+    GrList list = call.getList(0);
     string txt = "[";
-    for (int i; i < array.size(); ++i) {
+    for (int i; i < list.size(); ++i) {
         if (i != 0) {
             txt ~= ", ";
         }
-        txt ~= array[i].getStringData();
+        txt ~= list[i].getString();
     }
     txt ~= "]";
     _stdOut(txt);
@@ -216,13 +216,13 @@ private void _print_nsx(GrCall call) {
         return;
     }
 
-    GrArray array = call.getArray(0);
+    GrList list = call.getList(0);
     string txt = "[";
-    for (int i; i < array.size(); ++i) {
+    for (int i; i < list.size(); ++i) {
         if (i != 0) {
             txt ~= ", ";
         }
-        txt ~= array[i].getStringData();
+        txt ~= list[i].getString();
     }
     txt ~= "]";
     _stdOut(txt);

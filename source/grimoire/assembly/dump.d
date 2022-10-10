@@ -23,7 +23,7 @@ private string[] instructions = [
     "add.f", "sub.i", "sub.f", "mul.i", "mul.f", "div.i", "div.f", "rem.i",
     "rem.f", "neg.i", "neg.f", "inc.i", "inc.f", "dec.i", "dec.f", "copy",
     "swap", "setup_it", "local", "call", "acall", "pcall", "ret", "unwind",
-    "defer", "jmp", "jmp_eq", "jmp_neq", "array", "len", "idx", "idx2", "idx3",
+    "defer", "jmp", "jmp_eq", "jmp_neq", "list", "len", "idx", "idx2", "idx3",
     "cat.n", "append", "prepend", "eq.n", "neq.n", "dbg_prfbegin", "dbg_prfend"
 ];
 
@@ -45,7 +45,7 @@ string grDump(const GrBytecode bytecode) {
                 op <= GrOpcode.localLoad) || (op >= GrOpcode.globalStore && op <= GrOpcode.globalLoad) ||
             op == GrOpcode.globalPush || (op >= GrOpcode.localStack && op <= GrOpcode.call) ||
             (op == GrOpcode.new_) || (op >= GrOpcode.fieldRefLoad &&
-                op <= GrOpcode.fieldLoad2) || (op == GrOpcode.channel) || (op == GrOpcode.array))
+                op <= GrOpcode.fieldLoad2) || (op == GrOpcode.channel) || (op == GrOpcode.list))
             line ~= to!string(grGetInstructionUnsignedValue(opcode));
         else if (op == GrOpcode.fieldRefStore)
             line ~= to!string(grGetInstructionSignedValue(opcode));

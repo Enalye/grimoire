@@ -143,13 +143,13 @@ private void _reverse(GrCall call) {
 private void _insert(GrCall call) {
     GrString str = call.getString(0);
     GrInt index = call.getInt(1);
-    GrStr value = call.getStringData(2);
+    GrStringValue value = call.getStringData(2);
     str.insert(index, value);
 }
 
 private void _indexOf(GrCall call) {
     GrString str = call.getString(0);
-    GrStr value = call.getStringData(1);
+    GrStringValue value = call.getStringData(1);
     const GrInt result = cast(GrInt) str.indexOf(value);
     if (result < 0) {
         call.setNull();
@@ -160,7 +160,7 @@ private void _indexOf(GrCall call) {
 
 private void _lastIndexOf(GrCall call) {
     GrString str = call.getString(0);
-    GrStr value = call.getStringData(1);
+    GrStringValue value = call.getStringData(1);
     const GrInt result = cast(GrInt) str.lastIndexOf(value);
     if (result < 0) {
         call.setNull();
@@ -171,12 +171,12 @@ private void _lastIndexOf(GrCall call) {
 
 private void _contains(GrCall call) {
     GrString str = call.getString(0);
-    GrStr value = call.getStringData(1);
+    GrStringValue value = call.getStringData(1);
     call.setBool(str.contains(value));
 }
 
 private final class StringIterator {
-    GrStr value;
+    GrStringValue value;
     size_t index;
 }
 
@@ -192,6 +192,6 @@ private void _next(GrCall call) {
         call.setNull();
         return;
     }
-    call.setString(to!GrStr(iter.value[iter.index]));
+    call.setString(to!GrStringValue(iter.value[iter.index]));
     iter.index++;
 }

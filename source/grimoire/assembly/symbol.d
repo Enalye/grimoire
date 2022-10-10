@@ -11,7 +11,7 @@ import std.conv : to;
 alias GrBool = bool;
 alias GrInt = int;
 alias GrReal = double;
-alias GrStr = string;
+alias GrStringValue = string;
 alias GrPointer = void*;
 
 /// Stack trace

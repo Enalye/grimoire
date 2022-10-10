@@ -14,12 +14,12 @@ import grimoire.stdlib.pair;
 /// HashMap
 private final class HashMap {
     /// Payload
-    GrValue[GrStr] data;
+    GrValue[GrStringValue] data;
 
     /// Ctor
-    this(GrValue[] keys, GrValue[] values) {
+    this(GrString[] keys, GrValue[] values) {
         for (size_t i; i < keys.length; ++i) {
-            data[keys[i].getStringData()] = values[i];
+            data[keys[i]] = values[i];
         }
     }
     /// Ditto
@@ -33,7 +33,7 @@ private final class HashMap {
 
 /// Iterator
 private final class HashMapIterator {
-    Tuple!(GrStr, GrValue)[] pairs;
+    Tuple!(GrStringValue, GrValue)[] pairs;
     size_t index;
 }
 
@@ -44,8 +44,8 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
     GrType pairType = grGetForeignType("pair", [grString, grAny("T")]);
 
     library.addConstructor(&_new, mapType, []);
-    library.addConstructor(&_newByArray, mapType, [
-            grArray(grString), grArray(grAny("T"))
+    library.addConstructor(&_newByList, mapType, [
+            grList(grString), grList(grAny("T"))
         ]);
     library.addConstructor(&_newByPairs, mapType, [pairType]);
     library.addFunction(&_copy, "copy", [mapType], [mapType]);
@@ -61,8 +61,8 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
         ], [grAny("T")]);
     library.addFunction(&_has, "has", [grPure(mapType), grString], [grBool]);
     library.addFunction(&_remove, "remove", [mapType, grString]);
-    library.addFunction(&_byKeys, "keys", [mapType], [grArray(grString)]);
-    library.addFunction(&_byValues, "values", [mapType], [grArray(grAny("T"))]);
+    library.addFunction(&_byKeys, "keys", [mapType], [grList(grString)]);
+    library.addFunction(&_byValues, "values", [mapType], [grList(grAny("T"))]);
     library.addFunction(&_each, "each", [mapType], [iteratorType]);
     library.addFunction(&_next, "next", [iteratorType], [grOptional(pairType)]);
 
@@ -84,16 +84,16 @@ private void _new(GrCall call) {
     call.setForeign(hashmap);
 }
 
-private void _newByArray(GrCall call) {
-    HashMap hashmap = new HashMap(call.getArray(0).data, call.getArray(1).data);
+private void _newByList(GrCall call) {
+    HashMap hashmap = new HashMap(call.getList(0).getStrings(), call.getList(1).getValues());
     call.setForeign(hashmap);
 }
 
 private void _newByPairs(GrCall call) {
     HashMap hashmap = new HashMap;
-    GrPair[] pairs = call.getArray(0).getForeigns!GrPair();
+    GrPair[] pairs = call.getList(0).getForeigns!GrPair();
     for (size_t i; i < pairs.length; ++i) {
-        hashmap.data[pairs[i].key.getStringData()] = pairs[i].value;
+        hashmap.data[pairs[i].key.getString()] = pairs[i].value;
     }
     call.setForeign(hashmap);
 }
@@ -153,17 +153,17 @@ private void _remove(GrCall call) {
 private void _byKeys(GrCall call) {
     HashMap hashmap = call.getForeign!(HashMap)(0);
     GrValue[] ary;
-    foreach (GrStr key; hashmap.data.keys) {
+    foreach (GrStringValue key; hashmap.data.keys) {
         ary ~= GrValue(key);
     }
-    call.setArray(ary);
+    call.setList(ary);
 }
 
 private void _byValues(GrCall call) {
     HashMap hashmap = call.getForeign!(HashMap)(0);
     GrValue[] ary;
     ary = hashmap.data.values;
-    call.setArray(ary);
+    call.setList(ary);
 }
 
 private void _each(GrCall call) {
@@ -192,7 +192,7 @@ private void _next(GrCall call) {
 private void _print_(string T)(GrCall call) {
     HashMap hashmap = call.getForeign!HashMap(0);
 
-    GrStr result = "{";
+    GrStringValue result = "{";
     bool isFirst = true;
     foreach (key, value; hashmap.data) {
         if (isFirst) {
@@ -209,7 +209,7 @@ private void _print_(string T)(GrCall call) {
         else static if (T == "real")
             result ~= to!string(value.getReal());
         else static if (T == "string")
-            result ~= "\"" ~ value.getStringData() ~ "\"";
+            result ~= "\"" ~ value.getString() ~ "\"";
         else
             static assert(false);
     }

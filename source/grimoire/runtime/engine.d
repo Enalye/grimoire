@@ -18,7 +18,7 @@ import grimoire.runtime.task;
 import grimoire.runtime.value;
 import grimoire.runtime.object;
 import grimoire.runtime.string;
-import grimoire.runtime.array;
+import grimoire.runtime.list;
 import grimoire.runtime.channel;
 import grimoire.runtime.call;
 
@@ -36,19 +36,19 @@ class GrEngine {
         /// Global stack.
         GrValue[] _globalStackIn, _globalStackOut;
 
-        /// Task array.
+        /// Task list.
         GrTask[] _tasks, _createdTasks;
 
         /// Global panic state.
         /// It means that the throwing task didn't handle the exception.
         bool _isPanicking;
         /// Unhandled panic message.
-        GrStr _panicMessage;
+        GrStringValue _panicMessage;
         /// Stack traces are generated each time an error is raised.
         GrStackTrace[] _stackTraces;
 
         /// Extra type compiler information.
-        GrStr _meta;
+        GrStringValue _meta;
 
         /// Primitives.
         GrCallback[] _callbacks;
@@ -84,16 +84,16 @@ class GrEngine {
         }
 
         /// The unhandled error message.
-        GrStr panicMessage() const {
+        GrStringValue panicMessage() const {
             return _panicMessage;
         }
 
         /// Extra type compiler information.
-        GrStr meta() const {
+        GrStringValue meta() const {
             return _meta;
         }
         /// Ditto
-        GrStr meta(GrStr meta_) {
+        GrStringValue meta(GrStringValue meta_) {
             return _meta = meta_;
         }
     }
@@ -304,7 +304,7 @@ class GrEngine {
 	If nothing catches the error inside the task, the VM enters in a panic state. \
 	Every tasks will then execute their `defer` statements and be killed.
 	*/
-    void raise(GrTask task, GrStr message) {
+    void raise(GrTask task, GrStringValue message) {
         if (task.isPanicking)
             return;
         //Error message.
@@ -339,34 +339,34 @@ class GrEngine {
     alias getBoolVariable = getVariable!bool;
     alias getIntVariable = getVariable!GrInt;
     alias getRealVariable = getVariable!GrReal;
-    alias getPtrVariable = getVariable!GrPointer;
+    alias getPointerVariable = getVariable!GrPointer;
 
-    GrObject getObjectVariable(string name) {
-        return cast(GrObject) getVariable!GrPointer(name);
+    pragma(inline) T getEnumVariable(T)(string name) const {
+        return cast(T) getVariable!GrInt(name);
     }
 
-    GrStr getStringVariable(string name) {
-        return (cast(GrString) getVariable!GrPointer(name)).data;
+    pragma(inline) GrString getStringVariable(string name) const {
+        return cast(GrString) getVariable!GrPointer(name);
     }
 
-    GrArray getArrayVariable(string name) {
-        return cast(GrArray) getVariable!GrPointer(name);
+    pragma(inline) GrList getListVariable(string name) const {
+        return cast(GrList) getVariable!GrPointer(name);
     }
 
-    GrChannel getChannelVariable(string name) {
+    pragma(inline) GrChannel getChannelVariable(string name) const {
         return cast(GrChannel) getVariable!GrPointer(name);
     }
 
-    T getEnumVariable(T)(string name) {
-        return cast(T) getVariable!int(name);
+    pragma(inline) GrObject getObjectVariable(string name) const {
+        return cast(GrObject) getVariable!GrPointer(name);
     }
 
-    T getForeignVariable(T)(string name) {
+    pragma(inline) T getForeignVariable(T)(string name) const {
         // We cast to object first to avoid a crash when casting to a parent class
         return cast(T) cast(Object) getVariable!GrPointer(name);
     }
 
-    private T getVariable(T)(string name) {
+    pragma(inline) private T getVariable(T)(string name) const {
         const auto variable = name in _bytecode.variables;
         if (variable is null)
             throw new Exception("no global variable `" ~ name ~ "` defined");
@@ -380,70 +380,54 @@ class GrEngine {
             return _globals[variable.index]._rvalue;
         }
         else static if (is(T == GrPointer)) {
-            return _globals[variable.index]._ovalue;
+            return cast(GrPointer) _globals[variable.index]._ovalue;
         }
     }
 
     alias setBoolVariable = setVariable!GrBool;
     alias setIntVariable = setVariable!GrInt;
     alias setRealVariable = setVariable!GrReal;
-    alias setPtrVariable = setVariable!GrPointer;
+    alias setPointerVariable = setVariable!GrPointer;
 
-    void setObjectVariable(string name, GrObject value) {
-        setVariable!GrPointer(name, cast(GrPointer) value);
+    pragma(inline) void setEnumVariable(T)(string name, T value) {
+        setVariable!GrInt(name, cast(GrInt) value);
     }
 
-    void setStringVariable(string name, GrStr value) {
+    pragma(inline) void setStringVariable(string name, GrStringValue value) {
         setVariable!GrPointer(name, cast(GrPointer) new GrString(value));
     }
 
-    void setArrayVariable(string name, GrArray value) {
+    pragma(inline) void setListVariable(string name, GrList value) {
         setVariable!GrPointer(name, cast(GrPointer) value);
     }
 
-    void setArrayVariable(string name, GrValue[] value) {
-        setVariable!GrPointer(name, cast(GrPointer) new GrArray(value));
+    pragma(inline) void setListVariable(string name, GrValue[] value) {
+        setVariable!GrPointer(name, cast(GrPointer) new GrList(value));
     }
 
-    void setChannelVariable(string name, GrChannel value) {
+    pragma(inline) void setChannelVariable(string name, GrChannel value) {
         setVariable!GrPointer(name, cast(GrPointer) value);
     }
 
-    void setEnumVariable(T)(string name, T value) {
-        setVariable!int(name, cast(int) value);
-    }
-
-    void setForeignVariable(T)(string name, T value) {
+    pragma(inline) void setObjectVariable(string name, GrObject value) {
         setVariable!GrPointer(name, cast(GrPointer) value);
     }
 
-    private void setVariable(T)(string name, T value) {
+    pragma(inline) void setForeignVariable(T)(string name, T value) {
+        setVariable!GrPointer(name, cast(GrPointer) value);
+    }
+
+    pragma(inline) private void setVariable(T)(string name, T value) {
         const auto variable = name in _bytecode.variables;
         if (variable is null)
             throw new Exception("no global variable `" ~ name ~ "` defined");
-        static if (is(T == GrInt)) {
-            if ((variable.typeMask & 0x1) == 0)
-                throw new Exception("variable `" ~ name ~ "` is not an int");
-            _globals[variable.index]._ivalue = value;
-        }
-        else static if (is(T == GrBool)) {
-            if ((variable.typeMask & 0x1) == 0)
-                throw new Exception("variable `" ~ name ~ "` is not an int");
+        static if (is(T == GrInt) || is(T == GrBool)) {
             _globals[variable.index]._ivalue = value;
         }
         else static if (is(T == GrReal)) {
-            if ((variable.typeMask & 0x2) == 0)
-                throw new Exception("variable `" ~ name ~ "` is not a real");
             _globals[variable.index]._rvalue = value;
         }
-        /*else static if (is(T == GrString)) {
-            if ((variable.typeMask & 0x4) == 0)
-                throw new Exception("variable `" ~ name ~ "` is not a string");
-            _globals[variable.index].svalue = value;
-        }*/
         else static if (is(T == GrPointer)) {
-            if ((variable.typeMask & 0x8) == 0)
-                throw new Exception("variable `" ~ name ~ "` is not an object");
             _globals[variable.index]._ovalue = value;
         }
     }
@@ -1291,100 +1275,97 @@ class GrEngine {
                         currentTask.pc++;
                     currentTask.stackPos--;
                     break;
-                case array:
-                    const GrInt arraySize = grGetInstructionUnsignedValue(opcode);
-                    GrArray array = new GrArray(arraySize);
-                    for (GrInt i = arraySize - 1; i >= 0; i--)
-                        array.push(currentTask.stack[currentTask.stackPos - i]);
-                    currentTask.stackPos -= arraySize - 1;
+                case list:
+                    const GrInt listSize = grGetInstructionUnsignedValue(opcode);
+                    GrList list = new GrList(listSize);
+                    for (GrInt i = listSize - 1; i >= 0; i--)
+                        list.push(currentTask.stack[currentTask.stackPos - i]);
+                    currentTask.stackPos -= listSize - 1;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) array;
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) list;
                     currentTask.pc++;
                     break;
-                case index_array:
-                    GrArray array = cast(GrArray) currentTask
-                        .stack[currentTask.stackPos - 1]._ovalue;
+                case index_list:
+                    GrList list = cast(GrList) currentTask.stack[currentTask.stackPos - 1]._ovalue;
                     GrInt idx = currentTask.stack[currentTask.stackPos]._ivalue;
                     if (idx < 0) {
-                        idx = array.size + idx;
+                        idx = list.size + idx;
                     }
-                    if (idx >= array.size) {
+                    if (idx >= list.size) {
                         raise(currentTask, "IndexError");
                         break;
                     }
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ovalue = &array._data[idx];
+                    currentTask.stack[currentTask.stackPos]._ovalue = &list._data[idx];
                     currentTask.pc++;
                     break;
-                case index2_array:
-                    GrArray array = cast(GrArray) currentTask
-                        .stack[currentTask.stackPos - 1]._ovalue;
+                case index2_list:
+                    GrList list = cast(GrList) currentTask.stack[currentTask.stackPos - 1]._ovalue;
                     GrInt idx = currentTask.stack[currentTask.stackPos]._ivalue;
                     if (idx < 0) {
-                        idx = array.size + idx;
+                        idx = list.size + idx;
                     }
-                    if (idx >= array.size) {
+                    if (idx >= list.size) {
                         raise(currentTask, "IndexError");
                         break;
                     }
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos] = array[idx];
+                    currentTask.stack[currentTask.stackPos] = list[idx];
                     currentTask.pc++;
                     break;
-                case index3_array:
-                    GrArray array = cast(GrArray) currentTask
-                        .stack[currentTask.stackPos - 1]._ovalue;
+                case index3_list:
+                    GrList list = cast(GrList) currentTask.stack[currentTask.stackPos - 1]._ovalue;
                     GrInt idx = currentTask.stack[currentTask.stackPos]._ivalue;
                     if (idx < 0) {
-                        idx = array.size + idx;
+                        idx = list.size + idx;
                     }
-                    if (idx >= array.size) {
+                    if (idx >= list.size) {
                         raise(currentTask, "IndexError");
                         break;
                     }
-                    currentTask.stack[currentTask.stackPos - 1]._ovalue = &array._data[idx];
-                    currentTask.stack[currentTask.stackPos] = array[idx];
+                    currentTask.stack[currentTask.stackPos - 1]._ovalue = &list._data[idx];
+                    currentTask.stack[currentTask.stackPos] = list[idx];
                     currentTask.pc++;
                     break;
-                case length_array:
+                case length_list:
                     currentTask.stack[currentTask.stackPos]._ivalue = (cast(
-                            GrArray) currentTask.stack[currentTask.stackPos]._ovalue).size;
+                            GrList) currentTask.stack[currentTask.stackPos]._ovalue).size;
                     currentTask.pc++;
                     break;
-                case concatenate_array:
+                case concatenate_list:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) new GrArray(
-                        (cast(GrArray) currentTask.stack[currentTask.stackPos]._ovalue).data ~ (
-                            cast(GrArray) currentTask.stack[currentTask.stackPos + 1]._ovalue).data);
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) new GrList(
+                        (cast(GrList) currentTask.stack[currentTask.stackPos]._ovalue).getValues() ~ (
+                            cast(GrList) currentTask.stack[currentTask.stackPos + 1]._ovalue).getValues());
                     currentTask.pc++;
                     break;
-                case append_array:
+                case append_list:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) new GrArray(
-                        (cast(GrArray) currentTask.stack[currentTask.stackPos]._ovalue).data ~
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) new GrList(
+                        (cast(GrList) currentTask.stack[currentTask.stackPos]._ovalue).getValues() ~
                             currentTask.stack[currentTask.stackPos + 1]);
                     currentTask.pc++;
                     break;
-                case prepend_array:
+                case prepend_list:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) new GrArray(
+                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) new GrList(
                         currentTask.stack[currentTask.stackPos] ~ (cast(
-                            GrArray) currentTask.stack[currentTask.stackPos + 1]._ovalue).data);
+                            GrList) currentTask.stack[currentTask.stackPos + 1]._ovalue).getValues());
                     currentTask.pc++;
                     break;
-                case equal_array:
+                case equal_list:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue = (cast(
-                            GrArray) currentTask.stack[currentTask.stackPos]._ovalue).data == (
-                        cast(GrArray) currentTask.stack[currentTask.stackPos + 1]._ovalue).data;
+                            GrList) currentTask.stack[currentTask.stackPos]._ovalue).getValues() == (
+                        cast(GrList) currentTask.stack[currentTask.stackPos + 1]._ovalue).getValues();
                     currentTask.pc++;
                     break;
-                case notEqual_array:
+                case notEqual_list:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue = (cast(
-                            GrArray) currentTask.stack[currentTask.stackPos]._ovalue).data != (
-                        cast(GrArray) currentTask.stack[currentTask.stackPos + 1]._ovalue).data;
+                            GrList) currentTask.stack[currentTask.stackPos]._ovalue).getValues() != (
+                        cast(GrList) currentTask.stack[currentTask.stackPos + 1]._ovalue).getValues();
                     currentTask.pc++;
                     break;
                 case debugProfileBegin:

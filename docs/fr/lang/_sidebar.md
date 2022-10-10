@@ -17,7 +17,7 @@
   - [Opérateurs](/fr/lang/operators)
 
 - Types composés:
-  - [Listes](/fr/lang/array)
+  - [Listes](/fr/lang/list)
   - [Énumérations](/fr/lang/enum)
   - [Classes](/fr/lang/class)
   - [Canaux](/fr/lang/channel)

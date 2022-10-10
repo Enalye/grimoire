@@ -31,7 +31,7 @@ function<T> operator<=>(T a, T b)(int) {
 Constraints are additional restrictions imposed on a particular type.
 To restraint a generic type, you need to declare a `where` clause:
 ```grimoire
-function<T> add(array(T) ary, T val)
+function<T> add(list(T) ary, T val)
 where T: Numeric {
     loop(i, ary:size) {
         ary[i] += val;

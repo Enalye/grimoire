@@ -31,7 +31,7 @@ function<T> operator<=>(T a, T b)(int) {
 Les contraintes sont des restrictions additionnelles imposées sur un type particulier.
 Pour restraindre un type générique, on doit déclarer une clause `where`:
 ```grimoire
-function<T> additionner(array(T) ary, T val)
+function<T> additionner(list(T) ary, T val)
 where T: Numeric {
     loop(i, ary:size) {
         ary[i] += val;

@@ -85,12 +85,12 @@ Grimoire fourni un moyen pour déclarer une primitive avec des types générique
 Par exemple ceci:
 ```d
 library.addFunction(&_push, "push",
-    [grArray(grAny("T")), grAny("T")],
+    [grList(grAny("T")), grAny("T")],
 	[grAny("T")]);
 ```
 Est équivalent à:
 ```grimoire
-function<T> push(array(T) array, T value) (T) {}
+function<T> push(list(T) list, T value) (T) {}
 ```
 
 Pour restreindre quels types génériques sont valides, des contraintes peuvent être ajoutés.

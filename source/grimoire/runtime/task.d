@@ -9,7 +9,8 @@ import grimoire.assembly;
 
 import grimoire.runtime.engine;
 import grimoire.runtime.value;
-import grimoire.runtime.array;
+import grimoire.runtime.string;
+import grimoire.runtime.list;
 import grimoire.runtime.channel;
 import grimoire.runtime.object;
 
@@ -147,61 +148,46 @@ final class GrTask {
         locals.length = localsLimit;
     }
 
-    alias setBool = setValue!GrBool;
-    alias setInt = setValue!GrInt;
-    alias setReal = setValue!GrReal;
-    alias setPtr = setValue!GrPointer;
+    alias setValue = setParameter!GrValue;
+    alias setBool = setParameter!GrBool;
+    alias setInt = setParameter!GrInt;
+    alias setReal = setParameter!GrReal;
+    alias setPointer = setParameter!GrPointer;
 
-    void setInt32(int value) {
-        setValue!GrInt(cast(GrInt) value);
+    pragma(inline) void setObject(GrObject value) {
+        setParameter!GrPointer(cast(GrPointer) value);
     }
 
-    void setInt64(long value) {
-        setValue!GrInt(cast(GrInt) value);
+    pragma(inline) void setString(GrString value) {
+        setParameter!GrPointer(cast(GrPointer) value);
     }
 
-    void setReal32(real value) {
-        setValue!GrReal(cast(GrReal) value);
+    pragma(inline) void setString(GrStringValue value) {
+        setParameter!GrPointer(cast(GrPointer) new GrString(value));
     }
 
-    void setReal64(double value) {
-        setValue!GrReal(cast(GrReal) value);
+    pragma(inline) void setList(GrList value) {
+        setParameter!GrPointer(cast(GrPointer) value);
     }
 
-    void setObject(GrObject value) {
-        setValue!GrPointer(cast(GrPointer) value);
+    pragma(inline) void setList(GrValue[] value) {
+        setParameter!GrPointer(cast(GrPointer) new GrList(value));
     }
 
-    void setString(GrStr value) {
-        setValue!GrPointer(cast(GrPointer) value);
+    pragma(inline) void setChannel(GrChannel value) {
+        setParameter!GrPointer(cast(GrPointer) value);
     }
 
-    void setArray(GrArray value) {
-        setValue!GrPointer(cast(GrPointer) value);
+    pragma(inline) void setEnum(T)(T value) {
+        setParameter!GrInt(cast(GrInt) value);
     }
 
-    void setArray(GrValue[] value) {
-        setValue!GrPointer(cast(GrPointer) new GrArray(value));
+    pragma(inline) void setForeign(T)(T value) {
+        setParameter!GrPointer(cast(GrPointer) value);
     }
 
-    void setChannel(GrChannel value) {
-        setValue!GrPointer(cast(GrPointer) value);
-    }
-
-    void setEnum(T)(T value) {
-        setValue!GrInt(cast(GrInt) value);
-    }
-
-    void setForeign(T)(T value) {
-        setValue!GrPointer(cast(GrPointer) value);
-    }
-
-    private void setValue(T)(T value) {
-        static if (is(T == GrInt)) {
-            stackPos++;
-            stack[stackPos].setInt(value);
-        }
-        else static if (is(T == GrBool)) {
+    pragma(inline) private void setParameter(T)(T value) {
+        static if (is(T == GrInt) || is(T == GrBool)) {
             stackPos++;
             stack[stackPos].setInt(value);
         }
@@ -211,7 +197,7 @@ final class GrTask {
         }
         else static if (is(T == GrPointer)) {
             stackPos++;
-            stack[stackPos].setPtr(value);
+            stack[stackPos].setPointer(value);
         }
     }
 

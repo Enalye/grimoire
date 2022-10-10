@@ -14,7 +14,7 @@ private final class Dynamic {
         GrBool bvalue;
         GrInt ivalue;
         GrReal rvalue;
-        GrStr svalue;
+        GrStringValue svalue;
         GrPointer ovalue;
     }
 
@@ -51,7 +51,7 @@ private final class Dynamic {
         typeInfo = typeInfo_;
     }
 
-    this(GrStr value_, string typeInfo_) {
+    this(GrStringValue value_, string typeInfo_) {
         type = Type.string_;
         svalue = value_;
         typeInfo = typeInfo_;
@@ -73,7 +73,7 @@ package(grimoire.stdlib) void grLoadStdLibDynamic(GrLibrary library) {
     library.addCast(&_from_s, grString, dynamicType);
 
     /*library.addCast(&_from_o, grDynamic("T", (type, data) {
-            return type.base == GrType.Base.array || type.base == GrType.Base.class_
+            return type.base == GrType.Base.list || type.base == GrType.Base.class_
             || type.base == GrType.Base.foreign || type.base == GrType.Base.channel;
         }), dynamicType);
 
@@ -134,7 +134,7 @@ private void _from_s(GrCall call) {
 }
 
 private void _from_o(GrCall call) {
-    call.setForeign(new Dynamic(call.getPtr(0), call.getInType(0)));
+    call.setForeign(new Dynamic(call.getPointer(0), call.getInType(0)));
 }
 
 private void _from_i2(GrCall call) {
@@ -240,7 +240,7 @@ private void _to_o(GrCall call) {
     }
     switch (dynamic.type) with (Dynamic.Type) {
     case ptr_:
-        call.setPtr(dynamic.ovalue);
+        call.setPointer(dynamic.ovalue);
         return;
     default:
         call.raise("ConvError");

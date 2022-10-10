@@ -3,21 +3,21 @@
 Les listes sont des collections d’un seul type de valeur.
 
 ## Créer une liste
-Le type d’une liste est `array()` avec le type de contenu à l’intérieur des parenthèses:
+Le type d’une liste est `list()` avec le type de contenu à l’intérieur des parenthèses:
 ```grimoire
-array(int) myCollection = [1, 2, 3];
+list(int) myCollection = [1, 2, 3];
 ```
 
 Par défaut, une nouvelle liste partage le type de son premier élément.
-Ainsi, `[1, 2, 3]` sera de type `array(int)`.
+Ainsi, `[1, 2, 3]` sera de type `list(int)`.
 
-On peut expliciter en précédent la liste du type attendu: `array(int)[1, 2, 3]`
+On peut expliciter en précédent la liste du type attendu: `list(int)[1, 2, 3]`
 
-Si la liste est vide `[]`, expliciter le type devient **obligatoire** ou une erreur de compilation surviendra:  `array(string)[]` ou `array(string)`.
+Si la liste est vide `[]`, expliciter le type devient **obligatoire** ou une erreur de compilation surviendra:  `list(string)[]` ou `list(string)`.
 
 Pour initialiser une liste avec une taille initiale, il faut suivre le type de la liste par sa taille.
-Par exemple, une liste de 5 entiers devient: `array(int, 5)` qui est équivalent à `[0, 0, 0, 0, 0]`
-Autre exemple: `array(int, 5)[7, 8, 9]` vaut `[7, 8, 9, 0, 0]`.
+Par exemple, une liste de 5 entiers devient: `list(int, 5)` qui est équivalent à `[0, 0, 0, 0, 0]`
+Autre exemple: `list(int, 5)[7, 8, 9]` vaut `[7, 8, 9, 0, 0]`.
 
 ## Indexer une liste
 Pour accéder à une élément de la liste, on écrit l’index (en comptant à partir de 0) entre crochets:

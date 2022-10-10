@@ -92,16 +92,16 @@ The predicate takes 2 parameters:
 - A `GrType` of the provided value,
 - The context of the checker containing the defined generic types.
 
-Exemple of a primitive that can define a `push` function for every type of array that uses integers.
-It takes an array and a value that matches the type held by the array, and returns the array itself.
+Exemple of a primitive that can define a `push` function for every type of list that uses integers.
+It takes an list and a value that matches the type held by the list, and returns the list itself.
 ```d
 library.addFunction(&_push, "push", [
     grAny("A",   // We declare a generic type called "A"
 	(type, data) {
-		if (type.baseType != GrType.Base.array) // This type must be an array
+		if (type.baseType != GrType.Base.list) // This type must be an list
 			return false;
 		const GrType subType = grUnmangle(type.mangledType); // The subType is mangled
-		data.set("T", subType);  // We define the other generic type (called "T") with the subtype of the array
+		data.set("T", subType);  // We define the other generic type (called "T") with the subtype of the list
 		return grIsKindOfInt(subType.baseType); // We check is the baseType is good for us.
 	}), grAny("T")], // "T" is already defined above, so the types must match.
 	[grAny("A")]   // "A" is already defined above, it must be of the same type. Putting any predicate here is useless.

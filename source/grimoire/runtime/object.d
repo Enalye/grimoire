@@ -9,7 +9,7 @@ import grimoire.compiler, grimoire.assembly;
 import grimoire.runtime.channel;
 import grimoire.runtime.value;
 import grimoire.runtime.string;
-import grimoire.runtime.array;
+import grimoire.runtime.list;
 
 /**
 A single field of an object. \
@@ -50,58 +50,34 @@ final class GrObject {
     alias getBool = getField!GrBool;
     alias getInt = getField!GrInt;
     alias getReal = getField!GrReal;
-    alias getPtr = getField!GrPointer;
+    alias getPointer = getField!GrPointer;
 
-    pragma(inline) int getInt32(const string fieldName) {
-        return cast(int) getField!GrInt(fieldName);
-    }
-
-    pragma(inline) long getInt64(const string fieldName) {
-        return cast(long) getField!GrInt(fieldName);
-    }
-
-    pragma(inline) float getReal32(const string fieldName) {
-        return cast(float) getField!GrReal(fieldName);
-    }
-
-    pragma(inline) double getReal64(const string fieldName) {
-        return cast(double) getField!GrReal(fieldName);
-    }
-
-    pragma(inline) GrObject getObject(const string fieldName) {
-        return cast(GrObject) getField!GrPointer(fieldName);
-    }
-
-    pragma(inline) GrString getString(const string fieldName) {
-        return cast(GrString) getField!GrPointer(fieldName);
-    }
-
-    pragma(inline) GrStr getStringData(const string fieldName) {
-        return (cast(GrString) getField!GrPointer(fieldName)).data;
-    }
-
-    pragma(inline) GrArray getArray(const string fieldName) {
-        return cast(GrArray) getField!GrPointer(fieldName);
-    }
-
-    pragma(inline) GrValue[] getArrayData(const string fieldName) {
-        return (cast(GrArray) getField!GrPointer(fieldName)).data;
-    }
-
-    pragma(inline) GrChannel getChannel(const string fieldName) {
-        return cast(GrChannel) getField!GrPointer(fieldName);
-    }
-
-    pragma(inline) T getEnum(T)(const string fieldName) {
+    pragma(inline) T getEnum(T)(const string fieldName) const {
         return cast(T) getField!GrInt(fieldName);
     }
 
-    pragma(inline) T getForeign(T)(const string fieldName) {
+    pragma(inline) GrString getString(const string fieldName) const {
+        return cast(GrString) getField!GrPointer(fieldName);
+    }
+
+    pragma(inline) GrList getList(const string fieldName) const {
+        return cast(GrList) getField!GrPointer(fieldName);
+    }
+
+    pragma(inline) GrChannel getChannel(const string fieldName) const {
+        return cast(GrChannel) getField!GrPointer(fieldName);
+    }
+
+    pragma(inline) GrObject getObject(const string fieldName) const {
+        return cast(GrObject) getField!GrPointer(fieldName);
+    }
+
+    pragma(inline) T getForeign(T)(const string fieldName) const {
         // We cast to object first to avoid a crash when casting to a parent class
         return cast(T) cast(Object) getField!GrPointer(fieldName);
     }
 
-    pragma(inline) private T getField(T)(const string fieldName) {
+    pragma(inline) private T getField(T)(const string fieldName) const {
         for (size_t index; index < _fields.length; ++index) {
             if (_fields[index].name == fieldName) {
                 static if (is(T == GrValue))
@@ -113,7 +89,7 @@ final class GrObject {
                 else static if (is(T == GrReal))
                     return _fields[index].value.getReal();
                 else static if (is(T == GrPointer))
-                    return _fields[index].value.getPtr();
+                    return _fields[index].value.getPointer();
                 else
                     static assert(false, "invalid field type `" ~ T.stringof ~ "`");
             }
@@ -125,46 +101,30 @@ final class GrObject {
     alias setBool = setField!GrBool;
     alias setInt = setField!GrInt;
     alias setReal = setField!GrReal;
-    alias setPtr = setField!GrPointer;
+    alias setPointer = setField!GrPointer;
 
-    pragma(inline) void setInt32(const string fieldName, int value) {
+    pragma(inline) void setEnum(T)(const string fieldName, T value) {
         setField!GrInt(fieldName, cast(GrInt) value);
     }
 
-    pragma(inline) void setInt64(const string fieldName, long value) {
-        setField!GrInt(fieldName, cast(GrInt) value);
-    }
-
-    pragma(inline) void setReal32(const string fieldName, float value) {
-        setField!GrReal(fieldName, cast(GrReal) value);
-    }
-
-    pragma(inline) void setReal64(const string fieldName, double value) {
-        setField!GrReal(fieldName, cast(GrReal) value);
-    }
-
-    pragma(inline) void setObject(const string fieldName, GrObject value) {
-        setField!GrPointer(fieldName, cast(GrPointer) value);
-    }
-
-    pragma(inline) void setString(const string fieldName, GrStr value) {
+    pragma(inline) void setString(const string fieldName, GrStringValue value) {
         setField!GrPointer(fieldName, cast(GrPointer) new GrString(value));
     }
 
-    pragma(inline) void setArray(const string fieldName, GrArray value) {
+    pragma(inline) void setList(const string fieldName, GrList value) {
         setField!GrPointer(fieldName, cast(GrPointer) value);
     }
 
-    pragma(inline) void setArray(const string fieldName, GrValue[] value) {
-        setField!GrPointer(fieldName, cast(GrPointer) new GrArray(value));
+    pragma(inline) void setList(const string fieldName, GrValue[] value) {
+        setField!GrPointer(fieldName, cast(GrPointer) new GrList(value));
     }
 
     pragma(inline) void setChannel(const string fieldName, GrChannel value) {
         setField!GrPointer(fieldName, cast(GrPointer) value);
     }
 
-    pragma(inline) void setEnum(T)(const string fieldName, T value) {
-        setField!GrInt(fieldName, cast(GrInt) value);
+    pragma(inline) void setObject(const string fieldName, GrObject value) {
+        setField!GrPointer(fieldName, cast(GrPointer) value);
     }
 
     pragma(inline) void setForeign(T)(const string fieldName, T value) {

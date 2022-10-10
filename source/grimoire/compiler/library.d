@@ -77,7 +77,7 @@ class GrLibrary {
         case channel:
         case function_:
         case task:
-        case array:
+        case list:
         case foreign:
         case void_:
         case null_:
