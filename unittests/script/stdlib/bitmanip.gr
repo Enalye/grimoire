@@ -1,0 +1,10 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
+
+event operations() {
+    assert(1 << 2 == 4);
+    assert(15 >> 1 == 7);
+}

@@ -76,6 +76,7 @@ enum GrOpcode {
     optionalTry,
     optionalOr,
     optionalCall,
+    optionalCall2,
 
     and_int,
     or_int,

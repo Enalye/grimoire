@@ -19,12 +19,13 @@ private string[] instructions = [
     "fload2", "const.i", "const.f", "const.b", "const.s", "meta", "null",
     "gpush", "gpop", "eq.i", "eq.f", "eq.s", "neq.i", "neq.f", "neq.s", "geq.i",
     "geq.f", "leq.i", "leq.f", "gt.i", "gt.f", "lt.i", "lt.f", "check_null",
-    "opt_try", "opt_or", "opt_call", "and.i", "or.i", "not.i", "cat.s", "add.i",
-    "add.f", "sub.i", "sub.f", "mul.i", "mul.f", "div.i", "div.f", "rem.i",
-    "rem.f", "neg.i", "neg.f", "inc.i", "inc.f", "dec.i", "dec.f", "copy",
-    "swap", "setup_it", "local", "call", "acall", "pcall", "ret", "unwind",
-    "defer", "jmp", "jmp_eq", "jmp_neq", "list", "len", "idx", "idx2", "idx3",
-    "cat.n", "append", "prepend", "eq.n", "neq.n", "dbg_prfbegin", "dbg_prfend"
+    "opt_try", "opt_or", "opt_call", "opt_call2", "and.i", "or.i", "not.i",
+    "cat.s", "add.i", "add.f", "sub.i", "sub.f", "mul.i", "mul.f", "div.i",
+    "div.f", "rem.i", "rem.f", "neg.i", "neg.f", "inc.i", "inc.f", "dec.i",
+    "dec.f", "copy", "swap", "setup_it", "local", "call", "acall", "pcall",
+    "ret", "unwind", "defer", "jmp", "jmp_eq", "jmp_neq", "list", "len", "idx",
+    "idx2", "idx3", "cat.n", "append", "prepend", "eq.n", "neq.n", "dbg_prfbegin",
+    "dbg_prfend"
 ];
 
 /// Dump the bytecode's instruction list in a pretty format.
@@ -65,7 +66,8 @@ string grDump(const GrBytecode bytecode) {
         else if (op >= GrOpcode.jump && op <= GrOpcode.jumpNotEqual)
             line ~= to!string(i + grGetInstructionSignedValue(opcode));
         else if (op == GrOpcode.defer || op == GrOpcode.try_ || op == GrOpcode.catch_ ||
-            op == GrOpcode.tryChannel || op == GrOpcode.optionalCall)
+            op == GrOpcode.tryChannel || op == GrOpcode.optionalCall || op == GrOpcode
+            .optionalCall2)
             line ~= to!string(i + grGetInstructionSignedValue(opcode));
 
         i++;

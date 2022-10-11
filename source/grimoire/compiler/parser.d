@@ -2315,8 +2315,7 @@ final class GrParser {
                 string[] temp;
                 auto signature = parseInSignature(temp, true, templateVariables);
                 if (signature.length > 1) {
-                    logError(getError(Error.listCanOnlyContainOneTypeOfVal),
-                        getError(Error.conflictingListSignature),
+                    logError(getError(Error.listCanOnlyContainOneTypeOfVal), getError(Error.conflictingListSignature),
                         format(getError(Error.tryUsingXInstead),
                             getPrettyType(grList(signature[0]))), -1);
                 }
@@ -3977,7 +3976,7 @@ final class GrParser {
             logError(getError(Error.varNameExpected),
                 format(getError(Error.varNameExpectedFoundX), getPrettyLexemeType(get().type)));
 
-        lvalue = registerLocalVariable(identifier.svalue, type, isAuto);
+        lvalue = registerLocalVariable(identifier.svalue, type, isTyped ? isAuto : true);
         lvalue.isAuto = isTyped ? isAuto : true;
 
         //A composite type does not need to be initialized.
@@ -4183,19 +4182,20 @@ final class GrParser {
                     addInstruction(GrOpcode.primitiveCall, nextPrim.index);
                 else
                     addFunctionCall(nextFunc, fileId);
-                addSetInstruction(variable, fileId, grVoid, true);
 
                 uint jumpPosition = cast(uint) currentFunction.instructions.length;
-                addInstruction(GrOpcode.jumpEqual);
+                addInstruction(GrOpcode.optionalCall2);
 
-                parseBlock(true);
+                addSetInstruction(variable, fileId, subType);
+
+                parseBlock();
 
                 if (isYieldable)
                     addInstruction(GrOpcode.yield);
 
                 addInstruction(GrOpcode.jump,
                     cast(int)(blockPosition - currentFunction.instructions.length), true);
-                setInstruction(GrOpcode.jumpEqual, jumpPosition,
+                setInstruction(GrOpcode.optionalCall2, jumpPosition,
                     cast(int)(currentFunction.instructions.length - jumpPosition), true);
 
                 /* For is breakable and continuable. */

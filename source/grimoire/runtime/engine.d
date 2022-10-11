@@ -970,6 +970,14 @@ class GrEngine {
                     else
                         currentTask.pc++;
                     break;
+                case optionalCall2:
+                    if (currentTask.stack[currentTask.stackPos]._bytes == GR_NULL) {
+                        currentTask.pc += grGetInstructionSignedValue(opcode);
+                        currentTask.stackPos--;
+                    }
+                    else
+                        currentTask.pc++;
+                    break;
                 case and_int:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue = currentTask.stack[currentTask.stackPos]._ivalue &&

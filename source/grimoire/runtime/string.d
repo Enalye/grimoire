@@ -34,14 +34,6 @@ final class GrString {
         }
     }
 
-    /*pragma(inline) GrStringValue opIndex(GrInt index) {
-        return data[index];
-    }
-
-    pragma(inline) GrStringValue opIndexAssign(GrStringValue value, GrInt index) {
-        return data[index] = value;
-    }*/
-
     pragma(inline) void opAssign(GrStringValue values) {
         data = values;
     }
