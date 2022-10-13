@@ -15,8 +15,8 @@ An list is a list of values of the same type that can be stored together.
 |[each](#each)|[list](#list)(T) this|[ListIterator](#listiterator)\<T\>|
 |[empty?](#empty)|[list](#list)(T) this|bool|
 |[fill](#fill)|[list](#list)(T) this, T value|[list](#list)(T)|
-|[findFirst](#findFirst)|[list](#list)(T) this, T value|int|
-|[findLast](#findLast)|[list](#list)(T) this, T value|int|
+|[indexOf](#indexOf)|[list](#list)(T) this, T value|int|
+|[lastIndexOf](#lastIndexOf)|[list](#list)(T) this, T value|int|
 |[first](#first)|[list](#list)(T) this|T|
 |[has?](#has)|[list](#list)(T) this, T value|bool|
 |[insert](#insert)|[list](#list)(T) this, int index, T value|[list](#list)(T)|
@@ -69,14 +69,14 @@ ___
 Replace the content of the list with `value`.
 ___
 
-<a id="findFirst"></a>
-- findFirst ( [list](#list)(T) this, T value ) ( int )
+<a id="indexOf"></a>
+- indexOf ( [list](#list)(T) this, T value ) ( int )
 
 If `value` is found inside the list, returns the index of the first element found, otherwise -1 is returned.
 ___
 
-<a id="findLast"></a>
-- findLast ( [list](#list)(T) this, T value ) ( int )
+<a id="lastIndexOf"></a>
+- lastIndexOf ( [list](#list)(T) this, T value ) ( int )
 
 If `value` is found inside the list, returns the index of the last element found, otherwise -1 is returned.
 ___

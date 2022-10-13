@@ -94,14 +94,14 @@ private void _print_rx(GrCall call) {
 }
 
 private void _print_s(GrCall call) {
-    _stdOut(call.getStringData(0));
+    _stdOut(call.getString(0));
 }
 
 private void _print_sx(GrCall call) {
     if (call.isNull(0))
         _stdOut("null");
     else
-        _stdOut(call.getStringData(0));
+        _stdOut(call.getString(0));
 }
 
 private void _print_ni(GrCall call) {

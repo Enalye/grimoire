@@ -1,0 +1,31 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
+
+event methods() {
+    let chan = channel(int, 5);
+
+    assert(chan:isEmpty);
+    assert(!chan:isFull);
+    assert(chan:size == 0);
+    assert(chan:capacity == 5);
+
+    chan <- 2;
+    chan <- 3;
+
+    assert(!chan:isEmpty);
+    assert(!chan:isFull);
+    assert(chan:size == 2);
+    assert(chan:capacity == 5);
+
+    chan <- 2;
+    chan <- 3;
+    chan <- 4;
+
+    assert(!chan:isEmpty);
+    assert(chan:isFull);
+    assert(chan:size == 5);
+    assert(chan:capacity == 5);
+}

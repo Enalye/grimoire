@@ -1,0 +1,38 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
+
+event methods() {
+    let buffer = new CircularBuffer<int>(6);
+    assert(buffer:isEmpty);
+    assert(!buffer:isFull);
+
+    buffer:push(5);
+    buffer:push(7);
+    buffer:push(-8);
+    buffer:push(9);
+    buffer:push(17);
+
+    assert(!buffer:isEmpty);
+    assert(!buffer:isFull);
+
+    buffer:push(8);
+    assert(buffer:isFull);
+
+    assert(buffer:front == 8);
+    assert(buffer:back == 5);
+    buffer:push(99);
+
+    assert(buffer:front == 99);
+    assert(buffer:back == 7);
+
+    assert(buffer:pop() == 7);
+    assert(buffer:pop() == -8);
+    assert(buffer:pop() == 9);
+    assert(buffer:pop() == 17);
+    assert(buffer:pop() == 8);
+    assert(buffer:pop() == 99);
+    assert(buffer:isEmpty);
+}

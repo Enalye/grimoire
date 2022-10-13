@@ -11,7 +11,10 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 package(grimoire.stdlib) void grLoadStdLibString(GrLibrary library) {
+    library.addFunction(&_copy, "copy", [grPure(grString)], [grString]);
+    library.addFunction(&_size, "size", [grPure(grString)], [grInt]);
     library.addFunction(&_isEmpty, "isEmpty", [grPure(grString)], [grBool]);
+    library.addFunction(&_clear, "clear", [grString]);
     library.addFunction(&_unshift, "unshift", [grString, grString]);
     library.addFunction(&_push, "push", [grString, grString]);
     library.addFunction(&_shift, "shift", [grString], [grOptional(grString)]);
@@ -26,7 +29,8 @@ package(grimoire.stdlib) void grLoadStdLibString(GrLibrary library) {
         ]);
     library.addFunction(&_remove, "remove", [grString, grInt]);
     library.addFunction(&_remove2, "remove", [grString, grInt, grInt]);
-    library.addFunction(&_slice, "slice", [grPure(grString), grInt, grInt], [
+    library.addFunction(&_slice, "slice", [grPure(grString), grInt], [grString]);
+    library.addFunction(&_slice2, "slice", [grPure(grString), grInt, grInt], [
             grString
         ]);
     library.addFunction(&_reverse, "reverse", [grPure(grString)], [grString]);
@@ -46,18 +50,32 @@ package(grimoire.stdlib) void grLoadStdLibString(GrLibrary library) {
     library.addFunction(&_next, "next", [stringIterType], [grOptional(grString)]);
 }
 
+private void _copy(GrCall call) {
+    const GrStringValue value = call.getString(0);
+    call.setString(value);
+}
+
+private void _size(GrCall call) {
+    call.setInt(call.getList(0).size());
+}
+
 private void _isEmpty(GrCall call) {
     call.setBool(call.getString(0).isEmpty());
 }
 
+private void _clear(GrCall call) {
+    GrString str = call.getString(0);
+    str.clear();
+}
+
 private void _unshift(GrCall call) {
     GrString str = call.getString(0);
-    str.unshift(call.getStringData(1));
+    str.unshift(call.getString(1));
 }
 
 private void _push(GrCall call) {
     GrString str = call.getString(0);
-    str.push(call.getStringData(1));
+    str.push(call.getString(1));
 }
 
 private void _shift(GrCall call) {
@@ -131,6 +149,12 @@ private void _remove2(GrCall call) {
 
 private void _slice(GrCall call) {
     GrString str = call.getString(0);
+    GrInt index = call.getInt(1);
+    call.setString(str.slice(index, index));
+}
+
+private void _slice2(GrCall call) {
+    GrString str = call.getString(0);
     GrInt index1 = call.getInt(1);
     GrInt index2 = call.getInt(2);
     call.setString(str.slice(index1, index2));
@@ -143,13 +167,13 @@ private void _reverse(GrCall call) {
 private void _insert(GrCall call) {
     GrString str = call.getString(0);
     GrInt index = call.getInt(1);
-    GrStringValue value = call.getStringData(2);
+    GrStringValue value = call.getString(2);
     str.insert(index, value);
 }
 
 private void _indexOf(GrCall call) {
     GrString str = call.getString(0);
-    GrStringValue value = call.getStringData(1);
+    GrStringValue value = call.getString(1);
     const GrInt result = cast(GrInt) str.indexOf(value);
     if (result < 0) {
         call.setNull();
@@ -160,7 +184,7 @@ private void _indexOf(GrCall call) {
 
 private void _lastIndexOf(GrCall call) {
     GrString str = call.getString(0);
-    GrStringValue value = call.getStringData(1);
+    GrStringValue value = call.getString(1);
     const GrInt result = cast(GrInt) str.lastIndexOf(value);
     if (result < 0) {
         call.setNull();
@@ -171,7 +195,7 @@ private void _lastIndexOf(GrCall call) {
 
 private void _contains(GrCall call) {
     GrString str = call.getString(0);
-    GrStringValue value = call.getStringData(1);
+    GrStringValue value = call.getString(1);
     call.setBool(str.contains(value));
 }
 
@@ -182,7 +206,7 @@ private final class StringIterator {
 
 private void _each(GrCall call) {
     StringIterator iter = new StringIterator;
-    iter.value = call.getStringData(0);
+    iter.value = call.getString(0);
     call.setForeign(iter);
 }
 

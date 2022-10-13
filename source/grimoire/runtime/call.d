@@ -95,52 +95,32 @@ final class GrCall {
         return _inputs[index].isNull();
     }
 
-    pragma(inline) int getInt32(uint index) {
-        return cast(int) getParameter!GrInt(index);
-    }
-
-    pragma(inline) long getInt64(uint index) {
-        return cast(long) getParameter!GrInt(index);
-    }
-
-    pragma(inline) float getReal32(uint index) {
-        return cast(float) getParameter!GrReal(index);
-    }
-
-    pragma(inline) double getReal64(uint index) {
-        return cast(double) getParameter!GrReal(index);
-    }
-
-    pragma(inline) GrObject getObject(uint index) {
-        return cast(GrObject) getParameter!GrPointer(index);
-    }
-
-    pragma(inline) GrString getString(uint index) {
-        return cast(GrString) getParameter!GrPointer(index);
-    }
-
-    pragma(inline) GrStringValue getStringData(uint index) {
-        return (cast(GrString) getParameter!GrPointer(index)).data;
-    }
-
-    pragma(inline) GrList getList(uint index) {
-        return cast(GrList) getParameter!GrPointer(index);
-    }
-
-    pragma(inline) GrChannel getChannel(uint index) {
-        return cast(GrChannel) getParameter!GrPointer(index);
-    }
-
-    pragma(inline) T getEnum(T)(uint index) {
+    pragma(inline) T getEnum(T)(uint index) const {
         return cast(T) getParameter!GrInt(index);
     }
 
-    pragma(inline) T getForeign(T)(uint parameter) {
+    pragma(inline) GrObject getObject(uint index) const {
+        return cast(GrObject) getParameter!GrPointer(index);
+    }
+
+    pragma(inline) GrString getString(uint index) const {
+        return cast(GrString) getParameter!GrPointer(index);
+    }
+
+    pragma(inline) GrList getList(uint index) const {
+        return cast(GrList) getParameter!GrPointer(index);
+    }
+
+    pragma(inline) GrChannel getChannel(uint index) const {
+        return cast(GrChannel) getParameter!GrPointer(index);
+    }
+
+    pragma(inline) T getForeign(T)(uint parameter) const {
         // We cast to object first to avoid a crash when casting to a parent class
         return cast(T) cast(Object) getParameter!GrPointer(parameter);
     }
 
-    pragma(inline) private T getParameter(T)(uint index)
+    pragma(inline) private T getParameter(T)(uint index) const
     in (index < _parameters.length,
         "parameter index `" ~ to!string(index) ~ "` exceeds the number of parameters") {
         static if (is(T == GrValue)) {

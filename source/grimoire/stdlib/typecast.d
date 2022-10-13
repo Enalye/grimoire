@@ -64,8 +64,8 @@ private void typecast_as2s(GrCall call) {
 //As string list
 private void typecast_s2as(GrCall call) {
     GrValue[] result;
-    foreach (const ref sub; call.getStringData(0)) {
-        result ~= GrValue(to!GrStringValue(sub));
+    foreach (const ref sub; call.getString(0)) {
+        result ~= GrValue(sub);
     }
     call.setList(result);
 }

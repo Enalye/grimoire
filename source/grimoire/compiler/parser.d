@@ -6092,8 +6092,6 @@ final class GrParser {
 
                             bool isPure = currentType.isPure;
                             currentType = class_.signature[i];
-                            //if (isOptionalCall && currentType.base != GrType.Base.optional)
-                            //    currentType = grOptional(currentType);
                             currentType.isField = true;
                             GrVariable fieldLValue = new GrVariable;
                             fieldLValue.name = identifier;
@@ -6361,18 +6359,19 @@ final class GrParser {
                 currentType = grUnmangle(currentType.mangledType);
                 addInstruction(GrOpcode.optionalTry);
 
+                typeStack[$ - 1] = currentType;
                 hasValue = true;
                 hadValue = false;
                 break;
             case and:
             case or:
+            case bitwiseAnd: .. case bitwiseXor:
             case optionalOr:
             case multiply:
             case divide:
             case remainder: .. case not:
                 if (isExpectingLValue)
-                    logError(getError(
-                            Error.cantDoThisKindOfOpOnLeftSideOfAssignement),
+                    logError(getError(Error.cantDoThisKindOfOpOnLeftSideOfAssignement),
                         getError(Error.unexpectedOp));
                 if (!hadValue && !isUnaryOperator(lex.type))
                     logError(getError(Error.binOpMustHave2Operands), getError(Error.missingVal));

@@ -1,0 +1,52 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
+
+event methods() {
+    let map = new HashMap<int>();
+
+    assert(map:size == 0);
+    assert(map:isEmpty);
+
+    let map = new HashMap<int>([
+        "banana" => 5,
+        "orange" => 2,
+        "pear" => 1,
+        "tomato" => -7,
+        "pineapple" => 0]);
+    
+    assert(map:size == 5);
+    assert(!map:isEmpty);
+
+    assert(map:contains("orange"));
+    assert(!map:contains("apple"));
+
+    assert(map:get("orange") == 2);
+    assert(map:get("apple") == null(int));
+
+    assert(map:getOr("orange", 6) == 2);
+    assert(map:getOr("apple", 6) == 6);
+
+    map:remove("orange");
+    assert(map:size == 4);
+
+    let keys = map:byKeys;
+    let values = map:byValues;
+
+    assert(keys:size == 4);
+    assert(values:size == 4);
+
+    int i;
+    for(pair, map:each) {
+        assert(keys[i] == pair.key);
+        assert(values[i] == pair.value);
+        i++;
+    }
+
+    map:set("apple", 12);
+    assert(map:size == 5);
+    map:clear;
+    assert(map:size == 0);
+}

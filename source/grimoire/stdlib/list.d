@@ -20,11 +20,17 @@ package(grimoire.stdlib) void grLoadStdLibList(GrLibrary library) {
         ]);
     library.addFunction(&_fill, "fill", [grList(grAny("T")), grAny("T")]);
     library.addFunction(&_clear, "clear", [grList(grAny("T"))]);
-    library.addFunction(&_unshift, "unshift", [grList(grAny("T")), grAny("T")]);
-    library.addFunction(&_push, "push", [grList(grAny("T")), grAny("T")], [
-            grAny("T")
+    library.addFunction(&_get, "get", [grPure(grList(grAny("T"))), grInt], [
+            grOptional(grAny("T"))
         ]);
-    library.addFunction(&_shift, "shift", [grList(grAny("T"))], [grAny("T")]);
+    library.addFunction(&_getOr, "getOr", [
+            grPure(grList(grAny("T"))), grInt, grAny("T")
+        ], [grAny("T")]);
+    library.addFunction(&_unshift, "unshift", [grList(grAny("T")), grAny("T")]);
+    library.addFunction(&_push, "push", [grList(grAny("T")), grAny("T")]);
+    library.addFunction(&_shift, "shift", [grList(grAny("T"))], [
+            grOptional(grAny("T"))
+        ]);
     library.addFunction(&_pop, "pop", [grList(grAny("T"))], [
             grOptional(grAny("T"))
         ]);
@@ -40,41 +46,30 @@ package(grimoire.stdlib) void grLoadStdLibList(GrLibrary library) {
     library.addFunction(&_last, "last", [grPure(grList(grAny("T")))], [
             grOptional(grAny("T"))
         ]);
-    library.addFunction(&_remove, "remove", [grList(grAny("T")), grInt], [
-            grList(grAny("T"))
-        ]);
-    library.addFunction(&_remove2, "remove", [grList(grAny("T")), grInt,
-            grInt], [grList(grAny("T"))]);
+    library.addFunction(&_remove, "remove", [grList(grAny("T")), grInt]);
+    library.addFunction(&_remove2, "remove", [grList(grAny("T")), grInt, grInt]);
     library.addFunction(&_slice, "slice", [
             grPure(grList(grAny("T"))), grInt, grInt
         ], [grList(grAny("T"))]);
-    library.addFunction(&_reverse, "reverse", [grPure(grList(grAny("T")))],
-        [grList(grAny("T"))]);
+    library.addFunction(&_reverse, "reverse", [grPure(grList(grAny("T")))], [
+            grList(grAny("T"))
+        ]);
     library.addFunction(&_insert, "insert", [
             grList(grAny("T")), grInt, grAny("T")
         ]);
 
-    library.addFunction(&_findFirst, "findFirst",
-        [grPure(grList(grAny("T"))), grPure(grAny("T"))], [grInt]);
-    library.addFunction(&_findLast, "findLast", [
+    library.addFunction(&_indexOf, "indexOf", [
             grPure(grList(grAny("T"))), grPure(grAny("T"))
         ], [grOptional(grInt)]);
-    library.addFunction(&_findLast, "findLast", [
-            grPure(grList(grAny("T"))), grPure(grAny("T"))
-        ], [grOptional(grInt)]);
+    library.addFunction(&_lastIndexOf, "lastIndexOf",
+        [grPure(grList(grAny("T"))), grPure(grAny("T"))], [grOptional(grInt)]);
     library.addFunction(&_contains, "contains", [
             grPure(grList(grAny("T"))), grPure(grAny("T"))
         ], [grBool]);
 
-    library.addFunction(&_sort_!"int", "sort", [grList(grInt)], [
-            grList(grInt)
-        ]);
-    library.addFunction(&_sort_!"real", "sort", [grList(grReal)], [
-            grList(grReal)
-        ]);
-    library.addFunction(&_sort_!"string", "sort", [grList(grString)], [
-            grList(grString)
-        ]);
+    library.addFunction(&_sort_!"int", "sort", [grList(grInt)]);
+    library.addFunction(&_sort_!"real", "sort", [grList(grReal)]);
+    library.addFunction(&_sort_!"string", "sort", [grList(grString)]);
 
     GrType iteratorType = library.addForeign("ListIterator", ["T"]);
     library.addFunction(&_each, "each", [grList(grAny("T"))], [iteratorType]);
@@ -114,6 +109,26 @@ private void _fill(GrCall call) {
 private void _clear(GrCall call) {
     GrList list = call.getList(0);
     list.clear();
+}
+
+private void _get(GrCall call) {
+    GrList list = call.getList(0);
+    const GrInt idx = call.getInt(1);
+    if(idx >= list.size) {
+        call.setNull();
+        return;
+    }
+    call.setValue(list[idx]);
+}
+
+private void _getOr(GrCall call) {
+    GrList list = call.getList(0);
+    const GrInt idx = call.getInt(1);
+    if(idx >= list.size) {
+        call.setValue(call.getValue(2));
+        return;
+    }
+    call.setValue(list[idx]);
 }
 
 private void _unshift(GrCall call) {
@@ -224,7 +239,7 @@ private void _sort_(string T)(GrCall call) {
         list.sortByString();
 }
 
-private void _findFirst(GrCall call) {
+private void _indexOf(GrCall call) {
     GrList list = call.getList(0);
     GrValue value = call.getValue(1);
     const GrInt index = list.indexOf(value);
@@ -235,7 +250,7 @@ private void _findFirst(GrCall call) {
     call.setInt(index);
 }
 
-private void _findLast(GrCall call) {
+private void _lastIndexOf(GrCall call) {
     GrList list = call.getList(0);
     GrValue value = call.getValue(1);
     const GrInt index = list.lastIndexOf(value);

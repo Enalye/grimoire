@@ -7,4 +7,8 @@
 event operations() {
     assert(1 << 2 == 4);
     assert(15 >> 1 == 7);
+    assert(75 & 101 == 65);
+    assert(75 | 101 == 111);
+    assert(75 ^ 101 == 46);
+    assert(~255 == -256);
 }

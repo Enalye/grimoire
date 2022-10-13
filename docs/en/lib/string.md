@@ -12,8 +12,8 @@ Type that can hold UTF-8 characters.
 |-|-|-|
 |[each](#each)|[string](#string)|[StringIterator](#stringiterator)|
 |[empty?](#empty)|[string](#string) this|bool|
-|[findFirst](#findFirst)|[string](#string) this, [string](#string) subString|int|
-|[findLast](#findLast)|[string](#string) this, [string](#string) subString|int|
+|[indexOf](#indexOf)|[string](#string) this, [string](#string) subString|int|
+|[lastIndexOf](#lastIndexOf)|[string](#string) this, [string](#string) subString|int|
 |[first](#first)|[string](#string) this|[string](#string)|
 |[has?](#has)|[string](#string) this, [string](#string) subString|[string](#string)|
 |[insert](#insert)|[string](#string) this, int index, [string](#string) value|[string](#string)|
@@ -44,14 +44,14 @@ ___
 Returns `true` if the string has no character.
 ___
 
-<a id="findFirst"></a>
-- findFirst ( [string](#string) this, [string](#string) subString ) ( int )
+<a id="indexOf"></a>
+- indexOf ( [string](#string) this, [string](#string) subString ) ( int )
 
 If `subString` is found inside the string, returns the index of the first element found, otherwise -1 is returned.
 ___
 
-<a id="findLast"></a>
-- findLast ( [string](#string) this, [string](#string) subString ) ( int )
+<a id="lastIndexOf"></a>
+- lastIndexOf ( [string](#string) this, [string](#string) subString ) ( int )
 
 If `subString` is found inside the string, returns the index of the last element found, otherwise -1 is returned.
 ___

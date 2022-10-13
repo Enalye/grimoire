@@ -1,0 +1,27 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
+
+event methods() {
+    let queue = new Queue<int>;
+    assert(queue:isEmpty);
+
+    queue:push(5);
+    queue:push(7);
+    queue:push(-8);
+    queue:push(9);
+    queue:push(17);
+    assert(!queue:isEmpty);
+
+    assert(queue:front == 17);
+    assert(queue:back == 5);
+
+    assert(queue:pop() == 5);
+    assert(queue:pop() == 7);
+    assert(queue:pop() == -8);
+    assert(queue:pop() == 9);
+    assert(queue:pop() == 17);
+    assert(queue:isEmpty);
+}
