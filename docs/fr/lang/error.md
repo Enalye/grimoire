@@ -1,22 +1,17 @@
-# Gestion d’erreur
+# Erreurs
 
-La gestion d’erreur se fait par l’envoi et la réception d’erreurs.
-
-Pour lancer une erreur, on notera:
+Grimoire permet la gestion d’erreurs.
 ```grimoire
 throw "Erreur";
 ```
-Si l’on ne fait rien, la machine virtuelle paniquera car l’erreur se propagera sans jamais être attrapée.
 
-On entoure donc l’erreur d’un bloc `try` suivi d’un `catch` optionnel pour gérer l’erreur:
+Les blocs `try`/`catch` permettent la capture d’erreurs.
 ```grimoire
-event onLoad() {
-	try {
-		throw "Erreur";
-	}
-	catch(e) {
-		print("J’ai attrapé: " ~ e);
-	}
+try {
+    throw "Erreur";
+}
+catch(e) {
+    print("J’ai attrapé: " ~ e);
 }
 ```
-Et l’exécution de la tâche peut se poursuivre normalement.
+Une erreur non capturée mettra en panique la machine virtuelle et interrompera les autres tâches.

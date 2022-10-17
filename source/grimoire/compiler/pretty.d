@@ -38,8 +38,19 @@ string grGetPrettyType(const GrType variableType) {
     case string_:
         result ~= "string";
         break;
-    case array:
-        result ~= "array(";
+    case optional:
+        int i;
+        auto parameters = grUnmangleSignature(variableType.mangledType);
+        foreach (parameter; parameters) {
+            result ~= grGetPrettyType(parameter);
+            if ((i + 2) <= parameters.length)
+                result ~= ", ";
+            i++;
+        }
+        result ~= "?";
+        break;
+    case list:
+        result ~= "list(";
         int i;
         auto parameters = grUnmangleSignature(variableType.mangledType);
         foreach (parameter; parameters) {
@@ -110,7 +121,7 @@ string grGetPrettyType(const GrType variableType) {
         }
         result ~= ")";
         break;
-    case foreign:
+    case native:
     case class_:
         import std.algorithm.searching : findSplitBefore;
 
@@ -142,6 +153,7 @@ string grGetPrettyType(const GrType variableType) {
         result ~= ")";
         break;
     }
+
     return result;
 }
 

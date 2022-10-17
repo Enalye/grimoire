@@ -26,7 +26,7 @@ void main() {
         compiler.addLibrary(stdlib);
         GrBytecode bytecode = compiler.compileFile("script/test.gr", GrOption.symbols, locale);
         if (!bytecode) {
-            writeln(compiler.getError().prettify());
+            writeln(compiler.getError().prettify(locale));
             return;
         }
         if (testBytecode) {
@@ -55,7 +55,7 @@ void main() {
         while (engine.hasTasks)
             engine.process();
         if (engine.isPanicking) {
-            writeln("panic: " ~ to!string(engine.panicMessage));
+            writeln("panic: " ~ engine.panicMessage);
             foreach (trace; engine.stackTraces) {
                 writeln("[", trace.pc, "] in ", trace.name, " at ", trace.file,
                     "(", trace.line, ",", trace.column, ")");
@@ -66,7 +66,6 @@ void main() {
         //Benchmark
         writeln("compilation took: \t", compilationTime);
         writeln("execution took: \t", executionTime);
-        //writeln("Size of engine: ", GrEngine.classinfo.init.length, " Size of context: ", GrContext.classinfo.init.length);
 
         //writeln(engine.prettifyProfiling());
     }

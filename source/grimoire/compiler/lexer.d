@@ -32,6 +32,7 @@ struct GrLexeme {
         comma,
         at,
         pointer,
+        optional,
         as,
         try_,
         catch_,
@@ -43,6 +44,7 @@ struct GrLexeme {
         bitwiseXorAssign,
         andAssign,
         orAssign,
+        optionalOrAssign,
         addAssign,
         substractAssign,
         multiplyAssign,
@@ -57,6 +59,7 @@ struct GrLexeme {
         bitwiseXor,
         and,
         or,
+        optionalOr,
         add,
         substract,
         multiply,
@@ -102,7 +105,7 @@ struct GrLexeme {
         realType,
         booleanType,
         stringType,
-        arrayType,
+        listType,
         channelType,
         functionType,
         taskType,
@@ -122,7 +125,7 @@ struct GrLexeme {
         return_,
         self,
         die,
-        quit,
+        exit,
         yield,
         break_,
         continue_,
@@ -195,7 +198,7 @@ struct GrLexeme {
     GrBool bvalue;
 
     /// Can either describe a literal value like `"myString"` or an identifier.
-    GrString svalue;
+    GrStringValue svalue;
 
     /// Returns the entire _line from where the token is located.
     string getLine() {
@@ -427,8 +430,8 @@ package final class GrLexer {
             case '#': .. case '&':
             case '(': .. case '-':
             case '/':
-            case ':':
-                    .. case '@':
+            case ':': ..
+            case '@':
             case '[': .. case '^':
             case '{': .. case '~':
                 scanOperator();
@@ -615,7 +618,7 @@ package final class GrLexer {
                 _current++;
                 if (_current + 1 >= _text.length)
                     break;
-                if (get(1) == '&') {
+                if (get(1) == '=') {
                     lex.type = GrLexeme.Type.andAssign;
                     lex._textLength = 3;
                     _current++;
@@ -641,7 +644,7 @@ package final class GrLexer {
                 _current++;
                 if (_current + 1 >= _text.length)
                     break;
-                if (get(1) == '|') {
+                if (get(1) == '=') {
                     lex.type = GrLexeme.Type.orAssign;
                     lex._textLength = 3;
                     _current++;
@@ -834,6 +837,23 @@ package final class GrLexer {
                 _current++;
             }
             break;
+        case '?':
+            lex.type = GrLexeme.Type.optional;
+            if (_current + 1 >= _text.length)
+                break;
+            if (get(1) == '?') {
+                lex.type = GrLexeme.Type.optionalOr;
+                lex._textLength = 2;
+                _current++;
+                if (_current + 1 >= _text.length)
+                    break;
+                if (get(1) == '=') {
+                    lex.type = GrLexeme.Type.optionalOrAssign;
+                    lex._textLength = 3;
+                    _current++;
+                }
+            }
+            break;
         default:
             raiseError(Error.invalidOp);
         }
@@ -854,14 +874,14 @@ package final class GrLexer {
                 break;
 
             const dchar symbol = get();
-            if (symbol == '?') {
+            /*if (symbol == '?') {
                 buffer ~= symbol;
                 _current++;
                 break;
-            }
-            if (symbol <= '&' || (symbol >= '(' && symbol <= '/') || (symbol >= ':'
-                    && symbol <= '@') || (symbol >= '[' && symbol <= '^')
-                || (symbol >= '{' && symbol <= 0x7F))
+            }*/
+            if (symbol <= '&' || (symbol >= '(' && symbol <= '/') || (symbol >= ':' &&
+                    symbol <= '@') || (symbol >= '[' && symbol <= '^') ||
+                (symbol >= '{' && symbol <= 0x7F))
                 break;
 
             buffer ~= symbol;
@@ -945,7 +965,7 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.die;
             break;
         case "exit":
-            lex.type = GrLexeme.Type.quit;
+            lex.type = GrLexeme.Type.exit;
             break;
         case "yield":
             lex.type = GrLexeme.Type.yield;
@@ -995,8 +1015,8 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.stringType;
             lex.isType = true;
             break;
-        case "array":
-            lex.type = GrLexeme.Type.arrayType;
+        case "list":
+            lex.type = GrLexeme.Type.listType;
             lex.isType = true;
             break;
         case "channel":
@@ -1222,18 +1242,18 @@ package final class GrLexer {
 }
 
 private immutable string[] _prettyLexemeTypeTable = [
-    "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&",
-    "as", "try", "catch", "error", "defer", "=", "&=", "|=", "^=",
-    "&&=", "||=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+", "-",
-    "&", "|", "^", "&&", "||", "+", "-", "*", "/", "~", "%", "**",
-    "==", "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->",
-    "=>", "~", "!", "++", "--", "identifier", "const_int",
-    "const_float", "const_bool", "const_string", "null", "public", "const",
-    "pure", "alias", "event", "class", "enum", "where", "new", "copy",
-    "send", "receive", "int", "real", "bool", "string", "array",
-    "channel", "function", "task", "let", "if", "unless", "else",
-    "switch", "select", "case", "default", "while", "do", "until", "for",
-    "loop", "return", "self", "die", "exit", "yield", "break", "continue"
+    "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&", "?",
+    "as", "try", "catch", "error", "defer", "=", "&=", "|=", "^=", "&&=",
+    "||=", "??=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+", "-", "&",
+    "|", "^", "&&", "||", "??", "+", "-", "*", "/", "~", "%", "**", "==",
+    "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->", "=>", "~", "!",
+    "++", "--", "identifier", "const_int", "const_float", "const_bool",
+    "const_string", "null", "public", "const", "pure", "alias", "event",
+    "class", "enum", "where", "new", "copy", "send", "receive", "int", "real",
+    "bool", "string", "list", "channel", "function", "task", "let", "if",
+    "unless", "else", "switch", "select", "case", "default", "while", "do",
+    "until", "for", "loop", "return", "self", "die", "exit", "yield", "break",
+    "continue"
 ];
 
 /// Returns a displayable version of a token type.

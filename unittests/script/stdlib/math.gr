@@ -1,0 +1,20 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
+
+event methods() {
+    assert(min(1, -2) == -2);
+    assert(min(-1.5, 2.7) == -1.5);
+    assert(max(1, 2) == 2);
+    assert(max(-1.5, -2.7) == -1.5);
+
+    assert(clamp(-1, 5, 8) == 5);
+    assert(clamp(6, 5, 8) == 6);
+    assert(clamp(9, 5, 8) == 8);
+
+    assert(clamp(-1.5, 5.7, 8.3) == 5.7);
+    assert(clamp(6.2, 5.7, 8.3) == 6.2);
+    assert(clamp(9.7, 5.7, 8.3) == 8.3);
+}

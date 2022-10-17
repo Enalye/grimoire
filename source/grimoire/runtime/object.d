@@ -6,7 +6,10 @@
 module grimoire.runtime.object;
 
 import grimoire.compiler, grimoire.assembly;
-import grimoire.runtime.array, grimoire.runtime.channel;
+import grimoire.runtime.channel;
+import grimoire.runtime.value;
+import grimoire.runtime.string;
+import grimoire.runtime.list;
 
 /**
 A single field of an object. \
@@ -15,12 +18,7 @@ so you need to check with its type definition.
 */
 package final class GrField {
     string name;
-    union {
-        GrInt ivalue;
-        GrReal rvalue;
-        GrString svalue;
-        GrPtr ovalue;
-    }
+    GrValue value;
 }
 
 /// Object value in Grimoire runtime.
@@ -48,184 +46,108 @@ final class GrObject {
         }
     }
 
-    alias getBool = getField!bool;
+    alias getValue = getField!GrValue;
+    alias getBool = getField!GrBool;
     alias getInt = getField!GrInt;
     alias getReal = getField!GrReal;
-    alias getString = getField!GrString;
-    alias getPtr = getField!GrPtr;
+    alias getPointer = getField!GrPointer;
 
-    int getInt32(const string fieldName) {
-        return cast(int) getField!GrInt(fieldName);
-    }
-
-    long getInt64(const string fieldName) {
-        return cast(long) getField!GrInt(fieldName);
-    }
-
-    real getReal32(const string fieldName) {
-        return cast(real) getField!GrReal(fieldName);
-    }
-
-    double getReal64(const string fieldName) {
-        return cast(double) getField!GrReal(fieldName);
-    }
-
-    GrObject getObject(const string fieldName) {
-        return cast(GrObject) getField!GrPtr(fieldName);
-    }
-
-    GrArray!T getArray(T)(const string fieldName) {
-        return cast(GrArray!T) getField!GrPtr(fieldName);
-    }
-
-    GrIntArray getIntArray(const string fieldName) {
-        return cast(GrIntArray) getField!GrPtr(fieldName);
-    }
-
-    GrRealArray getRealArray(const string fieldName) {
-        return cast(GrRealArray) getField!GrPtr(fieldName);
-    }
-
-    GrStringArray getStringArray(const string fieldName) {
-        return cast(GrStringArray) getField!GrPtr(fieldName);
-    }
-
-    GrObjectArray getObjectArray(const string fieldName) {
-        return cast(GrObjectArray) getField!GrPtr(fieldName);
-    }
-
-    GrIntChannel getIntChannel(const string fieldName) {
-        return cast(GrIntChannel) getField!GrPtr(fieldName);
-    }
-
-    GrRealChannel getRealChannel(const string fieldName) {
-        return cast(GrRealChannel) getField!GrPtr(fieldName);
-    }
-
-    GrStringChannel getStringChannel(const string fieldName) {
-        return cast(GrStringChannel) getField!GrPtr(fieldName);
-    }
-
-    GrObjectChannel getObjectChannel(const string fieldName) {
-        return cast(GrObjectChannel) getField!GrPtr(fieldName);
-    }
-
-    T getEnum(T)(const string fieldName) {
+    pragma(inline) T getEnum(T)(const string fieldName) const {
         return cast(T) getField!GrInt(fieldName);
     }
 
-    T getForeign(T)(const string fieldName) {
-        // We cast to object first to avoid a crash when casting to a parent class
-        return cast(T) cast(Object) getField!GrPtr(fieldName);
+    pragma(inline) GrString getString(const string fieldName) const {
+        return cast(GrString) getField!GrPointer(fieldName);
     }
 
-    private T getField(T)(const string fieldName) {
+    pragma(inline) GrList getList(const string fieldName) const {
+        return cast(GrList) getField!GrPointer(fieldName);
+    }
+
+    pragma(inline) GrChannel getChannel(const string fieldName) const {
+        return cast(GrChannel) getField!GrPointer(fieldName);
+    }
+
+    pragma(inline) GrObject getObject(const string fieldName) const {
+        return cast(GrObject) getField!GrPointer(fieldName);
+    }
+
+    pragma(inline) T getNative(T)(const string fieldName) const {
+        // We cast to object first to avoid a crash when casting to a parent class
+        return cast(T) cast(Object) getField!GrPointer(fieldName);
+    }
+
+    pragma(inline) private T getField(T)(const string fieldName) const {
         for (size_t index; index < _fields.length; ++index) {
             if (_fields[index].name == fieldName) {
-                static if (is(T == GrInt))
-                    return _fields[index].ivalue;
+                static if (is(T == GrValue))
+                    return _fields[index].value;
+                else static if (is(T == GrInt))
+                    return _fields[index].value.getInt();
                 else static if (is(T == GrBool))
-                    return cast(T) _fields[index].ivalue;
+                    return cast(T) _fields[index].value.getInt();
                 else static if (is(T == GrReal))
-                    return _fields[index].rvalue;
-                else static if (is(T == GrString))
-                    return _fields[index].svalue;
-                else static if (is(T == GrPtr))
-                    return _fields[index].ovalue;
+                    return _fields[index].value.getReal();
+                else static if (is(T == GrPointer))
+                    return _fields[index].value.getPointer();
                 else
-                    static assert(false, "Invalid field type");
+                    static assert(false, "invalid field type `" ~ T.stringof ~ "`");
             }
         }
-        assert(false, "Invalid field name");
+        assert(false, "invalid field name `" ~ fieldName ~ "`");
     }
 
-    alias setBool = setField!bool;
+    alias setValue = setField!GrValue;
+    alias setBool = setField!GrBool;
     alias setInt = setField!GrInt;
     alias setReal = setField!GrReal;
-    alias setString = setField!GrString;
-    alias setPtr = setField!GrPtr;
+    alias setPointer = setField!GrPointer;
 
-    void setInt32(const string fieldName, int value) {
+    pragma(inline) void setEnum(T)(const string fieldName, T value) {
         setField!GrInt(fieldName, cast(GrInt) value);
     }
 
-    void setInt64(const string fieldName, long value) {
-        setField!GrInt(fieldName, cast(GrInt) value);
+    pragma(inline) void setString(const string fieldName, GrStringValue value) {
+        setField!GrPointer(fieldName, cast(GrPointer) new GrString(value));
     }
 
-    void setReal32(const string fieldName, real value) {
-        setField!GrReal(fieldName, cast(GrReal) value);
+    pragma(inline) void setList(const string fieldName, GrList value) {
+        setField!GrPointer(fieldName, cast(GrPointer) value);
     }
 
-    void setReal64(const string fieldName, double value) {
-        setField!GrReal(fieldName, cast(GrReal) value);
+    pragma(inline) void setList(const string fieldName, GrValue[] value) {
+        setField!GrPointer(fieldName, cast(GrPointer) new GrList(value));
     }
 
-    void setObject(const string fieldName, GrObject value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
+    pragma(inline) void setChannel(const string fieldName, GrChannel value) {
+        setField!GrPointer(fieldName, cast(GrPointer) value);
     }
 
-    void setArray(T)(const string fieldName, GrArray!T value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
+    pragma(inline) void setObject(const string fieldName, GrObject value) {
+        setField!GrPointer(fieldName, cast(GrPointer) value);
     }
 
-    void setIntArray(const string fieldName, GrIntArray value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
+    pragma(inline) void setNative(T)(const string fieldName, T value) {
+        setField!GrPointer(fieldName, cast(GrPointer) value);
     }
 
-    void setRealArray(const string fieldName, GrRealArray value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
-    }
-
-    void setStringArray(const string fieldName, GrStringArray value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
-    }
-
-    void setObjectArray(const string fieldName, GrObjectArray value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
-    }
-
-    void setIntChannel(const string fieldName, GrIntChannel value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
-    }
-
-    void setRealChannel(const string fieldName, GrRealChannel value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
-    }
-
-    void setStringChannel(const string fieldName, GrStringChannel value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
-    }
-
-    void setObjectChannel(const string fieldName, GrObjectChannel value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
-    }
-
-    void setEnum(T)(const string fieldName, T value) {
-        setField!GrInt(fieldName, cast(GrInt) value);
-    }
-
-    void setForeign(T)(const string fieldName, T value) {
-        setField!GrPtr(fieldName, cast(GrPtr) value);
-    }
-
-    private T setField(T)(const string fieldName, T value) {
+    pragma(inline) private T setField(T)(const string fieldName, T value) {
         for (size_t index; index < _fields.length; ++index) {
             if (_fields[index].name == fieldName) {
-                static if (is(T == GrInt))
-                    return _fields[index].ivalue = cast(int) value;
+                static if (is(T == GrValue))
+                    return _fields[index].value = value;
+                else static if (is(T == GrInt))
+                    return _fields[index].value._ivalue = value;
                 else static if (is(T == GrBool))
-                    return _fields[index].ivalue = value;
+                    return _fields[index].value._ivalue = cast(GrInt) value;
                 else static if (is(T == GrReal))
-                    return _fields[index].rvalue = value;
-                else static if (is(T == GrString))
-                    return _fields[index].svalue = value;
-                else static if (is(T == GrPtr))
-                    return _fields[index].ovalue = value;
+                    return _fields[index].value._rvalue = value;
+                else static if (is(T == GrPointer))
+                    return _fields[index].value._ovalue = value;
                 else
-                    static assert(false, "Invalid field type");
+                    static assert(false, "invalid field type `" ~ T.stringof ~ "`");
             }
         }
-        assert(false, "Invalid field name");
+        assert(false, "invalid field name `" ~ fieldName ~ "`");
     }
 }

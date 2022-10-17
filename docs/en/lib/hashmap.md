@@ -9,19 +9,19 @@ Dictionary that associates values by keys.
 |Function|Input|Output|
 |-|-|-|
 |[new](#new)||[HashMap](#hashmap)\<T\>|
-|[new](#new_arrays)|[array](/en/lib/array#array)(string) keys, [array](/en/lib/array#array)(T) values|[HashMap](#hashmap)\<T\>|
-|[new](#new_pairs)|[array](/en/lib/array#array)([Pair](/en/lib/pair#pair)\<[string](/en/lib/string#string), T\>) pairs|[HashMap](#hashmap)\<T\>|
+|[new](#new_lists)|[list](/en/lib/list#list)(string) keys, [list](/en/lib/list#list)(T) values|[HashMap](#hashmap)\<T\>|
+|[new](#new_pairs)|[list](/en/lib/list#list)([Pair](/en/lib/pair#pair)\<[string](/en/lib/string#string), T\>) pairs|[HashMap](#hashmap)\<T\>|
 |[clear](#clear)|[HashMap](#hashmap)\<T\> this|[HashMap](#hashmap)\<T\>|
 |[copy](#copy)|[HashMap](#hashmap)\<T\> this|[HashMap](#hashmap)\<T\>|
 |[each](#each)|[HashMap](#hashmap)\<T\> this|[HashMapIterator](#hashmapiterator)\<T\>|
 |[empty?](#empty)|[HashMap](#hashmap)\<T\> this|bool|
 |[get](#get)|[HashMap](#hashmap)\<T\> this, [string](/en/lib/string#string) key|T|
 |[has?](#has)|[HashMap](#hashmap)\<T\> this, [string](/en/lib/string#string) key|bool|
-|[keys](#keys)|[HashMap](#hashmap)\<T\> this|[array](/en/lib/array#array)([string](/en/lib/string#string))|
+|[keys](#keys)|[HashMap](#hashmap)\<T\> this|[list](/en/lib/list#list)([string](/en/lib/string#string))|
 |[remove](#remove)|[HashMap](#hashmap)\<T\> this, [string](/en/lib/string#string) key||
 |[set](#set)|[HashMap](#hashmap)\<T\> this, [string](/en/lib/string#string) key, T value||
 |[size](#size)|[HashMap](#hashmap)\<T\> this|int|
-|[values](#values)|[HashMap](#hashmap)\<T\> this|[array](/en/lib/array#array)(T)|
+|[values](#values)|[HashMap](#hashmap)\<T\> this|[list](/en/lib/list#list)(T)|
 
 ## Function Descriptions
 
@@ -31,15 +31,15 @@ Dictionary that associates values by keys.
 Create an empty HashMap.
 ___
 
-<a id="new_arrays"></a>
-- new ( [array](/en/lib/array#array)(string) keys, [array](/en/lib/array#array)(T) values ) ( [HashMap](#hashmap)\<T\> )
+<a id="new_lists"></a>
+- new ( [list](/en/lib/list#list)(string) keys, [list](/en/lib/list#list)(T) values ) ( [HashMap](#hashmap)\<T\> )
 
 Create a new HashMap by associating each key with its corresponding value.
 `keys` and `values` sizes must match.
 ___
 
 <a id="new_pairs"></a>
-- new ( [array](/en/lib/array#array)([Pair](/en/lib/pair#pair)\<[string](/en/lib/string#string), T\>) pairs ) ( [HashMap](#hashmap)\<T\> )
+- new ( [list](/en/lib/list#list)([Pair](/en/lib/pair#pair)\<[string](/en/lib/string#string), T\>) pairs ) ( [HashMap](#hashmap)\<T\> )
 
 Create a new HashMap with `pairs`.
 ___
@@ -81,7 +81,7 @@ Returns `true` if the `key` exists inside the HashMap.
 ___
 
 <a id="keys"></a>
-- keys ( [HashMap](#hashmap)\<T\> this ) ( [array](/en/lib/array#array)([string](/en/lib/string#string)) )
+- keys ( [HashMap](#hashmap)\<T\> this ) ( [list](/en/lib/list#list)([string](/en/lib/string#string)) )
 
 Returns the list of all keys.
 ___
@@ -105,7 +105,7 @@ Returns the number of elements in the HashMap.
 ___
 
 <a id="values"></a>
-- values ( [HashMap](#hashmap)\<T\> this ) ( [array](/en/lib/array#array)(T) )
+- values ( [HashMap](#hashmap)\<T\> this ) ( [list](/en/lib/list#list)(T) )
 
 Returns the list of all values.
 ___

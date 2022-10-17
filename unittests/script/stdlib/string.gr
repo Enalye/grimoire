@@ -1,0 +1,38 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
+
+event methods() {
+    let a = "Bonjour";
+
+    assert(a:size == 7);
+    assert(!a:isEmpty);
+
+    a:push(", les amis");
+    a:unshift("Coucou ! ");
+
+    assert(a:first? == "C");
+    assert(a:last? == "s");
+
+    assert(a == "Coucou ! Bonjour, les amis");
+
+    assert(a:contains("!"));
+    a:remove(7);
+    assert(!a:contains("!"));
+
+    assert(a:indexOf("ou")? == 1);
+    assert(a:lastIndexOf("ou")? == 12);
+    assert(a:indexOf("salut") ?? -1 == -1);
+    assert(a:lastIndexOf("salut") ?? -1 == -1);
+
+    assert(a:slice(12, a:size) == "our, les amis");
+    assert("saucisse":reverse == "essicuas");
+
+    int i;
+    for(char, "anticonstitutionnellement":each) {
+        assert(char == "anticonstitutionnellement":slice(i));
+        i++;
+    }
+}

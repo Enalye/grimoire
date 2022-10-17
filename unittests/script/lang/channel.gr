@@ -1,0 +1,45 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
+
+event send_receive() {
+    /*channel(int) c;
+    sender(c);
+    assert(<- c == 5);*/
+}
+
+task sender(channel(int) c) {
+    "sender":print;
+    c <- 5;
+    "sent":print;
+}
+
+event test_select() {
+    channel(int) c;
+    sender2(c);
+    
+    int i;
+    select
+    case(i = <- c)
+        assert(i == 5);
+    yield
+
+    select
+    case(i = <- c)
+        assert(i == 7);
+    default
+        assert(false);
+
+    select
+    case(i = <- c)
+        assert(false);
+    default
+        assert(true);
+}
+
+task sender2(channel(int) c) {
+    c <- 5;
+    c <- 7;
+}

@@ -1,16 +1,14 @@
-# Alias de type
-
-Un alias de type permet à un type de prendre un nom différent, permettant de raccourcir des signatures trop longues.
-
+# Alias
+Un alias de type permet de substituer un type à un autre.
 ```grimoire
-function square(int i) (int) {
+function auCarré(int i) (int) {
 	return i * i;
 };
 
-alias MyFunc = function(int) (int);
+alias MaFonction = function(int) (int);
 
 event onLoad() {
-    MyFunc myFunc = &(MyFunc) square;
-	10:myFunc:print;
+    MaFonction maFonction = @(MaFonction) auCarré;
+	10:maFonction:print;
 }
 ```

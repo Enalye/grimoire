@@ -1,0 +1,10 @@
+event test_throw() {
+    try {
+        throw "Test";
+    }
+    catch(e) {
+        assert(e == "Test");
+        return;
+    }
+    assert(false);
+}

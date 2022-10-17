@@ -1,31 +1,32 @@
 # Canaux
 
-Les canaux sont un concept qui permet la communication synchronisée entre différentes tâches.
-Grosso merdo c’est la même tambouille qu’en Go.
-
-Un canal se crée comme ceci:
+Les canaux permettent l’échange synchronisé de valeurs entre plusieurs tâches.
 ```grimoire
-channel(int) c = channel(int, 5);
+channel(int) canal;
 ```
-Ici, on crée un canal qui peut accueillir jusqu’à 5 entiers.
-Cette capacité (5), est optionnelle, par défaut elle est de 1.
 
-Pour passer ou récupérer une valeur d’un canal, on utilise l’opérateur `<-`:
+Par défaut, un canal a une capacité de 1.
+Pour changer sa capacité, on explicite lors de l’initialisation.
+```grimoire
+let canal = channel(int, 5); // Capacité de 5
+```
+
+L’opérateur `<-` permet de passer ou de récupérer une valeur d’un canal.
 ```grimoire
 let c = channel(int);
 c <- 1; //On envoie la valeur 1 dans le canal
 int value = <-c; //On récupère la valeur depuis le canal
 ```
 
-En revanche, l’envoie ou la réception est bloquant, on ne peut le faire sur la même tâche.
+Si aucune valeur n’est disponible dans le canal, la tâche réceptrice est bloquée.
 ```grimoire
-task foo(channel(string) c) {
-	print(<-c);
+task foo(channel(string) canal) {
+	print(<- canal); //Bloqué tant que canal est vide
 }
-event onLoad() {
-	let c = channel(string);
+
+event main() {
+	channel(string) c;
 	foo(c);
 	c <- "CC le monde !";
 }
 ```
-Là, foo sera bloqué jusqu’à ce que quelque chose soit écrit dans le canal, où il l’affichera.

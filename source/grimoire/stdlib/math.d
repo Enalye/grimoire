@@ -10,19 +10,15 @@ import std.algorithm.comparison : clamp;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
-    library.addVariable("PI", grReal, PI); //@ TODO: const
+    library.addVariable("PI", grConst(grReal), PI);
 
     library.addFunction(&_min_r, "min", [grReal, grReal], [grReal]);
     library.addFunction(&_min_i, "min", [grInt, grInt], [grInt]);
     library.addFunction(&_max_r, "max", [grReal, grReal], [grReal]);
     library.addFunction(&_max_i, "max", [grInt, grInt], [grInt]);
 
-    library.addFunction(&_clamp_r, "clamp", [grReal, grReal, grReal], [
-            grReal
-        ]);
-    library.addFunction(&_clamp_i, "clamp", [grInt, grInt, grInt], [
-            grInt
-        ]);
+    library.addFunction(&_clamp_r, "clamp", [grReal, grReal, grReal], [grReal]);
+    library.addFunction(&_clamp_i, "clamp", [grInt, grInt, grInt], [grInt]);
 
     library.addFunction(&_rand01, "rand", [], [grReal]);
     library.addFunction(&_rand_r, "rand", [grReal, grReal], [grReal]);
@@ -48,9 +44,7 @@ package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
     library.addOperator(&_pow_r, GrLibrary.Operator.power, [grReal, grReal], grReal);
 
     library.addFunction(&_lerp, "lerp", [grReal, grReal, grReal], [grReal]);
-    library.addFunction(&_rlerp, "rlerp", [grReal, grReal, grReal], [
-            grReal
-        ]);
+    library.addFunction(&_rlerp, "rlerp", [grReal, grReal, grReal], [grReal]);
 
     library.addFunction(&_abs_i, "abs", [grInt], [grInt]);
     library.addFunction(&_abs_r, "abs", [grReal], [grReal]);
@@ -58,15 +52,13 @@ package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
     library.addFunction(&_ceil, "ceil", [grReal], [grReal]);
     library.addFunction(&_round, "round", [grReal], [grReal]);
     library.addFunction(&_truncate, "truncate", [grReal], [grReal]);
-    library.addFunction(&_positive_i, "positive?", [grInt], [grBool]);
-    library.addFunction(&_positive_r, "positive?", [grReal], [grBool]);
-    library.addFunction(&_negative_i, "negative?", [grInt], [grBool]);
-    library.addFunction(&_negative_r, "negative?", [grReal], [grBool]);
-    library.addFunction(&_zero_i, "zero?", [grInt], [grBool]);
-    library.addFunction(&_zero_r, "zero?", [grReal], [grBool]);
-    library.addFunction(&_nan, "invalid?", [grReal], [grBool]);
-    library.addFunction(&_even, "even?", [grInt], [grBool]);
-    library.addFunction(&_odd, "odd?", [grInt], [grBool]);
+
+    library.addFunction(&_isNaN, "isNaN", [grReal], [grBool]);
+
+    library.addFunction(&_approach_i, "approach", [grInt, grInt, grInt], [grInt]);
+    library.addFunction(&_approach_r, "approach", [grReal, grReal, grReal], [
+            grReal
+        ]);
 }
 
 private void _min_r(GrCall call) {
@@ -229,38 +221,24 @@ private void _truncate(GrCall call) {
     call.setReal(trunc(call.getReal(0)));
 }
 
-private void _positive_i(GrCall call) {
-    call.setBool(call.getInt(0) > 0);
-}
-
-private void _positive_r(GrCall call) {
-    call.setBool(call.getReal(0) > 0);
-}
-
-private void _negative_i(GrCall call) {
-    call.setBool(call.getInt(0) < 0);
-}
-
-private void _negative_r(GrCall call) {
-    call.setBool(call.getReal(0) < 0);
-}
-
-private void _zero_i(GrCall call) {
-    call.setBool(call.getInt(0) == 0);
-}
-
-private void _zero_r(GrCall call) {
-    call.setBool(call.getReal(0) == 0);
-}
-
-private void _nan(GrCall call) {
+private void _isNaN(GrCall call) {
     call.setBool(isNaN(call.getReal(0)));
 }
 
-private void _even(GrCall call) {
-    call.setBool(!(call.getInt(0) & 0x1));
+private void _approach_i(GrCall call) {
+    import std.algorithm : min, max;
+
+    const GrInt value = call.getInt(0);
+    const GrInt target = call.getInt(1);
+    const GrInt step = call.getInt(2);
+    call.setInt(value > target ? max(value - step, target) : min(value + step, target));
 }
 
-private void _odd(GrCall call) {
-    call.setBool(call.getInt(0) & 0x1);
+private void _approach_r(GrCall call) {
+    import std.algorithm : min, max;
+
+    const GrReal value = call.getReal(0);
+    const GrReal target = call.getReal(1);
+    const GrReal step = call.getReal(2);
+    call.setReal(value > target ? max(value - step, target) : min(value + step, target));
 }

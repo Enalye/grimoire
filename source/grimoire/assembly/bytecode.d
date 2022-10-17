@@ -15,83 +15,38 @@ enum GrOpcode {
     try_,
     catch_,
     die,
-    quit,
+    exit,
     yield,
     task,
     anonymousTask,
     new_,
 
-    channel_int,
-    channel_real,
-    channel_string,
-    channel_object,
-    send_int,
-    send_real,
-    send_string,
-    send_object,
-    receive_int,
-    receive_real,
-    receive_string,
-    receive_object,
+    channel,
+    send,
+    receive,
     startSelectChannel,
     endSelectChannel,
     tryChannel,
     checkChannel,
 
-    shiftStack_int,
-    shiftStack_real,
-    shiftStack_string,
-    shiftStack_object,
+    shiftStack,
 
-    localStore_int,
-    localStore_real,
-    localStore_string,
-    localStore_object,
-    localStore2_int,
-    localStore2_real,
-    localStore2_string,
-    localStore2_object,
-    localLoad_int,
-    localLoad_real,
-    localLoad_string,
-    localLoad_object,
+    localStore,
+    localStore2,
+    localLoad,
 
-    globalStore_int,
-    globalStore_real,
-    globalStore_string,
-    globalStore_object,
-    globalStore2_int,
-    globalStore2_real,
-    globalStore2_string,
-    globalStore2_object,
-    globalLoad_int,
-    globalLoad_real,
-    globalLoad_string,
-    globalLoad_object,
+    globalStore,
+    globalStore2,
+    globalLoad,
 
-    refStore_int,
-    refStore_real,
-    refStore_string,
-    refStore_object,
-    refStore2_int,
-    refStore2_real,
-    refStore2_string,
-    refStore2_object,
+    refStore,
+    refStore2,
 
-    fieldStore_int,
-    fieldStore_real,
-    fieldStore_string,
-    fieldStore_object,
+    fieldRefStore,
+    fieldRefLoad,
+    fieldRefLoad2,
     fieldLoad,
     fieldLoad2,
-    fieldLoad_int,
-    fieldLoad_real,
-    fieldLoad_string,
-    fieldLoad_object,
-    fieldLoad2_int,
-    fieldLoad2_real,
-    fieldLoad2_string,
-    fieldLoad2_object,
 
     const_int,
     const_real,
@@ -100,14 +55,8 @@ enum GrOpcode {
     const_meta,
     const_null,
 
-    globalPush_int,
-    globalPush_real,
-    globalPush_string,
-    globalPush_object,
-    globalPop_int,
-    globalPop_real,
-    globalPop_string,
-    globalPop_object,
+    globalPush,
+    globalPop,
 
     equal_int,
     equal_real,
@@ -123,7 +72,11 @@ enum GrOpcode {
     greater_real,
     lesser_int,
     lesser_real,
-    isNonNull_object,
+    checkNull,
+    optionalTry,
+    optionalOr,
+    optionalCall,
+    optionalCall2,
 
     and_int,
     or_int,
@@ -146,21 +99,12 @@ enum GrOpcode {
     decrement_int,
     decrement_real,
 
-    copy_int,
-    copy_real,
-    copy_string,
-    copy_object,
-    swap_int,
-    swap_real,
-    swap_string,
-    swap_object,
+    copy,
+    swap,
 
     setupIterator,
 
-    localStack_int,
-    localStack_real,
-    localStack_string,
-    localStack_object,
+    localStack,
     call,
     anonymousCall,
     primitiveCall,
@@ -171,46 +115,18 @@ enum GrOpcode {
     jumpEqual,
     jumpNotEqual,
 
-    array_int,
-    array_real,
-    array_string,
-    array_object,
-    length_int,
-    length_real,
-    length_string,
-    length_object,
-    index_int,
-    index_real,
-    index_string,
-    index_object,
-    index2_int,
-    index2_real,
-    index2_string,
-    index2_object,
-    index3_int,
-    index3_real,
-    index3_string,
-    index3_object,
+    list,
+    length_list,
+    index_list,
+    index2_list,
+    index3_list,
 
-    concatenate_intArray,
-    concatenate_realArray,
-    concatenate_stringArray,
-    concatenate_objectArray,
-    append_int,
-    append_real,
-    append_string,
-    append_object,
-    prepend_int,
-    prepend_real,
-    prepend_string,
-    prepend_object,
+    concatenate_list,
+    append_list,
+    prepend_list,
 
-    equal_intArray,
-    equal_realArray,
-    equal_stringArray,
-    notEqual_intArray,
-    notEqual_realArray,
-    notEqual_stringArray,
+    equal_list,
+    notEqual_list,
 
     debugProfileBegin,
     debugProfileEnd
@@ -232,7 +148,7 @@ final class GrBytecode {
             /// Callback index
             int index;
             /// Parameters
-            uint iparams, fparams, sparams, oparams;
+            uint params;
             /// Ditto
             uint[] parameters;
             /// Signature
@@ -250,7 +166,7 @@ final class GrBytecode {
             /// Realing init value
             GrReal rvalue;
             /// String init value
-            GrString svalue;
+            GrStringValue svalue;
         }
 
         /// All the instructions.
@@ -263,7 +179,7 @@ final class GrBytecode {
         GrReal[] rconsts;
 
         /// String constants.
-        GrString[] sconsts;
+        GrStringValue[] sconsts;
 
         /// Callable primitives.
         PrimitiveReference[] primitives;
@@ -271,14 +187,8 @@ final class GrBytecode {
         /// All the classes.
         GrClassBuilder[] classes;
 
-        /// Number of int based global variables declared.
-        uint iglobalsCount;
-        /// Number of real based global variables declared.
-        uint rglobalsCount;
-        /// Number of string based global variables declared.
-        uint sglobalsCount;
-        /// Number of ptr based global variables declared.
-        uint oglobalsCount;
+        /// Number of global variables declared.
+        uint globalsCount;
 
         /// global event functions.
         /// Their name are in a mangled state.
@@ -304,10 +214,7 @@ final class GrBytecode {
         sconsts = bytecode.sconsts;
         primitives = bytecode.primitives;
         classes = bytecode.classes;
-        iglobalsCount = bytecode.iglobalsCount;
-        rglobalsCount = bytecode.rglobalsCount;
-        sglobalsCount = bytecode.sglobalsCount;
-        oglobalsCount = bytecode.oglobalsCount;
+        globalsCount = bytecode.globalsCount;
         events = bytecode.events;
         variables = bytecode.variables;
         symbols = bytecode.symbols.dup; //@TODO: change the shallow copy
@@ -323,14 +230,18 @@ final class GrBytecode {
         deserialize(buffer);
     }
 
+    string[] getEvents() {
+        return events.keys;
+    }
+
     /// Save the bytecode to a file.
     void save(string fileName) {
         std.file.write(fileName, serialize());
     }
 
-    /// Serialize the bytecode into an array.
+    /// Serialize the bytecode into an list.
     ubyte[] serialize() {
-        void writeStr(ref Appender!(ubyte[]) buffer, GrString s) {
+        void writeStr(ref Appender!(ubyte[]) buffer, GrStringValue s) {
             buffer.append!uint(cast(uint) s.length);
             buffer.put(cast(ubyte[]) s);
         }
@@ -343,10 +254,7 @@ final class GrBytecode {
         buffer.append!uint(cast(uint) sconsts.length);
         buffer.append!uint(cast(uint) opcodes.length);
 
-        buffer.append!uint(iglobalsCount);
-        buffer.append!uint(rglobalsCount);
-        buffer.append!uint(sglobalsCount);
-        buffer.append!uint(oglobalsCount);
+        buffer.append!uint(globalsCount);
 
         buffer.append!uint(cast(uint) events.length);
         buffer.append!uint(cast(uint) primitives.length);
@@ -371,10 +279,7 @@ final class GrBytecode {
 
         foreach (primitive; primitives) {
             buffer.append!uint(cast(uint) primitive.index);
-            buffer.append!uint(primitive.iparams);
-            buffer.append!uint(primitive.fparams);
-            buffer.append!uint(primitive.sparams);
-            buffer.append!uint(primitive.oparams);
+            buffer.append!uint(primitive.params);
 
             buffer.append!uint(cast(uint) primitive.inSignature.length);
             buffer.append!uint(cast(uint) primitive.outSignature.length);
@@ -421,10 +326,10 @@ final class GrBytecode {
         deserialize(cast(ubyte[]) std.file.read(fileName));
     }
 
-    /// Deserialize the bytecode from an array.
+    /// Deserialize the bytecode from an list.
     void deserialize(ubyte[] buffer) {
-        GrString readStr(ref ubyte[] buffer) {
-            GrString s;
+        GrStringValue readStr(ref ubyte[] buffer) {
+            GrStringValue s;
             const uint size = buffer.read!uint();
             if (size == 0)
                 return s;
@@ -444,10 +349,7 @@ final class GrBytecode {
         sconsts.length = buffer.read!uint();
         opcodes.length = buffer.read!uint();
 
-        iglobalsCount = buffer.read!uint();
-        rglobalsCount = buffer.read!uint();
-        sglobalsCount = buffer.read!uint();
-        oglobalsCount = buffer.read!uint();
+        globalsCount = buffer.read!uint();
 
         const uint eventsCount = buffer.read!uint();
         primitives.length = buffer.read!uint();
@@ -480,10 +382,7 @@ final class GrBytecode {
 
         for (size_t i; i < primitives.length; ++i) {
             primitives[i].index = buffer.read!uint();
-            primitives[i].iparams = buffer.read!uint();
-            primitives[i].fparams = buffer.read!uint();
-            primitives[i].sparams = buffer.read!uint();
-            primitives[i].oparams = buffer.read!uint();
+            primitives[i].params = buffer.read!uint();
 
             const uint inParamsCount = buffer.read!uint();
             const uint outParamsCount = buffer.read!uint();

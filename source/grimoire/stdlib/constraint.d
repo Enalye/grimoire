@@ -17,7 +17,7 @@ package(grimoire.stdlib) void grLoadStdLibConstraint() {
     grAddConstraint("Task", &_task, 0);
     grAddConstraint("Callable", &_callable, 0);
     grAddConstraint("Class", &_class, 0);
-    grAddConstraint("Foreign", &_foreign, 0);
+    grAddConstraint("Native", &_native, 0);
     grAddConstraint("Numeric", &_numeric, 0);
     grAddConstraint("NotNullable", &_notnullable, 0);
     grAddConstraint("Nullable", &_nullable, 0);
@@ -47,13 +47,14 @@ private bool _register(GrData, GrType type, const GrType[] types) {
         return type == GrType.Base.real_;
     case string_:
         return type == GrType.Base.string_;
-    case array:
+    case optional:
+    case list:
     case channel:
     case class_:
-    case foreign:
+    case native:
     case reference:
     case null_:
-        return type == GrType.Base.class_ || type == GrType.Base.array || type == GrType.Base.foreign
+        return type == GrType.Base.optional || type == GrType.Base.class_ || type == GrType.Base.list || type == GrType.Base.native
             || type == GrType.Base.channel || type == GrType.Base.reference || type == GrType
             .Base.null_;
     case void_:
@@ -86,8 +87,8 @@ private bool _class(GrData, GrType type, const GrType[]) {
     return type.base == GrType.Base.class_;
 }
 
-private bool _foreign(GrData, GrType type, const GrType[]) {
-    return type.base == GrType.Base.foreign;
+private bool _native(GrData, GrType type, const GrType[]) {
+    return type.base == GrType.Base.native;
 }
 
 private bool _numeric(GrData, GrType type, const GrType[]) {
@@ -101,14 +102,15 @@ private bool _notnullable(GrData, GrType type, const GrType[]) {
     case real_:
     case enum_:
     case string_:
-    case array:
+    case list:
     case channel:
     case function_:
     case task:
-        return true;
     case class_:
-    case foreign:
+    case native:
     case reference:
+        return true;
+    case optional:
     case null_:
     case void_:
     case internalTuple:
@@ -123,14 +125,15 @@ private bool _nullable(GrData, GrType type, const GrType[]) {
     case real_:
     case enum_:
     case string_:
-    case array:
+    case list:
     case channel:
     case function_:
     case task:
-        return false;
     case class_:
-    case foreign:
+    case native:
     case reference:
+        return false;
+    case optional:
     case null_:
     case void_:
     case internalTuple:
@@ -147,15 +150,15 @@ private bool _not(GrData, GrType type, const GrType[] types) {
 }
 
 private bool _base(GrData data, GrType type, const GrType[] types) {
-    if (type.base == GrType.Base.foreign && types[0].base == GrType.Base.foreign) {
+    if (type.base == GrType.Base.native && types[0].base == GrType.Base.native) {
         GrType baseType = types[0];
         for (;;) {
             if (type == baseType)
                 return true;
-            const GrForeignDefinition foreignType = data.getForeign(baseType.mangledType);
-            if (!foreignType.parent.length)
+            const GrNativeDefinition nativeType = data.getNative(baseType.mangledType);
+            if (!nativeType.parent.length)
                 return false;
-            baseType.mangledType = foreignType.parent;
+            baseType.mangledType = nativeType.parent;
         }
     }
     else if (type.base == GrType.Base.class_ && types[0].base == GrType.Base.class_) {
@@ -173,14 +176,14 @@ private bool _base(GrData data, GrType type, const GrType[] types) {
 }
 
 private bool _extends(GrData data, GrType type, const GrType[] types) {
-    if (type.base == GrType.Base.foreign && types[0].base == GrType.Base.foreign) {
+    if (type.base == GrType.Base.native && types[0].base == GrType.Base.native) {
         for (;;) {
             if (type == types[0])
                 return true;
-            const GrForeignDefinition foreignType = data.getForeign(type.mangledType);
-            if (!foreignType.parent.length)
+            const GrNativeDefinition nativeType = data.getNative(type.mangledType);
+            if (!nativeType.parent.length)
                 return false;
-            type.mangledType = foreignType.parent;
+            type.mangledType = nativeType.parent;
         }
     }
     else if (type.base == GrType.Base.class_ && types[0].base == GrType.Base.class_) {

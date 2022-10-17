@@ -17,7 +17,7 @@
   - [Operators](/en/lang/operators)
 
 - Compound types:
-  - [Arrays](/en/lang/array)
+  - [Lists](/en/lang/list)
   - [Enumerations](/en/lang/enum)
   - [Classes](/en/lang/class)
   - [Channels](/en/lang/channel)

@@ -156,14 +156,14 @@ while(i < 10)
 
 ## For
 
-`for` loops are yet another kind of loop that will automatically iterate on an array of values.
+`for` loops are yet another kind of loop that will automatically iterate on an list of values.
 For instance:
 ```grimoire
 for(i, [1, 2, 3, 4]) {
 	print(i);
 }
 ```
-Here, the for statement will take each value of the array, then assign them to the variable "i" specified.
+Here, the for statement will take each value of the list, then assign them to the variable "i" specified.
 
 The variable can be already declared, or declared inside the for statement like this:
 
@@ -177,11 +177,11 @@ for(int i, [1, 2]) {}
 ```
 If no type is specified, or declared as let, the variable will be automatically declared as `var`.
 
-The variable type must be convertible from the array's values, or it will raise a runtime error.
+The variable type must be convertible from the list's values, or it will raise a runtime error.
 
 ### Iterators
 
-`for` can also iterate on special object or foreign called iterators.
+`for` can also iterate on special object or native called iterators.
 In grimoire, an iterator is defined by the fact that a function that satisfies this signature exists:
 > `function next(Iterator) (bool, VALUE)`
 

@@ -16,12 +16,12 @@ They're only a handful of basic type recognised by grimoire.
 * Floating point number declared with **real** ex: 2.35f (Default value: 0f)
 * Boolean declared with **bool** ex: true, false (Default value: false)
 * String declared with **string** ex: "Hello" (Default value: "")
-* [Array](#arrays) (Default value: [])
+* [List](#lists) (Default value: [])
 * [Function](#functions) (Default value: empty function)
 * [Task](#tasks) (Default value: empty task)
 * [Channel](#channels) (Default value: size 1 channel)
 * [Class](#classes) (Default value: null)
-* [Foreign](#foreign-types) (Default value: null)
+* [Native](#native-types) (Default value: null)
 * [Enumerations](#enumerations) (Default value: the first value)
 
 ### Auto Type

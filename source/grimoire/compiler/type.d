@@ -31,11 +31,12 @@ struct GrType {
         real_,
         bool_,
         string_,
-        array,
+        optional,
+        list,
         function_,
         task,
         class_,
-        foreign,
+        native,
         channel,
         enum_,
         internalTuple,
@@ -45,7 +46,7 @@ struct GrType {
     /// General type, basic types only use that while compound types also use mangledType
     /// and mangledReturnType.
     Base base;
-    /// Used for compound types like arrays, functions, etc.
+    /// Used for compound types like lists, functions, etc.
     string mangledType, mangledReturnType;
     /// Is this from an object field ?
     bool isField;
@@ -60,16 +61,14 @@ struct GrType {
     bool isPure;
 
     /// Init as a basic type.
-    this(Base base_, bool isPure = false) {
+    this(Base base_) {
         base = base_;
-        isPure = isPure;
     }
 
     /// Compound type.
-    this(Base base_, string mangledType_, bool isPure = false) {
+    this(Base base_, string mangledType_) {
         base = base_;
         mangledType = mangledType_;
-        isPure = isPure;
     }
 
     /// Only assign a simple type (base).
@@ -89,8 +88,8 @@ struct GrType {
             return false;
         if (base == GrType.Base.function_ || base == GrType.Base.task)
             return mangledType == v.mangledType && mangledReturnType == v.mangledReturnType;
-        if (base == GrType.Base.foreign || base == GrType.Base.class_ ||
-            base == GrType.Base.enum_ || base == GrType.Base.array)
+        if (base == GrType.Base.native || base == GrType.Base.class_ ||
+            base == GrType.Base.enum_ || base == GrType.Base.list)
             return mangledType == v.mangledType;
         return true;
     }
@@ -110,76 +109,24 @@ const GrType grReal = GrType(GrType.Base.real_);
 /// Bool
 const GrType grBool = GrType(GrType.Base.bool_);
 /// String
-const GrType grString = GrType(GrType.Base.string_, false);
-/// Ditto
-const GrType grPureString = GrType(GrType.Base.string_, true);
-/// Int array
-const GrType grIntArray = GrType(GrType.Base.array, grMangleSignature([grInt]), false);
-/// Ditto
-const GrType grPureIntArray = GrType(GrType.Base.array, grMangleSignature([
-        grInt
-    ]), true);
-/// Real array
-const GrType grRealArray = GrType(GrType.Base.array, grMangleSignature([grReal]), false);
-/// Ditto
-const GrType grPureRealArray = GrType(GrType.Base.array, grMangleSignature([
-        grReal
-    ]), true);
-/// Bool array
-const GrType grBoolArray = GrType(GrType.Base.array, grMangleSignature([grBool]), false);
-/// Ditto
-const GrType grPureBoolArray = GrType(GrType.Base.array, grMangleSignature([
-        grBool
-    ]), true);
-/// String array
-const GrType grStringArray = GrType(GrType.Base.array, grMangleSignature([
-        grString
-    ]), false);
-/// Ditto
-const GrType grPureStringArray = GrType(GrType.Base.array, grMangleSignature([
-        grString
-    ]), true);
-/// Int channel
-const GrType grIntChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grInt
-    ]), false);
-/// Ditto
-const GrType grPureIntChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grInt
-    ]), true);
-/// Real channel
-const GrType grRealChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grReal
-    ]), false);
-/// Ditto
-const GrType grPureRealChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grReal
-    ]), true);
-/// Bool channel
-const GrType grBoolChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grBool
-    ]), false);
-/// Ditto
-const GrType grPureBoolChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grBool
-    ]), true);
-/// String channel
-const GrType grStringChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grString
-    ]), false);
-/// Ditto
-const GrType grPureStringChannel = GrType(GrType.Base.channel, grMangleSignature([
-        grString
-    ]), true);
+const GrType grString = GrType(GrType.Base.string_);
 
-/// Returns a GrType of type array and of `subType` subtype.
-GrType grArray(GrType subType, bool isPure = false) {
-    return GrType(GrType.Base.array, grMangleSignature([subType]), isPure);
+/// Make an optional version of the type.
+GrType grOptional(GrType subType) {
+    GrType type = GrType(GrType.Base.optional, grMangleSignature([subType]));
+    type.isPure = subType.isPure;
+    type.isConst = subType.isConst;
+    return type;
+}
+
+/// Returns a GrType of type list and of `subType` subtype.
+GrType grList(GrType subType) {
+    return GrType(GrType.Base.list, grMangleSignature([subType]));
 }
 
 /// Returns a GrType of type channel and of `subType` subtype.
-GrType grChannel(GrType subType, bool isPure = false) {
-    return GrType(GrType.Base.channel, grMangleSignature([subType]), isPure);
+GrType grChannel(GrType subType) {
+    return GrType(GrType.Base.channel, grMangleSignature([subType]));
 }
 
 /// Returns a GrType of type function with given signatures.
@@ -196,12 +143,23 @@ GrType grTask(GrType[] signature) {
 }
 
 /// Temporary type for template functions.
-GrType grAny(string name, bool isPure = false) {
+GrType grAny(string name) {
     GrType type;
     type.base = GrType.Base.void_;
     type.mangledType = name;
     type.isAny = true;
-    type.isPure = isPure;
+    return type;
+}
+
+/// Make a const version of the type.
+GrType grConst(GrType type) {
+    type.isConst = true;
+    return type;
+}
+
+/// Make a pure version of the type.
+GrType grPure(GrType type) {
+    type.isPure = true;
     return type;
 }
 
@@ -223,8 +181,8 @@ bool grIsKindOfString(GrType.Base type) {
 
 /// The type is handled by a ptr based register
 bool grIsKindOfObject(GrType.Base type) {
-    return type == GrType.Base.class_ || type == GrType.Base.array ||
-        type == GrType.Base.foreign || type == GrType.Base.channel ||
+    return type == GrType.Base.class_ || type == GrType.Base.list ||
+        type == GrType.Base.native || type == GrType.Base.channel ||
         type == GrType.Base.reference || type == GrType.Base.null_;
 }
 
@@ -289,10 +247,14 @@ package class GrVariable {
     uint fileId;
     /// Position information in case of errors.
     uint lexPosition;
+    /// The variable may be null.
+    bool isOptional;
+    /// Position of the optional instruction.
+    uint optionalPosition;
 }
 
 /// Define an arbitrary D pointer.
-final class GrForeignDefinition {
+final class GrNativeDefinition {
     /// Identifier.
     string name;
     /// Mother class it inherit from.
@@ -300,7 +262,7 @@ final class GrForeignDefinition {
 }
 
 /// Ditto
-final class GrAbstractForeignDefinition {
+final class GrAbstractNativeDefinition {
     /// Identifier.
     string name;
     /// Mother class it inherits from.
@@ -311,11 +273,10 @@ final class GrAbstractForeignDefinition {
     GrType[] parentTemplateSignature;
 }
 
-/// Create a foreign GrType for the type system.
-GrType grGetForeignType(string name, const GrType[] signature = [], bool isPure = false) {
-    GrType type = GrType.Base.foreign;
+/// Create a native GrType for the type system.
+GrType grGetNativeType(string name, const GrType[] signature = []) {
+    GrType type = GrType.Base.native;
     type.mangledType = grMangleComposite(name, signature);
-    type.isPure = isPure;
     return type;
 }
 
@@ -435,10 +396,9 @@ final class GrClassDefinition {
 }
 
 /// Create a GrType of class for the type system.
-GrType grGetClassType(const string name, const GrType[] signature = [], bool isPure = false) {
+GrType grGetClassType(const string name, const GrType[] signature = []) {
     GrType type = GrType.Base.class_;
     type.mangledType = grMangleComposite(name, signature);
-    type.isPure = isPure;
     return type;
 }
 
@@ -455,7 +415,7 @@ final class GrVariableDefinition {
     /// Floating init value
     GrReal rvalue;
     /// String init value
-    GrString svalue;
+    GrStringValue svalue;
     /// Register.
     uint register;
 }
@@ -480,7 +440,7 @@ package class GrFunction {
     /// Ditto
     Scope[] scopes;
 
-    uint[] iregisterAvailables, rregisterAvailables, sregisterAvailables, oregisterAvailables;
+    uint[] registerAvailables;
 
     /// All the function instructions.
     GrInstruction[] instructions;
@@ -501,8 +461,8 @@ package class GrFunction {
     GrFunction anonParent;
     uint position, anonReference;
 
-    uint nbIntegerParameters, nbRealParameters, nbStringParameters, nbObjectParameters;
-    uint ilocalsCount, flocalsCount, slocalsCount, olocalsCount;
+    uint nbParameters;
+    uint localsCount;
 
     GrDeferrableSection[] deferrableSections;
     GrDeferBlock[] registeredDeferBlocks;
@@ -561,19 +521,14 @@ package class GrFunction {
         case function_:
         case task:
         case enum_:
-            iregisterAvailables ~= variable.register;
-            break;
         case real_:
-            rregisterAvailables ~= variable.register;
-            break;
         case string_:
-            sregisterAvailables ~= variable.register;
-            break;
-        case array:
+        case list:
+        case optional:
         case class_:
-        case foreign:
+        case native:
         case channel:
-            oregisterAvailables ~= variable.register;
+            registerAvailables ~= variable.register;
             break;
         case internalTuple:
         case reference:

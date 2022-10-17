@@ -6,12 +6,13 @@
 module grimoire.assembly.symbol;
 
 import std.format, std.file, std.bitmanip, std.array, std.outbuffer;
+import std.conv : to;
 
 alias GrBool = bool;
-alias GrInt = long;
+alias GrInt = int;
 alias GrReal = double;
-alias GrString = string;
-alias GrPtr = void*;
+alias GrStringValue = string;
+alias GrPointer = void*;
 
 /// Stack trace
 struct GrStackTrace {

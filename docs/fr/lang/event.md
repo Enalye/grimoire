@@ -1,23 +1,18 @@
 # Événements
 
-Les événements sont comme des tâches qui sont appelées depuis D.
+Contrairement à la plupart des langages, Grimoire ne dispose pas de `main`, mais des événements appelés `event`.
 
-Ils se déclarent comme des tâches et sont automatiquement public:
+Les événements sont les points d’entrée d’un programme écrit en Grimoire.
 ```grimoire
-event foo(string msg) {
-	print(msg);
+event main(string arg) {
+	print(arg);
 }
 ```
+Un événement ne peut être appelé que depuis le programme hôte.
 
-Pour l’appeler depuis D:
 ```d
-auto mangledName = grMangleComposite("foo", [grString]);
-if(vm.hasEvent(mangledName)) {
-    GrTask task = vm.callEvent(mangledName);
-	task.setString("Hello World!");
+if (vm.hasEvent("main", [grString])) {
+    GrTask task = vm.callEvent("main", [grString]);
+	task.setString("Bonjour !");
 }
 ```
-Ici, le processus est un peu spécial.
-D’abord, on doit connaître le nom formatté (nom + signature) de l’évenement avec `grMangleComposite`.
-Puis on l’appelle.
-Si l’évenement a des paramètres, on doit ***absolument*** ajouter des valeurs au nouveau contexte, sinon la machine virtuelle plantera.

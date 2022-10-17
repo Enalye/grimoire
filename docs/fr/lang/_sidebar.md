@@ -1,30 +1,27 @@
-- [Introduction](/fr/lang/intro)
-
-- Les Basiques:
-  - [Syntaxe de base](/fr/lang/grammar)
-  - [Premier programme](/fr/lang/first-program)
-  - [Importation de fichiers](/fr/lang/import)
-  - [Variables](/fr/lang/variable)
-  - [Structures de contrôle](/fr/lang/control-flow)
-
-- Fonctions:
-  - [Déclaration](/fr/lang/function)
-  - [Tâches](/fr/lang/task)
-  - [Généricité](/fr/lang/template-function)
-  - [Fonctions et tâches anonymes](/fr/lang/anonymous-function)
-  - [Événements](/fr/lang/event)
-  - [Conversion de type](/fr/lang/type-casting)
-  - [Opérateurs](/fr/lang/operators)
-
-- Types composés:
-  - [Listes](/fr/lang/array)
-  - [Énumérations](/fr/lang/enum)
-  - [Classes](/fr/lang/class)
-  - [Canaux](/fr/lang/channel)
-  - [Alias de type](/fr/lang/alias)
-
-- Erreurs:
-  - [Gestion d’erreur](/fr/lang/error)
-  - [Report de code](/fr/lang/defer)
-
-- [Implémentation de l’IPA](/fr/lang/api)
+* Langage
+    1. [Introduction](/fr/lang/intro)
+    1. [Commentaires](/fr/lang/comments)
+    1. [Import](/fr/lang/import)
+    1. [Identifiant](/fr/lang/identifier)
+    1. [Variable](/fr/lang/variable)
+    1. [Nombres](/fr/lang/number)
+    1. [Booléen](/fr/lang/bool)
+    1. [Chaîne de caractères](/fr/lang/string)
+    1. [Liste](/fr/lang/list)
+    1. [Énumération](/fr/lang/enum)
+    1. [Canal](/fr/lang/channel)
+    1. [Classe](/fr/lang/class)
+    1. [Natif](/fr/lang/native)
+    1. [Fonction](/fr/lang/function)
+    1. [Tâche](/fr/lang/task)
+    1. [Événement](/fr/lang/event)
+    1. [Optionnel](/fr/lang/optional)
+    1. [Alias](/fr/lang/alias)
+    1. [Conditions](/fr/lang/conditions)
+    1. [Boucles](/fr/lang/loops)
+    1. [Conversion](/fr/lang/casting)
+    1. [Erreur](/fr/lang/error)
+    1. [Defer](/fr/lang/defer)
+    1. [Opérateurs](/fr/lang/operators)
+* [API](/fr/api/intro)
+* [Bibliothèques](/fr/lib/intro)

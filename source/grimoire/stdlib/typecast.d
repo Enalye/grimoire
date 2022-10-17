@@ -20,10 +20,10 @@ package(grimoire.stdlib) void grLoadStdLibTypecast(GrLibrary library) {
     library.addCast(&typecast_b2s, grBool, grString);
     library.addCast(&typecast_i2s, grInt, grString);
     library.addCast(&typecast_r2s, grReal, grString);
-    library.addCast(&typecast_as2s, grPureStringArray, grString);
+    library.addCast(&typecast_as2s, grPure(grList(grString)), grString);
 
-    //As string array
-    library.addCast(&typecast_s2as, grPureString, grStringArray);
+    //As string list
+    library.addCast(&typecast_s2as, grPure(grString), grList(grString));
 }
 
 //As int
@@ -46,26 +46,26 @@ private void typecast_b2s(GrCall call) {
 }
 
 private void typecast_i2s(GrCall call) {
-    call.setString(to!GrString(call.getInt(0)));
+    call.setString(to!GrStringValue(call.getInt(0)));
 }
 
 private void typecast_r2s(GrCall call) {
-    call.setString(to!GrString(call.getReal(0)));
+    call.setString(to!GrStringValue(call.getReal(0)));
 }
 
 private void typecast_as2s(GrCall call) {
-    GrString result;
-    foreach (const sub; call.getStringArray(0).data) {
+    GrStringValue result;
+    foreach (const ref sub; call.getList(0).getStrings()) {
         result ~= sub;
     }
     call.setString(result);
 }
 
-//As string array
+//As string list
 private void typecast_s2as(GrCall call) {
-    GrStringArray result = new GrStringArray;
-    foreach (const sub; call.getString(0)) {
-        result.data ~= to!GrString(sub);
+    GrValue[] result;
+    foreach (const ref sub; call.getString(0)) {
+        result ~= GrValue(sub);
     }
-    call.setStringArray(result);
+    call.setList(result);
 }

@@ -9,8 +9,8 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 package(grimoire.stdlib) void grLoadStdLibError(GrLibrary library) {
     library.addFunction(&_assert, "assert", [grBool]);
-    library.addFunction(&_assert_msg, "assert", [grBool, grPureString]);
-    library.addFunction(&_setMeta, "_setMeta", [grPureString]);
+    library.addFunction(&_assert_msg, "assert", [grBool, grPure(grString)]);
+    library.addFunction(&_setMeta, "_setMeta", [grPure(grString)]);
 }
 
 private void _assert(GrCall call) {
@@ -26,6 +26,6 @@ private void _assert_msg(GrCall call) {
 }
 
 private void _setMeta(GrCall call) {
-    const GrString value = call.getString(0);
+    const GrStringValue value = call.getString(0);
     call.task.engine.meta = value;
 }

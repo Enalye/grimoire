@@ -10,8 +10,9 @@ import grimoire.compiler;
 public import grimoire.stdlib.util;
 
 import grimoire.stdlib.constraint;
+import grimoire.stdlib.optional;
 import grimoire.stdlib.system;
-import grimoire.stdlib.array;
+import grimoire.stdlib.list;
 import grimoire.stdlib.hashmap;
 import grimoire.stdlib.range;
 import grimoire.stdlib.string;
@@ -23,17 +24,17 @@ import grimoire.stdlib.time;
 import grimoire.stdlib.typecast;
 import grimoire.stdlib.pair;
 import grimoire.stdlib.bitmanip;
-import grimoire.stdlib.dynamic;
 import grimoire.stdlib.queue;
+import grimoire.stdlib.circularbuffer;
 
 /// Load the standard library
 GrLibrary grLoadStdLibrary() {
     GrLibrary library = new GrLibrary;
     grLoadStdLibConstraint();
-    grLoadStdLibLog(library);
     grLoadStdLibSystem(library);
-    grLoadStdLibArray(library);
-    grLoadStdLibHashMap(library);
+    grLoadStdLibOptional(library);
+    grLoadStdLibLog(library);
+    grLoadStdLibList(library);
     grLoadStdLibRange(library);
     grLoadStdLibString(library);
     grLoadStdLibChannel(library);
@@ -43,7 +44,8 @@ GrLibrary grLoadStdLibrary() {
     grLoadStdLibTypecast(library);
     grLoadStdLibPair(library);
     grLoadStdLibBitmanip(library);
-    grLoadStdLibDynamic(library);
+    grLoadStdLibHashMap(library);
     grLoadStdLibQueue(library);
+    grLoadStdLibCircularBuffer(library);
     return library;
 }

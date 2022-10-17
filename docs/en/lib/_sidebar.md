@@ -1,5 +1,5 @@
 - [Standard Library](en/lib/)
-    - [array](en/lib/array)
+    - [list](en/lib/list)
     - [bitmanip](en/lib/bitmanip)
     - [channel](en/lib/channel)
     - [error](en/lib/error)

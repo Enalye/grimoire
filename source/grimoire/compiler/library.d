@@ -22,7 +22,7 @@ class GrLibrary {
         /// Opaque pointer types. \
         /// They're pointer only defined by a name. \
         /// Can only be used with primitives.
-        GrAbstractForeignDefinition[] _abstractForeignDefinitions;
+        GrAbstractNativeDefinition[] _abstractNativeDefinitions;
         /// Type aliases
         GrTypeAliasDefinition[] _aliasDefinitions;
         /// Enum types.
@@ -67,12 +67,13 @@ class GrLibrary {
         case real_:
         case string_:
             break;
+        case optional:
         case class_:
         case channel:
         case function_:
         case task:
-        case array:
-        case foreign:
+        case list:
+        case native:
         case void_:
         case null_:
         case internalTuple:
@@ -127,8 +128,8 @@ class GrLibrary {
 
     /// Define a class type.
     GrType addClass(string name, string[] fields, GrType[] signature,
-        string[] templateVariables = [], string parent = "",
-        GrType[] parentTemplateSignature = []) {
+        string[] templateVariables = [], string parent = "", GrType[] parentTemplateSignature = [
+        ]) {
         if (fields.length != signature.length)
             throw new Exception("class signature mismatch");
         GrClassDefinition class_ = new GrClassDefinition;
@@ -150,13 +151,17 @@ class GrLibrary {
         }
 
         GrType type = GrType.Base.class_;
-        type.mangledType = name;
-        type.isAbstract = class_.templateVariables.length > 0;
+        GrType[] anySignature;
+        foreach (tmp; templateVariables) {
+            anySignature ~= grAny(tmp);
+        }
+        type.mangledType = grMangleComposite(name, anySignature);
+        //type.isAbstract = class_.templateVariables.length > 0;
         return type;
     }
 
     /// Define a type alias
-    GrType addTypeAlias(string name, GrType type) {
+    GrType addAlias(string name, GrType type) {
         GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
         typeAlias.name = name;
         typeAlias.type = type;
@@ -166,27 +171,30 @@ class GrLibrary {
     }
 
     /// Define an opaque pointer type.
-    GrType addForeign(string name, string[] templateVariables = [],
+    GrType addNative(string name, string[] templateVariables = [],
         string parent = "", GrType[] parentTemplateSignature = []) {
         if (name == parent)
             throw new Exception("`" ~ name ~ "` can't be its own parent");
-        GrAbstractForeignDefinition foreign = new GrAbstractForeignDefinition;
-        foreign.name = name;
-        foreign.templateVariables = templateVariables;
-        foreign.parent = parent;
-        foreign.parentTemplateSignature = parentTemplateSignature;
-        _abstractForeignDefinitions ~= foreign;
+        GrAbstractNativeDefinition native = new GrAbstractNativeDefinition;
+        native.name = name;
+        native.templateVariables = templateVariables;
+        native.parent = parent;
+        native.parentTemplateSignature = parentTemplateSignature;
+        _abstractNativeDefinitions ~= native;
 
-        GrType type = GrType.Base.foreign;
-        type.mangledType = name;
-        type.isAbstract = foreign.templateVariables.length > 0;
+        GrType type = GrType.Base.native;
+        GrType[] anySignature;
+        foreach (tmp; templateVariables) {
+            anySignature ~= grAny(tmp);
+        }
+        type.mangledType = grMangleComposite(name, anySignature);
+        //type.isAbstract = native.templateVariables.length > 0;
         return type;
     }
 
     /// Define a new primitive.
-    GrPrimitive addFunction(GrCallback callback, string name,
-        GrType[] inSignature = [], GrType[] outSignature = [], GrConstraint[] constraints = [
-        ]) {
+    GrPrimitive addFunction(GrCallback callback, string name, GrType[] inSignature = [
+        ], GrType[] outSignature = [], GrConstraint[] constraints = []) {
         bool isAbstract;
         foreach (GrType type; inSignature) {
             if (type.isAbstract)
@@ -350,14 +358,13 @@ class GrLibrary {
         }
         if (inSignature.length != signatureSize)
             throw new Exception("The operator `" ~ name ~ "` must take " ~ to!string(
-                    signatureSize) ~ " parameter" ~ (signatureSize > 1
-                    ? "s" : "") ~ ": " ~ grGetPrettyFunctionCall("", inSignature));
+                    signatureSize) ~ " parameter" ~ (signatureSize > 1 ?
+                    "s" : "") ~ ": " ~ grGetPrettyFunctionCall("", inSignature));
         return addOperator(callback, name, inSignature, outType, constraints);
     }
     /// Ditto
-    GrPrimitive addOperator(GrCallback callback,
-        string name, GrType[] inSignature, GrType outType,
-        GrConstraint[] constraints = []) {
+    GrPrimitive addOperator(GrCallback callback, string name,
+        GrType[] inSignature, GrType outType, GrConstraint[] constraints = []) {
         if (inSignature.length > 2uL)
             throw new Exception(
                 "The operator `" ~ name ~ "` cannot take more than 2 parameters: " ~ grGetPrettyFunctionCall("",
@@ -369,11 +376,11 @@ class GrLibrary {
     A cast operator allows to convert from one type to another.
     It must have only one parameter and return the casted value.
     */
-    GrPrimitive addCast(GrCallback callback,
-        GrType srcType, GrType dstType, bool isExplicit = false,
-        GrConstraint[] constraints = []) {
-        auto primitive = addFunction(callback, "@as",
-            [srcType, dstType], [dstType], constraints);
+    GrPrimitive addCast(GrCallback callback, GrType srcType, GrType dstType,
+        bool isExplicit = false, GrConstraint[] constraints = []) {
+        auto primitive = addFunction(callback, "@as", [srcType, dstType], [
+                dstType
+            ], constraints);
         primitive.isExplicit = isExplicit;
         return primitive;
     }
@@ -382,33 +389,32 @@ class GrLibrary {
     Define a function that will be called with the `new` operation.
     It must return the defined type.
     */
-    GrPrimitive addConstructor(GrCallback callback,
-        GrType newType, GrType[] inSignature = [],
-        GrConstraint[] constraints = []) {
-        auto primitive = addFunction(callback, "@new",
-            inSignature ~ [newType], [newType], constraints);
+    GrPrimitive addConstructor(GrCallback callback, GrType newType,
+        GrType[] inSignature = [], GrConstraint[] constraints = []) {
+        auto primitive = addFunction(callback, "@new", inSignature ~ [newType],
+            [newType], constraints);
         return primitive;
     }
 
     /**
-    Define functions that access and modify a foreign’s property.
+    Define functions that access and modify a native’s property.
     */
-    GrPrimitive[] addProperty(GrCallback getCallback, GrCallback setCallback,
-        string name, GrType foreignType,
-        GrType propertyType, GrConstraint[] constraints = []) {
+    GrPrimitive[] addProperty(GrCallback getCallback, GrCallback setCallback, string name,
+        GrType nativeType, GrType propertyType, GrConstraint[] constraints = []) {
         GrPrimitive[] primitives;
         /*assert(callbacks.length <= operations.length,
             "the number of callbacks of the property `" ~ name ~
                 "` of the type `" ~ grGetPrettyType(
-                    foreignType) ~ "` exceed the number of operations");*/
+                    nativeType) ~ "` exceed the number of operations");*/
 
         if (getCallback) {
-            primitives ~= addFunction(getCallback, name ~ "@get",
-                [foreignType], [propertyType], constraints);
+            primitives ~= addFunction(getCallback, name ~ "@get", [nativeType],
+                [propertyType], constraints);
         }
         if (setCallback) {
-            primitives ~= addFunction(setCallback, name ~ "@set",
-                [foreignType, propertyType], [propertyType], constraints);
+            primitives ~= addFunction(setCallback, name ~ "@set", [
+                    nativeType, propertyType
+                ], [propertyType], constraints);
         }
         return primitives;
     }
