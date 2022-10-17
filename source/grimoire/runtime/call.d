@@ -115,7 +115,7 @@ final class GrCall {
         return cast(GrChannel) getParameter!GrPointer(index);
     }
 
-    pragma(inline) T getForeign(T)(uint parameter) const {
+    pragma(inline) T getNative(T)(uint parameter) const {
         // We cast to object first to avoid a crash when casting to a parent class
         return cast(T) cast(Object) getParameter!GrPointer(parameter);
     }
@@ -179,7 +179,7 @@ final class GrCall {
         setResult!GrPointer(cast(GrPointer) value);
     }
 
-    pragma(inline) void setForeign(T)(T value) {
+    pragma(inline) void setNative(T)(T value) {
         setResult!GrPointer(cast(GrPointer) value);
     }
 
@@ -241,8 +241,8 @@ final class GrCall {
         return cast(GrObject) _task.engine.getObjectVariable(name);
     }
 
-    T getForeignVariable(T)(string name) const {
-        return cast(T) _task.engine.getForeignVariable(T)(name);
+    T getNativeVariable(T)(string name) const {
+        return cast(T) _task.engine.getNativeVariable(T)(name);
     }
 
     void setBoolVariable(string name, GrBool value) {
@@ -281,8 +281,8 @@ final class GrCall {
         _task.engine.setEnumVariable(name, value);
     }
 
-    void setForeignVariable(T)(string name, T value) {
-        _task.engine.setForeignVariable(name, value);
+    void setNativeVariable(T)(string name, T value) {
+        _task.engine.setNativeVariable(name, value);
     }
 
     private {

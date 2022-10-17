@@ -361,7 +361,7 @@ class GrEngine {
         return cast(GrObject) getVariable!GrPointer(name);
     }
 
-    pragma(inline) T getForeignVariable(T)(string name) const {
+    pragma(inline) T getNativeVariable(T)(string name) const {
         // We cast to object first to avoid a crash when casting to a parent class
         return cast(T) cast(Object) getVariable!GrPointer(name);
     }
@@ -413,7 +413,7 @@ class GrEngine {
         setVariable!GrPointer(name, cast(GrPointer) value);
     }
 
-    pragma(inline) void setForeignVariable(T)(string name, T value) {
+    pragma(inline) void setNativeVariable(T)(string name, T value) {
         setVariable!GrPointer(name, cast(GrPointer) value);
     }
 

@@ -180,29 +180,29 @@ string value = obj.getString("bar");
 
 ## Type Aliases API
 
-Type aliases can be declared by calling `addTypeAlias` from GrLibrary:
+Type aliases can be declared by calling `addAlias` from GrLibrary:
 ```d
-library.addTypeAlias("MyInt", grInt);
+library.addAlias("MyInt", grInt);
 ```
 
 * * *
 
-## Foreign types API
+## Native types API
 
-Foreign types are opaque pointers used by D, grimoire doesn't have access to their content.
+Native types are opaque pointers used by D, grimoire doesn't have access to their content.
 As such, they can only be declared from D.
 ```d
-library.addForeign("MyType");
+library.addNative("MyType");
 ```
 
-Like classes, they can inherit from another foreign type.
+Like classes, they can inherit from another native type.
 ```d
-library.addForeign("MyType", [], "ParentType", []);
+library.addNative("MyType", [], "ParentType", []);
 ```
 
 The second and fourth parameters are the template variable of the defined and the parent class.
 ```d
-library.addForeign("MyType", ["T"], "ParentType", [grAny("T")]);
+library.addNative("MyType", ["T"], "ParentType", [grAny("T")]);
 ```
 Roughly means that MyType<T> inherits from ParentType<T>
 

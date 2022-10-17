@@ -97,7 +97,7 @@ GrType[] grUnmangleSignature(const string mangledSignature) {
             currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             break;
         case 'u':
-            currentType.base = GrType.Base.foreign;
+            currentType.base = GrType.Base.native;
             if ((i + 2) >= mangledSignature.length)
                 throw new Exception("invalid mangling format");
             i++;
@@ -237,7 +237,7 @@ string grMangle(const GrType type) {
     case enum_:
         mangledName ~= "e(" ~ type.mangledType ~ ")";
         break;
-    case foreign:
+    case native:
         mangledName ~= "u(" ~ type.mangledType ~ ")";
         break;
     case function_:
@@ -327,7 +327,7 @@ GrType grUnmangle(const string mangledSignature) {
             i++;
             break;
         case 'u':
-            currentType.base = GrType.Base.foreign;
+            currentType.base = GrType.Base.native;
             i++;
             currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             i++;

@@ -22,7 +22,7 @@ class GrLibrary {
         /// Opaque pointer types. \
         /// They're pointer only defined by a name. \
         /// Can only be used with primitives.
-        GrAbstractForeignDefinition[] _abstractForeignDefinitions;
+        GrAbstractNativeDefinition[] _abstractNativeDefinitions;
         /// Type aliases
         GrTypeAliasDefinition[] _aliasDefinitions;
         /// Enum types.
@@ -47,23 +47,18 @@ class GrLibrary {
     }
 
     /// Define a variable
-    void addVariable(string name, GrType type, bool isPure = false, bool isConst = false) {
+    void addVariable(string name, GrType type) {
         GrVariableDefinition variable = new GrVariableDefinition;
         variable.name = name;
         variable.type = type;
-        variable.type.isPure = isPure;
-        variable.type.isConst = isConst;
         _variableDefinitions ~= variable;
     }
 
     /// Define a variable with a default value
-    void addVariable(T)(string name, GrType type, T defaultValue,
-        bool isPure = false, bool isConst = false) {
+    void addVariable(T)(string name, GrType type, T defaultValue) {
         GrVariableDefinition variable = new GrVariableDefinition;
         variable.name = name;
         variable.type = type;
-        variable.type.isPure = isPure;
-        variable.type.isConst = isConst;
 
         final switch (type.base) with (GrType.Base) {
         case bool_:
@@ -78,7 +73,7 @@ class GrLibrary {
         case function_:
         case task:
         case list:
-        case foreign:
+        case native:
         case void_:
         case null_:
         case internalTuple:
@@ -166,7 +161,7 @@ class GrLibrary {
     }
 
     /// Define a type alias
-    GrType addTypeAlias(string name, GrType type) {
+    GrType addAlias(string name, GrType type) {
         GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
         typeAlias.name = name;
         typeAlias.type = type;
@@ -176,24 +171,24 @@ class GrLibrary {
     }
 
     /// Define an opaque pointer type.
-    GrType addForeign(string name, string[] templateVariables = [],
+    GrType addNative(string name, string[] templateVariables = [],
         string parent = "", GrType[] parentTemplateSignature = []) {
         if (name == parent)
             throw new Exception("`" ~ name ~ "` can't be its own parent");
-        GrAbstractForeignDefinition foreign = new GrAbstractForeignDefinition;
-        foreign.name = name;
-        foreign.templateVariables = templateVariables;
-        foreign.parent = parent;
-        foreign.parentTemplateSignature = parentTemplateSignature;
-        _abstractForeignDefinitions ~= foreign;
+        GrAbstractNativeDefinition native = new GrAbstractNativeDefinition;
+        native.name = name;
+        native.templateVariables = templateVariables;
+        native.parent = parent;
+        native.parentTemplateSignature = parentTemplateSignature;
+        _abstractNativeDefinitions ~= native;
 
-        GrType type = GrType.Base.foreign;
+        GrType type = GrType.Base.native;
         GrType[] anySignature;
         foreach (tmp; templateVariables) {
             anySignature ~= grAny(tmp);
         }
         type.mangledType = grMangleComposite(name, anySignature);
-        //type.isAbstract = foreign.templateVariables.length > 0;
+        //type.isAbstract = native.templateVariables.length > 0;
         return type;
     }
 
@@ -402,23 +397,23 @@ class GrLibrary {
     }
 
     /**
-    Define functions that access and modify a foreign’s property.
+    Define functions that access and modify a native’s property.
     */
     GrPrimitive[] addProperty(GrCallback getCallback, GrCallback setCallback, string name,
-        GrType foreignType, GrType propertyType, GrConstraint[] constraints = []) {
+        GrType nativeType, GrType propertyType, GrConstraint[] constraints = []) {
         GrPrimitive[] primitives;
         /*assert(callbacks.length <= operations.length,
             "the number of callbacks of the property `" ~ name ~
                 "` of the type `" ~ grGetPrettyType(
-                    foreignType) ~ "` exceed the number of operations");*/
+                    nativeType) ~ "` exceed the number of operations");*/
 
         if (getCallback) {
-            primitives ~= addFunction(getCallback, name ~ "@get", [foreignType],
+            primitives ~= addFunction(getCallback, name ~ "@get", [nativeType],
                 [propertyType], constraints);
         }
         if (setCallback) {
             primitives ~= addFunction(setCallback, name ~ "@set", [
-                    foreignType, propertyType
+                    nativeType, propertyType
                 ], [propertyType], constraints);
         }
         return primitives;

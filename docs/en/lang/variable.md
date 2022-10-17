@@ -21,7 +21,7 @@ They're only a handful of basic type recognised by grimoire.
 * [Task](#tasks) (Default value: empty task)
 * [Channel](#channels) (Default value: size 1 channel)
 * [Class](#classes) (Default value: null)
-* [Foreign](#foreign-types) (Default value: null)
+* [Native](#native-types) (Default value: null)
 * [Enumerations](#enumerations) (Default value: the first value)
 
 ### Auto Type

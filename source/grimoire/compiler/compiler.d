@@ -226,7 +226,7 @@ final class GrCompiler {
                 break;
             case list:
             case class_:
-            case foreign:
+            case native:
             case channel:
             case optional:
                 variable.typeMask = 0x8;
@@ -289,7 +289,7 @@ final class GrCompiler {
                     break;
                 case list:
                 case class_:
-                case foreign:
+                case native:
                 case channel:
                 case optional:
                     bytecode.primitives[id].parameters ~= 0x80000 | (

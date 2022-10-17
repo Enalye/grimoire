@@ -9,11 +9,11 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 package(grimoire.stdlib) void grLoadStdLibQueue(GrLibrary library) {
-    library.addForeign("Queue", ["T"]);
-    library.addForeign("QueueIterator", ["T"]);
+    library.addNative("Queue", ["T"]);
+    library.addNative("QueueIterator", ["T"]);
 
     GrType valueType = grAny("T");
-    GrType queueType = grGetForeignType("Queue", [valueType]);
+    GrType queueType = grGetNativeType("Queue", [valueType]);
 
     library.addConstructor(&_new, queueType);
 
@@ -79,21 +79,21 @@ final class GrQueue {
 }
 
 private void _new(GrCall call) {
-    call.setForeign(new GrQueue);
+    call.setNative(new GrQueue);
 }
 
 private void _isEmpty(GrCall call) {
-    const GrQueue queue = call.getForeign!GrQueue(0);
+    const GrQueue queue = call.getNative!GrQueue(0);
     call.setBool(queue.isEmpty);
 }
 
 private void _push(GrCall call) {
-    GrQueue queue = call.getForeign!GrQueue(0);
+    GrQueue queue = call.getNative!GrQueue(0);
     queue.push(call.getValue(1));
 }
 
 private void _pop(GrCall call) {
-    GrQueue queue = call.getForeign!GrQueue(0);
+    GrQueue queue = call.getNative!GrQueue(0);
     if (queue.isEmpty) {
         call.setNull();
         return;
@@ -102,7 +102,7 @@ private void _pop(GrCall call) {
 }
 
 private void _front(GrCall call) {
-    GrQueue queue = call.getForeign!GrQueue(0);
+    GrQueue queue = call.getNative!GrQueue(0);
     if (queue.isEmpty) {
         call.setNull();
         return;
@@ -111,7 +111,7 @@ private void _front(GrCall call) {
 }
 
 private void _back(GrCall call) {
-    GrQueue queue = call.getForeign!GrQueue(0);
+    GrQueue queue = call.getNative!GrQueue(0);
     if (queue.isEmpty) {
         call.setNull();
         return;

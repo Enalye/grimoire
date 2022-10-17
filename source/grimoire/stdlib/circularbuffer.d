@@ -9,8 +9,8 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 package(grimoire.stdlib) void grLoadStdLibCircularBuffer(GrLibrary library) {
-    GrType bufType = library.addForeign("CircularBuffer", ["T"]);
-    library.addForeign("CircularBufferIterator", ["T"]);
+    GrType bufType = library.addNative("CircularBuffer", ["T"]);
+    library.addNative("CircularBufferIterator", ["T"]);
 
     library.addConstructor(&_new, bufType, [grInt]);
 
@@ -91,36 +91,36 @@ final class GrCircularBuffer {
 }
 
 private void _new(GrCall call) {
-    call.setForeign(new GrCircularBuffer(call.getInt(0)));
+    call.setNative(new GrCircularBuffer(call.getInt(0)));
 }
 
 private void _isEmpty(GrCall call) {
-    const GrCircularBuffer buffer = call.getForeign!GrCircularBuffer(0);
+    const GrCircularBuffer buffer = call.getNative!GrCircularBuffer(0);
     call.setBool(buffer.isEmpty);
 }
 
 private void _isFull(GrCall call) {
-    const GrCircularBuffer buffer = call.getForeign!GrCircularBuffer(0);
+    const GrCircularBuffer buffer = call.getNative!GrCircularBuffer(0);
     call.setBool(buffer.isFull);
 }
 
 private void _size(GrCall call) {
-    const GrCircularBuffer buffer = call.getForeign!GrCircularBuffer(0);
+    const GrCircularBuffer buffer = call.getNative!GrCircularBuffer(0);
     call.setInt(buffer.size);
 }
 
 private void _capacity(GrCall call) {
-    const GrCircularBuffer buffer = call.getForeign!GrCircularBuffer(0);
+    const GrCircularBuffer buffer = call.getNative!GrCircularBuffer(0);
     call.setInt(buffer.capacity);
 }
 
 private void _push(GrCall call) {
-    GrCircularBuffer buffer = call.getForeign!GrCircularBuffer(0);
+    GrCircularBuffer buffer = call.getNative!GrCircularBuffer(0);
     buffer.push(call.getValue(1));
 }
 
 private void _pop(GrCall call) {
-    GrCircularBuffer buffer = call.getForeign!GrCircularBuffer(0);
+    GrCircularBuffer buffer = call.getNative!GrCircularBuffer(0);
     if (buffer.isEmpty) {
         call.setNull();
         return;
@@ -129,7 +129,7 @@ private void _pop(GrCall call) {
 }
 
 private void _front(GrCall call) {
-    GrCircularBuffer buffer = call.getForeign!GrCircularBuffer(0);
+    GrCircularBuffer buffer = call.getNative!GrCircularBuffer(0);
     if (buffer.isEmpty) {
         call.setNull();
         return;
@@ -138,7 +138,7 @@ private void _front(GrCall call) {
 }
 
 private void _back(GrCall call) {
-    GrCircularBuffer buffer = call.getForeign!GrCircularBuffer(0);
+    GrCircularBuffer buffer = call.getNative!GrCircularBuffer(0);
     if (buffer.isEmpty) {
         call.setNull();
         return;

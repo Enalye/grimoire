@@ -1,7 +1,6 @@
-# Code différé
+# Defers
 
-Un bloc de code mis à l’intérieur d’un `defer` est *garantit* de s’exécuter à la fin d’une fonction ou tâche, et ce même si une erreur est survenu avant la fin.
-
+`defer` assure l’exécution d’un bloc de code à la fin de la fonction actuelle, même en cas d’exception.
 ```grimoire
 event onLoad() {
 	defer { print("Dans le defer !"); }
@@ -9,5 +8,3 @@ event onLoad() {
 	throw "Erreur";
 }
 ```
-Dans cet exemple, « Avant le defer » s’affichera puis « Dans le defer ! », même si on lance une erreur avant la fin de la fonction.
-Cette instruction est utile pour garantir la libération des ressources.

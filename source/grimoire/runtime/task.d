@@ -182,7 +182,7 @@ final class GrTask {
         setParameter!GrInt(cast(GrInt) value);
     }
 
-    pragma(inline) void setForeign(T)(T value) {
+    pragma(inline) void setNative(T)(T value) {
         setParameter!GrPointer(cast(GrPointer) value);
     }
 

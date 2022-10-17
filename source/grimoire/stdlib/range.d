@@ -10,9 +10,9 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library) {
-    library.addForeign("RangeIterator", ["T"]);
-    GrType rangeIteratorIntType = grGetForeignType("RangeIterator", [grInt]);
-    GrType rangeIteratorRealType = grGetForeignType("RangeIterator", [grReal]);
+    library.addNative("RangeIterator", ["T"]);
+    GrType rangeIteratorIntType = grGetNativeType("RangeIterator", [grInt]);
+    GrType rangeIteratorRealType = grGetNativeType("RangeIterator", [grReal]);
 
     library.addFunction(&_range_next_i, "next", [rangeIteratorIntType], [
             grOptional(grInt),
@@ -43,7 +43,7 @@ private final class RangeIterator(T) {
 }
 
 private void _range_next_i(GrCall call) {
-    RangeIterator!GrInt iter = call.getForeign!(RangeIterator!GrInt)(0);
+    RangeIterator!GrInt iter = call.getNative!(RangeIterator!GrInt)(0);
     if (!iter) {
         call.raise("NullError");
         return;
@@ -61,7 +61,7 @@ private void _range_i(GrCall call) {
     iter.value = call.getInt(0);
     iter.end = call.getInt(1);
     iter.step = iter.value > iter.end ? -1 : 1;
-    call.setForeign(iter);
+    call.setNative(iter);
 }
 
 private void _range_step_i(GrCall call) {
@@ -72,11 +72,11 @@ private void _range_step_i(GrCall call) {
     if ((iter.value > iter.end && iter.step > 0) || (iter.value < iter.end && iter.step < 0)) {
         iter.step = -iter.step;
     }
-    call.setForeign(iter);
+    call.setNative(iter);
 }
 
 private void _range_next_r(GrCall call) {
-    RangeIterator!GrReal iter = call.getForeign!(RangeIterator!GrReal)(0);
+    RangeIterator!GrReal iter = call.getNative!(RangeIterator!GrReal)(0);
     if (!iter) {
         call.raise("NullError");
         return;
@@ -94,7 +94,7 @@ private void _range_r(GrCall call) {
     iter.value = call.getReal(0);
     iter.end = call.getReal(1);
     iter.step = iter.value > iter.end ? -1f : 1f;
-    call.setForeign(iter);
+    call.setNative(iter);
 }
 
 private void _range_step_r(GrCall call) {
@@ -105,5 +105,5 @@ private void _range_step_r(GrCall call) {
     if ((iter.value > iter.end && iter.step > 0f) || (iter.value < iter.end && iter.step < 0f)) {
         iter.step = -iter.step;
     }
-    call.setForeign(iter);
+    call.setNative(iter);
 }

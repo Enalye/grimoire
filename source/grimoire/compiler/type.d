@@ -36,7 +36,7 @@ struct GrType {
         function_,
         task,
         class_,
-        foreign,
+        native,
         channel,
         enum_,
         internalTuple,
@@ -88,7 +88,7 @@ struct GrType {
             return false;
         if (base == GrType.Base.function_ || base == GrType.Base.task)
             return mangledType == v.mangledType && mangledReturnType == v.mangledReturnType;
-        if (base == GrType.Base.foreign || base == GrType.Base.class_ ||
+        if (base == GrType.Base.native || base == GrType.Base.class_ ||
             base == GrType.Base.enum_ || base == GrType.Base.list)
             return mangledType == v.mangledType;
         return true;
@@ -182,7 +182,7 @@ bool grIsKindOfString(GrType.Base type) {
 /// The type is handled by a ptr based register
 bool grIsKindOfObject(GrType.Base type) {
     return type == GrType.Base.class_ || type == GrType.Base.list ||
-        type == GrType.Base.foreign || type == GrType.Base.channel ||
+        type == GrType.Base.native || type == GrType.Base.channel ||
         type == GrType.Base.reference || type == GrType.Base.null_;
 }
 
@@ -254,7 +254,7 @@ package class GrVariable {
 }
 
 /// Define an arbitrary D pointer.
-final class GrForeignDefinition {
+final class GrNativeDefinition {
     /// Identifier.
     string name;
     /// Mother class it inherit from.
@@ -262,7 +262,7 @@ final class GrForeignDefinition {
 }
 
 /// Ditto
-final class GrAbstractForeignDefinition {
+final class GrAbstractNativeDefinition {
     /// Identifier.
     string name;
     /// Mother class it inherits from.
@@ -273,9 +273,9 @@ final class GrAbstractForeignDefinition {
     GrType[] parentTemplateSignature;
 }
 
-/// Create a foreign GrType for the type system.
-GrType grGetForeignType(string name, const GrType[] signature = []) {
-    GrType type = GrType.Base.foreign;
+/// Create a native GrType for the type system.
+GrType grGetNativeType(string name, const GrType[] signature = []) {
+    GrType type = GrType.Base.native;
     type.mangledType = grMangleComposite(name, signature);
     return type;
 }
@@ -526,7 +526,7 @@ package class GrFunction {
         case list:
         case optional:
         case class_:
-        case foreign:
+        case native:
         case channel:
             registerAvailables ~= variable.register;
             break;

@@ -54,9 +54,9 @@ package(grimoire.stdlib) void grLoadStdLibLog(GrLibrary library) {
     library.addFunction(&_print_ox, "print", [grPure(grOptional(grAny("T")))],
         [], [grConstraint("Class", grAny("T"))]);
     library.addFunction(&_print_u, "print", [grPure(grAny("T"))], [],
-        [grConstraint("Foreign", grAny("T"))]);
+        [grConstraint("Native", grAny("T"))]);
     library.addFunction(&_print_ux, "print", [grPure(grOptional(grAny("T")))],
-        [], [grConstraint("Foreign", grAny("T"))]);
+        [], [grConstraint("Native", grAny("T"))]);
 }
 
 // print

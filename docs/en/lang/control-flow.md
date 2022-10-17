@@ -181,7 +181,7 @@ The variable type must be convertible from the list's values, or it will raise a
 
 ### Iterators
 
-`for` can also iterate on special object or foreign called iterators.
+`for` can also iterate on special object or native called iterators.
 In grimoire, an iterator is defined by the fact that a function that satisfies this signature exists:
 > `function next(Iterator) (bool, VALUE)`
 

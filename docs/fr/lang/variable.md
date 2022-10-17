@@ -3,55 +3,49 @@
 Les variables peuvent stocker une valeur pour être réutilisé plus tard.
 Une variable est défini par son type et doit être déclaré avant tout usage.
 
-`int a = 0;`
-Ici, on déclare une variable **a** de type **int** initialisée avec la valeur **0**.
-
-Si on affiche le contenu de la variable avec 'print(a)', on verra **0** d’affiché.
-
-Toutes les variables sont initialisée, si on ne leur assigne rien, ils auront leur valeur par défaut.
-
-## Types Basiques
-Les types de bases en Grimoire peuvent se répartir dans ces différentes catégories:
-* Les entiers déclarés avec **int** ex: 2 (Valeur par défaut: 0)
-* Les nombres décimaux déclarés avec **real** ex: 2.35f (Valeur par défaut: 0f)
-* Les booléens déclarés avec **bool** ex: true, false (Valeur par défaut: false)
-* Les chaînes de caractères déclarés avec **string** ex: "Coucou" (Valeur par défaut: "")
-* [Les listes](#lists) (Valeur par défaut: [])
-* [Les fonctions](#functions) (Valeur par défaut: fonction vide)
-* [Les tâches](#tasks) (Valeur par défaut: tâche vide)
-* [Les canaux](#channels) (Valeur par défaut: canal d’une taille de 1)
-* [Les classes](#classes) (Valeur par défaut: null)
-* [Les types étrangers](#foreign-types) (Valeur par défaut: null)
-* [Les énumérations](#enumerations) (Valeur par défaut: la première valeur)
-
-### Type Automatique
-`let` est un mot-clé se substituant à un type et permettant au compilateur d’inférer automatiquement le type d’une variable déclarée.
-Exemple:
 ```grimoire
-event onLoad() {
-    let a = 3.2; //'a' est automatiquement déclaré comme réel.
-    print(a);
-}
+int a = 0;
 ```
-`let` peut seulement être utilisé lors d’une déclaration de variable et ne peut faire partie de la signature d’une fonction car ce n’est pas un type !
 
-Les variables déclarées par ce biais **doivent** être initialisées.
+Sans initialisation, une variable est initialisé par sa valeur par défaut.
+Si aucune valeur par défaut n’existe, le script ne compilera pas.
+```grimoire
+real a;         //Vaut 0.0 par défaut
+HashMap<int> a; //Ne compile pas
+```
+
+> **Note:** Les classes et natifs n’ont pas de valeurs assignée par défaut, elles doivent donc **obligatoirement** être initialisées.
+
+* * *
+
+## Let
+`let` permet d’inférer automatiquement le type d’une variable déclarée.
+```grimoire
+let a = 3; //a est un entier
+```
+> `let` peut seulement être utilisé lors d’une déclaration de variable et ne peut faire partie de la signature d’une fonction car ce n’est pas un type !
+
+> **Note:** Les variables déclarées par ce biais **doivent** être initialisées.
+
+* * *
 
 ## Portée
 Une variable peut-être soit locale soit globale.
-* Une variable globale est déclarée en dehors de toute fonction/tâche/etc et est accessible globalement.
-* Une variable locale n’est accessible que dans le bloc dans lequel il a été défini.
+* Une variable déclarée en dehors de toute fonction/tâche/etc est **globale**.
+* Une variable **locale** n’est accessible que dans le bloc dans lequel il a été défini.
 
 Example:
 ```grimoire
 int globalVar; //Déclaré globalement, accessible partout.
 
-event onLoad() {
-    int localVar; //Declaré dans le onLoad, accessible uniquement dans onLoad.
+event main() {
+    int localVar; //Declaré dans le main, accessible uniquement dans le bloc actuel.
 }
 ```
 
-### Redéclaration
+* * *
+
+## Redéclaration
 Une même variable locale peut être redéclarée autant de fois que nécessaire avec n’importe quel type, les règles de portée de cette nouvelle déclaration s’applique toujours comme indiqué ci-dessus.
 
 ```grimoire
@@ -69,7 +63,9 @@ event onLoad() {
 }
 ```
 
-### Public et privé
+* * *
+
+## Visibilité
 Une variable globale n’est par défaut visible que depuis son propre fichier.
 Pour y accéder depuis un autre fichier, on doit le déclarer en public avec le mot-clé `public`:
 ```grimoire
@@ -83,6 +79,8 @@ public class A { //La classe est visible globalement
     int b; //b n’est visible que depuis ce fichier
 }
 ```
+
+* * *
 
 ## Liste de Déclaration
 
@@ -108,7 +106,7 @@ En revanche, la première valeur ne peut être manquante, ceci est illégal:
 > `int a, b, c = , 5, 2;`
 
 Chaque variable d’une liste d’initialisation sont du même type.
-Ex: `int a, b = 2, "Coucou"` déclenchera une erreur ca *b* s’attend à un **entier** et on lui passe une **chaîne de caractère**.
+Ex: `int a, b = 2, "Coucou"` déclenchera une erreur ca *b* s’attend à un `int` et on lui passe un `string`.
 
 Il y a tout de même un moyen de déclarer des variables de types différents grâce à `let`:
 > `let a, b, c, d = 1, 2.3, "Coucou!";`

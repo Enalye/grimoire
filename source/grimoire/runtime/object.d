@@ -72,7 +72,7 @@ final class GrObject {
         return cast(GrObject) getField!GrPointer(fieldName);
     }
 
-    pragma(inline) T getForeign(T)(const string fieldName) const {
+    pragma(inline) T getNative(T)(const string fieldName) const {
         // We cast to object first to avoid a crash when casting to a parent class
         return cast(T) cast(Object) getField!GrPointer(fieldName);
     }
@@ -127,7 +127,7 @@ final class GrObject {
         setField!GrPointer(fieldName, cast(GrPointer) value);
     }
 
-    pragma(inline) void setForeign(T)(const string fieldName, T value) {
+    pragma(inline) void setNative(T)(const string fieldName, T value) {
         setField!GrPointer(fieldName, cast(GrPointer) value);
     }
 

@@ -71,7 +71,7 @@ package(grimoire.stdlib) void grLoadStdLibList(GrLibrary library) {
     library.addFunction(&_sort_!"real", "sort", [grList(grReal)]);
     library.addFunction(&_sort_!"string", "sort", [grList(grString)]);
 
-    GrType iteratorType = library.addForeign("ListIterator", ["T"]);
+    GrType iteratorType = library.addNative("ListIterator", ["T"]);
     library.addFunction(&_each, "each", [grList(grAny("T"))], [iteratorType]);
     library.addFunction(&_next, "next", [iteratorType], [grOptional(grAny("T"))]);
 }
@@ -279,11 +279,11 @@ private void _each(GrCall call) {
         if (!element.isNull)
             iter.list ~= element;
     }
-    call.setForeign(iter);
+    call.setNative(iter);
 }
 
 private void _next(GrCall call) {
-    ListIterator iter = call.getForeign!(ListIterator)(0);
+    ListIterator iter = call.getNative!(ListIterator)(0);
     if (iter.index >= iter.list.length) {
         call.setNull();
         return;

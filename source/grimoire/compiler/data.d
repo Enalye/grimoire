@@ -26,9 +26,9 @@ final class GrData {
         /// Opaque pointer types. \
         /// They're pointer only defined by a name. \
         /// Can only be used with primitives.
-        GrForeignDefinition[] _foreignDefinitions;
-        /// Abstract foreign types.
-        GrAbstractForeignDefinition[] _abstractForeignDefinitions;
+        GrNativeDefinition[] _nativeDefinitions;
+        /// Abstract native types.
+        GrAbstractNativeDefinition[] _abstractNativeDefinitions;
         /// Type aliases
         GrTypeAliasDefinition[] _aliasDefinitions, _templateAliasDefinitions;
         /// Enum types.
@@ -54,7 +54,7 @@ final class GrData {
 
     /// Add types and primitives defined in the library
     void addLibrary(GrLibrary library) {
-        _abstractForeignDefinitions ~= library._abstractForeignDefinitions;
+        _abstractNativeDefinitions ~= library._abstractNativeDefinitions;
         _aliasDefinitions ~= library._aliasDefinitions;
         _abstractClassDefinitions ~= library._abstractClassDefinitions;
         _variableDefinitions ~= library._variableDefinitions;
@@ -91,7 +91,7 @@ final class GrData {
             return true;
         if (isTypeAlias(name, fileId, isPublic))
             return true;
-        if (isForeign(name))
+        if (isNative(name))
             return true;
         return false;
     }
@@ -104,7 +104,7 @@ final class GrData {
             return true;
         if (isTypeAlias(name))
             return true;
-        if (isForeign(name))
+        if (isNative(name))
             return true;
         return false;
     }
@@ -136,7 +136,7 @@ final class GrData {
     }
 
     /// Define an alias of another type.
-    package GrType addTypeAlias(const string name, const GrType type, uint fileId, bool isPublic) {
+    package GrType addAlias(const string name, const GrType type, uint fileId, bool isPublic) {
         GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
         typeAlias.name = name;
         typeAlias.type = type;
@@ -222,49 +222,49 @@ final class GrData {
     }
 
     /// Is the user-type defined ?
-    package bool isForeign(const string name) const {
-        foreach (foreign; _abstractForeignDefinitions) {
-            if (foreign.name == name)
+    package bool isNative(const string name) const {
+        foreach (native; _abstractNativeDefinitions) {
+            if (native.name == name)
                 return true;
         }
         return false;
     }
 
     /// Return the user-type definition.
-    GrForeignDefinition getForeign(const string mangledName) {
+    GrNativeDefinition getNative(const string mangledName) {
         import std.algorithm.searching : findSplitBefore;
 
-        foreach (foreign; _foreignDefinitions) {
-            if (foreign.name == mangledName)
-                return foreign;
+        foreach (native; _nativeDefinitions) {
+            if (native.name == mangledName)
+                return native;
         }
 
         const mangledTuple = findSplitBefore(mangledName, "$");
         string name = mangledTuple[0];
         GrType[] templateTypes = grUnmangleSignature(mangledTuple[1]);
-        foreach (foreign; _abstractForeignDefinitions) {
-            if (foreign.name == name && foreign.templateVariables.length == templateTypes.length) {
-                GrForeignDefinition generatedForeign = new GrForeignDefinition;
-                generatedForeign.name = mangledName;
-                generatedForeign.parent = foreign.parent;
+        foreach (native; _abstractNativeDefinitions) {
+            if (native.name == name && native.templateVariables.length == templateTypes.length) {
+                GrNativeDefinition generatedNative = new GrNativeDefinition;
+                generatedNative.name = mangledName;
+                generatedNative.parent = native.parent;
 
                 _anyData = new GrAnyData;
-                for (int i; i < foreign.templateVariables.length; ++i) {
-                    _anyData.set(foreign.templateVariables[i], templateTypes[i]);
+                for (int i; i < native.templateVariables.length; ++i) {
+                    _anyData.set(native.templateVariables[i], templateTypes[i]);
                 }
 
-                GrType[] parentTemplateSignature = foreign.parentTemplateSignature;
+                GrType[] parentTemplateSignature = native.parentTemplateSignature;
                 for (int i; i < parentTemplateSignature.length; ++i) {
                     if (parentTemplateSignature[i].isAny) {
                         parentTemplateSignature[i] = _anyData.get(
                             parentTemplateSignature[i].mangledType);
                     }
                 }
-                generatedForeign.parent = grMangleComposite(generatedForeign.parent,
+                generatedNative.parent = grMangleComposite(generatedNative.parent,
                     parentTemplateSignature);
 
-                _foreignDefinitions ~= generatedForeign;
-                return generatedForeign;
+                _nativeDefinitions ~= generatedNative;
+                return generatedNative;
             }
         }
         return null;
@@ -522,7 +522,7 @@ final class GrData {
             result.mangledType = grMangleComposite(composite.name, composite.signature);
             break;
         case class_:
-        case foreign:
+        case native:
             auto temp = grUnmangleComposite(type.mangledType);
             for (int i; i < temp.signature.length; ++i) {
                 temp.signature[i] = reifyType(temp.signature[i]);
@@ -652,7 +652,7 @@ final class GrData {
                     className = classType.parent;
                 }
                 continue;
-            case foreign:
+            case native:
                 if (first[i].base != second[i].base)
                     return false;
 
@@ -661,16 +661,16 @@ final class GrData {
                         isAbstract, fileId, isPublic))
                     return false;
 
-                string foreignName = first[i].mangledType;
+                string nativeName = first[i].mangledType;
                 for (;;) {
-                    if (grUnmangleComposite(foreignName)
+                    if (grUnmangleComposite(nativeName)
                         .name == grUnmangleComposite(second[i].mangledType).name) {
                         continue __signatureLoop;
                     }
-                    const GrForeignDefinition foreignType = getForeign(foreignName);
-                    if (!foreignType.parent.length)
+                    const GrNativeDefinition nativeType = getNative(nativeName);
+                    if (!nativeType.parent.length)
                         return false;
-                    foreignName = foreignType.parent;
+                    nativeName = nativeType.parent;
                 }
                 continue;
             case enum_:

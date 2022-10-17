@@ -121,7 +121,7 @@ string grGetPrettyType(const GrType variableType) {
         }
         result ~= ")";
         break;
-    case foreign:
+    case native:
     case class_:
         import std.algorithm.searching : findSplitBefore;
 

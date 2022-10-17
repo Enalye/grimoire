@@ -91,7 +91,7 @@ struct GrValue {
         return cast(GrObject) _ovalue;
     }
 
-    pragma(inline) T getForeign(T)() const {
+    pragma(inline) T getNative(T)() const {
         return cast(T) _ovalue;
     }
 
@@ -139,7 +139,7 @@ struct GrValue {
         _ovalue = cast(GrPointer) value;
     }
 
-    pragma(inline) void setForeign(T)(T value) {
+    pragma(inline) void setNative(T)(T value) {
         _ovalue = cast(GrPointer) value;
     }
 }

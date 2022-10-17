@@ -235,7 +235,7 @@ final class GrParser {
         case optional:
         case list:
         case class_:
-        case foreign:
+        case native:
         case channel:
             if (variable.isGlobal) {
                 variable.register = globalsCount;
@@ -417,7 +417,7 @@ final class GrParser {
             case string_:
             case optional:
             case list:
-            case foreign:
+            case native:
             case class_:
             case channel:
             case reference:
@@ -480,7 +480,7 @@ final class GrParser {
                 case optional:
                 case list:
                 case class_:
-                case foreign:
+                case native:
                 case channel:
                 case reference:
                     if (signature[i].isPure && !funcSignature[i].isPure) {
@@ -1087,7 +1087,7 @@ final class GrParser {
             }
             break;
         case class_:
-        case foreign:
+        case native:
             switch (lexType) with (GrLexeme.Type) {
             case not:
                 addInstruction(GrOpcode.shiftStack, -1);
@@ -1328,7 +1328,7 @@ final class GrParser {
             case string_:
             case class_:
             case list:
-            case foreign:
+            case native:
                 addInstruction(isExpectingValue ? GrOpcode.refStore2 : GrOpcode.refStore);
                 break;
             case void_:
@@ -1374,7 +1374,7 @@ final class GrParser {
             case real_:
             case string_:
             case optional:
-            case foreign:
+            case native:
             case reference:
             case channel:
             case list:
@@ -1402,7 +1402,7 @@ final class GrParser {
             case channel:
             case class_:
             case list:
-            case foreign:
+            case native:
                 addInstruction(isExpectingValue ? GrOpcode.globalStore2
                         : GrOpcode.globalStore, variable.register);
                 break;
@@ -1426,7 +1426,7 @@ final class GrParser {
             case optional:
             case list:
             case class_:
-            case foreign:
+            case native:
             case channel:
                 addInstruction(isExpectingValue ? GrOpcode.localStore2
                         : GrOpcode.localStore, variable.register);
@@ -1486,7 +1486,7 @@ final class GrParser {
             case optional:
             case list:
             case class_:
-            case foreign:
+            case native:
             case channel:
                 if (allowOptimization && currentFunction.instructions.length &&
                     currentFunction.instructions[$ - 1].opcode == GrOpcode.globalStore &&
@@ -1518,7 +1518,7 @@ final class GrParser {
             case optional:
             case list:
             case class_:
-            case foreign:
+            case native:
             case channel:
                 if (allowOptimization && currentFunction.instructions.length &&
                     currentFunction.instructions[$ - 1].opcode == GrOpcode.localStore &&
@@ -1952,7 +1952,7 @@ final class GrParser {
         if (_data.isTypeDeclared(typeAliasName, fileId, isPublic))
             logError(format(getError(Error.nameXDefMultipleTimes),
                     typeAliasName), format(getError(Error.alreadyDef), typeAliasName));
-        _data.addTypeAlias(typeAliasName, type, fileId, isPublic);
+        _data.addAlias(typeAliasName, type, fileId, isPublic);
     }
 
     private void parseEnumDeclaration(bool isPublic) {
@@ -2269,15 +2269,15 @@ final class GrParser {
                     currentType.mangledType = lex.svalue;
                     checkAdvance();
                 }
-                else if (lex.type == GrLexeme.Type.identifier && _data.isForeign(lex.svalue)) {
-                    currentType.base = GrType.Base.foreign;
+                else if (lex.type == GrLexeme.Type.identifier && _data.isNative(lex.svalue)) {
+                    currentType.base = GrType.Base.native;
                     currentType.mangledType = lex.svalue;
                     checkAdvance();
                     currentType.mangledType = grMangleComposite(lex.svalue,
                         parseTemplateSignature(templateVariables));
                     if (mustBeType) {
-                        GrForeignDefinition foreign = _data.getForeign(currentType.mangledType);
-                        if (!foreign)
+                        GrNativeDefinition native = _data.getNative(currentType.mangledType);
+                        if (!native)
                             logError(format(getError(Error.xIsAbstract), getPrettyType(currentType)),
                                 format(getError(Error.xIsAbstractAndCannotBeInstanciated),
                                     getPrettyType(currentType)), "", -1);
@@ -2389,7 +2389,7 @@ final class GrParser {
         case class_:
         case optional:
         case list:
-        case foreign:
+        case native:
         case channel:
         case reference:
             addInstruction(GrOpcode.globalPop, 0u);
@@ -2417,7 +2417,7 @@ final class GrParser {
         case class_:
         case optional:
         case list:
-        case foreign:
+        case native:
         case channel:
         case reference:
             addInstruction(GrOpcode.globalPush, nbPush);
@@ -3642,7 +3642,7 @@ final class GrParser {
         case class_:
         case optional:
         case list:
-        case foreign:
+        case native:
         case channel:
         case reference:
             addInstruction(GrOpcode.channel, channelSize);
@@ -4046,7 +4046,7 @@ final class GrParser {
                 case optional:
                 case list:
                 case class_:
-                case foreign:
+                case native:
                 case channel:
                 case reference:
                     addInstruction(GrOpcode.length_list);
@@ -4099,7 +4099,7 @@ final class GrParser {
                 case optional:
                 case list:
                 case class_:
-                case foreign:
+                case native:
                 case channel:
                 case reference:
                     addInstruction(GrOpcode.index2_list);
@@ -4129,7 +4129,7 @@ final class GrParser {
                 closeContinuableSection();
             }
             break;
-        case foreign:
+        case native:
         case class_: {
                 GrVariable iterator = registerSpecialVariable("it", containerType);
 
@@ -4728,15 +4728,15 @@ final class GrParser {
                 if (dst.mangledType == src.mangledType)
                     return dst;
                 break;
-            case foreign:
-                string foreignName = src.mangledType;
+            case native:
+                string nativeName = src.mangledType;
                 for (;;) {
-                    if (dst.mangledType == foreignName)
+                    if (dst.mangledType == nativeName)
                         return dst;
-                    const GrForeignDefinition foreignType = _data.getForeign(foreignName);
-                    if (!foreignType.parent.length)
+                    const GrNativeDefinition nativeType = _data.getNative(nativeName);
+                    if (!nativeType.parent.length)
                         break;
-                    foreignName = foreignType.parent;
+                    nativeName = nativeType.parent;
                 }
                 break;
             }
@@ -4768,7 +4768,7 @@ final class GrParser {
             case enum_:
             case list:
             case class_:
-            case foreign:
+            case native:
             case channel:
             case reference:
             case internalTuple:
@@ -4916,7 +4916,7 @@ final class GrParser {
                     addSetInstruction(fieldLValue, fileId, fieldLValue.type);
                 }
                 break;
-            case foreign:
+            case native:
             default:
                 logError(format(getError(Error.xNotClassType),
                         getPrettyType(objectType)), getError(Error.invalidType), "", -1);
@@ -5088,7 +5088,7 @@ final class GrParser {
         case optional:
         case list:
         case class_:
-        case foreign:
+        case native:
         case channel:
         case reference:
             addInstruction(GrOpcode.list, listSize);
@@ -5132,7 +5132,7 @@ final class GrParser {
                     case optional:
                     case list:
                     case class_:
-                    case foreign:
+                    case native:
                     case channel:
                     case reference:
                         addInstruction(GrOpcode.index_list);
@@ -5177,7 +5177,7 @@ final class GrParser {
                 case optional:
                 case list:
                 case class_:
-                case foreign:
+                case native:
                 case channel:
                 case reference:
                     addInstruction(GrOpcode.index_list);
@@ -5463,7 +5463,7 @@ final class GrParser {
             case optional:
             case list:
             case class_:
-            case foreign:
+            case native:
             case channel:
             case reference:
                 addInstruction(GrOpcode.list, 0);
@@ -5496,7 +5496,7 @@ final class GrParser {
             case class_:
             case optional:
             case list:
-            case foreign:
+            case native:
             case channel:
             case reference:
                 addInstruction(GrOpcode.channel, 1);
@@ -5509,7 +5509,7 @@ final class GrParser {
             }
             break;
         case class_:
-        case foreign:
+        case native:
         case reference:
         case void_:
         case null_:
@@ -5535,7 +5535,7 @@ final class GrParser {
         case class_:
         case optional:
         case list:
-        case foreign:
+        case native:
         case channel:
         case reference:
             counter++;
@@ -5832,7 +5832,7 @@ final class GrParser {
                             case optional:
                             case list:
                             case class_:
-                            case foreign:
+                            case native:
                             case channel:
                             case reference:
                                 setInstruction(GrOpcode.index3_list,
@@ -5867,7 +5867,7 @@ final class GrParser {
                         case optional:
                         case list:
                         case class_:
-                        case foreign:
+                        case native:
                         case channel:
                         case reference:
                             setInstruction(GrOpcode.index2_list,
@@ -5964,14 +5964,14 @@ final class GrParser {
                     }
                 }
 
-                if (currentType.base == GrType.Base.foreign) {
+                if (currentType.base == GrType.Base.native) {
                     if (get().type != GrLexeme.Type.identifier)
                         logError(format(getError(Error.expectedFieldNameFoundX),
                                 getPrettyLexemeType(get().type)), getError(Error.missingField));
                     const string propertyName = get().svalue;
                     checkAdvance();
-                    GrForeignDefinition foreign = _data.getForeign(currentType.mangledType);
-                    if (!foreign)
+                    GrNativeDefinition native = _data.getNative(currentType.mangledType);
+                    if (!native)
                         logError(format(getError(Error.xNotDecl),
                                 getPrettyType(currentType)), getError(Error.unknownType));
 
@@ -6534,7 +6534,7 @@ final class GrParser {
         case class_:
         case optional:
         case list:
-        case foreign:
+        case native:
             addInstruction(asCopy ? GrOpcode.fieldLoad2 : GrOpcode.fieldLoad, index);
             break;
         case internalTuple:

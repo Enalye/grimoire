@@ -97,7 +97,7 @@ final class GrList {
         return cast(GrObject[]) cast(GrPointer[]) _data;
     }
 
-    pragma(inline) T[] getForeigns(T)() {
+    pragma(inline) T[] getNatives(T)() {
         return cast(T[]) cast(GrPointer[]) _data;
     }
 
@@ -143,7 +143,7 @@ final class GrList {
         _data = cast(GrValue[]) values;
     }
 
-    pragma(inline) void setForeigns(T)(T[] values) {
+    pragma(inline) void setNatives(T)(T[] values) {
         _data = cast(GrValue[]) values;
     }
 

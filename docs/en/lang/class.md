@@ -51,7 +51,7 @@ class A {
 
 An uninitialized class variable will be initialized to null.
 
-Like foreign types, you can assign "null" to a class type variable.
+Like native types, you can assign "null" to a class type variable.
 
 ```grimoire
 MyClass obj = null;

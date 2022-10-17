@@ -1,3 +1,3 @@
-- [Référence du Langage](fr/lang/intro.md)
-- [Référence de la bibliothèque](fr/lib/)
-
+* [Langage](/fr/lang/intro)
+* [API](/fr/api/intro)
+* [Bibliothèques](/fr/lib/intro)
