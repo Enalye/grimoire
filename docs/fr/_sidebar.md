@@ -1,3 +1,4 @@
-* [Langage](/fr/lang/intro)
-* [API](/fr/api/intro)
-* [Bibliothèques](/fr/lib/intro)
+* [Accueil](/fr/)
+* [Langage](/fr/lang/)
+* [Intégration](/fr/api/)
+* [Bibliothèques](/fr/lib/)

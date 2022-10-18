@@ -1,7 +1,7 @@
-* [Langage](/fr/lang/intro)
-* [API](/fr/api/intro)
-* Bibliothèques
-    - [Introduction](fr/lib/intro)
+* [Accueil](/fr/)
+* [Langage](/fr/lang/)
+* [Intégration](/fr/api/)
+* [Bibliothèques](/fr/lib/)
     - [Standard](fr/lib/stdlib)
         - [list](fr/lib/std_list)
         - [bitmanip](fr/lib/std_bitmanip)

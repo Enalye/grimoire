@@ -1,4 +1,5 @@
-* Langage
+* [Accueil](/fr/)
+* [Langage](/fr/lang/)
     1. [Introduction](/fr/lang/intro)
     1. [Commentaires](/fr/lang/comments)
     1. [Import](/fr/lang/import)
@@ -23,5 +24,5 @@
     1. [Erreur](/fr/lang/error)
     1. [Defer](/fr/lang/defer)
     1. [Opérateurs](/fr/lang/operators)
-* [API](/fr/api/intro)
-* [Bibliothèques](/fr/lib/intro)
+* [Intégration](/fr/api/)
+* [Bibliothèques](/fr/lib/)
