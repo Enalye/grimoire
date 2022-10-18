@@ -46,8 +46,7 @@ void main() {
         engine.addLibrary(stdlib);
         engine.load(bytecode);
 
-        if (engine.hasEvent("onLoad"))
-            engine.callEvent("onLoad");
+        engine.callEvent("main");
 
         write("> ");
         startTime = MonoTime.currTime();
