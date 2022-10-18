@@ -325,8 +325,9 @@ final class GrCall {
 	}
 	---
 	*/
-    GrTask callEvent(string mangledName) {
-        return _task.engine.callEvent(mangledName);
+    GrTask callEvent(const string name, const GrType[] signature = [], GrValue[] parameters = [
+        ]) {
+        return _task.engine.callEvent(name, signature, parameters);
     }
 
     /**

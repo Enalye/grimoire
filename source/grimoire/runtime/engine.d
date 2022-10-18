@@ -152,7 +152,8 @@ class GrEngine {
 	Checks whether an event exists. \
 	The event's name must be mangled with its signature.
 	*/
-    bool hasEvent(string mangledName) {
+    bool hasEvent(const string name, const GrType[] signature = []) const {
+        const string mangledName = grMangleComposite(name, signature);
         return (mangledName in _bytecode.events) !is null;
     }
 
@@ -169,12 +170,26 @@ class GrEngine {
 	}
 	---
 	*/
-    GrTask callEvent(string mangledName, Priority priority = Priority.normal) {
+    GrTask callEvent(const string name, const GrType[] signature = [],
+        GrValue[] parameters = [], Priority priority = Priority.normal) {
+        const string mangledName = grMangleComposite(name, signature);
         const auto event = mangledName in _bytecode.events;
         if (event is null)
-            throw new Exception("no event \'" ~ mangledName ~ "\' in script");
+            return null;
+        if (signature.length != parameters.length)
+            throw new Exception("the number of parameters (" ~ to!string(
+                    parameters.length) ~ ") of `" ~ grGetPrettyFunctionCall(
+                    mangledName) ~ "` mismatch its definition");
         GrTask task = new GrTask(this);
         task.pc = *event;
+
+        if (parameters.length > task.stack.length)
+            task.stack.length = parameters.length;
+
+        for (size_t i; i < parameters.length; ++i)
+            task.stack[i] = parameters[i];
+        task.stackPos = (cast(int) parameters.length) - 1;
+
         final switch (priority) with (Priority) {
         case immediate:
             _tasks ~= task;
