@@ -27,7 +27,7 @@ event main() {
 }
 ```
 
-`pure` rend le contenu d’un type inaltérable.
+`pure`, quant à lui, rend le contenu d’un type inaltérable.
 ```grimoire
 class Personnage {
     string nom;

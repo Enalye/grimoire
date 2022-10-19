@@ -4,8 +4,13 @@
 
 Opérations pour effectuer des opérations binaires
 
-## Fonctions
+## Opérateurs
 
-
-
-## Description des fonctions
+|Operateur|Entrée|Sortie|
+|-|-|-|
+|<<|**int** *valeur*, **int** *décalage*|**int**|
+|>>|**int** *valeur*, **int** *décalage*|**int**|
+|&|**int** *a*, **int** *b*|**int**|
+|\||**int** *a*, **int** *b*|**int**|
+|^|**int** *a*, **int** *b*|**int**|
+|!|**int** *a*, **int** *b*|**int**|

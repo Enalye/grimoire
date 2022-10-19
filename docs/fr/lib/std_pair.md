@@ -15,5 +15,5 @@ Paire de clé/valeur.
 
 |Operator|Entrée|Sortie|
 |-|-|-|
-|=>|T1 key, T2 value|Pair\<T1, T2\>|
+|=>|T1 key, T2 value|[Pair](#Pair)\<T1, T2\>|
 

@@ -43,16 +43,17 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
 
     GrType pairType = grGetNativeType("Pair", [grString, grAny("T")]);
 
-    library.addConstructor(&_new, mapType, []);
+    library.addConstructor(&_new, mapType);
     library.addConstructor(&_newByList, mapType, [
-            grList(grString), grList(grAny("T"))
+            grPure(grList(grString)), grPure(grList(grAny("T")))
         ]);
     library.addConstructor(&_newByPairs, mapType, [grPure(grList(pairType))]);
-    library.addFunction(&_copy, "copy", [mapType], [mapType]);
+
+    library.addFunction(&_copy, "copy", [grPure(mapType)], [mapType]);
     library.addFunction(&_size, "size", [grPure(mapType)], [grInt]);
     library.addFunction(&_isEmpty, "isEmpty", [grPure(mapType)], [grBool]);
     library.addFunction(&_clear, "clear", [mapType], [mapType]);
-    library.addFunction(&_set, "set", [mapType, grString, grAny("T")]);
+    library.addFunction(&_set, "set", [mapType, grPure(grString), grAny("T")]);
     library.addFunction(&_get, "get", [grPure(mapType), grString], [
             grOptional(grAny("T"))
         ]);
@@ -62,23 +63,23 @@ package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
     library.addFunction(&_contains, "contains", [grPure(mapType), grString], [
             grBool
         ]);
-    library.addFunction(&_remove, "remove", [mapType, grString]);
-    library.addFunction(&_byKeys, "byKeys", [mapType], [grList(grString)]);
-    library.addFunction(&_byValues, "byValues", [mapType], [grList(grAny("T"))]);
-    library.addFunction(&_each, "each", [mapType], [iteratorType]);
+    library.addFunction(&_remove, "remove", [mapType, grPure(grString)]);
+    library.addFunction(&_byKeys, "byKeys", [grPure(mapType)], [grList(grString)]);
+    library.addFunction(&_byValues, "byValues", [grPure(mapType)], [grList(grAny("T"))]);
+    library.addFunction(&_each, "each", [grPure(mapType)], [iteratorType]);
     library.addFunction(&_next, "next", [iteratorType], [grOptional(pairType)]);
 
     GrType boolHashMap = grGetNativeType("HashMap", [grBool]);
-    library.addFunction(&_print_!"bool", "print", [boolHashMap]);
+    library.addFunction(&_print_!"bool", "print", [grPure(boolHashMap)]);
 
     GrType intHashMap = grGetNativeType("HashMap", [grInt]);
-    library.addFunction(&_print_!"int", "print", [intHashMap]);
+    library.addFunction(&_print_!"int", "print", [grPure(intHashMap)]);
 
     GrType realHashMap = grGetNativeType("HashMap", [grReal]);
-    library.addFunction(&_print_!"real", "print", [realHashMap]);
+    library.addFunction(&_print_!"real", "print", [grPure(realHashMap)]);
 
     GrType stringHashMap = grGetNativeType("HashMap", [grString]);
-    library.addFunction(&_print_!"string", "print", [stringHashMap]);
+    library.addFunction(&_print_!"string", "print", [grPure(stringHashMap)]);
 }
 
 private void _new(GrCall call) {

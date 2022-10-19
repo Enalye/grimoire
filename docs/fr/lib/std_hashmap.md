@@ -4,110 +4,107 @@
 
 Dictionnaire associant des valeurs par clés.
 
+## Constructeurs
+
+|Fonction|Entrée|Sortie|
+|-|-|-|
+|[new](#new)||**[HashMap](#hashmap)\<T\>**|
+|[new](#new_lists)|**pure list(string)** *clés*, **pure list(T)** *valeurs*|**[HashMap](#hashmap)\<T\>**|
+|[new](#new_pairs)|**pure list([Pair](/fr/lib/std_pair#pair)\<string, T\>)** *pairs*|**[HashMap](#hashmap)\<T\>**|
+
 ## Fonctions
 
 |Fonction|Entrée|Sortie|
 |-|-|-|
-|[new](#new)||[HashMap](#hashmap)\<T\>|
-|[new](#new_lists)|[list](/fr/lib/list#list)(string) clés, [list](/fr/lib/list#list)(T) valeurs|[HashMap](#hashmap)\<T\>|
-|[new](#new_pairs)|[list](/fr/lib/list#list)([Pair](/fr/lib/pair#pair)\<[string](/fr/lib/string#string), T\>) pairs|[HashMap](#hashmap)\<T\>|
-|[clear](#clear)|[HashMap](#hashmap)\<T\> hashmap|[HashMap](#hashmap)\<T\>|
-|[copy](#copy)|[HashMap](#hashmap)\<T\> hashmap|[HashMap](#hashmap)\<T\>|
-|[each](#each)|[HashMap](#hashmap)\<T\> hashmap|[HashMapIterator](#hashmapiterator)\<T\>|
-|[empty?](#empty)|[HashMap](#hashmap)\<T\> hashmap|bool|
-|[get](#get)|[HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé|T|
-|[has?](#has)|[HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé|bool|
-|[keys](#keys)|[HashMap](#hashmap)\<T\> hashmap|[list](/fr/lib/list#list)([string](/fr/lib/string#string))|
-|[remove](#remove)|[HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé||
-|[set](#set)|[HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé, T valeur||
-|[size](#size)|[HashMap](#hashmap)\<T\> hashmap|int|
-|[values](#values)|[HashMap](#hashmap)\<T\> hashmap|[list](/fr/lib/list#list)(T)|
+|[clear](#clear)|**[HashMap](#hashmap)\<T\>** *hashmap*|**[HashMap](#hashmap)\<T\>**|
+|[copy](#copy)|**pure [HashMap](#hashmap)\<T\>** *hashmap*|**[HashMap](#hashmap)\<T\>**|
+|[each](#each)|**[HashMap](#hashmap)\<T\>** *hashmap*|**[HashMapIterator](#hashmapiterator)\<T\>**|
+|[isEmpty](#isEmpty)|**pure [HashMap](#hashmap)\<T\>** *hashmap*|**bool**|
+|[get](#get)|**pure [HashMap](#hashmap)\<T\>** *hashmap*, **pure string** *clé*|**T?**|
+|[getOr](#get)|**pure [HashMap](#hashmap)\<T\>** *hashmap*, **pure string** *clé*, **T** *défaut*|**T**|
+|[contains](#contains)|**pure [HashMap](#hashmap)\<T\>** *hashmap*, **string** *clé*|**bool**|
+|[byKeys](#byKeys)|**pure [HashMap](#hashmap)\<T\>** *hashmap*|**list(string)**|
+|[remove](#remove)|**[HashMap](#hashmap)\<T\>** *hashmap*, **pure string** clé||
+|[set](#set)|**[HashMap](#hashmap)\<T\>** *hashmap*, **pure string** *clé*, **T** *valeur*||
+|[size](#size)|**pure [HashMap](#hashmap)\<T\>** *hashmap*|**int**|
+|[byValues](#byValues)|**pure [HashMap](#hashmap)\<T\>** *hashmap*|**list(T)**|
+
+---
 
 ## Description des fonctions
 
-<a id="new"></a>
-- new ( ) ( [HashMap](#hashmap)\<T\> )
-
-Crée une HashMap vide.
-___
-
-<a id="new_lists"></a>
-- new ( [list](/fr/lib/list#list)(string) clés, [list](/fr/lib/list#list)(T) valeurs ) ( [HashMap](#hashmap)\<T\> )
-
-Crée une nouvelle HashMap en associant chaque clé avec sa valeur correspondante.
-La taille de `clés` et de `valeurs` doivent correspondre.
-___
-
-<a id="new_pairs"></a>
-- new ( [list](/fr/lib/list#list)([Pair](/fr/lib/pair#pair)\<[string](/fr/lib/string#string), T\>) paires ) ( [HashMap](#hashmap)\<T\> )
-
-Crée une nouvelle HashMap à partir des `paires`.
-___
-
 <a id="clear"></a>
-- clear ( [HashMap](#hashmap)\<T\> hashmap ) ( [HashMap](#hashmap)\<T\> )
+- clear (**[HashMap](#hashmap)\<T\>** *hashmap*) (**[HashMap](#hashmap)\<T\>**)
 
 Vide l’HashMap.
 ___
 
 <a id="copy"></a>
-- copy ( [HashMap](#hashmap)\<T\> hashmap ) ( [HashMap](#hashmap)\<T\> )
+- copy (**pure [HashMap](#hashmap)\<T\>** *hashmap*) (**[HashMap](#hashmap)\<T\>**)
 
 Returne une copie de l’HashMap.
 ___
 
 <a id="each"></a>
-- each ( [HashMap](#hashmap)\<T\> hashmap ) ( [HashMapIterator](#hashmapiterator)\<T\> )
+- each (**pure [HashMap](#hashmap)\<T\>** hashmap) (**[HashMapIterator](#hashmapiterator)\<T\>**)
 
 Returne un itérateur permettant d’itérer sur chaque paire de clés/valeurs.
 ___
 
-<a id="empty"></a>
-- empty? ( [HashMap](#hashmap)\<T\> hashmap ) ( bool )
+<a id="isEmpty"></a>
+- isEmpty (**pure [HashMap](#hashmap)\<T\>** *hashmap*) (**bool**)
 
 Returne `true` si l’HashMap ne contient rien.
 ___
 
 <a id="get"></a>
-- get ( [HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé ) ( T )
+- get (**pure [HashMap](#hashmap)\<T\>** *hashmap*, **pure string** *clé*) (**T?**)
 
-Returns the valeur associated with the specified `clé`.
+Returne la valeur associée avec `clé`.
+Si cette valeur n’existe pas, retourne `null(T)`.
 ___
 
-<a id="has"></a>
-- has? ( [HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé ) ( bool )
+<a id="getOr"></a>
+- getOr (**pure [HashMap](#hashmap)\<T\>** *hashmap*, **pure string** *clé*, **T** *défaut*) (**T**)
 
-Returns `true` if the `clé` exists inside the HashMap.
+Returne la valeur associée avec `clé`.
+Si cette valeur n’existe pas, retourne `défaut`.
 ___
 
-<a id="keys"></a>
-- keys ( [HashMap](#hashmap)\<T\> hashmap ) ( [list](/fr/lib/list#list)([string](/fr/lib/string#string)) )
+<a id="contains"></a>
+- contains (**pure [HashMap](#hashmap)\<T\>** *hashmap*, **pure string** *clé*) (**bool**)
 
-Returns the list of all clés.
+Renvoie `true` si `clé` existe dans l’HashMap.
+___
+
+<a id="byKeys"></a>
+- byKeys (**pure [HashMap](#hashmap)\<T\>** *hashmap*) (**list(string)**)
+
+Returne la liste de toutes les clés.
 ___
 
 <a id="remove"></a>
-- remove ( [HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé ) ( [HashMap](#hashmap)\<T\> )
+- remove (**[HashMap](#hashmap)\<T\>** *hashmap*, **pure string** *clé*) (**[HashMap](#hashmap)\<T\>**)
 
-Delete the entry `clé`.
+Retire l’entrée `clé` de l’HashMap.
 ___
 
 <a id="set"></a>
-- set ( [HashMap](#hashmap)\<T\> hashmap, [string](/fr/lib/string#string) clé, T valeur ) ( [HashMap](#hashmap)\<T\> )
+- set (**[HashMap](#hashmap)\<T\>** *hashmap*, **pure string** clé, **T** *valeur*) (**[HashMap](#hashmap)\<T\>**)
 
-Adds the specified `clé` and `valeur` to the HashMap.
+Ajoute la nouvelle `valeur` à la `clé` correspondante dans l’HashMap.
 ___
 
 <a id="size"></a>
-- size ( [HashMap](#hashmap)\<T\> hashmap ) ( int )
+- size (**[HashMap](#hashmap)\<T\>** *hashmap*) (**int**)
 
-Returns the number of elements in the HashMap.
+Returne le nombre d’élements dans l’HashMap.
 ___
 
-<a id="values"></a>
-- values ( [HashMap](#hashmap)\<T\> hashmap ) ( [list](/fr/lib/list#list)(T) )
+<a id="byValues"></a>
+- byValues (**[HashMap](#hashmap)\<T\>** *hashmap*) (**list(T)**)
 
-Returns the list of all valeurs.
+Returnse la liste de toutes les valeurs.
 ___
 
 <a id="hashmapiterator"></a>
@@ -125,7 +122,6 @@ Fournit un moyen d’itérer sur une HashMap.
 ## Description des fonctions
 
 <a id="next"></a>
-- next ( [HashMapIterator](#hashmapiterator)\<T\> iterateur ) ( bool, T )
+- next (**[HashMapIterator](#hashmapiterator)\<T\>** *iterateur*) (**T?**)
 
-Advance l’itérateur à l’élément suivant.
-Retourne `true` tant que l’itérateur n’a pas atteint la fin de la liste et retourne l’élément actuel.
+Avance l’itérateur à l’élément suivant.
