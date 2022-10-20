@@ -104,13 +104,13 @@ final class GrDoc : GrLibDefinition {
 
         Variable[] _variables;
         Enum[] _enums;
+        Class[] _classes;
+        Native[] _natives;
         Alias[] _aliases;
         OperatorFunction[] _operators;
         Constructor[] _constructors;
         Cast[] _casts;
         Function[] _functions;
-        Class[] _classes;
-        Native[] _natives;
         Property[] _properties;
     }
 
@@ -500,6 +500,26 @@ final class GrDoc : GrLibDefinition {
                 ]);
             }
         }
+
+        /*if (_classes.length) {
+            md.addHeader("Classes", 2);
+
+            foreach (class_; _classes) {
+                md.addHeader(class_.name, 3);
+                class_.
+                string fields = "{";
+                foreach (field; enum_.fields) {
+                    if (fields.length)
+                        fields ~= ", ";
+                    fields ~= field;
+                }
+                fields ~= "}";
+                auto comment = locale in enum_.comments;
+                md.addTable([
+                    enum_.name, fields, comment ? (*comment).comment: ""
+                ]);
+            }
+        }*/
 
         if (_aliases.length) {
             md.addHeader("Alias", 2);
