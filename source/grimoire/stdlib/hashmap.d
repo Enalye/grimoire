@@ -37,7 +37,9 @@ private final class HashMapIterator {
     size_t index;
 }
 
-package(grimoire.stdlib) void grLoadStdLibHashMap(GrLibrary library) {
+void grLoadStdLibHashMap(GrLibDefinition library) {
+    library.setModule(["std", "hashmap"]);
+
     GrType mapType = library.addNative("HashMap", ["T"]);
     GrType iteratorType = library.addNative("HashMapIterator", ["T"]);
 

@@ -9,7 +9,9 @@ import std.datetime;
 import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibTime(GrLibrary library) {
+void grLoadStdLibTime(GrLibDefinition library) {
+    library.setModule(["std", "time"]);
+
     library.addFunction(&_time, "time", [], [grInt]);
 
     library.addFunction(&_wait, "wait", [grInt]);

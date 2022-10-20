@@ -7,7 +7,9 @@ module grimoire.stdlib.error;
 
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibError(GrLibrary library) {
+void grLoadStdLibError(GrLibDefinition library) {
+    library.setModule(["std", "error"]);
+
     library.addFunction(&_assert, "assert", [grBool]);
     library.addFunction(&_assert_msg, "assert", [grBool, grPure(grString)]);
     library.addFunction(&_setMeta, "_setMeta", [grPure(grString)]);

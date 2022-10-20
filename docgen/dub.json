@@ -1,0 +1,9 @@
+{
+	"name": "docgen",
+	"targetType": "executable",
+	"dependencies": {
+		"grimoire": {"path": "../"}
+	},
+	"targetPath": "bin",
+	"workingDirectory": "../"
+}

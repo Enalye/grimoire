@@ -10,7 +10,9 @@ import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
-package(grimoire.stdlib) void grLoadStdLibString(GrLibrary library) {
+void grLoadStdLibString(GrLibDefinition library) {
+    library.setModule(["std", "string"]);
+
     library.addFunction(&_copy, "copy", [grPure(grString)], [grString]);
     library.addFunction(&_size, "size", [grPure(grString)], [grInt]);
     library.addFunction(&_isEmpty, "isEmpty", [grPure(grString)], [grBool]);

@@ -7,10 +7,12 @@ module grimoire.stdlib.pair;
 
 import grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibPair(GrLibrary library) {
+void grLoadStdLibPair(GrLibDefinition library) {
+    library.setModule(["std", "pair"]);
+
     GrType pairType = library.addNative("Pair", ["K", "V"]);
 
-    library.addOperator(&_new, GrLibrary.Operator.arrow, [
+    library.addOperator(&_new, GrLibDefinition.Operator.arrow, [
             grAny("K"), grAny("V")
         ], pairType);
 

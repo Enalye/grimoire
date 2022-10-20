@@ -9,7 +9,9 @@ import std.range;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
-package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library) {
+void grLoadStdLibRange(GrLibDefinition library) {
+    library.setModule(["std", "range"]);
+
     library.addNative("RangeIterator", ["T"]);
     GrType rangeIteratorIntType = grGetNativeType("RangeIterator", [grInt]);
     GrType rangeIteratorRealType = grGetNativeType("RangeIterator", [grReal]);
@@ -17,7 +19,7 @@ package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library) {
     library.addFunction(&_range_next_i, "next", [rangeIteratorIntType], [
             grOptional(grInt),
         ]);
-    library.addOperator(&_range_i, GrLibrary.Operator.interval, [grInt,
+    library.addOperator(&_range_i, GrLibDefinition.Operator.interval, [grInt,
             grInt], rangeIteratorIntType);
     library.addFunction(&_range_i, "range", [grInt, grInt], [
             rangeIteratorIntType
@@ -29,7 +31,7 @@ package(grimoire.stdlib) void grLoadStdLibRange(GrLibrary library) {
     library.addFunction(&_range_next_r, "next", [rangeIteratorRealType], [
             grOptional(grReal)
         ]);
-    library.addOperator(&_range_r, GrLibrary.Operator.interval, [grReal,
+    library.addOperator(&_range_r, GrLibDefinition.Operator.interval, [grReal,
             grReal], rangeIteratorRealType);
     library.addFunction(&_range_r, "range", [grReal, grReal], [
             rangeIteratorRealType

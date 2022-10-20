@@ -7,35 +7,35 @@
 
 |Fonction|Entrée|Sortie|
 |-|-|-|
-|[range](#range_i2)|int from, int to|[RangeIterator](#rangeiterator)\<int\>|
-|[range](#range_r2)|real from, real to|[RangeIterator](#rangeiterator)\<real\>|
-|[range](#range_i3)|int from, int to, int step|[RangeIterator](#rangeiterator)\<int\>|
-|[range](#range_r3)|real from, real to, real step|[RangeIterator](#rangeiterator)\<real\>|
+|[range](#range_i2)|**int** *début*, **int** *fin*|**[RangeIterator](#rangeiterator)\<int\>**|
+|[range](#range_r2)|**real** *début*, **real** *fin*|**[RangeIterator](#rangeiterator)\<real\>**|
+|[range](#range_i3)|**int** *début*, **int** *fin*, **int** *pas*|**[RangeIterator](#rangeiterator)\<int\>**|
+|[range](#range_r3)|**real** *début*, **real** *fin*, **real** *pas*|**[RangeIterator](#rangeiterator)\<real\>**|
 
 ## Description des fonctions
 
 <a id="range_i2"></a>
-- range ( int from, int to ) ( [RangeIterator](#rangeiterator)\<int\> )
+- range (**int** *début*, **int** *fin*) (**[RangeIterator](#rangeiterator)\<int\>**)
 
-Returns a new iterator that yields values between `from` and `to` included with an increment of `1`.
+Returne un itérateur qui renvoie des valeurs comprises entre `début` et `fin` inclus par incréments de `1`.
 ___
 
 <a id="range_r2"></a>
-- range ( real from, real to ) ( [RangeIterator](#rangeiterator)\<real\> )
+- range (**real** *début*, **real** *fin*) (**[RangeIterator](#rangeiterator)\<real\>**)
 
-Returns a new iterator that yields values between `from` and `to` included with an increment of `1.0`.
+Returne un itérateur qui renvoie des valeurs comprises entre `début` et `fin` inclus par incréments de `1.0`.
 ___
 
 <a id="range_i3"></a>
-- range ( int from, int to, int step ) ( [RangeIterator](#rangeiterator)\<int\> )
+- range (**int** *début*, **int** *fin*, **int** *pas*) (**[RangeIterator](#rangeiterator)\<int\>**)
 
-Returns a new iterator that yields values between `from` and `to` included with an increment of `step`.
+Returne un itérateur qui renvoie des valeurs comprises entre `début` et `fin` inclus par incréments de `pas`.
 ___
 
 <a id="range_r3"></a>
-- range ( real from, real to, real step ) ( [RangeIterator](#rangeiterator)\<real\> )
+- range (**real** *début*, **real** *fin*, **real** *pas*) (**[RangeIterator](#rangeiterator)\<real\>**)
 
-Returns a new iterator that yields values between `from` and `to` included with an increment of `step`.
+Returne un itérateur qui renvoie des valeurs comprises entre `début` et `fin` inclus par incréments de `pas`.
 ___
 
 # RangeIterator
@@ -44,20 +44,18 @@ ___
 
 |Fonction|Entrée|Sortie|
 |-|-|-|
-|[next](#next_i)|[RangeIterator](#rangeiterator)\<int\> this|bool, int|
-|[next](#next_r)|[RangeIterator](#rangeiterator)\<real\> this|bool, real|
+|[next](#next_i)|**[RangeIterator](#rangeiterator)\<int\>** *itérateur*|**int?**|
+|[next](#next_r)|**[RangeIterator](#rangeiterator)\<real\>** *itérateur*|**real?**|
 
 ## Description des fonctions
 
 <a id="next_i"></a>
-- next ( [RangeIterator](#rangeiterator)\<int\> ) ( bool, T )
+- next (**[RangeIterator](#rangeiterator)\<int\>**) (**T?**)
 
-Advance the iterator to the next element.
-Returns `true` while the iterator hasn't reach the end and the current element.
+Avance l’itérateur jusqu’au prochain élément.
 ___
 
 <a id="next_r"></a>
-- next ( [RangeIterator](#rangeiterator)\<real\> ) ( bool, T )
+- next (**[RangeIterator](#rangeiterator)\<real\>**) (**T?**)
 
-Advance the iterator to the next element.
-Returns `true` while the iterator hasn't reach the end and the current element.
+Avance l’itérateur jusqu’au prochain élément.

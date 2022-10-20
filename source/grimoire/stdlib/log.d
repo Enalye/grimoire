@@ -9,7 +9,12 @@ import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
-package(grimoire.stdlib) void grLoadStdLibLog(GrLibrary library) {
+void grLoadStdLibLog(GrLibDefinition library) {
+    library.setModule(["std", "io"]);
+
+    library.setComment(GrLocale.fr_FR, ["valeur"], "Affiche le contenu de @i0.");
+    library.setComment(GrLocale.en_US, ["value"], "Display @i0's content.");
+
     //print
     library.addFunction(&_print_i, "print", [grInt]);
     library.addFunction(&_print_ix, "print", [grOptional(grInt)]);

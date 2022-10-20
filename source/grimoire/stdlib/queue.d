@@ -8,7 +8,9 @@ module grimoire.stdlib.queue;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
-package(grimoire.stdlib) void grLoadStdLibQueue(GrLibrary library) {
+void grLoadStdLibQueue(GrLibDefinition library) {
+    library.setModule(["std", "queue"]);
+
     library.addNative("Queue", ["T"]);
     library.addNative("QueueIterator", ["T"]);
 

@@ -33,7 +33,7 @@ Une list est une liste de *valeur* d’un même type pouvant être stockées ens
 |[shift](#shift_1)|**list(T)** *liste*|**T**|
 |[shift](#shift_2)|**list(T)** *liste*, **int** *quantité*|**list(T)**|
 |[size](#size)|**pure list(T)** *liste*|**int**|
-|[slice](#slice)|**pure list(T)** *liste*, **int** *indexDébut*, **int** *indexFin*|**list(list(T))**|
+|[slice](#slice)|**pure list(T)** *liste*, **int** *indexDébut*, **int** *indexFin*|**list(T)**|
 |[sort](#sort_i)|**list(int)** *liste*||
 |[sort](#sort_r)|**list(real)** *liste*||
 |[sort](#sort_s)|**list(string)** *liste*||

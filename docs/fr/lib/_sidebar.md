@@ -8,7 +8,7 @@
         - [channel](fr/lib/std_channel)
         - [error](fr/lib/std_error)
         - [hashmap](fr/lib/std_hashmap)
-        - [log](fr/lib/std_log)
+        - [io](fr/lib/std_io)
         - [math](fr/lib/std_math)
         - [pair](fr/lib/std_pair)
         - [range](fr/lib/std_range)

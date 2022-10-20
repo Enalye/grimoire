@@ -8,7 +8,9 @@ module grimoire.stdlib.channel;
 import std.range;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibChannel(GrLibrary library) {
+void grLoadStdLibChannel(GrLibDefinition library) {
+    library.setModule(["std", "channel"]);
+
     GrType chanType = grPure(grChannel(grAny("T")));
 
     library.addFunction(&_size, "size", [chanType], [grInt]);

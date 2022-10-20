@@ -12,7 +12,8 @@
 	"workingDirectory": "bin",
 	"-ddoxTool": "scod",
 	"subPackages": [
-		"./test/",
-        "./unittests"
+		"./test",
+        "./unittests",
+        "./docgen"
 	]
 }

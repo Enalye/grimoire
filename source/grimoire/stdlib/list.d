@@ -9,7 +9,9 @@ import std.range;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
-package(grimoire.stdlib) void grLoadStdLibList(GrLibrary library) {
+void grLoadStdLibList(GrLibDefinition library) {
+    library.setModule(["std", "list"]);
+
     library.addFunction(&_copy, "copy", [grPure(grList(grAny("T")))], [
             grList(grAny("T"))
         ]);

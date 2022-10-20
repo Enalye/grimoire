@@ -9,8 +9,10 @@ import std.random, std.math;
 import std.algorithm.comparison : clamp;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
-    library.addVariable("PI", grConst(grReal), PI);
+void grLoadStdLibMath(GrLibDefinition library) {
+    library.setModule(["std", "math"]);
+
+    library.addVariable("PI", grConst(grReal), GrValue(PI));
 
     library.addFunction(&_min_r, "min", [grReal, grReal], [grReal]);
     library.addFunction(&_min_i, "min", [grInt, grInt], [grInt]);
@@ -40,8 +42,8 @@ package(grimoire.stdlib) void grLoadStdLibMath(GrLibrary library) {
     library.addFunction(&_log2, "log2", [grReal], [grReal]);
     library.addFunction(&_log10, "log10", [grReal], [grReal]);
     library.addFunction(&_sqrt, "sqrt", [grReal], [grReal]);
-    library.addOperator(&_pow_i, GrLibrary.Operator.power, [grInt, grInt], grInt);
-    library.addOperator(&_pow_r, GrLibrary.Operator.power, [grReal, grReal], grReal);
+    library.addOperator(&_pow_i, GrLibDefinition.Operator.power, [grInt, grInt], grInt);
+    library.addOperator(&_pow_r, GrLibDefinition.Operator.power, [grReal, grReal], grReal);
 
     library.addFunction(&_lerp, "lerp", [grReal, grReal, grReal], [grReal]);
     library.addFunction(&_rlerp, "rlerp", [grReal, grReal, grReal], [grReal]);

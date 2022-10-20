@@ -8,7 +8,9 @@ module grimoire.stdlib.optional;
 import grimoire.compiler, grimoire.runtime, grimoire.assembly;
 import grimoire.stdlib.util;
 
-package void grLoadStdLibOptional(GrLibrary library) {
+void grLoadStdLibOptional(GrLibDefinition library) {
+    library.setModule(["std", "optional"]);
+
     library.addFunction(&_some, "some", [grAny("T")], [grOptional(grAny("T"))]);
     library.addFunction(&_expect, "expect", [
             grOptional(grAny("T")), grPure(grString)
@@ -21,7 +23,7 @@ package void grLoadStdLibOptional(GrLibrary library) {
         ], [grAny("T")]);
 
     library.addOperator(&_opUnary!("~", "Int"),
-        GrLibrary.Operator.bitwiseNot, [grOptional(grInt)], grOptional(grInt));
+        GrLibDefinition.Operator.bitwiseNot, [grOptional(grInt)], grOptional(grInt));
 
     static foreach (op; ["&", "|", "^", "<<", ">>"]) {
         library.addOperator(&_opBinary!(op, "Int", "Int", "Int"), op,
@@ -47,7 +49,7 @@ package void grLoadStdLibOptional(GrLibrary library) {
             [grOptional(grInt), grOptional(grReal)], grOptional(grReal));
     }
 
-    library.addOperator(&_opUnary!("!", "Bool"), GrLibrary.Operator.not,
+    library.addOperator(&_opUnary!("!", "Bool"), GrLibDefinition.Operator.not,
         [grOptional(grBool)], grOptional(grBool));
 
     static foreach (op; ["&&", "||"]) {

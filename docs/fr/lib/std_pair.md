@@ -8,12 +8,12 @@ Paire de clé/valeur.
 
 |Champ|Type|
 |-|-|
-|key|T1|
-|value|T2|
+|clé|T1|
+|valeur|T2|
 
 ## Opérateurs
 
-|Operator|Entrée|Sortie|
-|-|-|-|
-|=>|T1 key, T2 value|[Pair](#Pair)\<T1, T2\>|
+|Operator|Entrée|Sortie|Générique|
+|-|-|-|-|
+|=>|**T1** *clé*, **T2** *valeur*|[Pair](#Pair)\<**T1**, **T2**\>|**T1**, **T2**|
 

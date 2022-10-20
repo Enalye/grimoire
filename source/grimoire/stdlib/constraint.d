@@ -8,7 +8,7 @@ module grimoire.stdlib.constraint;
 import grimoire.compiler;
 import grimoire.stdlib.util;
 
-package(grimoire.stdlib) void grLoadStdLibConstraint() {
+void grLoadStdLibConstraint() {
     grAddConstraint("Pure", &_pure, 0);
     grAddConstraint("Register", &_register, 1);
     grAddConstraint("Enum", &_enum, 0);

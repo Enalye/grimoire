@@ -8,7 +8,9 @@ module grimoire.stdlib.typecast;
 import std.conv;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
-package(grimoire.stdlib) void grLoadStdLibTypecast(GrLibrary library) {
+void grLoadStdLibTypecast(GrLibDefinition library) {
+    library.setModule(["std", "typecast"]);
+
     //As int
     library.addCast(&typecast_r2i, grReal, grInt, true);
     library.addCast(&typecast_b2i, grBool, grInt);

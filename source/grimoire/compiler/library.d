@@ -13,219 +13,9 @@ import grimoire.compiler.type;
 import grimoire.compiler.constraint;
 import grimoire.compiler.mangle;
 import grimoire.compiler.pretty;
+import grimoire.compiler.util;
 
-/**
-Contains type information and D linked functions.
-*/
-class GrLibrary {
-    package(grimoire) {
-        /// Opaque pointer types. \
-        /// They're pointer only defined by a name. \
-        /// Can only be used with primitives.
-        GrAbstractNativeDefinition[] _abstractNativeDefinitions;
-        /// Type aliases
-        GrTypeAliasDefinition[] _aliasDefinitions;
-        /// Enum types.
-        GrEnumDefinition[] _enumDefinitions;
-        /// Object types.
-        GrClassDefinition[] _abstractClassDefinitions;
-        /// Variable types
-        GrVariableDefinition[] _variableDefinitions;
-
-        /// All primitives, used for both the compiler and the runtime.
-        GrPrimitive[] _abstractPrimitives;
-
-        /// All the primitive callbacks.
-        GrCallback[] _callbacks;
-
-        /// Name aliases
-        string[string] _aliases;
-    }
-
-    void addAlias(string name, string alias_) {
-        _aliases[name] = alias_;
-    }
-
-    /// Define a variable
-    void addVariable(string name, GrType type) {
-        GrVariableDefinition variable = new GrVariableDefinition;
-        variable.name = name;
-        variable.type = type;
-        _variableDefinitions ~= variable;
-    }
-
-    /// Define a variable with a default value
-    void addVariable(T)(string name, GrType type, T defaultValue) {
-        GrVariableDefinition variable = new GrVariableDefinition;
-        variable.name = name;
-        variable.type = type;
-
-        final switch (type.base) with (GrType.Base) {
-        case bool_:
-        case int_:
-        case enum_:
-        case real_:
-        case string_:
-            break;
-        case optional:
-        case class_:
-        case channel:
-        case function_:
-        case task:
-        case list:
-        case native:
-        case void_:
-        case null_:
-        case internalTuple:
-        case reference:
-            throw new Exception(
-                "can't initialize library variable of type `" ~ grGetPrettyType(type) ~ "`");
-        }
-        static if (isIntegral!T) {
-            if (type.base != GrType.Base.int_ && type.base != GrType.Base.enum_)
-                throw new Exception(
-                    "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
-                        type) ~ "`");
-            variable.ivalue = cast(int) defaultValue;
-        }
-        else static if (is(T == bool)) {
-            if (type.base != GrType.Base.bool_)
-                throw new Exception(
-                    "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
-                        type) ~ "`");
-            variable.ivalue = defaultValue ? 1 : 0;
-        }
-        else static if (isFloatingPoint!T) {
-            if (type.base != GrType.Base.real_)
-                throw new Exception(
-                    "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
-                        type) ~ "`");
-            variable.rvalue = cast(float) defaultValue;
-        }
-        static if (is(T == string)) {
-            if (type.base != GrType.Base.string_)
-                throw new Exception(
-                    "the default value of `" ~ name ~ "` doesn't match the type of  `" ~ grGetPrettyType(
-                        type) ~ "`");
-            variable.svalue = defaultValue;
-        }
-        variable.isInitialized = true;
-        _variableDefinitions ~= variable;
-    }
-
-    /// Define an enum
-    GrType addEnum(string name, string[] fields) {
-        GrEnumDefinition enum_ = new GrEnumDefinition;
-        enum_.name = name;
-        enum_.fields = fields;
-        enum_.isPublic = true;
-        _enumDefinitions ~= enum_;
-
-        GrType type = GrType.Base.enum_;
-        type.mangledType = name;
-        return type;
-    }
-
-    /// Define a class type.
-    GrType addClass(string name, string[] fields, GrType[] signature,
-        string[] templateVariables = [], string parent = "", GrType[] parentTemplateSignature = [
-        ]) {
-        if (fields.length != signature.length)
-            throw new Exception("class signature mismatch");
-        GrClassDefinition class_ = new GrClassDefinition;
-        class_.name = name;
-        class_.parent = parent;
-        class_.signature = signature;
-        class_.fields = fields;
-        class_.templateVariables = templateVariables;
-        class_.parentTemplateSignature = parentTemplateSignature;
-        class_.isPublic = true;
-        class_.isParsed = true;
-        _abstractClassDefinitions ~= class_;
-
-        class_.fieldsInfo.length = fields.length;
-        for (int i; i < class_.fieldsInfo.length; ++i) {
-            class_.fieldsInfo[i].fileId = 0;
-            class_.fieldsInfo[i].isPublic = true;
-            class_.fieldsInfo[i].position = 0;
-        }
-
-        GrType type = GrType.Base.class_;
-        GrType[] anySignature;
-        foreach (tmp; templateVariables) {
-            anySignature ~= grAny(tmp);
-        }
-        type.mangledType = grMangleComposite(name, anySignature);
-        //type.isAbstract = class_.templateVariables.length > 0;
-        return type;
-    }
-
-    /// Define a type alias
-    GrType addAlias(string name, GrType type) {
-        GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
-        typeAlias.name = name;
-        typeAlias.type = type;
-        typeAlias.isPublic = true;
-        _aliasDefinitions ~= typeAlias;
-        return type;
-    }
-
-    /// Define an opaque pointer type.
-    GrType addNative(string name, string[] templateVariables = [],
-        string parent = "", GrType[] parentTemplateSignature = []) {
-        if (name == parent)
-            throw new Exception("`" ~ name ~ "` can't be its own parent");
-        GrAbstractNativeDefinition native = new GrAbstractNativeDefinition;
-        native.name = name;
-        native.templateVariables = templateVariables;
-        native.parent = parent;
-        native.parentTemplateSignature = parentTemplateSignature;
-        _abstractNativeDefinitions ~= native;
-
-        GrType type = GrType.Base.native;
-        GrType[] anySignature;
-        foreach (tmp; templateVariables) {
-            anySignature ~= grAny(tmp);
-        }
-        type.mangledType = grMangleComposite(name, anySignature);
-        //type.isAbstract = native.templateVariables.length > 0;
-        return type;
-    }
-
-    /// Define a new primitive.
-    GrPrimitive addFunction(GrCallback callback, string name, GrType[] inSignature = [
-        ], GrType[] outSignature = [], GrConstraint[] constraints = []) {
-        bool isAbstract;
-        foreach (GrType type; inSignature) {
-            if (type.isAbstract)
-                throw new Exception("`" ~ grGetPrettyFunction(name, inSignature,
-                        outSignature) ~ "` can't use type `" ~ grGetPrettyType(
-                        type) ~ "` as it is abstract");
-            if (type.isAny) {
-                isAbstract = true;
-                break;
-            }
-        }
-        foreach (GrType type; outSignature) {
-            if (type.isAbstract)
-                throw new Exception("`" ~ grGetPrettyFunction(name, inSignature,
-                        outSignature) ~ "` can't use type `" ~ grGetPrettyType(
-                        type) ~ "` as it is abstract");
-        }
-
-        GrPrimitive primitive = new GrPrimitive;
-        primitive.inSignature = inSignature;
-        primitive.outSignature = outSignature;
-        primitive.name = name;
-        primitive.callbackId = cast(int) _callbacks.length;
-        primitive.constraints = constraints;
-
-        _callbacks ~= callback;
-
-        _abstractPrimitives ~= primitive;
-        return primitive;
-    }
-
+interface GrLibDefinition {
     /// Type of operator overloading
     enum Operator {
         plus,
@@ -258,11 +48,235 @@ class GrLibrary {
         not,
     }
 
+    void setModule(string[]);
+    void setComment(GrLocale, string[], string);
+    void setModuleDescription(GrLocale, string);
+    void setDescription(GrLocale, string);
+    void addVariable(string, GrType);
+    void addVariable(string, GrType, GrValue);
+    GrType addEnum(string, string[]);
+    GrType addClass(string, string[], GrType[], string[] = [], string = "", GrType[] = [
+        ]);
+    GrType addAlias(string, GrType);
+    GrType addNative(string, string[] = [], string = "", GrType[] = []);
+    GrPrimitive addFunction(GrCallback, string, GrType[] = [], GrType[] = [], GrConstraint[] = [
+        ]);
+    GrPrimitive addOperator(GrCallback, Operator operator, GrType[],
+        GrType outType, GrConstraint[] = []);
+    GrPrimitive addOperator(GrCallback, string, GrType[], GrType outType, GrConstraint[] = [
+        ]);
+    GrPrimitive addCast(GrCallback, GrType, GrType, bool = false, GrConstraint[] = [
+        ]);
+    GrPrimitive addConstructor(GrCallback, GrType, GrType[] = [], GrConstraint[] = [
+        ]);
+    GrPrimitive[] addProperty(GrCallback, GrCallback, string, GrType, GrType, GrConstraint[] = [
+        ]);
+}
+
+/**
+Contains type information and D linked functions.
+*/
+final class GrLibrary : GrLibDefinition {
+    package(grimoire) {
+        /// Opaque pointer types. \
+        /// They're pointer only defined by a name. \
+        /// Can only be used with primitives.
+        GrAbstractNativeDefinition[] _abstractNativeDefinitions;
+        /// Type aliases
+        GrTypeAliasDefinition[] _aliasDefinitions;
+        /// Enum types.
+        GrEnumDefinition[] _enumDefinitions;
+        /// Object types.
+        GrClassDefinition[] _abstractClassDefinitions;
+        /// Variable types
+        GrVariableDefinition[] _variableDefinitions;
+
+        /// All primitives, used for both the compiler and the runtime.
+        GrPrimitive[] _abstractPrimitives;
+
+        /// All the primitive callbacks.
+        GrCallback[] _callbacks;
+
+        /// Name aliases
+        string[string] _aliases;
+    }
+
+    override void setModule(string[]) {
+    }
+
+    override void setComment(GrLocale, string[], string) {
+    }
+
+    override void setModuleDescription(GrLocale, string) {
+    }
+
+    override void setDescription(GrLocale, string) {
+    }
+
+    /// Define a variable
+    override void addVariable(string name, GrType type) {
+        GrVariableDefinition variable = new GrVariableDefinition;
+        variable.name = name;
+        variable.type = type;
+        _variableDefinitions ~= variable;
+    }
+
+    /// Define a variable with a default value
+    override void addVariable(string name, GrType type, GrValue defaultValue) {
+        GrVariableDefinition variable = new GrVariableDefinition;
+        variable.name = name;
+        variable.type = type;
+
+        final switch (type.base) with (GrType.Base) {
+        case bool_:
+            variable.ivalue = defaultValue.getBool();
+            break;
+        case int_:
+        case enum_:
+            variable.ivalue = defaultValue.getInt();
+            break;
+        case real_:
+            variable.rvalue = defaultValue.getReal();
+            break;
+        case string_:
+            variable.svalue = defaultValue.getString();
+            break;
+        case optional:
+        case class_:
+        case channel:
+        case function_:
+        case task:
+        case list:
+        case native:
+        case void_:
+        case null_:
+        case internalTuple:
+        case reference:
+            throw new Exception(
+                "can't initialize library variable of type `" ~ grGetPrettyType(type) ~ "`");
+        }
+
+        variable.isInitialized = true;
+        _variableDefinitions ~= variable;
+    }
+
+    /// Define an enum
+    override GrType addEnum(string name, string[] fields) {
+        GrEnumDefinition enum_ = new GrEnumDefinition;
+        enum_.name = name;
+        enum_.fields = fields;
+        enum_.isPublic = true;
+        _enumDefinitions ~= enum_;
+
+        GrType type = GrType.Base.enum_;
+        type.mangledType = name;
+        return type;
+    }
+
+    /// Define a class type.
+    override GrType addClass(string name, string[] fields, GrType[] signature,
+        string[] templateVariables = [], string parent = "", GrType[] parentTemplateSignature = [
+        ]) {
+        if (fields.length != signature.length)
+            throw new Exception("class signature mismatch");
+        GrClassDefinition class_ = new GrClassDefinition;
+        class_.name = name;
+        class_.parent = parent;
+        class_.signature = signature;
+        class_.fields = fields;
+        class_.templateVariables = templateVariables;
+        class_.parentTemplateSignature = parentTemplateSignature;
+        class_.isPublic = true;
+        class_.isParsed = true;
+        _abstractClassDefinitions ~= class_;
+
+        class_.fieldsInfo.length = fields.length;
+        for (int i; i < class_.fieldsInfo.length; ++i) {
+            class_.fieldsInfo[i].fileId = 0;
+            class_.fieldsInfo[i].isPublic = true;
+            class_.fieldsInfo[i].position = 0;
+        }
+
+        GrType type = GrType.Base.class_;
+        GrType[] anySignature;
+        foreach (tmp; templateVariables) {
+            anySignature ~= grAny(tmp);
+        }
+        type.mangledType = grMangleComposite(name, anySignature);
+        return type;
+    }
+
+    /// Define a type alias
+    override GrType addAlias(string name, GrType type) {
+        GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
+        typeAlias.name = name;
+        typeAlias.type = type;
+        typeAlias.isPublic = true;
+        _aliasDefinitions ~= typeAlias;
+        return type;
+    }
+
+    /// Define an opaque pointer type.
+    override GrType addNative(string name, string[] templateVariables = [],
+        string parent = "", GrType[] parentTemplateSignature = []) {
+        if (name == parent)
+            throw new Exception("`" ~ name ~ "` can't be its own parent");
+        GrAbstractNativeDefinition native = new GrAbstractNativeDefinition;
+        native.name = name;
+        native.templateVariables = templateVariables;
+        native.parent = parent;
+        native.parentTemplateSignature = parentTemplateSignature;
+        _abstractNativeDefinitions ~= native;
+
+        GrType type = GrType.Base.native;
+        GrType[] anySignature;
+        foreach (tmp; templateVariables) {
+            anySignature ~= grAny(tmp);
+        }
+        type.mangledType = grMangleComposite(name, anySignature);
+        return type;
+    }
+
+    /// Define a new primitive.
+    override GrPrimitive addFunction(GrCallback callback, string name,
+        GrType[] inSignature = [], GrType[] outSignature = [], GrConstraint[] constraints = [
+        ]) {
+        bool isAbstract;
+        foreach (GrType type; inSignature) {
+            if (type.isAbstract)
+                throw new Exception("`" ~ grGetPrettyFunction(name, inSignature,
+                        outSignature) ~ "` can't use type `" ~ grGetPrettyType(
+                        type) ~ "` as it is abstract");
+            if (type.isAny) {
+                isAbstract = true;
+                break;
+            }
+        }
+        foreach (GrType type; outSignature) {
+            if (type.isAbstract)
+                throw new Exception("`" ~ grGetPrettyFunction(name, inSignature,
+                        outSignature) ~ "` can't use type `" ~ grGetPrettyType(
+                        type) ~ "` as it is abstract");
+        }
+
+        GrPrimitive primitive = new GrPrimitive;
+        primitive.inSignature = inSignature;
+        primitive.outSignature = outSignature;
+        primitive.name = name;
+        primitive.callbackId = cast(int) _callbacks.length;
+        primitive.constraints = constraints;
+
+        _callbacks ~= callback;
+
+        _abstractPrimitives ~= primitive;
+        return primitive;
+    }
+
     /**
     An operator is a function that replace a binary or unary grimoire operator such as `+`, `==`, etc
     The name of the function must be that of the operator like "+", "-", "or", etc.
     */
-    GrPrimitive addOperator(GrCallback callback, Operator operator,
+    override GrPrimitive addOperator(GrCallback callback, Operator operator,
         GrType[] inSignature, GrType outType, GrConstraint[] constraints = []) {
         string name;
         uint signatureSize = 2;
@@ -363,7 +377,7 @@ class GrLibrary {
         return addOperator(callback, name, inSignature, outType, constraints);
     }
     /// Ditto
-    GrPrimitive addOperator(GrCallback callback, string name,
+    override GrPrimitive addOperator(GrCallback callback, string name,
         GrType[] inSignature, GrType outType, GrConstraint[] constraints = []) {
         if (inSignature.length > 2uL)
             throw new Exception(
@@ -376,8 +390,8 @@ class GrLibrary {
     A cast operator allows to convert from one type to another.
     It must have only one parameter and return the casted value.
     */
-    GrPrimitive addCast(GrCallback callback, GrType srcType, GrType dstType,
-        bool isExplicit = false, GrConstraint[] constraints = []) {
+    override GrPrimitive addCast(GrCallback callback, GrType srcType,
+        GrType dstType, bool isExplicit = false, GrConstraint[] constraints = []) {
         auto primitive = addFunction(callback, "@as", [srcType, dstType], [
                 dstType
             ], constraints);
@@ -389,7 +403,7 @@ class GrLibrary {
     Define a function that will be called with the `new` operation.
     It must return the defined type.
     */
-    GrPrimitive addConstructor(GrCallback callback, GrType newType,
+    override GrPrimitive addConstructor(GrCallback callback, GrType newType,
         GrType[] inSignature = [], GrConstraint[] constraints = []) {
         auto primitive = addFunction(callback, "@new", inSignature ~ [newType],
             [newType], constraints);
@@ -399,8 +413,9 @@ class GrLibrary {
     /**
     Define functions that access and modify a native’s property.
     */
-    GrPrimitive[] addProperty(GrCallback getCallback, GrCallback setCallback, string name,
-        GrType nativeType, GrType propertyType, GrConstraint[] constraints = []) {
+    override GrPrimitive[] addProperty(GrCallback getCallback, GrCallback setCallback,
+        string name, GrType nativeType, GrType propertyType, GrConstraint[] constraints = [
+        ]) {
         GrPrimitive[] primitives;
         /*assert(callbacks.length <= operations.length,
             "the number of callbacks of the property `" ~ name ~
