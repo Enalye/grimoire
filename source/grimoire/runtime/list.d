@@ -151,8 +151,14 @@ final class GrList {
         _data.length = 0;
     }
 
-    pragma(inline) void resize(GrInt size_) {
+    pragma(inline) void resize(GrInt size_, GrValue defaultValue) {
+        GrInt oldSize = cast(GrInt) _data.length;
         _data.length = size_;
+
+        while (oldSize < size_) {
+            _data[oldSize] = defaultValue;
+            oldSize++;
+        }
     }
 
     pragma(inline) GrValue first() {

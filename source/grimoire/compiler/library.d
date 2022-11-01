@@ -49,9 +49,10 @@ interface GrLibDefinition {
     }
 
     void setModule(string[]);
-    void setComment(GrLocale, string[], string);
+    void setDescription(GrLocale, string = "");
+    void setParameters(GrLocale, string[] = []);
+    void setModuleInfo(GrLocale, string);
     void setModuleDescription(GrLocale, string);
-    void setDescription(GrLocale, string);
     void addVariable(string, GrType);
     void addVariable(string, GrType, GrValue);
     GrType addEnum(string, string[]);
@@ -104,13 +105,16 @@ final class GrLibrary : GrLibDefinition {
     override void setModule(string[]) {
     }
 
-    override void setComment(GrLocale, string[], string) {
+    override void setDescription(GrLocale, string = "") {
+    }
+
+    override void setParameters(GrLocale, string[] = []) {
+    }
+
+    override void setModuleInfo(GrLocale, string) {
     }
 
     override void setModuleDescription(GrLocale, string) {
-    }
-
-    override void setDescription(GrLocale, string) {
     }
 
     /// Define a variable

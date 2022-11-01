@@ -11,6 +11,9 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 void grLoadStdLibTypecast(GrLibDefinition library) {
     library.setModule(["std", "typecast"]);
 
+    library.setModuleInfo(GrLocale.fr_FR, "Fonctions de conversion.");
+    library.setModuleInfo(GrLocale.en_US, "Conversion functions.");
+
     //As int
     library.addCast(&typecast_r2i, grReal, grInt, true);
     library.addCast(&typecast_b2i, grBool, grInt);

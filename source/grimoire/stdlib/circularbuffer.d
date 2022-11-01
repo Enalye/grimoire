@@ -12,22 +12,57 @@ void grLoadStdLibCircularBuffer(GrLibDefinition library) {
     library.setModule(["std", "circularbuffer"]);
 
     GrType bufType = library.addNative("CircularBuffer", ["T"]);
+
+    library.setDescription(GrLocale.fr_FR, "Itère sur un buffer circulaire.");
+    library.setDescription(GrLocale.en_US, "Iterate on a circular buffer.");
     library.addNative("CircularBufferIterator", ["T"]);
 
     library.addConstructor(&_new, bufType, [grInt]);
 
+    library.setDescription(GrLocale.fr_FR, "Renvoie `true` si `buffer` ne contient rien.");
+    library.setDescription(GrLocale.en_US, "Returns `true` if `buffer` contains nothing.");
+    library.setParameters(GrLocale.fr_FR, ["buffer"]);
+    library.setParameters(GrLocale.en_US, ["buffer"]);
     library.addFunction(&_isEmpty, "isEmpty", [grPure(bufType)], [grBool]);
+
+    library.setDescription(GrLocale.fr_FR, "Renvoie `true` si `buffer` est plein.");
+    library.setDescription(GrLocale.en_US, "Returns `true` if `buffer` is full.");
     library.addFunction(&_isFull, "isFull", [grPure(bufType)], [grBool]);
 
+    library.setDescription(GrLocale.fr_FR, "Retourne la taille actuelle du `buffer`.");
+    library.setDescription(GrLocale.en_US, "Returns the `buffer`'s size.");
     library.addFunction(&_size, "size", [grPure(bufType)], [grInt]);
+
+    library.setDescription(GrLocale.fr_FR, "Retourne la capacité maximale du `buffer`.");
+    library.setDescription(GrLocale.en_US, "Returns the `buffer`'s capacity.");
     library.addFunction(&_capacity, "capacity", [grPure(bufType)], [grInt]);
 
+    library.setDescription(GrLocale.fr_FR, "Ajoute `valeur` dans le `buffer`.");
+    library.setDescription(GrLocale.en_US, "Appends `value` to the `buffer`.");
+    library.setParameters(GrLocale.fr_FR, ["buffer", "valeur"]);
+    library.setParameters(GrLocale.en_US, ["buffer", "value"]);
     library.addFunction(&_push, "push", [bufType, grAny("T")]);
+
+    library.setDescription(GrLocale.fr_FR, "Retire un élément du `buffer` et le retourne.
+S’il n’en existe pas, retourne `null(T)`.");
+    library.setDescription(GrLocale.en_US, "Removes an element of the `buffer` and returns it.
+If there aren't any, returns `null(T)`.");
+    library.setParameters(GrLocale.fr_FR, ["buffer"]);
+    library.setParameters(GrLocale.en_US, ["buffer"]);
     library.addFunction(&_pop, "pop", [bufType], [grOptional(grAny("T"))]);
 
+    library.setDescription(GrLocale.fr_FR, "Retourne le premier élément de `buffer`.
+S’il n’existe pas, retourne `null(T)`.");
+    library.setDescription(GrLocale.en_US, "Returns the first element of `buffer`.
+If it doesn't exist, returns `null(T)`.");
     library.addFunction(&_front, "front", [grPure(bufType)], [
             grOptional(grAny("T"))
         ]);
+
+    library.setDescription(GrLocale.fr_FR, "Returne le dernier élément de `buffer`.
+S’il n’existe pas, retourne `null(T)`.");
+    library.setDescription(GrLocale.en_US, "Returns the last element of `buffer`.
+If it doesn't exist, returns `null(T)`.");
     library.addFunction(&_back, "back", [grPure(bufType)], [
             grOptional(grAny("T"))
         ]);

@@ -1,168 +1,158 @@
-# **string**
+# std.string
 
 Type de base.
-
 ## Description
-
 Type pouvant contenir des caractères UTF-8.
-
+## Natifs
+### StringIterator
+Itère sur les caractères d’une chaîne.
 ## Fonctions
-
 |Fonction|Entrée|Sortie|
 |-|-|-|
-|[contains](#contains)|**pure string** *chaîne*, **pure string** *valeur*|**string**|
-|[copy](#copy)|**pure string** *chaîne*|**string**|
-|[each](#each)|**pure string**|**[StringIterator](#stringiterator)**|
-|[first](#first)|**pure string** *chaîne*|**string**|
-|[indexOf](#indexOf)|**pure string** *chaîne*, **string** *valeur*|**int**|
-|[insert](#insert)|**string** *chaîne*, **int** *index*, **string** *valeur*|**string**|
-|[isEmpty](#isEmpty)|**string** *chaîne*|**bool**|
-|[lastIndexOf](#lastIndexOf)|**string** *chaîne*, **string** *valeur*|**int**|
-|[last](#last)|**string** *chaîne*|**string**|
-|[pop](#pop_1)|**string** *chaîne*|**string**|
-|[pop](#pop_2)|**string** *chaîne*, **int** *quantité*|**string**|
-|[push](#push)|**string** *chaîne*, **string** *valeur*|**string**|
-|[remove](#remove)|**string** *chaîne*, **int** *index*|**string**|
-|[remove](#remove)|**string** *chaîne*, **int** *indexDébut*, **int** *indexFin*|**string**|
-|[reverse](#reverse)|**string** *chaîne*|**string**|
-|[shift](#shift_1)|**string** *chaîne*|**string**|
-|[shift](#shift_2)|**string** *chaîne*, **int** *quantité*|**string**|
-|[size](#size)|**pure string** *chaîne*|**int**|
-|[slice](#slice)|**string** *chaîne*, **int** *indexDébut*, **int** *indexFin*|**string**|
-|[unshift](#unshift)|**string** *chaîne*, **string** *valeur*|**string**|
+|[clear](#func_0)|**string** *str*||
+|[contains](#func_1)|**pure string** *str*, **pure string** *valeur*|**bool**|
+|[copy](#func_2)|**pure string** *str*|**string**|
+|[each](#func_3)|**string** *chaîne*|**StringIterator**|
+|[first](#func_4)|**pure string** *str*|**string?**|
+|[indexOf](#func_5)|**pure string** *str*, **pure string** *valeur*|**int?**|
+|[insert](#func_6)|**string** *liste*, **int** *index*, **pure string** *valeur*||
+|[isEmpty](#func_7)|**pure string** *str*|**bool**|
+|[last](#func_8)|**pure string** *str*|**string?**|
+|[lastIndexOf](#func_9)|**pure string** *str*, **pure string** *valeur*|**int?**|
+|[next](#func_10)|**StringIterator** *itérateur*|**string?**|
+|[pop](#func_11)|**string** *str*|**string?**|
+|[pop](#func_12)|**string** *str*, **int** *quantité*|**string**|
+|[push](#func_13)|**string** *str*, **string** *valeur*||
+|[remove](#func_14)|**string** *str*, **int** *index*||
+|[remove](#func_15)|**string** *str*, **int** *indexDébut*, **int** *indexFin*||
+|[reverse](#func_16)|**pure string** *str*|**string**|
+|[shift](#func_17)|**string** *str*|**string?**|
+|[shift](#func_18)|**string** *str*, **int** *quantité*|**string**|
+|[size](#func_19)|**pure string** *str*|**int**|
+|[slice](#func_20)|**pure string** *str*, **int** *indexDébut*, **int** *indexFin*|**string**|
+|[unshift](#func_21)|**string** *str*, **string** *valeur*||
 
+
+***
 ## Description des fonctions
 
-<a id="each"></a>
-- each ( **string** *chaîne* ) ( [StringIterator](#stringiterator) )
+<a id="func_0"></a>
+> clear (**string** *str*)
 
-Returns an iterator that iterate through each character.
-___
+Vide la `str`.
 
-<a id="empty"></a>
-- empty? ( **string** *chaîne* ) ( **bool** )
+<a id="func_1"></a>
+> contains (**pure string** *str*, **pure string** *valeur*) (**bool**)
 
-Returns `true` if the **string** has no character.
-___
+Renvoie `true` si `valeur` existe dans `str`.
 
-<a id="indexOf"></a>
-- indexOf ( **string** *chaîne*, **string** *valeur* ) ( **int** )
+<a id="func_2"></a>
+> copy (**pure string** *str*) (**string**)
 
-If `*valeur*` is found inside the **string**, returns the *index* of the first element found, otherwise -1 is returned.
-___
+Retourne une copie d’`str`.
 
-<a id="lastIndexOf"></a>
-- lastIndexOf ( **string** *chaîne*, **string** *valeur* ) ( **int** )
+<a id="func_3"></a>
+> each (**string** *chaîne*) (**StringIterator**)
 
-If `*valeur*` is found inside the **string**, returns the *index* of the last element found, otherwise -1 is returned.
-___
+Retourne un itérateur qui parcours chaque caractère de la chaîne.
 
-<a id="first"></a>
-- first ( **string** *chaîne* ) ( **string** )
+<a id="func_4"></a>
+> first (**pure string** *str*) (**string?**)
 
-Returns the first character of the **string**.
-___
+Retourne le premier élément d’`str`.
+S’il n’existe pas, retourne `null(T)`.
 
-<a id="has"></a>
-- has? ( **string** *chaîne*, **string** *valeur* ) ( **bool** )
+<a id="func_5"></a>
+> indexOf (**pure string** *str*, **pure string** *valeur*) (**int?**)
 
-Returns `true` if the `*valeur*` is found inside the **string**.
-___
+Retourne la première occurence de `valeur` dans `str` à partir d’`index`.
+Si `valeur  n’existe pas, `null(int)` est renvoyé.
+Si `index` est négatif, l’`index` est calculé à partir de la fin d’`str`.
 
-<a id="insert"></a>
-- insert ( **string** *chaîne*, **int** *index*, **string** *valeur* ) ( **string** )
+<a id="func_6"></a>
+> insert (**string** *liste*, **int** *index*, **pure string** *valeur*)
 
-Insert the `*valeur*` to the **string** at the specified `*index*`.
-___
+Insère `valeur` dans la `str` à l’`index` spécifié.
+Si `index` dépasse la taille d’`str`, `valeur` est ajouté en fin d’`str`.
+Si `index` est négatif, l’`index` est calculé à partir de la fin d’`str`.
 
-<a id="last"></a>
-- last ( **string** *chaîne* ) ( **string** )
+<a id="func_7"></a>
+> isEmpty (**pure string** *str*) (**bool**)
 
-Returns the last character of the **string**.
-___
+Renvoie `true` si la `str` ne contient rien.
 
-<a id="pop_1"></a>
-- pop ( **string** *chaîne* ) ( **string** )
+<a id="func_8"></a>
+> last (**pure string** *str*) (**string?**)
 
-Remove the last element from the **string**.
-___
+Returne le dernier élément d’`str`.
+S’il n’existe pas, retourne `null(T)`.
 
-<a id="pop_2"></a>
-- pop ( **string** *chaîne*, **int** *quantité* ) ( **string** )
+<a id="func_9"></a>
+> lastIndexOf (**pure string** *str*, **pure string** *valeur*) (**int?**)
 
-Remove the last `*quantité*` element from the **string**.
-___
+Retourne la dernière occurence de `valeur` dans `str` à partir d’`index`.
+Si `valeur  n’existe pas, `null(int)` est renvoyé.
+Si `index` est négatif, l’`index` est calculé à partir de la fin d’`str`.
 
-<a id="push"></a>
-- push ( **string** *chaîne*, [**string**](#**string**] *valeur* ) ( **string** )
+<a id="func_10"></a>
+> next (**StringIterator** *itérateur*) (**string?**)
 
-Append the `*valeur*` at the end of the **string**.
-___
+Avance l’itérateur jusqu’au caractère suivant.
 
-<a id="remove"></a>
-- remove ( **string** *chaîne*, **int** *index* ) ( **string** )
+<a id="func_11"></a>
+> pop (**string** *str*) (**string?**)
 
-Delete the element at `*index*`.
-___
+Retire le dernier élément d’`str` et le retourne.
+S’il n’existe pas, retourne `null(T)`.
 
-<a id="remove"></a>
-- remove ( **string** *chaîne*, **int** *indexDébut*, **int** *indexFin* ) ( **string** )
+<a id="func_12"></a>
+> pop (**string** *str*, **int** *quantité*) (**string**)
 
-Delete the elements between `*indexDébut*` and `*indexFin*` included.
-___
+Retire `quantité` éléments d’`str` et les retourne.
 
-<a id="reverse"></a>
-- reverse ( **string** *chaîne* ) ( **string** )
+<a id="func_13"></a>
+> push (**string** *str*, **string** *valeur*)
 
-Invert the **string**.
-___
+Ajoute `valeur` en fin d’`str`.
 
-<a id="shift_1"></a>
-- shift ( **string** *chaîne* ) ( **string** )
+<a id="func_14"></a>
+> remove (**string** *str*, **int** *index*)
 
-Remove the first element from the **string**.
-___
+Retire l’élément à l’`index` spécifié.
 
-<a id="shift_2"></a>
-- shift ( **string** *chaîne*, **int** *quantité* ) ( **string** )
+<a id="func_15"></a>
+> remove (**string** *str*, **int** *indexDébut*, **int** *indexFin*)
 
-Remove the first `*quantité*` element from the **string**.
-___
+Retire les éléments de `indexDébut` à `indexFin` inclus.
 
-<a id="slice"></a>
-- slice ( **string** *chaîne*, **int** *indexDébut*, **int** *indexFin* ) ( **string** )
+<a id="func_16"></a>
+> reverse (**pure string** *str*) (**string**)
 
-Returns the **string** from `*indexDébut*` to `*indexFin*` included.
-___
+Retourne l’inverse d’`str`.
 
-<a id="split"></a>
-- split ( **string**(T) *chaîne*, T *valeur* ) ( **string** )
+<a id="func_17"></a>
+> shift (**string** *str*) (**string?**)
 
-Remove the first `*quantité*` element from the **string**.
-___
+Retire le premier élément d’`str` et les retourne.
+S’il n’existe pas, retourne `null(T)`.
 
-<a id="unshift"></a>
-- unshift ( **string** *chaîne*, **string** *valeur* ) ( list(**string**) )
+<a id="func_18"></a>
+> shift (**string** *str*, **int** *quantité*) (**string**)
 
-Prepend the `*valeur*` at the beginning of the **string**.
-___
+Retire les premiers `quantité` éléments d’`str` et les retourne.
 
-# StringIterator
+<a id="func_19"></a>
+> size (**pure string** *str*) (**int**)
 
-## Description
+Renvoie la taille d’`str`.
 
-Provides a way to iterate through an list.
+<a id="func_20"></a>
+> slice (**pure string** *str*, **int** *indexDébut*, **int** *indexFin*) (**string**)
 
-## Fonctions
+Retourne une portion d’`str` de `indexDébut` jusqu’à `indexFin` inclus.
 
-|Fonction|Entrée|Sortie|
-|-|-|-|
-|[next](#next)|[StringIterator](#stringiterator) *chaîne*|**bool**, **string**|
+<a id="func_21"></a>
+> unshift (**string** *str*, **string** *valeur*)
 
-## Description des fonctions
+Ajoute `valeur` en début d’`str`.
 
-<a id="next"></a>
-- next ( [StringIterator](#stringiterator) ) ( **bool**, **string** )
-
-Advance the iterator to the next element.
-Returns `true` while the iterator hasn't reach the end and the current element.

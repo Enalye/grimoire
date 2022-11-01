@@ -12,30 +12,73 @@ import grimoire.stdlib.util;
 void grLoadStdLibRange(GrLibDefinition library) {
     library.setModule(["std", "range"]);
 
+    library.setModuleInfo(GrLocale.fr_FR, "Fonctions pour itérer sur des séries de nombres.");
+    library.setModuleInfo(GrLocale.en_US, "Functions to iterate on series of numbers.");
+
+    library.setDescription(GrLocale.fr_FR, "Itère sur une série de nombres.");
+    library.setDescription(GrLocale.en_US, "Iterate on a serie of numbers.");
     library.addNative("RangeIterator", ["T"]);
     GrType rangeIteratorIntType = grGetNativeType("RangeIterator", [grInt]);
     GrType rangeIteratorRealType = grGetNativeType("RangeIterator", [grReal]);
 
+    library.setDescription(GrLocale.fr_FR, "Avance jusqu’au nombre suivant de la série.");
+    library.setDescription(GrLocale.en_US, "Advance until the next number in the serie.");
+    library.setParameters(GrLocale.fr_FR, ["itérateur"]);
+    library.setParameters(GrLocale.en_US, ["iterator"]);
     library.addFunction(&_range_next_i, "next", [rangeIteratorIntType], [
             grOptional(grInt),
         ]);
-    library.addOperator(&_range_i, GrLibDefinition.Operator.interval, [grInt,
-            grInt], rangeIteratorIntType);
+    library.addOperator(&_range_i, GrLibDefinition.Operator.interval, [
+            grInt, grInt
+        ], rangeIteratorIntType);
+
+    library.setDescription(GrLocale.fr_FR,
+        "Retourne un itérateur qui part de `début` jusqu’à `fin` inclus.");
+    library.setDescription(GrLocale.en_US,
+        "Returns an iterator that start from `start` and end with `end` included.");
+    library.setParameters(GrLocale.fr_FR, ["début", "fin"]);
+    library.setParameters(GrLocale.en_US, ["start", "end"]);
     library.addFunction(&_range_i, "range", [grInt, grInt], [
             rangeIteratorIntType
         ]);
+
+    library.setDescription(GrLocale.fr_FR,
+        "Retourne un itérateur qui part de `début` jusqu’à `fin` inclus par incréments de `pas`.");
+    library.setDescription(GrLocale.en_US,
+        "Returns an iterator that start from `start` and end with `end` included by increments of `step`.");
+    library.setParameters(GrLocale.fr_FR, ["début", "fin", "pas"]);
+    library.setParameters(GrLocale.en_US, ["start", "end", "step"]);
     library.addFunction(&_range_step_i, "range", [grInt, grInt, grInt], [
             rangeIteratorIntType
         ]);
 
+    library.setDescription(GrLocale.fr_FR, "Avance jusqu’au nombre suivant de la série.");
+    library.setDescription(GrLocale.en_US, "Advance until the next number in the serie.");
+    library.setParameters(GrLocale.fr_FR, ["itérateur"]);
+    library.setParameters(GrLocale.en_US, ["iterator"]);
     library.addFunction(&_range_next_r, "next", [rangeIteratorRealType], [
             grOptional(grReal)
         ]);
-    library.addOperator(&_range_r, GrLibDefinition.Operator.interval, [grReal,
-            grReal], rangeIteratorRealType);
+    library.addOperator(&_range_r, GrLibDefinition.Operator.interval, [
+            grReal, grReal
+        ], rangeIteratorRealType);
+
+    library.setDescription(GrLocale.fr_FR,
+        "Retourne un itérateur qui part de `début` jusqu’à `fin` inclus.");
+    library.setDescription(GrLocale.en_US,
+        "Returns an iterator that start from `start` and end with `end` included.");
+    library.setParameters(GrLocale.fr_FR, ["début", "fin"]);
+    library.setParameters(GrLocale.en_US, ["start", "end"]);
     library.addFunction(&_range_r, "range", [grReal, grReal], [
             rangeIteratorRealType
         ]);
+
+    library.setDescription(GrLocale.fr_FR,
+        "Retourne un itérateur qui part de `début` jusqu’à `fin` inclus par incréments de `pas`.");
+    library.setDescription(GrLocale.en_US,
+        "Returns an iterator that start from `start` and end with `end` included by increments of `step`.");
+    library.setParameters(GrLocale.fr_FR, ["début", "fin", "pas"]);
+    library.setParameters(GrLocale.en_US, ["start", "end", "step"]);
     library.addFunction(&_range_step_r, "range", [grReal, grReal, grReal],
         [rangeIteratorRealType]);
 }

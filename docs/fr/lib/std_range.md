@@ -1,61 +1,55 @@
-# range
+# std.range
 
-## Description
-
-
+Fonctions pour itérer sur des séries de nombres.
+## Natifs
+### RangeIterator\<T>
+Itère sur une série de nombres.
+## Opérateurs
+|Opérateur|Entrée|Sortie|
+|-|-|-|
+|->|**int**, **int**|**RangeIterator\<int>**|
+|->|**real**, **real**|**RangeIterator\<real>**|
 ## Fonctions
-
 |Fonction|Entrée|Sortie|
 |-|-|-|
-|[range](#range_i2)|**int** *début*, **int** *fin*|**[RangeIterator](#rangeiterator)\<int\>**|
-|[range](#range_r2)|**real** *début*, **real** *fin*|**[RangeIterator](#rangeiterator)\<real\>**|
-|[range](#range_i3)|**int** *début*, **int** *fin*, **int** *pas*|**[RangeIterator](#rangeiterator)\<int\>**|
-|[range](#range_r3)|**real** *début*, **real** *fin*, **real** *pas*|**[RangeIterator](#rangeiterator)\<real\>**|
+|[next](#func_0)|**RangeIterator\<int>** *itérateur*|**int?**|
+|[next](#func_1)|**RangeIterator\<real>** *itérateur*|**real?**|
+|[range](#func_2)|**int** *début*, **int** *fin*|**RangeIterator\<int>**|
+|[range](#func_3)|**int** *début*, **int** *fin*, **int** *pas*|**RangeIterator\<int>**|
+|[range](#func_4)|**real** *début*, **real** *fin*|**RangeIterator\<real>**|
+|[range](#func_5)|**real** *début*, **real** *fin*, **real** *pas*|**RangeIterator\<real>**|
 
+
+***
 ## Description des fonctions
 
-<a id="range_i2"></a>
-- range (**int** *début*, **int** *fin*) (**[RangeIterator](#rangeiterator)\<int\>**)
+<a id="func_0"></a>
+> next (**RangeIterator\<int>** *itérateur*) (**int?**)
 
-Returne un itérateur qui renvoie des valeurs comprises entre `début` et `fin` inclus par incréments de `1`.
-___
+Avance jusqu’au nombre suivant de la série.
 
-<a id="range_r2"></a>
-- range (**real** *début*, **real** *fin*) (**[RangeIterator](#rangeiterator)\<real\>**)
+<a id="func_1"></a>
+> next (**RangeIterator\<real>** *itérateur*) (**real?**)
 
-Returne un itérateur qui renvoie des valeurs comprises entre `début` et `fin` inclus par incréments de `1.0`.
-___
+Avance jusqu’au nombre suivant de la série.
 
-<a id="range_i3"></a>
-- range (**int** *début*, **int** *fin*, **int** *pas*) (**[RangeIterator](#rangeiterator)\<int\>**)
+<a id="func_2"></a>
+> range (**int** *début*, **int** *fin*) (**RangeIterator\<int>**)
 
-Returne un itérateur qui renvoie des valeurs comprises entre `début` et `fin` inclus par incréments de `pas`.
-___
+Retourne un itérateur qui part de `début` jusqu’à `fin` inclus.
 
-<a id="range_r3"></a>
-- range (**real** *début*, **real** *fin*, **real** *pas*) (**[RangeIterator](#rangeiterator)\<real\>**)
+<a id="func_3"></a>
+> range (**int** *début*, **int** *fin*, **int** *pas*) (**RangeIterator\<int>**)
 
-Returne un itérateur qui renvoie des valeurs comprises entre `début` et `fin` inclus par incréments de `pas`.
-___
+Retourne un itérateur qui part de `début` jusqu’à `fin` inclus par incréments de `pas`.
 
-# RangeIterator
+<a id="func_4"></a>
+> range (**real** *début*, **real** *fin*) (**RangeIterator\<real>**)
 
-## Fonctions
+Retourne un itérateur qui part de `début` jusqu’à `fin` inclus.
 
-|Fonction|Entrée|Sortie|
-|-|-|-|
-|[next](#next_i)|**[RangeIterator](#rangeiterator)\<int\>** *itérateur*|**int?**|
-|[next](#next_r)|**[RangeIterator](#rangeiterator)\<real\>** *itérateur*|**real?**|
+<a id="func_5"></a>
+> range (**real** *début*, **real** *fin*, **real** *pas*) (**RangeIterator\<real>**)
 
-## Description des fonctions
+Retourne un itérateur qui part de `début` jusqu’à `fin` inclus par incréments de `pas`.
 
-<a id="next_i"></a>
-- next (**[RangeIterator](#rangeiterator)\<int\>**) (**T?**)
-
-Avance l’itérateur jusqu’au prochain élément.
-___
-
-<a id="next_r"></a>
-- next (**[RangeIterator](#rangeiterator)\<real\>**) (**T?**)
-
-Avance l’itérateur jusqu’au prochain élément.

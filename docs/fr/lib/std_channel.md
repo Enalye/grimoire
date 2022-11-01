@@ -1,44 +1,37 @@
-# channel
+# std.channel
 
 Type de base.
-
 ## Description
-
 Un canal est un moyen de communication et de synchronisation entre tâches.
-
 ## Fonctions
-
 |Fonction|Entrée|Sortie|
 |-|-|-|
-|[size](#size)|**pure channel(T)** *canal*|**int**|
-|[capacity](#capacity)|**pure channel(T)** *canal*|**int**|
-|[isEmpty](#isEmpty)|**pure channel(T)** *canal*|**bool**|
-|[isFull](#isFull)|**pure channel(T)** *canal*|**bool**|
+|[capacity](#func_0)|**pure channel(T)** *canal*|**int**|
+|[isEmpty](#func_1)|**pure channel(T)** *canal*|**bool**|
+|[isFull](#func_2)|**pure channel(T)** *canal*|**bool**|
+|[size](#func_3)|**pure channel(T)** *canal*|**int**|
 
----
 
+***
 ## Description des fonctions
 
-<a id="size"></a>
-- size (**pure channel(T)** *canal*) (**int**)
+<a id="func_0"></a>
+> capacity (**pure channel(T)** *canal*) (**int**)
 
-Retourne la taille actuelle du canal.
-___
+Retourne la capacité maximale du canal.
 
-<a id="capacity"></a>
-- capacity (**pure channel(T)** *canal*) (**int**)
-
-Retourne la capacité maximal du canal.
-___
-
-<a id="isEmpty"></a>
-- isEmpty (**pure channel(T)** *canal*) (**bool**)
+<a id="func_1"></a>
+> isEmpty (**pure channel(T)** *canal*) (**bool**)
 
 Renvoie `true` si le canal ne contient rien.
-___
 
-<a id="isFull"></a>
-- isFull (**pure channel(T)** *canal*) (**bool**)
+<a id="func_2"></a>
+> isFull (**pure channel(T)** *canal*) (**bool**)
 
 Renvoie `true` si le canal a atteint sa capacité maximale.
-___
+
+<a id="func_3"></a>
+> size (**pure channel(T)** *canal*) (**int**)
+
+Retourne la taille actuelle du canal.
+

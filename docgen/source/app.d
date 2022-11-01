@@ -61,8 +61,11 @@ void generate(GrLocale locale) {
             fileName ~= part;
         }
         fileName ~= ".md";
-        std.file.write(buildNormalizedPath("testdoc",
-                to!string(locale), fileName), generatedText);
+        string folderName = to!string(locale);
+        auto parts = folderName.split("_");
+        if (parts.length >= 1)
+            folderName = parts[0];
+        std.file.write(buildNormalizedPath("docs", folderName, "lib", fileName), generatedText);
         i++;
     }
 }

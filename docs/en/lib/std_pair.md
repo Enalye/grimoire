@@ -1,6 +1,6 @@
 # std.pair
 
-Paire de clé/valeur.
+Pair of key/value.
 ## Natifs
 ### Pair\<K, V>
 ## Opérateurs

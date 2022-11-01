@@ -12,8 +12,11 @@ import grimoire.stdlib.util;
 void grLoadStdLibLog(GrLibDefinition library) {
     library.setModule(["std", "io"]);
 
-    library.setComment(GrLocale.fr_FR, ["valeur"], "Affiche le contenu de @i0.");
-    library.setComment(GrLocale.en_US, ["value"], "Display @i0's content.");
+    library.setDescription(GrLocale.fr_FR, "Affiche le contenu de `valeur`.");
+    library.setDescription(GrLocale.en_US, "Display `value`'s content.");
+
+    library.setParameters(GrLocale.fr_FR, ["valeur"]);
+    library.setParameters(GrLocale.en_US, ["value"]);
 
     //print
     library.addFunction(&_print_i, "print", [grInt]);

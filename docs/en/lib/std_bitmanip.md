@@ -1,6 +1,6 @@
 # std.bitmanip
 
-Opérations pour effectuer des opérations binaires.
+Operations to make binary operations.
 ## Opérateurs
 |Opérateur|Entrée|Sortie|
 |-|-|-|

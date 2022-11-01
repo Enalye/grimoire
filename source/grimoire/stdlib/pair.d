@@ -10,6 +10,9 @@ import grimoire.compiler, grimoire.runtime;
 void grLoadStdLibPair(GrLibDefinition library) {
     library.setModule(["std", "pair"]);
 
+    library.setModuleInfo(GrLocale.fr_FR, "Paire de clé/valeur.");
+    library.setModuleInfo(GrLocale.en_US, "Pair of key/value.");
+
     GrType pairType = library.addNative("Pair", ["K", "V"]);
 
     library.addOperator(&_new, GrLibDefinition.Operator.arrow, [

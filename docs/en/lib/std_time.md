@@ -1,6 +1,6 @@
 # std.time
 
-Fonctions liées au temps.
+Time related functions.
 ## Fonctions
 |Fonction|Entrée|Sortie|
 |-|-|-|
@@ -21,45 +21,45 @@ Fonctions liées au temps.
 <a id="func_0"></a>
 > hours (**int** *h*) (**int**)
 
-Convertis `h` heures en millisecondes.
+Converts `h` hours in milliseconds.
 
 <a id="func_1"></a>
 > hours (**real** *h*) (**int**)
 
-Convertis `h` heures en millisecondes.
+Converts `h` hours in milliseconds.
 
 <a id="func_2"></a>
 > minutes (**int** *m*) (**int**)
 
-Convertis `m` secondes en millisecondes.
+Converts `m` seconds in milliseconds.
 
 <a id="func_3"></a>
 > minutes (**real** *m*) (**int**)
 
-Convertis `m` secondes en millisecondes.
+Converts `m` seconds in milliseconds.
 
 <a id="func_4"></a>
 > seconds (**int** *s*) (**int**)
 
-Convertis `s` secondes en millisecondes.
+Converts `s` seconds in milliseconds.
 
 <a id="func_5"></a>
 > seconds (**real** *s*) (**int**)
 
-Convertis `s` secondes en millisecondes.
+Converts `s` seconds in milliseconds.
 
 <a id="func_6"></a>
 > sleep (**int** *ms*)
 
-Bloque la tâche durant `ms` millisecondes.
+Blocks the task during `ms` milliseconds.
 
 <a id="func_7"></a>
 > time (**int**)
 
-Renvoie le temps écoulé.
+Returns the elapsed time.
 
 <a id="func_8"></a>
 > wait (**int** *x*)
 
-Bloque la tâche durant `x` passes.
+Blocks the task during `x` passes.
 

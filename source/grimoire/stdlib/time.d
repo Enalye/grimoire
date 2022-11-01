@@ -12,17 +12,45 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 void grLoadStdLibTime(GrLibDefinition library) {
     library.setModule(["std", "time"]);
 
+    library.setModuleInfo(GrLocale.fr_FR, "Fonctions liées au temps.");
+    library.setModuleInfo(GrLocale.en_US, "Time related functions.");
+
+    library.setDescription(GrLocale.fr_FR, "Renvoie le temps écoulé.");
+    library.setDescription(GrLocale.en_US, "Returns the elapsed time.");
+    library.setParameters(GrLocale.fr_FR);
+    library.setParameters(GrLocale.en_US);
     library.addFunction(&_time, "time", [], [grInt]);
 
+    library.setDescription(GrLocale.fr_FR, "Bloque la tâche durant `x` passes.");
+    library.setDescription(GrLocale.en_US, "Blocks the task during `x` passes.");
+    library.setParameters(GrLocale.fr_FR, ["x"]);
+    library.setParameters(GrLocale.en_US, ["x"]);
     library.addFunction(&_wait, "wait", [grInt]);
+
+    library.setDescription(GrLocale.fr_FR, "Bloque la tâche durant `ms` millisecondes.");
+    library.setDescription(GrLocale.en_US, "Blocks the task during `ms` milliseconds.");
+    library.setParameters(GrLocale.fr_FR, ["ms"]);
+    library.setParameters(GrLocale.en_US, ["ms"]);
     library.addFunction(&_sleep, "sleep", [grInt]);
 
+    library.setDescription(GrLocale.fr_FR, "Convertis `s` secondes en millisecondes.");
+    library.setDescription(GrLocale.en_US, "Converts `s` seconds in milliseconds.");
+    library.setParameters(GrLocale.fr_FR, ["s"]);
+    library.setParameters(GrLocale.en_US, ["s"]);
     library.addFunction(&_seconds_i, "seconds", [grInt], [grInt]);
     library.addFunction(&_seconds_f, "seconds", [grReal], [grInt]);
 
+    library.setDescription(GrLocale.fr_FR, "Convertis `m` secondes en millisecondes.");
+    library.setDescription(GrLocale.en_US, "Converts `m` seconds in milliseconds.");
+    library.setParameters(GrLocale.fr_FR, ["m"]);
+    library.setParameters(GrLocale.en_US, ["m"]);
     library.addFunction(&_minutes_i, "minutes", [grInt], [grInt]);
     library.addFunction(&_minutes_f, "minutes", [grReal], [grInt]);
 
+    library.setDescription(GrLocale.fr_FR, "Convertis `h` heures en millisecondes.");
+    library.setDescription(GrLocale.en_US, "Converts `h` hours in milliseconds.");
+    library.setParameters(GrLocale.fr_FR, ["h"]);
+    library.setParameters(GrLocale.en_US, ["h"]);
     library.addFunction(&_hours_i, "hours", [grInt], [grInt]);
     library.addFunction(&_hours_f, "hours", [grReal], [grInt]);
 }

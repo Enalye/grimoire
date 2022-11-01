@@ -1,3 +1,3 @@
-# Grimoire Standard Library
+# Libraries
 
-The standard library is a set of basic types and functions embedded with Grimoire.
+This documentation regroups some useful libraries used with Grimoire.

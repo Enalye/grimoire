@@ -11,6 +11,9 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 void grLoadStdLibBitmanip(GrLibDefinition library) {
     library.setModule(["std", "bitmanip"]);
 
+    library.setModuleInfo(GrLocale.fr_FR, "Opérations pour effectuer des opérations binaires.");
+    library.setModuleInfo(GrLocale.en_US, "Operations to make binary operations.");
+
     library.addOperator(&_shiftLeft, GrLibrary.Operator.leftShift, [grInt, grInt], grInt);
     library.addOperator(&_shiftRight, GrLibrary.Operator.rightShift, [grInt, grInt], grInt);
     library.addOperator(&_and, GrLibrary.Operator.bitwiseAnd, [grInt, grInt], grInt);

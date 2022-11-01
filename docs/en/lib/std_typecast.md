@@ -1,6 +1,6 @@
 # std.typecast
 
-Fonctions de conversion.
+Conversion functions.
 ## Conversions
 |Source|Destination|
 |-|-|
