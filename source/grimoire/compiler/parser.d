@@ -2313,15 +2313,16 @@ final class GrParser {
                 currentType.base = GrType.Base.list;
                 checkAdvance();
                 string[] temp;
-                auto signature = parseInSignature(temp, true, templateVariables);
+                auto signature = parseTemplateSignature(templateVariables);
                 if (signature.length > 1) {
                     logError(getError(Error.listCanOnlyContainOneTypeOfVal), getError(Error.conflictingListSignature),
                         format(getError(Error.tryUsingXInstead),
                             getPrettyType(grList(signature[0]))), -1);
                 }
                 else if (signature.length == 0) {
-                    logError(getError(Error.listCanOnlyContainOneTypeOfVal),
-                        getError(Error.conflictingListSignature), "", -1);
+                    logError(getError(Error.listCanOnlyContainOneTypeOfVal), format(getError(Error.expectedXFoundY),
+                            getPrettyLexemeType(GrLexeme.Type.lesser),
+                            getPrettyLexemeType(get().type)));
                 }
                 currentType.mangledType = grMangleSignature(signature);
                 break;
@@ -2344,7 +2345,7 @@ final class GrParser {
                 currentType.base = GrType.Base.channel;
                 checkAdvance();
                 string[] temp;
-                GrType[] signature = parseInSignature(temp, true, templateVariables);
+                GrType[] signature = parseTemplateSignature(templateVariables);
                 if (signature.length != 1)
                     logError(getError(Error.channelCanOnlyContainOneTypeOfVal),
                         getError(Error.conflictingChannelSignature),
@@ -3597,11 +3598,10 @@ final class GrParser {
         int channelSize = 1;
 
         checkAdvance();
-        if (get().type != GrLexeme.Type.leftParenthesis)
-            logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexeme.Type.channelType)),
+        if (get().type != GrLexeme.Type.lesser)
+            logError(format(getError(Error.missingXInChanSignature), getPrettyLexemeType(GrLexeme.Type.lesser)),
                 format(getError(Error.expectedXFoundY),
-                    getPrettyLexemeType(GrLexeme.Type.leftParenthesis),
-                    getPrettyLexemeType(get().type)));
+                    getPrettyLexemeType(GrLexeme.Type.lesser), getPrettyLexemeType(get().type)));
         checkAdvance();
         GrType subType = parseType();
 
@@ -3618,16 +3618,16 @@ final class GrParser {
                     format(getError(Error.expectedAtLeastSizeOf1FoundX), channelSize));
             checkAdvance();
         }
-        else if (lex.type != GrLexeme.Type.rightParenthesis) {
-            logError(getError(Error.missingCommaOrRightParenthesisInsideChanSignature),
-                format(getError(Error.expectedCommaOrRightParenthesisFoundX),
+        else if (lex.type != GrLexeme.Type.greater) {
+            logError(getError(Error.missingCommaOrGreaterInsideChanSignature),
+                format(getError(Error.expectedCommaOrGreaterFoundX),
                     getPrettyLexemeType(get().type)));
         }
         lex = get();
-        if (lex.type != GrLexeme.Type.rightParenthesis)
-            logError(getError(Error.missingParenthesesAfterChanSignature), format(getError(Error.expectedXFoundY),
-                    getPrettyLexemeType(GrLexeme.Type.rightParenthesis),
-                    getPrettyLexemeType(get().type)));
+        if (lex.type != GrLexeme.Type.greater)
+            logError(format(getError(Error.missingXInChanSignature), getPrettyLexemeType(GrLexeme.Type.greater)),
+                format(getError(Error.expectedXFoundY),
+                    getPrettyLexemeType(GrLexeme.Type.greater), getPrettyLexemeType(get().type)));
         checkAdvance();
         channelType.mangledType = grMangleSignature([subType]);
 
@@ -5002,15 +5002,13 @@ final class GrParser {
         const uint fileId = get().fileId;
         int listSize, defaultListSize;
 
-        //Explicit type like: list(int)[1, 2, 3] or default size like: list(int, 5)
+        //Explicit type like: list<int>[1, 2, 3] or default size like: list<int>(5, 0)
         if (get().type == GrLexeme.Type.listType) {
             checkAdvance();
-            if (get().type != GrLexeme.Type.leftParenthesis)
-                logError(format(getError(Error.missingParenthesesAfterX),
-                        getPrettyLexemeType(GrLexeme.Type.channelType)),
+            if (get().type != GrLexeme.Type.lesser)
+                logError(format(getError(Error.missingXInListSignature), getPrettyLexemeType(GrLexeme.Type.lesser)),
                     format(getError(Error.expectedXFoundY),
-                        getPrettyLexemeType(GrLexeme.Type.leftParenthesis),
-                        getPrettyLexemeType(get().type)));
+                        getPrettyLexemeType(GrLexeme.Type.lesser), getPrettyLexemeType(get().type)));
             checkAdvance();
             subType = parseType();
 
@@ -5027,16 +5025,16 @@ final class GrParser {
                         format(getError(Error.expectedAtLeastSizeOf1FoundX), defaultListSize));
                 checkAdvance();
             }
-            else if (lex.type != GrLexeme.Type.rightParenthesis) {
-                logError(getError(Error.missingCommaOrRightParenthesisInsideListSignature),
-                    format(getError(Error.expectedCommaOrRightParenthesisFoundX),
+            else if (lex.type != GrLexeme.Type.greater) {
+                logError(getError(Error.missingCommaOrGreaterInsideListSignature),
+                    format(getError(Error.expectedCommaOrGreaterFoundX),
                         getPrettyLexemeType(get().type)));
             }
             lex = get();
-            if (lex.type != GrLexeme.Type.rightParenthesis)
-                logError(getError(Error.missingParenthesesAfterListSignature), format(getError(Error.expectedXFoundY),
-                        getPrettyLexemeType(GrLexeme.Type.rightParenthesis),
-                        getPrettyLexemeType(get().type)));
+            if (lex.type != GrLexeme.Type.greater)
+                logError(format(getError(Error.missingXInListSignature), getPrettyLexemeType(GrLexeme.Type.greater)),
+                    format(getError(Error.expectedXFoundY),
+                        getPrettyLexemeType(GrLexeme.Type.greater), getPrettyLexemeType(get().type)));
             checkAdvance();
             listType.mangledType = grMangleSignature([subType]);
         }
@@ -5925,16 +5923,17 @@ final class GrParser {
                 hasValue = true;
                 addInstruction(GrOpcode.const_null);
                 checkAdvance();
-                if (get().type == GrLexeme.Type.leftParenthesis) {
+                if (get().type == GrLexeme.Type.lesser) {
                     checkAdvance();
                     GrType subType = parseType();
                     if (subType.base != GrType.Base.void_)
                         currentType = grOptional(subType);
 
-                    if (get().type != GrLexeme.Type.rightParenthesis)
-                        logError(getError(Error.missingParenthesesAfterNullSignature),
+                    if (get().type != GrLexeme.Type.greater)
+                        logError(format(getError(Error.missingXInNullSignature),
+                                getPrettyLexemeType(GrLexeme.Type.greater)),
                             format(getError(Error.expectedXFoundY),
-                                getPrettyLexemeType(GrLexeme.Type.rightParenthesis),
+                                getPrettyLexemeType(GrLexeme.Type.greater),
                                 getPrettyLexemeType(get().type)));
                     checkAdvance();
                 }
@@ -7025,16 +7024,16 @@ final class GrParser {
         xNotValidRetType,
         chanSizeMustBePositive,
         listSizeMustBePositive,
-        missingCommaOrRightParenthesisInsideChanSignature,
-        missingCommaOrRightParenthesisInsideListSignature,
-        missingParenthesesAfterChanSignature,
-        missingParenthesesAfterListSignature,
-        missingParenthesesAfterNullSignature,
+        missingCommaOrGreaterInsideChanSignature,
+        missingCommaOrGreaterInsideListSignature,
+        missingXInChanSignature,
+        missingXInListSignature,
+        missingXInNullSignature,
         expectedIntFoundX,
         chanSizeMustBeOneOrHigher,
         listSizeMustBeZeroOrHigher,
         expectedAtLeastSizeOf1FoundX,
-        expectedCommaOrRightParenthesisFoundX,
+        expectedCommaOrGreaterFoundX,
         chanCantBeOfTypeX,
         invalidChanType,
         missingParenthesesAfterX,
@@ -7264,15 +7263,15 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.xNotValidRetType: "`%s` is not a valid return type",
                 Error.chanSizeMustBePositive: "a channel size must be a positive integer value",
                 Error.listSizeMustBePositive: "an list size must be a positive integer value",
-                Error.missingCommaOrRightParenthesisInsideChanSignature: "missing `,` or `)` inside channel signature",
-                Error.missingCommaOrRightParenthesisInsideListSignature: "missing `,` or `)` inside list signature",
-                Error.missingParenthesesAfterChanSignature: "missing parentheses after the channel signature",
-                Error.missingParenthesesAfterListSignature: "missing parentheses after the list signature",
-                Error.missingParenthesesAfterNullSignature: "missing parentheses after the null signature",
+                Error.missingCommaOrGreaterInsideChanSignature: "missing `,` or `>` inside channel signature",
+                Error.missingCommaOrGreaterInsideListSignature: "missing `,` or `>` inside list signature",
+                Error.missingXInChanSignature: "missing `%s` after the channel signature",
+                Error.missingXInListSignature: "missing `%s` after the list signature",
+                Error.missingXInNullSignature: "missing `%s` after the null signature",
                 Error.chanSizeMustBeOneOrHigher: "the channel size must be one or higher",
                 Error.listSizeMustBeZeroOrHigher: "the list size must be zero or higher",
                 Error.expectedAtLeastSizeOf1FoundX: "expected at least a size of 1, found %s",
-                Error.expectedCommaOrRightParenthesisFoundX: "expected `,` or `)`, found `%s`",
+                Error.expectedCommaOrGreaterFoundX: "expected `,` or `>`, found `%s`",
                 Error.chanCantBeOfTypeX: "a channel can't be of type `%s`",
                 Error.missingParenthesesAfterX: "missing parentheses after `%s`",
                 Error.missingCommaInX: "missing comma in `%s`",
@@ -7428,7 +7427,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.globalDeclExpected: "une déclaration globale est attendue",
                 Error.globalDeclExpectedFoundX: "une déclaration globale est attendue, `%s` trouvé",
                 Error.funcMissingRetAtEnd: "il manque un retour en fin de fonction",
-                Error.missingRet: "`retourne` manquant",
+                Error.missingRet: "`return` manquant",
                 Error.expectedTypeAliasNameFoundX: "nom d’alias de type attendu, `%s` trouvé",
                 Error.expectedEnumNameFoundX: "nom d'énumération attendu, `%s` trouvé",
                 Error.expectedXFoundY: "`%s` attendu, `%s` trouvé",
@@ -7478,26 +7477,26 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.expected1ParamFoundXs: "1 paramètre attendu, %s paramètres trouvés",
                 Error.missingCurlyBraces: "accolades manquantes",
                 Error.expectedIntFoundX: "entier attendu, `%s` trouvé",
-                Error.deferInsideDefer: "`décale` à l’intérieur d’un autre `décale`",
-                Error.cantDeferInsideDefer: "impossible de faire un `décale` dans un autre `defer`",
-                Error.xInsideDefer: "`%s` à l’intérieur d’un décale",
-                Error.cantXInsideDefer: "impossible de faire un `%s` dans un décale",
-                Error.breakOutsideLoop: "`casse` en dehors d’une boucle",
-                Error.cantBreakOutsideLoop: "impossible de `casse` en dehors d’une boucle",
+                Error.deferInsideDefer: "`defer` à l’intérieur d’un autre `defer`",
+                Error.cantDeferInsideDefer: "impossible de faire un `defer` dans un autre `defer`",
+                Error.xInsideDefer: "`%s` à l’intérieur d’un `defer`",
+                Error.cantXInsideDefer: "impossible de faire un `%s` dans un `defer`",
+                Error.breakOutsideLoop: "`break` en dehors d’une boucle",
+                Error.cantBreakOutsideLoop: "impossible de `break` en dehors d’une boucle",
                 Error.continueOutsideLoop: "`continue` en dehors d’une boucle",
                 Error.cantContinueOutsideLoop: "impossible de `continue` en dehors d’une boucle",
                 Error.xNotValidRetType: "`%s` n’est pas un type de retour valide",
                 Error.chanSizeMustBePositive: "la taille d’un canal doit être un entier positif",
                 Error.listSizeMustBePositive: "la taille d’une liste doit être un entier positif",
-                Error.missingCommaOrRightParenthesisInsideChanSignature: "`,` ou `)` manquant dans la signature du canal",
-                Error.missingCommaOrRightParenthesisInsideListSignature: "`,` ou `)` manquant dans la signature de la liste",
-                Error.missingParenthesesAfterChanSignature: "parenthèses manquantes après la signature du canal",
-                Error.missingParenthesesAfterListSignature: "parenthèses manquantes après la signature de la liste",
-                Error.missingParenthesesAfterNullSignature: "parenthèses manquantes après la signature du type nul",
+                Error.missingCommaOrGreaterInsideChanSignature: "`,` ou `)` manquant dans la signature du canal",
+                Error.missingCommaOrGreaterInsideListSignature: "`,` ou `)` manquant dans la signature de la liste",
+                Error.missingXInChanSignature: "`%s` manquantes après la signature du canal",
+                Error.missingXInListSignature: "`%s` manquantes après la signature de la liste",
+                Error.missingXInNullSignature: "`%s` manquantes après la signature du type nul",
                 Error.chanSizeMustBeOneOrHigher: "la taille du canal doit être de un ou plus",
                 Error.listSizeMustBeZeroOrHigher: "la taille d’une liste doit être supérieure à zéro",
                 Error.expectedAtLeastSizeOf1FoundX: "une taille de 1 minimum attendue, %s trouvé",
-                Error.expectedCommaOrRightParenthesisFoundX: "`,` ou `)` attendu, `%s` trouvé",
+                Error.expectedCommaOrGreaterFoundX: "`,` ou `>` attendu, `%s` trouvé",
                 Error.chanCantBeOfTypeX: "un canal ne peut être de type `%s`",
                 Error.missingParenthesesAfterX: "parenthèses manquantes après `%s`",
                 Error.missingCommaInX: "virgule manquante dans `%s`",
