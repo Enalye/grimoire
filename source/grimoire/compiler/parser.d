@@ -5729,7 +5729,7 @@ final class GrParser {
                     typeStack ~= currentType;
                 }
                 break;
-            case doubleColon:
+            case colon:
                 advance();
                 if (!hadValue)
                     logError(getError(Error.methodCallMustBePlacedAfterVal),
@@ -5952,6 +5952,7 @@ final class GrParser {
             case period:
                 checkAdvance();
                 bool isOptionalCall;
+                bool hasField;
                 uint optionalCallPosition;
                 if (get().type == GrLexeme.Type.optional) {
                     checkAdvance();
@@ -5960,133 +5961,30 @@ final class GrParser {
                         isOptionalCall = true;
                         optionalCallPosition = cast(uint) currentFunction.instructions.length;
                         addInstruction(GrOpcode.optionalCall);
+                        import std.stdio;
+
+                        writeln("aa: ", optionalCallPosition);
                     }
                 }
+                if (get().type != GrLexeme.Type.identifier)
+                    logError(format(getError(Error.expectedFieldNameFoundX),
+                            getPrettyLexemeType(get().type)), getError(Error.missingField));
+                const string identifier = get().svalue;
 
-                if (currentType.base == GrType.Base.native) {
-                    if (get().type != GrLexeme.Type.identifier)
-                        logError(format(getError(Error.expectedFieldNameFoundX),
-                                getPrettyLexemeType(get().type)), getError(Error.missingField));
-                    const string propertyName = get().svalue;
-                    checkAdvance();
-                    GrNativeDefinition native = _data.getNative(currentType.mangledType);
-                    if (!native)
-                        logError(format(getError(Error.xNotDecl),
-                                getPrettyType(currentType)), getError(Error.unknownType));
-
-                    GrType[] signature = [currentType];
-
-                    GrLexeme.Type operatorType = get().type;
-
-                    if (operatorType != GrLexeme.Type.assign) {
-                        if (requireLValue(operatorType)) {
-                            addInstruction(GrOpcode.copy);
-                        }
-
-                        const string callbackName = propertyName ~ "@get";
-                        auto matching = getFirstMatchingFuncOrPrim(callbackName, signature, fileId);
-                        if (matching.prim) {
-                            addInstruction(GrOpcode.primitiveCall, matching.prim.index);
-                            currentType = matching.prim.outSignature[0];
-                        }
-                        else {
-                            logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(callbackName,
-                                    signature)), getError(Error.unknownFunc), "", -1);
-                        }
-                    }
-
-                    bool isSet;
-                    if (operatorType >= GrLexeme.Type.assign &&
-                        operatorType <= GrLexeme.Type.powerAssign) {
-                        isSet = true;
-                        checkAdvance();
-                        GrType subType = parseSubExpression(GR_SUBEXPR_TERMINATE_COMMA |
-                                GR_SUBEXPR_TERMINATE_PARENTHESIS | GR_SUBEXPR_EXPECTING_VALUE |
-                                GR_SUBEXPR_TERMINATE_SEMICOLON).type;
-                        if (subType.base == GrType.Base.internalTuple) {
-                            auto types = grUnpackTuple(subType);
-                            if (types.length)
-                                signature ~= types;
-                            else
-                                logError(getError(Error.exprYieldsNoVal),
-                                    getError(Error.expectedValFoundNothing));
-                        }
-                        else
-                            signature ~= subType;
-
-                        if (operatorType != GrLexeme.Type.assign) {
-                            currentType = addBinaryOperator(operatorType - (
-                                    GrLexeme.Type.bitwiseAndAssign - GrLexeme.Type.bitwiseAnd),
-                                currentType, subType, fileId);
-                        }
-                    }
-                    else if (operatorType == GrLexeme.Type.increment ||
-                        operatorType == GrLexeme.Type.decrement) {
-                        isSet = true;
-                        checkAdvance();
-                        currentType = addUnaryOperator(operatorType, currentType, fileId);
-                        signature ~= currentType;
-                    }
-
-                    if (isSet) {
-                        const string callbackName = propertyName ~ "@set";
-                        auto matching = getFirstMatchingFuncOrPrim(callbackName, signature, fileId);
-                        if (matching.prim) {
-                            addInstruction(GrOpcode.primitiveCall, matching.prim.index);
-                            currentType = grPackTuple(matching.prim.outSignature);
-                            if (currentType.base == GrType.Base.internalTuple) {
-                                GrType[] types = grUnpackTuple(currentType);
-                                if (types.length)
-                                    currentType = types[0];
-                                else
-                                    logError(getError(Error.exprYieldsNoVal),
-                                        getError(Error.expectedValFoundNothing));
-                            }
-                        }
-                        else {
-                            logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(callbackName,
-                                    signature)), getError(Error.unknownFunc), "", -1);
-                        }
-                    }
-
-                    if (isOptionalCall) {
-                        if (currentType.base != GrType.Base.optional)
-                            currentType = grOptional(currentType);
-
-                        setInstruction(GrOpcode.optionalCall, optionalCallPosition,
-                            cast(int)(currentFunction.instructions.length - optionalCallPosition),
-                            true);
-                    }
-
-                    if (hadValue)
-                        typeStack[$ - 1] = currentType;
-                    else
-                        typeStack ~= currentType;
-
-                    hasValue = true;
-                    hadValue = false;
-                    hasLValue = false;
-                    hadLValue = false;
-                }
-                else if (currentType.base == GrType.Base.class_) {
-                    if (get().type != GrLexeme.Type.identifier)
-                        logError(format(getError(Error.expectedFieldNameFoundX),
-                                getPrettyLexemeType(get().type)), getError(Error.missingField));
-                    const string identifier = get().svalue;
-                    checkAdvance();
+                if (currentType.base == GrType.Base.class_) {
                     GrClassDefinition class_ = getClass(currentType.mangledType, get().fileId);
                     if (!class_)
                         logError(format(getError(Error.xNotDecl),
                                 getPrettyType(currentType)), getError(Error.unknownType));
                     const auto nbFields = class_.signature.length;
-                    bool hasField;
                     for (int i; i < nbFields; i++) {
                         if (identifier == class_.fields[i]) {
                             if ((class_.fieldsInfo[i].fileId != fileId) &&
                                 !class_.fieldsInfo[i].isPublic)
                                 logError(format(getError(Error.xOnTypeYIsPrivate), identifier,
                                         getPrettyType(currentType)),
-                                    getError(Error.privateField), "", -1);
+                                    getError(Error.privateField), "");
+                            checkAdvance();
                             hasField = true;
 
                             bool isPure = currentType.isPure;
@@ -6135,7 +6033,7 @@ final class GrParser {
                                 addLoadFieldInstruction(currentType, fieldLValue.register, true);
                                 break;
                             case leftParenthesis:
-                                lvalues.length--;
+                                //lvalues.length--;
                                 addLoadFieldInstruction(currentType, fieldLValue.register, false);
                                 currentType = parseAnonymousCall(typeStack[$ - 1]);
                                 //Unpack function value for 1 or less return values
@@ -6162,18 +6060,21 @@ final class GrParser {
                                 goto default;
                             default:
                                 addLoadFieldInstruction(currentType, fieldLValue.register, false);
-                                if (isOptionalCall) {
-                                    setInstruction(GrOpcode.optionalCall, optionalCallPosition,
-                                        cast(int)(
-                                            currentFunction.instructions.length -
-                                            optionalCallPosition), true);
-                                }
                                 break;
+                            }
+
+                            if (isOptionalCall) {
+                                setInstruction(GrOpcode.optionalCall, optionalCallPosition,
+                                    cast(int)(
+                                        currentFunction.instructions.length - optionalCallPosition),
+                                    true);
                             }
                             break;
                         }
                     }
-                    if (!hasField) {
+                    if (hasField)
+                        break;
+                    /*if (!hasField) {
                         const string[] nearestValues = findNearestStrings(identifier, class_.fields);
                         string errorNote;
                         if (nearestValues.length) {
@@ -6187,14 +6088,177 @@ final class GrParser {
                         logError(format(getError(Error.noFieldXOnTypeY), identifier, getPrettyType(currentType)),
                             getError(Error.unknownField),
                             format(getError(Error.availableFieldsAreX), errorNote), -1);
+                    }*/
+                }
+
+                GrType[] signature = [currentType];
+
+                GrLexeme.Type operatorType = get(1).type;
+
+                if (operatorType == GrLexeme.Type.leftParenthesis) {
+                    uint nbReturnValues;
+
+                    GrType selfType = grVoid;
+                    selfType = typeStack[$ - 1];
+                    typeStack.length--;
+                    hadValue = false;
+
+                    GrVariable lvalue;
+                    currentType = parseIdentifier(lvalue, lastType, selfType, isExpectingLValue);
+                    //Unpack function value for 1 or less return values
+                    //Multiples values are left as a tuple for parseExpressionList()
+                    if (currentType.base == GrType.Base.internalTuple) {
+                        auto types = grUnpackTuple(currentType);
+                        nbReturnValues = cast(uint) types.length;
+                        if (!types.length)
+                            currentType = grVoid;
+                        else if (types.length == 1uL)
+                            currentType = isOptionalCall ? grOptional(types[0]) : types[0];
+                        else if (isOptionalCall) {
+                            for (size_t i; i < types.length; ++i) {
+                                if (types[i].base != GrType.Base.optional)
+                                    types[i] = grOptional(types[i]);
+                            }
+                            currentType = grPackTuple(types);
+                        }
+                    }
+                    else if (isOptionalCall) {
+                        currentType = grOptional(currentType);
+                        nbReturnValues = 1;
+                    }
+
+                    if (isOptionalCall) {
+                        const uint jumpPosition = cast(uint) currentFunction.instructions.length;
+                        addInstruction(GrOpcode.jump);
+
+                        setInstruction(GrOpcode.optionalCall, optionalCallPosition,
+                            cast(int)(currentFunction.instructions.length - optionalCallPosition),
+                            true);
+
+                        for (uint i; i < nbReturnValues; ++i)
+                            addInstruction(GrOpcode.const_null);
+
+                        setInstruction(GrOpcode.jump, jumpPosition,
+                            cast(int)(currentFunction.instructions.length - jumpPosition), true);
+                    }
+
+                    const auto nextLexeme = get();
+                    if (nextLexeme.type == GrLexeme.Type.leftBracket)
+                        hasReference = true;
+                    if (currentType != GrType(GrType.Base.void_)) {
+                        hasValue = true;
+                        typeStack ~= currentType;
+                    }
+                    break;
+                }
+
+                checkAdvance();
+                GrType[] outputs;
+                if (operatorType != GrLexeme.Type.assign) {
+                    if (requireLValue(operatorType)) {
+                        addInstruction(GrOpcode.copy);
+                    }
+
+                    auto matching = getFirstMatchingFuncOrPrim(identifier, signature, fileId);
+                    if (matching.prim) {
+                        addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+                        outputs = matching.prim.outSignature;
+                    }
+                    else if (matching.func) {
+                        outputs = addFunctionCall(matching.func, fileId);
+                    }
+                    else {
+                        logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(identifier,
+                                signature)), getError(Error.unknownFunc), "", -1);
+                    }
+
+                }
+
+                bool isSet;
+                if (operatorType >= GrLexeme.Type.assign && operatorType <= GrLexeme
+                    .Type.powerAssign) {
+                    if (operatorType != GrLexeme.Type.assign && outputs.length != 1)
+                        logError("opération binaire sur 2 objs seulement.", "nb objs invalide");
+
+                    isSet = true;
+                    checkAdvance();
+                    GrType subType = parseSubExpression(GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_PARENTHESIS |
+                            GR_SUBEXPR_EXPECTING_VALUE | GR_SUBEXPR_TERMINATE_SEMICOLON).type;
+                    if (subType.base == GrType.Base.internalTuple) {
+                        auto types = grUnpackTuple(subType);
+                        if (types.length)
+                            signature ~= types;
+                        else
+                            logError(getError(Error.exprYieldsNoVal),
+                                getError(Error.expectedValFoundNothing));
+                    }
+                    else
+                        signature ~= subType;
+
+                    if (operatorType != GrLexeme.Type.assign && signature.length != 1)
+                        logError("opération binaire sur 2 objs seulement.", "nb objs invalide");
+
+                    if (operatorType != GrLexeme.Type.assign) {
+                        currentType = addBinaryOperator(operatorType - (
+                                GrLexeme.Type.bitwiseAndAssign - GrLexeme.Type.bitwiseAnd),
+                            currentType, subType, fileId);
                     }
                 }
-                else {
+                else if (operatorType == GrLexeme.Type.increment ||
+                    operatorType == GrLexeme.Type.decrement) {
+                    if (outputs.length != 1)
+                        logError("opération unaire sur 1 obj seulement.", "nb objs invalide");
+
+                    isSet = true;
+                    checkAdvance();
+                    currentType = addUnaryOperator(operatorType, currentType, fileId);
+                    signature ~= currentType;
+                }
+
+                if (isSet) {
+                    auto matching = getFirstMatchingFuncOrPrim(identifier, signature, fileId);
+                    if (matching.prim) {
+                        addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+                        currentType = grPackTuple(matching.prim.outSignature);
+                        if (currentType.base == GrType.Base.internalTuple) {
+                            GrType[] types = grUnpackTuple(currentType);
+                            if (types.length)
+                                currentType = types[0];
+                            else
+                                logError(getError(Error.exprYieldsNoVal),
+                                    getError(Error.expectedValFoundNothing));
+                        }
+                    }
+                    else {
+                        logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(identifier,
+                                signature)), getError(Error.unknownFunc), "", -1);
+                    }
+                }
+
+                if (isOptionalCall) {
+                    if (currentType.base != GrType.Base.optional)
+                        currentType = grOptional(currentType);
+
+                    setInstruction(GrOpcode.optionalCall, optionalCallPosition,
+                        cast(int)(currentFunction.instructions.length - optionalCallPosition), true);
+                }
+
+                if (hadValue)
+                    typeStack[$ - 1] = currentType;
+                else
+                    typeStack ~= currentType;
+
+                hasValue = true;
+                hadValue = false;
+                hasLValue = false;
+                hadLValue = false;
+
+                /*else {
                     logError(format(getError(Error.cantAccessFieldOnTypeX), getPrettyType(currentType)),
                         format(getError(Error.expectedClassFoundX), getPrettyType(currentType)));
-                }
+                }*/
                 break;
-            case colon:
+            /*case colon:
                 const size_t methodCallPos = current;
                 if (!hadValue)
                     logError(getError(Error.missingParamOnMethodCall),
@@ -6279,7 +6343,7 @@ final class GrParser {
                     goto case doubleColon;
                 }
                 break;
-            case pointer:
+            */case pointer:
                 currentType = parseFunctionPointer(currentType);
                 typeStack ~= currentType;
                 hasValue = true;
