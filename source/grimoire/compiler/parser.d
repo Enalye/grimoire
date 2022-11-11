@@ -6637,12 +6637,6 @@ final class GrParser {
             logError(format(getError(Error.xNotCallable), getPrettyType(type)),
                 format(getError(Error.xNotFuncNorTask), getPrettyType(type)));
 
-        GrVariable functionId;
-        if (type.base == GrType.Base.function_) {
-            functionId = registerSpecialVariable("anon", GrType(GrType.Base.int_));
-            addSetInstruction(functionId, fileId, GrType(GrType.Base.int_));
-        }
-
         //Signature parsing with type conversion
         GrType[] signature;
         GrType[] anonSignature = grUnmangleSignature(type.mangledType);
@@ -6718,11 +6712,13 @@ final class GrParser {
         GrType retTypes = grPackTuple(grUnmangleSignature(type.mangledReturnType));
 
         if (type.base == GrType.Base.function_) {
-            addGetInstruction(functionId, GrType(GrType.Base.int_));
-        }
+            int offset = cast(int) anonSignature.length;
 
-        if (type.base == GrType.Base.function_)
-            addInstruction(GrOpcode.anonymousCall, 0u);
+            if (selfType != grVoid)
+                offset--;
+
+            addInstruction(GrOpcode.anonymousCall, offset);
+        }
         else
             addInstruction(GrOpcode.anonymousTask, 0u);
         return retTypes;

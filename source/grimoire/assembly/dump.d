@@ -52,7 +52,7 @@ string grDump(const GrBytecode bytecode) {
             line ~= to!string(grGetInstructionSignedValue(opcode));
         else if (op == GrOpcode.shiftStack)
             line ~= to!string(grGetInstructionSignedValue(opcode));
-        else if (op == GrOpcode.primitiveCall)
+        else if (op == GrOpcode.primitiveCall || op == GrOpcode.anonymousCall)
             line ~= to!string(grGetInstructionUnsignedValue(opcode));
         else if (op == GrOpcode.const_int)
             line ~= to!string(bytecode.iconsts[grGetInstructionUnsignedValue(opcode)]);

@@ -1270,7 +1270,14 @@ class GrEngine {
                     currentTask.callStack[currentTask.stackFramePos].retPosition =
                         currentTask.pc + 1u;
                     currentTask.stackFramePos++;
-                    currentTask.pc = cast(uint) currentTask.stack[currentTask.stackPos]._ivalue;
+                    uint pos = currentTask.stackPos - cast(int) grGetInstructionUnsignedValue(
+                        opcode);
+                    currentTask.pc = cast(uint) currentTask.stack[pos]._ivalue;
+
+                    // On décale toute la signature
+                    while (pos != currentTask.stackPos)
+                        currentTask.stack[pos] = currentTask.stack[++pos];
+
                     currentTask.stackPos--;
                     break;
                 case primitiveCall:
