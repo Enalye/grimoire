@@ -5961,9 +5961,6 @@ final class GrParser {
                         isOptionalCall = true;
                         optionalCallPosition = cast(uint) currentFunction.instructions.length;
                         addInstruction(GrOpcode.optionalCall);
-                        import std.stdio;
-
-                        writeln("aa: ", optionalCallPosition);
                     }
                 }
                 if (get().type != GrLexeme.Type.identifier)
@@ -6022,6 +6019,9 @@ final class GrParser {
 
                             switch (get().type) with (GrLexeme.Type) {
                             case period:
+                                if (currentType.base == GrType.Base.function_ ||
+                                    currentType.base == GrType.Base.task)
+                                    goto case leftParenthesis;
                                 addInstruction(GrOpcode.fieldLoad, fieldLValue.register);
                                 break;
                             case assign:
@@ -6047,6 +6047,8 @@ final class GrParser {
                                 }
                                 if (currentType.base == GrType.Base.void_) {
                                     typeStack.length--;
+                                    hadValue = false;
+                                    hasValue = false;
                                 }
                                 else {
                                     hadValue = false;
@@ -6216,18 +6218,17 @@ final class GrParser {
                 }
 
                 if (isSet) {
+                    outputs.length = 0;
+
                     auto matching = getFirstMatchingFuncOrPrim(identifier, signature, fileId);
                     if (matching.prim) {
                         addInstruction(GrOpcode.primitiveCall, matching.prim.index);
                         currentType = grPackTuple(matching.prim.outSignature);
                         if (currentType.base == GrType.Base.internalTuple) {
-                            GrType[] types = grUnpackTuple(currentType);
-                            if (types.length)
-                                currentType = types[0];
-                            else
-                                logError(getError(Error.exprYieldsNoVal),
-                                    getError(Error.expectedValFoundNothing));
+                            outputs = grUnpackTuple(currentType);
                         }
+                        else if (currentType != grVoid)
+                            outputs = [currentType];
                     }
                     else {
                         logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(identifier,
@@ -6235,30 +6236,45 @@ final class GrParser {
                     }
                 }
 
+                if (outputs.length == 1uL)
+                    currentType = outputs[0];
+                else if (outputs.length)
+                    currentType = grPackTuple(outputs);
+                else
+                    currentType = grVoid;
+
                 if (isOptionalCall) {
-                    if (currentType.base != GrType.Base.optional)
+                    if (currentType.base != GrType.Base.optional && currentType != grVoid)
                         currentType = grOptional(currentType);
 
                     setInstruction(GrOpcode.optionalCall, optionalCallPosition,
                         cast(int)(currentFunction.instructions.length - optionalCallPosition), true);
                 }
 
-                if (hadValue)
-                    typeStack[$ - 1] = currentType;
-                else
-                    typeStack ~= currentType;
+                if (currentType != grVoid) {
+                    if (hadValue)
+                        typeStack[$ - 1] = currentType;
+                    else
+                        typeStack ~= currentType;
 
-                hasValue = true;
-                hadValue = false;
-                hasLValue = false;
-                hadLValue = false;
+                    hasValue = true;
+                    hadValue = false;
+                    hasLValue = false;
+                    hadLValue = false;
+                }
+                else {
+                    hasValue = false;
+                    hadValue = false;
+                    hasLValue = false;
+                    hadLValue = false;
+                }
 
                 /*else {
                     logError(format(getError(Error.cantAccessFieldOnTypeX), getPrettyType(currentType)),
                         format(getError(Error.expectedClassFoundX), getPrettyType(currentType)));
                 }*/
                 break;
-            /*case colon:
+                /*case colon:
                 const size_t methodCallPos = current;
                 if (!hadValue)
                     logError(getError(Error.missingParamOnMethodCall),
@@ -6343,7 +6359,8 @@ final class GrParser {
                     goto case doubleColon;
                 }
                 break;
-            */case pointer:
+            */
+            case pointer:
                 currentType = parseFunctionPointer(currentType);
                 typeStack ~= currentType;
                 hasValue = true;
