@@ -5984,6 +5984,8 @@ final class GrParser {
                             checkAdvance();
                             hasField = true;
 
+                            GrType selfType = currentType;
+
                             bool isPure = currentType.isPure;
                             currentType = class_.signature[i];
                             currentType.isField = true;
@@ -6034,8 +6036,9 @@ final class GrParser {
                                 break;
                             case leftParenthesis:
                                 //lvalues.length--;
+                                addInstruction(GrOpcode.copy);
                                 addLoadFieldInstruction(currentType, fieldLValue.register, false);
-                                currentType = parseAnonymousCall(typeStack[$ - 1]);
+                                currentType = parseAnonymousCall(typeStack[$ - 1], selfType);
                                 //Unpack function value for 1 or less return values
                                 //Multiples values are left as a tuple for parseExpressionList()
                                 if (currentType.base == GrType.Base.internalTuple) {
@@ -6630,14 +6633,14 @@ final class GrParser {
     private GrType parseAnonymousCall(GrType type, GrType selfType = grVoid) {
         const uint fileId = get().fileId;
 
+        if (type.base != GrType.Base.function_ && type.base != GrType.Base.task)
+            logError(format(getError(Error.xNotCallable), getPrettyType(type)),
+                format(getError(Error.xNotFuncNorTask), getPrettyType(type)));
+
         GrVariable functionId;
         if (type.base == GrType.Base.function_) {
             functionId = registerSpecialVariable("anon", GrType(GrType.Base.int_));
             addSetInstruction(functionId, fileId, GrType(GrType.Base.int_));
-        }
-        else if (type.base != GrType.Base.task) {
-            logError(format(getError(Error.xNotCallable), getPrettyType(type)),
-                format(getError(Error.xNotFuncNorTask), getPrettyType(type)));
         }
 
         //Signature parsing with type conversion
