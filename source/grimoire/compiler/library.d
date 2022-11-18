@@ -387,7 +387,7 @@ final class GrLibrary : GrLibDefinition {
             throw new Exception(
                 "The operator `" ~ name ~ "` cannot take more than 2 parameters: " ~ grGetPrettyFunctionCall("",
                     inSignature));
-        return addFunction(callback, "@op_" ~ name, inSignature, [outType], constraints);
+        return addFunction(callback, "@operator_" ~ name, inSignature, [outType], constraints);
     }
 
     /**

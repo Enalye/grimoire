@@ -871,7 +871,7 @@ final class GrParser {
 
     private GrType addCustomBinaryOperator(GrLexeme.Type lexType,
         GrType leftType, GrType rightType, uint fileId) {
-        string name = "@op_" ~ getPrettyLexemeType(lexType);
+        string name = "@operator_" ~ getPrettyLexemeType(lexType);
         GrType[] signature = [leftType, rightType];
 
         //GrPrimitive check
@@ -901,7 +901,7 @@ final class GrParser {
     }
 
     private GrType addCustomUnaryOperator(GrLexeme.Type lexType, const GrType type, uint fileId) {
-        string name = "@op_" ~ getPrettyLexemeType(lexType);
+        string name = "@operator_" ~ getPrettyLexemeType(lexType);
         GrType[] signature = [type];
 
         //GrPrimitive check
@@ -2051,19 +2051,37 @@ final class GrParser {
                 checkAdvance();
             }
 
-            GrType fieldType = parseType();
+            if (get().type != GrLexeme.Type.var && get().type != GrLexeme.Type.const_)
+                logError(format(getError(Error.unexpectedXSymbolInExpr),
+                        getPrettyLexemeType(get().type)), getError(Error.unexpectedSymbol));
+
+            checkAdvance();
+
+            uint fieldCount;
             do {
                 if (get().type == GrLexeme.Type.comma)
                     checkAdvance();
 
                 const string fieldName = get().svalue;
-                signature ~= fieldType;
                 fields ~= fieldName;
                 fieldScopes ~= isFieldPublic;
                 fieldPositions ~= current;
+                fieldCount++;
                 checkAdvance();
             }
             while (get().type == GrLexeme.Type.comma);
+
+            if (get().type != GrLexeme.Type.colon)
+                logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.colon),
+                        getPrettyLexemeType(get().type)), format(getError(Error.missingX),
+                        getPrettyLexemeType(GrLexeme.Type.colon)));
+
+            checkAdvance();
+
+            GrType fieldType = parseType();
+
+            while (fieldCount--)
+                signature ~= fieldType;
 
             if (get().type != GrLexeme.Type.semicolon)
                 logError(getError(Error.missingSemicolonAfterClassFieldDecl), format(getError(Error.expectedXFoundY),
@@ -2080,6 +2098,10 @@ final class GrParser {
         class_.parent = parentClassName;
         class_.signature = signature;
         class_.fields = fields;
+
+        writeln(class_.name);
+        writeln(class_.signature);
+        writeln(class_.fields);
 
         class_.fieldsInfo.length = fields.length;
         for (int i; i < class_.fieldsInfo.length; ++i) {
@@ -2559,17 +2581,31 @@ final class GrParser {
         string name;
         bool isConversion;
         if (get().type == GrLexeme.Type.as) {
+            checkAdvance();
             name = "@as";
             isConversion = true;
         }
-        else if (get().type == GrLexeme.Type.new_) {
-            name = "@new";
+        else if (get().type == GrLexeme.Type.at) {
+            checkAdvance();
+            GrType staticType = parseType(true, templateVariables);
+            name = "@static_" ~ grGetPrettyType(staticType);
+
+            if (get().type == GrLexeme.Type.period) {
+                checkAdvance();
+                if (get().type != GrLexeme.Type.identifier)
+                    logError(format(getError(Error.expectedIdentifierFoundX),
+                            getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
+
+                name ~= "." ~ get().svalue;
+                checkAdvance();
+            }
         }
         else if (get().type == GrLexeme.Type.identifier) {
             if (get().svalue == "operator") {
                 advance();
                 if (get().isOverridableOperator()) {
-                    name = "@op_" ~ getPrettyLexemeType(get().type);
+                    name = "@operator_" ~ getPrettyLexemeType(get().type);
+                    checkAdvance();
                 }
                 else if (get().isOperator) {
                     logError(format(getError(Error.cantOverrideXOp),
@@ -2582,14 +2618,13 @@ final class GrParser {
             }
             else {
                 name = get().svalue;
+                checkAdvance();
             }
         }
         else {
             logError(format(getError(Error.expectedIdentifierFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
         }
-
-        checkAdvance();
 
         GrTemplateFunction temp = new GrTemplateFunction;
         temp.isTask = false;
@@ -4650,11 +4685,13 @@ final class GrParser {
         return resultType;
     }
 
-    private GrType parseObjectBuilder() {
-        if (get().type != GrLexeme.Type.new_)
-            logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.new_),
+    private GrType[] parseStaticCall() {
+        GrType[] outputs;
+
+        if (get().type != GrLexeme.Type.at)
+            logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.at),
                     getPrettyLexemeType(get().type)), format(getError(Error.missingX),
-                    getPrettyLexemeType(GrLexeme.Type.new_)));
+                    getPrettyLexemeType(GrLexeme.Type.at)));
         checkAdvance();
         if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.identifier),
@@ -4666,6 +4703,8 @@ final class GrParser {
         if (get().type == GrLexeme.Type.leftCurlyBrace) {
             switch (objectType.base) with (GrType.Base) {
             case class_:
+                outputs = [objectType];
+
                 GrClassDefinition class_ = getClass(objectType.mangledType, fileId);
                 if (!class_)
                     logError(format(getError(Error.xNotDecl),
@@ -4744,6 +4783,18 @@ final class GrParser {
             }
         }
         else {
+            string name = "@static_" ~ grGetPrettyType(objectType);
+
+            if (get().type == GrLexeme.Type.period) {
+                checkAdvance();
+                if (get().type != GrLexeme.Type.identifier)
+                    logError(format(getError(Error.expectedIdentifierFoundX),
+                            getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
+
+                name ~= "." ~ get().svalue;
+                checkAdvance();
+            }
+
             GrType[] signature;
             if (get().type == GrLexeme.Type.leftParenthesis) {
                 advance();
@@ -4774,36 +4825,25 @@ final class GrParser {
                     }
                 }
             }
-            signature ~= objectType;
 
             //GrPrimitive call.
-            auto matching = getFirstMatchingFuncOrPrim("@new", signature, fileId);
+            auto matching = getFirstMatchingFuncOrPrim(name, signature, fileId);
             if (matching.prim) {
                 addInstruction(GrOpcode.primitiveCall, matching.prim.index);
-                if (matching.prim.outSignature.length != 1uL ||
-                    matching.prim.outSignature[0] != objectType) {
-                    logError(getError(Error.opMustHave1RetVal), format(getError(matching.prim.outSignature.length > 1 ?
-                            Error.expectedXRetValsFoundY : Error.expectedXRetValFoundY),
-                            1, matching.prim.outSignature.length));
-                }
+                outputs = matching.prim.outSignature;
             }
             else if (matching.func) {
                 //GrFunction/Task call.
                 addFunctionCall(matching.func, fileId);
-                if (matching.func.outSignature.length != 1uL ||
-                    matching.func.outSignature[0] != objectType) {
-                    logError(getError(Error.opMustHave1RetVal), format(getError(matching.func.outSignature.length > 1 ?
-                            Error.expectedXRetValsFoundY : Error.expectedXRetValFoundY),
-                            1, matching.func.outSignature.length));
-                }
+                outputs = matching.func.outSignature;
             }
             else {
-                logError(format(getError(Error.xNotDecl), getPrettyFunctionCall("@new",
+                logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                         signature)), getError(Error.unknownFunc), "", -1);
             }
         }
 
-        return objectType;
+        return outputs;
     }
 
     /**
@@ -5759,9 +5799,24 @@ final class GrParser {
                 }
                 typeStack ~= currentType;
                 break;
-            case new_:
-                currentType = parseObjectBuilder();
-                hasValue = true;
+            case at:
+                GrType[] types = parseStaticCall();
+
+                if (!types.length)
+                    currentType = grVoid;
+                else if (types.length == 1uL)
+                    currentType = types[0];
+                else
+                    currentType = grPackTuple(types);
+
+                hadValue = false;
+                if (currentType.base == GrType.Base.void_) {
+                    hasValue = false;
+                }
+                else {
+                    hasValue = true;
+                }
+
                 typeStack ~= currentType;
                 break;
             case channelType:

@@ -181,7 +181,7 @@ struct GrLexeme {
     /// is this a reserved grimoire word ?
     bool isKeyword;
 
-    /// Only describe first class type such as `int`, `string` or `function`.
+    /// Only describe first class type such as `int`, `string` or `func`.
     /// Structure or other custom type are not.
     bool isType;
 
@@ -600,6 +600,9 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.comma;
             break;
         case '@':
+            lex.type = GrLexeme.Type.at;
+            break;
+        case '$':
             lex.type = GrLexeme.Type.pointer;
             break;
         case '&':
@@ -995,7 +998,7 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.taskType;
             lex.isType = true;
             break;
-        case "function":
+        case "func":
             lex.type = GrLexeme.Type.functionType;
             lex.isType = true;
             break;
@@ -1242,7 +1245,7 @@ package final class GrLexer {
 }
 
 private immutable string[] _prettyLexemeTypeTable = [
-    "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "&", "?",
+    "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "$", "?",
     "as", "try", "catch", "error", "defer", "=", "&=", "|=", "^=", "&&=",
     "||=", "??=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+", "-", "&",
     "|", "^", "&&", "||", "??", "+", "-", "*", "/", "~", "%", "**", "==",

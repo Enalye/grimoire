@@ -81,7 +81,7 @@ string grGetPrettyType(const GrType variableType) {
             result ~= to!string(variableType.mangledType);
             break;
         case function_:
-            result ~= "function(";
+            result ~= "func(";
             int i;
             auto inSignature = grUnmangleSignature(variableType.mangledType);
             foreach (type; inSignature) {
@@ -93,13 +93,15 @@ string grGetPrettyType(const GrType variableType) {
             result ~= ")";
             auto outSignature = grUnmangleSignature(variableType.mangledReturnType);
             if (outSignature.length)
-                result ~= " ";
+                result ~= " (";
             foreach (type; outSignature) {
                 result ~= grGetPrettyType(type);
                 if ((i + 2) <= outSignature.length)
                     result ~= ", ";
                 i++;
             }
+            if (outSignature.length)
+                result ~= ")";
             break;
         case task:
             result ~= "task(";
@@ -206,17 +208,7 @@ string grGetPrettyFunctionCall(const string mangledName) {
 string grGetPrettyFunctionCall(const string name, const GrType[] inSignature) {
     string result;
     GrType[] signature = inSignature.dup;
-    if (name == "@new") {
-        result = "new ";
-        if (signature.length) {
-            result ~= grGetPrettyType(signature[$ - 1]);
-            signature.length--;
-        }
-        result ~= "(";
-    }
-    else {
-        result = to!string(name) ~ "(";
-    }
+    result = to!string(name) ~ "(";
 
     int i;
     foreach (type; signature) {
