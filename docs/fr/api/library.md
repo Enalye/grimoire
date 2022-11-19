@@ -13,14 +13,14 @@ GrLibrary library = new GrLibrary;
 `addVariable()` permet de déclarer des variables globales.
 
 ```d
-library.addVariable("PI", grConst(grReal), 3.141592); 
+library.addVariable("PI", grConst(grFloat), 3.141592); 
 ```
 
 Ces variables deviennent accessible pendant l’exécution de la machine virtuelle.
 
 ```d
-GrReal pi = engine.getRealVariable("PI");
-engine.setRealVariable("PI", 3.0);
+GrFloat pi = engine.getFloatVariable("PI");
+engine.setFloatVariable("PI", 3.0);
 ```
 
 * * *
@@ -30,16 +30,16 @@ engine.setRealVariable("PI", 3.0);
 La méthode `addFunction()` permet de définir de nouvelle fonctions.
 
 ```d
-library.addFunction(&multiplier, "multiplier", [grReal, grReal], [grReal]);
+library.addFunction(&multiplier, "multiplier", [grFloat, grFloat], [grFloat]);
 ```
 
 Le premier paramètre est un callback vers une fonction de type `void function(GrCall)`.
 
 ```d
 void multiplier(GrCall call) {
-	GrReal valeur1 = call.getReal(0);
-	GrReal valeur2 = call.getReal(1);
-    call.setReal(valeur1 * valeur2);
+	GrFloat valeur1 = call.getFloat(0);
+	GrFloat valeur2 = call.getFloat(1);
+    call.setFloat(valeur1 * valeur2);
 }
 ```
 
@@ -57,12 +57,12 @@ void maConv(GrCall call) {
 La méthode `addOperator` permet la surcharge d’opérateur.
 
 ```d
-library.addOperator(&additionner, GrLibrary.Operator.add, [grReal, grInt], grReal);
+library.addOperator(&additionner, GrLibrary.Operator.add, [grFloat, grInt], grFloat);
 // Ou
-library.addOperator(&additionner, "+", [grReal, grInt], grReal);
+library.addOperator(&additionner, "+", [grFloat, grInt], grFloat);
 
 void additionner(GrCall call) {
-    call.setReal(call.getReal(0) + cast(GrReal) call.getInt(1));
+    call.setFloat(call.getFloat(0) + cast(GrFloat) call.getInt(1));
 }
 ```
 > ***Important:***

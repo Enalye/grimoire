@@ -8,8 +8,8 @@ event onLoad() {
     print(3.5 + 2);
 }
 
-function operator+(real a, int b) (real) {
-    return a + b as real;
+function operator+(float a, int b) (float) {
+    return a + b as float;
 }
 ```
 

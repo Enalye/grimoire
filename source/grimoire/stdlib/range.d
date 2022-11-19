@@ -19,7 +19,7 @@ void grLoadStdLibRange(GrLibDefinition library) {
     library.setDescription(GrLocale.en_US, "Iterate on a serie of numbers.");
     library.addNative("RangeIterator", ["T"]);
     GrType rangeIteratorIntType = grGetNativeType("RangeIterator", [grInt]);
-    GrType rangeIteratorRealType = grGetNativeType("RangeIterator", [grReal]);
+    GrType rangeIteratorFloatType = grGetNativeType("RangeIterator", [grFloat]);
 
     library.setDescription(GrLocale.fr_FR, "Avance jusqu’au nombre suivant de la série.");
     library.setDescription(GrLocale.en_US, "Advance until the next number in the serie.");
@@ -56,12 +56,12 @@ void grLoadStdLibRange(GrLibDefinition library) {
     library.setDescription(GrLocale.en_US, "Advance until the next number in the serie.");
     library.setParameters(GrLocale.fr_FR, ["itérateur"]);
     library.setParameters(GrLocale.en_US, ["iterator"]);
-    library.addFunction(&_range_next_r, "next", [rangeIteratorRealType], [
-            grOptional(grReal)
+    library.addFunction(&_range_next_r, "next", [rangeIteratorFloatType], [
+            grOptional(grFloat)
         ]);
     library.addOperator(&_range_r, GrLibDefinition.Operator.interval, [
-            grReal, grReal
-        ], rangeIteratorRealType);
+            grFloat, grFloat
+        ], rangeIteratorFloatType);
 
     library.setDescription(GrLocale.fr_FR,
         "Retourne un itérateur qui part de `début` jusqu’à `fin` inclus.");
@@ -69,8 +69,8 @@ void grLoadStdLibRange(GrLibDefinition library) {
         "Returns an iterator that start from `start` and end with `end` included.");
     library.setParameters(GrLocale.fr_FR, ["début", "fin"]);
     library.setParameters(GrLocale.en_US, ["start", "end"]);
-    library.addFunction(&_range_r, "range", [grReal, grReal], [
-            rangeIteratorRealType
+    library.addFunction(&_range_r, "range", [grFloat, grFloat], [
+            rangeIteratorFloatType
         ]);
 
     library.setDescription(GrLocale.fr_FR,
@@ -79,8 +79,8 @@ void grLoadStdLibRange(GrLibDefinition library) {
         "Returns an iterator that start from `start` and end with `end` included by increments of `step`.");
     library.setParameters(GrLocale.fr_FR, ["début", "fin", "pas"]);
     library.setParameters(GrLocale.en_US, ["start", "end", "step"]);
-    library.addFunction(&_range_step_r, "range", [grReal, grReal, grReal],
-        [rangeIteratorRealType]);
+    library.addFunction(&_range_step_r, "range", [grFloat, grFloat, grFloat],
+        [rangeIteratorFloatType]);
 }
 
 private final class RangeIterator(T) {
@@ -121,7 +121,7 @@ private void _range_step_i(GrCall call) {
 }
 
 private void _range_next_r(GrCall call) {
-    RangeIterator!GrReal iter = call.getNative!(RangeIterator!GrReal)(0);
+    RangeIterator!GrFloat iter = call.getNative!(RangeIterator!GrFloat)(0);
     if (!iter) {
         call.raise("NullError");
         return;
@@ -130,23 +130,23 @@ private void _range_next_r(GrCall call) {
         call.setNull();
         return;
     }
-    call.setReal(iter.value);
+    call.setFloat(iter.value);
     iter.value += iter.step;
 }
 
 private void _range_r(GrCall call) {
-    RangeIterator!GrReal iter = new RangeIterator!GrReal;
-    iter.value = call.getReal(0);
-    iter.end = call.getReal(1);
+    RangeIterator!GrFloat iter = new RangeIterator!GrFloat;
+    iter.value = call.getFloat(0);
+    iter.end = call.getFloat(1);
     iter.step = iter.value > iter.end ? -1f : 1f;
     call.setNative(iter);
 }
 
 private void _range_step_r(GrCall call) {
-    RangeIterator!GrReal iter = new RangeIterator!GrReal;
-    iter.value = call.getReal(0);
-    iter.end = call.getReal(1);
-    iter.step = call.getReal(2);
+    RangeIterator!GrFloat iter = new RangeIterator!GrFloat;
+    iter.value = call.getFloat(0);
+    iter.end = call.getFloat(1);
+    iter.step = call.getFloat(2);
     if ((iter.value > iter.end && iter.step > 0f) || (iter.value < iter.end && iter.step < 0f)) {
         iter.step = -iter.step;
     }

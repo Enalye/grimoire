@@ -8,16 +8,16 @@ Itère sur une série de nombres.
 |Opérateur|Entrée|Sortie|
 |-|-|-|
 |->|**int**, **int**|**RangeIterator\<int>**|
-|->|**real**, **real**|**RangeIterator\<real>**|
+|->|**float**, **float**|**RangeIterator\<float>**|
 ## Fonctions
 |Fonction|Entrée|Sortie|
 |-|-|-|
 |[next](#func_0)|**RangeIterator\<int>** *itérateur*|**int?**|
-|[next](#func_1)|**RangeIterator\<real>** *itérateur*|**real?**|
+|[next](#func_1)|**RangeIterator\<float>** *itérateur*|**float?**|
 |[range](#func_2)|**int** *début*, **int** *fin*|**RangeIterator\<int>**|
 |[range](#func_3)|**int** *début*, **int** *fin*, **int** *pas*|**RangeIterator\<int>**|
-|[range](#func_4)|**real** *début*, **real** *fin*|**RangeIterator\<real>**|
-|[range](#func_5)|**real** *début*, **real** *fin*, **real** *pas*|**RangeIterator\<real>**|
+|[range](#func_4)|**float** *début*, **float** *fin*|**RangeIterator\<float>**|
+|[range](#func_5)|**float** *début*, **float** *fin*, **float** *pas*|**RangeIterator\<float>**|
 
 
 ***
@@ -29,7 +29,7 @@ Itère sur une série de nombres.
 Avance jusqu’au nombre suivant de la série.
 
 <a id="func_1"></a>
-> next (**RangeIterator\<real>** *itérateur*) (**real?**)
+> next (**RangeIterator\<float>** *itérateur*) (**float?**)
 
 Avance jusqu’au nombre suivant de la série.
 
@@ -44,12 +44,12 @@ Retourne un itérateur qui part de `début` jusqu’à `fin` inclus.
 Retourne un itérateur qui part de `début` jusqu’à `fin` inclus par incréments de `pas`.
 
 <a id="func_4"></a>
-> range (**real** *début*, **real** *fin*) (**RangeIterator\<real>**)
+> range (**float** *début*, **float** *fin*) (**RangeIterator\<float>**)
 
 Retourne un itérateur qui part de `début` jusqu’à `fin` inclus.
 
 <a id="func_5"></a>
-> range (**real** *début*, **real** *fin*, **real** *pas*) (**RangeIterator\<real>**)
+> range (**float** *début*, **float** *fin*, **float** *pas*) (**RangeIterator\<float>**)
 
 Retourne un itérateur qui part de `début` jusqu’à `fin` inclus par incréments de `pas`.
 

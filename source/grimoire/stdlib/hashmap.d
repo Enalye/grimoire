@@ -148,7 +148,7 @@ void grLoadStdLibHashMap(GrLibDefinition library) {
 
     GrType boolHashMap = grGetNativeType("HashMap", [grBool]);
     GrType intHashMap = grGetNativeType("HashMap", [grInt]);
-    GrType realHashMap = grGetNativeType("HashMap", [grReal]);
+    GrType floatHashMap = grGetNativeType("HashMap", [grFloat]);
     GrType stringHashMap = grGetNativeType("HashMap", [grString]);
 
     library.setDescription(GrLocale.fr_FR, "Affiche le contenu d’`hashmap`.");
@@ -157,7 +157,7 @@ void grLoadStdLibHashMap(GrLibDefinition library) {
     library.setParameters(GrLocale.en_US, ["hashmap"]);
     library.addFunction(&_print_!"bool", "print", [grPure(boolHashMap)]);
     library.addFunction(&_print_!"int", "print", [grPure(intHashMap)]);
-    library.addFunction(&_print_!"real", "print", [grPure(realHashMap)]);
+    library.addFunction(&_print_!"float", "print", [grPure(floatHashMap)]);
     library.addFunction(&_print_!"string", "print", [grPure(stringHashMap)]);
 }
 
@@ -288,8 +288,8 @@ private void _print_(string T)(GrCall call) {
             result ~= to!string(value.getBool());
         else static if (T == "int")
             result ~= to!string(value.getInt());
-        else static if (T == "real")
-            result ~= to!string(value.getReal());
+        else static if (T == "float")
+            result ~= to!string(value.getFloat());
         else static if (T == "string")
             result ~= "\"" ~ value.getString() ~ "\"";
         else

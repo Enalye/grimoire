@@ -86,7 +86,7 @@ final class GrCall {
     alias getValue = getParameter!GrValue;
     alias getBool = getParameter!GrBool;
     alias getInt = getParameter!GrInt;
-    alias getReal = getParameter!GrReal;
+    alias getFloat = getParameter!GrFloat;
     alias getPointer = getParameter!GrPointer;
 
     pragma(inline) GrBool isNull(uint index)
@@ -132,8 +132,8 @@ final class GrCall {
         else static if (is(T == GrBool)) {
             return _inputs[index].getInt() > 0;
         }
-        else static if (is(T == GrReal)) {
-            return _inputs[index].getReal();
+        else static if (is(T == GrFloat)) {
+            return _inputs[index].getFloat();
         }
         else static if (is(T == GrPointer)) {
             return _inputs[index].getPointer();
@@ -143,7 +143,7 @@ final class GrCall {
     alias setValue = setResult!GrValue;
     alias setBool = setResult!GrBool;
     alias setInt = setResult!GrInt;
-    alias setReal = setResult!GrReal;
+    alias setFloat = setResult!GrFloat;
     alias setPointer = setResult!GrPointer;
 
     pragma(inline) void setNull() {
@@ -193,8 +193,8 @@ final class GrCall {
         else static if (is(T == GrBool)) {
             _outputs[_results].setInt(cast(GrInt) value);
         }
-        else static if (is(T == GrReal)) {
-            _outputs[_results].setReal(value);
+        else static if (is(T == GrFloat)) {
+            _outputs[_results].setFloat(value);
         }
         else static if (is(T == GrString)) {
             _outputs[_results].setString(value);
@@ -217,8 +217,8 @@ final class GrCall {
         return cast(T) _task.engine.getEnumVariable(T)(name);
     }
 
-    GrReal getRealVariable(string name) const {
-        return _task.engine.getRealVariable(name);
+    GrFloat getFloatVariable(string name) const {
+        return _task.engine.getFloatVariable(name);
     }
 
     GrPointer getPointerVariable(string name) const {
@@ -253,8 +253,8 @@ final class GrCall {
         _task.engine.setIntVariable(name, value);
     }
 
-    void setRealVariable(string name, GrReal value) {
-        _task.engine.setRealVariable(name, value);
+    void setFloatVariable(string name, GrFloat value) {
+        _task.engine.setFloatVariable(name, value);
     }
 
     void setStringVariable(string name, GrStringValue value) {

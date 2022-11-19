@@ -474,8 +474,8 @@ final class GrDoc : GrLibDefinition {
                 case int_:
                     value = to!string(var.value.getInt());
                     break;
-                case real_:
-                    value = to!string(var.value.getReal());
+                case float_:
+                    value = to!string(var.value.getFloat());
                     break;
                 case string_:
                     value = to!string(var.value.getString());

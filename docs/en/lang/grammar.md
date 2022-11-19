@@ -16,7 +16,7 @@ Exemple of valid identifiers:
 ## Reserved words
 
 The following are keyword used by the language, they cannot be used as identifier (variables, functions, etc):
-`import`, `public`, `alias`, `event`, `class`, `enum`, `where`, `if`, `unless`, `else`, `switch`, `select`, `case`, `default`, `while`, `do`, `until`, `for`, `loop`, `return`, `self`, `die`, `exit`, `yield`, `break`, `continue`, `as`, `try`, `catch`, `throw`, `defer`, `void`, `task`, `function`, `int`, `real`, `bool`, `string`, `list`, `channel`, `new`, `let`, `true`, `false`, `null`, `not`, `and`, `or`, `bit_not`, `bit_and`, `bit_or`, `bit_xor`.
+`import`, `public`, `alias`, `event`, `class`, `enum`, `where`, `if`, `unless`, `else`, `switch`, `select`, `case`, `default`, `while`, `do`, `until`, `for`, `loop`, `return`, `self`, `die`, `exit`, `yield`, `break`, `continue`, `as`, `try`, `catch`, `throw`, `defer`, `void`, `task`, `function`, `int`, `float`, `bool`, `string`, `list`, `channel`, `new`, `let`, `true`, `false`, `null`, `not`, `and`, `or`, `bit_not`, `bit_and`, `bit_or`, `bit_xor`.
 
 
 
@@ -25,7 +25,7 @@ The following are keyword used by the language, they cannot be used as identifie
 Numbers can either be integers or floating point values.
 
 An integer is defined by digits from 0 to 9.
-A real is similar but must either:
+A float is similar but must either:
 - Have a decimal part separated by a `.` dot : `5.678`, `.123`, `60.`
 - Have a `f` at the end of the number : `1f`, `.25f`, `2.f`
 

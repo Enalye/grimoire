@@ -151,7 +151,7 @@ final class GrTask {
     alias setValue = setParameter!GrValue;
     alias setBool = setParameter!GrBool;
     alias setInt = setParameter!GrInt;
-    alias setReal = setParameter!GrReal;
+    alias setFloat = setParameter!GrFloat;
     alias setPointer = setParameter!GrPointer;
 
     pragma(inline) void setObject(GrObject value) {
@@ -191,9 +191,9 @@ final class GrTask {
             stackPos++;
             stack[stackPos].setInt(value);
         }
-        else static if (is(T == GrReal)) {
+        else static if (is(T == GrFloat)) {
             stackPos++;
-            stack[stackPos].setReal(value);
+            stack[stackPos].setFloat(value);
         }
         else static if (is(T == GrPointer)) {
             stackPos++;

@@ -23,8 +23,8 @@ void grLoadStdLibLog(GrLibDefinition library) {
     library.addFunction(&_print_ix, "print", [grOptional(grInt)]);
     library.addFunction(&_print_b, "print", [grBool]);
     library.addFunction(&_print_bx, "print", [grOptional(grBool)]);
-    library.addFunction(&_print_r, "print", [grReal]);
-    library.addFunction(&_print_rx, "print", [grOptional(grReal)]);
+    library.addFunction(&_print_r, "print", [grFloat]);
+    library.addFunction(&_print_rx, "print", [grOptional(grFloat)]);
     library.addFunction(&_print_s, "print", [grString]);
     library.addFunction(&_print_sx, "print", [grOptional(grString)]);
     library.addFunction(&_print_ni, "print", [grPure(grList(grInt))]);
@@ -35,9 +35,9 @@ void grLoadStdLibLog(GrLibDefinition library) {
     library.addFunction(&_print_nbx, "print", [
             grPure(grOptional(grList(grBool)))
         ]);
-    library.addFunction(&_print_nr, "print", [grPure(grList(grReal))]);
+    library.addFunction(&_print_nr, "print", [grPure(grList(grFloat))]);
     library.addFunction(&_print_nrx, "print", [
-            grPure(grOptional(grList(grReal)))
+            grPure(grOptional(grList(grFloat)))
         ]);
     library.addFunction(&_print_ns, "print", [grPure(grList(grString))]);
     library.addFunction(&_print_nsx, "print", [
@@ -91,14 +91,14 @@ private void _print_bx(GrCall call) {
 }
 
 private void _print_r(GrCall call) {
-    _stdOut(to!string(call.getReal(0)));
+    _stdOut(to!string(call.getFloat(0)));
 }
 
 private void _print_rx(GrCall call) {
     if (call.isNull(0))
         _stdOut("null");
     else
-        _stdOut(to!string(call.getReal(0)));
+        _stdOut(to!string(call.getFloat(0)));
 }
 
 private void _print_s(GrCall call) {
@@ -181,7 +181,7 @@ private void _print_nr(GrCall call) {
         if (i != 0) {
             txt ~= ", ";
         }
-        txt ~= to!string(list[i].getReal());
+        txt ~= to!string(list[i].getFloat());
     }
     txt ~= "]";
     _stdOut(txt);
@@ -199,7 +199,7 @@ private void _print_nrx(GrCall call) {
         if (i != 0) {
             txt ~= ", ";
         }
-        txt ~= to!string(list[i].getReal());
+        txt ~= to!string(list[i].getFloat());
     }
     txt ~= "]";
     _stdOut(txt);

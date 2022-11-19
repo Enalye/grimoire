@@ -5,56 +5,56 @@ Fonctions liées aux maths.
 ## Variables
 |Variable|Type|Valeur|Description|
 |-|-|-|-|
-|PI|**const real**|3.14159|Rapport entre le diamètre du cercle et sa circonférence.|
+|PI|**const float**|3.14159|Rapport entre le diamètre du cercle et sa circonférence.|
 ## Opérateurs
 |Opérateur|Entrée|Sortie|
 |-|-|-|
 |**|**int**, **int**|**int**|
-|**|**real**, **real**|**real**|
+|**|**float**, **float**|**float**|
 ## Fonctions
 |Fonction|Entrée|Sortie|
 |-|-|-|
-|[abs](#func_0)|**real** *x*|**real**|
+|[abs](#func_0)|**float** *x*|**float**|
 |[abs](#func_1)|**int** *x*|**int**|
-|[acos](#func_2)|**real** *radians*|**real**|
-|[approach](#func_3)|**real** *x*, **real** *cible*, **real** *pas*|**real**|
+|[acos](#func_2)|**float** *radians*|**float**|
+|[approach](#func_3)|**float** *x*, **float** *cible*, **float** *pas*|**float**|
 |[approach](#func_4)|**int** *x*, **int** *cible*, **int** *pas*|**int**|
-|[asin](#func_5)|**real** *radians*|**real**|
-|[atan](#func_6)|**real** *radians*|**real**|
-|[atan2](#func_7)|**real** *a*, **real** *b*|**real**|
-|[ceil](#func_8)|**real** *x*|**real**|
+|[asin](#func_5)|**float** *radians*|**float**|
+|[atan](#func_6)|**float** *radians*|**float**|
+|[atan2](#func_7)|**float** *a*, **float** *b*|**float**|
+|[ceil](#func_8)|**float** *x*|**float**|
 |[clamp](#func_9)|**int** *x*, **int** *min*, **int** *max*|**int**|
-|[clamp](#func_10)|**real** *x*, **real** *min*, **real** *max*|**real**|
-|[cos](#func_11)|**real** *radians*|**real**|
-|[deg](#func_12)|**real** *radians*|**real**|
-|[exp](#func_13)|**real** *x*|**real**|
-|[floor](#func_14)|**real** *x*|**real**|
-|[isNaN](#func_15)|**real** *x*|**bool**|
-|[lerp](#func_16)|**real** *source*, **real** *destination*, **real** *t*|**real**|
-|[log](#func_17)|**real** *x*|**real**|
-|[log10](#func_18)|**real** *x*|**real**|
-|[log2](#func_19)|**real** *x*|**real**|
+|[clamp](#func_10)|**float** *x*, **float** *min*, **float** *max*|**float**|
+|[cos](#func_11)|**float** *radians*|**float**|
+|[deg](#func_12)|**float** *radians*|**float**|
+|[exp](#func_13)|**float** *x*|**float**|
+|[floor](#func_14)|**float** *x*|**float**|
+|[isNaN](#func_15)|**float** *x*|**bool**|
+|[lerp](#func_16)|**float** *source*, **float** *destination*, **float** *t*|**float**|
+|[log](#func_17)|**float** *x*|**float**|
+|[log10](#func_18)|**float** *x*|**float**|
+|[log2](#func_19)|**float** *x*|**float**|
 |[max](#func_20)|**int** *a*, **int** *b*|**int**|
-|[max](#func_21)|**real** *a*, **real** *b*|**real**|
-|[min](#func_22)|**real** *a*, **real** *b*|**real**|
+|[max](#func_21)|**float** *a*, **float** *b*|**float**|
+|[min](#func_22)|**float** *a*, **float** *b*|**float**|
 |[min](#func_23)|**int** *a*, **int** *b*|**int**|
-|[rad](#func_24)|**real** *degrés*|**real**|
+|[rad](#func_24)|**float** *degrés*|**float**|
 |[rand](#func_25)|**int** *min*, **int** *max*|**int**|
-|[rand](#func_26)||**real**|
-|[rand](#func_27)|**real** *min*, **real** *max*|**real**|
-|[rlerp](#func_28)|**real** *source*, **real** *destination*, **real** *valeur*|**real**|
-|[round](#func_29)|**real** *x*|**real**|
-|[sin](#func_30)|**real** *radians*|**real**|
-|[sqrt](#func_31)|**real** *x*|**real**|
-|[tan](#func_32)|**real** *radians*|**real**|
-|[truncate](#func_33)|**real** *x*|**real**|
+|[rand](#func_26)||**float**|
+|[rand](#func_27)|**float** *min*, **float** *max*|**float**|
+|[rlerp](#func_28)|**float** *source*, **float** *destination*, **float** *valeur*|**float**|
+|[round](#func_29)|**float** *x*|**float**|
+|[sin](#func_30)|**float** *radians*|**float**|
+|[sqrt](#func_31)|**float** *x*|**float**|
+|[tan](#func_32)|**float** *radians*|**float**|
+|[truncate](#func_33)|**float** *x*|**float**|
 
 
 ***
 ## Description des fonctions
 
 <a id="func_0"></a>
-> abs (**real** *x*) (**real**)
+> abs (**float** *x*) (**float**)
 
 Retourne la valeur absolue de `x`.
 
@@ -64,12 +64,12 @@ Retourne la valeur absolue de `x`.
 Retourne la valeur absolue de `x`.
 
 <a id="func_2"></a>
-> acos (**real** *radians*) (**real**)
+> acos (**float** *radians*) (**float**)
 
 Retourne l’arc cosinus de `radians`.
 
 <a id="func_3"></a>
-> approach (**real** *x*, **real** *cible*, **real** *pas*) (**real**)
+> approach (**float** *x*, **float** *cible*, **float** *pas*) (**float**)
 
 Approche `x` de `cible` par incrément de `pas` sans le dépasser.
 Un `pas` négatif l’éloigne de `destination` d’autant.
@@ -81,22 +81,22 @@ Approche `x` de `cible` par incrément de `pas` sans le dépasser.
 Un `pas` négatif l’éloigne de `destination` d’autant.
 
 <a id="func_5"></a>
-> asin (**real** *radians*) (**real**)
+> asin (**float** *radians*) (**float**)
 
 Retourne l’arc sinus de `radians`.
 
 <a id="func_6"></a>
-> atan (**real** *radians*) (**real**)
+> atan (**float** *radians*) (**float**)
 
 Retourne l’arc tangeante de `radians`.
 
 <a id="func_7"></a>
-> atan2 (**real** *a*, **real** *b*) (**real**)
+> atan2 (**float** *a*, **float** *b*) (**float**)
 
 Variation d’`atan`.
 
 <a id="func_8"></a>
-> ceil (**real** *x*) (**real**)
+> ceil (**float** *x*) (**float**)
 
 Retourne l’arrondi de `x` à l’entier supérieur.
 
@@ -106,52 +106,52 @@ Retourne l’arrondi de `x` à l’entier supérieur.
 Restreint `x` entre `min` et `max`.
 
 <a id="func_10"></a>
-> clamp (**real** *x*, **real** *min*, **real** *max*) (**real**)
+> clamp (**float** *x*, **float** *min*, **float** *max*) (**float**)
 
 Restreint `x` entre `min` et `max`.
 
 <a id="func_11"></a>
-> cos (**real** *radians*) (**real**)
+> cos (**float** *radians*) (**float**)
 
 Retourne le cosinus de `radians`.
 
 <a id="func_12"></a>
-> deg (**real** *radians*) (**real**)
+> deg (**float** *radians*) (**float**)
 
 Convertit `radians` en degrés .
 
 <a id="func_13"></a>
-> exp (**real** *x*) (**real**)
+> exp (**float** *x*) (**float**)
 
 Retourne l’exponentielle de `x`.
 
 <a id="func_14"></a>
-> floor (**real** *x*) (**real**)
+> floor (**float** *x*) (**float**)
 
 Retourne l’arrondi de `x` à l’entier inférieur.
 
 <a id="func_15"></a>
-> isNaN (**real** *x*) (**bool**)
+> isNaN (**float** *x*) (**bool**)
 
 Vérifie si le `x` est un réel valide ou non.
 
 <a id="func_16"></a>
-> lerp (**real** *source*, **real** *destination*, **real** *t*) (**real**)
+> lerp (**float** *source*, **float** *destination*, **float** *t*) (**float**)
 
 Interpole entre `source` et `destination` en fonction de `t` compris entre 0 et 1.
 
 <a id="func_17"></a>
-> log (**real** *x*) (**real**)
+> log (**float** *x*) (**float**)
 
 Renvoie le logarithme naturel de `x`.
 
 <a id="func_18"></a>
-> log10 (**real** *x*) (**real**)
+> log10 (**float** *x*) (**float**)
 
 Renvoie le logarithme en base 10 de `x`.
 
 <a id="func_19"></a>
-> log2 (**real** *x*) (**real**)
+> log2 (**float** *x*) (**float**)
 
 Renvoie le logarithme en base 2 de `x`.
 
@@ -161,12 +161,12 @@ Renvoie le logarithme en base 2 de `x`.
 Renvoie la plus grande valeur entre `a` et `b`.
 
 <a id="func_21"></a>
-> max (**real** *a*, **real** *b*) (**real**)
+> max (**float** *a*, **float** *b*) (**float**)
 
 Renvoie la plus grande valeur entre `a` et `b`.
 
 <a id="func_22"></a>
-> min (**real** *a*, **real** *b*) (**real**)
+> min (**float** *a*, **float** *b*) (**float**)
 
 Renvoie la plus petite valeur entre `a` et `b`.
 
@@ -176,7 +176,7 @@ Renvoie la plus petite valeur entre `a` et `b`.
 Renvoie la plus petite valeur entre `a` et `b`.
 
 <a id="func_24"></a>
-> rad (**real** *degrés*) (**real**)
+> rad (**float** *degrés*) (**float**)
 
 Convertit `degrés`  en radians.
 
@@ -186,43 +186,43 @@ Convertit `degrés`  en radians.
 Retourne une valeur aléatoire comprise entre `min` et `max` inclus.
 
 <a id="func_26"></a>
-> rand (**real**)
+> rand (**float**)
 
 Retourne une valeur aléatoire comprise entre 0 et 1 exclus.
 
 <a id="func_27"></a>
-> rand (**real** *min*, **real** *max*) (**real**)
+> rand (**float** *min*, **float** *max*) (**float**)
 
 Retourne une valeur aléatoire comprise entre `min` et `max` inclus.
 
 <a id="func_28"></a>
-> rlerp (**real** *source*, **real** *destination*, **real** *valeur*) (**real**)
+> rlerp (**float** *source*, **float** *destination*, **float** *valeur*) (**float**)
 
 Opération inverse de lerp.
 Retourne le ratio entre 0 et 1 de `valeur` par rapport à `source` et `destination`
 
 <a id="func_29"></a>
-> round (**real** *x*) (**real**)
+> round (**float** *x*) (**float**)
 
 Retourne l’arrondi de `x` à l’entier le plus proche.
 
 <a id="func_30"></a>
-> sin (**real** *radians*) (**real**)
+> sin (**float** *radians*) (**float**)
 
 Retourne le sinus de `radians`.
 
 <a id="func_31"></a>
-> sqrt (**real** *x*) (**real**)
+> sqrt (**float** *x*) (**float**)
 
 Renvoie la racine carré de `x`.
 
 <a id="func_32"></a>
-> tan (**real** *radians*) (**real**)
+> tan (**float** *radians*) (**float**)
 
 Retourne la tangeante de `radians`.
 
 <a id="func_33"></a>
-> truncate (**real** *x*) (**real**)
+> truncate (**float** *x*) (**float**)
 
 Retourne la partie entière de `x`.
 

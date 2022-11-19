@@ -5,11 +5,11 @@ Fonctions liées au temps.
 |Fonction|Entrée|Sortie|
 |-|-|-|
 |[hours](#func_0)|**int** *h*|**int**|
-|[hours](#func_1)|**real** *h*|**int**|
+|[hours](#func_1)|**float** *h*|**int**|
 |[minutes](#func_2)|**int** *m*|**int**|
-|[minutes](#func_3)|**real** *m*|**int**|
+|[minutes](#func_3)|**float** *m*|**int**|
 |[seconds](#func_4)|**int** *s*|**int**|
-|[seconds](#func_5)|**real** *s*|**int**|
+|[seconds](#func_5)|**float** *s*|**int**|
 |[sleep](#func_6)|**int** *ms*||
 |[time](#func_7)||**int**|
 |[wait](#func_8)|**int** *x*||
@@ -24,7 +24,7 @@ Fonctions liées au temps.
 Convertis `h` heures en millisecondes.
 
 <a id="func_1"></a>
-> hours (**real** *h*) (**int**)
+> hours (**float** *h*) (**int**)
 
 Convertis `h` heures en millisecondes.
 
@@ -34,7 +34,7 @@ Convertis `h` heures en millisecondes.
 Convertis `m` secondes en millisecondes.
 
 <a id="func_3"></a>
-> minutes (**real** *m*) (**int**)
+> minutes (**float** *m*) (**int**)
 
 Convertis `m` secondes en millisecondes.
 
@@ -44,7 +44,7 @@ Convertis `m` secondes en millisecondes.
 Convertis `s` secondes en millisecondes.
 
 <a id="func_5"></a>
-> seconds (**real** *s*) (**int**)
+> seconds (**float** *s*) (**int**)
 
 Convertis `s` secondes en millisecondes.
 

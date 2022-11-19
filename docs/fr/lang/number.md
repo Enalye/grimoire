@@ -1,5 +1,5 @@
 # Nombres
-Grimoire possède 2 types de nombres: les entiers `int` et les réels `real`.
+Grimoire possède 2 types de nombres: les entiers `int` et les réels `float`.
 
 ## Entiers
 

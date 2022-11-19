@@ -13,7 +13,7 @@ All variables are initialized, if you don't assign anything, it'll have its defa
 ## Basic Types
 They're only a handful of basic type recognised by grimoire.
 * Integer declared with **int** ex: 2 (Default value: 0)
-* Floating point number declared with **real** ex: 2.35f (Default value: 0f)
+* Floating point number declared with **float** ex: 2.35f (Default value: 0f)
 * Boolean declared with **bool** ex: true, false (Default value: false)
 * String declared with **string** ex: "Hello" (Default value: "")
 * [List](#lists) (Default value: [])
@@ -29,7 +29,7 @@ They're only a handful of basic type recognised by grimoire.
 Example:
 ```grimoire
 event onLoad() {
-  let a = 3.2; //'a' is inferred to be a real type.
+  let a = 3.2; //'a' is inferred to be a float type.
   print(a);
 }
 ```
@@ -99,6 +99,6 @@ But you can use **let** to initialize automatically different types :
 
 Here:
 * *a = 1* and is of type **int**,
-* *b = 2.3* and is of type **real**,
+* *b = 2.3* and is of type **float**,
 * *c = "Hi!"* and is of type **string**,
 * *d = "Hi!"* and is of type **string**.

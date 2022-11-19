@@ -1,6 +1,6 @@
 # Type casting
 
-You can explicitly cast a value to any type with the keyword `as`, it must be followed by the desired type like this: `real a = 5 as real;`.
+You can explicitly cast a value to any type with the keyword `as`, it must be followed by the desired type like this: `float a = 5 as float;`.
 
 ## Custom casting
 

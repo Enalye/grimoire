@@ -4,12 +4,12 @@ Fonctions de conversion.
 ## Conversions
 |Source|Destination|
 |-|-|
-|**real**|**int**|
+|**float**|**int**|
 |**bool**|**int**|
-|**int**|**real**|
+|**int**|**float**|
 |**bool**|**string**|
 |**int**|**string**|
-|**real**|**string**|
+|**float**|**string**|
 |**pure list(string)**|**string**|
 |**pure string**|**list(string)**|
 

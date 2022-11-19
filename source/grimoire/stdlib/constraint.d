@@ -43,8 +43,8 @@ private bool _register(GrData, GrType type, const GrType[] types) {
         return type == GrType.Base.int_ || type == GrType.Base.bool_
             || type == GrType.Base.function_ || type == GrType.Base.task || type == GrType
             .Base.enum_;
-    case real_:
-        return type == GrType.Base.real_;
+    case float_:
+        return type == GrType.Base.float_;
     case string_:
         return type == GrType.Base.string_;
     case optional:
@@ -92,14 +92,14 @@ private bool _native(GrData, GrType type, const GrType[]) {
 }
 
 private bool _numeric(GrData, GrType type, const GrType[]) {
-    return type.base == GrType.Base.int_ || type.base == GrType.Base.real_;
+    return type.base == GrType.Base.int_ || type.base == GrType.Base.float_;
 }
 
 private bool _notnullable(GrData, GrType type, const GrType[]) {
     final switch (type.base) with (GrType.Base) {
     case bool_:
     case int_:
-    case real_:
+    case float_:
     case enum_:
     case string_:
     case list:
@@ -122,7 +122,7 @@ private bool _nullable(GrData, GrType type, const GrType[]) {
     final switch (type.base) with (GrType.Base) {
     case bool_:
     case int_:
-    case real_:
+    case float_:
     case enum_:
     case string_:
     case list:

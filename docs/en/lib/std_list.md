@@ -35,7 +35,7 @@ Iterate on a list.
 |[size](#func_23)|**pure list(T)** *lst*|**int**|
 |[slice](#func_24)|**pure list(T)** *lst*, **int** *startIndex*, **int** *endIndex*|**list(T)**|
 |[sort](#func_25)|**list(int)** *lst*||
-|[sort](#func_26)|**list(real)** *lst*||
+|[sort](#func_26)|**list(float)** *lst*||
 |[sort](#func_27)|**list(string)** *lst*||
 |[unshift](#func_28)|**list(T)** *lst*, **T** *value*||
 
@@ -189,7 +189,7 @@ Returns a slice of `lst` from `startIndex` to `endIndex` included.
 Sorts `lst`.
 
 <a id="func_26"></a>
-> sort (**list(real)** *lst*)
+> sort (**list(float)** *lst*)
 
 Sorts `lst`.
 

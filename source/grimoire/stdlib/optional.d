@@ -74,21 +74,21 @@ Otherwise, the non-optional version of `x` is returned.");
 
     static foreach (op; ["+", "-"]) {
         library.addOperator(&_opUnary!(op, "Int"), op, [grOptional(grInt)], grOptional(grInt));
-        library.addOperator(&_opUnary!(op, "Real"), op, [grOptional(grReal)], grOptional(grReal));
+        library.addOperator(&_opUnary!(op, "Float"), op, [grOptional(grFloat)], grOptional(grFloat));
     }
 
     static foreach (op; ["+", "-", "*", "/", "%"]) {
         library.addOperator(&_opBinary!(op, "Int", "Int", "Int"), op,
             [grOptional(grInt), grOptional(grInt)], grOptional(grInt));
 
-        library.addOperator(&_opBinary!(op, "Real", "Real", "Real"), op,
-            [grOptional(grReal), grOptional(grReal)], grOptional(grReal));
+        library.addOperator(&_opBinary!(op, "Float", "Float", "Float"), op,
+            [grOptional(grFloat), grOptional(grFloat)], grOptional(grFloat));
 
-        library.addOperator(&_opBinary!(op, "Real", "Int", "Real"), op,
-            [grOptional(grReal), grOptional(grInt)], grOptional(grReal));
+        library.addOperator(&_opBinary!(op, "Float", "Int", "Float"), op,
+            [grOptional(grFloat), grOptional(grInt)], grOptional(grFloat));
 
-        library.addOperator(&_opBinary!(op, "Int", "Real", "Real"), op,
-            [grOptional(grInt), grOptional(grReal)], grOptional(grReal));
+        library.addOperator(&_opBinary!(op, "Int", "Float", "Float"), op,
+            [grOptional(grInt), grOptional(grFloat)], grOptional(grFloat));
     }
 
     library.addOperator(&_opUnary!("!", "Bool"),
@@ -106,28 +106,28 @@ Otherwise, the non-optional version of `x` is returned.");
         library.addOperator(&_opEquality!(op, "Int", "Int"), op,
             [grOptional(grInt), grOptional(grInt)], grBool);
 
-        library.addOperator(&_opEquality!(op, "Real", "Real"), op,
-            [grOptional(grReal), grOptional(grReal)], grBool);
+        library.addOperator(&_opEquality!(op, "Float", "Float"), op,
+            [grOptional(grFloat), grOptional(grFloat)], grBool);
 
-        library.addOperator(&_opEquality!(op, "Int", "Real"), op,
-            [grOptional(grInt), grOptional(grReal)], grBool);
+        library.addOperator(&_opEquality!(op, "Int", "Float"), op,
+            [grOptional(grInt), grOptional(grFloat)], grBool);
 
-        library.addOperator(&_opEquality!(op, "Real", "Int"), op,
-            [grOptional(grReal), grOptional(grInt)], grBool);
+        library.addOperator(&_opEquality!(op, "Float", "Int"), op,
+            [grOptional(grFloat), grOptional(grInt)], grBool);
     }
 
     static foreach (op; [">", "<", ">=", "<="]) {
         library.addOperator(&_opComparison!(op, "Int", "Int"), op,
             [grOptional(grInt), grOptional(grInt)], grBool);
 
-        library.addOperator(&_opComparison!(op, "Real", "Real"), op,
-            [grOptional(grReal), grOptional(grReal)], grBool);
+        library.addOperator(&_opComparison!(op, "Float", "Float"), op,
+            [grOptional(grFloat), grOptional(grFloat)], grBool);
 
-        library.addOperator(&_opComparison!(op, "Int", "Real"), op,
-            [grOptional(grInt), grOptional(grReal)], grBool);
+        library.addOperator(&_opComparison!(op, "Int", "Float"), op,
+            [grOptional(grInt), grOptional(grFloat)], grBool);
 
-        library.addOperator(&_opComparison!(op, "Real", "Int"), op,
-            [grOptional(grReal), grOptional(grInt)], grBool);
+        library.addOperator(&_opComparison!(op, "Float", "Int"), op,
+            [grOptional(grFloat), grOptional(grInt)], grBool);
     }
 }
 

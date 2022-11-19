@@ -77,8 +77,8 @@ final class GrList {
         return values;
     }
 
-    pragma(inline) GrReal[] getReals() {
-        return cast(GrReal[]) _data;
+    pragma(inline) GrFloat[] getFloats() {
+        return cast(GrFloat[]) _data;
     }
 
     pragma(inline) GrString[] getStrings() {
@@ -123,7 +123,7 @@ final class GrList {
             _data[i].setEnum!T(values[i]);
     }
 
-    pragma(inline) void setReals(GrReal[] values) {
+    pragma(inline) void setFloats(GrFloat[] values) {
         _data = cast(GrValue[]) values;
     }
 
@@ -317,10 +317,10 @@ final class GrList {
         _data.sort!((a, b) => a.getInt() < b.getInt())();
     }
 
-    pragma(inline) void sortByReal() {
+    pragma(inline) void sortByFloat() {
         import std.algorithm.sorting : sort;
 
-        _data.sort!((a, b) => a.getReal() < b.getReal())();
+        _data.sort!((a, b) => a.getFloat() < b.getFloat())();
     }
 
     pragma(inline) void sortByString() {

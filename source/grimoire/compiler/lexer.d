@@ -85,7 +85,7 @@ struct GrLexeme {
         decrement,
         identifier,
         int_,
-        real_,
+        float_,
         bool_,
         string_,
         null_,
@@ -102,7 +102,7 @@ struct GrLexeme {
         send,
         receive,
         integerType,
-        realType,
+        floatType,
         booleanType,
         stringType,
         listType,
@@ -191,7 +191,7 @@ struct GrLexeme {
 
     /// Floating point value of the constant.
     /// isLiteral will be true and type set to float.
-    GrReal rvalue;
+    GrFloat rvalue;
 
     /// Boolean value of the constant.
     /// isLiteral will be true and type set to bool.
@@ -492,8 +492,8 @@ package final class GrLexer {
         lex._textLength = cast(uint) buffer.length;
 
         if (isFloat) {
-            lex.type = GrLexeme.Type.real_;
-            lex.rvalue = to!GrReal(buffer);
+            lex.type = GrLexeme.Type.float_;
+            lex.rvalue = to!GrFloat(buffer);
         }
         else {
             lex.type = GrLexeme.Type.int_;
@@ -1006,8 +1006,8 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.integerType;
             lex.isType = true;
             break;
-        case "real":
-            lex.type = GrLexeme.Type.realType;
+        case "float":
+            lex.type = GrLexeme.Type.floatType;
             lex.isType = true;
             break;
         case "bool":
@@ -1252,7 +1252,7 @@ private immutable string[] _prettyLexemeTypeTable = [
     "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->", "=>", "~", "!",
     "++", "--", "identifier", "const_int", "const_float", "const_bool",
     "const_string", "null", "public", "const", "pure", "alias", "event",
-    "class", "enum", "where", "new", "copy", "send", "receive", "int", "real",
+    "class", "enum", "where", "new", "copy", "send", "receive", "int", "float",
     "bool", "string", "list", "channel", "function", "task", "var", "if",
     "unless", "else", "switch", "select", "case", "default", "while", "do",
     "until", "for", "loop", "return", "self", "die", "exit", "yield", "break",

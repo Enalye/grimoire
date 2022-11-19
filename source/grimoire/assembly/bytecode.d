@@ -49,7 +49,7 @@ enum GrOpcode {
     fieldLoad2,
 
     const_int,
-    const_real,
+    const_float,
     const_bool,
     const_string,
     const_meta,
@@ -59,19 +59,19 @@ enum GrOpcode {
     globalPop,
 
     equal_int,
-    equal_real,
+    equal_float,
     equal_string,
     notEqual_int,
-    notEqual_real,
+    notEqual_float,
     notEqual_string,
     greaterOrEqual_int,
-    greaterOrEqual_real,
+    greaterOrEqual_float,
     lesserOrEqual_int,
-    lesserOrEqual_real,
+    lesserOrEqual_float,
     greater_int,
-    greater_real,
+    greater_float,
     lesser_int,
-    lesser_real,
+    lesser_float,
     checkNull,
     optionalTry,
     optionalOr,
@@ -83,21 +83,21 @@ enum GrOpcode {
     not_int,
     concatenate_string,
     add_int,
-    add_real,
+    add_float,
     substract_int,
-    substract_real,
+    substract_float,
     multiply_int,
-    multiply_real,
+    multiply_float,
     divide_int,
-    divide_real,
+    divide_float,
     remainder_int,
-    remainder_real,
+    remainder_float,
     negative_int,
-    negative_real,
+    negative_float,
     increment_int,
-    increment_real,
+    increment_float,
     decrement_int,
-    decrement_real,
+    decrement_float,
 
     copy,
     swap,
@@ -163,8 +163,8 @@ final class GrBytecode {
             uint typeMask;
             /// Integral init value
             GrInt ivalue;
-            /// Realing init value
-            GrReal rvalue;
+            /// Floating init value
+            GrFloat rvalue;
             /// String init value
             GrStringValue svalue;
         }
@@ -175,8 +175,8 @@ final class GrBytecode {
         /// Integer constants.
         GrInt[] iconsts;
 
-        /// Realing point constants.
-        GrReal[] rconsts;
+        /// Floating point constants.
+        GrFloat[] rconsts;
 
         /// String constants.
         GrStringValue[] sconsts;
@@ -264,8 +264,8 @@ final class GrBytecode {
 
         foreach (GrInt i; iconsts)
             buffer.append!GrInt(i);
-        foreach (GrReal i; rconsts)
-            buffer.append!GrReal(i);
+        foreach (GrFloat i; rconsts)
+            buffer.append!GrFloat(i);
         foreach (string i; sconsts) {
             writeStr(buffer, i);
         }
@@ -307,7 +307,7 @@ final class GrBytecode {
             if (reference.typeMask & 0x1)
                 buffer.append!GrInt(reference.ivalue);
             else if (reference.typeMask & 0x2)
-                buffer.append!GrReal(reference.rvalue);
+                buffer.append!GrFloat(reference.rvalue);
             else if (reference.typeMask & 0x4)
                 writeStr(buffer, reference.svalue);
         }
@@ -362,7 +362,7 @@ final class GrBytecode {
         }
 
         for (uint i; i < rconsts.length; ++i) {
-            rconsts[i] = buffer.read!GrReal();
+            rconsts[i] = buffer.read!GrFloat();
         }
 
         for (uint i; i < sconsts.length; ++i) {
@@ -419,7 +419,7 @@ final class GrBytecode {
             if (reference.typeMask & 0x1)
                 reference.ivalue = buffer.read!GrInt();
             else if (reference.typeMask & 0x2)
-                reference.rvalue = buffer.read!GrReal();
+                reference.rvalue = buffer.read!GrFloat();
             else if (reference.typeMask & 0x4)
                 reference.svalue = readStr(buffer);
             variables[name] = reference;

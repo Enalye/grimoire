@@ -7,7 +7,7 @@ Contrairement à la plupart des langages de programmation, les classes en Grimoi
 class Animal {
     string nom;
     int nombreDePattes;
-    real vitesse;
+    float vitesse;
 }
 ```
 

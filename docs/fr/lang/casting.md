@@ -2,7 +2,7 @@
 
 L’opérateur `as` permet de convertir une valeur d’un type vers un autre.
 ```grimoire
-real a = 5 as real;
+float a = 5 as float;
 ```
 
 ## Conversion personnalisée

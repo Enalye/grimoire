@@ -24,17 +24,17 @@ engine.addLibrary(library);
 
 You can declare global variables from a library using addVariable():
 ```d
-library.addVariable("pi", grReal, 3.141592f, true); 
+library.addVariable("pi", grFloat, 3.141592f, true); 
 ```
 
 To access the variable in runtime, you can use the getXVariable() of GrCall or GrEngine:
 ```d
-float value = engine.getRealVariable("PI");
+float value = engine.getFloatVariable("PI");
 ```
 
 To modify it, use the setXVariable() ones:
 ```d
-engine.setRealVariable("PI", 3f);
+engine.setFloatVariable("PI", 3f);
 ```
 
 * * *
@@ -57,8 +57,8 @@ Exemple:
 ```d
 //A function print that takes a string and returns nothing
 library.addFunction(&print_a_string, "print", [grString]);
-//Function mul() that takes 2 reals and returns one.
-library.addFunction(&multiply, "mul", [grReal, grReal], [grReal]);
+//Function mul() that takes 2 floats and returns one.
+library.addFunction(&multiply, "mul", [grFloat, grFloat], [grFloat]);
 ```
 
 * * *
@@ -71,11 +71,11 @@ The GrCall object contains everything you need about the current running context
 It looks like this:
 ```d
 void myPrimitive(GrCall call) {
-	writeln(call.getReal(0));
+	writeln(call.getFloat(0));
     call.setInt(99);
 }
 ```
-Here, the primitive takes a real parameter at index 0 (first parameter), and prints it, then returns the int value 99.
+Here, the primitive takes a float parameter at index 0 (first parameter), and prints it, then returns the int value 99.
 getXXX methods fetch the parameters, the type must match the declaration, else they'll throw an exception.
 setXXX methods returns a value on the stack, beware of the order in which you call setXXX functions.
 
@@ -134,15 +134,15 @@ void myCast(GrCall call) {
 
 Like addCast, but using addOperator instead.
 ```d
-library.addOperator(&myOperator, GrLibrary.Operator.add, [grReal, grInt], grReal);
+library.addOperator(&myOperator, GrLibrary.Operator.add, [grFloat, grInt], grFloat);
 // Or
-library.addOperator(&myOperator, "+", [grReal, grInt], grReal);
+library.addOperator(&myOperator, "+", [grFloat, grInt], grFloat);
 ```
 
 Then writing the function itself.
 ```d
 void myOperator(GrCall call) {
-    call.setReal(call.getReal(0) + cast(int) call.getInt(1));
+    call.setFloat(call.getFloat(0) + cast(int) call.getInt(1));
 }
 ```
 

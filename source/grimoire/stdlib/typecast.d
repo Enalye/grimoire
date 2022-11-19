@@ -15,16 +15,16 @@ void grLoadStdLibTypecast(GrLibDefinition library) {
     library.setModuleInfo(GrLocale.en_US, "Conversion functions.");
 
     //As int
-    library.addCast(&typecast_r2i, grReal, grInt, true);
+    library.addCast(&typecast_r2i, grFloat, grInt, true);
     library.addCast(&typecast_b2i, grBool, grInt);
 
-    //As real
-    library.addCast(&typecast_i2r, grInt, grReal);
+    //As float
+    library.addCast(&typecast_i2r, grInt, grFloat);
 
     //As string
     library.addCast(&typecast_b2s, grBool, grString);
     library.addCast(&typecast_i2s, grInt, grString);
-    library.addCast(&typecast_r2s, grReal, grString);
+    library.addCast(&typecast_r2s, grFloat, grString);
     library.addCast(&typecast_as2s, grPure(grList(grString)), grString);
 
     //As string list
@@ -33,16 +33,16 @@ void grLoadStdLibTypecast(GrLibDefinition library) {
 
 //As int
 private void typecast_r2i(GrCall call) {
-    call.setInt(to!GrInt(call.getReal(0)));
+    call.setInt(to!GrInt(call.getFloat(0)));
 }
 
 private void typecast_b2i(GrCall call) {
     call.setInt(to!GrInt(call.getBool(0)));
 }
 
-//As real
+//As float
 private void typecast_i2r(GrCall call) {
-    call.setReal(to!GrReal(call.getInt(0)));
+    call.setFloat(to!GrFloat(call.getInt(0)));
 }
 
 //As string
@@ -55,7 +55,7 @@ private void typecast_i2s(GrCall call) {
 }
 
 private void typecast_r2s(GrCall call) {
-    call.setString(to!GrStringValue(call.getReal(0)));
+    call.setString(to!GrStringValue(call.getFloat(0)));
 }
 
 private void typecast_as2s(GrCall call) {

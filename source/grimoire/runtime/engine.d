@@ -353,7 +353,7 @@ class GrEngine {
 
     alias getBoolVariable = getVariable!bool;
     alias getIntVariable = getVariable!GrInt;
-    alias getRealVariable = getVariable!GrReal;
+    alias getFloatVariable = getVariable!GrFloat;
     alias getPointerVariable = getVariable!GrPointer;
 
     pragma(inline) T getEnumVariable(T)(string name) const {
@@ -391,7 +391,7 @@ class GrEngine {
         else static if (is(T == GrBool)) {
             return _globals[variable.index]._ivalue > 0;
         }
-        else static if (is(T == GrReal)) {
+        else static if (is(T == GrFloat)) {
             return _globals[variable.index]._rvalue;
         }
         else static if (is(T == GrPointer)) {
@@ -401,7 +401,7 @@ class GrEngine {
 
     alias setBoolVariable = setVariable!GrBool;
     alias setIntVariable = setVariable!GrInt;
-    alias setRealVariable = setVariable!GrReal;
+    alias setFloatVariable = setVariable!GrFloat;
     alias setPointerVariable = setVariable!GrPointer;
 
     pragma(inline) void setEnumVariable(T)(string name, T value) {
@@ -439,7 +439,7 @@ class GrEngine {
         static if (is(T == GrInt) || is(T == GrBool)) {
             _globals[variable.index]._ivalue = value;
         }
-        else static if (is(T == GrReal)) {
+        else static if (is(T == GrFloat)) {
             _globals[variable.index]._rvalue = value;
         }
         else static if (is(T == GrPointer)) {
@@ -812,7 +812,7 @@ class GrEngine {
                             opcode)];
                     currentTask.pc++;
                     break;
-                case const_real:
+                case const_float:
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
@@ -869,7 +869,7 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
-                case equal_real:
+                case equal_float:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue =
                         currentTask.stack[currentTask.stackPos]._rvalue ==
@@ -890,7 +890,7 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
-                case notEqual_real:
+                case notEqual_float:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue =
                         currentTask.stack[currentTask.stackPos]._rvalue !=
@@ -911,7 +911,7 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
-                case greaterOrEqual_real:
+                case greaterOrEqual_float:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue =
                         currentTask.stack[currentTask.stackPos]._rvalue >=
@@ -925,7 +925,7 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
-                case lesserOrEqual_real:
+                case lesserOrEqual_float:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue =
                         currentTask.stack[currentTask.stackPos]._rvalue <=
@@ -939,7 +939,7 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
-                case greater_real:
+                case greater_float:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue =
                         currentTask.stack[currentTask.stackPos]._rvalue >
@@ -953,7 +953,7 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
-                case lesser_real:
+                case lesser_float:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue =
                         currentTask.stack[currentTask.stackPos]._rvalue <
@@ -1016,7 +1016,7 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
-                case add_real:
+                case add_float:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._rvalue +=
                         currentTask.stack[currentTask.stackPos + 1]._rvalue;
@@ -1034,7 +1034,7 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
-                case substract_real:
+                case substract_float:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._rvalue -=
                         currentTask.stack[currentTask.stackPos + 1]._rvalue;
@@ -1046,7 +1046,7 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
-                case multiply_real:
+                case multiply_float:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._rvalue *=
                         currentTask.stack[currentTask.stackPos + 1]._rvalue;
@@ -1062,7 +1062,7 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
-                case divide_real:
+                case divide_float:
                     if (currentTask.stack[currentTask.stackPos]._rvalue == 0f) {
                         raise(currentTask, "ZeroDivisionError");
                         break;
@@ -1082,7 +1082,7 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
-                case remainder_real:
+                case remainder_float:
                     if (currentTask.stack[currentTask.stackPos]._rvalue == 0f) {
                         raise(currentTask, "ZeroDivisionError");
                         break;
@@ -1097,7 +1097,7 @@ class GrEngine {
                         .stack[currentTask.stackPos]._ivalue;
                     currentTask.pc++;
                     break;
-                case negative_real:
+                case negative_float:
                     currentTask.stack[currentTask.stackPos]._rvalue = -currentTask
                         .stack[currentTask.stackPos]._rvalue;
                     currentTask.pc++;
@@ -1106,7 +1106,7 @@ class GrEngine {
                     currentTask.stack[currentTask.stackPos]._ivalue++;
                     currentTask.pc++;
                     break;
-                case increment_real:
+                case increment_float:
                     currentTask.stack[currentTask.stackPos]._rvalue += 1f;
                     currentTask.pc++;
                     break;
@@ -1114,7 +1114,7 @@ class GrEngine {
                     currentTask.stack[currentTask.stackPos]._ivalue--;
                     currentTask.pc++;
                     break;
-                case decrement_real:
+                case decrement_float:
                     currentTask.stack[currentTask.stackPos]._rvalue -= 1f;
                     currentTask.pc++;
                     break;

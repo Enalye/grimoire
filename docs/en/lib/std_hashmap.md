@@ -27,7 +27,7 @@ Iterate on a hashmap.
 |[next](#func_9)|**HashMapIterator\<T>** *iterator*|**Pair\<string, T>?**|
 |[print](#func_10)|**pure HashMap\<bool>** *hashmap*||
 |[print](#func_11)|**pure HashMap\<int>** *hashmap*||
-|[print](#func_12)|**pure HashMap\<real>** *hashmap*||
+|[print](#func_12)|**pure HashMap\<float>** *hashmap*||
 |[print](#func_13)|**pure HashMap\<string>** *hashmap*||
 |[remove](#func_14)|**HashMap\<T>** *hashmap*, **pure string** *key*||
 |[set](#func_15)|**HashMap\<T>** *hashmap*, **pure string** *key*, **T** *value*||
@@ -100,7 +100,7 @@ Display the content of `hashmap`.
 Display the content of `hashmap`.
 
 <a id="func_12"></a>
-> print (**pure HashMap\<real>** *hashmap*)
+> print (**pure HashMap\<float>** *hashmap*)
 
 Display the content of `hashmap`.
 

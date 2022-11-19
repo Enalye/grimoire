@@ -28,7 +28,7 @@ struct GrType {
         void_,
         null_,
         int_,
-        real_,
+        float_,
         bool_,
         string_,
         optional,
@@ -104,8 +104,8 @@ struct GrType {
 const GrType grVoid = GrType(GrType.Base.void_);
 /// Integer
 const GrType grInt = GrType(GrType.Base.int_);
-/// Real
-const GrType grReal = GrType(GrType.Base.real_);
+/// Float
+const GrType grFloat = GrType(GrType.Base.float_);
 /// Bool
 const GrType grBool = GrType(GrType.Base.bool_);
 /// String
@@ -169,9 +169,9 @@ bool grIsKindOfInt(GrType.Base type) {
         type == GrType.Base.function_ || type == GrType.Base.task || type == GrType.Base.enum_;
 }
 
-/// The type is handled by a real based register
-bool grIsKindOfReal(GrType.Base type) {
-    return type == GrType.Base.real_;
+/// The type is handled by a float based register
+bool grIsKindOfFloat(GrType.Base type) {
+    return type == GrType.Base.float_;
 }
 
 /// The type is handled by a string based register
@@ -229,7 +229,7 @@ A local or global variable.
 package class GrVariable {
     /// Its type.
     GrType type;
-    /// Register position, separate for each type (int, real, string and objects);
+    /// Register position, separate for each type (int, float, string and objects);
     uint register = uint.max;
     /// Declared from the global scope ?
     bool isGlobal;
@@ -413,7 +413,7 @@ final class GrVariableDefinition {
     /// Integral init value
     GrInt ivalue;
     /// Floating init value
-    GrReal rvalue;
+    GrFloat rvalue;
     /// String init value
     GrStringValue svalue;
     /// Register.
@@ -521,7 +521,7 @@ package class GrFunction {
         case function_:
         case task:
         case enum_:
-        case real_:
+        case float_:
         case string_:
         case list:
         case optional:

@@ -10,7 +10,7 @@ int a = 0;
 Sans initialisation, une variable est initialisé par sa valeur par défaut.
 Si aucune valeur par défaut n’existe, le script ne compilera pas.
 ```grimoire
-real a;         //Vaut 0.0 par défaut
+float a;         //Vaut 0.0 par défaut
 HashMap<int> a; //Ne compile pas
 ```
 
@@ -56,7 +56,7 @@ event onLoad() {
     x:print; // Affiche « Bonjour »
 
     {
-        real x = 1.2;
+        float x = 1.2;
         x:print; // Affiche 1.2
     }
     x:print; // Affiche « Bonjour »
@@ -113,6 +113,6 @@ Il y a tout de même un moyen de déclarer des variables de types différents gr
 
 Ce qui donne:
 * *a vaut 1* et est de type **int**,
-* *b vaut 2.3* et est de type **real**,
+* *b vaut 2.3* et est de type **float**,
 * *c vaut "Hi!"* et est de type **string**,
 * *d vaut "Hi!"* et est de type **string**.

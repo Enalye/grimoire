@@ -56,7 +56,7 @@ string grDump(const GrBytecode bytecode) {
             line ~= to!string(grGetInstructionUnsignedValue(opcode));
         else if (op == GrOpcode.const_int)
             line ~= to!string(bytecode.iconsts[grGetInstructionUnsignedValue(opcode)]);
-        else if (op == GrOpcode.const_real)
+        else if (op == GrOpcode.const_float)
             line ~= to!string(bytecode.rconsts[grGetInstructionUnsignedValue(opcode)]);
         else if (op == GrOpcode.const_bool)
             line ~= (grGetInstructionUnsignedValue(opcode) ? "true" : "false");

@@ -24,7 +24,7 @@ event onLoad() {
 The type of a function/task is the same as its declaration without the parameters' name:
 ```grimoire
 event onLoad() {
-	function(int, real) (string, int) myFunction = function(int a, real b) (string, int) { return "Hey", 2; };
+	function(int, float) (string, int) myFunction = function(int a, float b) (string, int) { return "Hey", 2; };
 }
 ```
 

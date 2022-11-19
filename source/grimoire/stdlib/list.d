@@ -228,7 +228,7 @@ If `index` is negative, `index` is calculated from the back of `lst`.");
     library.setParameters(GrLocale.fr_FR, ["lst"]);
     library.setParameters(GrLocale.en_US, ["lst"]);
     library.addFunction(&_sort_!"int", "sort", [grList(grInt)]);
-    library.addFunction(&_sort_!"real", "sort", [grList(grReal)]);
+    library.addFunction(&_sort_!"float", "sort", [grList(grFloat)]);
     library.addFunction(&_sort_!"string", "sort", [grList(grString)]);
 
     library.setDescription(GrLocale.fr_FR, "Itère sur une liste.");
@@ -407,8 +407,8 @@ private void _sort_(string T)(GrCall call) {
     GrList list = call.getList(0);
     static if (T == "int")
         list.sortByInt();
-    else static if (T == "real")
-        list.sortByReal();
+    else static if (T == "float")
+        list.sortByFloat();
     else static if (T == "string")
         list.sortByString();
 }

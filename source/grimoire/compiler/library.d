@@ -139,8 +139,8 @@ final class GrLibrary : GrLibDefinition {
         case enum_:
             variable.ivalue = defaultValue.getInt();
             break;
-        case real_:
-            variable.rvalue = defaultValue.getReal();
+        case float_:
+            variable.rvalue = defaultValue.getFloat();
             break;
         case string_:
             variable.svalue = defaultValue.getString();

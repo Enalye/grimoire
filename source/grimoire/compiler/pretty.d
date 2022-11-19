@@ -33,8 +33,8 @@ string grGetPrettyType(const GrType variableType) {
         case int_:
             result ~= "int";
             break;
-        case real_:
-            result ~= "real";
+        case float_:
+            result ~= "float";
             break;
         case bool_:
             result ~= "bool";

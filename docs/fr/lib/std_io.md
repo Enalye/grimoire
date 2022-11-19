@@ -7,16 +7,16 @@
 |[print](#func_1)|**int?** *valeur*||
 |[print](#func_2)|**bool** *valeur*||
 |[print](#func_3)|**bool?** *valeur*||
-|[print](#func_4)|**real** *valeur*||
-|[print](#func_5)|**real?** *valeur*||
+|[print](#func_4)|**float** *valeur*||
+|[print](#func_5)|**float?** *valeur*||
 |[print](#func_6)|**string** *valeur*||
 |[print](#func_7)|**string?** *valeur*||
 |[print](#func_8)|**pure list(int)** *valeur*||
 |[print](#func_9)|**pure list(int)?** *valeur*||
 |[print](#func_10)|**pure list(bool)** *valeur*||
 |[print](#func_11)|**pure list(bool)?** *valeur*||
-|[print](#func_12)|**pure list(real)** *valeur*||
-|[print](#func_13)|**pure list(real)?** *valeur*||
+|[print](#func_12)|**pure list(float)** *valeur*||
+|[print](#func_13)|**pure list(float)?** *valeur*||
 |[print](#func_14)|**pure list(string)** *valeur*||
 |[print](#func_15)|**pure list(string)?** *valeur*||
 |[print](#func_16)|**pure T** *valeur*||
@@ -55,12 +55,12 @@ Affiche le contenu de `valeur`.
 Affiche le contenu de `valeur`.
 
 <a id="func_4"></a>
-> print (**real** *valeur*)
+> print (**float** *valeur*)
 
 Affiche le contenu de `valeur`.
 
 <a id="func_5"></a>
-> print (**real?** *valeur*)
+> print (**float?** *valeur*)
 
 Affiche le contenu de `valeur`.
 
@@ -95,12 +95,12 @@ Affiche le contenu de `valeur`.
 Affiche le contenu de `valeur`.
 
 <a id="func_12"></a>
-> print (**pure list(real)** *valeur*)
+> print (**pure list(float)** *valeur*)
 
 Affiche le contenu de `valeur`.
 
 <a id="func_13"></a>
-> print (**pure list(real)?** *valeur*)
+> print (**pure list(float)?** *valeur*)
 
 Affiche le contenu de `valeur`.
 

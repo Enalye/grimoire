@@ -16,7 +16,7 @@ package(grimoire) enum GR_NULL = 0xffffUL << 48;
 struct GrValue {
     package(grimoire) union {
         GrInt _ivalue;
-        GrReal _rvalue;
+        GrFloat _rvalue;
         GrPointer _ovalue;
         ulong _bytes;
     }
@@ -25,7 +25,7 @@ struct GrValue {
         _ivalue = value;
     }
 
-    this(GrReal value) {
+    this(GrFloat value) {
         _rvalue = value;
     }
 
@@ -67,7 +67,7 @@ struct GrValue {
         return cast(T) _ivalue;
     }
 
-    pragma(inline) GrReal getReal() const {
+    pragma(inline) GrFloat getFloat() const {
         return _rvalue;
     }
 
@@ -107,7 +107,7 @@ struct GrValue {
         _ivalue = cast(GrInt) value;
     }
 
-    pragma(inline) void setReal(GrReal value) {
+    pragma(inline) void setFloat(GrFloat value) {
         _rvalue = value;
     }
 

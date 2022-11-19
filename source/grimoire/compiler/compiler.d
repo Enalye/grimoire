@@ -216,7 +216,7 @@ final class GrCompiler {
                 variable.typeMask = 0x1;
                 variable.ivalue = variableDef.isInitialized ? variableDef.ivalue : 0;
                 break;
-            case real_:
+            case float_:
                 variable.typeMask = 0x2;
                 variable.rvalue = variableDef.isInitialized ? variableDef.rvalue : 0f;
                 break;
@@ -277,7 +277,7 @@ final class GrCompiler {
                         bytecode.primitives[id].params & 0xFFFF);
                     bytecode.primitives[id].params++;
                     break;
-                case real_:
+                case float_:
                     bytecode.primitives[id].parameters ~= 0x20000 | (
                         bytecode.primitives[id].params & 0xFFFF);
                     bytecode.primitives[id].params++;

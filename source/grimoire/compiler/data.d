@@ -488,7 +488,7 @@ final class GrData {
         }
         final switch (type.base) with (GrType.Base) {
         case int_:
-        case real_:
+        case float_:
         case bool_:
         case string_:
             break;
@@ -598,7 +598,7 @@ final class GrData {
             }
             final switch (second[i].base) with (GrType.Base) {
             case int_:
-            case real_:
+            case float_:
             case bool_:
             case string_:
                 if (first[i].base == second[i].base)

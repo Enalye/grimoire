@@ -49,7 +49,7 @@ final class GrObject {
     alias getValue = getField!GrValue;
     alias getBool = getField!GrBool;
     alias getInt = getField!GrInt;
-    alias getReal = getField!GrReal;
+    alias getFloat = getField!GrFloat;
     alias getPointer = getField!GrPointer;
 
     pragma(inline) T getEnum(T)(const string fieldName) const {
@@ -86,8 +86,8 @@ final class GrObject {
                     return _fields[index].value.getInt();
                 else static if (is(T == GrBool))
                     return cast(T) _fields[index].value.getInt();
-                else static if (is(T == GrReal))
-                    return _fields[index].value.getReal();
+                else static if (is(T == GrFloat))
+                    return _fields[index].value.getFloat();
                 else static if (is(T == GrPointer))
                     return _fields[index].value.getPointer();
                 else
@@ -100,7 +100,7 @@ final class GrObject {
     alias setValue = setField!GrValue;
     alias setBool = setField!GrBool;
     alias setInt = setField!GrInt;
-    alias setReal = setField!GrReal;
+    alias setFloat = setField!GrFloat;
     alias setPointer = setField!GrPointer;
 
     pragma(inline) void setEnum(T)(const string fieldName, T value) {
@@ -140,7 +140,7 @@ final class GrObject {
                     return _fields[index].value._ivalue = value;
                 else static if (is(T == GrBool))
                     return _fields[index].value._ivalue = cast(GrInt) value;
-                else static if (is(T == GrReal))
+                else static if (is(T == GrFloat))
                     return _fields[index].value._rvalue = value;
                 else static if (is(T == GrPointer))
                     return _fields[index].value._ovalue = value;

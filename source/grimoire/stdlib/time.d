@@ -38,21 +38,21 @@ void grLoadStdLibTime(GrLibDefinition library) {
     library.setParameters(GrLocale.fr_FR, ["s"]);
     library.setParameters(GrLocale.en_US, ["s"]);
     library.addFunction(&_seconds_i, "seconds", [grInt], [grInt]);
-    library.addFunction(&_seconds_f, "seconds", [grReal], [grInt]);
+    library.addFunction(&_seconds_f, "seconds", [grFloat], [grInt]);
 
     library.setDescription(GrLocale.fr_FR, "Convertis `m` secondes en millisecondes.");
     library.setDescription(GrLocale.en_US, "Converts `m` seconds in milliseconds.");
     library.setParameters(GrLocale.fr_FR, ["m"]);
     library.setParameters(GrLocale.en_US, ["m"]);
     library.addFunction(&_minutes_i, "minutes", [grInt], [grInt]);
-    library.addFunction(&_minutes_f, "minutes", [grReal], [grInt]);
+    library.addFunction(&_minutes_f, "minutes", [grFloat], [grInt]);
 
     library.setDescription(GrLocale.fr_FR, "Convertis `h` heures en millisecondes.");
     library.setDescription(GrLocale.en_US, "Converts `h` hours in milliseconds.");
     library.setParameters(GrLocale.fr_FR, ["h"]);
     library.setParameters(GrLocale.en_US, ["h"]);
     library.addFunction(&_hours_i, "hours", [grInt], [grInt]);
-    library.addFunction(&_hours_f, "hours", [grReal], [grInt]);
+    library.addFunction(&_hours_f, "hours", [grFloat], [grInt]);
 }
 
 private void _time(GrCall call) {
@@ -105,7 +105,7 @@ private void _seconds_i(GrCall call) {
 }
 
 private void _seconds_f(GrCall call) {
-    call.setInt(cast(GrInt)(call.getReal(0) * 1_000f));
+    call.setInt(cast(GrInt)(call.getFloat(0) * 1_000f));
 }
 
 private void _minutes_i(GrCall call) {
@@ -113,7 +113,7 @@ private void _minutes_i(GrCall call) {
 }
 
 private void _minutes_f(GrCall call) {
-    call.setInt(cast(GrInt)(call.getReal(0) * 60_000f));
+    call.setInt(cast(GrInt)(call.getFloat(0) * 60_000f));
 }
 
 private void _hours_i(GrCall call) {
@@ -121,5 +121,5 @@ private void _hours_i(GrCall call) {
 }
 
 private void _hours_f(GrCall call) {
-    call.setInt(cast(GrInt)(call.getReal(0) * 3_600_000f));
+    call.setInt(cast(GrInt)(call.getFloat(0) * 3_600_000f));
 }

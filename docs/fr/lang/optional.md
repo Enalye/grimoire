@@ -14,14 +14,14 @@ monString:print; // -> null
 
 De même, on peut assigner `null` à un type optionnel.
 ```grimoire
-real? valeur = 5;
+float? valeur = 5;
 valeur = null;
 ```
 
 Si le compilateur ne peut inférer le type de `null`, on doit le préciser.
 ```grimoire
 let? valeur = null(int);
-null(real):print;
+null(float):print;
 ```
 
 # L’opérateur « ? »
