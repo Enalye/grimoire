@@ -2099,10 +2099,6 @@ final class GrParser {
         class_.signature = signature;
         class_.fields = fields;
 
-        writeln(class_.name);
-        writeln(class_.signature);
-        writeln(class_.fields);
-
         class_.fieldsInfo.length = fields.length;
         for (int i; i < class_.fieldsInfo.length; ++i) {
             class_.fieldsInfo[i].fileId = class_.fileId;
@@ -5068,14 +5064,28 @@ final class GrParser {
     ---
     */
     private GrType parseConversionOperator(GrType[] typeStack) {
-        const uint fileId = get().fileId;
         if (!typeStack.length)
             logError(getError(Error.noValToConv), getError(Error.missingVal));
-        advance();
-        auto asType = parseType();
-        convertType(typeStack[$ - 1], asType, fileId, false, true);
-        typeStack[$ - 1] = asType;
-        return asType;
+        checkAdvance();
+
+        const uint fileId = get().fileId;
+        if (get().type != GrLexeme.Type.lesser)
+            logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.lesser),
+                    getPrettyLexemeType(get().type)), format(getError(Error.missingX),
+                    getPrettyLexemeType(GrLexeme.Type.lesser)));
+        checkAdvance();
+
+        GrType type = parseType();
+
+        if (get().type != GrLexeme.Type.greater)
+            logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.greater),
+                    getPrettyLexemeType(get().type)), format(getError(Error.missingX),
+                    getPrettyLexemeType(GrLexeme.Type.greater)));
+        checkAdvance();
+
+        convertType(typeStack[$ - 1], type, fileId, false, true);
+        typeStack[$ - 1] = type;
+        return type;
     }
 
     /// Parse an assignable (named) element.
@@ -5437,34 +5447,34 @@ final class GrParser {
     Parse a function reference expression. \
     Converts a public function/task into an anonymous one.
     */
-    private GrType parseFunctionPointer(GrType currentType) {
+    private GrType parseFunctionPointer() {
         const uint fileId = get().fileId;
+        if (get().type != GrLexeme.Type.lesser)
+            logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.lesser),
+                    getPrettyLexemeType(get().type)), format(getError(Error.missingX),
+                    getPrettyLexemeType(GrLexeme.Type.lesser)));
         checkAdvance();
-        if (get().type == GrLexeme.Type.leftParenthesis) {
-            checkAdvance();
-            GrType refType = parseType();
-            if (get().type != GrLexeme.Type.rightParenthesis)
-                logError(getError(Error.missingParenthesesAfterType), format(getError(Error.expectedXFoundY),
-                        getPrettyLexemeType(GrLexeme.Type.rightParenthesis),
-                        getPrettyLexemeType(get().type)));
-            checkAdvance();
-            if (currentType.base == GrType.Base.void_)
-                currentType = refType;
-            else
-                currentType = convertType(refType, currentType, fileId);
-        }
+
+        GrType type = parseType();
+        if (get().type != GrLexeme.Type.greater)
+            logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.greater),
+                    getPrettyLexemeType(get().type)), format(getError(Error.missingX),
+                    getPrettyLexemeType(GrLexeme.Type.greater)));
+        checkAdvance();
+
         if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedFuncNameFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingFuncName));
-        if (currentType.base != GrType.Base.function_ && currentType.base != GrType.Base.task)
+
+        if (type.base != GrType.Base.function_ && type.base != GrType.Base.task)
             logError(format(getError(Error.cantInferTypeOfX), get().svalue),
                 getError(Error.funcTypeCantBeInferred));
 
         GrType funcType = addFunctionAddress(get().svalue,
-            grUnmangleSignature(currentType.mangledType), get().fileId);
-        convertType(funcType, currentType, fileId);
+            grUnmangleSignature(type.mangledType), get().fileId);
+        type = convertType(funcType, type, fileId);
         checkAdvance();
-        return currentType;
+        return type;
     }
 
     private enum {
@@ -6238,8 +6248,11 @@ final class GrParser {
                 }
                 break;
             */
-            case pointer:
-                currentType = parseFunctionPointer(currentType);
+            case bitwiseAnd:
+                if (get(1).type != GrLexeme.Type.lesser)
+                    goto case bitwiseOr;
+                checkAdvance();
+                currentType = parseFunctionPointer();
                 typeStack ~= currentType;
                 hasValue = true;
                 break;
@@ -6323,13 +6336,15 @@ final class GrParser {
                 break;
             case and:
             case or:
-            case bitwiseAnd: .. case bitwiseXor:
+            case bitwiseOr:
+            case bitwiseXor:
             case optionalOr:
             case multiply:
             case divide:
             case remainder: .. case not:
                 if (isExpectingLValue)
-                    logError(getError(Error.cantDoThisKindOfOpOnLeftSideOfAssignement),
+                    logError(getError(
+                            Error.cantDoThisKindOfOpOnLeftSideOfAssignement),
                         getError(Error.unexpectedOp));
                 if (!hadValue && !isUnaryOperator(lex.type))
                     logError(getError(Error.binOpMustHave2Operands), getError(Error.missingVal));
@@ -7054,7 +7069,6 @@ final class GrParser {
         missingSemicolonAfterAssignmentList,
         typeXHasNoDefaultVal,
         cantInitThisType,
-        missingParenthesesAfterType,
         expectedFuncNameFoundX,
         missingFuncName,
         cantInferTypeOfX,
@@ -7288,7 +7302,6 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.missingSemicolonAfterAssignmentList: "missing semicolon after assignment list",
                 Error.typeXHasNoDefaultVal: "the type `%s` has no default value",
                 Error.cantInitThisType: "can't initialize this type",
-                Error.missingParenthesesAfterType: "missing parentheses after the type",
                 Error.expectedFuncNameFoundX: "expected function name, found `%s`",
                 Error.missingFuncName: "missing function name",
                 Error.cantInferTypeOfX: "can't infer the type of `%s`",
@@ -7513,7 +7526,6 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.missingSemicolonAfterAssignmentList: "point-virgule manquant après la liste d’assignation",
                 Error.typeXHasNoDefaultVal: "le type `%s` n’a pas de valeur par défaut",
                 Error.cantInitThisType: "impossible d’initialiser ce type",
-                Error.missingParenthesesAfterType: "parenthèses manquantes après le type",
                 Error.expectedFuncNameFoundX: "nom de fonction attendu, `%s` trouvé",
                 Error.missingFuncName: "nom de fonction manquant",
                 Error.cantInferTypeOfX: "impossible d’inférer le type de `%s`",
