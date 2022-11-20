@@ -457,33 +457,99 @@ package final class GrLexer {
         GrLexeme lex = GrLexeme(this);
         lex.isLiteral = true;
 
-        bool isFloat;
+        bool isStart = true;
+        bool isPrefix, isMaybeFloat, isFloat;
+        bool isBinary, isOctal, isHexadecimal;
         string buffer;
         for (;;) {
             dchar symbol = get();
 
-            if (symbol >= '0' && symbol <= '9')
+            if (isBinary) {
+                if (symbol != '0' && symbol != '1') {
+                    if (_current)
+                        _current--;
+                    break;
+                }
+
                 buffer ~= symbol;
+            }
+            else if (isOctal) {
+                if (symbol < '0' || symbol > '7') {
+                    if (_current)
+                        _current--;
+                    break;
+                }
+
+                buffer ~= symbol;
+            }
+            else if (isHexadecimal) {
+                if (!((symbol >= '0' && symbol <= '9') || (symbol >= 'a' &&
+                        symbol <= 'f') || (symbol >= 'A' && symbol <= 'F'))) {
+                    if (_current)
+                        _current--;
+                    break;
+                }
+
+                buffer ~= symbol;
+            }
+            else if (isPrefix && (symbol == 'b' || symbol == 'B')) {
+                isPrefix = false;
+                isBinary = true;
+            }
+            else if (isPrefix && (symbol == 'o' || symbol == 'O')) {
+                isPrefix = false;
+                isOctal = true;
+            }
+            else if (isPrefix && (symbol == 'x' || symbol == 'X')) {
+                isPrefix = false;
+                isHexadecimal = true;
+            }
+            else if (symbol >= '0' && symbol <= '9') {
+                if (isStart && symbol == '0') {
+                    isPrefix = true;
+                }
+                else if (isMaybeFloat) {
+                    buffer ~= '.';
+                    isMaybeFloat = false;
+                    isFloat = true;
+                }
+
+                if (!isPrefix)
+                    buffer ~= symbol;
+            }
             else if (symbol == '_') {
                 // Do nothing, only cosmetic (e.g. 1_000_000).
             }
             else if (symbol == '.') {
-                if (isFloat)
+                if (isMaybeFloat) {
+                    _current -= 2;
                     break;
-                isFloat = true;
-                buffer ~= symbol;
+                }
+                if (isFloat) {
+                    _current--;
+                    break;
+                }
+                isMaybeFloat = true;
             }
             else if (symbol == 'f') {
+                if (isMaybeFloat) {
+                    _current--;
+                    break;
+                }
                 isFloat = true;
                 break;
             }
             else {
                 if (_current)
                     _current--;
+
+                if (isMaybeFloat)
+                    _current--;
                 break;
             }
 
             _current++;
+            isStart = false;
 
             if (_current >= _text.length)
                 break;
@@ -491,7 +557,26 @@ package final class GrLexer {
 
         lex._textLength = cast(uint) buffer.length;
 
-        if (isFloat) {
+        if (!buffer.length && !isFloat) {
+            lex.type = GrLexeme.Type.int_;
+            lex.ivalue = 0;
+            _lexemes ~= lex;
+            raiseError(Error.emptyNumber);
+        }
+
+        if (isBinary) {
+            lex.type = GrLexeme.Type.int_;
+            lex.ivalue = to!GrInt(buffer, 2);
+        }
+        else if (isOctal) {
+            lex.type = GrLexeme.Type.int_;
+            lex.ivalue = to!GrInt(buffer, 8);
+        }
+        else if (isHexadecimal) {
+            lex.type = GrLexeme.Type.int_;
+            lex.ivalue = to!GrInt(buffer, 16);
+        }
+        else if (isFloat) {
             lex.type = GrLexeme.Type.float_;
             lex.rvalue = to!GrFloat(buffer);
         }
@@ -1213,6 +1298,7 @@ package final class GrLexer {
         lexFileIdOutOfBounds,
         lexLineCountOutOfBounds,
         unexpectedEndOfFile,
+        emptyNumber,
         expectedQuotationMarkAtBeginningOfStr,
         missingQuotationMarkAtEndOfStr,
         invalidOp,
@@ -1225,6 +1311,7 @@ package final class GrLexer {
                 Error.lexFileIdOutOfBounds: "lexeme file id out of bounds",
                 Error.lexLineCountOutOfBounds: "lexeme line count out of bounds",
                 Error.unexpectedEndOfFile: "unexpected end of file",
+                Error.emptyNumber: "empty number",
                 Error.expectedQuotationMarkAtBeginningOfStr: "expected `\"` at the beginning of the string",
                 Error.missingQuotationMarkAtEndOfStr: "missing `\"` at the end of the string",
                 Error.invalidOp: "invalid operator",
@@ -1234,6 +1321,7 @@ package final class GrLexer {
                 Error.lexFileIdOutOfBounds: "l’id de fichier du lexeme excède les limites",
                 Error.lexLineCountOutOfBounds: "le numéro de ligne du lexeme excède les limites",
                 Error.unexpectedEndOfFile: "fin de fichier inattendue",
+                Error.emptyNumber: "nombre vide",
                 Error.expectedQuotationMarkAtBeginningOfStr: "`\"` attendu au début de la chaîne",
                 Error.missingQuotationMarkAtEndOfStr: "`\"` manquant en fin de chaîne",
                 Error.invalidOp: "opérateur invalide",
