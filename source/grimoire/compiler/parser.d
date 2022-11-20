@@ -1982,25 +1982,24 @@ final class GrParser {
     }
 
     private void registerClassDeclaration(bool isPublic) {
-        checkAdvance();
-        string[] templateVariables = parseTemplateVariables();
         const uint fileId = get().fileId;
-        const uint declPosition = current;
+
+        checkAdvance();
         if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedClassNameFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
+
         const string className = get().svalue;
+        checkAdvance();
+
         if (_data.isTypeDeclared(className, fileId, isPublic))
             logError(format(getError(Error.nameXDefMultipleTimes), className),
                 format(getError(Error.xAlreadyDecl), className));
-        _data.registerClass(className, fileId, isPublic, templateVariables, declPosition);
 
-        if (get(1).type != GrLexeme.Type.leftCurlyBrace) {
-            checkAdvance();
-            logError(getError(Error.classHaveNoBody), format(getError(Error.expectedXFoundY),
-                    getPrettyLexemeType(GrLexeme.Type.leftCurlyBrace),
-                    getPrettyLexemeType(get().type)));
-        }
+        string[] templateVariables = parseTemplateVariables();
+        const uint declPosition = current;
+
+        _data.registerClass(className, fileId, isPublic, templateVariables, declPosition);
 
         skipDeclaration();
     }
@@ -2031,12 +2030,7 @@ final class GrParser {
         }
 
         uint[] fieldPositions;
-        if (get().type != GrLexeme.Type.identifier)
-            logError(format(getError(Error.expectedClassNameFoundX),
-                    getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
-        const string className = get().svalue;
         string parentClassName;
-        checkAdvance();
 
         //Inheritance
         if (get().type == GrLexeme.Type.colon) {
