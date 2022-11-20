@@ -65,6 +65,9 @@ final class GrParser {
         GrData _data;
         bool _isAssignationOptimizable;
         int _options;
+
+        bool _mustDeferClassDeclaration;
+        GrClassDefinition[] _deferredClassDeclarations;
     }
 
     /// Ctor
@@ -1756,6 +1759,10 @@ final class GrParser {
             }
         }
 
+        foreach (GrClassDefinition class_; _deferredClassDeclarations) {
+            parseClassDeclaration(class_);
+        }
+
         //Function definitions
         reset();
         while (!isEnd()) {
@@ -1908,19 +1915,25 @@ final class GrParser {
     private void parseTypeAliasDeclaration(bool isPublic) {
         const uint fileId = get().fileId;
         checkAdvance();
+
         if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedTypeAliasNameFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
         const string typeAliasName = get().svalue;
         checkAdvance();
-        if (get().type != GrLexeme.Type.assign)
-            logError(getError(Error.missingAssignInType),
-                format(getError(Error.expectedXFoundY), "=", getPrettyLexemeType(get().type)));
+
+        if (get().type != GrLexeme.Type.colon)
+            logError(getError(Error.missingAssignInType), format(getError(Error.expectedXFoundY),
+                    getPrettyLexemeType(GrLexeme.Type.colon), getPrettyLexemeType(get().type)));
         checkAdvance();
+
+        _mustDeferClassDeclaration = true;
         GrType type = parseType(true);
+        _mustDeferClassDeclaration = false;
+
         if (get().type != GrLexeme.Type.semicolon)
-            logError(getError(Error.missingSemicolonAfterType),
-                format(getError(Error.expectedXFoundY), ";", getPrettyLexemeType(get().type)));
+            logError(getError(Error.missingSemicolonAfterType), format(getError(Error.expectedXFoundY),
+                    getPrettyLexemeType(GrLexeme.Type.semicolon), getPrettyLexemeType(get().type)));
 
         if (_data.isTypeDeclared(typeAliasName, fileId, isPublic))
             logError(format(getError(Error.nameXDefMultipleTimes),
@@ -1996,7 +2009,12 @@ final class GrParser {
         GrClassDefinition class_ = _data.getClass(mangledType, fileId);
         if (!class_)
             return null;
-        parseClassDeclaration(class_);
+        if (_mustDeferClassDeclaration) {
+            _deferredClassDeclarations ~= class_;
+        }
+        else {
+            parseClassDeclaration(class_);
+        }
         return class_;
     }
 
@@ -7179,15 +7197,15 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.expectedXFoundY: "expected `%s`, found `%s`",
                 Error.missingIdentifier: "missing identifier",
                 Error.missingAssignInType: "missing assignment in `type`",
-                Error.missingSemicolonAfterType: "missing semicolon after `type`",
+                Error.missingSemicolonAfterType: "missing `;` after `type`",
                 Error.enumDefNotHaveBody: "the enum definition does not have a body",
                 Error.expectedEnumFieldFoundX: "expected enum field, found `%s`",
-                Error.missingSemicolonAfterEnumField: "missing semicolon after type enum field",
+                Error.missingSemicolonAfterEnumField: "missing `;` after type enum field",
                 Error.xAlreadyDecl: "`%s` is already declared",
                 Error.expectedClassNameFoundX: "expected class name, found `%s`",
                 Error.parentClassNameMissing: "the parent class name is missing",
                 Error.classHaveNoBody: "the class does not have a body",
-                Error.missingSemicolonAfterClassFieldDecl: "missing semicolon after class field declaration",
+                Error.missingSemicolonAfterClassFieldDecl: "missing `;` after class field declaration",
                 Error.xCantInheritFromY: "`%s` can't inherit from `%s`",
                 Error.xIncludedRecursively: "`%s` is included recursively",
                 Error.recursiveInheritence: "recursive inheritence",
@@ -7290,7 +7308,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.missingVar: "missing variable",
                 Error.exprYieldsNoVal: "the expression yields no value",
                 Error.expectedValFoundNothing: "expected value, found nothing",
-                Error.missingSemicolonAfterExprList: "missing semicolon after expression list",
+                Error.missingSemicolonAfterExprList: "missing `;` after expression list",
                 Error.tryingAssignXValsToYVar: "trying to assign `%s` values to %s variable",
                 Error.tryingAssignXValsToYVars: "trying to assign `%s` values to %s variables",
                 Error.moreValThanVarToAssign: "there are more values than variable to assign to",
@@ -7299,7 +7317,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.firstValOfAssignmentListCantBeEmpty: "first value of an assignment list can't be empty",
                 Error.cantInferTypeWithoutAssignment: "can't infer the type without assignment",
                 Error.missingTypeInfoOrInitVal: "missing type information or initial value",
-                Error.missingSemicolonAfterAssignmentList: "missing semicolon after assignment list",
+                Error.missingSemicolonAfterAssignmentList: "missing `;` after assignment list",
                 Error.typeXHasNoDefaultVal: "the type `%s` has no default value",
                 Error.cantInitThisType: "can't initialize this type",
                 Error.expectedFuncNameFoundX: "expected function name, found `%s`",
@@ -7327,7 +7345,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.binOpMustHave2Operands: "a binary operation must have 2 operands",
                 Error.unexpectedXSymbolInExpr: "unexpected `%s` symbol in the expression",
                 Error.unexpectedSymbol: "unexpected symbol",
-                Error.missingSemicolonAtEndOfExpr: "missing semicolon at the end of the expression",
+                Error.missingSemicolonAtEndOfExpr: "missing `;` at the end of the expression",
                 Error.cantLoadFieldOfTypeX: "can't load a field of type `%s`",
                 Error.fieldTypeIsInvalid: "the field type is invalid",
                 Error.xNotCallable: "`%s` is not callable",
@@ -7403,15 +7421,15 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.expectedXFoundY: "`%s` attendu, `%s` trouvé",
                 Error.missingIdentifier: "identificateur attendu",
                 Error.missingAssignInType: "assignation manquante dans `type`",
-                Error.missingSemicolonAfterType: "point-virgule manquand dans `type`",
+                Error.missingSemicolonAfterType: "`;` manquand dans `type`",
                 Error.enumDefNotHaveBody: "la définition de l’énumération n’a pas de corps",
                 Error.expectedEnumFieldFoundX: "champ attendu dans l’énumération, `%s` trouvé",
-                Error.missingSemicolonAfterEnumField: "point-virgule manquant après le champ de l’énumération",
+                Error.missingSemicolonAfterEnumField: "`;` manquant après le champ de l’énumération",
                 Error.xAlreadyDecl: "`%s` est déjà déclaré",
                 Error.expectedClassNameFoundX: "nom de classe attendu, `%s` trouvé",
                 Error.parentClassNameMissing: "le nom de la classe parente est manquante",
                 Error.classHaveNoBody: "la classe n’a pas de corps",
-                Error.missingSemicolonAfterClassFieldDecl: "point-virgule manquant après le champ de la classe",
+                Error.missingSemicolonAfterClassFieldDecl: "`;` manquant après le champ de la classe",
                 Error.xCantInheritFromY: "`%s` ne peut pas hériter de `%s`",
                 Error.xIncludedRecursively: "`%s` est inclus récursivement",
                 Error.recursiveInheritence: "héritage récursif",
@@ -7514,7 +7532,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.missingVar: "variable manquante",
                 Error.exprYieldsNoVal: "l’expression ne rend aucune valeur",
                 Error.expectedValFoundNothing: "valeur attendue, rien de trouvé",
-                Error.missingSemicolonAfterExprList: "point-virgule manquant après la liste d’expressions",
+                Error.missingSemicolonAfterExprList: "`;` manquant après la liste d’expressions",
                 Error.tryingAssignXValsToYVar: "tentative d’assigner `%s` valeurs à %s variable",
                 Error.tryingAssignXValsToYVars: "tentative d’assigner `%s` valeurs à %s variables",
                 Error.moreValThanVarToAssign: "il y a plus de valeurs que de variables auquels affecter",
@@ -7523,7 +7541,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.firstValOfAssignmentListCantBeEmpty: "la première valeur d’une liste d’assignation ne peut être vide",
                 Error.cantInferTypeWithoutAssignment: "impossible d’inférer le type sans assignation",
                 Error.missingTypeInfoOrInitVal: "information de type ou valeur initiale manquante",
-                Error.missingSemicolonAfterAssignmentList: "point-virgule manquant après la liste d’assignation",
+                Error.missingSemicolonAfterAssignmentList: "`;` manquant après la liste d’assignation",
                 Error.typeXHasNoDefaultVal: "le type `%s` n’a pas de valeur par défaut",
                 Error.cantInitThisType: "impossible d’initialiser ce type",
                 Error.expectedFuncNameFoundX: "nom de fonction attendu, `%s` trouvé",
@@ -7551,7 +7569,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.binOpMustHave2Operands: "une opération binaire doit avoir 2 opérandes",
                 Error.unexpectedXSymbolInExpr: "symbole `%s` inattendu dans l’expression",
                 Error.unexpectedSymbol: "symbole inattendu",
-                Error.missingSemicolonAtEndOfExpr: "point-virgule manquant en fin d’expression",
+                Error.missingSemicolonAtEndOfExpr: "`;` manquant en fin d’expression",
                 Error.cantLoadFieldOfTypeX: "impossible de charger un champ de type `%s`",
                 Error.fieldTypeIsInvalid: "le type de champ est invalide",
                 Error.xNotCallable: "`%s` n’est pas appelable",

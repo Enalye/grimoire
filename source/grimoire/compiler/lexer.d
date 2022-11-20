@@ -97,7 +97,6 @@ struct GrLexeme {
         class_,
         enum_,
         where,
-        new_,
         copy,
         send,
         receive,
@@ -1111,10 +1110,6 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.channelType;
             lex.isType = true;
             break;
-        case "new":
-            lex.type = GrLexeme.Type.new_;
-            lex.isType = false;
-            break;
         case "var":
             lex.type = GrLexeme.Type.var;
             lex.isType = false;
@@ -1340,8 +1335,8 @@ private immutable string[] _prettyLexemeTypeTable = [
     "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->", "=>", "~", "!",
     "++", "--", "identifier", "const_int", "const_float", "const_bool",
     "const_string", "null", "public", "const", "pure", "alias", "event",
-    "class", "enum", "where", "new", "copy", "send", "receive", "int", "float",
-    "bool", "string", "list", "channel", "function", "task", "var", "if",
+    "class", "enum", "where", "copy", "send", "receive", "int", "float",
+    "bool", "string", "list", "channel", "func", "task", "var", "if",
     "unless", "else", "switch", "select", "case", "default", "while", "do",
     "until", "for", "loop", "return", "self", "die", "exit", "yield", "break",
     "continue"
