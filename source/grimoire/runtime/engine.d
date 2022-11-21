@@ -15,6 +15,7 @@ import std.typecons : Nullable;
 import grimoire.compiler, grimoire.assembly;
 
 import grimoire.runtime.task;
+import grimoire.runtime.event;
 import grimoire.runtime.value;
 import grimoire.runtime.object;
 import grimoire.runtime.string;
@@ -161,6 +162,14 @@ class GrEngine {
         return _bytecode.events.keys;
     }
 
+    GrEvent getEvent(GrInt address_) const {
+        foreach (string name, uint address; _bytecode.events) {
+            if (address == address_)
+                return new GrEvent(name, address);
+        }
+        return null;
+    }
+
     /**
 	Spawn a new task registered as an event. \
 	The event's name must be mangled with its signature.
@@ -200,24 +209,35 @@ class GrEngine {
         }
         return task;
     }
+    /// Ditto
+    GrTask callEvent(const GrEvent event, GrValue[] parameters = [],
+        Priority priority = Priority.normal) {
+        if (event is null)
+            return null;
 
-    /**
-	Spawn a new task at an arbitrary address. \
-	The address needs to correspond to the start of a task, else the VM will crash. \
-	*/
-    GrTask callAddress(uint pc) {
-        if (pc == 0 || pc >= _bytecode.opcodes.length)
-            throw new Exception("address \'" ~ to!string(pc) ~ "\' out of bounds");
-
-        // For now we assume a task is always following a die from the previous task
-        // Not a 100% foolproof method but it'll do for now.
-        const GrOpcode opcode = cast(GrOpcode)(_bytecode.opcodes[(cast(long) pc) - 1] & 0xFF);
-        if (opcode != GrOpcode.die)
-            throw new Exception("the address does not correspond with a task");
+        if (event.signature.length != parameters.length)
+            throw new Exception("the number of parameters (" ~ to!string(
+                    parameters.length) ~ ") of `" ~ grGetPrettyFunctionCall(event.name,
+                    event.signature) ~ "` mismatch its definition");
 
         GrTask task = new GrTask(this);
-        task.pc = pc;
-        _createdTasks ~= task;
+        task.pc = event.address;
+
+        if (parameters.length > task.stack.length)
+            task.stack.length = parameters.length;
+
+        for (size_t i; i < parameters.length; ++i)
+            task.stack[i] = parameters[i];
+        task.stackPos = (cast(int) parameters.length) - 1;
+
+        final switch (priority) with (Priority) {
+        case immediate:
+            _tasks ~= task;
+            break;
+        case normal:
+            _createdTasks ~= task;
+            break;
+        }
         return task;
     }
 
@@ -291,7 +311,7 @@ class GrEngine {
     private Nullable!(GrFunctionSymbol) getFunctionInfo(uint position) {
         Nullable!(GrFunctionSymbol) bestInfo;
         foreach (const GrSymbol symbol; _bytecode.symbols) {
-            if (symbol.type == GrSymbol.Type.function_) {
+            if (symbol.type == GrSymbol.Type.func) {
                 auto info = cast(GrFunctionSymbol) symbol;
                 if (info.start <= position && info.start + info.length > position) {
                     if (bestInfo.isNull) {

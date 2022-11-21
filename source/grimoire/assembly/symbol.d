@@ -35,7 +35,7 @@ abstract class GrSymbol {
     /// Type of symbol
     enum Type : uint {
         none = 0,
-        function_
+        func
     }
     /// Ditto
     Type type;
@@ -81,7 +81,7 @@ final class GrFunctionSymbol : GrSymbol {
 
     /// Ctor
     this() {
-        type = Type.function_;
+        type = Type.func;
     }
 
     /// Serialize the symbol into the bytecode

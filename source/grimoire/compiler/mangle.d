@@ -105,7 +105,7 @@ GrType[] grUnmangleSignature(const string mangledSignature) {
             break;
         case 'f':
             i++;
-            currentType.base = GrType.Base.function_;
+            currentType.base = GrType.Base.func;
             currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             i++;
             currentType.mangledReturnType = grUnmangleBlock(mangledSignature, i);
@@ -240,11 +240,14 @@ string grMangle(const GrType type) {
     case native:
         mangledName ~= "u(" ~ type.mangledType ~ ")";
         break;
-    case function_:
+    case func:
         mangledName ~= "f(" ~ type.mangledType ~ ")(" ~ type.mangledReturnType ~ ")";
         break;
     case task:
         mangledName ~= "t(" ~ type.mangledType ~ ")";
+        break;
+    case event:
+        mangledName ~= "v(" ~ type.mangledType ~ ")";
         break;
     case channel:
         mangledName ~= "c(" ~ type.mangledType ~ ")";
@@ -334,7 +337,7 @@ GrType grUnmangle(const string mangledSignature) {
             break;
         case 'f':
             i++;
-            currentType.base = GrType.Base.function_;
+            currentType.base = GrType.Base.func;
             currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             i++;
             currentType.mangledReturnType = grUnmangleBlock(mangledSignature, i);

@@ -234,8 +234,9 @@ final class GrParser {
         final switch (variable.type.base) with (GrType.Base) {
         case int_:
         case bool_:
-        case function_:
+        case func:
         case task:
+        case event:
         case enum_:
         case float_:
         case string_:
@@ -320,13 +321,13 @@ final class GrParser {
         bool isAnonymous = false, bool isEvent = false, bool isPublic = false) {
         GrFunction func = new GrFunction;
         func.isTask = isTask;
+        func.isEvent = isEvent;
         func.inputVariables = inputVariables;
         func.inSignature = signature;
         func.outSignature = outSignature;
         func.fileId = fileId;
 
         if (isAnonymous) {
-            //func.index = cast(uint) anonymousFunctions.length;
             func.anonParent = currentFunction;
             func.anonReference = cast(uint) currentFunction.instructions.length;
             func.name = currentFunction.name ~ "@anon" ~ to!string(func.index);
@@ -338,14 +339,12 @@ final class GrParser {
             addInstruction(GrOpcode.const_int, 0u);
         }
         else {
-            //func.index = cast(uint) functions.length;
             func.name = name;
             func.isPublic = isPublic;
 
             func.mangledName = grMangleComposite(name, signature);
             assertNoGlobalDeclaration(func.mangledName, fileId, isPublic);
 
-            func.isEvent = isEvent;
             func.lexPosition = current;
             functionsQueue ~= func;
         }
@@ -398,8 +397,9 @@ final class GrParser {
                 break;
             case int_:
             case bool_:
-            case function_:
+            case func:
             case task:
+            case event:
             case enum_:
             case float_:
             case string_:
@@ -410,7 +410,7 @@ final class GrParser {
             case channel:
             case reference:
                 currentFunction.nbParameters++;
-                if (currentFunction.isTask)
+                if (currentFunction.isTask && !currentFunction.isEvent)
                     addInstruction(GrOpcode.globalPop, 0u);
                 break;
             case internalTuple:
@@ -441,6 +441,11 @@ final class GrParser {
                 return func;
             }
         }
+        foreach (GrFunction func; events) {
+            if (func.mangledName == mangledName) {
+                return func;
+            }
+        }
         return null;
     }
 
@@ -460,8 +465,9 @@ final class GrParser {
                 case float_:
                 case bool_:
                 case enum_:
-                case function_:
+                case func:
                 case task:
+                case event:
                 case internalTuple:
                     continue;
                 case string_:
@@ -612,6 +618,13 @@ final class GrParser {
 
     GrFunction getFunction(string name, GrType[] signature, uint fileId = 0, bool isPublic = false) {
         const string mangledName = grMangleComposite(name, signature);
+
+        foreach (GrFunction func; events) {
+            if (func.mangledName == mangledName) {
+                return func;
+            }
+        }
+
         foreach (GrFunction func; functions) {
             if (func.mangledName == mangledName && (func.fileId == fileId ||
                     func.isPublic || isPublic)) {
@@ -776,7 +789,7 @@ final class GrParser {
     private void addInstruction(GrOpcode opcode, int value = 0, bool isSigned = false) {
         if (currentFunction is null)
             throw new Exception(
-                "the expression is located outside of a function or task, which is forbidden");
+                "the expression is located outside of a function, task, or event which is forbidden");
 
         GrInstruction instruction;
         instruction.opcode = opcode;
@@ -797,7 +810,7 @@ final class GrParser {
     private void addInstructionInFront(GrOpcode opcode, int value = 0, bool isSigned = false) {
         if (currentFunction is null)
             throw new Exception(
-                "the expression is located outside of a function or task, which is forbidden");
+                "the expression is located outside of a function, task or event which is forbidden");
 
         GrInstruction instruction;
         instruction.opcode = opcode;
@@ -833,7 +846,7 @@ final class GrParser {
     private void setInstruction(GrOpcode opcode, uint index, int value = 0u, bool isSigned = false) {
         if (currentFunction is null)
             throw new Exception(
-                "the expression is located outside of a function or task, which is forbidden");
+                "the expression is located outside of a function, task or event which is forbidden");
 
         if (index >= currentFunction.instructions.length)
             throw new Exception("an instruction's index is exeeding the function size");
@@ -1307,8 +1320,9 @@ final class GrParser {
             final switch (valueType.base) with (GrType.Base) {
             case bool_:
             case int_:
-            case function_:
+            case func:
             case task:
+            case event:
             case optional:
             case channel:
             case enum_:
@@ -1348,16 +1362,15 @@ final class GrParser {
         if (valueType.base != GrType.Base.void_)
             convertType(valueType, variable.type, fileId);
 
-        //if(!variable.isInitialized && isExpectingValue)
-        //    logError("Uninitialized variable", "The variable is being used without being assigned");
         variable.isInitialized = true;
 
         if (variable.isField) {
             final switch (variable.type.base) with (GrType.Base) {
             case bool_:
             case int_:
-            case function_:
+            case func:
             case task:
+            case event:
             case enum_:
             case float_:
             case string_:
@@ -1381,8 +1394,9 @@ final class GrParser {
             final switch (variable.type.base) with (GrType.Base) {
             case bool_:
             case int_:
-            case function_:
+            case func:
             case task:
+            case event:
             case enum_:
             case float_:
             case string_:
@@ -1406,8 +1420,9 @@ final class GrParser {
             final switch (variable.type.base) with (GrType.Base) {
             case bool_:
             case int_:
-            case function_:
+            case func:
             case task:
+            case event:
             case enum_:
             case float_:
             case string_:
@@ -1466,8 +1481,9 @@ final class GrParser {
             final switch (variable.type.base) with (GrType.Base) {
             case bool_:
             case int_:
-            case function_:
+            case func:
             case task:
+            case event:
             case enum_:
             case float_:
             case string_:
@@ -1498,8 +1514,9 @@ final class GrParser {
             final switch (variable.type.base) with (GrType.Base) {
             case bool_:
             case int_:
-            case function_:
+            case func:
             case task:
+            case event:
             case enum_:
             case float_:
             case string_:
@@ -1671,10 +1688,12 @@ final class GrParser {
             writeln(".sconst " ~ to!string(svalue) ~ "\t;" ~ to!string(i));
 
         foreach (GrFunction func; functions) {
-            if (func.isTask)
+            if (func.isEvent)
+                writeln("\n.event " ~ func.name);
+            else if (func.isTask)
                 writeln("\n.task " ~ func.name);
             else
-                writeln("\n.function " ~ func.name);
+                writeln("\n.func " ~ func.name);
 
             foreach (size_t i, GrInstruction instruction; func.instructions) {
                 writeln("[" ~ to!string(i) ~ "] " ~ to!string(
@@ -1718,8 +1737,8 @@ final class GrParser {
                 parseEnumDeclaration(isPublic);
                 break;
             case event:
-            case taskType:
-            case functionType:
+            case task:
+            case func:
                 skipDeclaration();
                 break;
             case alias_:
@@ -1747,8 +1766,8 @@ final class GrParser {
                 parseTypeAliasDeclaration(isPublic);
                 break;
             case event:
-            case taskType:
-            case functionType:
+            case task:
+            case func:
             case class_:
             case enum_:
                 skipDeclaration();
@@ -1784,12 +1803,12 @@ final class GrParser {
             case event:
                 parseEventDeclaration(isPublic);
                 break;
-            case taskType:
+            case task:
                 if (get(1).type != GrLexeme.Type.identifier && get(1).type != GrLexeme.Type.lesser)
                     goto case integerType;
                 parseTaskDeclaration(isPublic);
                 break;
-            case functionType:
+            case func:
                 if (get(1).type != GrLexeme.Type.identifier && !get(1)
                     .isOperator && get(1).type != GrLexeme.Type.as && get(1)
                     .type != GrLexeme.Type.lesser)
@@ -1831,10 +1850,10 @@ final class GrParser {
             case class_:
                 skipDeclaration();
                 break;
-            case taskType:
+            case task:
                 skipDeclaration();
                 break;
-            case functionType:
+            case func:
                 skipDeclaration();
                 break;
             case var:
@@ -1923,7 +1942,7 @@ final class GrParser {
         checkAdvance();
 
         if (get().type != GrLexeme.Type.colon)
-            logError(getError(Error.missingAssignInType), format(getError(Error.expectedXFoundY),
+            logError(getError(Error.missingColonBeforeType), format(getError(Error.expectedXFoundY),
                     getPrettyLexemeType(GrLexeme.Type.colon), getPrettyLexemeType(get().type)));
         checkAdvance();
 
@@ -2319,14 +2338,19 @@ final class GrParser {
                 }
                 currentType.mangledType = grMangleSignature(signature);
                 break;
-            case functionType:
-                currentType.base = GrType.Base.function_;
+            case func:
+                currentType.base = GrType.Base.func;
                 checkAdvance();
                 currentType.mangledType = grMangleSignature(parseSignature(templateVariables));
                 currentType.mangledReturnType = grMangleSignature(parseSignature(templateVariables));
                 break;
-            case taskType:
+            case task:
                 currentType.base = GrType.Base.task;
+                checkAdvance();
+                currentType.mangledType = grMangleSignature(parseSignature(templateVariables));
+                break;
+            case event:
+                currentType.base = GrType.Base.event;
                 checkAdvance();
                 currentType.mangledType = grMangleSignature(parseSignature(templateVariables));
                 break;
@@ -2370,8 +2394,9 @@ final class GrParser {
             break;
         case int_:
         case bool_:
-        case function_:
+        case func:
         case task:
+        case event:
         case enum_:
         case float_:
         case string_:
@@ -2398,8 +2423,9 @@ final class GrParser {
             break;
         case int_:
         case bool_:
-        case function_:
+        case func:
         case task:
+        case event:
         case enum_:
         case float_:
         case string_:
@@ -2499,7 +2525,8 @@ final class GrParser {
             checkAdvance();
 
             if (get().type != GrLexeme.Type.colon)
-                logError("", "");
+                logError(getError(Error.missingColonBeforeType), format(getError(Error.expectedXFoundY),
+                        getPrettyLexemeType(GrLexeme.Type.colon), getPrettyLexemeType(get().type)));
             checkAdvance();
 
             inSignature ~= parseType(true, templateVariables);
@@ -2759,21 +2786,23 @@ final class GrParser {
         return func;
     }
 
-    private GrType parseAnonymousFunction(bool isTask) {
+    private GrType parseAnonymousFunction(bool isTask, bool isEvent) {
         checkAdvance();
+
         string[] inputs;
         GrType[] outSignature;
         GrType[] inSignature = parseInSignature(inputs);
 
-        if (!isTask) {
+        if (!isTask && !isEvent) {
             //Return Type.
             outSignature = parseSignature();
         }
-        preBeginFunction("$anon", get().fileId, inSignature, inputs, isTask, outSignature, true);
+        preBeginFunction("$anon", get().fileId, inSignature, inputs, isTask,
+            outSignature, true, isEvent);
         openDeferrableSection();
         parseBlock();
 
-        if (isTask) {
+        if (isTask || isEvent) {
             if (!currentFunction.instructions.length ||
                 currentFunction.instructions[$ - 1].opcode != GrOpcode.die)
                 addDie();
@@ -2796,11 +2825,11 @@ final class GrParser {
 
         endFunction();
 
-        GrType functionType = isTask ? GrType.Base.task : GrType.Base.function_;
-        functionType.mangledType = grMangleSignature(inSignature);
-        functionType.mangledReturnType = grMangleSignature(outSignature);
+        GrType func = isEvent ? GrType.Base.event : (isTask ? GrType.Base.task : GrType.Base.func);
+        func.mangledType = grMangleSignature(inSignature);
+        func.mangledReturnType = grMangleSignature(outSignature);
 
-        return functionType;
+        return func;
     }
 
     /**
@@ -3348,14 +3377,20 @@ final class GrParser {
             case listType:
                 returnType = GrType(GrType.Base.list);
                 break;
-            case functionType:
-                GrType type = GrType.Base.function_;
+            case func:
+                GrType type = GrType.Base.func;
                 checkAdvance();
                 type.mangledType = grMangleSignature(parseSignature());
                 returnType = type;
                 break;
-            case taskType:
+            case task:
                 GrType type = GrType.Base.task;
+                checkAdvance();
+                type.mangledType = grMangleSignature(parseSignature());
+                returnType = type;
+                break;
+            case event:
+                GrType type = GrType.Base.event;
                 checkAdvance();
                 type.mangledType = grMangleSignature(parseSignature());
                 returnType = type;
@@ -3498,8 +3533,9 @@ final class GrParser {
         final switch (subType.base) with (GrType.Base) {
         case int_:
         case bool_:
-        case function_:
+        case func:
         case task:
+        case event:
         case enum_:
         case float_:
         case string_:
@@ -3901,8 +3937,9 @@ final class GrParser {
                 final switch (subType.base) with (GrType.Base) {
                 case bool_:
                 case int_:
-                case function_:
+                case func:
                 case task:
+                case event:
                 case enum_:
                 case float_:
                 case string_:
@@ -3954,8 +3991,9 @@ final class GrParser {
                 final switch (subType.base) with (GrType.Base) {
                 case bool_:
                 case int_:
-                case function_:
+                case func:
                 case task:
+                case event:
                 case enum_:
                 case float_:
                 case string_:
@@ -4554,12 +4592,13 @@ final class GrParser {
         bool noFail = false, bool isExplicit = false) {
         if (src.base == dst.base) {
             final switch (src.base) with (GrType.Base) {
-            case function_:
+            case func:
                 if (src.mangledType == dst.mangledType &&
                     src.mangledReturnType == dst.mangledReturnType)
                     return dst;
                 break;
             case task:
+            case event:
                 if (src.mangledType == dst.mangledType)
                     return dst;
                 break;
@@ -4621,8 +4660,9 @@ final class GrParser {
 
         if (dst.base == GrType.Base.bool_) {
             final switch (src.base) with (GrType.Base) {
-            case function_:
+            case func:
             case task:
+            case event:
             case void_:
             case bool_:
             case int_:
@@ -4946,8 +4986,9 @@ final class GrParser {
         final switch (subType.base) with (GrType.Base) {
         case bool_:
         case int_:
-        case function_:
+        case func:
         case task:
+        case event:
         case enum_:
         case float_:
         case string_:
@@ -4990,8 +5031,9 @@ final class GrParser {
                     final switch (subType.base) with (GrType.Base) {
                     case bool_:
                     case int_:
-                    case function_:
+                    case func:
                     case task:
+                    case event:
                     case enum_:
                     case float_:
                     case string_:
@@ -5035,8 +5077,9 @@ final class GrParser {
                 final switch (subType.base) with (GrType.Base) {
                 case bool_:
                 case int_:
-                case function_:
+                case func:
                 case task:
+                case event:
                 case enum_:
                 case float_:
                 case string_:
@@ -5296,7 +5339,7 @@ final class GrParser {
         case string_:
             addStringConstant("");
             break;
-        case function_:
+        case func:
             GrType[] inSignature = grUnmangleSignature(type.mangledType);
             GrType[] outSignature = grUnmangleSignature(type.mangledReturnType);
             string[] inputs;
@@ -5315,12 +5358,24 @@ final class GrParser {
             break;
         case task:
             GrType[] inSignature = grUnmangleSignature(type.mangledType);
-            GrType[] outSignature = grUnmangleSignature(type.mangledReturnType);
             string[] inputs;
             for (int i; i < inSignature.length; ++i) {
                 inputs ~= to!string(i);
             }
-            preBeginFunction("$anon", fileId, inSignature, inputs, true, outSignature, true);
+            preBeginFunction("$anon", fileId, inSignature, inputs, true, [], true);
+            openDeferrableSection();
+            addDie();
+            closeDeferrableSection();
+            registerDeferBlocks();
+            endFunction();
+            break;
+        case event:
+            GrType[] inSignature = grUnmangleSignature(type.mangledType);
+            string[] inputs;
+            for (int i; i < inSignature.length; ++i) {
+                inputs ~= to!string(i);
+            }
+            preBeginFunction("$anon", fileId, inSignature, inputs, true, [], true, true);
             openDeferrableSection();
             addDie();
             closeDeferrableSection();
@@ -5335,8 +5390,9 @@ final class GrParser {
             final switch (subTypes[0].base) with (GrType.Base) {
             case bool_:
             case int_:
-            case function_:
+            case func:
             case task:
+            case event:
             case enum_:
             case float_:
             case string_:
@@ -5368,8 +5424,9 @@ final class GrParser {
             final switch (subTypes[0].base) with (GrType.Base) {
             case int_:
             case bool_:
-            case function_:
+            case func:
             case task:
+            case event:
             case enum_:
             case float_:
             case string_:
@@ -5407,8 +5464,9 @@ final class GrParser {
         final switch (type.base) with (GrType.Base) {
         case int_:
         case bool_:
-        case function_:
+        case func:
         case task:
+        case event:
         case enum_:
         case float_:
         case string_:
@@ -5457,7 +5515,7 @@ final class GrParser {
 
     /**
     Parse a function reference expression. \
-    Converts a public function/task into an anonymous one.
+    Converts a public function/task/event into an anonymous one.
     */
     private GrType parseFunctionPointer() {
         const uint fileId = get().fileId;
@@ -5478,7 +5536,8 @@ final class GrParser {
             logError(format(getError(Error.expectedFuncNameFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingFuncName));
 
-        if (type.base != GrType.Base.function_ && type.base != GrType.Base.task)
+        if (type.base != GrType.Base.func && type.base != GrType.Base.task &&
+            type.base != GrType.Base.event)
             logError(format(getError(Error.cantInferTypeOfX), get().svalue),
                 getError(Error.funcTypeCantBeInferred));
 
@@ -5704,8 +5763,9 @@ final class GrParser {
                             final switch (currentType.base) with (GrType.Base) {
                             case bool_:
                             case int_:
-                            case function_:
+                            case func:
                             case task:
+                            case event:
                             case enum_:
                             case float_:
                             case string_:
@@ -5739,8 +5799,9 @@ final class GrParser {
                         final switch (currentType.base) with (GrType.Base) {
                         case bool_:
                         case int_:
-                        case function_:
+                        case func:
                         case task:
+                        case event:
                         case enum_:
                         case float_:
                         case string_:
@@ -5918,7 +5979,7 @@ final class GrParser {
 
                             switch (get().type) with (GrLexeme.Type) {
                             case period:
-                                if (currentType.base == GrType.Base.function_ ||
+                                if (currentType.base == GrType.Base.func ||
                                     currentType.base == GrType.Base.task)
                                     goto case leftParenthesis;
                                 addInstruction(GrOpcode.fieldLoad, fieldLValue.register);
@@ -6073,14 +6134,15 @@ final class GrParser {
                         logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(identifier,
                                 signature)), getError(Error.unknownFunc), "", -1);
                     }
-
                 }
 
                 bool isSet;
                 if (operatorType >= GrLexeme.Type.assign && operatorType <= GrLexeme
                     .Type.powerAssign) {
                     if (operatorType != GrLexeme.Type.assign && outputs.length != 1)
-                        logError("opération binaire sur 2 objs seulement.", "nb objs invalide");
+                        logError(getError(Error.binOpMustHave2Operands), format(getError((outputs.length + 1) > 1 ?
+                                Error.expectedXRetValsFoundY : Error.expectedXRetValFoundY),
+                                2, outputs.length));
 
                     isSet = true;
                     checkAdvance();
@@ -6098,7 +6160,9 @@ final class GrParser {
                         signature ~= subType;
 
                     if (operatorType != GrLexeme.Type.assign && signature.length != 1)
-                        logError("opération binaire sur 2 objs seulement.", "nb objs invalide");
+                        logError(getError(Error.binOpMustHave2Operands), format(getError((signature.length + 1) > 1 ?
+                                Error.expectedXRetValsFoundY : Error.expectedXRetValFoundY),
+                                2, signature.length));
 
                     if (operatorType != GrLexeme.Type.assign) {
                         currentType = addBinaryOperator(operatorType - (
@@ -6109,7 +6173,8 @@ final class GrParser {
                 else if (operatorType == GrLexeme.Type.increment ||
                     operatorType == GrLexeme.Type.decrement) {
                     if (outputs.length != 1)
-                        logError("opération unaire sur 1 obj seulement.", "nb objs invalide");
+                        logError(getError(Error.unOpMustHave1Operand),
+                            format(getError(Error.expectedXRetValFoundY), 1, outputs.length));
 
                     isSet = true;
                     checkAdvance();
@@ -6287,13 +6352,18 @@ final class GrParser {
                 typeStack ~= currentType;
                 hasValue = true;
                 break;
-            case functionType:
-                currentType = parseAnonymousFunction(false);
+            case func:
+                currentType = parseAnonymousFunction(false, false);
                 typeStack ~= currentType;
                 hasValue = true;
                 break;
-            case taskType:
-                currentType = parseAnonymousFunction(true);
+            case task:
+                currentType = parseAnonymousFunction(true, false);
+                typeStack ~= currentType;
+                hasValue = true;
+                break;
+            case event:
+                currentType = parseAnonymousFunction(false, true);
                 typeStack ~= currentType;
                 hasValue = true;
                 break;
@@ -6509,8 +6579,9 @@ final class GrParser {
         final switch (type.base) with (GrType.Base) {
         case bool_:
         case int_:
-        case function_:
+        case func:
         case task:
+        case event:
         case enum_:
         case float_:
         case string_:
@@ -6535,7 +6606,7 @@ final class GrParser {
     private GrType parseAnonymousCall(GrType type, GrType selfType = grVoid) {
         const uint fileId = get().fileId;
 
-        if (type.base != GrType.Base.function_ && type.base != GrType.Base.task)
+        if (type.base != GrType.Base.func && type.base != GrType.Base.task)
             logError(format(getError(Error.xNotCallable), getPrettyType(type)),
                 format(getError(Error.xNotFuncNorTask), getPrettyType(type)));
 
@@ -6613,7 +6684,7 @@ final class GrParser {
         //Anonymous call.
         GrType retTypes = grPackTuple(grUnmangleSignature(type.mangledReturnType));
 
-        if (type.base == GrType.Base.function_) {
+        if (type.base == GrType.Base.func) {
             int offset = cast(int) anonSignature.length;
 
             if (selfType != grVoid)
@@ -6657,8 +6728,8 @@ final class GrParser {
             if (!variable)
                 variable = getGlobalVariable(identifierName, fileId);
             if (variable) {
-                if (variable.type.base != GrType.Base.function_ &&
-                    variable.type.base != GrType.Base.task)
+                if (variable.type.base != GrType.Base.func && variable.type.base != GrType
+                    .Base.task)
                     logError(format(getError(Error.xNotCallable), identifierName),
                         format(getError(Error.funcOrTaskExpectedFoundX),
                             getPrettyType(variable.type)), "", -1);
@@ -6755,7 +6826,7 @@ final class GrParser {
 
                 returnType = grPackTuple(grUnmangleSignature(variable.type.mangledReturnType));
 
-                if (variable.type.base == GrType.Base.function_)
+                if (variable.type.base == GrType.Base.func)
                     addInstruction(GrOpcode.anonymousCall, 0u);
                 else if (variable.type.base == GrType.Base.task)
                     addInstruction(GrOpcode.anonymousTask, 0u);
@@ -6953,7 +7024,7 @@ final class GrParser {
         expectedEnumNameFoundX,
         expectedXFoundY,
         missingIdentifier,
-        missingAssignInType,
+        missingColonBeforeType,
         missingSemicolonAfterType,
         enumDefNotHaveBody,
         expectedEnumFieldFoundX,
@@ -7104,6 +7175,7 @@ final class GrParser {
         missingRefBeforeAssignation,
         cantDoThisKindOfOpOnLeftSideOfAssignement,
         unexpectedOp,
+        unOpMustHave1Operand,
         binOpMustHave2Operands,
         unexpectedXSymbolInExpr,
         unexpectedSymbol,
@@ -7190,8 +7262,8 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.expectedEnumNameFoundX: "expected enum name, found `%s`",
                 Error.expectedXFoundY: "expected `%s`, found `%s`",
                 Error.missingIdentifier: "missing identifier",
-                Error.missingAssignInType: "missing assignment in `type`",
-                Error.missingSemicolonAfterType: "missing `;` after `type`",
+                Error.missingColonBeforeType: "missing `:` before type",
+                Error.missingSemicolonAfterType: "missing `;` after type",
                 Error.enumDefNotHaveBody: "the enum definition does not have a body",
                 Error.expectedEnumFieldFoundX: "expected enum field, found `%s`",
                 Error.missingSemicolonAfterEnumField: "missing `;` after type enum field",
@@ -7336,6 +7408,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.missingRefBeforeAssignation: "missing reference before assignation",
                 Error.cantDoThisKindOfOpOnLeftSideOfAssignement: "can't do this kind of operation on the left side of an assignment",
                 Error.unexpectedOp: "unexpected operation",
+                Error.unOpMustHave1Operand: "an unary operation must have 1 operand",
                 Error.binOpMustHave2Operands: "a binary operation must have 2 operands",
                 Error.unexpectedXSymbolInExpr: "unexpected `%s` symbol in the expression",
                 Error.unexpectedSymbol: "unexpected symbol",
@@ -7414,8 +7487,8 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.expectedEnumNameFoundX: "nom d'énumération attendu, `%s` trouvé",
                 Error.expectedXFoundY: "`%s` attendu, `%s` trouvé",
                 Error.missingIdentifier: "identificateur attendu",
-                Error.missingAssignInType: "assignation manquante dans `type`",
-                Error.missingSemicolonAfterType: "`;` manquand dans `type`",
+                Error.missingColonBeforeType: "`:` manquant avant le type",
+                Error.missingSemicolonAfterType: "`;` manquant après le type",
                 Error.enumDefNotHaveBody: "la définition de l’énumération n’a pas de corps",
                 Error.expectedEnumFieldFoundX: "champ attendu dans l’énumération, `%s` trouvé",
                 Error.missingSemicolonAfterEnumField: "`;` manquant après le champ de l’énumération",
@@ -7560,6 +7633,7 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.missingRefBeforeAssignation: "référence manquante avant l’assignation",
                 Error.cantDoThisKindOfOpOnLeftSideOfAssignement: "ce genre d’opération est impossible à gauche d’une assignation",
                 Error.unexpectedOp: "opération inattendue",
+                Error.unOpMustHave1Operand: "une opération unaire doit avoir 1 opérande",
                 Error.binOpMustHave2Operands: "une opération binaire doit avoir 2 opérandes",
                 Error.unexpectedXSymbolInExpr: "symbole `%s` inattendu dans l’expression",
                 Error.unexpectedSymbol: "symbole inattendu",

@@ -33,8 +33,9 @@ struct GrType {
         string_,
         optional,
         list,
-        function_,
+        func,
         task,
+        event,
         class_,
         native,
         channel,
@@ -86,8 +87,10 @@ struct GrType {
     bool opEquals(const GrType v) const {
         if (base != v.base)
             return false;
-        if (base == GrType.Base.function_ || base == GrType.Base.task)
+        if (base == GrType.Base.func)
             return mangledType == v.mangledType && mangledReturnType == v.mangledReturnType;
+        if (base == GrType.Base.task || base == GrType.Base.event)
+            return mangledType == v.mangledType;
         if (base == GrType.Base.native || base == GrType.Base.class_ ||
             base == GrType.Base.enum_ || base == GrType.Base.list)
             return mangledType == v.mangledType;
@@ -131,7 +134,7 @@ GrType grChannel(GrType subType) {
 
 /// Returns a GrType of type function with given signatures.
 GrType grFunction(GrType[] inSignature, GrType[] outSignature = []) {
-    GrType type = GrType.Base.function_;
+    GrType type = GrType.Base.func;
     type.mangledType = grMangleSignature(inSignature);
     type.mangledReturnType = grMangleSignature(outSignature);
     return type;
@@ -140,6 +143,11 @@ GrType grFunction(GrType[] inSignature, GrType[] outSignature = []) {
 /// Returns a GrType of type task with given signature.
 GrType grTask(GrType[] signature) {
     return GrType(GrType.Base.task, grMangleSignature(signature));
+}
+
+/// Returns a GrType of type event with given signature.
+GrType grEvent(GrType[] signature) {
+    return GrType(GrType.Base.event, grMangleSignature(signature));
 }
 
 /// Temporary type for template functions.
@@ -166,7 +174,8 @@ GrType grPure(GrType type) {
 /// The type is handled by a int based register
 bool grIsKindOfInt(GrType.Base type) {
     return type == GrType.Base.int_ || type == GrType.Base.bool_ ||
-        type == GrType.Base.function_ || type == GrType.Base.task || type == GrType.Base.enum_;
+        type == GrType.Base.func || type == GrType.Base.task ||
+        type == GrType.Base.event || type == GrType.Base.enum_;
 }
 
 /// The type is handled by a float based register
@@ -518,8 +527,9 @@ package class GrFunction {
         final switch (variable.type.base) with (GrType.Base) {
         case int_:
         case bool_:
-        case function_:
+        case func:
         case task:
+        case event:
         case enum_:
         case float_:
         case string_:
@@ -541,7 +551,8 @@ package class GrFunction {
 
 /// Get the type of the function.
 GrType grGetFunctionAsType(const GrFunction func) {
-    GrType type = func.isTask ? GrType.Base.task : GrType.Base.function_;
+    GrType type = func.isEvent ? GrType.Base.event : (func.isTask ?
+            GrType.Base.task : GrType.Base.func);
     type.mangledType = grMangleSignature(func.inSignature);
     type.mangledReturnType = grMangleSignature(func.outSignature);
     return type;

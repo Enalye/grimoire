@@ -38,11 +38,12 @@ private bool _register(GrData, GrType type, const GrType[] types) {
     case int_:
     case bool_:
     case enum_:
-    case function_:
+    case func:
     case task:
-        return type == GrType.Base.int_ || type == GrType.Base.bool_
-            || type == GrType.Base.function_ || type == GrType.Base.task || type == GrType
-            .Base.enum_;
+    case event:
+        return type == GrType.Base.int_ || type == GrType.Base.bool_ ||
+            type == GrType.Base.func || type == GrType.Base.task ||
+            type == GrType.Base.event || type == GrType.Base.enum_;
     case float_:
         return type == GrType.Base.float_;
     case string_:
@@ -54,8 +55,9 @@ private bool _register(GrData, GrType type, const GrType[] types) {
     case native:
     case reference:
     case null_:
-        return type == GrType.Base.optional || type == GrType.Base.class_ || type == GrType.Base.list || type == GrType.Base.native
-            || type == GrType.Base.channel || type == GrType.Base.reference || type == GrType
+        return type == GrType.Base.optional || type == GrType.Base.class_ ||
+            type == GrType.Base.list || type == GrType.Base.native ||
+            type == GrType.Base.channel || type == GrType.Base.reference || type == GrType
             .Base.null_;
     case void_:
     case internalTuple:
@@ -72,7 +74,7 @@ private bool _channel(GrData, GrType type, const GrType[]) {
 }
 
 private bool _function(GrData, GrType type, const GrType[]) {
-    return type.base == GrType.Base.function_;
+    return type.base == GrType.Base.func;
 }
 
 private bool _task(GrData, GrType type, const GrType[]) {
@@ -80,7 +82,7 @@ private bool _task(GrData, GrType type, const GrType[]) {
 }
 
 private bool _callable(GrData, GrType type, const GrType[]) {
-    return type.base == GrType.Base.function_ || type.base == GrType.Base.task;
+    return type.base == GrType.Base.func || type.base == GrType.Base.task;
 }
 
 private bool _class(GrData, GrType type, const GrType[]) {
@@ -104,8 +106,9 @@ private bool _notnullable(GrData, GrType type, const GrType[]) {
     case string_:
     case list:
     case channel:
-    case function_:
+    case func:
     case task:
+    case event:
     case class_:
     case native:
     case reference:
@@ -127,8 +130,9 @@ private bool _nullable(GrData, GrType type, const GrType[]) {
     case string_:
     case list:
     case channel:
-    case function_:
+    case func:
     case task:
+    case event:
     case class_:
     case native:
     case reference:

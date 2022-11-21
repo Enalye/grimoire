@@ -8,9 +8,9 @@ module grimoire.compiler.compiler;
 import std.stdio, std.string, std.array, std.conv, std.math, std.file;
 import grimoire.runtime, grimoire.assembly;
 import grimoire.compiler.util, grimoire.compiler.lexer, grimoire.compiler.parser,
-grimoire.compiler.primitive, grimoire.compiler.type, grimoire.compiler.data,
-grimoire.compiler.error, grimoire.compiler.mangle,
-grimoire.compiler.library, grimoire.compiler.pretty;
+    grimoire.compiler.primitive, grimoire.compiler.type, grimoire.compiler.data,
+    grimoire.compiler.error, grimoire.compiler.mangle,
+    grimoire.compiler.library, grimoire.compiler.pretty;
 
 /// Compiler class, generate bytecode and hold errors.
 final class GrCompiler {
@@ -127,20 +127,24 @@ final class GrCompiler {
                 debugSymbol.name = grGetPrettyFunction(func);
                 debugSymbol.length = cast(uint) func.instructions.length;
                 debugSymbol.file = lexer.getFile(func.fileId);
+
                 foreach (ref position; func.debugSymbol) {
                     GrFunctionSymbol.Position pos;
                     pos.line = position.line;
                     pos.column = position.column;
                     debugSymbol.positions ~= pos;
                 }
+
                 bytecode.symbols ~= debugSymbol;
             }
 
             foreach (size_t i, instruction; func.instructions)
                 opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
                     instruction.value);
+
             foreach (call; func.functionCalls)
                 call.position += lastOpcodeCount;
+
             func.position = lastOpcodeCount;
             lastOpcodeCount += cast(uint) func.instructions.length;
             events[func.mangledName] = func.position;
@@ -160,14 +164,21 @@ final class GrCompiler {
                 }
                 bytecode.symbols ~= debugSymbol;
             }
+
             foreach (size_t i, instruction; func.instructions)
                 opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
                     instruction.value);
+
             foreach (call; func.functionCalls)
                 call.position += lastOpcodeCount;
+
             func.position = lastOpcodeCount;
             lastOpcodeCount += func.instructions.length;
+
+            if (func.isEvent)
+                events[func.mangledName] = func.position;
         }
+
         foreach (func; parser.functions) {
             if (options & GrOption.symbols) {
                 auto debugSymbol = new GrFunctionSymbol();
@@ -183,11 +194,14 @@ final class GrCompiler {
                 }
                 bytecode.symbols ~= debugSymbol;
             }
+
             foreach (size_t i, instruction; func.instructions)
                 opcodes[lastOpcodeCount + i] = makeOpcode(cast(uint) instruction.opcode,
                     instruction.value);
+
             foreach (call; func.functionCalls)
                 call.position += lastOpcodeCount;
+
             func.position = lastOpcodeCount;
             lastOpcodeCount += func.instructions.length;
         }
@@ -210,8 +224,9 @@ final class GrCompiler {
             final switch (variableDef.type.base) with (GrType.Base) {
             case bool_:
             case int_:
-            case function_:
+            case func:
             case task:
+            case event:
             case enum_:
                 variable.typeMask = 0x1;
                 variable.ivalue = variableDef.isInitialized ? variableDef.ivalue : 0;
@@ -263,15 +278,16 @@ final class GrCompiler {
             if (_data._primitives[id].name == "@as")
                 inSignature.length = 1;
             else if (_data._primitives[id].name == "@new")
-                inSignature.length --;
+                inSignature.length--;
             for (size_t i; i < inSignature.length; ++i) {
                 const GrType type = inSignature[i];
                 bytecode.primitives[id].inSignature ~= grMangle(type);
                 final switch (type.base) with (GrType.Base) {
                 case bool_:
                 case int_:
-                case function_:
+                case func:
                 case task:
+                case event:
                 case enum_:
                     bytecode.primitives[id].parameters ~= 0x10000 | (
                         bytecode.primitives[id].params & 0xFFFF);

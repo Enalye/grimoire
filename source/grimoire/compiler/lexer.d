@@ -93,7 +93,6 @@ struct GrLexeme {
         const_,
         pure_,
         alias_,
-        event,
         class_,
         enum_,
         where,
@@ -106,8 +105,9 @@ struct GrLexeme {
         stringType,
         listType,
         channelType,
-        functionType,
-        taskType,
+        func,
+        task,
+        event,
         var,
         if_,
         unless,
@@ -994,9 +994,6 @@ package final class GrLexer {
         case "alias":
             lex.type = GrLexeme.Type.alias_;
             break;
-        case "event":
-            lex.type = GrLexeme.Type.event;
-            break;
         case "class":
             lex.type = GrLexeme.Type.class_;
             break;
@@ -1078,12 +1075,16 @@ package final class GrLexer {
         case "defer":
             lex.type = GrLexeme.Type.defer;
             break;
-        case "task":
-            lex.type = GrLexeme.Type.taskType;
+        case "func":
+            lex.type = GrLexeme.Type.func;
             lex.isType = true;
             break;
-        case "func":
-            lex.type = GrLexeme.Type.functionType;
+        case "task":
+            lex.type = GrLexeme.Type.task;
+            lex.isType = true;
+            break;
+        case "event":
+            lex.type = GrLexeme.Type.event;
             lex.isType = true;
             break;
         case "int":
@@ -1334,9 +1335,9 @@ private immutable string[] _prettyLexemeTypeTable = [
     "|", "^", "&&", "||", "??", "+", "-", "*", "/", "~", "%", "**", "==",
     "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->", "=>", "~", "!",
     "++", "--", "identifier", "const_int", "const_float", "const_bool",
-    "const_string", "null", "public", "const", "pure", "alias", "event",
-    "class", "enum", "where", "copy", "send", "receive", "int", "float",
-    "bool", "string", "list", "channel", "func", "task", "var", "if",
+    "const_string", "null", "public", "const", "pure", "alias",
+    "class", "enum", "where", "copy", "send", "receive", "int", "float", "bool",
+    "string", "list", "channel", "func", "task", "event", "var", "if",
     "unless", "else", "switch", "select", "case", "default", "while", "do",
     "until", "for", "loop", "return", "self", "die", "exit", "yield", "break",
     "continue"

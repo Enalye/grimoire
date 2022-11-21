@@ -10,6 +10,7 @@ import std.conv : to;
 import grimoire.assembly, grimoire.compiler;
 
 import grimoire.runtime.task;
+import grimoire.runtime.event;
 import grimoire.runtime.value;
 import grimoire.runtime.object;
 import grimoire.runtime.string;
@@ -115,9 +116,13 @@ final class GrCall {
         return cast(GrChannel) getParameter!GrPointer(index);
     }
 
-    pragma(inline) T getNative(T)(uint parameter) const {
+    pragma(inline) GrEvent getEvent(uint index) const {
+        return _task.engine.getEvent(getParameter!GrInt(index));
+    }
+
+    pragma(inline) T getNative(T)(uint index) const {
         // We cast to object first to avoid a crash when casting to a parent class
-        return cast(T) cast(Object) getParameter!GrPointer(parameter);
+        return cast(T) cast(Object) getParameter!GrPointer(index);
     }
 
     pragma(inline) private T getParameter(T)(uint index) const
@@ -329,13 +334,9 @@ final class GrCall {
         ]) {
         return _task.engine.callEvent(name, signature, parameters);
     }
-
-    /**
-	Spawn a new coroutine at an arbitrary address. \
-	The address needs to correspond to the start of a task, else the VM will crash. \
-	*/
-    GrTask callAddress(uint pc) {
-        return _task.engine.callAddress(pc);
+    /// Ditto
+    GrTask callEvent(const GrEvent event, GrValue[] parameters = []) {
+        return _task.engine.callEvent(event, parameters);
     }
 
     /// Pause the current task.

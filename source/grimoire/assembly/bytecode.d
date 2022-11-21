@@ -434,7 +434,7 @@ final class GrBytecode {
             final switch (type) with (GrSymbol.Type) {
             case none:
                 break;
-            case function_:
+            case func:
                 symbol = new GrFunctionSymbol;
                 break;
             }

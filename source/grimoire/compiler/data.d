@@ -499,7 +499,7 @@ final class GrData {
             result.mangledType = grMangle(subType);
             result.isAbstract = subType.isAbstract;
             break;
-        case function_:
+        case func:
             auto composite = grUnmangleComposite(type.mangledType);
             for (int i; i < composite.signature.length; ++i) {
                 composite.signature[i] = reifyType(composite.signature[i]);
@@ -514,6 +514,14 @@ final class GrData {
             result.mangledReturnType = grMangleSignature(outSignature);
             break;
         case task:
+            auto composite = grUnmangleComposite(type.mangledType);
+            for (int i; i < composite.signature.length; ++i) {
+                composite.signature[i] = reifyType(composite.signature[i]);
+                result.isAbstract |= composite.signature[i].isAbstract;
+            }
+            result.mangledType = grMangleComposite(composite.name, composite.signature);
+            break;
+        case event:
             auto composite = grUnmangleComposite(type.mangledType);
             for (int i; i < composite.signature.length; ++i) {
                 composite.signature[i] = reifyType(composite.signature[i]);
@@ -561,7 +569,7 @@ final class GrData {
             GrType subType = grUnmangle(type.mangledType);
             checkUnknownClasses(subType);
             break;
-        case function_:
+        case func:
             foreach (GrType inType; grUnmangleSignature(type.mangledType))
                 checkUnknownClasses(inType);
             foreach (GrType outType; grUnmangleSignature(type.mangledReturnType))
@@ -613,7 +621,7 @@ final class GrData {
                         [grUnmangle(second[i].mangledType)], isAbstract, fileId, isPublic))
                     continue;
                 return false;
-            case function_:
+            case func:
                 if (first[i].base != second[i].base)
                     return false;
                 if (!isSignatureCompatible(grUnmangleSignature(first[i].mangledType),
@@ -625,6 +633,13 @@ final class GrData {
                     return false;
                 continue;
             case task:
+                if (first[i].base != second[i].base)
+                    return false;
+                if (isSignatureCompatible(grUnmangleSignature(first[i].mangledType),
+                        grUnmangleSignature(second[i].mangledType), isAbstract, fileId, isPublic))
+                    continue;
+                return false;
+            case event:
                 if (first[i].base != second[i].base)
                     return false;
                 if (isSignatureCompatible(grUnmangleSignature(first[i].mangledType),

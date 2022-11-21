@@ -148,8 +148,9 @@ final class GrLibrary : GrLibDefinition {
         case optional:
         case class_:
         case channel:
-        case function_:
+        case func:
         case task:
+        case event:
         case list:
         case native:
         case void_:

@@ -80,7 +80,7 @@ string grGetPrettyType(const GrType variableType) {
         case enum_:
             result ~= to!string(variableType.mangledType);
             break;
-        case function_:
+        case func:
             result ~= "func(";
             int i;
             auto inSignature = grUnmangleSignature(variableType.mangledType);
@@ -105,6 +105,18 @@ string grGetPrettyType(const GrType variableType) {
             break;
         case task:
             result ~= "task(";
+            int i;
+            auto parameters = grUnmangleSignature(variableType.mangledType);
+            foreach (parameter; parameters) {
+                result ~= grGetPrettyType(parameter);
+                if ((i + 2) <= parameters.length)
+                    result ~= ", ";
+                i++;
+            }
+            result ~= ")";
+            break;
+        case event:
+            result ~= "event(";
             int i;
             auto parameters = grUnmangleSignature(variableType.mangledType);
             foreach (parameter; parameters) {
