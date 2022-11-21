@@ -546,7 +546,6 @@ final class GrData {
         case reference:
             break;
         }
-        result.isConst = type.isConst;
         result.isPure = type.isPure;
         return result;
     }

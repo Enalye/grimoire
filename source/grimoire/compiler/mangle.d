@@ -47,10 +47,6 @@ GrType[] grUnmangleSignature(const string mangledSignature) {
             currentType.isPure = true;
             i++;
         }
-        if (mangledSignature[i] == '#') {
-            currentType.isConst = true;
-            i++;
-        }
 
         switch (mangledSignature[i]) {
         case '*':
@@ -194,6 +190,7 @@ string grUnmangleBlock(const string mangledSignature, ref int i) {
 /// Mangling operation for a single type.
 string grMangle(const GrType type) {
     string mangledName = "$";
+
     if (type.isAny) {
         mangledName ~= "a(" ~ type.mangledType ~ ")";
         return mangledName;
@@ -201,9 +198,6 @@ string grMangle(const GrType type) {
 
     if (type.isPure) {
         mangledName ~= '@';
-    }
-    if (type.isConst) {
-        mangledName ~= '#';
     }
 
     final switch (type.base) with (GrType.Base) {
@@ -274,10 +268,6 @@ GrType grUnmangle(const string mangledSignature) {
 
         if (mangledSignature[i] == '@') {
             currentType.isPure = true;
-            i++;
-        }
-        if (mangledSignature[i] == '#') {
-            currentType.isConst = true;
             i++;
         }
 

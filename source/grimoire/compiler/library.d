@@ -53,8 +53,9 @@ interface GrLibDefinition {
     void setParameters(GrLocale, string[] = []);
     void setModuleInfo(GrLocale, string);
     void setModuleDescription(GrLocale, string);
-    void addVariable(string, GrType);
-    void addVariable(string, GrType, GrValue);
+    GrType addVar(string, GrType);
+    GrType addVar(string, GrType, GrValue);
+    GrType addConst(string, GrType, GrValue);
     GrType addEnum(string, string[]);
     GrType addClass(string, string[], GrType[], string[] = [], string = "", GrType[] = [
         ]);
@@ -118,15 +119,16 @@ final class GrLibrary : GrLibDefinition {
     }
 
     /// Define a variable
-    override void addVariable(string name, GrType type) {
+    override GrType addVar(string name, GrType type) {
         GrVariableDefinition variable = new GrVariableDefinition;
         variable.name = name;
         variable.type = type;
         _variableDefinitions ~= variable;
+        return type;
     }
 
     /// Define a variable with a default value
-    override void addVariable(string name, GrType type, GrValue defaultValue) {
+    override GrType addVar(string name, GrType type, GrValue defaultValue) {
         GrVariableDefinition variable = new GrVariableDefinition;
         variable.name = name;
         variable.type = type;
@@ -163,6 +165,51 @@ final class GrLibrary : GrLibDefinition {
 
         variable.isInitialized = true;
         _variableDefinitions ~= variable;
+
+        return type;
+    }
+
+    /// Défini une constante
+    override GrType addConst(string name, GrType type, GrValue defaultValue) {
+        GrVariableDefinition variable = new GrVariableDefinition;
+        variable.name = name;
+        variable.type = type;
+        variable.isConst = true;
+
+        final switch (type.base) with (GrType.Base) {
+        case bool_:
+            variable.ivalue = defaultValue.getBool();
+            break;
+        case int_:
+        case enum_:
+            variable.ivalue = defaultValue.getInt();
+            break;
+        case float_:
+            variable.rvalue = defaultValue.getFloat();
+            break;
+        case string_:
+            variable.svalue = defaultValue.getString();
+            break;
+        case optional:
+        case class_:
+        case channel:
+        case func:
+        case task:
+        case event:
+        case list:
+        case native:
+        case void_:
+        case null_:
+        case internalTuple:
+        case reference:
+            throw new Exception(
+                "can't initialize library variable of type `" ~ grGetPrettyType(type) ~ "`");
+        }
+
+        variable.isInitialized = true;
+        _variableDefinitions ~= variable;
+
+        return type;
     }
 
     /// Define an enum

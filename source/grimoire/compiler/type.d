@@ -53,12 +53,10 @@ struct GrType {
     bool isField;
     /// Can this type match with others ?
     bool isAny;
-    /// Is the type abstract ?
-    /// An abstract type cannot be used in signatures.
+    /// Le type est-il abstrait ?
+    /// Un type abstrait ne peut être utilisé dans une signature.
     bool isAbstract;
-    /// Can we modify its value ?
-    bool isConst;
-    /// Can we modify the referenced value ?
+    /// Le type est-il mutable ?
     bool isPure;
 
     /// Init as a basic type.
@@ -118,7 +116,6 @@ const GrType grString = GrType(GrType.Base.string_);
 GrType grOptional(GrType subType) {
     GrType type = GrType(GrType.Base.optional, grMangleSignature([subType]));
     type.isPure = subType.isPure;
-    type.isConst = subType.isConst;
     return type;
 }
 
@@ -156,12 +153,6 @@ GrType grAny(string name) {
     type.base = GrType.Base.void_;
     type.mangledType = name;
     type.isAny = true;
-    return type;
-}
-
-/// Make a const version of the type.
-GrType grConst(GrType type) {
-    type.isConst = true;
     return type;
 }
 
@@ -248,6 +239,8 @@ package class GrVariable {
     bool isInitialized;
     /// Is the type to be infered automatically ? (e.g. the `let` keyword).
     bool isAuto;
+    /// La variable est-elle réassignable ?
+    bool isConst;
     /// Its unique name inside its scope (function based scope).
     string name;
     /// Is the variable visible from other files ? (Global only)
@@ -377,6 +370,8 @@ final class GrClassDefinition {
     GrType[] signature;
     /// List of field names.
     string[] fields;
+    /// Est-ce que les champs sont constants ?
+    bool[] fieldConsts;
     /// List of template variables.
     string[] templateVariables;
     /// List of template types.
@@ -417,6 +412,8 @@ final class GrVariableDefinition {
     string name;
     /// Its type
     GrType type;
+    /// Le type est-il assignable ?
+    bool isConst;
     /// Does the variable use a custom initialization value ?
     bool isInitialized;
     /// Integral init value

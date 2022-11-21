@@ -15,9 +15,6 @@ string grGetPrettyType(const GrType variableType) {
     if (variableType.isPure) {
         result ~= "pure ";
     }
-    if (variableType.isConst) {
-        result ~= "const ";
-    }
 
     if (variableType.isAny) {
         result ~= variableType.mangledType;
@@ -54,7 +51,7 @@ string grGetPrettyType(const GrType variableType) {
             result ~= "?";
             break;
         case list:
-            result ~= "list(";
+            result ~= "list<";
             int i;
             auto parameters = grUnmangleSignature(variableType.mangledType);
             foreach (parameter; parameters) {
@@ -63,10 +60,10 @@ string grGetPrettyType(const GrType variableType) {
                     result ~= ", ";
                 i++;
             }
-            result ~= ")";
+            result ~= ">";
             break;
         case channel:
-            result ~= "channel(";
+            result ~= "channel<";
             int i;
             auto parameters = grUnmangleSignature(variableType.mangledType);
             foreach (parameter; parameters) {
@@ -75,7 +72,7 @@ string grGetPrettyType(const GrType variableType) {
                     result ~= ", ";
                 i++;
             }
-            result ~= ")";
+            result ~= ">";
             break;
         case enum_:
             result ~= to!string(variableType.mangledType);

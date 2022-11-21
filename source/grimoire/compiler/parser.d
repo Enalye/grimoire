@@ -169,7 +169,7 @@ final class GrParser {
     /// Register a special local variable, used for iterators, etc.
     private GrVariable registerSpecialVariable(string name, GrType type) {
         name = "~" ~ name;
-        GrVariable specialVariable = registerVariable(name, type, false, false, false);
+        GrVariable specialVariable = registerVariable(name, type, false, false, false, false);
         specialVariable.isAuto = false;
         specialVariable.isInitialized = true; //We shortcut this check
         return specialVariable;
@@ -177,7 +177,7 @@ final class GrParser {
 
     /// Register a variable
     private GrVariable registerVariable(string name, GrType type, bool isAuto,
-        bool isGlobal, bool isPublic) {
+        bool isGlobal, bool isConst, bool isPublic) {
         //Check if declared globally.
         assertNoGlobalDeclaration(name, get().fileId, isPublic);
 
@@ -186,6 +186,7 @@ final class GrParser {
         variable.isGlobal = isGlobal;
         variable.isInitialized = false;
         variable.type = type;
+        variable.isConst = isConst;
         variable.name = name;
         variable.isPublic = isPublic;
         variable.fileId = get().fileId;
@@ -1311,9 +1312,14 @@ final class GrParser {
     private void addSetInstruction(GrVariable variable, uint fileId,
         GrType valueType = grVoid, bool isExpectingValue = false, bool isInitialization = false) {
         _isAssignationOptimizable = true;
-        if (variable.type.isConst && !isInitialization)
-            logError(format(getError(Error.xIsConstAndCantBeModified), variable.name),
-                format(getError(Error.cantModifyAConstX), getPrettyType(variable.type)));
+        if (variable.isConst && !isInitialization) {
+            if (variable.type.base == GrType.Base.reference)
+                logError(getError(Error.exprIsConstAndCantBeModified),
+                    getError(Error.cantModifyAConst));
+            else
+                logError(format(getError(Error.xIsConstAndCantBeModified),
+                        variable.name), getError(Error.cantModifyAConst));
+        }
 
         if (variable.type.base == GrType.Base.reference) {
             valueType = convertType(valueType, grUnmangle(variable.type.mangledType), fileId);
@@ -1350,7 +1356,6 @@ final class GrParser {
                 .Base.optional)
                 valueType = grOptional(valueType);
             variable.isOptional = false;
-            valueType.isConst = variable.type.isConst;
             valueType.isPure = valueType.isPure || variable.type.isPure;
             variable.type = valueType;
             if (valueType.base == GrType.Base.void_)
@@ -1712,7 +1717,7 @@ final class GrParser {
         beginGlobalScope();
         foreach (GrVariableDefinition variableDef; _data._variableDefinitions) {
             GrVariable variable = registerVariable(variableDef.name,
-                variableDef.type, false, true, true);
+                variableDef.type, false, true, variableDef.isConst, true);
             variableDef.register = variable.register;
         }
         endGlobalScope();
@@ -2069,7 +2074,7 @@ final class GrParser {
 
         string[] fields;
         GrType[] signature;
-        bool[] fieldScopes;
+        bool[] fieldScopes, fieldConsts;
         while (!isEnd()) {
             if (get().type == GrLexeme.Type.rightCurlyBrace) {
                 checkAdvance();
@@ -2086,6 +2091,7 @@ final class GrParser {
                 logError(format(getError(Error.unexpectedXSymbolInExpr),
                         getPrettyLexemeType(get().type)), getError(Error.unexpectedSymbol));
 
+            const isConst = get().type == GrLexeme.Type.const_;
             checkAdvance();
 
             uint fieldCount;
@@ -2113,6 +2119,7 @@ final class GrParser {
 
             while (fieldCount--)
                 signature ~= fieldType;
+            fieldConsts ~= isConst;
 
             if (get().type != GrLexeme.Type.semicolon)
                 logError(getError(Error.missingSemicolonAfterClassFieldDecl), format(getError(Error.expectedXFoundY),
@@ -2129,6 +2136,7 @@ final class GrParser {
         class_.parent = parentClassName;
         class_.signature = signature;
         class_.fields = fields;
+        class_.fieldConsts = fieldConsts;
 
         class_.fieldsInfo.length = fields.length;
         for (int i; i < class_.fieldsInfo.length; ++i) {
@@ -2168,6 +2176,7 @@ final class GrParser {
             class_.fields = parentClass.fields ~ class_.fields;
             class_.signature = parentClass.signature ~ class_.signature;
             class_.fieldsInfo = parentClass.fieldsInfo ~ class_.fieldsInfo;
+            class_.fieldConsts = parentClass.fieldConsts ~ class_.fieldConsts;
             fileId = parentClass.fileId;
             parent = parentClass.parent;
             lastClass = parentClass;
@@ -3146,7 +3155,8 @@ final class GrParser {
                 logError(getError(Error.missingIdentifier),
                     format(getError(Error.expectedIdentifierFoundX),
                         getPrettyLexemeType(get().type)));
-            GrVariable errVariable = registerVariable(get().svalue, grString, false, false, false);
+            GrVariable errVariable = registerVariable(get().svalue, grString,
+                false, false, false, false);
 
             advance();
             if (get().type != GrLexeme.Type.rightParenthesis)
@@ -3352,7 +3362,7 @@ final class GrParser {
 
         GrVariable[] lvalues;
         foreach (string identifier; identifiers) {
-            lvalues ~= registerVariable(identifier, type, isAuto, isGlobal, isPublic);
+            lvalues ~= registerVariable(identifier, type, isAuto, isGlobal, isConst, isPublic);
         }
 
         parseAssignList(lvalues, true);
@@ -3746,7 +3756,7 @@ final class GrParser {
                     getPrettyLexemeType(GrLexeme.Type.leftParenthesis),
                     getPrettyLexemeType(get().type)));
 
-        /* While is breakable and continuable. */
+        /* While peut avoir un `break` ou un `continue`. */
         openBreakableSection();
         openContinuableSection(isYieldable);
 
@@ -3772,7 +3782,7 @@ final class GrParser {
         setInstruction(isNegative ? GrOpcode.jumpNotEqual : GrOpcode.jumpEqual, conditionPosition,
             cast(int)(currentFunction.instructions.length - conditionPosition), true);
 
-        /* While is breakable and continuable. */
+        /* While peut avoir un `break` ou un `continue`. */
         closeBreakableSection();
         closeContinuableSection();
     }
@@ -3792,7 +3802,7 @@ final class GrParser {
             advance();
         }
 
-        /* While is breakable and continuable. */
+        /* While peut avoir un `break` ou un `continue`. */
         openBreakableSection();
         openContinuableSection(isYieldable);
 
@@ -3827,7 +3837,7 @@ final class GrParser {
         addInstruction(isNegative ? GrOpcode.jumpEqual : GrOpcode.jumpNotEqual,
             cast(int)(blockPosition - currentFunction.instructions.length), true);
 
-        /* While is breakable and continuable. */
+        /* While peut avoir un `break` ou un `continue`. */
         closeBreakableSection();
         closeContinuableSection();
     }
@@ -3869,14 +3879,14 @@ final class GrParser {
                 format(getError(Error.varOrRefExpectedFoundX), getPrettyLexemeType(get().type)));
             break;
         }
-        type.isConst = isConst;
         type.isPure = isPure;
         GrLexeme identifier = get();
         if (identifier.type != GrLexeme.Type.identifier)
             logError(getError(Error.varNameExpected),
                 format(getError(Error.varNameExpectedFoundX), getPrettyLexemeType(get().type)));
 
-        lvalue = registerVariable(identifier.svalue, type, isTyped ? isAuto : true, false, false);
+        lvalue = registerVariable(identifier.svalue, type, isTyped ? isAuto
+                : true, false, isConst, false);
 
         //A composite type does not need to be initialized.
         if (lvalue.type == GrType.Base.class_)
@@ -3965,7 +3975,7 @@ final class GrParser {
                 addIntConstant(-1);
                 addSetInstruction(index, fileId);
 
-                /* For is breakable and continuable. */
+                /* For peut avoir un `break` ou un `continue`. */
                 openBreakableSection();
                 openContinuableSection(isYieldable);
 
@@ -4025,7 +4035,7 @@ final class GrParser {
                 setInstruction(GrOpcode.jumpEqual, jumpPosition,
                     cast(int)(currentFunction.instructions.length - jumpPosition), true);
 
-                /* For is breakable and continuable. */
+                /* For peut avoir un `break` ou un `continue`. */
                 closeBreakableSection();
                 closeContinuableSection();
             }
@@ -4068,7 +4078,7 @@ final class GrParser {
                 }
                 addSetInstruction(iterator, fileId, containerType);
 
-                /* For is breakable and continuable. */
+                /* For peut avoir un `break` ou un `continue`. */
                 openBreakableSection();
                 openContinuableSection(isYieldable);
 
@@ -4099,7 +4109,7 @@ final class GrParser {
                 setInstruction(GrOpcode.optionalCall2, jumpPosition,
                     cast(int)(currentFunction.instructions.length - jumpPosition), true);
 
-                /* For is breakable and continuable. */
+                /* For peut avoir un `break` ou un `continue`. */
                 closeBreakableSection();
                 closeContinuableSection();
             }
@@ -4314,7 +4324,7 @@ final class GrParser {
         else
             isInfinite = true;
 
-        /* For is breakable and continuable. */
+        /* For peut avoir un `break` ou un `continue`. */
         openBreakableSection();
         openContinuableSection(isYieldable);
 
@@ -4351,7 +4361,7 @@ final class GrParser {
             setInstruction(GrOpcode.jumpEqual, jumpPosition,
                 cast(int)(currentFunction.instructions.length - jumpPosition), true);
 
-        /* For is breakable and continuable. */
+        /* For peut avoir un `break` ou un `continue`. */
         closeBreakableSection();
         closeContinuableSection();
         currentFunction.closeScope();
@@ -4774,6 +4784,7 @@ final class GrParser {
                         const string fieldName = get().svalue;
                         checkAdvance();
                         bool hasField = false;
+
                         for (int i; i < class_.fields.length; ++i) {
                             if (class_.fields[i] == fieldName) {
                                 hasField = true;
@@ -4790,6 +4801,7 @@ final class GrParser {
                                 fieldLValue.isInitialized = false;
                                 fieldLValue.isField = true;
                                 fieldLValue.type = class_.signature[i];
+                                fieldLValue.isConst = class_.fieldConsts[i];
                                 fieldLValue.register = i;
                                 fieldLValue.fileId = get().fileId;
                                 fieldLValue.lexPosition = current;
@@ -4811,10 +4823,12 @@ final class GrParser {
                 for (int i; i < class_.fields.length; ++i) {
                     if (initFields[i])
                         continue;
+
                     GrVariable fieldLValue = new GrVariable;
                     fieldLValue.isInitialized = false;
                     fieldLValue.isField = true;
                     fieldLValue.type = class_.signature[i];
+                    fieldLValue.isConst = class_.fieldConsts[i];
                     fieldLValue.register = i;
                     fieldLValue.fileId = get().fileId;
                     fieldLValue.lexPosition = current;
@@ -5017,9 +5031,11 @@ final class GrParser {
         for (;;) {
             if (get().type == GrLexeme.Type.comma)
                 logError(getError(Error.expectedIndexFoundComma), getError(Error.missingVal));
+
             auto index = parseSubExpression(
                 GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA |
                     GR_SUBEXPR_EXPECTING_VALUE).type;
+
             if (index.base == GrType.Base.void_)
                 logError(getError(Error.expectedIntFoundNothing), getError(Error.missingVal));
             convertType(index, grInt, fileId);
@@ -5054,7 +5070,6 @@ final class GrParser {
                     }
                     bool isPure = listType.isPure;
                     listType = subType;
-                    listType.isConst = listType.isConst || isPure;
                     listType.isPure = listType.isPure || isPure;
                     break;
                 default:
@@ -5100,7 +5115,6 @@ final class GrParser {
                 }
                 bool isPure = listType.isPure;
                 listType = subType;
-                listType.isConst = listType.isConst || isPure;
                 listType.isPure = listType.isPure || isPure;
                 break;
             default:
@@ -5789,6 +5803,7 @@ final class GrParser {
                         }
                         hasLValue = true;
                         GrVariable refVar = new GrVariable;
+                        refVar.isConst = currentType.isPure;
                         refVar.type.base = GrType.Base.reference;
                         refVar.type.mangledType = grMangleSignature([
                             currentType
@@ -5951,8 +5966,8 @@ final class GrParser {
                             fieldLValue.name = identifier;
                             fieldLValue.isInitialized = true;
                             fieldLValue.isField = true;
-                            currentType.isConst = currentType.isConst || isPure;
                             currentType.isPure = currentType.isPure || isPure;
+                            fieldLValue.isConst = class_.fieldConsts[i] || isPure;
                             fieldLValue.type = currentType;
                             fieldLValue.register = i;
                             fieldLValue.fileId = get().fileId;
@@ -6239,92 +6254,6 @@ final class GrParser {
                         format(getError(Error.expectedClassFoundX), getPrettyType(currentType)));
                 }*/
                 break;
-                /*case colon:
-                const size_t methodCallPos = current;
-                if (!hadValue)
-                    logError(getError(Error.missingParamOnMethodCall),
-                        getError(Error.methodCallMustBePlacedAfterVal));
-                checkAdvance();
-                if (get().type == GrLexeme.Type.optional) {
-                    ///@TODO: optional call
-                    checkAdvance();
-                }
-                GrType selfType = currentType;
-                if (get().type != GrLexeme.Type.identifier)
-                    logError(format(getError(Error.expectedFuncNameFoundX),
-                            getPrettyLexemeType(get().type)), getError(Error.missingFuncName));
-                const string identifier = get().svalue;
-                checkAdvance();
-                bool hasField;
-
-                if (currentType.base == GrType.Base.class_) {
-                    GrClassDefinition class_ = getClass(currentType.mangledType, get().fileId);
-                    if (!class_)
-                        logError(format(getError(Error.xNotDecl),
-                                getPrettyType(currentType)), getError(Error.unknownClass), "", -1);
-                    const auto nbFields = class_.signature.length;
-                    for (int i; i < nbFields; i++) {
-                        if (identifier == class_.fields[i]) {
-                            if ((class_.fieldsInfo[i].fileId != fileId) &&
-                                !class_.fieldsInfo[i].isPublic) {
-                                logError(format(getError(Error.xOnTypeYIsPrivate), identifier,
-                                        getPrettyType(currentType)),
-                                    getError(Error.privateField), "", -1);
-                            }
-                            hasField = true;
-                            currentType = class_.signature[i];
-                            currentType.isField = true;
-                            GrVariable fieldLValue = new GrVariable;
-                            fieldLValue.isInitialized = true;
-                            fieldLValue.isField = true;
-                            fieldLValue.type = currentType;
-                            fieldLValue.register = i;
-                            fieldLValue.fileId = get().fileId;
-                            fieldLValue.lexPosition = current;
-
-                            if (hadLValue)
-                                lvalues.length--;
-
-                            if (hadValue)
-                                typeStack[$ - 1] = currentType;
-                            else
-                                typeStack ~= currentType;
-
-                            hasValue = true;
-                            hadValue = false;
-                            hasLValue = true;
-                            hadLValue = false;
-
-                            addInstruction(GrOpcode.copy);
-                            addLoadFieldInstruction(currentType, fieldLValue.register, false);
-                            currentType = parseAnonymousCall(typeStack[$ - 1], selfType);
-                            //Unpack function value for 1 or less return values
-                            //Multiples values are left as a tuple for parseExpressionList()
-                            if (currentType.base == GrType.Base.internalTuple) {
-                                auto types = grUnpackTuple(currentType);
-                                if (!types.length)
-                                    currentType = grVoid;
-                                else if (types.length == 1uL)
-                                    currentType = types[0];
-                            }
-                            if (currentType.base == GrType.Base.void_) {
-                                typeStack.length--;
-                            }
-                            else {
-                                hadValue = false;
-                                hasValue = true;
-                                typeStack[$ - 1] = currentType;
-                            }
-                            break;
-                        }
-                    }
-                }
-                if (!hasField) {
-                    current = methodCallPos;
-                    goto case doubleColon;
-                }
-                break;
-            */
             case bitwiseAnd:
                 if (get(1).type != GrLexeme.Type.lesser)
                     goto case bitwiseOr;
@@ -6342,7 +6271,7 @@ final class GrParser {
                 hadValue = false;
                 break;
             case self:
-                // Parse a function call that refers to its parent. 
+                // Se réfère à la fonction actuelle
                 checkAdvance();
                 currentType = addFunctionAddress(currentFunction, get().fileId);
                 if (currentType.base == GrType.Base.void_)
@@ -7002,8 +6931,9 @@ final class GrParser {
         noXUnaryOpDefForY,
         noXBinaryOpDefForYAndZ,
         unknownOp,
+        exprIsConstAndCantBeModified,
         xIsConstAndCantBeModified,
-        cantModifyAConstX,
+        cantModifyAConst,
         cantCallXWithArgsYBecausePure,
         callCanCauseASideEffect,
         maybeUsePure,
@@ -7242,8 +7172,9 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.exprYieldsMultipleVal: "the expression yields multiple values",
                 Error.noXUnaryOpDefForY: "there is no `%s` unary operator defined for `%s`",
                 Error.noXBinaryOpDefForYAndZ: "there is no `%s` binary operator defined for `%s` and `%s`",
+                Error.exprIsConstAndCantBeModified: "the expression is const and can't be modified",
                 Error.xIsConstAndCantBeModified: "`%s` is const and can't be modified",
-                Error.cantModifyAConstX: "can't modify a const `%s`",
+                Error.cantModifyAConst: "can't modify a const",
                 Error.cantCallXWithArgsYBecausePure: "can't call `%s` with arguments `%s` because a pure parameter is mutable",
                 Error.callCanCauseASideEffect: "this call may trigger a side effet",
                 Error.maybeUsePure: "maybe you should change the function's parameter to `pure` ?",
@@ -7467,8 +7398,9 @@ logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                 Error.exprYieldsMultipleVal: "l’expression délivre plusieurs valeurs",
                 Error.noXUnaryOpDefForY: "il n’y a pas d’opérateur unaire `%s` défini pour `%s`",
                 Error.noXBinaryOpDefForYAndZ: "il n’y pas d’opérateur binaire `%s` défini pour `%s` et `%s`",
-                Error.xIsConstAndCantBeModified: "`%s` est constant et ne peut être altéré",
-                Error.cantModifyAConstX: "impossible de modifier un `%s` constant",
+                Error.exprIsConstAndCantBeModified: "l’expression est constante et ne peut être assigné",
+                Error.xIsConstAndCantBeModified: "`%s` est constant et ne peut être assigné",
+                Error.cantModifyAConst: "impossible de modifier un type constant",
                 Error.cantCallXWithArgsYBecausePure: "impossible d’appeler `%s` avec les arguments `%s` car un paramètre pur est modifiable",
                 Error.callCanCauseASideEffect: "l’appel risque de créer un effet de bord",
                 Error.maybeUsePure: "peut-être voudriez-vous changer le paramètre de la fonction en `pure` ?",

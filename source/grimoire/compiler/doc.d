@@ -21,7 +21,7 @@ final class GrDoc : GrLibDefinition {
         struct Variable {
             GrType type;
             string name;
-            bool hasValue;
+            bool hasValue, isConst;
             GrValue value;
             string[GrLocale] comments;
         }
@@ -138,15 +138,16 @@ final class GrDoc : GrLibDefinition {
         _parameters[locale] = parameters;
     }
 
-    override void addVariable(string name, GrType type) {
+    override GrType addVar(string name, GrType type) {
         Variable var;
         var.name = name;
         var.type = type;
         var.comments = _comments.dup;
         _variables ~= var;
+        return type;
     }
 
-    override void addVariable(string name, GrType type, GrValue value) {
+    override GrType addVar(string name, GrType type, GrValue value) {
         Variable var;
         var.name = name;
         var.type = type;
@@ -154,6 +155,19 @@ final class GrDoc : GrLibDefinition {
         var.value = value;
         var.comments = _comments.dup;
         _variables ~= var;
+        return type;
+    }
+
+    override GrType addConst(string name, GrType type, GrValue value) {
+        Variable var;
+        var.name = name;
+        var.type = type;
+        var.isConst = true;
+        var.hasValue = true;
+        var.value = value;
+        var.comments = _comments.dup;
+        _variables ~= var;
+        return type;
     }
 
     override GrType addEnum(string name, string[] fields) {

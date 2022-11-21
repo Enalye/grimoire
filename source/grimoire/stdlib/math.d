@@ -19,7 +19,7 @@ void grLoadStdLibMath(GrLibDefinition library) {
         "Rapport entre le diamètre du cercle et sa circonférence.");
     library.setDescription(GrLocale.en_US,
         "Ratio between the diameter of a circle and its circumference.");
-    library.addVariable("PI", grConst(grFloat), GrValue(PI));
+    library.addConst("PI", grFloat, GrValue(PI));
 
     library.setDescription(GrLocale.fr_FR, "Renvoie la plus petite valeur entre `a` et `b`.");
     library.setDescription(GrLocale.en_US, "Returns the smallest value between `a` and `b`.");
@@ -37,7 +37,9 @@ void grLoadStdLibMath(GrLibDefinition library) {
     library.setDescription(GrLocale.en_US, "Restrict `x` between `min` and `max`.");
     library.setParameters(GrLocale.fr_FR, ["x", "min", "max"]);
     library.setParameters(GrLocale.en_US, ["x", "min", "max"]);
-    library.addFunction(&_clamp_r, "clamp", [grFloat, grFloat, grFloat], [grFloat]);
+    library.addFunction(&_clamp_r, "clamp", [grFloat, grFloat, grFloat], [
+            grFloat
+        ]);
     library.addFunction(&_clamp_i, "clamp", [grInt, grInt, grInt], [grInt]);
 
     library.setDescription(GrLocale.fr_FR,
@@ -49,7 +51,8 @@ void grLoadStdLibMath(GrLibDefinition library) {
 
     library.setDescription(GrLocale.fr_FR,
         "Retourne une valeur aléatoire comprise entre `min` et `max` inclus.");
-    library.setDescription(GrLocale.en_US, "Returns a random value between `min` and `max` included.");
+    library.setDescription(GrLocale.en_US,
+        "Returns a random value between `min` and `max` included.");
     library.setParameters(GrLocale.fr_FR, ["min", "max"]);
     library.setParameters(GrLocale.en_US, ["min", "max"]);
     library.addFunction(&_rand_r, "rand", [grFloat, grFloat], [grFloat]);
@@ -150,14 +153,17 @@ Returns the ratio between 0 and 1 of `value` from `source` to `destination`.");
     library.addFunction(&_abs_r, "abs", [grFloat], [grFloat]);
 
     library.setDescription(GrLocale.fr_FR, "Retourne l’arrondi de `x` à l’entier inférieur.");
-    library.setDescription(GrLocale.en_US, "Returns the rounded value of `x` not greater than `x`.");
+    library.setDescription(GrLocale.en_US,
+        "Returns the rounded value of `x` not greater than `x`.");
     library.addFunction(&_floor, "floor", [grFloat], [grFloat]);
 
     library.setDescription(GrLocale.fr_FR, "Retourne l’arrondi de `x` à l’entier supérieur.");
-    library.setDescription(GrLocale.en_US, "Returns the rounded value of `x` not smaller than `x`.");
+    library.setDescription(GrLocale.en_US,
+        "Returns the rounded value of `x` not smaller than `x`.");
     library.addFunction(&_ceil, "ceil", [grFloat], [grFloat]);
 
-    library.setDescription(GrLocale.fr_FR, "Retourne l’arrondi de `x` à l’entier le plus proche.");
+    library.setDescription(GrLocale.fr_FR,
+        "Retourne l’arrondi de `x` à l’entier le plus proche.");
     library.setDescription(GrLocale.en_US, "Returns the nearest rounded value of `x`.");
     library.addFunction(&_round, "round", [grFloat], [grFloat]);
 
