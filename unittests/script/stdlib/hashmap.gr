@@ -5,7 +5,7 @@
  */
 
 event methods() {
-    let map = new HashMap<int>();
+    var map = @HashMap<int>();
 
     assert(map:size == 0);
     assert(map:isEmpty);

@@ -5,7 +5,7 @@
  */
 
 event methods() {
-    let chan = channel(int, 5);
+    var chan = channel<int, 5>;
 
     assert(chan:isEmpty);
     assert(!chan:isFull);

@@ -185,39 +185,39 @@ string grGetPrettyFunctionCall(const string mangledName) {
     if (index < 0)
         return to!string(mangledName) ~ "()";
 
-    string result;
     const string name = mangledName[0 .. index];
     auto inSignature = grUnmangleSignature(mangledName[index .. $]);
 
-    if (name == "@new") {
-        result = "new ";
-        if (inSignature.length) {
-            result ~= grGetPrettyType(inSignature[$ - 1]);
-            inSignature.length--;
-        }
-        result ~= "(";
-    }
-    else {
-        result = name ~ "(";
-    }
-
-    int i;
-    foreach (type; inSignature) {
-        result ~= grGetPrettyType(type);
-        if ((i + 2) <= inSignature.length)
-            result ~= ", ";
-        i++;
-    }
-    result ~= ")";
-    return result;
+    return grGetPrettyFunctionCall(name, inSignature);
 }
 
 /// Displayable format for a mangled string of format: function$signature \
 /// Return signature is not used.
 string grGetPrettyFunctionCall(const string name, const GrType[] inSignature) {
+    import std.string : indexOf;
+
     string result;
     GrType[] signature = inSignature.dup;
-    result = to!string(name) ~ "(";
+
+    if (name == "@as") {
+        signature.length = 1;
+        result = name;
+    }
+    else if (name.length >= "@static_".length && name[0 .. "@static_".length] == "@static_") {
+        if (signature.length) {
+            result = "@" ~ grGetPrettyType(signature[$ - 1]);
+            signature.length--;
+        }
+
+        size_t methodIndex = name.indexOf('.');
+        if (methodIndex != -1) {
+            result ~= name[methodIndex .. $];
+        }
+    }
+    else {
+        result = name;
+    }
+    result ~= "(";
 
     int i;
     foreach (type; signature) {
@@ -232,11 +232,35 @@ string grGetPrettyFunctionCall(const string name, const GrType[] inSignature) {
 
 /// Prettify a function.
 string grGetPrettyFunction(const string name, const GrType[] inSignature, const GrType[] outSignature) {
-    string result = to!string(name) ~ "(";
+    import std.string : indexOf;
+
+    string result;
+    GrType[] signature = inSignature.dup;
+
+    if (name == "@as") {
+        signature.length = 1;
+        result = name;
+    }
+    else if (name.length >= "@static_".length && name[0 .. "@static_".length] == "@static_") {
+        if (signature.length) {
+            result = "@" ~ grGetPrettyType(signature[$ - 1]);
+            signature.length--;
+        }
+
+        size_t methodIndex = name.indexOf('.');
+        if (methodIndex != -1) {
+            result ~= name[methodIndex .. $];
+        }
+    }
+    else {
+        result = name;
+    }
+    result ~= "(";
+
     int i;
-    foreach (type; inSignature) {
+    foreach (type; signature) {
         result ~= grGetPrettyType(type);
-        if ((i + 2) <= inSignature.length)
+        if ((i + 2) <= signature.length)
             result ~= ", ";
         i++;
     }

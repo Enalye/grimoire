@@ -715,14 +715,27 @@ final class GrData {
     }
 
     private string getPrettyPrimitive(const GrPrimitive primitive) {
-        import std.conv : to;
+        import std.string : indexOf;
 
         string result = primitive.name;
         auto nbParameters = primitive.inSignature.length;
+
         if (primitive.name == "@as")
             nbParameters = 1;
-        else if (primitive.name == "@new")
-            nbParameters--;
+        else if (primitive.name.length >= "@static_".length &&
+            primitive.name[0 .. "@static_".length] == "@static_") {
+
+            if (primitive.inSignature.length) {
+                result = "@" ~ grGetPrettyType(primitive.inSignature[$ - 1]);
+                nbParameters--;
+            }
+
+            size_t methodIndex = primitive.name.indexOf('.');
+            if (methodIndex != -1) {
+                result ~= primitive.name[methodIndex .. $];
+            }
+        }
+
         result ~= "(";
         for (int i; i < nbParameters; i++) {
             result ~= grGetPrettyType(primitive.inSignature[i]);

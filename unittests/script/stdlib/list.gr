@@ -5,7 +5,7 @@
  */
 
 event methods() {
-    let a = [5, 7, 9, 10, -2, 0, 8];
+    var a = [5, 7, 9, 10, -2, 0, 8];
 
     assert(a:size == 7);
     a:resize(8);

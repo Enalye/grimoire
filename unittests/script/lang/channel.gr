@@ -10,17 +10,17 @@ event send_receive() {
     assert(<- c == 5);*/
 }
 
-task sender(channel(int) c) {
+task sender(c: channel<int>) {
     "sender":print;
     c <- 5;
     "sent":print;
 }
 
 event test_select() {
-    channel(int) c;
+    var c: channel<int>;
     sender2(c);
     
-    int i;
+    var i: int;
     select
     case(i = <- c)
         assert(i == 5);
@@ -39,7 +39,7 @@ event test_select() {
         assert(true);
 }
 
-task sender2(channel(int) c) {
+task sender2(c: channel<int>) {
     c <- 5;
     c <- 7;
 }

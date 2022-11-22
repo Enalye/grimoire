@@ -494,14 +494,17 @@ package final class GrLexer {
             else if (isPrefix && (symbol == 'b' || symbol == 'B')) {
                 isPrefix = false;
                 isBinary = true;
+                buffer.length = 0;
             }
             else if (isPrefix && (symbol == 'o' || symbol == 'O')) {
                 isPrefix = false;
                 isOctal = true;
+                buffer.length = 0;
             }
             else if (isPrefix && (symbol == 'x' || symbol == 'X')) {
                 isPrefix = false;
                 isHexadecimal = true;
+                buffer.length = 0;
             }
             else if (symbol >= '0' && symbol <= '9') {
                 if (isStart && symbol == '0') {
@@ -513,8 +516,7 @@ package final class GrLexer {
                     isFloat = true;
                 }
 
-                if (!isPrefix)
-                    buffer ~= symbol;
+                buffer ~= symbol;
             }
             else if (symbol == '_') {
                 // Do nothing, only cosmetic (e.g. 1_000_000).

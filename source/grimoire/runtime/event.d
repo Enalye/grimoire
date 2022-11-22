@@ -1,3 +1,9 @@
+/** 
+ * Copyright: Enalye
+ * License: Zlib
+ * Authors: Enalye
+ */
+
 module grimoire.runtime.event;
 
 import grimoire.assembly;

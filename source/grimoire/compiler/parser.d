@@ -588,6 +588,7 @@ final class GrParser {
             if (temp.name == name && (temp.fileId == fileId || temp.isPublic || isPublic)) {
                 GrAnyData anyData = new GrAnyData;
                 _data.setAnyData(anyData);
+
                 if (_data.isSignatureCompatible(signature, temp.inSignature,
                         true, fileId, isPublic)) {
                     foreach (GrConstraint constraint; temp.constraints) {
@@ -2624,6 +2625,8 @@ final class GrParser {
         string[] templateVariables = parseTemplateVariables();
         string name;
         bool isConversion;
+        GrType staticType;
+
         if (get().type == GrLexeme.Type.as) {
             checkAdvance();
             name = "@as";
@@ -2631,8 +2634,12 @@ final class GrParser {
         }
         else if (get().type == GrLexeme.Type.at) {
             checkAdvance();
-            GrType staticType = parseType(true, templateVariables);
-            name = "@static_" ~ grGetPrettyType(staticType);
+            staticType = parseType(true, templateVariables);
+            name = "@static_" ~ grUnmangleComposite(staticType.mangledType).name;
+
+            if (staticType.base == GrType.Base.void_)
+                logError(format(getError(Error.xNotDecl),
+                        getPrettyType(staticType)), getError(Error.unknownType));
 
             if (get().type == GrLexeme.Type.period) {
                 checkAdvance();
@@ -2682,8 +2689,12 @@ final class GrParser {
         string[] inputs;
         temp.inSignature = parseInSignature(inputs, templateVariables);
         temp.outSignature = parseSignature(templateVariables);
-        if (name == "@as" || name == "@new")
+
+        if (name == "@as")
             temp.inSignature ~= temp.outSignature;
+        else if (staticType.base != GrType.Base.void_)
+            temp.inSignature ~= staticType;
+
         temp.constraints = parseWhereStatement(templateVariables);
         templatedFunctions ~= temp;
         skipBlock(true);
@@ -4845,7 +4856,7 @@ final class GrParser {
             }
         }
         else {
-            string name = "@static_" ~ grGetPrettyType(objectType);
+            string name = "@static_" ~ grUnmangleComposite(objectType.mangledType).name;
 
             if (get().type == GrLexeme.Type.period) {
                 checkAdvance();
@@ -4887,6 +4898,7 @@ final class GrParser {
                     }
                 }
             }
+            signature ~= objectType;
 
             //GrPrimitive call.
             auto matching = getFirstMatchingFuncOrPrim(name, signature, fileId);

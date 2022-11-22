@@ -5,7 +5,7 @@
  */
 
 event methods() {
-    let buffer = new CircularBuffer<int>(6);
+    var buffer = @CircularBuffer<int>(6);
     assert(buffer:isEmpty);
     assert(!buffer:isFull);
 

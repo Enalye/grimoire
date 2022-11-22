@@ -5,7 +5,7 @@
  */
 
 event methods() {
-    let a = "Bonjour";
+    var a = "Bonjour";
 
     assert(a:size == 7);
     assert(!a:isEmpty);
@@ -30,9 +30,9 @@ event methods() {
     assert(a:slice(12, a:size) == "our, les amis");
     assert("saucisse":reverse == "essicuas");
 
-    int i;
+    var i: int;
     for(char, "anticonstitutionnellement":each) {
-        assert(char == "anticonstitutionnellement":slice(i));
+        assert(char == "anticonstitutionnellement":slice(i, i));
         i++;
     }
 }

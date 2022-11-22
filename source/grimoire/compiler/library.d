@@ -455,10 +455,10 @@ final class GrLibrary : GrLibDefinition {
     Define a function that will be called with the `new` operation.
     It must return the defined type.
     */
-    override GrPrimitive addConstructor(GrCallback callback, GrType newType,
+    override GrPrimitive addConstructor(GrCallback callback, GrType type,
         GrType[] inSignature = [], GrConstraint[] constraints = []) {
-        auto primitive = addFunction(callback, "@new", inSignature ~ [newType],
-            [newType], constraints);
+        auto primitive = addFunction(callback, "@static_" ~ grUnmangleComposite(type.mangledType)
+                .name, inSignature ~ [type], [type], constraints);
         return primitive;
     }
 

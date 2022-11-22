@@ -83,8 +83,8 @@ event test_loop() {
 }
 
 event test_for() {
-    int x;
-    for(int i, [10, 11, 12]) {
+    var x: int;
+    for(i, [10, 11, 12]) {
         assert(i == 10 + x);
         x ++;
     }

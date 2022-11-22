@@ -5,7 +5,7 @@
  */
 
 event methods() {
-    let queue = new Queue<int>;
+    var queue = @Queue<int>;
     assert(queue:isEmpty);
 
     queue:push(5);
