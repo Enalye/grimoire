@@ -11,13 +11,9 @@ import std.algorithm : canFind;
 import grimoire.assembly;
 import grimoire.compiler.data, grimoire.compiler.error, grimoire.compiler.util;
 
-/**
-Describe the smallest element found in a source _file.
-*/
+/// Décrit la plus petite unité lexicale présent dans un fichier source
 struct GrLexeme {
-    /**
-    Kinds of valid token.
-    */
+    /// Type de jetons valides
     enum Type {
         nothing,
         leftBracket,
@@ -131,7 +127,6 @@ struct GrLexeme {
         continue_,
     }
 
-    /// Default.
     this(GrLexer _lexer) {
         _line = _lexer._line;
         _column = _lexer._current - _lexer._positionOfLine;
@@ -140,88 +135,88 @@ struct GrLexeme {
     }
 
     private {
-        /// Parent lexer.
+        /// Le lexer parent
         GrLexer lexer;
 
-        /// Id of the file the token is in.
+        /// L’id du fichier dans lequel il est présent
         uint _fileId;
 
-        /// Position information in case of errors.
+        /// Informations sur sa position en cas d’erreur
         uint _line, _column, _textLength = 1;
     }
 
     @property {
-        /// Line position
+        /// Sa ligne
         uint line() const {
             return _line;
         }
-        /// Column position
+        /// Sa colonne
         uint column() const {
             return _column;
         }
-        /// Text length
+        /// Taille du texte
         uint textLength() const {
             return _textLength;
         }
-        /// Text length
+        /// Ditto
         uint textLength(uint textLength_) {
             return _textLength = textLength_;
         }
-        /// File id
+        /// L’id du fichier
         uint fileId() const {
             return _fileId;
         }
     }
 
-    /// Kind of token.
+    /// Type de jeton
     Type type;
 
-    /// Whether the lexeme is a constant value.
+    /// Est-ce que le type est une constante ?
     bool isLiteral;
 
-    /// Whether the lexeme is an operator.
+    /// Est-ce que le type est une opérateur ?
     bool isOperator;
 
-    /// is this a reserved grimoire word ?
+    /// Est-ce que c’est un mot-clé réservé ?
     bool isKeyword;
 
-    /// Only describe first class type such as `int`, `string` or `func`.
-    /// Structure or other custom type are not.
+    /// Décrit seulement les types de premier ordre comme `int`, `string` ou `func`.
+    /// Les types natifs ou les classes n’en font pas partie.
     bool isType;
 
-    /// Integral value of the constant.
-    /// isLiteral will be true and type set to int.
+    /// Valeur entière de la constante.
+    /// `isLiteral` vaut `true` et `type` vaut `int_`.
     GrInt ivalue;
 
-    /// Floating point value of the constant.
-    /// isLiteral will be true and type set to float.
+    /// Valeur flottante de la constante.
+    /// `isLiteral` vaut `true` et `type` vaut `float_`.
     GrFloat rvalue;
 
-    /// Boolean value of the constant.
-    /// isLiteral will be true and type set to bool.
+    /// Valeur booléenne de la constante.
+    /// `isLiteral` vaut `true` et `type` vaut `bool_`.
     GrBool bvalue;
 
-    /// Can either describe a literal value like `"myString"` or an identifier.
+    /// Décrit soit une valeur constante comme `"bonjour"` ou un identificateur.
     GrStringValue svalue;
 
-    /// Returns the entire _line from where the token is located.
+    /// Renvoie la ligne entière où le jeton est situé.
     string getLine() {
         return lexer.getLine(this);
     }
 
+    /// Renvoie le nom du fichier où le jeton est situé.
     string getFile() {
         return lexer.getFile(this);
     }
 
-    /// Can we define a custom function with this operator
+    /// Est-ce qu’on peut surcharger cet opérateur ?
     bool isOverridableOperator() const {
         return type >= Type.add && type <= Type.not;
     }
 }
 
-/**
-The lexer scans the entire file and all the imported files it references.
-*/
+/// Le lexeur analyse l’entièreté du fichier et importe tous les fichiers qui y sont référencés,
+/// puis génère une série de lexème qui seront analysé par le parseur.
 package final class GrLexer {
     private {
         string[] _filesToImport, _filesImported;
@@ -235,18 +230,17 @@ package final class GrLexer {
     }
 
     @property {
-        /// Generated tokens.
+        /// Tous les jetons générés.
         GrLexeme[] lexemes() {
             return _lexemes;
         }
     }
 
-    /// Ctor
     this(GrLocale locale) {
         _locale = locale;
     }
 
-    /// Start scanning the root file and all its dependencies.
+    /// Analyse le fichier racine et toutes ses dépendances.
     void scanFile(GrData data, string fileName) {
         import std.path : buildNormalizedPath, absolutePath;
 
@@ -275,7 +269,7 @@ package final class GrLexer {
             _fileId++;
         }
 
-        // Translate aliases
+        // Traduit les alias
         foreach (ref lexeme; _lexemes) {
             if (lexeme.type == GrLexeme.Type.identifier) {
                 string* name = (lexeme.svalue in _data._aliases);
@@ -286,9 +280,7 @@ package final class GrLexer {
         }
     }
 
-    /**
-	Fetch the entire line where a lexeme is.
-	*/
+    /// Récupère toute la ligne sur lequel un lexème est présent.
     package string getLine(GrLexeme lex) {
         if (lex._fileId >= _filesImported.length)
             raiseError(Error.lexFileIdOutOfBounds);
@@ -299,21 +291,20 @@ package final class GrLexer {
         return to!string(_lines[lex._line]);
     }
 
-    /**
-	Fetch the file where a lexeme is.
-	*/
+    /// Récupère le fichier où le lexème est présent.
     package string getFile(GrLexeme lex) {
         if (lex._fileId >= _filesImported.length)
             raiseError(Error.lexFileIdOutOfBounds);
         return _filesImported[lex._fileId];
     }
     /// Ditto
-    package string getFile(size_t lexFileIdOutOfBounds) {
-        if (lexFileIdOutOfBounds >= _filesImported.length)
+    package string getFile(size_t fileId) {
+        if (fileId >= _filesImported.length)
             raiseError(Error.lexFileIdOutOfBounds);
-        return _filesImported[lexFileIdOutOfBounds];
+        return _filesImported[fileId];
     }
 
+    /// Renvoie le caractère présent à la position du curseur.
     private dchar get(int offset = 0) {
         const uint position = to!int(_current) + offset;
         if (position < 0 || position >= _text.length)
@@ -321,7 +312,7 @@ package final class GrLexer {
         return _text[position];
     }
 
-    /// Advance the current character pointer and skips whitespaces and comments.
+    /// Avance le curseur tout en ignorant les espaces et les commentaires.
     private bool advance(bool startFromCurrent = false) {
         if (!startFromCurrent)
             _current++;
@@ -385,7 +376,7 @@ package final class GrLexer {
                         }
                         else if (_text[_current] == '*' && _text[_current + 1] == '/') {
                             if (_current > 0 && _text[_current - 1] == '/') {
-                                //Skip
+                                // On ignore
                             }
                             else if (commentScope == 0) {
                                 _current++;
@@ -412,9 +403,9 @@ package final class GrLexer {
         return true;
     }
 
-    /// Scan the content of a single file.
+    /// Analyse le contenu d’un seul fichier
     private void scanScript() {
-        //Skip the first escape characters.
+        // On ignore les espaces/commentaires situés au début
         advance(true);
 
         do {
@@ -524,7 +515,7 @@ package final class GrLexer {
                 buffer ~= symbol;
             }
             else if (symbol == '_') {
-                // Do nothing, only cosmetic (e.g. 1_000_000).
+                // On ne fait rien, c’est purement visuel (par ex: 1_000_000)
             }
             else if (symbol == '.') {
                 if (isMaybeFloat) {
@@ -1202,7 +1193,7 @@ package final class GrLexer {
         _lexemes ~= lex;
     }
 
-    /// Transform the path in your path system.
+    /// Transforme le chemin en chemin natif du système.
     private string convertPathToImport(string path) {
         import std.regex : replaceAll, regex;
         import std.path : dirSeparator;
@@ -1210,7 +1201,7 @@ package final class GrLexer {
         return replaceAll(path, regex(r"\\/|/|\\"), dirSeparator);
     }
 
-    /// add a single file path delimited by `"` to the import list.
+    /// Ajoute un seul chemin de fichier délimité par `"` à la liste de fichiers à importer.
     private void scanFilePath() {
         import std.path : dirName, buildNormalizedPath, absolutePath;
 
@@ -1242,16 +1233,16 @@ package final class GrLexer {
         _filesToImport ~= buffer;
     }
 
-    /// Scan a `use` directive.
-    /// Syntax:
-    /// `use "FILEPATH"` or
-    /// `use { "FILEPATH1", "FILEPATH2", "FILEPATH3" }`
+    /// Analyse la directive `import`.
+    /// Syntaxe:
+    /// `import "CHEMIN/DU/FICHIER"` or
+    /// `import { "CHEMIN1" "CHEMIN2" "CHEMIN3" }`
     /// ___
-    /// add a file to the list of files to import.
+    /// Ajoute des fichier à la liste des fichiers à importer.
     private void scanUse() {
         advance();
 
-        // Multiple files import.
+        // Import de plusieurs fichiers
         if (get() == '{') {
             advance();
             bool isFirst = true;
@@ -1262,24 +1253,26 @@ package final class GrLexer {
                     advance();
                 else
                     raiseError(Error.missingQuotationMarkAtEndOfStr);
-                // EOF
+
+                // Fin du fichier
                 if (_current >= _text.length)
                     raiseError(Error.missingRightCurlyBraceAfterUsedFilesList);
-                // End of the import list.
+
+                // Fin de la liste
                 if (get() == '}')
                     break;
-                // Scan
+
+                // Analyse le chemin
                 scanFilePath();
             }
         }
         else {
+            // Analyse le chemin
             scanFilePath();
         }
     }
 
-    /**
-	Lexical error
-	*/
+    /// Erreur lexicale.
     private void raiseError(Error error) {
         raiseError(getLexerError(error, _locale));
     }
@@ -1295,14 +1288,14 @@ package final class GrLexer {
             GrLexeme lexeme = _lexemes[$ - 1];
             error.filePath = to!string(lexeme.getFile());
             error.lineText = to!string(lexeme.getLine()).replace("\t", " ");
-            error.line = lexeme._line + 1u; // By convention, the first line is 1, not 0.
+            error.line = lexeme._line + 1u; // Par convention, la première ligne comment à partir de 1, et non 0
             error.column = lexeme._column;
             error.textLength = lexeme._textLength;
         }
         else {
             error.filePath = to!string(_file);
             error.lineText = to!string(_lines[_line]);
-            error.line = _line + 1u; // By convention, the first line is 1, not 0.
+            error.line = _line + 1u; // Par convention, la première ligne comment à partir de 1, et non 0
             error.column = _current - _positionOfLine;
             error.textLength = 0u;
         }
@@ -1362,18 +1355,15 @@ private immutable string[] _prettyLexemeTypeTable = [
     "loop", "return", "self", "die", "exit", "yield", "break", "continue"
 ];
 
-/// Returns a displayable version of a token type.
-string grGetPrettyLexemeType(GrLexeme.Type operator) {
-    return _prettyLexemeTypeTable[operator];
+/// Renvoie une version affichable du type de jeton
+string grGetPrettyLexemeType(GrLexeme.Type lexType) {
+    return _prettyLexemeTypeTable[lexType];
 }
 
-/**
-Lexical error during tokenization
-*/
+/// Décrit une erreur lexicale
 package final class GrLexerException : Exception {
     GrError error;
 
-    /// Ctor
     this(GrError error_, string _file = __FILE__, size_t _line = __LINE__) {
         super(error_.message, _file, _line);
         error = error_;

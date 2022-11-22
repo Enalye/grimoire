@@ -8,7 +8,7 @@ module grimoire.assembly.bytecode;
 import std.file, std.bitmanip, std.array, std.outbuffer;
 import grimoire.assembly.symbol;
 
-/// Low-level instructions for the VM.
+/// Instructions bas niveau de la machine virtuelle.
 enum GrOpcode {
     nop,
     throw_,
@@ -132,22 +132,22 @@ enum GrOpcode {
     debugProfileEnd
 }
 
-/// Class reference
+/// Référence d’une classe.
 package(grimoire) class GrClassBuilder {
-    /// Class name
+    /// Nom de la classe
     string name;
-    /// All its fields
+    /// Les champs de la classe
     string[] fields;
 }
 
-/// Compiled form of grimoire.
+/// Forme compilée d’un code grimoire.
 final class GrBytecode {
     package(grimoire) {
-        /// Data used to setup GrCall objects.
+        /// Données utilisées pour créer les objets `GrCall`.
         struct PrimitiveReference {
-            /// Callback index
+            /// L’index de la primitive
             int index;
-            /// Parameters
+            /// Paramètres
             uint params;
             /// Ditto
             uint[] parameters;
@@ -155,58 +155,58 @@ final class GrBytecode {
             string[] inSignature, outSignature;
         }
 
-        /// Reference to a global variable.
+        /// Référence une variable globale.
         struct Variable {
-            /// Register
+            /// L’index de la variable
             uint index;
-            /// Type of value
+            /// Type de valeur
             uint typeMask;
-            /// Integral init value
+            /// Valeur entière initiale
             GrInt ivalue;
-            /// Floating init value
+            /// Valeur flottante initiale
             GrFloat rvalue;
-            /// String init value
+            /// Valeur textuelle initiale
             GrStringValue svalue;
         }
 
-        /// All the instructions.
+        /// Toutes les instructions.
         uint[] opcodes;
 
-        /// Integer constants.
+        /// Constantes entières.
         GrInt[] iconsts;
 
-        /// Floating point constants.
+        /// Constantes flottantes.
         GrFloat[] rconsts;
 
-        /// String constants.
+        /// Constantes textuelles.
         GrStringValue[] sconsts;
 
-        /// Callable primitives.
+        /// Primitives appelables.
         PrimitiveReference[] primitives;
 
-        /// All the classes.
+        /// Toutes les classes.
         GrClassBuilder[] classes;
 
-        /// Number of global variables declared.
+        /// Nombre de variables globales déclarées.
         uint globalsCount;
 
-        /// global event functions.
-        /// Their name are in a mangled state.
+        /// Événements globaux
         uint[string] events;
 
-        /// Global variables
+        /// Variables globales
         Variable[string] variables;
 
+        /// Symboles de déboguage
         GrSymbol[] symbols;
     }
 
+    /// Préfixe des fichiers grimoires compilés.
     private immutable magicWord = "grb";
 
-    /// Default ctor
     this() {
     }
 
-    /// Copy ctor
+    /// Charger depuis un bytecode
     this(GrBytecode bytecode) {
         opcodes = bytecode.opcodes;
         iconsts = bytecode.iconsts;
@@ -217,29 +217,30 @@ final class GrBytecode {
         globalsCount = bytecode.globalsCount;
         events = bytecode.events;
         variables = bytecode.variables;
-        symbols = bytecode.symbols.dup; //@TODO: change the shallow copy
+        symbols = bytecode.symbols.dup; //@TODO: changer la copie superficielle
     }
 
-    /// Load from a file
+    /// Charger depuis un fichier
     this(string filePath) {
         load(filePath);
     }
 
-    /// Load from bytes
+    /// Charger depuis un buffer
     this(ubyte[] buffer) {
         deserialize(buffer);
     }
 
-    string[] getEvents() {
-        return events.keys;
-    }
-
-    /// Save the bytecode to a file.
+    /// Enregistre le bytecode dans un fichier.
     void save(string fileName) {
         std.file.write(fileName, serialize());
     }
 
-    /// Serialize the bytecode into an list.
+    /// Récupère l’ensemble des événements globaux.
+    string[] getEvents() {
+        return events.keys;
+    }
+
+    /// Sérialise le bytecode
     ubyte[] serialize() {
         void writeStr(ref Appender!(ubyte[]) buffer, GrStringValue s) {
             buffer.append!uint(cast(uint) s.length);
@@ -312,7 +313,7 @@ final class GrBytecode {
                 writeStr(buffer, reference.svalue);
         }
 
-        // Serialize symbols
+        // Sérialise les symboles
         foreach (GrSymbol symbol; symbols) {
             buffer.append!uint(symbol.type);
             symbol.serialize(buffer);
@@ -321,12 +322,12 @@ final class GrBytecode {
         return buffer.data;
     }
 
-    /// Load the bytecode from a file.
+    /// Charge le bytecode depuis un fichier
     void load(string fileName) {
         deserialize(cast(ubyte[]) std.file.read(fileName));
     }
 
-    /// Deserialize the bytecode from an list.
+    /// Désérialise le bytecode depuis un buffer
     void deserialize(ubyte[] buffer) {
         GrStringValue readStr(ref ubyte[] buffer) {
             GrStringValue s;
@@ -425,7 +426,7 @@ final class GrBytecode {
             variables[name] = reference;
         }
 
-        // Deserialize symbols
+        // Désérialise les symboles
         for (uint i; i < symbols.length; ++i) {
             GrSymbol symbol;
             const uint type = buffer.read!uint();
@@ -445,22 +446,22 @@ final class GrBytecode {
     }
 }
 
-/// Get the unsigned value part of an instruction
+/// Récupère la partie valeur non-signée d’une instruction
 pure uint grGetInstructionUnsignedValue(uint instruction) {
     return (instruction >> 8u) & 0xffffff;
 }
 
-/// Get the signed value part of an instruction
+/// Récupère la partie valeur signée d’une instruction
 pure int grGetInstructionSignedValue(uint instruction) {
     return (cast(int)((instruction >> 8u) & 0xffffff)) - 0x800000;
 }
 
-/// Get the opcode part of an instruction
+/// Récupère la partie instruction d’une instruction
 pure uint grGetInstructionOpcode(uint instruction) {
     return instruction & 0xff;
 }
 
-/// Format an instruction.
+/// Forme une instruction.
 pure uint grMakeInstruction(uint instr, uint value1, uint value2) {
     return ((value2 << 16u) & 0xffff0000) | ((value1 << 8u) & 0xff00) | (instr & 0xff);
 }

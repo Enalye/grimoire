@@ -8,7 +8,7 @@ event methods() {
     var a = [5, 7, 9, 10, -2, 0, 8];
 
     assert(a:size == 7);
-    a:resize(8);
+    a:resize(8, 0);
     assert(a:size == 8);
 
     assert(!a:isEmpty);

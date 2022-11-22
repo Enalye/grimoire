@@ -14,25 +14,24 @@ alias GrFloat = double;
 alias GrStringValue = string;
 alias GrPointer = void*;
 
-/// Stack trace
+/// Trace d’appels
 struct GrStackTrace {
-    /// Where the error was raised inside this function
+    /// Où l’erreur a été lancé dans cette fonction
     uint pc;
-    /// The name of the function
+    /// Le nom de la fonction
     string name;
-    /// Source file from where the stack trace was generated
+    /// Fichier source d’où la trace a été générée
     string file;
-    /// Position inside the source file where the error happened
+    /// Position dans le fichier source où l’erreur est survenue
     uint line;
     /// Ditto
     uint column;
 }
 
-/**
-A class that contains debug information, should always be overridden
-*/
+/// Représente des informations de déboguage.
+/// Doit toujours être spécialisé.
 abstract class GrSymbol {
-    /// Type of symbol
+    /// Type de symbole
     enum Type : uint {
         none = 0,
         func
@@ -40,51 +39,40 @@ abstract class GrSymbol {
     /// Ditto
     Type type;
 
-    /// Serialize the symbol into the bytecode
+    /// Sérialise le symbole vers le bytecode
     void serialize(ref Appender!(ubyte[]));
-    /// Deserialize the symbol from the bytecode
+    /// Désérialise le symbole depuis le bytecode
     void deserialize(ref ubyte[] buffer);
 
-    /**
-    Stringify the debug information
-    */
+    /// Formate les informations de déboguage
     string prettify();
 }
 
-/**
-
-*/
+/// Symbole de déboguage d’une fonction
 final class GrFunctionSymbol : GrSymbol {
     public {
-        /**
-        Location of the function in the bytecode
-        */
+        /// Position de la fonction dans le bytecode
         uint start;
-        /**
-        Number of opcodes in the function
-        */
+        /// Nombre d’opcodes dans la fonction
         uint length;
-        /**
-        Name of the function
-        */
+        /// Nom de la fonction
         string name;
-        /// File where the function is defined
+        /// Fichier où la fonction est définie
         string file;
-        /// Corresponding position in the source for each bytecode
+        /// Position d’origine du fichier source pour chaque instruction
         struct Position {
-            /// Source coordinates
+            /// Position source
             uint line, column;
         }
         /// Ditto
         Position[] positions;
     }
 
-    /// Ctor
     this() {
         type = Type.func;
     }
 
-    /// Serialize the symbol into the bytecode
+    /// Sérialise le symbole vers le bytecode
     override void serialize(ref Appender!(ubyte[]) buffer) {
         buffer.append!uint(start);
         buffer.append!uint(length);
@@ -99,7 +87,7 @@ final class GrFunctionSymbol : GrSymbol {
         }
     }
 
-    /// Deserialize the symbol from the bytecode
+    /// Désérialise the symbole depuis le bytecode
     override void deserialize(ref ubyte[] buffer) {
         start = buffer.read!uint();
         length = buffer.read!uint();
@@ -114,6 +102,7 @@ final class GrFunctionSymbol : GrSymbol {
         }
     }
 
+    /// Formate les informations de déboguage
     override string prettify() {
         return format("%d+%d\t%s", start, length, name);
     }

@@ -46,13 +46,13 @@ event test_unless() {
 }
 
 event test_while() {
-    int i;
+    var i: int;
     while(i < 5)
         i ++;
     assert(i == 5);
 
     
-    int i;
+    var i: int;
     do
         i ++;
     while(i < 5)
@@ -60,12 +60,12 @@ event test_while() {
 }
 
 event test_until() {
-    int i;
+    var i: int;
     until(i >= 5)
         i ++;
     assert(i == 5);
 
-    int i;
+    var i: int;
     do
         i ++;
     until(i >= 5)
@@ -73,11 +73,11 @@ event test_until() {
 }
 
 event test_loop() {
-    int x;
+    var x: int;
     loop(5) x ++;
     assert(x == 5);
 
-    int x;
+    var x: int;
     loop(i, 5) x = i;
     assert(x == 4);
 }

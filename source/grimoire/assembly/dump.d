@@ -28,14 +28,8 @@ private string[] instructions = [
     "dbg_prfend"
 ];
 
-/// Dump the bytecode's instruction list in a pretty format.
+/// Formate la liste des instructions du bytecode dans un format lisible.
 string grDump(const GrBytecode bytecode) {
-    /*writeln("\n----- VM DUMP ------");
-    writeln("iconsts: ", bytecode.iconsts);
-    writeln("rconsts: ", bytecode.rconsts);
-    writeln("sconsts: ", bytecode.sconsts);
-    writeln("\nOpcodes:");*/
-
     string result;
     uint i;
     foreach (uint opcode; bytecode.opcodes) {

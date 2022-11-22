@@ -475,13 +475,12 @@ final class GrLibrary : GrLibDefinition {
                     nativeType) ~ "` exceed the number of operations");*/
 
         if (getCallback) {
-            primitives ~= addFunction(getCallback, name ~ "@get", [nativeType],
-                [propertyType], constraints);
+            primitives ~= addFunction(getCallback, "@property_" ~ name,
+                [nativeType], [propertyType], constraints);
         }
         if (setCallback) {
-            primitives ~= addFunction(setCallback, name ~ "@set", [
-                    nativeType, propertyType
-                ], [propertyType], constraints);
+            primitives ~= addFunction(setCallback, "@property_" ~ name,
+                [nativeType, propertyType], [propertyType], constraints);
         }
         return primitives;
     }
@@ -491,16 +490,17 @@ final class GrLibrary : GrLibDefinition {
 
         auto nbParameters = primitive.inSignature.length;
         string result;
-        if (primitive.name == "@new") {
-            result ~= "new ";
-            if (nbParameters > 0) {
-                result ~= grGetPrettyType(primitive.inSignature[$ - 1]);
-                nbParameters--;
-            }
-        }
-        else if (primitive.name == "@as") {
+        if (primitive.name == "@as") {
             result ~= "as";
             nbParameters = 1;
+        }
+        else if (primitive.name.length >= "@static_".length &&
+            primitive.name[0 .. "@static_".length] == "@static_") {
+
+            if (nbParameters) {
+                result = "@" ~ grGetPrettyType(primitive.inSignature[$ - 1]);
+                nbParameters--;
+            }
         }
         else {
             result ~= primitive.name;

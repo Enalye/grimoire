@@ -10,7 +10,7 @@ event methods() {
     assert(map:size == 0);
     assert(map:isEmpty);
 
-    let map = new HashMap<int>([
+    var map = @HashMap<int>([
         "banana" => 5,
         "orange" => 2,
         "pear" => 1,
@@ -24,7 +24,7 @@ event methods() {
     assert(!map:contains("apple"));
 
     assert(map:get("orange") == 2);
-    assert(map:get("apple") == null(int));
+    assert(map:get("apple") == null<int>);
 
     assert(map:getOr("orange", 6) == 2);
     assert(map:getOr("apple", 6) == 6);
@@ -32,13 +32,13 @@ event methods() {
     map:remove("orange");
     assert(map:size == 4);
 
-    let keys = map:byKeys;
-    let values = map:byValues;
+    var keys = map:byKeys;
+    var values = map:byValues;
 
     assert(keys:size == 4);
     assert(values:size == 4);
 
-    int i;
+    var i: int;
     for(pair, map:each) {
         assert(keys[i] == pair.key);
         assert(values[i] == pair.value);
