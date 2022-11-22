@@ -19,6 +19,7 @@ struct GrLexeme {
     Kinds of valid token.
     */
     enum Type {
+        nothing,
         leftBracket,
         rightBracket,
         leftParenthesis,
@@ -161,6 +162,10 @@ struct GrLexeme {
         /// Text length
         uint textLength() const {
             return _textLength;
+        }
+        /// Text length
+        uint textLength(uint textLength_) {
+            return _textLength = textLength_;
         }
         /// File id
         uint fileId() const {
@@ -948,6 +953,19 @@ package final class GrLexer {
         }
 
         _lexemes ~= lex;
+
+        /*
+            Pour empêcher un problème lié à la mauvaise interprétation entre
+            les opérateurs >> ou >= d’une opération arithmétique et
+            deux > > successifs ou > = lié à l’expression d’un type ;
+            on ajoute un lexème vide qui pourra être utilisé à la volonté du
+            parseur, celui-ci doit être ignoré par le `advance()`.
+        */
+        if (lex.type == GrLexeme.Type.rightShift || lex.type == GrLexeme.Type.greaterOrEqual) {
+            lex.type = GrLexeme.Type.nothing;
+            lex._textLength = 1;
+            _lexemes ~= lex;
+        }
     }
 
     /**
@@ -1331,18 +1349,17 @@ package final class GrLexer {
 }
 
 private immutable string[] _prettyLexemeTypeTable = [
-    "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "$", "?",
-    "as", "try", "catch", "error", "defer", "=", "&=", "|=", "^=", "&&=",
+    "", "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "$",
+    "?", "as", "try", "catch", "error", "defer", "=", "&=", "|=", "^=", "&&=",
     "||=", "??=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+", "-", "&",
     "|", "^", "&&", "||", "??", "+", "-", "*", "/", "~", "%", "**", "==",
     "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->", "=>", "~", "!",
     "++", "--", "identifier", "const_int", "const_float", "const_bool",
-    "const_string", "null", "public", "const", "pure", "alias",
-    "class", "enum", "where", "copy", "send", "receive", "int", "float", "bool",
-    "string", "list", "channel", "func", "task", "event", "var", "if",
-    "unless", "else", "switch", "select", "case", "default", "while", "do",
-    "until", "for", "loop", "return", "self", "die", "exit", "yield", "break",
-    "continue"
+    "const_string", "null", "public", "const", "pure", "alias", "class", "enum",
+    "where", "copy", "send", "receive", "int", "float", "bool", "string",
+    "list", "channel", "func", "task", "event", "var", "if", "unless", "else",
+    "switch", "select", "case", "default", "while", "do", "until", "for",
+    "loop", "return", "self", "die", "exit", "yield", "break", "continue"
 ];
 
 /// Returns a displayable version of a token type.

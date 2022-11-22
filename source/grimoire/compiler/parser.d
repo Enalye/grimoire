@@ -82,8 +82,11 @@ final class GrParser {
 
     /// Advance to the next lexeme.
     private void advance() {
-        if (current < lexemes.length)
-            current++;
+        do {
+            if (current < lexemes.length)
+                current++;
+        }
+        while (current < lexemes.length && lexemes[current].type == GrLexeme.Type.nothing);
     }
 
     /// Return to the last lexeme.
@@ -2460,6 +2463,7 @@ final class GrParser {
         if (get().type != GrLexeme.Type.lesser)
             return variables;
         checkAdvance();
+        distinguishTemplateLexemes();
         if (get().type == GrLexeme.Type.greater) {
             checkAdvance();
             return variables;
@@ -2471,6 +2475,7 @@ final class GrParser {
             variables ~= get().svalue;
             checkAdvance();
 
+            distinguishTemplateLexemes();
             const GrLexeme lex = get();
             if (lex.type == GrLexeme.Type.greater) {
                 checkAdvance();
@@ -2489,6 +2494,7 @@ final class GrParser {
         if (get().type != GrLexeme.Type.lesser)
             return signature;
         checkAdvance();
+        distinguishTemplateLexemes();
         if (get().type == GrLexeme.Type.greater) {
             checkAdvance();
             return signature;
@@ -2496,6 +2502,7 @@ final class GrParser {
         for (;;) {
             signature ~= parseType(true, templateVariables);
 
+            distinguishTemplateLexemes();
             const GrLexeme lex = get();
             if (lex.type == GrLexeme.Type.greater) {
                 checkAdvance();
@@ -3525,6 +3532,7 @@ final class GrParser {
         checkAdvance();
         GrType subType = parseType();
 
+        distinguishTemplateLexemes();
         GrLexeme lex = get();
         if (lex.type == GrLexeme.Type.comma) {
             checkAdvance();
@@ -3543,6 +3551,7 @@ final class GrParser {
                 format(getError(Error.expectedCommaOrGreaterFoundX),
                     getPrettyLexemeType(get().type)));
         }
+        distinguishTemplateLexemes();
         lex = get();
         if (lex.type != GrLexeme.Type.greater)
             logError(format(getError(Error.missingXInChanSignature), getPrettyLexemeType(GrLexeme.Type.greater)),
@@ -4946,6 +4955,7 @@ final class GrParser {
             checkAdvance();
             subType = parseType();
 
+            distinguishTemplateLexemes();
             GrLexeme lex = get();
             if (lex.type == GrLexeme.Type.comma) {
                 checkAdvance();
@@ -4964,6 +4974,7 @@ final class GrParser {
                     format(getError(Error.expectedCommaOrGreaterFoundX),
                         getPrettyLexemeType(get().type)));
             }
+            distinguishTemplateLexemes();
             lex = get();
             if (lex.type != GrLexeme.Type.greater)
                 logError(format(getError(Error.missingXInListSignature), getPrettyLexemeType(GrLexeme.Type.greater)),
@@ -5158,6 +5169,7 @@ final class GrParser {
 
         GrType type = parseType();
 
+        distinguishTemplateLexemes();
         if (get().type != GrLexeme.Type.greater)
             logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.greater),
                     getPrettyLexemeType(get().type)), format(getError(Error.missingX),
@@ -5552,6 +5564,7 @@ final class GrParser {
         checkAdvance();
 
         GrType type = parseType();
+        distinguishTemplateLexemes();
         if (get().type != GrLexeme.Type.greater)
             logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.greater),
                     getPrettyLexemeType(get().type)), format(getError(Error.missingX),
@@ -5899,6 +5912,7 @@ final class GrParser {
                     if (subType.base != GrType.Base.void_)
                         currentType = grOptional(subType);
 
+                    distinguishTemplateLexemes();
                     if (get().type != GrLexeme.Type.greater)
                         logError(format(getError(Error.missingXInNullSignature),
                                 getPrettyLexemeType(GrLexeme.Type.greater)),
@@ -6864,6 +6878,25 @@ final class GrParser {
         return returnType;
     }
 
+    /// À appeler avant un `>` attendu.
+    /// Permet d’empêcher les symboles comme `>>` d’être mal interprétés.
+    private void distinguishTemplateLexemes() {
+        switch (get().type) with (GrLexeme.Type) {
+        case rightShift:
+            lexemes[current].type = GrLexeme.Type.greater;
+            lexemes[current].textLength = 1;
+            lexemes[current + 1].type = GrLexeme.Type.greater;
+            break;
+        case greaterOrEqual:
+            lexemes[current].type = GrLexeme.Type.greater;
+            lexemes[current].textLength = 1;
+            lexemes[current + 1].type = GrLexeme.Type.equal;
+            break;
+        default:
+            return;
+        }
+    }
+
     private string getPrettyFunctionCall(string name, GrType[] signature) {
         return grGetPrettyFunctionCall(name, signature);
     }
@@ -7145,12 +7178,7 @@ final class GrParser {
         expectedOptionalType,
         opMustFollowAnOptionalType
     }
-    // format(getError(Error.), )
-    /*
 
-logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
-        signature)), getError(Error.unknownType), "", -1);
-    */
     private string getError(Error error) {
         immutable string[Error][GrLocale.max + 1] messages = [
             [ //en_US
