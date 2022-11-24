@@ -12,6 +12,7 @@ import grimoire.compiler.mangle;
 import grimoire.compiler.pretty;
 import grimoire.compiler.util;
 
+/// Contient les informations de types et les primitives de façon à générer une documentation
 final class GrDoc : GrLibDefinition {
     private {
         string[] _module;
@@ -87,6 +88,16 @@ final class GrDoc : GrLibDefinition {
             GrType[] inSignature;
             GrConstraint[] constraints;
             string[GrLocale] comments;
+            string[][GrLocale] parameters;
+        }
+
+        struct Static {
+            GrType type;
+            string name;
+            GrType[] inSignature, outSignature;
+            GrConstraint[] constraints;
+            string[GrLocale] comments;
+            string[][GrLocale] parameters;
         }
 
         struct Property {
@@ -104,6 +115,7 @@ final class GrDoc : GrLibDefinition {
         Alias[] _aliases;
         OperatorFunction[] _operators;
         Constructor[] _constructors;
+        Static[] _statics;
         Cast[] _casts;
         Function[] _functions;
         Property[] _properties;
@@ -373,7 +385,23 @@ final class GrDoc : GrLibDefinition {
         ctor.inSignature = inSignature;
         ctor.constraints = constraints;
         ctor.comments = _comments.dup;
+        ctor.parameters = _parameters.dup;
         _constructors ~= ctor;
+        return null;
+    }
+
+    override GrPrimitive addStatic(GrCallback, GrType type, string name,
+        GrType[] inSignature = [], GrType[] outSignature = [], GrConstraint[] constraints = [
+        ]) {
+        Static static_;
+        static_.type = type;
+        static_.name = name;
+        static_.inSignature = inSignature;
+        static_.outSignature = outSignature;
+        static_.constraints = constraints;
+        static_.comments = _comments.dup;
+        static_.parameters = _parameters.dup;
+        _statics ~= static_;
         return null;
     }
 
@@ -661,15 +689,37 @@ final class GrDoc : GrLibDefinition {
         if (_constructors.length) {
             md.addHeader("Constructeurs", 2);
 
-            md.addTableHeader(["Constructeur", "Entrée"]);
+            md.addTableHeader(["Fonction", "Entrée"]);
+            int i;
             foreach (ctor; _constructors) {
+                string funcName = "@" ~ _getPrettyType(ctor.type);
                 string inSignature;
+                string[] parametersName;
+                auto parameters = locale in ctor.parameters;
+                if (parameters) {
+                    parametersName = *parameters;
+                }
+
+                int paramIdx;
                 foreach (type; ctor.inSignature) {
                     if (inSignature.length)
                         inSignature ~= ", ";
                     inSignature ~= _getPrettyType(type);
+
+                    if (parametersName.length) {
+                        inSignature ~= " *" ~ parametersName[0] ~ "*";
+                        parametersName = parametersName[1 .. $];
+                    }
+                    else {
+                        inSignature ~= " *param" ~ to!string(paramIdx) ~ "*";
+                    }
+                    paramIdx++;
                 }
-                md.addTable([_getPrettyType(ctor.type), inSignature]);
+
+                md.addTable([
+                    asLink(funcName, "ctor_" ~ to!string(i)), inSignature
+                ]);
+                i++;
             }
         }
 
@@ -686,6 +736,49 @@ final class GrDoc : GrLibDefinition {
                     property_.hasGet ? "oui": "non",
                     property_.hasSet ? "oui": "non"
                 ]);
+            }
+        }
+
+        if (_statics.length) {
+            md.addHeader("Fonctions Statiques", 2);
+
+            md.addTableHeader(["Fonction", "Entrée", "Sortie"]);
+            int i;
+            foreach (static_; _statics) {
+                string funcName = "@" ~ _getPrettyType(static_.type) ~ "." ~ static_.name;
+                string inSignature, outSignature;
+                string[] parametersName;
+                auto parameters = locale in static_.parameters;
+                if (parameters) {
+                    parametersName = *parameters;
+                }
+
+                int paramIdx;
+                foreach (type; static_.inSignature) {
+                    if (inSignature.length)
+                        inSignature ~= ", ";
+                    inSignature ~= _getPrettyType(type);
+
+                    if (parametersName.length) {
+                        inSignature ~= " *" ~ parametersName[0] ~ "*";
+                        parametersName = parametersName[1 .. $];
+                    }
+                    else {
+                        inSignature ~= " *param" ~ to!string(paramIdx) ~ "*";
+                    }
+                    paramIdx++;
+                }
+
+                foreach (type; static_.outSignature) {
+                    if (outSignature.length)
+                        outSignature ~= ", ";
+                    outSignature ~= _getPrettyType(type);
+                }
+                md.addTable([
+                    asLink(funcName, "static_" ~ to!string(i)), inSignature,
+                    outSignature
+                ]);
+                i++;
             }
         }
 

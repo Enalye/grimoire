@@ -1,7 +1,7 @@
 /** 
- * Copyright: Enalye
- * License: Zlib
- * Authors: Enalye
+ * Droits d’auteur: Enalye
+ * Licence: Zlib
+ * Auteur: Enalye
  */
 module grimoire.runtime.object;
 
@@ -73,7 +73,7 @@ final class GrObject {
     }
 
     pragma(inline) T getNative(T)(const string fieldName) const {
-        // We cast to object first to avoid a crash when casting to a parent class
+        // On change en objet d’abord pour éviter un plantage en changeant pour une classe mère
         return cast(T) cast(Object) getField!GrPointer(fieldName);
     }
 

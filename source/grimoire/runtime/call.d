@@ -1,7 +1,7 @@
 /** 
- * Copyright: Enalye
- * License: Zlib
- * Authors: Enalye
+ * Droits d’auteur: Enalye
+ * Licence: Zlib
+ * Auteur: Enalye
  */
 module grimoire.runtime.call;
 
@@ -17,11 +17,11 @@ import grimoire.runtime.string;
 import grimoire.runtime.list;
 import grimoire.runtime.channel;
 
-/// Primitive type.
+/// Type des fonctions de rappel des primitives
 alias GrCallback = void function(GrCall);
 private GrValue[128] _outputs;
 
-/// Primitive task.
+/// Contient les informations liées à l’exécution d’une primitive
 final class GrCall {
     private {
         GrTask _task;
@@ -36,12 +36,12 @@ final class GrCall {
     }
 
     @property {
-        /// Current task running the primitive.
+        /// La tâche actuelle exécutant la primitive
         GrTask task() {
             return _task;
         }
 
-        /// Extra type compiler information.
+        /// Informations supplémentaires de type du compilateur
         GrStringValue meta() const {
             return _task.engine.meta;
         }
@@ -58,7 +58,7 @@ final class GrCall {
         _outSignature = primRef.outSignature.dup;
     }
 
-    /// The actual runtime call to the primitive.
+    /// Exécution de la primitive
     void call(GrTask task) {
         _results = 0;
         _hasError = false;
@@ -121,7 +121,7 @@ final class GrCall {
     }
 
     pragma(inline) T getNative(T)(uint index) const {
-        // We cast to object first to avoid a crash when casting to a parent class
+        // On change en objet d’abord pour éviter un plantage en changeant pour une classe mère
         return cast(T) cast(Object) getParameter!GrPointer(index);
     }
 
@@ -295,9 +295,10 @@ final class GrCall {
         bool _hasError;
     }
 
-    /// Does not actually send the error to the task.
-    /// Because the stacks would be in an undefined state.
-    /// So we wait until the primitive is finished before calling dispatchError().
+    /// N’envoie pas de suite l’erreur vers la tâche, \
+    /// sinon la pile serait dans un état indéfini. \
+    /// On attend donc jusqu’à ce que la primitive finisse avant \
+    /// d’appeler `dispatchError()`.
     void raise(GrString message) {
         _message = message.data;
         _hasError = true;
@@ -311,25 +312,25 @@ final class GrCall {
     private void dispatchError() {
         _task.engine.raise(_task, _message);
 
-        //The task is still in a primitive call
-        //and will increment the pc, so we prevent that.
+        // La tâche est toujours dans un appel de primitive
+        // et va incrémenter le compteur d’instruction,
+        // on évite donc ça.
         _task.pc--;
     }
 
-    /// Create a new object of type `typeName`.
+    /// Instancie un nouvel objet
     GrObject createObject(string name) {
         return _task.engine.createObject(name);
     }
 
     /**
-	Spawn a new coroutine registered as an event. \
-	The event's name must be mangled with its signature.
-	---
-	event myEvent() {
-		trace("myEvent was created !");
-	}
-	---
-	*/
+    Crée une nouvelle tâche à partir d’un événement.
+    ---
+    event monÉvénement() {
+        print("Bonjour!");
+    }
+    ---
+    */
     GrTask callEvent(const string name, const GrType[] signature = [], GrValue[] parameters = [
         ]) {
         return _task.engine.callEvent(name, signature, parameters);
@@ -339,7 +340,7 @@ final class GrCall {
         return _task.engine.callEvent(event, parameters);
     }
 
-    /// Pause the current task.
+    /// Met en suspend la tâche actuelle
     void block(GrBlocker blocker) {
         _task.block(blocker);
     }

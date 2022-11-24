@@ -1,7 +1,7 @@
 /** 
- * Copyright: Enalye
- * License: Zlib
- * Authors: Enalye
+ * Droits d’auteur: Enalye
+ * Licence: Zlib
+ * Auteur: Enalye
  */
 module grimoire.runtime.list;
 
@@ -12,10 +12,10 @@ import grimoire.runtime.string;
 import grimoire.runtime.object;
 import grimoire.runtime.channel;
 
-/// Runtime list, can only hold one subtype.
+/// Collection contenant plusieurs valeurs
 final class GrList {
-    /// Payload
     package {
+        /// Liste des valeurs
         GrValue[] _data;
     }
 

@@ -1,7 +1,7 @@
 /** 
- * Copyright: Enalye
- * License: Zlib
- * Authors: Enalye
+ * Droits d’auteur: Enalye
+ * Licence: Zlib
+ * Auteur: Enalye
  */
 module grimoire.runtime.engine;
 
@@ -23,35 +23,33 @@ import grimoire.runtime.list;
 import grimoire.runtime.channel;
 import grimoire.runtime.call;
 
-/**
-Grimoire's virtual machine.
-*/
+/// La machine virtuelle de grimoire
 class GrEngine {
     private {
-        /// Bytecode.
+        /// Le bytecode
         GrBytecode _bytecode;
 
-        /// Global variables.
+        /// Les variables globales
         GrValue[] _globals;
 
-        /// Global stack.
+        /// La pile globale
         GrValue[] _globalStackIn, _globalStackOut;
 
-        /// Task list.
+        /// Liste des tâche en exécution
         GrTask[] _tasks, _createdTasks;
 
-        /// Global panic state.
-        /// It means that the throwing task didn't handle the exception.
+        /// État de panique global
+        /// Signifie que la tâche impliquée n’a pas correctement géré son exception
         bool _isPanicking;
-        /// Unhandled panic message.
+        /// Message de panique non-géré
         GrStringValue _panicMessage;
-        /// Stack traces are generated each time an error is raised.
+        /// Les traces d’appel sont générés chaque fois qu’une erreur est lancé
         GrStackTrace[] _stackTraces;
 
-        /// Extra type compiler information.
+        /// Informations supplémentaires de type du compilateur
         GrStringValue _meta;
 
-        /// Primitives.
+        /// Primitives
         GrCallback[] _callbacks;
         /// Ditto
         GrCall[] _calls;
@@ -65,31 +63,31 @@ class GrEngine {
         normal
     }
 
-    /// External way of stopping the VM.
+    /// Moyen externe d’arrêter la machine virtuelle
     shared bool isRunning = true;
 
     @property {
-        /// Check if there is a task currently running.
+        /// Vérifie si une tâche est en cours d’exécution
         bool hasTasks() const {
             return (_tasks.length + _createdTasks.length) > 0uL;
         }
 
-        /// Whether the whole VM has panicked, true if an unhandled error occurred.
+        /// Est-ce que la machine virtuelle est en panique ?
         bool isPanicking() const {
             return _isPanicking;
         }
 
-        /// If the VM has raised an error, stack traces are generated.
+        /// Si la machine virtuelle a lancé une erreur, des traces d’appel sont générées
         const(GrStackTrace[]) stackTraces() const {
             return _stackTraces;
         }
 
-        /// The unhandled error message.
+        /// Le message de panique
         GrStringValue panicMessage() const {
             return _panicMessage;
         }
 
-        /// Extra type compiler information.
+        /// Informations supplémentaires de type du compilateur
         GrStringValue meta() const {
             return _meta;
         }
@@ -99,7 +97,6 @@ class GrEngine {
         }
     }
 
-    /// Default.
     this() {
     }
 
@@ -107,16 +104,18 @@ class GrEngine {
         _tasks ~= new GrTask(this);
     }
 
-    /// Add a new library to the runtime.
-    /// ___
-    /// It must be called before loading the bytecode.
-    /// It should be loading the same library as the compiler
-    /// and in the same order.
+    /**
+    Ajoute une nouvelle bibliothèque.
+    ___
+    Elle doit être appelé avant de charger le bytecode. \
+    Elle doit être identique à celle du compilateur. \
+    Et elle doit être appelé dans le même ordre.
+    */
     final void addLibrary(GrLibrary library) {
         _callbacks ~= library._callbacks;
     }
 
-    /// Load the bytecode.
+    /// Charge le bytecode.
     final void load(GrBytecode bytecode) {
         initialize();
         _bytecode = bytecode;
@@ -142,26 +141,27 @@ class GrEngine {
                 _globals[index]._ovalue = null;
         }
 
-        // Index the classes
+        // Indexe les classes
         for (size_t index; index < _bytecode.classes.length; index++) {
             GrClassBuilder classBuilder = _bytecode.classes[index];
             _classBuilders[classBuilder.name] = classBuilder;
         }
     }
 
-    /**
-	Checks whether an event exists. \
-	The event's name must be mangled with its signature.
-	*/
+    /// Vérifie si un événément existe
     bool hasEvent(const string name, const GrType[] signature = []) const {
         const string mangledName = grMangleComposite(name, signature);
         return (mangledName in _bytecode.events) !is null;
     }
 
+    /// Récupère la liste des événements du bytecode. \
+    /// Les noms sont sous la forme décorée.
     string[] getEvents() {
         return _bytecode.events.keys;
     }
 
+    /// Récupère un événement à l’adresse indiqué. \
+    /// Si l’adresse ne correspond à aucun événement, il ne sera pas retourné.
     GrEvent getEvent(GrInt address_) const {
         foreach (string name, uint address; _bytecode.events) {
             if (address == address_)
@@ -171,14 +171,13 @@ class GrEngine {
     }
 
     /**
-	Spawn a new task registered as an event. \
-	The event's name must be mangled with its signature.
-	---
-	event myEvent() {
-		print("myEvent was created !");
-	}
-	---
-	*/
+    Crée une nouvelle tâche à partir d’un événement.
+    ---
+    event monÉvénement() {
+        print("Bonjour!");
+    }
+    ---
+    */
     GrTask callEvent(const string name, const GrType[] signature = [],
         GrValue[] parameters = [], Priority priority = Priority.normal) {
         const string mangledName = grMangleComposite(name, signature);
@@ -209,6 +208,7 @@ class GrEngine {
         }
         return task;
     }
+
     /// Ditto
     GrTask callEvent(const GrEvent event, GrValue[] parameters = [],
         Priority priority = Priority.normal) {
@@ -245,16 +245,12 @@ class GrEngine {
         _createdTasks ~= task;
     }
 
-    /**
-    Captures an unhandled error and kill the VM.
-    */
+    /// Capture une erreur non-géré et tue la machine virtuelle
     void panic() {
         _tasks.length = 0;
     }
 
-    /**
-    Immediately prints a stacktrace to standard output
-    */
+    /// Génère les traces d’appel de la tâche
     private void generateStackTrace(GrTask task) {
         {
             GrStackTrace trace;
@@ -305,9 +301,7 @@ class GrEngine {
         }
     }
 
-    /**
-    Tries to resolve a function from a position in the bytecode
-    */
+    /// Essaye de récupérer le symbole d’une fonction depuis sa position dans le bytecode
     private Nullable!(GrFunctionSymbol) getFunctionInfo(uint position) {
         Nullable!(GrFunctionSymbol) bestInfo;
         foreach (const GrSymbol symbol; _bytecode.symbols) {
@@ -329,40 +323,39 @@ class GrEngine {
     }
 
     /**
-	Raise an error message and attempt to recover from it. \
-	The error is raised inside a task. \
-	___
-	For each function it unwinds, it'll search for a `try/catch` that captures it. \
-	If none is found, it'll execute every `defer` statements inside the function and
-	do the same for the next function in the callstack.
-	___
-	If nothing catches the error inside the task, the VM enters in a panic state. \
-	Every tasks will then execute their `defer` statements and be killed.
-	*/
+    Lance une erreur depuis une tâche et lance la procédure de récupération.
+    ___
+    Pour chaque fonction remonté, on cherche un `try/catch` qui l’englobe. \
+    Si aucun n’est trouvé, chaque `defer` dans la fonction est exécuté et \
+    ainsi de suite pour la prochaine fonction dans la pile d’appel.
+    ___
+    Si rien ne permet la capture de l’erreur dans la tâche, la machine virtuelle entrera en panique. \
+    Chaque tâche exécura ses propres `defer` et sera tué.
+    */
     void raise(GrTask task, GrStringValue message) {
         if (task.isPanicking)
             return;
-        //Error message.
+
+        // Message d’erreur
         _globalStackIn ~= GrValue(message);
 
         generateStackTrace(task);
 
-        //We indicate that the task is in a panic state until a catch is found.
+        // On indique que la tâche est en panique jusqu’à ce qu’un `catch` est trouvé
         task.isPanicking = true;
 
         if (task.callStack.length && task.callStack[task.stackFramePos].exceptionHandlers.length) {
-            //Exception handler found in the current function, just jump.
+            // Un gestionnaire d’erreur a été trouvé dans la fonction, on y va
             task.pc = task.callStack[task.stackFramePos].exceptionHandlers[$ - 1];
         }
         else {
-            //No exception handler in the current function, unwinding the deferred code, then return.
+            // Aucun gestionnaire d’erreur de trouvé dans la fonction,
+            // on déroule le code différé, puis on quitte la fonction.
             task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
         }
     }
 
-    /**
-	Marks each task as killed and prevents any new task from spawning.
-	*/
+    /// Marque toutes les tâches comme morte et empêche toute nouvelle tâche d’être créée
     private void killTasks() {
         foreach (task; _tasks) {
             task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
@@ -397,7 +390,7 @@ class GrEngine {
     }
 
     pragma(inline) T getNativeVariable(T)(string name) const {
-        // We cast to object first to avoid a crash when casting to a parent class
+        // On change en objet d’abord pour éviter un plantage en changeant pour une classe mère
         return cast(T) cast(Object) getVariable!GrPointer(name);
     }
 
@@ -467,7 +460,7 @@ class GrEngine {
         }
     }
 
-    /// Run the vm until all the tasks are finished or suspended.
+    /// Exécute la machine virtuelle jusqu’à ce que toutes les tâches finissent ou soient suspendues
     void process() {
         import std.algorithm.mutation : remove, swap;
 
@@ -496,34 +489,36 @@ class GrEngine {
                     break;
                 case throw_:
                     if (!currentTask.isPanicking) {
-                        //Error message.
+                        // Message d’erreur
                         _globalStackIn ~= currentTask.stack[currentTask.stackPos];
                         currentTask.stackPos--;
                         generateStackTrace(currentTask);
 
-                        //We indicate that the task is in a panic state until a catch is found.
+                        // On indique que la tâche est en panique jusqu’à ce qu’un `catch` est trouvé
                         currentTask.isPanicking = true;
                     }
 
-                    //Exception handler found in the current function, just jump.
+                    // Un gestionnaire d’erreur a été trouvé dans la fonction, on y va
                     if (currentTask.callStack[currentTask.stackFramePos].exceptionHandlers.length) {
                         currentTask.pc =
                             currentTask.callStack[currentTask.stackFramePos]
                             .exceptionHandlers[$ - 1];
                     }
-                    //No exception handler in the current function, unwinding the deferred code, then return.
+                    // Aucun gestionnaire d’erreur de trouvé dans la fonction,
+                    // on déroule le code différé, puis on quitte la fonction.
 
-                    //Check for deferred calls as we will exit the current function.
+                    // On vérifie les appel différés puisqu’on va quitter la fonction
                     else if (currentTask.callStack[currentTask.stackFramePos].deferStack.length) {
-                        //Pop the last defer and run it.
+                        // Dépile le dernier `defer` et l’exécute
                         currentTask.pc =
                             currentTask.callStack[currentTask.stackFramePos].deferStack[$ - 1];
                         currentTask.callStack[currentTask.stackFramePos].deferStack.length--;
-                        //The search for an exception handler will be done by unwind after all defer
-                        //has been called for this function.
+                        // La recherche d’un gestionnaire d’erreur sera fait par l’`unwind`
+                        // après que tous les `defer` aient été appelé dans cette fonction
                     }
                     else if (currentTask.stackFramePos) {
-                        //Then returns to the last function, raise will be run again.
+                        // Puis on quitte vers la fonction précédente,
+                        // `raise` sera de nouveau exécuté
                         currentTask.stackFramePos--;
                         currentTask.localsPos -=
                             currentTask.callStack[currentTask.stackFramePos].localStackSize;
@@ -532,15 +527,15 @@ class GrEngine {
                             _debugProfileEnd();
                     }
                     else {
-                        //Kill the others.
+                        // On tue les autres tâches
                         killTasks();
 
-                        //The VM is now panicking.
+                        // La machine virtuelle est maintenant en panique
                         _isPanicking = true;
                         _panicMessage = (cast(GrString) _globalStackIn[$ - 1]._ovalue).data;
                         _globalStackIn.length--;
 
-                        //Every deferred call has been executed, now die.
+                        // Tous les appels différés ont été exécuté, on tue la tâche
                         _tasks = _tasks.remove(index);
                         continue tasksLabel;
                     }
@@ -575,27 +570,27 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case die:
-                    //Check for deferred calls.
+                    // On vérifie les appel différés
                     if (currentTask.callStack[currentTask.stackFramePos].deferStack.length) {
-                        //Pop the last defer and run it.
+                        // Dépile le dernier `defer` et l’exécute
                         currentTask.pc =
                             currentTask.callStack[currentTask.stackFramePos].deferStack[$ - 1];
                         currentTask.callStack[currentTask.stackFramePos].deferStack.length--;
 
-                        //Flag as killed so the entire stack will be unwinded.
+                        // On marque la tâche comme morte afin que la pile soit déroulée
                         currentTask.isKilled = true;
                     }
                     else if (currentTask.stackFramePos) {
-                        //Then returns to the last function without modifying the pc.
+                        // Puis on retourne à la fonction précédente sans modifier le pointeur d’instruction
                         currentTask.stackFramePos--;
                         currentTask.localsPos -=
                             currentTask.callStack[currentTask.stackFramePos].localStackSize;
 
-                        //Flag as killed so the entire stack will be unwinded.
+                        // On marque la tâche comme morte afin que la pile soit déroulée
                         currentTask.isKilled = true;
                     }
                     else {
-                        //No need to flag if the call stack is empty without any deferred statement.
+                        // il y a plus rien à faire, on tue la tâche
                         currentTask.isKilled = true;
                         _tasks = _tasks.remove(index);
                         continue tasksLabel;
@@ -1157,21 +1152,21 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case return_:
-                    //If another task was killed by an exception,
-                    //we might end up there if the task has just been spawned.
+                    // On peut se trouver là si la tâche vient d’être créée
+                    // et qu’une autre tâche a été tué par une exception
                     if (currentTask.stackFramePos < 0 && currentTask.isKilled) {
                         _tasks = _tasks.remove(index);
                         continue tasksLabel;
                     }
-                    //Check for deferred calls.
+                    // On vérifie les appel différés
                     else if (currentTask.callStack[currentTask.stackFramePos].deferStack.length) {
-                        //Pop the last defer and run it.
+                        // Dépile le dernier `defer` et l’exécute
                         currentTask.pc =
                             currentTask.callStack[currentTask.stackFramePos].deferStack[$ - 1];
                         currentTask.callStack[currentTask.stackFramePos].deferStack.length--;
                     }
                     else {
-                        //Then returns to the last function.
+                        // Puis on retourne vers la fonction précédente
                         currentTask.stackFramePos--;
                         currentTask.pc =
                             currentTask.callStack[currentTask.stackFramePos].retPosition;
@@ -1180,22 +1175,22 @@ class GrEngine {
                     }
                     break;
                 case unwind:
-                    //If another task was killed by an exception,
-                    //we might end up there if the task has just been spawned.
+                    // On peut se trouver là si la tâche vient d’être créée
+                    // et qu’une autre tâche a été tué par une exception
                     if (currentTask.stackFramePos < 0) {
                         _tasks = _tasks.remove(index);
                         continue tasksLabel;
                     }
-                    //Check for deferred calls.
+                    // On vérifie les appel différés
                     else if (currentTask.callStack[currentTask.stackFramePos].deferStack.length) {
-                        //Pop the next defer and run it.
+                        // Dépile le dernier `defer` et l’exécute
                         currentTask.pc =
                             currentTask.callStack[currentTask.stackFramePos].deferStack[$ - 1];
                         currentTask.callStack[currentTask.stackFramePos].deferStack.length--;
                     }
                     else if (currentTask.isKilled) {
                         if (currentTask.stackFramePos) {
-                            //Then returns to the last function without modifying the pc.
+                            // Puis on retourne vers la fonction précédente sans modifier le pointeur d’instruction
                             currentTask.stackFramePos--;
                             currentTask.localsPos -=
                                 currentTask.callStack[currentTask.stackFramePos].localStackSize;
@@ -1204,7 +1199,7 @@ class GrEngine {
                                 _debugProfileEnd();
                         }
                         else {
-                            //Every deferred call has been executed, now die.
+                            // Tous les appels différés ont été exécuté, on tue la tâche
                             _tasks = _tasks.remove(index);
                             continue tasksLabel;
                         }
@@ -1213,7 +1208,7 @@ class GrEngine {
                         //An exception has been raised without any try/catch inside the function.
                         //So all deferred code is run here before searching in the parent function.
                         if (currentTask.stackFramePos) {
-                            //Then returns to the last function without modifying the pc.
+                            // On retourne vers la fonction précédente sans modifier le pointeur d’instruction
                             currentTask.stackFramePos--;
                             currentTask.localsPos -=
                                 currentTask.callStack[currentTask.stackFramePos].localStackSize;
@@ -1221,7 +1216,7 @@ class GrEngine {
                             if (_isDebug)
                                 _debugProfileEnd();
 
-                            //Exception handler found in the current function, just jump.
+                            // Un gestionnaire d’erreur a été trouvé dans la fonction, on y va
                             if (
                                 currentTask.callStack[currentTask.stackFramePos]
                                 .exceptionHandlers.length) {
@@ -1231,25 +1226,25 @@ class GrEngine {
                             }
                         }
                         else {
-                            //Kill the others.
+                            // On tue les autres tâches
                             foreach (otherTask; _tasks) {
                                 otherTask.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
                                 otherTask.isKilled = true;
                             }
                             _createdTasks.length = 0;
 
-                            //The VM is now panicking.
+                            // La machine virtuelle est en panique
                             _isPanicking = true;
                             _panicMessage = (cast(GrString) _globalStackIn[$ - 1]._ovalue).data;
                             _globalStackIn.length--;
 
-                            //Every deferred call has been executed, now die.
+                            // Tous les appels différés ont été exécuté, on tue la tâche
                             _tasks = _tasks.remove(index);
                             continue tasksLabel;
                         }
                     }
                     else {
-                        //Then returns to the last function.
+                        // Puis on quitte vers la fonction précédente
                         currentTask.stackFramePos--;
                         currentTask.pc =
                             currentTask.callStack[currentTask.stackFramePos].retPosition;
@@ -1432,7 +1427,7 @@ class GrEngine {
         }
     }
 
-    /// Create a new object.
+    /// Instancie un nouvel objet
     GrObject createObject(string name) {
         GrClassBuilder* builder = (name in _classBuilders);
         if (builder)
@@ -1448,12 +1443,12 @@ class GrEngine {
         DebugFunction[] _debugFunctionsStack;
     }
 
-    /// Runtime information about every called functions
+    /// Informations de profilage pour chaque fonction appelée
     DebugFunction[int] dumpProfiling() {
         return _debugFunctions;
     }
 
-    /// Prettify the result from `dumpProfiling`
+    /// Enjolive le résultat obtenu par `dumpProfiling`
     string prettifyProfiling() {
         import std.algorithm.comparison : max;
         import std.conv : to;
@@ -1489,7 +1484,7 @@ class GrEngine {
         return report;
     }
 
-    /// Runtime information of a called function
+    /// Information de profilage d’une fonction appelée
     final class DebugFunction {
         private {
             MonoTime _start;
@@ -1500,15 +1495,15 @@ class GrEngine {
         }
 
         @property {
-            /// Total execution time passed inside the function
+            /// Temps total d’exécution passé dans cette fonction
             Duration total() const {
                 return _total;
             }
-            /// Total times the function was called
+            /// Nombre de fois que cette fonction a été appelé
             ulong count() const {
                 return _count;
             }
-            /// Prettified name of the function
+            /// Nom enjolivé de la fonction
             string name() const {
                 return _name;
             }

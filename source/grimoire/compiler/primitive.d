@@ -1,7 +1,7 @@
 /** 
- * Copyright: Enalye
- * License: Zlib
- * Authors: Enalye
+ * Droits d’auteur: Enalye
+ * Licence: Zlib
+ * Auteur: Enalye
  */
 module grimoire.compiler.primitive;
 
@@ -16,34 +16,30 @@ import grimoire.compiler.constraint;
 import grimoire.compiler.mangle;
 import grimoire.compiler.data;
 
-/**
-A single primitive. \
-Primitives are hard-coded grimoire's functions, they are used the same way as other functions.
-*/
+/// Fonction en D appelable en grimoire
 class GrPrimitive {
-    /// The callback id.
-	int callbackId;
-    /// Function parameters' type.
-	GrType[] inSignature;
-    /// Return values.
-	GrType[] outSignature;
-    /// The base name of the function to call.
-	string name,
-    /// Name mangled with its parameters' type.
-        mangledName;
-    /// Function ID.
-	uint index;
-    /// For convertions: Can this convertion be used without "as" ?
+    /// L’id de la fonction à rappeler
+    int callbackId;
+    /// Paramètres de la fonction
+    GrType[] inSignature;
+    /// Les types de retour
+    GrType[] outSignature;
+    /// Le nom de base de la fonction
+    string name;
+    /// Le nom décoré de la fonction
+    string mangledName;
+    /// L’id de la fonction
+    uint index;
+    /// Pour les convertions: est-ce qu’elle peut être appelé sans `as` ?
     bool isExplicit;
-    /// If the primitive has a generic parameter type, it becomes abstract
+    /// Si un des paramètres est générique, la primitive devient abstraite
     bool isAbstract;
-    /// Generic constraints
+    /// Contraintes de fonction
     GrConstraint[] constraints;
 
-    /// Ctor
-    this() {}
+    this() {
+    }
 
-    /// Ditto
     this(const GrPrimitive primitive) {
         callbackId = primitive.callbackId;
         inSignature = primitive.inSignature.dup;

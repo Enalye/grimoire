@@ -1,7 +1,7 @@
 /** 
- * Copyright: Enalye
- * License: Zlib
- * Authors: Enalye
+ * Droits d’auteur: Enalye
+ * Licence: Zlib
+ * Auteur: Enalye
  */
 module grimoire.runtime.string;
 
@@ -11,7 +11,7 @@ import std.conv : to;
 import grimoire.assembly;
 import grimoire.runtime.value;
 
-/// Runtime string
+/// Conteneur d’une chaîne de caractère UTF-8
 final class GrString {
     public GrStringValue data;
 

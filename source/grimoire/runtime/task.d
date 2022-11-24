@@ -1,7 +1,7 @@
 /** 
- * Copyright: Enalye
- * License: Zlib
- * Authors: Enalye
+ * Droits d’auteur: Enalye
+ * Licence: Zlib
+ * Auteur: Enalye
  */
 module grimoire.runtime.task;
 
@@ -14,52 +14,44 @@ import grimoire.runtime.list;
 import grimoire.runtime.channel;
 import grimoire.runtime.object;
 
-/**
-Represents a single function task in the callStack.
-*/
+/// Représente un appel de fonction dans la pile d’appels
 struct GrStackFrame {
-    /// Size of the locals in the calling function.
+    /// Nombre de variables locales dans la fonction
     uint localStackSize;
-    /// PC to jumps back to.
+    /// Position de retour
     uint retPosition;
-    /// All current function deferred blocks.
+    /// Les portions de code différées
     uint[] deferStack;
-    /// All current function exception handling blocks.
+    /// Les gestionnaires d’exceptions
     uint[] exceptionHandlers;
 }
 
-/**
-Snapshot of the task's state. \
-Used when we need to restore the task to a previous state.
-*/
+/// Aperçu de l’état de la tâche. \
+/// Permet la restauration de la tâche à un état antérieur.
 struct GrTaskState {
-    /// Current expression stack top
+    /// Position actuelle dans la pile des valeurs
     int stackPos;
 
-    /// Callstack
+    /// Pile d’appel
     GrStackFrame stackFrame;
 
-    /// Stack frame pointer for the current function.
-    /// Each function takes 2 integer: the return pc, and the local variable size.
+    /// Position dans la pile d’appel
     uint stackFramePos;
 
-    /// Local variables: Access with locals[localsPos + variableIndex]
+    /// Adresse de début de l’espace locale des variables de la fonction. \
+    /// On y accède avec `locals[localsPos + variableIndex]`.
     uint localsPos;
 }
 
-/**
-Pause the associated task.
-*/
+/// Met en pause une tâche
 abstract class GrBlocker {
-    /// Update the state, returns true if the task is still paused.
+    /// Met à jour le bloqueur. \
+    /// Retourne `true` tant que la tâche est en pause.
     bool run();
 }
 
-/**
-Coroutines are tasks that hold local data.
-*/
+/// Tâche représentant un fil d’exécution indépendant et concurrent (coroutine)
 final class GrTask {
-    /// Default ctor.
     this(GrEngine engine_) {
         engine = engine_;
         setupCallStack(4);
@@ -67,81 +59,83 @@ final class GrTask {
         setupLocals(2);
     }
 
-    /// Parent engine where the task is running.
+    /// La machine virtuelle
     GrEngine engine;
 
-    /// Local variables
+    /// Pile des variables locales
     GrValue[] locals;
 
-    /// Callstack
+    /// Pile d’appel
     GrStackFrame[] callStack;
 
-    /// Expression stack.
+    /// Pile d’opérations
     GrValue[] stack;
 
-    /// Operation pointer.
+    /// Pointeur d’instruction
     uint pc;
-    /// Local variables: Access with locals[localsPos + variableIndex]
+
+    /// Adresse de début de l’espace locale des variables de la fonction. \
+    /// On y accède avec `locals[localsPos + variableIndex]`.
     uint localsPos;
-    /// Stack frame pointer for the current function.
-    /// Each function takes 2 integer: the return pc, and the local variable size.
+
+    /// Position dans la pile d’appel
     uint stackFramePos;
 
-    /// Current expression stack top
+    /// Position dans la pile d’opérations
     int stackPos = -1;
 
-    /// Kill state, unwind the call stack and call all registered deferred statements.
+    /// Fin de la tâche, déroule toute la pile d’appel et exécute toutes les instructions différées
     bool isKilled;
 
-    /// An exception has been raised an is not caught.
+    /// Une exception a été lancé et n’est pas capturé
     bool isPanicking;
 
-    /// Set when the task is in a select/case statement.
-    /// Then, the task is not stopped by a blocking channel.
+    /// Quand la tâche est dans un bloc `select/case`. \
+    /// Empêche les canaux de bloquer la tâche.
     bool isEvaluatingChannel;
 
-    /// Set when the task is forced to yield by a blocking channel.
-    /// Release only when the channel is ready.
+    /// Quand la tâche est préempté par un canal bloquant. \
+    /// Relaché quand le canal est prêt.
     bool isLocked;
 
-    /// When evaluating, a blocking jump to this position will occur instead of blocking.
+    /// Durant une évaluation, un saut se fera vers cette position au lieu de bloquer
     uint selectPositionJump;
 
-    /// The task will block until the blocker is cleared.
+    /// La tâche est en pause tant que le bloqueur est là
     GrBlocker blocker;
 
-    /// Backup to restore stack state after select evaluation.
+    /// Point de restauration de l’état de la tâche après un `select`
     GrTaskState[] states;
 
-    /// Current callstack max depth.
+    /// Profondeur maximale de la pile d’appel
     uint callStackLimit;
-    /// Current max local variable available.
+    /// Taille maximale de la pile des variables locales
     uint localsLimit;
 
-    /// Initialize the call stacks.
+    /// Initialise la pile d’appel
     void setupCallStack(uint size) {
         callStackLimit = size;
         callStack = new GrStackFrame[callStackLimit];
     }
 
-    /// Initialize the expression stacks.
+    /// Initialise la pile d’opérations
     void setupStack(uint size) {
         stack = new GrValue[size];
     }
 
-    /// Initialize the local variable stacks.
+    /// Initialise la pile des variables locales
     void setupLocals(uint size) {
         localsLimit = size;
         locals = new GrValue[localsLimit];
     }
 
-    /// Double the current callstack size.
+    /// Double la taille de la pile d’appel
     void doubleCallStackSize() {
         callStackLimit <<= 1;
         callStack.length = callStackLimit;
     }
 
-    /// Double the current integer locals stacks' size.
+    /// Double la taille de la pile des variables locales
     void doubleLocalsStackSize(uint localsStackSize) {
         while (localsStackSize >= localsLimit)
             localsLimit <<= 1;
@@ -201,7 +195,7 @@ final class GrTask {
         }
     }
 
-    /// Register the current state of the task
+    /// Enregistre un aperçu de l’état de la tâche
     void pushState() {
         GrTaskState state;
         state.stackPos = stackPos;
@@ -211,7 +205,7 @@ final class GrTask {
         states ~= state;
     }
 
-    /// Restore the last state of the task
+    /// Récupère un aperçu de l’état de la tâche
     void restoreState() {
         if (!states.length)
             throw new Exception("Fatal error: pop task state");
@@ -222,30 +216,18 @@ final class GrTask {
         callStack[stackFramePos] = state.stackFrame;
     }
 
-    /// Remove last state of the task
+    /// Retire le dernier aperçu de l’état de la tâche
     void popState() {
         states.length--;
     }
 
-    /// Lock the task until the blocker is cleared
+    /// Bloque l’exécution de la tâche tant que le bloqueur est présent
     void block(GrBlocker blocker_) {
         blocker = blocker_;
     }
 
-    /// Unlock the task from the blocker
+    /// Débloque la tâche du bloqueur
     void unblock() {
         blocker = null;
-    }
-
-    /// Dump stacks info
-    string dump() {
-        import std.conv : to;
-
-        string result = "Task Dump:";
-        result ~= "\nfstack: " ~ to!string(stack[0 .. (stackPos + 1)]);
-        result ~= "\nistack: " ~ to!string(stack[0 .. (stackPos + 1)]);
-        result ~= "\nsstack: " ~ to!string(stack[0 .. (stackPos + 1)]);
-        result ~= "\nostack: " ~ to!string(stack[0 .. (stackPos + 1)]);
-        return result;
     }
 }

@@ -4,23 +4,23 @@ import std.algorithm;
 import std.algorithm.comparison;
 import std.typetuple;
 
-/// Compiler options
+/// Options de compilation
 enum GrOption {
-    /// Default
+    /// Par défaut
     none = 0x0,
-    /// Generate debug symbols in the bytecode
+    /// Génère des symboles de débogage dans le bytecode
     symbols = 0x1,
-    /// Add profiling commands to bytecode to fill profiling information
+    /// Ajoute des commandes de profilage dans le bytecode
     profile = 0x2
 }
 
-/// Compiler locale
+/// La langue du compilateur
 enum GrLocale {
     en_US,
     fr_FR
 }
 
-/// Search for strings that somewhat ressemble the base value
+/// Recherche un texte qui ressemble à peu-près à la valeur de base
 package string[] findNearestStrings(const string baseValue, const(string[]) ary, size_t distance = 0) {
     struct WeightedValue {
         size_t weight;

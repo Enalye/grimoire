@@ -1,7 +1,7 @@
 /** 
- * Copyright: Enalye
- * License: Zlib
- * Authors: Enalye
+ * Droits d’auteur: Enalye
+ * Licence: Zlib
+ * Auteur: Enalye
  */
 module grimoire.compiler.type;
 
@@ -13,17 +13,10 @@ import grimoire.compiler.mangle;
 import grimoire.compiler.data;
 import grimoire.compiler.constraint;
 
-/**
-Compiler type definition for Grimoire's type system.
-It doesn't mean anything for the VM.
-*/
+/// Représente un type pour le compilateur de grimoire
 struct GrType {
-    /**
-    Type category.
-
-    Complex types use mangledType and mangledReturnType
-    to represent them.
-    */
+    /// Catégorie du type. \
+    /// Les types composés utilisent `mangledType` voire `mangledReturnType` en plus.
     enum Base {
         void_,
         null_,
@@ -44,14 +37,13 @@ struct GrType {
         reference
     }
 
-    /// General type, basic types only use that while compound types also use mangledType
-    /// and mangledReturnType.
+    /// Ditto
     Base base;
-    /// Used for compound types like lists, functions, etc.
+    /// Utilisés pour les types composés comme les listes, les fonctions, etc
     string mangledType, mangledReturnType;
-    /// Is this from an object field ?
+    /// Est-ce un champ d’une classe ?
     bool isField;
-    /// Can this type match with others ?
+    /// Est-ce un type générique ?
     bool isAny;
     /// Le type est-il abstrait ?
     /// Un type abstrait ne peut être utilisé dans une signature.
@@ -59,29 +51,29 @@ struct GrType {
     /// Le type est-il mutable ?
     bool isPure;
 
-    /// Init as a basic type.
+    /// Type simple
     this(Base base_) {
         base = base_;
     }
 
-    /// Compound type.
+    /// Type composé
     this(Base base_, string mangledType_) {
         base = base_;
         mangledType = mangledType_;
     }
 
-    /// Only assign a simple type (base).
+    /// Assigne simplement un type basique
     GrType opOpAssign(string op)(GrType.Base t) {
         mixin("base = base" ~ op ~ "t;");
         return this;
     }
 
-    /// Check general type equality.
+    /// Vérifie l’égalité avec le type de base
     bool opEquals(const GrType.Base v) const {
         return (base == v);
     }
 
-    /// Check full type equality.
+    /// Vérifie l’égalité complète entre les types
     bool opEquals(const GrType v) const {
         if (base != v.base)
             return false;
@@ -95,41 +87,41 @@ struct GrType {
         return true;
     }
 
-    /// Only to disable warnings because of opEquals.
+    /// Juste pour désactiver les avertissement à cause de `opEquals`
     size_t toHash() const @safe pure nothrow {
         return 0;
     }
 }
 
-/// No type
+/// Aucun type
 const GrType grVoid = GrType(GrType.Base.void_);
-/// Integer
+/// Nombre entier
 const GrType grInt = GrType(GrType.Base.int_);
-/// Float
+/// Nombre flottant
 const GrType grFloat = GrType(GrType.Base.float_);
-/// Bool
+/// Type booléen
 const GrType grBool = GrType(GrType.Base.bool_);
-/// String
+/// Chaîne de caractères
 const GrType grString = GrType(GrType.Base.string_);
 
-/// Make an optional version of the type.
+/// Crée une version optionnel du type
 GrType grOptional(GrType subType) {
     GrType type = GrType(GrType.Base.optional, grMangleSignature([subType]));
     type.isPure = subType.isPure;
     return type;
 }
 
-/// Returns a GrType of type list and of `subType` subtype.
+/// Renvoie un `GrType` liste avec en sous-type `subType`
 GrType grList(GrType subType) {
     return GrType(GrType.Base.list, grMangleSignature([subType]));
 }
 
-/// Returns a GrType of type channel and of `subType` subtype.
+/// Renvoie un `GrType` canal avec en sous-type `subType`
 GrType grChannel(GrType subType) {
     return GrType(GrType.Base.channel, grMangleSignature([subType]));
 }
 
-/// Returns a GrType of type function with given signatures.
+/// Renvoie une fonction avec sa signature
 GrType grFunction(GrType[] inSignature, GrType[] outSignature = []) {
     GrType type = GrType.Base.func;
     type.mangledType = grMangleSignature(inSignature);
@@ -137,17 +129,17 @@ GrType grFunction(GrType[] inSignature, GrType[] outSignature = []) {
     return type;
 }
 
-/// Returns a GrType of type task with given signature.
+/// Renvoie une tâche avec sa signature
 GrType grTask(GrType[] signature) {
     return GrType(GrType.Base.task, grMangleSignature(signature));
 }
 
-/// Returns a GrType of type event with given signature.
+/// Renvoie un événement avec sa signature
 GrType grEvent(GrType[] signature) {
     return GrType(GrType.Base.event, grMangleSignature(signature));
 }
 
-/// Temporary type for template functions.
+/// Type générique
 GrType grAny(string name) {
     GrType type;
     type.base = GrType.Base.void_;
@@ -156,59 +148,59 @@ GrType grAny(string name) {
     return type;
 }
 
-/// Make a pure version of the type.
+/// Rend le type pur
 GrType grPure(GrType type) {
     type.isPure = true;
     return type;
 }
 
-/// The type is handled by a int based register
+/// Est-ce que le type est considéré comme un entier par la machine virtuelle ?
 bool grIsKindOfInt(GrType.Base type) {
     return type == GrType.Base.int_ || type == GrType.Base.bool_ ||
         type == GrType.Base.func || type == GrType.Base.task ||
         type == GrType.Base.event || type == GrType.Base.enum_;
 }
 
-/// The type is handled by a float based register
+/// Est-ce que le type est considéré comme un flottant par la machine virtuelle ?
 bool grIsKindOfFloat(GrType.Base type) {
     return type == GrType.Base.float_;
 }
 
-/// The type is handled by a string based register
+/// Est-ce que le type est considéré comme une chaîne de caractères par la machine virtuelle ?
 bool grIsKindOfString(GrType.Base type) {
     return type == GrType.Base.string_;
 }
 
-/// The type is handled by a ptr based register
+/// Est-ce que le type est considéré comme un pointeur par la machine virtuelle ?
 bool grIsKindOfObject(GrType.Base type) {
     return type == GrType.Base.class_ || type == GrType.Base.list ||
         type == GrType.Base.native || type == GrType.Base.channel ||
         type == GrType.Base.reference || type == GrType.Base.null_;
 }
 
-/// Context for any validation
+/// Contexte pour la validation des types génériques
 final class GrAnyData {
     private {
         GrType[string] _types;
     }
 
-    /// Clear any stored type definition
+    /// Nettoie toutes les définitions de type
     void clear() {
         _types.clear;
     }
 
-    /// Define a new type
+    /// Definit un nouveau type
     void set(const string key, GrType type) {
         _types[key] = type;
     }
 
-    /// Fetch an already defined type
+    /// Rècupère un type défini
     GrType get(const string key) const {
         return _types.get(key, grVoid);
     }
 }
 
-/// Pack multiple types as a single one.
+/// Emballe plusieurs types en un seul
 package GrType grPackTuple(const GrType[] types) {
     const string mangledName = grMangleSignature(types);
     GrType type = GrType.Base.internalTuple;
@@ -216,66 +208,64 @@ package GrType grPackTuple(const GrType[] types) {
     return type;
 }
 
-/// Unpack multiple types from a single one.
+/// Déballe plusieurs types depuis un seul
 package GrType[] grUnpackTuple(GrType type) {
     if (type.base != GrType.Base.internalTuple)
         throw new Exception("Cannot unpack a not tuple type.");
     return grUnmangleSignature(type.mangledType);
 }
 
-/**
-A local or global variable.
-*/
+/// Représente une variable en grimoire
 package class GrVariable {
-    /// Its type.
+    /// Type de la variable
     GrType type;
-    /// Register position, separate for each type (int, float, string and objects);
+    /// Son registre
     uint register = uint.max;
-    /// Declared from the global scope ?
+    /// Est-ce une variable globale ?
     bool isGlobal;
-    /// Declared from an object definition ?
+    /// Est-ce un champ d’une classe ?
     bool isField;
-    /// Does it have a value yet ?
+    /// Est-ce qu’elle a une valeur initiale ?
     bool isInitialized;
-    /// Is the type to be infered automatically ? (e.g. the `let` keyword).
+    /// Le type doit-il être inféré automatiquement ?
     bool isAuto;
     /// La variable est-elle réassignable ?
     bool isConst;
-    /// Its unique name inside its scope (function based scope).
+    /// Son nom unique dans la portée
     string name;
-    /// Is the variable visible from other files ? (Global only)
+    /// Est-elle visible depuis les autres fichiers ?
     bool isPublic;
-    /// The file where the variable is declared.
+    /// Le fichier d’où elle est déclarée
     uint fileId;
-    /// Position information in case of errors.
+    /// Sa position en cas d’erreurs
     uint lexPosition;
-    /// The variable may be null.
+    /// La variable peut-elle ne rien valoir ?
     bool isOptional;
-    /// Position of the optional instruction.
+    /// Position de l’instruction optionnelle
     uint optionalPosition;
 }
 
-/// Define an arbitrary D pointer.
+/// Représente un type opaque
 final class GrNativeDefinition {
-    /// Identifier.
+    /// Identificateur
     string name;
-    /// Mother class it inherit from.
+    /// Sa classe mère
     string parent;
 }
 
 /// Ditto
 final class GrAbstractNativeDefinition {
-    /// Identifier.
+    /// Identificateur
     string name;
-    /// Mother class it inherits from.
+    /// Sa classe mère
     string parent;
-    /// Template values
+    /// Nom des types génériques
     string[] templateVariables;
-    /// Template signature
+    /// La signature générique de sa classe mère
     GrType[] parentTemplateSignature;
 }
 
-/// Create a native GrType for the type system.
+/// Renvoie un type natif
 GrType grGetNativeType(string name, const GrType[] signature = []) {
     GrType type = GrType.Base.native;
     type.mangledType = grMangleComposite(name, signature);
@@ -283,14 +273,13 @@ GrType grGetNativeType(string name, const GrType[] signature = []) {
 }
 
 /**
-Define the content of a type alias. \
-Not to be confused with GrType used by the type system.
+Definit un alias de type.
 ---
-type MyNewType = AnotherType;
+alias NouveauType: AutreType;
 ---
 */
 final class GrTypeAliasDefinition {
-    /// Identifier.
+    /// Identificateur
     string name;
     /// The type aliased.
     GrType type;
@@ -301,28 +290,27 @@ final class GrTypeAliasDefinition {
 }
 
 /**
-Define the content of an enum. \
-Not to be confused with GrType used by the type system.
+Definit une énumération.
 ---
-enum MyEnum {
-    field1;
-    field2;
+enum MonÉnum {
+    champ1;
+    champ2;
 }
 ---
 */
 final class GrEnumDefinition {
-    /// Identifier.
+    /// Identificateur
     string name;
-    /// List of field names.
+    /// Noms des différents champs
     string[] fields;
-    /// Unique ID of the enum definition.
+    /// L’id de l’énumération
     size_t index;
-    /// Is the type visible from other files ?
+    /// Est-il visible depuis les autres fichiers ?
     bool isPublic;
-    /// The file where the type is declared.
+    /// Le fichier d’où il a été déclaré
     uint fileId;
 
-    /// Does the field name exists ?
+    /// Est-ce qu’il a ce champ ?
     bool hasField(const string name) const {
         foreach (field; fields) {
             if (field == name)
@@ -331,7 +319,7 @@ final class GrEnumDefinition {
         return false;
     }
 
-    /// Returns the value of the field
+    /// Renvoie l’index du champ
     int getField(const string name) const {
         import std.conv : to;
 
@@ -345,7 +333,7 @@ final class GrEnumDefinition {
     }
 }
 
-/// Create a GrType of enum for the type system.
+/// Renvoie une énumération
 GrType grGetEnumType(const string name) {
     GrType stType = GrType.Base.enum_;
     stType.mangledType = name;
@@ -353,28 +341,27 @@ GrType grGetEnumType(const string name) {
 }
 
 /**
-Define the content of a class. \
-Not to be confused with GrType used by the type system.
+Definit une classe.
 ---
-class MyClass {
+class MaClasse<T> : Parent<T> {
     // Fields
 }
 ---
 */
 final class GrClassDefinition {
-    /// Identifier.
+    /// Identificateur
     string name;
-    /// Mother class it inherit from.
+    /// Sa classe mère
     string parent;
-    /// List of field types.
+    /// Types des champs
     GrType[] signature;
-    /// List of field names.
+    /// Noms des champs
     string[] fields;
     /// Est-ce que les champs sont constants ?
     bool[] fieldConsts;
-    /// List of template variables.
+    /// Les variables de type génériques
     string[] templateVariables;
-    /// List of template types.
+    /// Liste des types génériques
     GrType[] templateTypes, parentTemplateSignature;
 
     package {
@@ -386,61 +373,59 @@ final class GrClassDefinition {
 
         FieldInfo[] fieldsInfo;
 
-        /// The lexeme that declared it.
+        /// Le lexème qui l’a déclaré
         uint position;
     }
-    /// Unique ID of the object definition.
+    /// L’id de la classe
     size_t index;
-    /// Is the type visible from other files ?
+    /// Est-elle visible depuis d’autres fichiers ?
     bool isPublic;
-    /// The file where the type is declared.
+    /// Le fichier dans lequel elle est déclarée
     uint fileId;
-    /// Is the declaration of the class already parsed ?
+    /// A-t’elle déjà été analysé ?
     bool isParsed;
 }
 
-/// Create a GrType of class for the type system.
+/// Renvoie une classe
 GrType grGetClassType(const string name, const GrType[] signature = []) {
     GrType type = GrType.Base.class_;
     type.mangledType = grMangleComposite(name, signature);
     return type;
 }
 
-/// Define a variable defined from a library
+/// Definit une variable depuis une bibliothèque
 final class GrVariableDefinition {
-    /// Identifier.
+    /// Identificateur
     string name;
-    /// Its type
+    /// Son type
     GrType type;
     /// Le type est-il assignable ?
     bool isConst;
-    /// Does the variable use a custom initialization value ?
+    /// A-t’elle une valeur d’initialisation ?
     bool isInitialized;
-    /// Integral init value
+    /// Valeur entière d’initialisation
     GrInt ivalue;
-    /// Floating init value
+    /// Valeur flottante d’initialisation
     GrFloat rvalue;
-    /// String init value
+    /// Valeur textuelle d’initialisation
     GrStringValue svalue;
-    /// Register.
+    /// Registre
     uint register;
 }
 
-/// A single instruction used by the VM.
+/// Instruction utilisé par la machine virtuelle
 struct GrInstruction {
-    /// What needs to be done.
+    /// Le type d’opération a effectuer
     GrOpcode opcode;
-    /// Payload, may not be used.
+    /// Valeur optionnelle, dépend du type d’opcode
     uint value;
 }
 
-/**
-Function/Task/Event definition.
-*/
+/// Fonction, tâche ou événement
 package class GrFunction {
-    /// Local scoping
+    /// Portée locale
     struct Scope {
-        /// Every variable declared within its scope.
+        /// Toutes les variables déclarées dans cette portée
         GrVariable[string] localVariables;
     }
     /// Ditto
@@ -448,21 +433,21 @@ package class GrFunction {
 
     uint[] registerAvailables;
 
-    /// All the function instructions.
+    /// Les instructions appartenant à la fonction
     GrInstruction[] instructions;
     uint stackSize, index, offset;
 
-    /// Unmangled function name.
+    /// Nom de base de la fonction
     string name;
-    /// Mangled function name.
+    /// Nom décoré de la fonction
     string mangledName;
-    /// Function input parameters' name.
+    /// Noms des paramètres de la fonction
     string[] inputVariables, templateVariables;
-    /// Function parameters' type.
+    /// Types des paramètres de la fonction
     GrType[] inSignature, outSignature, templateSignature;
     bool isTask, isAnonymous, isEvent;
 
-    /// Function calls made from within its scope.
+    /// Les appels de fonction effectués depuis cette fonction
     GrFunctionCall[] functionCalls;
     GrFunction anonParent;
     uint position, anonReference;
@@ -474,9 +459,9 @@ package class GrFunction {
     GrDeferBlock[] registeredDeferBlocks;
     bool[] isDeferrableSectionLocked = [false];
 
-    /// Is the function visible from other files ?
+    /// Est-elle visible depuis d’autres fichiers ?
     bool isPublic;
-    /// The file where the function is declared.
+    /// Le fichier d’où cette fonction est déclarée
     uint fileId;
 
     uint lexPosition;
@@ -493,7 +478,7 @@ package class GrFunction {
 
     GrVariable getLocal(string name) {
         foreach_reverse (ref Scope scope_; scopes) {
-            //Check if declared locally.
+            // On vérifie si elle est déclarée localement
             GrVariable* variable = (name in scope_.localVariables);
             if (variable !is null)
                 return *variable;
@@ -546,7 +531,7 @@ package class GrFunction {
     }
 }
 
-/// Get the type of the function.
+/// Renvoie la fonction en tant que type
 GrType grGetFunctionAsType(const GrFunction func) {
     GrType type = func.isEvent ? GrType.Base.event : (func.isTask ?
             GrType.Base.task : GrType.Base.func);

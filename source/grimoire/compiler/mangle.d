@@ -1,7 +1,7 @@
 /** 
- * Copyright: Enalye
- * License: Zlib
- * Authors: Enalye
+ * Droits d’auteur: Enalye
+ * Licence: Zlib
+ * Auteur: Enalye
  */
 module grimoire.compiler.mangle;
 
@@ -10,16 +10,16 @@ import std.string : indexOf;
 import grimoire.compiler.type;
 
 /**
-    Mangle a signature of types.
+Décore une signature de type.
 
-    Example:
-    ---
-    [int, string, func(bool, float)]
-    ---
-    Will be mangled as `$i$s$f($b$f)()`
+Exemple:
+---
+[int, string, func(bool, float)]
+---
+Sera transformé en `$i$s$f($b$f)()`
 
-    The return type is not conserved in the mangled form as its not part of its signature.
-    But function. passed as parameters have theirs.
+Les types de retour ne sont pas conservé dans le forme décorée car ils ne font pas partie de la signature. \
+En revanche, les fonctions passées en paramètres ont le leur.
 */
 string grMangleSignature(const GrType[] signature) {
     string mangledName;
@@ -29,18 +29,18 @@ string grMangleSignature(const GrType[] signature) {
     return mangledName;
 }
 
-/// Reverse the mangling operation for a signature.
+/// Inverse l’opération de décoration pour une signature
 GrType[] grUnmangleSignature(const string mangledSignature) {
     GrType[] unmangledSignature;
     int i;
     while (i < mangledSignature.length) {
-        //Type separator
+        // Séparateur de type
         if (mangledSignature[i] != '$') {
             throw new Exception("invalid unmangle signature mangling format, missing $");
         }
         i++;
 
-        //Value
+        // Valeur
         GrType currentType = GrType.Base.void_;
 
         if (mangledSignature[i] == '@') {
@@ -126,23 +126,23 @@ GrType[] grUnmangleSignature(const string mangledSignature) {
 }
 
 /**
-    Can be used to mangle a named function or a templated type.
+Peut-être utilisé pour décorer une fonction nommée ou un type générique.
 
-    Example:
-    ---
-    func test(int i, string s, func(bool, float)) float {}
-    ---
-    Will be mangled as `test$i$s$f($b$f)()`
+Exemple:
+---
+func test(int i, string s, func(bool, float)) (float) {}
+---
+Sera transformé en `test$i$s$f($b$f)()`
 
-    The return type is not conserved in the mangled form as its not part of its signature.
-    But function. passed as parameters have theirs.
+Les types de retour ne sont pas conservé dans le forme décorée car ils ne font pas partie de la signature. \
+En revanche, les fonctions passées en paramètres ont le leur.
 */
 string grMangleComposite(string name, const GrType[] signature) {
     return name ~ grMangleSignature(signature);
 }
 
-/// Reverses the grMangleComposite operation.
-/// Returns a struct containing the name and the signature.
+/// Inverse l’opération de `grMangleComposite`. \
+/// Retourne une structure contenant le nom et la signature.
 auto grUnmangleComposite(const string mangledSignature) {
     struct UnmangleCompositeResult {
         string name;
@@ -160,7 +160,7 @@ auto grUnmangleComposite(const string mangledSignature) {
     return result;
 }
 
-/// Reverse the mangling operation for a function passed as a parameter.
+/// Inverse l’opération de décoration pour une fonction passé en paramètre.
 string grUnmangleBlock(const string mangledSignature, ref int i) {
     string subString;
     int blockCount = 1;
@@ -187,7 +187,7 @@ string grUnmangleBlock(const string mangledSignature, ref int i) {
     throw new Exception("invalid subType mangling format, missing )");
 }
 
-/// Mangling operation for a single type.
+/// Opération de décoration pour un simple type
 string grMangle(const GrType type) {
     string mangledName = "$";
 
@@ -255,13 +255,13 @@ string grMangle(const GrType type) {
     return mangledName;
 }
 
-/// Reverse the mangling operation for a single type.
+/// Inverse l’opération de décoration pour une simple type
 GrType grUnmangle(const string mangledSignature) {
     GrType currentType = GrType.Base.void_;
 
     int i;
     if (i < mangledSignature.length) {
-        //Type separator
+        // Séparateur de type
         if (mangledSignature[i] != '$')
             throw new Exception("invalid unmangle mangling format, missing $");
         i++;
@@ -271,7 +271,7 @@ GrType grUnmangle(const string mangledSignature) {
             i++;
         }
 
-        //Value
+        // Valeur
         switch (mangledSignature[i]) {
         case '*':
             currentType.base = GrType.Base.void_;

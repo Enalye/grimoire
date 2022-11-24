@@ -1,18 +1,16 @@
 /** 
- * Copyright: Enalye
- * License: Zlib
- * Authors: Enalye
+ * Droits d’auteur: Enalye
+ * Licence: Zlib
+ * Auteur: Enalye
  */
 module grimoire.runtime.channel;
 
 import grimoire.assembly;
 import grimoire.runtime.value;
 
-/**
-A pipe that allow synchronised communication between coroutines.
-*/
+/// Canal permettant la communication synchrone entre tâches
 final class GrChannel {
-    /// The channel is active.
+    /// Le canal est actif
     bool isOwned = true;
 
     private {
@@ -22,68 +20,53 @@ final class GrChannel {
     }
 
     @property {
-        /**
-        On a channel of size 1, the sender is blocked
-        until something tells him he is ready to receive the value.
-
-        For any other size, the sender is never blocked
-        until the buffer is full.
-        */
+        /// Vérifie si le canal peut recevoir une nouvelle valeur
         bool canSend() const {
             /*if (_capacity == 1u)
                 return _isReceiverReady && _size < 1u;
             else*/
-                return _size < _capacity;
+            return _size < _capacity;
         }
 
-        /**
-        You can receive whenever there is a value stored
-        without being blocked.
-        */
+        /// Vérifie si le canal peut renvoyer une nouvelle valeur
         bool canReceive() const {
             return _size > 0u;
         }
 
-        /// Number of values the channel is currently storing
+        /// Nombre de valeur que possède le canal
         uint size() const {
             return _size;
         }
 
-        /// Maximum number of values the channel can store
+        /// Nombre maximum de valeur que peut posséder le canal
         uint capacity() const {
             return _capacity;
         }
 
-        /// Is the channel empty ?
+        /// Le canal est-il vide ?
         bool isEmpty() const {
             return _size == 0u;
         }
 
-        /// Is the channel full ?
+        /// Le canal est-il plein ?
         bool isFull() const {
             return _size == _capacity;
         }
     }
 
-    /// Buffer of size 1.
-    this() {
-        _capacity = 1u;
-    }
-
-    /// Fixed size buffer.
-    this(uint buffSize) {
+    this(uint buffSize = 1u) {
         _capacity = buffSize;
     }
 
-    /// Always check canSend() before.
+    /// À appeler après avoir vérifié `canSend()` avant.
     void send()(auto ref GrValue value) {
-        if (_size == _capacity/* || (_capacity == 1u && !_isReceiverReady)*/)
+        if (_size == _capacity /* || (_capacity == 1u && !_isReceiverReady)*/ )
             throw new Exception("Attempt to write on a full channel");
         _buffer ~= value;
         _size++;
     }
 
-    /// Always check canReceive() before.
+    /// À appeler après avoir vérifié `canReceive()` avant.
     GrValue receive() {
         if (_size == 0)
             throw new Exception("Attempt to read an empty channel");
@@ -94,10 +77,7 @@ final class GrChannel {
         return value;
     }
 
-    /**
-    Notify the senders that they can write to
-    this channel because you are blocked on it.
-    */
+    /// Obsolète
     void setReceiverReady() {
         _isReceiverReady = true;
     }

@@ -1,7 +1,7 @@
 /** 
- * Copyright: Enalye
- * License: Zlib
- * Authors: Enalye
+ * Droits d’auteur: Enalye
+ * Licence: Zlib
+ * Auteur: Enalye
  */
 module grimoire.compiler.constraint;
 
@@ -11,7 +11,7 @@ private {
     GrConstraint.Data[string] _constraints;
 }
 
-/// Template function constraint
+/// Restriction de modèle de fonction
 final class GrConstraint {
     alias Predicate = bool function(GrData, GrType, const GrType[]);
 
@@ -26,7 +26,6 @@ final class GrConstraint {
         const GrType[] _parameters;
     }
 
-    /// Ctor
     this(Predicate predicate, uint arity, GrType type, const GrType[] parameters) {
         _data.predicate = predicate;
         _data.arity = arity;
@@ -41,7 +40,7 @@ final class GrConstraint {
         _parameters = constraint._parameters.dup;
     }
 
-    /// Checks if the types validate the constraint
+    /// Vérifie si les types sont validés par la contrainte
     bool evaluate(GrData data, const GrAnyData anyData) {
         GrType type = _type.isAny ? anyData.get(_type.mangledType) : _type;
         GrType[] parameters;
@@ -52,15 +51,16 @@ final class GrConstraint {
     }
 }
 
-/// Setup a constraint object from a registered constraint
-GrConstraint grConstraint(const string name, GrType type, const GrType[] parameters = []) {
+/// Récupère une contrainte existante
+GrConstraint grConstraint(const string name, GrType type, const GrType[] parameters = [
+    ]) {
     GrConstraint.Data data = grGetConstraint(name);
     if (!data.predicate)
         throw new Exception("unregistered template constraint");
     return new GrConstraint(data.predicate, data.arity, type, parameters);
 }
 
-/// Register a new constraint
+/// Enregistre une nouvelle contrainte
 void grAddConstraint(const string name, GrConstraint.Predicate predicate, uint arity) {
     GrConstraint.Data data;
     data.predicate = predicate;
@@ -68,8 +68,8 @@ void grAddConstraint(const string name, GrConstraint.Predicate predicate, uint a
     _constraints[name] = data;
 }
 
-/// Fetch a registered constraint
-GrConstraint.Data grGetConstraint(const string name) {
+/// Récupère les données d’une contrainte enregistrée
+package(grimoire) GrConstraint.Data grGetConstraint(const string name) {
     GrConstraint.Data* func = name in _constraints;
     return func ? *func : GrConstraint.Data();
 }

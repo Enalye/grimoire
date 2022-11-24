@@ -1,15 +1,15 @@
 /** 
- * Copyright: Enalye
- * License: Zlib
- * Authors: Enalye
+ * Droits d’auteur: Enalye
+ * Licence: Zlib
+ * Auteur: Enalye
  */
 module grimoire.compiler.error;
 
 import grimoire.compiler.util;
 
-/// Contains a lot of information about what just happened.
+/// Contient beaucoup d’information sur l’erreur qui s’est produit
 final class GrError {
-    /// From which step the error come from.
+    /// À quel étape l’erreur est arrivée
     enum Type {
         lexer,
         parser
@@ -32,7 +32,7 @@ final class GrError {
     }
 
     @property {
-        /// From which step the error come from.
+        /// À quel étape l’erreur est arrivée
         package Type type(Type type_) {
             return _type = type_;
         }
@@ -41,7 +41,7 @@ final class GrError {
             return _type;
         }
 
-        /// Error title.
+        /// Titre de l’erreur
         package string message(string message_) {
             return _message = message_;
         }
@@ -50,7 +50,7 @@ final class GrError {
             return _message;
         }
 
-        /// What's wrong in details.
+        /// L’erreur plus en détail
         package string info(string info_) {
             return _info = info_;
         }
@@ -59,7 +59,7 @@ final class GrError {
             return _info;
         }
 
-        /// Some remarks about the problem.
+        /// Quelques remarques sur le problème
         package string note(string note_) {
             return _note = note_;
         }
@@ -68,7 +68,7 @@ final class GrError {
             return _note;
         }
 
-        /// Script that generated the error.
+        /// Le fichier source d’où provient le problème
         package string filePath(string filePath_) {
             return _filePath = filePath_;
         }
@@ -77,7 +77,7 @@ final class GrError {
             return _filePath;
         }
 
-        /// Line of the error inside the script.
+        /// La ligne de l’erreur dans le fichier source
         package size_t line(size_t line_) {
             return _line = line_;
         }
@@ -86,7 +86,7 @@ final class GrError {
             return _line;
         }
 
-        /// Character offset of the error at the line.
+        /// La colonne de l’erreur dans le fichier source
         package size_t column(size_t column_) {
             return _column = column_;
         }
@@ -95,7 +95,8 @@ final class GrError {
             return _column;
         }
 
-        /// Size of the error segment, the error is in between `column` and `column + textLength`
+        /// La taille de la partie erronée. \
+        /// L’erreur est situé entre `column` et `column + textLength`
         package size_t textLength(size_t textLength_) {
             return _textLength = textLength_;
         }
@@ -104,7 +105,7 @@ final class GrError {
             return _textLength;
         }
 
-        /// The line from which the error originate
+        /// La ligne entière d’où l’erreur provient
         package string lineText(string lineText_) {
             return _lineText = lineText_;
         }
@@ -113,7 +114,7 @@ final class GrError {
             return _lineText;
         }
 
-        /// What's wrong in details.
+        /// L’erreur plus en détail
         package string otherInfo(string otherInfo_) {
             return _otherInfo = otherInfo_;
         }
@@ -122,7 +123,7 @@ final class GrError {
             return _otherInfo;
         }
 
-        /// Script that generated the error.
+        /// Le fichier source d’où provient le problème
         package string otherFilePath(string otherFilePath_) {
             return _otherFilePath = otherFilePath_;
         }
@@ -131,7 +132,7 @@ final class GrError {
             return _otherFilePath;
         }
 
-        /// Line of the error inside the script.
+        /// La ligne de l’erreur dans le fichier source
         package size_t otherLine(size_t otherLine_) {
             return _otherLine = otherLine_;
         }
@@ -140,7 +141,7 @@ final class GrError {
             return _otherLine;
         }
 
-        /// Character offset of the error at the line.
+        /// La colonne de l’erreur dans le fichier source
         package size_t otherColumn(size_t otherColumn_) {
             return _otherColumn = otherColumn_;
         }
@@ -149,7 +150,8 @@ final class GrError {
             return _otherColumn;
         }
 
-        /// Size of the error segment, the error is in between `column` and `column + textLength`
+        /// La taille de la partie erronée. \
+        /// L’erreur est situé entre `column` et `column + textLength`
         package size_t otherTextLength(size_t otherTextLength_) {
             return _otherTextLength = otherTextLength_;
         }
@@ -158,7 +160,7 @@ final class GrError {
             return _otherTextLength;
         }
 
-        /// The line from which the error originate
+        /// La ligne entière d’où l’erreur provient
         package string otherLineText(string otherLineText_) {
             return _otherLineText = otherLineText_;
         }
@@ -168,7 +170,7 @@ final class GrError {
         }
     }
 
-    /// Format the error and prints it.
+    /// Formate l’erreur pour le rendre présentable
     string prettify(GrLocale locale) {
         import std.conv : to;
         import std.algorithm.comparison : clamp;
@@ -185,15 +187,14 @@ final class GrError {
         }
         //report ~= "\033[0;93mwarning";
 
-        //Error report
+        // Message d’erreur
         report ~= "\033[37;1m: " ~ _message ~ "\n";
 
-        //Additional info
+        // Informations additionnelles
         if (_otherInfo.length) {
-            //Error report
             report ~= "\033[37;0m";
 
-            //File path
+            // Chemin du fichier
             lineNumber = to!string(_otherLine) ~ "| ";
             foreach (x; 1 .. lineNumber.length)
                 report ~= " ";
@@ -207,11 +208,11 @@ final class GrError {
                 report ~= " ";
             report ~= "\033[1;34m|\n";
 
-            //Script snippet
+            // Aperçu du script
             report ~= " " ~ lineNumber;
             report ~= "\033[1;34m" ~ _otherLineText ~ "\033[1;34m\n";
 
-            //Red underline
+            // Sousligner en rouge
             foreach (x; 1 .. lineNumber.length)
                 report ~= " ";
             report ~= "\033[1;34m|";
@@ -223,13 +224,13 @@ final class GrError {
             foreach (x; 0 .. _otherTextLength)
                 report ~= "-";
 
-            //Error description
+            // Description de l’erreur
             if (_otherInfo.length)
                 report ~= "  " ~ _otherInfo;
             report ~= "\n";
         }
 
-        //File path
+        // Chemin du fichier
         lineNumber = to!string(_line) ~ "| ";
         foreach (x; 1 .. lineNumber.length)
             report ~= " ";
@@ -243,26 +244,26 @@ final class GrError {
             report ~= " ";
         report ~= "\033[1;34m|\n";
 
-        //Script snippet
+        // Aperçu du script
         report ~= " " ~ lineNumber;
         report ~= "\033[1;34m" ~ _lineText ~ "\033[1;34m\n";
 
-        //Red underline
+        // Sousligner en rouge
         foreach (x; 1 .. lineNumber.length)
             report ~= " ";
         report ~= "\033[1;34m|";
         foreach (x; 0 .. clamp(_column, 0, _lineText.length))
             report ~= " ";
 
-        report ~= "\033[1;31m"; //Red color
-        //report ~= "\033[1;93m"; //Orange color
+        report ~= "\033[1;31m"; // En rouge
+        //report ~= "\033[1;93m"; // En orange
 
         foreach (x; 0 .. _textLength)
             report ~= "^";
 
-        //Error description
-        report ~= "\033[1;31m"; //Red color
-        //report ~= "\033[0;93m"; //Orange color
+        // Description de l’erreur
+        report ~= "\033[1;31m"; // En rouge
+        //report ~= "\033[0;93m"; // En orange
 
         if (_info.length)
             report ~= "  " ~ _info;

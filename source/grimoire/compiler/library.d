@@ -1,7 +1,7 @@
 /** 
- * Copyright: Enalye
- * License: Zlib
- * Authors: Enalye
+ * Droits d’auteur: Enalye
+ * Licence: Zlib
+ * Auteur: Enalye
  */
 module grimoire.compiler.library;
 
@@ -15,8 +15,13 @@ import grimoire.compiler.mangle;
 import grimoire.compiler.pretty;
 import grimoire.compiler.util;
 
+/**
+Renseigne les types et primitives de la bibliothèque. \
+* Utilisez `GrLibrary` pour la compilation et l’exécution.
+* Utilisez `GrDoc` pour la documentation.
+*/
 interface GrLibDefinition {
-    /// Type of operator overloading
+    /// Type d’opérateur à surcharger
     enum Operator {
         plus,
         minus,
@@ -71,35 +76,34 @@ interface GrLibDefinition {
         ]);
     GrPrimitive addConstructor(GrCallback, GrType, GrType[] = [], GrConstraint[] = [
         ]);
+    GrPrimitive addStatic(GrCallback, GrType, string, GrType[] = [],
+        GrType[] = [], GrConstraint[] = []);
     GrPrimitive[] addProperty(GrCallback, GrCallback, string, GrType, GrType, GrConstraint[] = [
         ]);
 }
 
-/**
-Contains type information and D linked functions.
-*/
+/// Contient les informations de types et les fonctions en D liées
 final class GrLibrary : GrLibDefinition {
     package(grimoire) {
-        /// Opaque pointer types. \
-        /// They're pointer only defined by a name. \
-        /// Can only be used with primitives.
+        /// Types de pointeurs opaques. \
+        /// Ils ne sont utilisables que par des primitives.
         GrAbstractNativeDefinition[] _abstractNativeDefinitions;
-        /// Type aliases
+        /// Alias de type.
         GrTypeAliasDefinition[] _aliasDefinitions;
-        /// Enum types.
+        /// Types d’énumérations.
         GrEnumDefinition[] _enumDefinitions;
-        /// Object types.
+        /// Types de classes.
         GrClassDefinition[] _abstractClassDefinitions;
-        /// Variable types
+        /// Définitions de variables globales.
         GrVariableDefinition[] _variableDefinitions;
 
-        /// All primitives, used for both the compiler and the runtime.
+        /// Les primitives.
         GrPrimitive[] _abstractPrimitives;
 
-        /// All the primitive callbacks.
+        /// Les pointeurs de fonction liés aux primitives.
         GrCallback[] _callbacks;
 
-        /// Name aliases
+        /// Alias de noms.
         string[string] _aliases;
     }
 
@@ -118,7 +122,7 @@ final class GrLibrary : GrLibDefinition {
     override void setModuleDescription(GrLocale, string) {
     }
 
-    /// Define a variable
+    /// Définit une variable non-constante
     override GrType addVar(string name, GrType type) {
         GrVariableDefinition variable = new GrVariableDefinition;
         variable.name = name;
@@ -127,7 +131,7 @@ final class GrLibrary : GrLibDefinition {
         return type;
     }
 
-    /// Define a variable with a default value
+    /// Définit une variable non-constante avec une valeur initiale
     override GrType addVar(string name, GrType type, GrValue defaultValue) {
         GrVariableDefinition variable = new GrVariableDefinition;
         variable.name = name;
@@ -169,7 +173,7 @@ final class GrLibrary : GrLibDefinition {
         return type;
     }
 
-    /// Défini une constante
+    /// Définit une variable constante avec une valeur initiale
     override GrType addConst(string name, GrType type, GrValue defaultValue) {
         GrVariableDefinition variable = new GrVariableDefinition;
         variable.name = name;
@@ -212,7 +216,7 @@ final class GrLibrary : GrLibDefinition {
         return type;
     }
 
-    /// Define an enum
+    /// Definit une énumération
     override GrType addEnum(string name, string[] fields) {
         GrEnumDefinition enum_ = new GrEnumDefinition;
         enum_.name = name;
@@ -225,7 +229,7 @@ final class GrLibrary : GrLibDefinition {
         return type;
     }
 
-    /// Define a class type.
+    /// Definit une classe
     override GrType addClass(string name, string[] fields, GrType[] signature,
         string[] templateVariables = [], string parent = "", GrType[] parentTemplateSignature = [
         ]) {
@@ -258,7 +262,7 @@ final class GrLibrary : GrLibDefinition {
         return type;
     }
 
-    /// Define a type alias
+    /// Definit un alias de type
     override GrType addAlias(string name, GrType type) {
         GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
         typeAlias.name = name;
@@ -268,7 +272,7 @@ final class GrLibrary : GrLibDefinition {
         return type;
     }
 
-    /// Define an opaque pointer type.
+    /// Definit un type natif
     override GrType addNative(string name, string[] templateVariables = [],
         string parent = "", GrType[] parentTemplateSignature = []) {
         if (name == parent)
@@ -289,7 +293,7 @@ final class GrLibrary : GrLibDefinition {
         return type;
     }
 
-    /// Define a new primitive.
+    /// Definit une nouvelle primitive
     override GrPrimitive addFunction(GrCallback callback, string name,
         GrType[] inSignature = [], GrType[] outSignature = [], GrConstraint[] constraints = [
         ]) {
@@ -324,10 +328,7 @@ final class GrLibrary : GrLibDefinition {
         return primitive;
     }
 
-    /**
-    An operator is a function that replace a binary or unary grimoire operator such as `+`, `==`, etc
-    The name of the function must be that of the operator like "+", "-", "or", etc.
-    */
+    /// Surcharge un opérateur binaire ou untaire tel que `+`, `==`, etc
     override GrPrimitive addOperator(GrCallback callback, Operator operator,
         GrType[] inSignature, GrType outType, GrConstraint[] constraints = []) {
         string name;
@@ -428,6 +429,7 @@ final class GrLibrary : GrLibDefinition {
                     "s" : "") ~ ": " ~ grGetPrettyFunctionCall("", inSignature));
         return addOperator(callback, name, inSignature, outType, constraints);
     }
+
     /// Ditto
     override GrPrimitive addOperator(GrCallback callback, string name,
         GrType[] inSignature, GrType outType, GrConstraint[] constraints = []) {
@@ -438,10 +440,7 @@ final class GrLibrary : GrLibDefinition {
         return addFunction(callback, "@operator_" ~ name, inSignature, [outType], constraints);
     }
 
-    /**
-    A cast operator allows to convert from one type to another.
-    It must have only one parameter and return the casted value.
-    */
+    /// Définit une convertion entre deux types différents
     override GrPrimitive addCast(GrCallback callback, GrType srcType,
         GrType dstType, bool isExplicit = false, GrConstraint[] constraints = []) {
         auto primitive = addFunction(callback, "@as", [srcType, dstType], [
@@ -451,10 +450,7 @@ final class GrLibrary : GrLibDefinition {
         return primitive;
     }
 
-    /**
-    Define a function that will be called with the `new` operation.
-    It must return the defined type.
-    */
+    /// Ajoute un constructeur
     override GrPrimitive addConstructor(GrCallback callback, GrType type,
         GrType[] inSignature = [], GrConstraint[] constraints = []) {
         auto primitive = addFunction(callback, "@static_" ~ grUnmangleComposite(type.mangledType)
@@ -462,21 +458,31 @@ final class GrLibrary : GrLibDefinition {
         return primitive;
     }
 
-    /**
-    Define functions that access and modify a native’s property.
-    */
+    /// Ajoute une fonction statique lié à un type
+    override GrPrimitive addStatic(GrCallback callback, GrType type, string name,
+        GrType[] inSignature = [], GrType[] outSignature = [], GrConstraint[] constraints = [
+        ]) {
+        auto primitive = addFunction(callback, "@static_" ~ grUnmangleComposite(type.mangledType)
+                .name ~ "." ~ name, inSignature ~ [type], outSignature, constraints);
+        return primitive;
+    }
+
+    /// Définit des primitives qui agiront comme un champ d’une classe mais pour un natif. \
+    /// Laisser `setCallback` à `null` rendra la propriété constante.
+    /// * `getCallback` prend `nativeType`  en entrée et doit renvoyer `propertyType` en sortie.
+    /// * `setCallback` prend `nativeType` et `propertyType`  en entrée et doit renvoyer `propertyType` en sortie.
     override GrPrimitive[] addProperty(GrCallback getCallback, GrCallback setCallback,
         string name, GrType nativeType, GrType propertyType, GrConstraint[] constraints = [
         ]) {
         GrPrimitive[] primitives;
-        /*assert(callbacks.length <= operations.length,
-            "the number of callbacks of the property `" ~ name ~
-                "` of the type `" ~ grGetPrettyType(
-                    nativeType) ~ "` exceed the number of operations");*/
 
         if (getCallback) {
             primitives ~= addFunction(getCallback, "@property_" ~ name,
                 [nativeType], [propertyType], constraints);
+        }
+        else {
+            throw new Exception("the property `@" ~ grGetPrettyType(
+                    nativeType) ~ "." ~ name ~ "`must define at least a getter");
         }
         if (setCallback) {
             primitives ~= addFunction(setCallback, "@property_" ~ name,
@@ -485,6 +491,7 @@ final class GrLibrary : GrLibDefinition {
         return primitives;
     }
 
+    /// Enjolive la primitive
     private string getPrettyPrimitive(GrPrimitive primitive) {
         import std.conv : to;
 

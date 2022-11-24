@@ -1,14 +1,14 @@
 /** 
- * Copyright: Enalye
- * License: Zlib
- * Authors: Enalye
+ * Droits d’auteur: Enalye
+ * Licence: Zlib
+ * Auteur: Enalye
  */
 module grimoire.compiler.pretty;
 
 import std.conv : to;
 import grimoire.compiler.util, grimoire.compiler.type, grimoire.compiler.mangle;
 
-/// Convert a type into a pretty format for display.
+/// Enjolive un type dans un format présentable
 string grGetPrettyType(const GrType variableType) {
     string result;
 
@@ -173,8 +173,8 @@ string grGetPrettyType(const GrType variableType) {
     return result;
 }
 
-/// Displayable format for a mangled string of format: function$signature \
-/// Return signature is not used.
+/// Formate un appel de fonction décoré sous la forme `function$signature`. \
+/// La signature de retour est ignorée.
 string grGetPrettyFunctionCall(const string mangledName) {
     import std.string : indexOf;
 
@@ -191,8 +191,7 @@ string grGetPrettyFunctionCall(const string mangledName) {
     return grGetPrettyFunctionCall(name, inSignature);
 }
 
-/// Displayable format for a mangled string of format: function$signature \
-/// Return signature is not used.
+/// Formate un appel de fonction.
 string grGetPrettyFunctionCall(const string name, const GrType[] inSignature) {
     import std.string : indexOf;
 
@@ -230,7 +229,7 @@ string grGetPrettyFunctionCall(const string name, const GrType[] inSignature) {
     return result;
 }
 
-/// Prettify a function.
+/// Enjolive une fonction.
 string grGetPrettyFunction(const string name, const GrType[] inSignature, const GrType[] outSignature) {
     import std.string : indexOf;
 

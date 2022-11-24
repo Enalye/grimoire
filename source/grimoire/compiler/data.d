@@ -1,7 +1,7 @@
 /** 
- * Copyright: Enalye
- * License: Zlib
- * Authors: Enalye
+ * Droits d’auteur: Enalye
+ * Licence: Zlib
+ * Auteur: Enalye
  */
 module grimoire.compiler.data;
 
@@ -15,44 +15,44 @@ import grimoire.compiler.library;
 import grimoire.compiler.pretty;
 
 /**
-Contains type information and D linked functions. \
-Must be the same between the compilation and the runtime.
+Contient les informations de types et les fonctions en D liées. \
+Ces informations doivent rester cohérents entre la compilation et l’exécution.
 ___
-Only use the *add*X() functions ***before*** compilation happen,
-else they won't be linked.
+N’utilisez les fonctions `add[…]()` qu’avant la compilation, \
+sinon elles ne seront pas utilisées.
 */
 final class GrData {
     package(grimoire) {
-        /// Opaque pointer types. \
-        /// They're pointer only defined by a name. \
-        /// Can only be used with primitives.
+        /// Types de pointeurs opaques. \
+        /// Ils ne sont utilisables que par des primitives.
         GrNativeDefinition[] _nativeDefinitions;
-        /// Abstract native types.
+        /// Types abstraits de natifs.
         GrAbstractNativeDefinition[] _abstractNativeDefinitions;
-        /// Type aliases
+        /// Alias de type.
         GrTypeAliasDefinition[] _aliasDefinitions, _templateAliasDefinitions;
-        /// Enum types.
+        /// Types d’énumérations.
         GrEnumDefinition[] _enumDefinitions;
-        /// Object types.
+        /// Types de classes.
         GrClassDefinition[] _classDefinitions;
-        /// Abstract object types.
+        /// Types abstraits de classes.
         GrClassDefinition[] _abstractClassDefinitions;
-        /// Variable types
+        /// Définitions de variables globales.
         GrVariableDefinition[] _variableDefinitions;
 
-        /// All primitives, used for both the compiler and the runtime.
+        /// Les primitives.
         GrPrimitive[] _primitives, _abstractPrimitives;
 
-        /// Used to validate special primitives.
+        /// Utilisé pour valider des primitives génériques.
         GrAnyData _anyData;
 
+        /// Les pointeurs de fonction liés aux primitives.
         GrCallback[] _callbacks;
 
-        /// Name aliases
+        /// Alias de noms.
         string[string] _aliases;
     }
 
-    /// Add types and primitives defined in the library
+    /// Ajoute une nouvelle bibliothèque contenant ses définitions de type et de primitives
     void addLibrary(GrLibrary library) {
         _abstractNativeDefinitions ~= library._abstractNativeDefinitions;
         _aliasDefinitions ~= library._aliasDefinitions;
@@ -75,15 +75,7 @@ final class GrData {
         }
     }
 
-    /// Primitive global constants, call registerIntConstant at the start of the parser. \
-    /// Not used for now.
-    GrType addIntConstant(const string name, int value) {
-        if (value + 1 > value)
-            assert(false, "TODO: Implement later");
-        return grVoid;
-    }
-
-    /// Is a type already declared in this file
+    /// Ce type est-il déjà déclaré dans ce fichier ?
     package bool isTypeDeclared(const string name, uint fileId, bool isPublic) const {
         if (isEnum(name, fileId, isPublic))
             return true;
@@ -96,7 +88,7 @@ final class GrData {
         return false;
     }
 
-    /// Is a type already declared in this file
+    /// Ditto
     private bool isTypeDeclared(const string name) const {
         if (isEnum(name))
             return true;
@@ -109,7 +101,7 @@ final class GrData {
         return false;
     }
 
-    /// Define an enum type.
+    /// Définit une énumération
     package GrType addEnum(const string name, const string[] fields, uint fileId, bool isPublic) {
         GrEnumDefinition enumDef = new GrEnumDefinition;
         enumDef.name = name;
@@ -124,6 +116,7 @@ final class GrData {
         return stType;
     }
 
+    /// Définit une classe
     package void registerClass(const string name, uint fileId, bool isPublic,
         string[] templateVariables, uint position) {
         GrClassDefinition class_ = new GrClassDefinition;
@@ -135,7 +128,7 @@ final class GrData {
         _abstractClassDefinitions ~= class_;
     }
 
-    /// Define an alias of another type.
+    /// Definit un alias de type
     package GrType addAlias(const string name, const GrType type, uint fileId, bool isPublic) {
         GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
         typeAlias.name = name;
@@ -146,7 +139,7 @@ final class GrData {
         return type;
     }
 
-    /// Define an alias of another type.
+    /// Definit un alias temporaire pour la généricité
     package GrType addTemplateAlias(const string name, const GrType type, uint fileId, bool isPublic) {
         GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
         typeAlias.name = name;
@@ -157,11 +150,12 @@ final class GrData {
         return type;
     }
 
+    /// Nettoie les alias génériques
     package void clearTemplateAliases() {
         _templateAliasDefinitions.length = 0;
     }
 
-    /// Is the enum defined ?
+    /// L’énumération existe-elle ?
     package bool isEnum(const string name, uint fileId, bool isPublic) const {
         foreach (enumType; _enumDefinitions) {
             if (enumType.name == name && (enumType.fileId == fileId || enumType.isPublic || isPublic))
@@ -179,7 +173,7 @@ final class GrData {
         return false;
     }
 
-    /// Is the class defined ?
+    /// La classe existe-elle ?
     package bool isClass(const string name, uint fileId, bool isPublic) const {
         foreach (class_; _abstractClassDefinitions) {
             if (class_.name == name && (class_.fileId == fileId || class_.isPublic || isPublic))
@@ -197,7 +191,7 @@ final class GrData {
         return false;
     }
 
-    /// Is the type alias defined ?
+    /// L’alias existe-il ?
     package bool isTypeAlias(const string name, uint fileId, bool isPublic) const {
         foreach (typeAlias; _templateAliasDefinitions) {
             if (typeAlias.name == name && (typeAlias.fileId == fileId ||
@@ -221,7 +215,7 @@ final class GrData {
         return false;
     }
 
-    /// Is the user-type defined ?
+    /// Le natif exite-il ?
     package bool isNative(const string name) const {
         foreach (native; _abstractNativeDefinitions) {
             if (native.name == name)
@@ -230,7 +224,7 @@ final class GrData {
         return false;
     }
 
-    /// Return the user-type definition.
+    /// Renvoie la définition du natif
     GrNativeDefinition getNative(const string mangledName) {
         import std.algorithm.searching : findSplitBefore;
 
@@ -270,7 +264,7 @@ final class GrData {
         return null;
     }
 
-    /// Return the enum definition.
+    /// Renvoie la définition de l’énumération
     GrEnumDefinition getEnum(const string name, uint fileId) {
         import std.conv : to;
 
@@ -281,7 +275,7 @@ final class GrData {
         return null;
     }
 
-    /// Return the class definition.
+    /// Renvoie la définition de la classe
     GrClassDefinition getClass(const string mangledName, uint fileId, bool isPublic = false) {
         import std.algorithm.searching : findSplitBefore;
 
@@ -342,7 +336,7 @@ final class GrData {
         return null;
     }
 
-    /// Return the type alias definition.
+    /// Renvoie la définition de l’alias de type
     GrTypeAliasDefinition getTypeAlias(const string name, uint fileId) {
         foreach (typeAlias; _templateAliasDefinitions) {
             if (typeAlias.name == name && (typeAlias.fileId == fileId || typeAlias.isPublic))
@@ -355,9 +349,7 @@ final class GrData {
         return null;
     }
 
-    /**
-    Is the primitive already declared ?
-    */
+    /// La primitive exite-elle ?
     bool isPrimitiveDeclared(const string mangledName) {
         foreach (primitive; _primitives) {
             if (primitive.mangledName == mangledName)
@@ -366,9 +358,7 @@ final class GrData {
         return false;
     }
 
-    /**
-    Returns the declared primitive definition.
-    */
+    /// Renvoie la définition de la primitive
     GrPrimitive getPrimitive(const string mangledName) {
         import std.conv : to;
 
@@ -455,8 +445,10 @@ final class GrData {
         return null;
     }
 
+    /// Transforme un modèle de primitive en primitive concrète
     package GrPrimitive reifyPrimitive(const GrPrimitive templatePrimitive) {
-        // We assume the signature was already validated with `isSignatureCompatible` to be fully compatible with the primitive
+        // On considère que la signature a déjà été validé par `isSignatureCompatible`
+        // pour être entièrement compatible avec la primitive
         GrPrimitive primitive = new GrPrimitive(templatePrimitive);
         for (int i; i < primitive.inSignature.length; ++i) {
             primitive.inSignature[i] = reifyType(primitive.inSignature[i]);
@@ -478,6 +470,7 @@ final class GrData {
         return primitive;
     }
 
+    /// On transforme un type générique en type concret
     private GrType reifyType(const GrType type) {
         GrType result = type;
         if (type.isAny) {
@@ -550,7 +543,7 @@ final class GrData {
         return result;
     }
 
-    // Forcing the classes to be reified they aren't already
+    // Force les classes à être réifiées quand elle ne le sont pas encore
     private void checkUnknownClasses(GrType type) {
         switch (type.base) with (GrType.Base) {
         case class_:
@@ -583,7 +576,7 @@ final class GrData {
         }
     }
 
-    /// Check if the first signature match or can be upgraded (by inheritance) to the second one.
+    /// Vérifie si la première signature correspond ou peut être promu (par héritage) à la seconde
     bool isSignatureCompatible(const GrType[] first, const GrType[] second,
         bool isAbstract, uint fileId, bool isPublic = false) {
         if (first.length != second.length)
@@ -705,15 +698,14 @@ final class GrData {
         _anyData = anyData;
     }
 
-    /**
-    Prettify a primitive signature.
-    */
+    /// Formate une primitive pour être affichable
     private string getPrimitiveDisplayById(uint id) {
         if (id >= _primitives.length)
             throw new Exception("invalid primitive id");
         return getPrettyPrimitive(_primitives[id]);
     }
 
+    /// Ditto
     private string getPrettyPrimitive(const GrPrimitive primitive) {
         import std.string : indexOf;
 
