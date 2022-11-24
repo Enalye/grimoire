@@ -3872,57 +3872,24 @@ final class GrParser {
     }
 
     private GrVariable parseDeclarableArgument() {
-        GrVariable lvalue;
-        GrType type = GrType.Base.void_;
-        bool isAuto, isConst, isPure, isTyped = true;
+        GrType type;
+        bool isAuto, isTyped = true;
 
-        if (get().type == GrLexeme.Type.const_) {
-            checkAdvance();
-            isConst = true;
-        }
-        if (get().type == GrLexeme.Type.pure_) {
-            checkAdvance();
-            isPure = true;
-        }
-        if (!isConst && get().type == GrLexeme.Type.const_) {
-            checkAdvance();
-            isConst = true;
-        }
-
-        switch (get().type) with (GrLexeme.Type) {
-        case var:
-            isAuto = true;
-            checkAdvance();
-            break;
-        case integerType: .. case channelType:
-            type = parseType();
-            break;
-        case identifier:
-            if (_data.isTypeDeclared(get().svalue, get().fileId, false))
-                type = parseType();
-            else
-                isTyped = false;
-            break;
-        default:
-            logError(getError(Error.varDefOrRefExpected),
-                format(getError(Error.varOrRefExpectedFoundX), getPrettyLexemeType(get().type)));
-            break;
-        }
-        type.isPure = isPure;
-        GrLexeme identifier = get();
-        if (identifier.type != GrLexeme.Type.identifier)
-            logError(getError(Error.varNameExpected),
-                format(getError(Error.varNameExpectedFoundX), getPrettyLexemeType(get().type)));
-
-        lvalue = registerVariable(identifier.svalue, type, isTyped ? isAuto
-                : true, false, isConst, false);
-
-        // Un type composé n’a pas besoin d’être initialisé
-        if (lvalue.type == GrType.Base.class_)
-            lvalue.isInitialized = true;
-
+        if (get().type != GrLexeme.Type.identifier)
+            logError(format(getError(Error.expectedIdentifierFoundX),
+                    getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
+        const string identifier = get().svalue;
         checkAdvance();
-        return lvalue;
+
+        if (get().type == GrLexeme.Type.colon) {
+            checkAdvance();
+            type = parseType(true);
+        }
+        else {
+            isAuto = true;
+        }
+
+        return registerVariable(identifier, type, isTyped ? isAuto : true, false, false, false);
     }
 
     /// Permet l’itération sur une liste ou un itérateur
@@ -7179,10 +7146,6 @@ final class GrParser {
         prevDefaultCaseDef,
         missingWhileOrUntilAfterLoop,
         expectedWhileOrUntilFoundX,
-        varDefOrRefExpected,
-        varOrRefExpectedFoundX,
-        varNameExpected,
-        varNameExpectedFoundX,
         listCantBeOfTypeX,
         invalidListType,
         primXMustRetOptional,
@@ -7412,10 +7375,6 @@ final class GrParser {
                 Error.prevDefaultCaseDef: "previous default case definition",
                 Error.missingWhileOrUntilAfterLoop: "missing `while` or `until` after the loop",
                 Error.expectedWhileOrUntilFoundX: "expected `while` or `until`, found `%s`",
-                Error.varDefOrRefExpected: "a variable definition or reference is expected",
-                Error.varOrRefExpectedFoundX: "a variable or reference is expected, found `%s`",
-                Error.varNameExpected: "a variable name is expected",
-                Error.varNameExpectedFoundX: "a variable name is expected, found `%s`",
                 Error.listCantBeOfTypeX: "a list can't be of type `%s`",
                 Error.primXMustRetOptional: "the primitive `%s` must return an optional type",
                 Error.signatureMismatch: "signature mismatch",
@@ -7638,10 +7597,6 @@ final class GrParser {
                 Error.prevDefaultCaseDef: "précédente définition du cas par défaut",
                 Error.missingWhileOrUntilAfterLoop: "`tant` ou `jusque` manquant après la boucle",
                 Error.expectedWhileOrUntilFoundX: "`tant` ou `jusque` attendu, `%s` trouvé",
-                Error.varDefOrRefExpected: "une définition de variable ou une référence est attendue",
-                Error.varOrRefExpectedFoundX: "une variable ou référence est attendue, `%s` trouvé",
-                Error.varNameExpected: "un nom de variable est attendu",
-                Error.varNameExpectedFoundX: "un nom de variable est attendu, `%s` trouvé",
                 Error.listCantBeOfTypeX: "une liste ne peut pas être de type `%s`",
                 Error.primXMustRetOptional: "la primitive `%s` doit retourner un type optionnel",
                 Error.signatureMismatch: "la signature ne correspond pas",
