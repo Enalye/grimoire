@@ -3871,7 +3871,8 @@ final class GrParser {
         closeContinuableSection();
     }
 
-    private GrVariable parseDeclarableArgument() {
+    /// Analyse une déclaration de variable utilisé dans pour les boucles `for` et `loop`
+    private GrVariable parseIteratorDeclaration() {
         GrType type;
         bool isAuto, isTyped = true;
 
@@ -3912,7 +3913,7 @@ final class GrParser {
         advance();
         currentFunction.openScope();
 
-        GrVariable variable = parseDeclarableArgument();
+        GrVariable variable = parseIteratorDeclaration();
 
         if (get().type != GrLexeme.Type.comma)
             logError(format(getError(Error.missingCommaInX), getPrettyLexemeType(GrLexeme.Type.for_)),
@@ -4282,7 +4283,7 @@ final class GrParser {
             advance();
             if (arity == 2) {
                 hasCustomIterator = true;
-                customIterator = parseDeclarableArgument();
+                customIterator = parseIteratorDeclaration();
                 if (customIterator.isAuto) {
                     customIterator.isAuto = false;
                     customIterator.type = grInt;
