@@ -54,6 +54,9 @@ class GrEngine {
         /// Ditto
         GrCall[] _calls;
 
+        /// Version
+        uint _userVersion;
+
         /// Classes
         GrClassBuilder[string] _classBuilders;
     }
@@ -64,7 +67,7 @@ class GrEngine {
     }
 
     /// Moyen externe d’arrêter la machine virtuelle
-    shared bool isRunning = true;
+    shared bool isRunning = false;
 
     @property {
         /// Vérifie si une tâche est en cours d’exécution
@@ -97,11 +100,8 @@ class GrEngine {
         }
     }
 
-    this() {
-    }
-
-    private void initialize() {
-        _tasks ~= new GrTask(this);
+    this(uint userVersion = 0u) {
+        _userVersion = userVersion;
     }
 
     /**
@@ -116,12 +116,19 @@ class GrEngine {
     }
 
     /// Charge le bytecode.
-    final void load(GrBytecode bytecode) {
-        initialize();
+    final bool load(GrBytecode bytecode) {
+        isRunning = false;
+
+        if (!bytecode.checkVersion(_userVersion)) {
+            _bytecode = null;
+            return false;
+        }
+
         _bytecode = bytecode;
         _globals = new GrValue[_bytecode.globalsCount];
+        _tasks ~= new GrTask(this);
 
-        // Setup the primitives
+        // Prépare les primitives
         for (uint i; i < _bytecode.primitives.length; ++i) {
             if (_bytecode.primitives[i].index > _callbacks.length)
                 throw new Exception("callback index out of bounds");
@@ -146,6 +153,9 @@ class GrEngine {
             GrClassBuilder classBuilder = _bytecode.classes[index];
             _classBuilders[classBuilder.name] = classBuilder;
         }
+
+        isRunning = true;
+        return true;
     }
 
     /// Vérifie si un événément existe
@@ -180,6 +190,10 @@ class GrEngine {
     */
     GrTask callEvent(const string name, const GrType[] signature = [],
         GrValue[] parameters = [], Priority priority = Priority.normal) {
+
+        if (!isRunning)
+            return null;
+
         const string mangledName = grMangleComposite(name, signature);
         const auto event = mangledName in _bytecode.events;
         if (event is null)
@@ -212,7 +226,7 @@ class GrEngine {
     /// Ditto
     GrTask callEvent(const GrEvent event, GrValue[] parameters = [],
         Priority priority = Priority.normal) {
-        if (event is null)
+        if (!isRunning || event is null)
             return null;
 
         if (event.signature.length != parameters.length)

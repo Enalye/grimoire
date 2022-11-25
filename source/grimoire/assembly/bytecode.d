@@ -8,6 +8,10 @@ module grimoire.assembly.bytecode;
 import std.file, std.bitmanip, std.array, std.outbuffer;
 import grimoire.assembly.symbol;
 
+/// Correspond à une version du langage. \
+/// Un bytecode ayant une version différente ne pourra pas être chargé.
+enum GRIMOIRE_VERSION = 700;
+
 /// Instructions bas niveau de la machine virtuelle.
 enum GrOpcode {
     nop,
@@ -169,6 +173,9 @@ final class GrBytecode {
             GrStringValue svalue;
         }
 
+        /// Version du bytecode.
+        uint grimoireVersion, userVersion;
+
         /// Toutes les instructions.
         uint[] opcodes;
 
@@ -230,6 +237,11 @@ final class GrBytecode {
         deserialize(buffer);
     }
 
+    /// Vérifie si la version de grimoire est correcte
+    bool checkVersion(uint userVersion_ = 0u) {
+        return (grimoireVersion == GRIMOIRE_VERSION) && (userVersion == userVersion_);
+    }
+
     /// Enregistre le bytecode dans un fichier.
     void save(string fileName) {
         std.file.write(fileName, serialize());
@@ -249,6 +261,9 @@ final class GrBytecode {
 
         Appender!(ubyte[]) buffer = appender!(ubyte[]);
         buffer.put(cast(ubyte[]) magicWord);
+
+        buffer.append!uint(cast(uint) grimoireVersion);
+        buffer.append!uint(cast(uint) userVersion);
 
         buffer.append!uint(cast(uint) iconsts.length);
         buffer.append!uint(cast(uint) rconsts.length);
@@ -344,6 +359,14 @@ final class GrBytecode {
         if (buffer[0 .. magicWord.length] != magicWord)
             throw new Exception("invalid bytecode");
         buffer = buffer[magicWord.length .. $];
+
+        grimoireVersion = buffer.read!uint();
+        userVersion = buffer.read!uint();
+
+        // Si la version diffère, l’encodage de la suite peut-être différent
+        // On évite donc de désérialiser la suite
+        if (grimoireVersion != GRIMOIRE_VERSION)
+            return;
 
         iconsts.length = buffer.read!uint();
         rconsts.length = buffer.read!uint();

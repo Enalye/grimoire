@@ -17,9 +17,11 @@ final class GrCompiler {
     private {
         GrData _data;
         GrError _error;
+        uint _userVersion;
     }
 
-    this() {
+    this(uint userVersion = 0u) {
+        _userVersion = userVersion;
         _data = new GrData;
     }
 
@@ -72,6 +74,9 @@ final class GrCompiler {
         uint nbOpcodes, lastOpcodeCount;
 
         GrBytecode bytecode = new GrBytecode;
+
+        bytecode.grimoireVersion = GRIMOIRE_VERSION;
+        bytecode.userVersion = _userVersion;
 
         foreach (func; parser.functions)
             nbOpcodes += cast(uint) func.instructions.length;

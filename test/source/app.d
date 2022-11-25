@@ -44,7 +44,11 @@ void main() {
 
         GrEngine engine = new GrEngine;
         engine.addLibrary(stdlib);
-        engine.load(bytecode);
+
+        if (!engine.load(bytecode)) {
+            writeln("bytecode incompatible");
+            return;
+        }
 
         engine.callEvent("main");
 
@@ -53,8 +57,9 @@ void main() {
 
         while (engine.hasTasks)
             engine.process();
+
         if (engine.isPanicking) {
-            writeln("panic: " ~ engine.panicMessage);
+            writeln("panique: " ~ engine.panicMessage);
             foreach (trace; engine.stackTraces) {
                 writeln("[", trace.pc, "] in ", trace.name, " at ", trace.file,
                     "(", trace.line, ",", trace.column, ")");
