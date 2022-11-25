@@ -58,9 +58,8 @@ interface GrLibDefinition {
     void setParameters(GrLocale, string[] = []);
     void setModuleInfo(GrLocale, string);
     void setModuleDescription(GrLocale, string);
-    GrType addVar(string, GrType);
-    GrType addVar(string, GrType, GrValue);
-    GrType addConst(string, GrType, GrValue);
+    GrType addVariable(string, GrType);
+    GrType addVariable(string, GrType, GrValue, bool = false);
     GrType addEnum(string, string[]);
     GrType addClass(string, string[], GrType[], string[] = [], string = "", GrType[] = [
         ]);
@@ -122,8 +121,8 @@ final class GrLibrary : GrLibDefinition {
     override void setModuleDescription(GrLocale, string) {
     }
 
-    /// Définit une variable non-constante
-    override GrType addVar(string name, GrType type) {
+    /// Définit une variable
+    override GrType addVariable(string name, GrType type) {
         GrVariableDefinition variable = new GrVariableDefinition;
         variable.name = name;
         variable.type = type;
@@ -131,54 +130,12 @@ final class GrLibrary : GrLibDefinition {
         return type;
     }
 
-    /// Définit une variable non-constante avec une valeur initiale
-    override GrType addVar(string name, GrType type, GrValue defaultValue) {
+    /// Définit une variable avec une valeur initiale
+    override GrType addVariable(string name, GrType type, GrValue defaultValue, bool isConst = false) {
         GrVariableDefinition variable = new GrVariableDefinition;
         variable.name = name;
         variable.type = type;
-
-        final switch (type.base) with (GrType.Base) {
-        case bool_:
-            variable.ivalue = defaultValue.getBool();
-            break;
-        case int_:
-        case enum_:
-            variable.ivalue = defaultValue.getInt();
-            break;
-        case float_:
-            variable.rvalue = defaultValue.getFloat();
-            break;
-        case string_:
-            variable.svalue = defaultValue.getString();
-            break;
-        case optional:
-        case class_:
-        case channel:
-        case func:
-        case task:
-        case event:
-        case list:
-        case native:
-        case void_:
-        case null_:
-        case internalTuple:
-        case reference:
-            throw new Exception(
-                "can't initialize library variable of type `" ~ grGetPrettyType(type) ~ "`");
-        }
-
-        variable.isInitialized = true;
-        _variableDefinitions ~= variable;
-
-        return type;
-    }
-
-    /// Définit une variable constante avec une valeur initiale
-    override GrType addConst(string name, GrType type, GrValue defaultValue) {
-        GrVariableDefinition variable = new GrVariableDefinition;
-        variable.name = name;
-        variable.type = type;
-        variable.isConst = true;
+        variable.isConst = isConst;
 
         final switch (type.base) with (GrType.Base) {
         case bool_:

@@ -5,7 +5,7 @@ Maths related functions.
 ## Variables
 |Variable|Type|Valeur|Description|
 |-|-|-|-|
-|PI|**const float**|3.14159|Ratio between the diameter of a circle and its circumference.|
+|PI|**float**|3.14159|Ratio between the diameter of a circle and its circumference.|
 ## Opérateurs
 |Opérateur|Entrée|Sortie|
 |-|-|-|

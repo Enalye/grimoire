@@ -150,7 +150,7 @@ final class GrDoc : GrLibDefinition {
         _parameters[locale] = parameters;
     }
 
-    override GrType addVar(string name, GrType type) {
+    override GrType addVariable(string name, GrType type) {
         Variable var;
         var.name = name;
         var.type = type;
@@ -159,24 +159,13 @@ final class GrDoc : GrLibDefinition {
         return type;
     }
 
-    override GrType addVar(string name, GrType type, GrValue value) {
+    override GrType addVariable(string name, GrType type, GrValue value, bool isConst = false) {
         Variable var;
         var.name = name;
         var.type = type;
         var.hasValue = true;
         var.value = value;
-        var.comments = _comments.dup;
-        _variables ~= var;
-        return type;
-    }
-
-    override GrType addConst(string name, GrType type, GrValue value) {
-        Variable var;
-        var.name = name;
-        var.type = type;
-        var.isConst = true;
-        var.hasValue = true;
-        var.value = value;
+        var.isConst = isConst;
         var.comments = _comments.dup;
         _variables ~= var;
         return type;

@@ -11,14 +11,14 @@
 |[print](#func_5)|**float?** *value*||
 |[print](#func_6)|**string** *value*||
 |[print](#func_7)|**string?** *value*||
-|[print](#func_8)|**pure list(int)** *value*||
-|[print](#func_9)|**pure list(int)?** *value*||
-|[print](#func_10)|**pure list(bool)** *value*||
-|[print](#func_11)|**pure list(bool)?** *value*||
-|[print](#func_12)|**pure list(float)** *value*||
-|[print](#func_13)|**pure list(float)?** *value*||
-|[print](#func_14)|**pure list(string)** *value*||
-|[print](#func_15)|**pure list(string)?** *value*||
+|[print](#func_8)|**pure list\<int>** *value*||
+|[print](#func_9)|**pure list\<int>?** *value*||
+|[print](#func_10)|**pure list\<bool>** *value*||
+|[print](#func_11)|**pure list\<bool>?** *value*||
+|[print](#func_12)|**pure list\<float>** *value*||
+|[print](#func_13)|**pure list\<float>?** *value*||
+|[print](#func_14)|**pure list\<string>** *value*||
+|[print](#func_15)|**pure list\<string>?** *value*||
 |[print](#func_16)|**pure T** *value*||
 |[print](#func_17)|**T?** *value*||
 |[print](#func_18)|**pure T** *value*||
@@ -75,42 +75,42 @@ Display `value`'s content.
 Display `value`'s content.
 
 <a id="func_8"></a>
-> print (**pure list(int)** *value*)
+> print (**pure list\<int>** *value*)
 
 Display `value`'s content.
 
 <a id="func_9"></a>
-> print (**pure list(int)?** *value*)
+> print (**pure list\<int>?** *value*)
 
 Display `value`'s content.
 
 <a id="func_10"></a>
-> print (**pure list(bool)** *value*)
+> print (**pure list\<bool>** *value*)
 
 Display `value`'s content.
 
 <a id="func_11"></a>
-> print (**pure list(bool)?** *value*)
+> print (**pure list\<bool>?** *value*)
 
 Display `value`'s content.
 
 <a id="func_12"></a>
-> print (**pure list(float)** *value*)
+> print (**pure list\<float>** *value*)
 
 Display `value`'s content.
 
 <a id="func_13"></a>
-> print (**pure list(float)?** *value*)
+> print (**pure list\<float>?** *value*)
 
 Display `value`'s content.
 
 <a id="func_14"></a>
-> print (**pure list(string)** *value*)
+> print (**pure list\<string>** *value*)
 
 Display `value`'s content.
 
 <a id="func_15"></a>
-> print (**pure list(string)?** *value*)
+> print (**pure list\<string>?** *value*)
 
 Display `value`'s content.
 

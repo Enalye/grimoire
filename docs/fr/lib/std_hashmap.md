@@ -7,16 +7,16 @@ Dictionnaire associant des valeurs par clés.
 ### HashMapIterator\<T>
 Itère sur une hashmap.
 ## Constructeurs
-|Constructeur|Entrée|
+|Fonction|Entrée|
 |-|-|
-|**HashMap\<T>**||
-|**HashMap\<T>**|**pure list(string)**, **pure list(T)**|
-|**HashMap\<T>**|**pure list(Pair\<string, T>)**|
+|[@**HashMap\<T>**](#ctor_0)||
+|[@**HashMap\<T>**](#ctor_1)|**pure list\<string>** *param0*, **pure list\<T>** *param1*|
+|[@**HashMap\<T>**](#ctor_2)|**pure list\<Pair\<string, T>>** *param0*|
 ## Fonctions
 |Fonction|Entrée|Sortie|
 |-|-|-|
-|[byKeys](#func_0)|**pure HashMap\<T>** *hashmap*|**list(string)**|
-|[byValues](#func_1)|**pure HashMap\<T>** *hashmap*|**list(T)**|
+|[byKeys](#func_0)|**pure HashMap\<T>** *hashmap*|**list\<string>**|
+|[byValues](#func_1)|**pure HashMap\<T>** *hashmap*|**list\<T>**|
 |[clear](#func_2)|**HashMap\<T>** *hashmap*|**HashMap\<T>**|
 |[contains](#func_3)|**pure HashMap\<T>** *hashmap*, **string** *clé*|**bool**|
 |[copy](#func_4)|**pure HashMap\<T>** *hashmap*|**HashMap\<T>**|
@@ -38,12 +38,12 @@ Itère sur une hashmap.
 ## Description des fonctions
 
 <a id="func_0"></a>
-> byKeys (**pure HashMap\<T>** *hashmap*) (**list(string)**)
+> byKeys (**pure HashMap\<T>** *hashmap*) (**list\<string>**)
 
 Returne la liste de toutes les clés.
 
 <a id="func_1"></a>
-> byValues (**pure HashMap\<T>** *hashmap*) (**list(T)**)
+> byValues (**pure HashMap\<T>** *hashmap*) (**list\<T>**)
 
 Returne la liste de toutes les valeurs.
 

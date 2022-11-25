@@ -6,7 +6,8 @@ Fonctions basiques.
 |-|-|-|
 |[cond](#func_0)|**bool** *condition*, **T** *a*, **T** *b*|**T**|
 |[swap](#func_1)|**T1** *a*, **T2** *b*|**T2**, **T1**|
-|[typeOf](#func_2)|**T** *valeur*|**string**|
+|[testa](#func_2)|**event(string)** *valeur*||
+|[typeOf](#func_3)|**T** *valeur*|**string**|
 
 
 ***
@@ -23,6 +24,11 @@ Renvoie `a` si `condition` est vrai, sinon renvoie `b`.
 Renvoie `a` et `b` dans l’ordre inverse.
 
 <a id="func_2"></a>
+> testa (**event(string)** *valeur*)
+
+Retourne le type de `valeur`.
+
+<a id="func_3"></a>
 > typeOf (**T** *valeur*) (**string**)
 
 Retourne le type de `valeur`.

@@ -7,9 +7,9 @@ Une queue est une collection pouvant être manipulé par les deux bouts.
 ### QueueIterator\<T>
 Itère sur une queue.
 ## Constructeurs
-|Constructeur|Entrée|
+|Fonction|Entrée|
 |-|-|
-|**Queue\<T>**||
+|[@**Queue\<T>**](#ctor_0)||
 ## Fonctions
 |Fonction|Entrée|Sortie|
 |-|-|-|

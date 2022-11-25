@@ -10,8 +10,8 @@ Fonctions de conversion.
 |**bool**|**string**|
 |**int**|**string**|
 |**float**|**string**|
-|**pure list(string)**|**string**|
-|**pure string**|**list(string)**|
+|**pure list\<string>**|**string**|
+|**pure string**|**list\<string>**|
 
 
 ***
