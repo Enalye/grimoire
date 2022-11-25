@@ -16,21 +16,21 @@ event main() {
 }
 ```
 
-```cpp
+```go
 //Invert a string
 event main() {
-    assert("Hello World !":invert == "! dlroW olleH");
+    assert("Hello World !".invert == "! dlroW olleH");
 }
 
-function invert(string str) (string) {
-    let result = str as list(string);
-    loop(i, result:size / 2)
+func invert(str: string) (string) {
+    let result = str as<list<string>>;
+    loop(i, result.size / 2)
         result[i], result[-(i + 1)] = result[-(i + 1)], result[i];
-    return result as string;
+    return result as<string>;
 }
 ```
 
-```cpp
+```go
 //Fibonacci
 event fib() {
     assert(
