@@ -746,15 +746,15 @@ final class GrDoc : GrLibDefinition {
                 foreach (type; static_.inSignature) {
                     if (inSignature.length)
                         inSignature ~= ", ";
-                    inSignature ~= _getPrettyType(type);
 
                     if (parametersName.length) {
-                        inSignature ~= " *" ~ parametersName[0] ~ "*";
+                        inSignature ~= "*" ~ parametersName[0] ~ "*";
                         parametersName = parametersName[1 .. $];
                     }
                     else {
-                        inSignature ~= " *param" ~ to!string(paramIdx) ~ "*";
+                        inSignature ~= "*param" ~ to!string(paramIdx) ~ "*";
                     }
+                    inSignature ~= ": " ~ _getPrettyType(type);
                     paramIdx++;
                 }
 
@@ -788,15 +788,15 @@ final class GrDoc : GrLibDefinition {
                 foreach (type; func.inSignature) {
                     if (inSignature.length)
                         inSignature ~= ", ";
-                    inSignature ~= _getPrettyType(type);
 
                     if (parametersName.length) {
-                        inSignature ~= " *" ~ parametersName[0] ~ "*";
+                        inSignature ~= "*" ~ parametersName[0] ~ "*";
                         parametersName = parametersName[1 .. $];
                     }
                     else {
-                        inSignature ~= " *param" ~ to!string(paramIdx) ~ "*";
+                        inSignature ~= "*param" ~ to!string(paramIdx) ~ "*";
                     }
+                    inSignature ~= ": " ~ _getPrettyType(type);
                     paramIdx++;
                 }
 
@@ -836,15 +836,14 @@ final class GrDoc : GrLibDefinition {
                     foreach (type; func.inSignature) {
                         if (inSignature.length)
                             inSignature ~= ", ";
-                        inSignature ~= _getPrettyType(type);
-
                         if (parametersName.length) {
-                            inSignature ~= " *" ~ parametersName[0] ~ "*";
+                            inSignature ~= "*" ~ parametersName[0] ~ "*";
                             parametersName = parametersName[1 .. $];
                         }
                         else {
-                            inSignature ~= " *param" ~ to!string(paramIdx) ~ "*";
+                            inSignature ~= "*param" ~ to!string(paramIdx) ~ "*";
                         }
+                        inSignature ~= ": " ~ _getPrettyType(type);
                         paramIdx++;
                     }
                     name ~= inSignature;

@@ -4,26 +4,26 @@ Functions to help error handling.
 ## Fonctions
 |Fonction|Entrée|Sortie|
 |-|-|-|
-|[_setMeta](#func_0)|**pure string** *value*||
-|[assert](#func_1)|**bool** *value*, **pure string** *error*||
-|[assert](#func_2)|**bool** *value*||
+|[_setMeta](#func_0)|*value*: **pure string**||
+|[assert](#func_1)|*value*: **bool**, *error*: **pure string**||
+|[assert](#func_2)|*value*: **bool**||
 
 
 ***
 ## Description des fonctions
 
 <a id="func_0"></a>
-> _setMeta (**pure string** *value*)
+> _setMeta (*value*: **pure string**)
 
 Internal function.
 
 <a id="func_1"></a>
-> assert (**bool** *value*, **pure string** *error*)
+> assert (*value*: **bool**, *error*: **pure string**)
 
 If `value` is false, throw the exception `errror`.
 
 <a id="func_2"></a>
-> assert (**bool** *value*)
+> assert (*value*: **bool**)
 
 If `value` is false, throw an exception `"AssertError"`.
 

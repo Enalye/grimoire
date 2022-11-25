@@ -69,36 +69,36 @@ Its null type is equal to `null(T)` where `T` is the referenced type.
 ## Fonctions
 |Fonction|Entrée|Sortie|
 |-|-|-|
-|[expect](#func_0)|**T?** *x*, **pure string** *error*|**T**|
-|[some](#func_1)|**T** *x*|**T?**|
-|[unwrap](#func_2)|**T?** *x*|**T**|
-|[unwrapOr](#func_3)|**T?** *x*, **T** *default*|**T**|
+|[expect](#func_0)|*x*: **T?**, *error*: **pure string**|**T**|
+|[some](#func_1)|*x*: **T**|**T?**|
+|[unwrap](#func_2)|*x*: **T?**|**T**|
+|[unwrapOr](#func_3)|*x*: **T?**, *default*: **T**|**T**|
 
 
 ***
 ## Description des fonctions
 
 <a id="func_0"></a>
-> expect (**T?** *x*, **pure string** *error*) (**T**)
+> expect (*x*: **T?**, *error*: **pure string**) (**T**)
 
 Checks if an optionnal is null.
 If it is, the exception `error` is thrown.
 Otherwise, the non-optional version of `x` is returned.
 
 <a id="func_1"></a>
-> some (**T** *x*) (**T?**)
+> some (*x*: **T**) (**T?**)
 
 Returns an optional version of the type.
 
 <a id="func_2"></a>
-> unwrap (**T?** *x*) (**T**)
+> unwrap (*x*: **T?**) (**T**)
 
 Checks if an optionnal is null.
 If it is, the exception `"UnwrapError"` is thrown.
 Otherwise, the non-optional version of `x` is returned.
 
 <a id="func_3"></a>
-> unwrapOr (**T?** *x*, **T** *default*) (**T**)
+> unwrapOr (*x*: **T?**, *default*: **T**) (**T**)
 
 Checks if an optionnal is null.
 If it is, the `default` value is returned.

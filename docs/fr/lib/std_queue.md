@@ -13,41 +13,41 @@ Itère sur une queue.
 ## Fonctions
 |Fonction|Entrée|Sortie|
 |-|-|-|
-|[back](#func_0)|**pure Queue\<T>** *queue*|**T?**|
-|[front](#func_1)|**pure Queue\<T>** *queue*|**T?**|
-|[isEmpty](#func_2)|**pure Queue\<T>** *queue*|**bool**|
-|[pop](#func_3)|**Queue\<T>** *queue*|**T?**|
-|[push](#func_4)|**Queue\<T>** *queue*, **T** *valeur*||
+|[back](#func_0)|*queue*: **pure Queue\<T>**|**T?**|
+|[front](#func_1)|*queue*: **pure Queue\<T>**|**T?**|
+|[isEmpty](#func_2)|*queue*: **pure Queue\<T>**|**bool**|
+|[pop](#func_3)|*queue*: **Queue\<T>**|**T?**|
+|[push](#func_4)|*queue*: **Queue\<T>**, *valeur*: **T**||
 
 
 ***
 ## Description des fonctions
 
 <a id="func_0"></a>
-> back (**pure Queue\<T>** *queue*) (**T?**)
+> back (*queue*: **pure Queue\<T>**) (**T?**)
 
 Returne le dernier élément de `queue`.
 S’il n’existe pas, retourne `null(T)`.
 
 <a id="func_1"></a>
-> front (**pure Queue\<T>** *queue*) (**T?**)
+> front (*queue*: **pure Queue\<T>**) (**T?**)
 
 Retourne le premier élément de `queue`.
 S’il n’existe pas, retourne `null(T)`.
 
 <a id="func_2"></a>
-> isEmpty (**pure Queue\<T>** *queue*) (**bool**)
+> isEmpty (*queue*: **pure Queue\<T>**) (**bool**)
 
 Renvoie `true` si la `queue` ne contient rien.
 
 <a id="func_3"></a>
-> pop (**Queue\<T>** *queue*) (**T?**)
+> pop (*queue*: **Queue\<T>**) (**T?**)
 
 Retire le dernier élément de `queue` et le retourne.
 S’il n’existe pas, retourne `null(T)`.
 
 <a id="func_4"></a>
-> push (**Queue\<T>** *queue*, **T** *valeur*)
+> push (*queue*: **Queue\<T>**, *valeur*: **T**)
 
 Ajoute `valeur` en fin de `queue`.
 

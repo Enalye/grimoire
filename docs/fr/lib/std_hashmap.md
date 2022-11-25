@@ -15,112 +15,112 @@ Itère sur une hashmap.
 ## Fonctions
 |Fonction|Entrée|Sortie|
 |-|-|-|
-|[byKeys](#func_0)|**pure HashMap\<T>** *hashmap*|**list\<string>**|
-|[byValues](#func_1)|**pure HashMap\<T>** *hashmap*|**list\<T>**|
-|[clear](#func_2)|**HashMap\<T>** *hashmap*|**HashMap\<T>**|
-|[contains](#func_3)|**pure HashMap\<T>** *hashmap*, **string** *clé*|**bool**|
-|[copy](#func_4)|**pure HashMap\<T>** *hashmap*|**HashMap\<T>**|
-|[each](#func_5)|**pure HashMap\<T>** *hashmap*|**HashMapIterator\<T>**|
-|[get](#func_6)|**pure HashMap\<T>** *hashmap*, **string** *clé*|**T?**|
-|[getOr](#func_7)|**pure HashMap\<T>** *hashmap*, **string** *clé*, **T** *défaut*|**T**|
-|[isEmpty](#func_8)|**pure HashMap\<T>** *hashmap*|**bool**|
-|[next](#func_9)|**HashMapIterator\<T>** *itérateur*|**Pair\<string, T>?**|
-|[print](#func_10)|**pure HashMap\<bool>** *hashmap*||
-|[print](#func_11)|**pure HashMap\<int>** *hashmap*||
-|[print](#func_12)|**pure HashMap\<float>** *hashmap*||
-|[print](#func_13)|**pure HashMap\<string>** *hashmap*||
-|[remove](#func_14)|**HashMap\<T>** *hashmap*, **pure string** *clé*||
-|[set](#func_15)|**HashMap\<T>** *hashmap*, **pure string** *clé*, **T** *valeur*||
-|[size](#func_16)|**pure HashMap\<T>** *hashmap*|**int**|
+|[byKeys](#func_0)|*hashmap*: **pure HashMap\<T>**|**list\<string>**|
+|[byValues](#func_1)|*hashmap*: **pure HashMap\<T>**|**list\<T>**|
+|[clear](#func_2)|*hashmap*: **HashMap\<T>**|**HashMap\<T>**|
+|[contains](#func_3)|*hashmap*: **pure HashMap\<T>**, *clé*: **string**|**bool**|
+|[copy](#func_4)|*hashmap*: **pure HashMap\<T>**|**HashMap\<T>**|
+|[each](#func_5)|*hashmap*: **pure HashMap\<T>**|**HashMapIterator\<T>**|
+|[get](#func_6)|*hashmap*: **pure HashMap\<T>**, *clé*: **string**|**T?**|
+|[getOr](#func_7)|*hashmap*: **pure HashMap\<T>**, *clé*: **string**, *défaut*: **T**|**T**|
+|[isEmpty](#func_8)|*hashmap*: **pure HashMap\<T>**|**bool**|
+|[next](#func_9)|*itérateur*: **HashMapIterator\<T>**|**Pair\<string, T>?**|
+|[print](#func_10)|*hashmap*: **pure HashMap\<bool>**||
+|[print](#func_11)|*hashmap*: **pure HashMap\<int>**||
+|[print](#func_12)|*hashmap*: **pure HashMap\<float>**||
+|[print](#func_13)|*hashmap*: **pure HashMap\<string>**||
+|[remove](#func_14)|*hashmap*: **HashMap\<T>**, *clé*: **pure string**||
+|[set](#func_15)|*hashmap*: **HashMap\<T>**, *clé*: **pure string**, *valeur*: **T**||
+|[size](#func_16)|*hashmap*: **pure HashMap\<T>**|**int**|
 
 
 ***
 ## Description des fonctions
 
 <a id="func_0"></a>
-> byKeys (**pure HashMap\<T>** *hashmap*) (**list\<string>**)
+> byKeys (*hashmap*: **pure HashMap\<T>**) (**list\<string>**)
 
 Returne la liste de toutes les clés.
 
 <a id="func_1"></a>
-> byValues (**pure HashMap\<T>** *hashmap*) (**list\<T>**)
+> byValues (*hashmap*: **pure HashMap\<T>**) (**list\<T>**)
 
 Returne la liste de toutes les valeurs.
 
 <a id="func_2"></a>
-> clear (**HashMap\<T>** *hashmap*) (**HashMap\<T>**)
+> clear (*hashmap*: **HashMap\<T>**) (**HashMap\<T>**)
 
 Vide la `hashmap`.
 
 <a id="func_3"></a>
-> contains (**pure HashMap\<T>** *hashmap*, **string** *clé*) (**bool**)
+> contains (*hashmap*: **pure HashMap\<T>**, *clé*: **string**) (**bool**)
 
 Renvoie `true` si `clé` existe dans la `hashmap`.
 
 <a id="func_4"></a>
-> copy (**pure HashMap\<T>** *hashmap*) (**HashMap\<T>**)
+> copy (*hashmap*: **pure HashMap\<T>**) (**HashMap\<T>**)
 
 Returns a copy of the `hashmap`.
 
 <a id="func_5"></a>
-> each (**pure HashMap\<T>** *hashmap*) (**HashMapIterator\<T>**)
+> each (*hashmap*: **pure HashMap\<T>**) (**HashMapIterator\<T>**)
 
 Returne un itérateur permettant d’itérer sur chaque paire de clés/valeurs.
 
 <a id="func_6"></a>
-> get (**pure HashMap\<T>** *hashmap*, **string** *clé*) (**T?**)
+> get (*hashmap*: **pure HashMap\<T>**, *clé*: **string**) (**T?**)
 
 Returne la valeur associée avec `clé`.
 Si cette valeur n’existe pas, retourne `null(T)`.
 
 <a id="func_7"></a>
-> getOr (**pure HashMap\<T>** *hashmap*, **string** *clé*, **T** *défaut*) (**T**)
+> getOr (*hashmap*: **pure HashMap\<T>**, *clé*: **string**, *défaut*: **T**) (**T**)
 
 Returne la valeur associée avec `clé`.
 Si cette valeur n’existe pas, retourne `défaut`.
 
 <a id="func_8"></a>
-> isEmpty (**pure HashMap\<T>** *hashmap*) (**bool**)
+> isEmpty (*hashmap*: **pure HashMap\<T>**) (**bool**)
 
 Renvoie `true` si la `hashmap` ne contient rien.
 
 <a id="func_9"></a>
-> next (**HashMapIterator\<T>** *itérateur*) (**Pair\<string, T>?**)
+> next (*itérateur*: **HashMapIterator\<T>**) (**Pair\<string, T>?**)
 
 Avance l’itérateur à l’élément suivant.
 
 <a id="func_10"></a>
-> print (**pure HashMap\<bool>** *hashmap*)
+> print (*hashmap*: **pure HashMap\<bool>**)
 
 Affiche le contenu d’`hashmap`.
 
 <a id="func_11"></a>
-> print (**pure HashMap\<int>** *hashmap*)
+> print (*hashmap*: **pure HashMap\<int>**)
 
 Affiche le contenu d’`hashmap`.
 
 <a id="func_12"></a>
-> print (**pure HashMap\<float>** *hashmap*)
+> print (*hashmap*: **pure HashMap\<float>**)
 
 Affiche le contenu d’`hashmap`.
 
 <a id="func_13"></a>
-> print (**pure HashMap\<string>** *hashmap*)
+> print (*hashmap*: **pure HashMap\<string>**)
 
 Affiche le contenu d’`hashmap`.
 
 <a id="func_14"></a>
-> remove (**HashMap\<T>** *hashmap*, **pure string** *clé*)
+> remove (*hashmap*: **HashMap\<T>**, *clé*: **pure string**)
 
 Retire l’entrée `clé` de la `hashmap`.
 
 <a id="func_15"></a>
-> set (**HashMap\<T>** *hashmap*, **pure string** *clé*, **T** *valeur*)
+> set (*hashmap*: **HashMap\<T>**, *clé*: **pure string**, *valeur*: **T**)
 
 Ajoute la nouvelle `valeur` à la `clé` correspondante dans la `hashmap`.
 
 <a id="func_16"></a>
-> size (**pure HashMap\<T>** *hashmap*) (**int**)
+> size (*hashmap*: **pure HashMap\<T>**) (**int**)
 
 Returne le nombre d’élements dans la `hashmap`.
 
