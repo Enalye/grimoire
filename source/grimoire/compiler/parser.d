@@ -5941,7 +5941,6 @@ final class GrParser {
                     logError(format(getError(Error.expectedFieldNameFoundX),
                             getPrettyLexemeType(get().type)), getError(Error.missingField));
                 const string identifier = get().svalue;
-                checkAdvance();
 
                 if (currentType.base == GrType.Base.native) {
                     GrNativeDefinition native = _data.getNative(currentType.mangledType);
@@ -6038,6 +6037,7 @@ final class GrParser {
                         hadValue = false;
                         hasLValue = false;
                         hadLValue = false;
+                        checkAdvance();
                         break;
                     }
                 }
@@ -6054,6 +6054,7 @@ final class GrParser {
                                 logError(format(getError(Error.xOnTypeYIsPrivate), identifier,
                                         getPrettyType(currentType)),
                                     getError(Error.privateField), "");
+                            checkAdvance();
                             hasField = true;
 
                             GrType selfType = currentType;
@@ -6169,7 +6170,7 @@ final class GrParser {
 
                 GrType[] signature = [currentType];
 
-                GrLexeme.Type operatorType = get().type;
+                GrLexeme.Type operatorType = get(1).type;
 
                 if (operatorType == GrLexeme.Type.leftParenthesis) {
                     uint nbReturnValues;
@@ -6228,6 +6229,7 @@ final class GrParser {
                     break;
                 }
 
+                checkAdvance();
                 GrType[] outputs;
                 if (operatorType != GrLexeme.Type.assign) {
                     if (requireLValue(operatorType)) {
