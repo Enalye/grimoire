@@ -5460,6 +5460,23 @@ final class GrParser {
             break;
         case class_:
         case native:
+            string name = "@static_" ~ grUnmangleComposite(type.mangledType).name;
+            auto matching = getFirstMatchingFuncOrPrim(name, [type], get().fileId);
+
+            if (matching.prim) {
+                addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+                if (matching.prim.outSignature.length != 1 || matching.prim.outSignature[0] != type)
+                    goto case void_;
+            }
+            else if (matching.func) {
+                addFunctionCall(matching.func, fileId);
+                if (matching.func.outSignature.length != 1 || matching.func.outSignature[0] != type)
+                    goto case void_;
+            }
+            else {
+                goto case void_;
+            }
+            break;
         case reference:
         case void_:
         case null_:
