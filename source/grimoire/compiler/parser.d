@@ -5951,10 +5951,12 @@ final class GrParser {
                     const string propertyName = "@property_" ~ identifier;
                     GrType[] signature = [currentType];
 
-                    GrLexeme.Type operatorType = get().type;
+                    GrLexeme.Type operatorType = get(1).type;
 
                     auto getFunc = getFirstMatchingFuncOrPrim(propertyName, signature, fileId);
                     if (getFunc.prim) {
+                        checkAdvance();
+
                         if (operatorType != GrLexeme.Type.assign) {
                             if (requireLValue(operatorType)) {
                                 addInstruction(GrOpcode.copy);
@@ -6037,7 +6039,6 @@ final class GrParser {
                         hadValue = false;
                         hasLValue = false;
                         hadLValue = false;
-                        checkAdvance();
                         break;
                     }
                 }
