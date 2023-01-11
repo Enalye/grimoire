@@ -112,6 +112,7 @@ enum GrOpcode {
     call,
     anonymousCall,
     primitiveCall,
+    safePrimitiveCall,
     return_,
     unwind,
     defer,
@@ -151,6 +152,8 @@ final class GrBytecode {
         struct PrimitiveReference {
             /// L’index de la primitive
             int index;
+            /// Nom de la primitive
+            string name;
             /// Paramètres
             uint params;
             /// Ditto
@@ -295,6 +298,7 @@ final class GrBytecode {
 
         foreach (primitive; primitives) {
             buffer.append!uint(cast(uint) primitive.index);
+            writeStr(buffer, primitive.name);
             buffer.append!uint(primitive.params);
 
             buffer.append!uint(cast(uint) primitive.inSignature.length);
@@ -406,6 +410,7 @@ final class GrBytecode {
 
         for (size_t i; i < primitives.length; ++i) {
             primitives[i].index = buffer.read!uint();
+            primitives[i].name = readStr(buffer);
             primitives[i].params = buffer.read!uint();
 
             const uint inParamsCount = buffer.read!uint();

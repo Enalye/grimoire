@@ -11,7 +11,9 @@ enum GrOption {
     /// Génère des symboles de débogage dans le bytecode
     symbols = 0x1,
     /// Ajoute des commandes de profilage dans le bytecode
-    profile = 0x2
+    profile = 0x2,
+    /// Change certaines instructions par des versions plus sécurisés
+    safe = 0x4
 }
 
 /// La langue du compilateur

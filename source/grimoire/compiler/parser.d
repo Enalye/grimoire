@@ -898,7 +898,8 @@ final class GrParser {
         // primitive
         auto matching = getFirstMatchingFuncOrPrim(name, signature, fileId);
         if (matching.prim) {
-            addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+            addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
+                    : GrOpcode.primitiveCall, matching.prim.index);
             if (matching.prim.outSignature.length != 1uL) {
                 logError(getError(Error.opMustHave1RetVal), format(getError(matching.prim.outSignature.length > 1 ?
                         Error.expected1RetValFoundX : Error.expected1RetValFoundXs),
@@ -928,7 +929,8 @@ final class GrParser {
         // primitive
         auto matching = getFirstMatchingFuncOrPrim(name, signature, fileId);
         if (matching.prim) {
-            addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+            addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
+                    : GrOpcode.primitiveCall, matching.prim.index);
             if (matching.prim.outSignature.length != 1uL) {
                 logError(getError(Error.opMustHave1RetVal), format(getError(matching.prim.outSignature.length > 1 ?
                         Error.expected1RetValFoundX : Error.expected1RetValFoundXs),
@@ -4085,7 +4087,8 @@ final class GrParser {
 
                 addGetInstruction(iterator, containerType);
                 if (nextPrim)
-                    addInstruction(GrOpcode.primitiveCall, nextPrim.index);
+                    addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
+                            : GrOpcode.primitiveCall, nextPrim.index);
                 else
                     addFunctionCall(nextFunc, fileId);
 
@@ -4714,7 +4717,8 @@ final class GrParser {
             // Par ex: float -> int à cause d’un risque de perte d’information.
             if (matching.prim.isExplicit && !isExplicit)
                 return resultType;
-            addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+            addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
+                    : GrOpcode.primitiveCall, matching.prim.index);
             if (matching.prim.outSignature.length != 1uL) {
                 logError(getError(Error.opMustHave1RetVal), format(getError(matching.prim.outSignature.length > 1 ?
                         Error.expectedXRetValsFoundY : Error.expectedXRetValFoundY),
@@ -4887,7 +4891,8 @@ final class GrParser {
             // Appel de fonction
             auto matching = getFirstMatchingFuncOrPrim(name, signature, fileId);
             if (matching.prim) {
-                addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+                addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
+                        : GrOpcode.primitiveCall, matching.prim.index);
                 outputs = matching.prim.outSignature;
             }
             else if (matching.func) {
@@ -5464,7 +5469,8 @@ final class GrParser {
             auto matching = getFirstMatchingFuncOrPrim(name, [type], get().fileId);
 
             if (matching.prim) {
-                addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+                addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
+                        : GrOpcode.primitiveCall, matching.prim.index);
                 if (matching.prim.outSignature.length != 1 || matching.prim.outSignature[0] != type)
                     goto case void_;
             }
@@ -5979,7 +5985,8 @@ final class GrParser {
                                 addInstruction(GrOpcode.copy);
                             }
 
-                            addInstruction(GrOpcode.primitiveCall, getFunc.prim.index);
+                            addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
+                                    : GrOpcode.primitiveCall, getFunc.prim.index);
                             currentType = getFunc.prim.outSignature[0];
                         }
 
@@ -6021,7 +6028,8 @@ final class GrParser {
                             auto setFunc = getFirstMatchingFuncOrPrim(propertyName,
                                 signature, fileId);
                             if (setFunc.prim) {
-                                addInstruction(GrOpcode.primitiveCall, setFunc.prim.index);
+                                addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
+                                        : GrOpcode.primitiveCall, setFunc.prim.index);
                                 currentType = grPackTuple(setFunc.prim.outSignature);
                                 if (currentType.base == GrType.Base.internalTuple) {
                                     GrType[] types = grUnpackTuple(currentType);
@@ -6256,7 +6264,8 @@ final class GrParser {
 
                     auto matching = getFirstMatchingFuncOrPrim(identifier, signature, fileId);
                     if (matching.prim) {
-                        addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+                        addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
+                                : GrOpcode.primitiveCall, matching.prim.index);
                         outputs = matching.prim.outSignature;
                     }
                     else if (matching.func) {
@@ -6319,7 +6328,8 @@ final class GrParser {
 
                     auto matching = getFirstMatchingFuncOrPrim(identifier, signature, fileId);
                     if (matching.prim) {
-                        addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+                        addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
+                                : GrOpcode.primitiveCall, matching.prim.index);
                         currentType = grPackTuple(matching.prim.outSignature);
                         if (currentType.base == GrType.Base.internalTuple) {
                             outputs = grUnpackTuple(currentType);
@@ -6913,7 +6923,8 @@ final class GrParser {
                 // Appel de fonction
                 auto matching = getFirstMatchingFuncOrPrim(identifierName, signature, fileId);
                 if (matching.prim) {
-                    addInstruction(GrOpcode.primitiveCall, matching.prim.index);
+                    addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
+                            : GrOpcode.primitiveCall, matching.prim.index);
                     returnType = grPackTuple(matching.prim.outSignature);
                 }
                 else if (matching.func) {

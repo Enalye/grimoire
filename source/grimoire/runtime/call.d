@@ -6,6 +6,7 @@
 module grimoire.runtime.call;
 
 import std.conv : to;
+import std.exception : enforce;
 
 import grimoire.assembly, grimoire.compiler;
 
@@ -31,6 +32,7 @@ final class GrCall {
         int _params;
         int _results;
         bool _isInitialized;
+        string _name;
         string[] _inSignature, _outSignature;
         GrValue[] _inputs;
     }
@@ -47,8 +49,10 @@ final class GrCall {
         }
     }
 
-    package(grimoire) this(GrCallback callback, const ref GrBytecode.PrimitiveReference primRef) {
+    package(grimoire) this(GrCallback callback, string name,
+        const ref GrBytecode.PrimitiveReference primRef) {
         _callback = callback;
+        _name = name;
 
         _parameters = primRef.parameters.dup;
 
@@ -59,14 +63,25 @@ final class GrCall {
     }
 
     /// Exécution de la primitive
-    void call(GrTask task) {
+    void call(bool isSafe = false)(GrTask task) {
         _results = 0;
         _hasError = false;
         _task = task;
 
         const int stackIndex = (_task.stackPos + 1) - _params;
+
+        static if (isSafe) {
+            enforce(stackIndex >= 0,
+                "stack corrupted before the call of the primitive `" ~ prettify() ~ "`");
+        }
+
         _inputs = _task.stack[stackIndex .. _task.stackPos + 1];
         _callback(this);
+
+        static if (isSafe) {
+            enforce(_results == _outSignature.length, "the primitive `" ~ prettify() ~ "` returned " ~ to!string(
+                    _results) ~ " value(s) instead of " ~ to!string(_outSignature.length));
+        }
 
         _task.stack.length = stackIndex + _results + 1;
         _task.stack[stackIndex .. stackIndex + _results] = _outputs[0 .. _results];
@@ -343,5 +358,18 @@ final class GrCall {
     /// Met en suspend la tâche actuelle
     void block(GrBlocker blocker) {
         _task.block(blocker);
+    }
+
+    /// Formate la primitive pour la rendre affichable
+    string prettify() const {
+        GrType[] inSig, outSig;
+        foreach (string type; _inSignature) {
+            inSig ~= grUnmangle(type);
+        }
+        foreach (string type; _outSignature) {
+            outSig ~= grUnmangle(type);
+        }
+
+        return grGetPrettyFunction(_name, inSig, outSig);
     }
 }

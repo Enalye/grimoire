@@ -132,7 +132,7 @@ class GrEngine {
         for (uint i; i < _bytecode.primitives.length; ++i) {
             if (_bytecode.primitives[i].index > _callbacks.length)
                 throw new Exception("callback index out of bounds");
-            _calls ~= new GrCall(_callbacks[_bytecode.primitives[i].index], _bytecode.primitives[i]);
+            _calls ~= new GrCall(_callbacks[_bytecode.primitives[i].index], _bytecode.primitives[i].name, _bytecode.primitives[i]);
         }
 
         foreach (ref globalRef; _bytecode.variables) {
@@ -175,6 +175,16 @@ class GrEngine {
     GrEvent getEvent(GrInt address_) const {
         foreach (string name, uint address; _bytecode.events) {
             if (address == address_)
+                return new GrEvent(name, address);
+        }
+        return null;
+    }
+
+    /// Récupère l’événement correspondant au nom indiqué.
+    GrEvent getEvent(const string name_, const GrType[] signature = []) const {
+        const string mangledName = grMangleComposite(name_, signature);
+        foreach (string name, uint address; _bytecode.events) {
+            if (mangledName == name)
                 return new GrEvent(name, address);
         }
         return null;
@@ -1311,6 +1321,14 @@ class GrEngine {
                     break;
                 case primitiveCall:
                     _calls[grGetInstructionUnsignedValue(opcode)].call(currentTask);
+                    currentTask.pc++;
+                    if (currentTask.blocker) {
+                        index++;
+                        continue tasksLabel;
+                    }
+                    break;
+                case safePrimitiveCall:
+                    _calls[grGetInstructionUnsignedValue(opcode)].call!(true)(currentTask);
                     currentTask.pc++;
                     if (currentTask.blocker) {
                         index++;

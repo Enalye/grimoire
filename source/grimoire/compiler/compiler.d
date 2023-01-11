@@ -279,6 +279,7 @@ final class GrCompiler {
         bytecode.primitives.length = _data._primitives.length;
         for (size_t id; id < bytecode.primitives.length; ++id) {
             bytecode.primitives[id].index = _data._primitives[id].callbackId;
+            bytecode.primitives[id].name = _data._primitives[id].name;
             GrType[] inSignature = _data._primitives[id].inSignature;
             if (_data._primitives[id].name == "@as")
                 inSignature.length = 1;

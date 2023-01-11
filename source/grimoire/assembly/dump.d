@@ -23,9 +23,9 @@ private string[] instructions = [
     "cat.s", "add.i", "add.f", "sub.i", "sub.f", "mul.i", "mul.f", "div.i",
     "div.f", "rem.i", "rem.f", "neg.i", "neg.f", "inc.i", "inc.f", "dec.i",
     "dec.f", "copy", "swap", "setup_it", "local", "call", "acall", "pcall",
-    "ret", "unwind", "defer", "jmp", "jmp_eq", "jmp_neq", "list", "len", "idx",
-    "idx2", "idx3", "cat.n", "append", "prepend", "eq.n", "neq.n", "dbg_prfbegin",
-    "dbg_prfend"
+    "spcall", "ret", "unwind", "defer", "jmp", "jmp_eq", "jmp_neq", "list",
+    "len", "idx", "idx2", "idx3", "cat.n", "append", "prepend", "eq.n",
+    "neq.n", "dbg_prfbegin", "dbg_prfend"
 ];
 
 /// Formate la liste des instructions du bytecode dans un format lisible.
@@ -46,7 +46,7 @@ string grDump(const GrBytecode bytecode) {
             line ~= to!string(grGetInstructionSignedValue(opcode));
         else if (op == GrOpcode.shiftStack)
             line ~= to!string(grGetInstructionSignedValue(opcode));
-        else if (op == GrOpcode.primitiveCall || op == GrOpcode.anonymousCall)
+        else if (op == GrOpcode.primitiveCall || op == GrOpcode.safePrimitiveCall || op == GrOpcode.anonymousCall)
             line ~= to!string(grGetInstructionUnsignedValue(opcode));
         else if (op == GrOpcode.const_int)
             line ~= to!string(bytecode.iconsts[grGetInstructionUnsignedValue(opcode)]);

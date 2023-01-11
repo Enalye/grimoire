@@ -41,6 +41,14 @@ struct GrValue {
         _ovalue = cast(GrPointer) new GrString(value);
     }
 
+    this(GrObject value) {
+        _ovalue = cast(GrPointer) value;
+    }
+
+    this(T)(T value) if (is(T == class)) {
+        _ovalue = cast(GrPointer) value;
+    }
+
     this(GrPointer value) {
         _ovalue = value;
     }
