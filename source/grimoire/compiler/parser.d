@@ -180,7 +180,7 @@ final class GrParser {
 
     /// Enregistre une nouvelle variable
     private GrVariable registerVariable(string name, GrType type, bool isAuto,
-        bool isGlobal, bool isConst, bool isPublic) {
+        bool isGlobal, bool isConst, bool isPublic, bool isDeferred = false) {
 
         assertNoGlobalDeclaration(name, get().fileId, isPublic);
 
@@ -198,10 +198,12 @@ final class GrParser {
         if (!isAuto)
             setVariableRegister(variable);
 
-        if (isGlobal)
-            globalVariables ~= variable;
-        else
-            currentFunction.setLocal(variable);
+        if (!isDeferred) {
+            if (isGlobal)
+                globalVariables ~= variable;
+            else
+                currentFunction.setLocal(variable);
+        }
 
         return variable;
     }
@@ -3391,10 +3393,19 @@ final class GrParser {
 
         GrVariable[] lvalues;
         foreach (string identifier; identifiers) {
-            lvalues ~= registerVariable(identifier, type, isAuto, isGlobal, isConst, isPublic);
+            GrVariable lvalue = registerVariable(identifier, type, isAuto,
+                isGlobal, isConst, isPublic, true);
+            lvalues ~= lvalue;
         }
 
         parseAssignList(lvalues, true);
+
+        foreach (GrVariable lvalue; lvalues) {
+            if (isGlobal)
+                globalVariables ~= lvalue;
+            else
+                currentFunction.setLocal(lvalue);
+        }
     }
 
     private GrType parseFunctionReturnType() {

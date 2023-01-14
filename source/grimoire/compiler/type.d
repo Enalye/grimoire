@@ -243,6 +243,8 @@ package class GrVariable {
     bool isOptional;
     /// Position de l’instruction optionnelle
     uint optionalPosition;
+    /// Ignore la variable
+    bool isHidden;
 }
 
 /// Représente un type opaque
@@ -480,7 +482,7 @@ package class GrFunction {
         foreach_reverse (ref Scope scope_; scopes) {
             // On vérifie si elle est déclarée localement
             GrVariable* variable = (name in scope_.localVariables);
-            if (variable !is null)
+            if (variable !is null && !(*variable).isHidden)
                 return *variable;
         }
         return null;
