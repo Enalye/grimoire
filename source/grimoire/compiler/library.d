@@ -60,7 +60,7 @@ interface GrLibDefinition {
     void setModuleDescription(GrLocale, string);
     GrType addVariable(string, GrType);
     GrType addVariable(string, GrType, GrValue, bool = false);
-    GrType addEnum(string, string[]);
+    GrType addEnum(string, string[], int[] = []);
     GrType addClass(string, string[], GrType[], string[] = [], string = "", GrType[] = [
         ]);
     GrType addAlias(string, GrType);
@@ -174,10 +174,21 @@ final class GrLibrary : GrLibDefinition {
     }
 
     /// Definit une énumération
-    override GrType addEnum(string name, string[] fields) {
+    override GrType addEnum(string name, string[] fieldNames, int[] values = []) {
         GrEnumDefinition enum_ = new GrEnumDefinition;
         enum_.name = name;
-        enum_.fields = fields;
+
+        int lastValue = -1;
+        for (size_t i; i < fieldNames.length; ++i) {
+            GrEnumDefinition.Field field;
+            field.name = fieldNames[i];
+
+            lastValue = i < values.length ? values[i] : lastValue + 1;
+            field.value = lastValue;
+
+            enum_.fields ~= field;
+        }
+
         enum_.isPublic = true;
         _enumDefinitions ~= enum_;
 

@@ -2013,7 +2013,7 @@ final class GrParser {
         if (_data.isTypeDeclared(enumName, fileId, isPublic))
             logError(format(getError(Error.nameXDefMultipleTimes), enumName),
                 format(getError(Error.xAlreadyDecl), enumName));
-        _data.addEnum(enumName, fields, fileId, isPublic);
+        _data.addEnum(enumName, fields, [], fileId, isPublic); //@TODO: Valeur des énums
     }
 
     /// Déclare une nouvelle classe sans l’analyser
@@ -6958,7 +6958,11 @@ final class GrParser {
                     getError(Error.missingEnumConstantName));
             const string fieldName = get().svalue;
             if (!definition.hasField(fieldName)) {
-                const string[] nearestValues = findNearestStrings(fieldName, definition.fields);
+                string[] fieldNames;
+                foreach (field; definition.fields) {
+                    fieldNames ~= field.name;
+                }
+                const string[] nearestValues = findNearestStrings(fieldName, fieldNames);
                 string errorNote;
                 if (nearestValues.length) {
                     foreach (size_t i, const string value; nearestValues) {

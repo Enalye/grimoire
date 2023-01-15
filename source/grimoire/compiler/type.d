@@ -243,8 +243,6 @@ package class GrVariable {
     bool isOptional;
     /// Position de l’instruction optionnelle
     uint optionalPosition;
-    /// Ignore la variable
-    bool isHidden;
 }
 
 /// Représente un type opaque
@@ -301,10 +299,17 @@ enum MonÉnum {
 ---
 */
 final class GrEnumDefinition {
+    /// Champ de l’énumération
+    struct Field {
+        /// Noms du champs
+        string name;
+        /// Valeur du champs
+        int value;
+    }
     /// Identificateur
     string name;
-    /// Noms des différents champs
-    string[] fields;
+    /// Les différents champs de l’énumération
+    Field[] fields;
     /// L’id de l’énumération
     size_t index;
     /// Est-il visible depuis les autres fichiers ?
@@ -313,25 +318,25 @@ final class GrEnumDefinition {
     uint fileId;
 
     /// Est-ce qu’il a ce champ ?
-    bool hasField(const string name) const {
+    bool hasField(const string name_) const {
         foreach (field; fields) {
-            if (field == name)
+            if (field.name == name_)
                 return true;
         }
         return false;
     }
 
     /// Renvoie l’index du champ
-    int getField(const string name) const {
+    int getField(const string name_) const {
         import std.conv : to;
 
         int fieldIndex = 0;
         foreach (field; fields) {
-            if (field == name)
-                return fieldIndex;
+            if (field.name == name_)
+                return field.value;
             fieldIndex++;
         }
-        assert(false, "undefined enum \'" ~ name ~ "\'");
+        assert(false, "enum `" ~ name ~ "` has no field called `" ~ name_ ~ "`");
     }
 }
 
@@ -482,7 +487,7 @@ package class GrFunction {
         foreach_reverse (ref Scope scope_; scopes) {
             // On vérifie si elle est déclarée localement
             GrVariable* variable = (name in scope_.localVariables);
-            if (variable !is null && !(*variable).isHidden)
+            if (variable !is null)
                 return *variable;
         }
         return null;

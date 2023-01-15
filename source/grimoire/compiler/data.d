@@ -102,10 +102,22 @@ final class GrData {
     }
 
     /// Définit une énumération
-    package GrType addEnum(const string name, const string[] fields, uint fileId, bool isPublic) {
+    package GrType addEnum(const string name, const string[] fieldNames,
+        const int[] values, uint fileId, bool isPublic) {
         GrEnumDefinition enumDef = new GrEnumDefinition;
         enumDef.name = name;
-        enumDef.fields = fields.dup;
+
+        int lastValue = -1;
+        for (size_t i; i < fieldNames.length; ++i) {
+            GrEnumDefinition.Field field;
+            field.name = fieldNames[i];
+
+            lastValue = i < values.length ? values[i] : lastValue + 1;
+            field.value = lastValue;
+
+            enumDef.fields ~= field;
+        }
+
         enumDef.index = _enumDefinitions.length;
         enumDef.fileId = fileId;
         enumDef.isPublic = isPublic;

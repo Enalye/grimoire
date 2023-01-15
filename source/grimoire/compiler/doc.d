@@ -171,10 +171,10 @@ final class GrDoc : GrLibDefinition {
         return type;
     }
 
-    override GrType addEnum(string name, string[] fields) {
+    override GrType addEnum(string name, string[] fieldNames, int[] values = []) {
         Enum enum_;
         enum_.name = name;
-        enum_.fields = fields;
+        enum_.fields = fieldNames;
         enum_.comments = _comments.dup;
         _enums ~= enum_;
 
