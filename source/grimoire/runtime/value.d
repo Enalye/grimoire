@@ -49,6 +49,14 @@ struct GrValue {
         _ovalue = cast(GrPointer) value;
     }
 
+    this(T)(T[] values) {
+        GrList list = new GrList;
+        foreach (value; values) {
+            list.push(GrValue(value));
+        }
+        _ovalue = cast(GrPointer) list;
+    }
+
     this(GrPointer value) {
         _ovalue = value;
     }
