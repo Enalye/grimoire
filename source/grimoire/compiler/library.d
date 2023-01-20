@@ -81,6 +81,9 @@ interface GrLibDefinition {
         ]);
 }
 
+/// Fonction renseignant une bibliothèque
+alias GrLibLoader = void function(GrLibDefinition);
+
 /// Contient les informations de types et les fonctions en D liées
 final class GrLibrary : GrLibDefinition {
     package(grimoire) {

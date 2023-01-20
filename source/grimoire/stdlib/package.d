@@ -28,25 +28,26 @@ public {
     import grimoire.stdlib.circularbuffer;
 }
 
-/// Load the standard library
+/// Charge la bibliothèque standard
 GrLibrary grLoadStdLibrary() {
     GrLibrary library = new GrLibrary;
     grLoadStdLibConstraint();
-    grLoadStdLibSystem(library);
-    grLoadStdLibOptional(library);
-    grLoadStdLibLog(library);
-    grLoadStdLibList(library);
-    grLoadStdLibRange(library);
-    grLoadStdLibString(library);
-    grLoadStdLibChannel(library);
-    grLoadStdLibMath(library);
-    grLoadStdLibError(library);
-    grLoadStdLibTime(library);
-    grLoadStdLibTypecast(library);
-    grLoadStdLibPair(library);
-    grLoadStdLibBitmanip(library);
-    grLoadStdLibHashMap(library);
-    grLoadStdLibQueue(library);
-    grLoadStdLibCircularBuffer(library);
+
+    foreach (loader; grGetStdLibraryLoaders()) {
+        loader(library);
+    }
+
     return library;
+}
+
+/// Retourne les fonctions de chargement de la bibliothèque standard
+GrLibLoader[] grGetStdLibraryLoaders() {
+    return [
+        &grLoadStdLibSystem, &grLoadStdLibOptional, &grLoadStdLibLog,
+        &grLoadStdLibList, &grLoadStdLibRange, &grLoadStdLibString,
+        &grLoadStdLibChannel, &grLoadStdLibMath, &grLoadStdLibError,
+        &grLoadStdLibTime, &grLoadStdLibTypecast, &grLoadStdLibPair,
+        &grLoadStdLibBitmanip, &grLoadStdLibHashMap, &grLoadStdLibQueue,
+        &grLoadStdLibCircularBuffer
+    ];
 }
