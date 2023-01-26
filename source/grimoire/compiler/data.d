@@ -314,6 +314,7 @@ final class GrData {
                 generatedClass.isPublic = class_.isPublic;
                 generatedClass.fileId = class_.fileId;
                 generatedClass.fieldsInfo = class_.fieldsInfo;
+                generatedClass.fieldConsts = class_.fieldConsts;
                 generatedClass.index = _classDefinitions.length;
 
                 _anyData = new GrAnyData;

@@ -218,10 +218,12 @@ final class GrLibrary : GrLibDefinition {
         _abstractClassDefinitions ~= class_;
 
         class_.fieldsInfo.length = fields.length;
+        class_.fieldConsts.length = fields.length;
         for (int i; i < class_.fieldsInfo.length; ++i) {
             class_.fieldsInfo[i].fileId = 0;
             class_.fieldsInfo[i].isPublic = true;
             class_.fieldsInfo[i].position = 0;
+            class_.fieldConsts[i] = false;
         }
 
         GrType type = GrType.Base.class_;
