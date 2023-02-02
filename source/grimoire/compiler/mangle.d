@@ -255,7 +255,7 @@ string grMangle(const GrType type) {
     return mangledName;
 }
 
-/// Inverse l’opération de décoration pour une simple type
+/// Inverse l’opération de décoration pour un simple type
 GrType grUnmangle(const string mangledSignature) {
     GrType currentType = GrType.Base.void_;
 

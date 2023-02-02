@@ -46,9 +46,26 @@ string grDump(const GrBytecode bytecode) {
             line ~= to!string(grGetInstructionSignedValue(opcode));
         else if (op == GrOpcode.shiftStack)
             line ~= to!string(grGetInstructionSignedValue(opcode));
-        else if (op == GrOpcode.primitiveCall || op == GrOpcode.safePrimitiveCall || op == GrOpcode.anonymousCall)
+        else if (op == GrOpcode.anonymousCall)
             line ~= to!string(grGetInstructionUnsignedValue(opcode));
-        else if (op == GrOpcode.const_int)
+        else if (op == GrOpcode.primitiveCall || op == GrOpcode.safePrimitiveCall) {
+            const uint index = grGetInstructionUnsignedValue(opcode);
+            if (index < bytecode.primitives.length) {
+                const GrBytecode.PrimitiveReference primitive = bytecode.primitives[index];
+
+                GrType[] inSignature, outSignature;
+                foreach (type; primitive.inSignature) {
+                    inSignature ~= grUnmangle(type);
+                }
+                foreach (type; primitive.outSignature) {
+                    outSignature ~= grUnmangle(type);
+                }
+
+                line ~= grGetPrettyFunction(primitive.name, inSignature, outSignature);
+            } else {
+                line ~= to!string(index);
+            }
+        } else if (op == GrOpcode.const_int)
             line ~= to!string(bytecode.iconsts[grGetInstructionUnsignedValue(opcode)]);
         else if (op == GrOpcode.const_float)
             line ~= to!string(bytecode.rconsts[grGetInstructionUnsignedValue(opcode)]);

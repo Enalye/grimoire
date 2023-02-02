@@ -1014,6 +1014,7 @@ final class GrParser {
         }
         else if (lexType == GrLexeme.Type.concatenate &&
             rightType.base == GrType.Base.string_ && leftType != rightType) {
+            addInstruction(GrOpcode.swap);
             convertType(leftType, rightType, fileId);
             resultType = addInternalOperator(lexType, rightType, true);
         }
