@@ -5965,8 +5965,9 @@ final class GrParser {
                 uint optionalCallPosition;
                 if (get().type == GrLexeme.Type.optional) {
                     checkAdvance();
-                    if (currentType.base == GrType.Base.optional) {
-                        currentType = grUnmangle(typeStack[$ - 1].mangledType);
+                    if (typeStack[$ - 1].base == GrType.Base.optional) {
+                        typeStack[$ - 1] = grUnmangle(typeStack[$ - 1].mangledType);
+                        currentType = typeStack[$ - 1];
                         isOptionalCall = true;
                         optionalCallPosition = cast(uint) currentFunction.instructions.length;
                         addInstruction(GrOpcode.optionalCall);
