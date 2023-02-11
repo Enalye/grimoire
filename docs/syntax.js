@@ -21,10 +21,10 @@ Prism.languages.grimoire = {
 			punctuation: /[.\\]/
 		}
 	},
-	'keyword': /\b(?:import|public|alias|event|class|enum|where|if|unless|else|switch|select|case|default|while|do|until|for|loop|return|self|die|exit|yield|break|continue|as|try|catch|throw|defer|void|task|function|int|float|bool|string|list|channel|new|let|true|false|null|not|and|or|bit_not|bit_and|bit_or|bit_xor)\b/,
+	'keyword': /\b(?:import|public|alias|event|class|enum|where|if|unless|else|switch|select|case|default|while|do|until|for|loop|return|self|die|exit|yield|break|continue|as|try|catch|throw|defer|void|task|func|int|float|bool|string|list|channel|let|true|false|null|not|and|or|bit_not|bit_and|bit_or|bit_xor)\b/,
 	'boolean': /\b(?:true|false)\b/,
 	//'function': /[a-z0-9_]+(?=\()/i,
 	'number': /\b0x[\da-f]+\b|(?:\b\d+\.?\d*|\B\.\d+)(?:e[+-]?\d+)?/i,
-	'operator': /--?|\+\+?|!=?=?|<=?|>=?|==?=?|&&?|\|\|?|\?=??|\*\*?|\/|~|\^|%/,
+	'operator': /@|--?|\+\+?|!=?=?|<=?|>=?|==?=?|&&?|\|\|?|\?=??|\*\*?|\/|~|\^|%/,
 	'punctuation': /[{}[\];(),.:]/
 };
