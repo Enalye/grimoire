@@ -1,6 +1,3 @@
-![logo](https://raw.githubusercontent.com/Enalye/grimoire/master/logo.png)
-
-* * *
 * [Accueil](/fr/)
 * [Langage](/fr/lang/)
     1. [Commentaires](/fr/lang/comments)
