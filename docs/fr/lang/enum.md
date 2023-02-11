@@ -12,10 +12,10 @@ enum Couleur {
 
 Les champs d’une énumération ont une valeur unique.
 ```grimoire
-Couleur maCouleur = Couleur.rouge;
+var maCouleur = Couleur.rouge;
 
 switch(maCouleur)
-case(Couleur.rouge) "On est sur du rouge !":print;
-case(Couleur.vert) "On est sur du vert !":print;
-case(Couleur.bleu) "On est sur du bleu !":print;
+case(Couleur.rouge) "On est sur du rouge !".print;
+case(Couleur.vert) "On est sur du vert !".print;
+case(Couleur.bleu) "On est sur du bleu !".print;
 ```

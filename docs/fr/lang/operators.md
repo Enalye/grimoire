@@ -4,12 +4,12 @@ Tout comme les conversions, on peut définir nos propre opérateurs en appelant 
 Suivant si on surcharge un opérateur unaire ou binaire, le nombre de paramètres doit correspondre (1 ou 2).
 
 ```grimoire
-event onLoad() {
+event main() {
     print(3.5 + 2);
 }
 
-function operator+(float a, int b) (float) {
-    return a + b as float;
+func operator"+"(a: float, b: int) (float) {
+    return a + b as<float>;
 }
 ```
 

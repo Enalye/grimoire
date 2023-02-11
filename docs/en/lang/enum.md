@@ -1,11 +1,7 @@
 # Enumerations
 
-Enumerations (or enum) are a set of named constants defined inside a single type.
-They can only be compared between them and can't do any arithmetic operation.
+Enumerations are a set of different alternatives that a sigle type can have.
 
-## Definition
-
-They are declared with the keyword enum:
 ```grimoire
 enum Color {
 	red;
@@ -14,17 +10,14 @@ enum Color {
 }
 ```
 
-## Accessing a field
-
-To access a value, just type the name of the enum with
-the name of the field you want separated with a dot:
+The fields of an enumeration all have an unique value.
 ```grimoire
 event onLoad() {
-	Color myColor = Color.red;
+	var myColor = Color.red;
 
 	switch(myColor)
-	case(Color.red) "The color is red !":print;
-	case(Color.green) "The color is green !":print;
-	case(Color.blue) "The color is blue !":print;
+	case(Color.red) "The color is red !".print;
+	case(Color.green) "The color is green !".print;
+	case(Color.blue) "The color is blue !".print;
 }
 ```

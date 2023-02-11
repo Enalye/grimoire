@@ -4,7 +4,7 @@ Un programme peut être réparti sur plusieurs fichiers.
 
 Pour les importer, utilisez le mot-clé `import` suivi du chemin relatif du fichier.
 ```grimoire
-import "foo/monScript.gr"
+import "foo/monscript.gr"
 ```
 Avec des accolades `{}` vous pouvez ajouter plusieurs fichiers à la fois.
 ```grimoire

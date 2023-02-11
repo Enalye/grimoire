@@ -12,6 +12,7 @@ GrLibrary library = new GrLibrary;
 
 `addVariable()` permet de déclarer des variables globales.
 
+
 ```d
 library.addVariable("PI", grConst(grFloat), 3.141592); 
 ```
@@ -27,7 +28,7 @@ engine.setFloatVariable("PI", 3.0);
 
 ## Fonctions
 
-La méthode `addFunction()` permet de définir de nouvelle fonctions.
+`addFunction()` permet de définir de nouvelle fonctions.
 
 ```d
 library.addFunction(&multiplier, "multiplier", [grFloat, grFloat], [grFloat]);
@@ -43,7 +44,7 @@ void multiplier(GrCall call) {
 }
 ```
 
-La méthode `addCast` permet de définir de nouvelles conversions.
+`addCast` permet de définir de nouvelles conversions.
 
 ```d
 library.addCast(&maConv, grBool, grString);
@@ -54,7 +55,7 @@ void maConv(GrCall call) {
 }
 ```
 
-La méthode `addOperator` permet la surcharge d’opérateur.
+`addOperator` permet la surcharge d’opérateur.
 
 ```d
 library.addOperator(&additionner, GrLibrary.Operator.add, [grFloat, grInt], grFloat);
@@ -80,7 +81,7 @@ library.addFunction(&_push, "push",
 ```
 Ce code est équivalent à:
 ```grimoire
-function<T> push(list(T) liste, T valeur) (T) {}
+func<T> push(a: list<T>, b: T) (T) {}
 ```
 Des contraintes peuvent également restreindre le type.
 ```d
@@ -98,12 +99,12 @@ Une classe se déclare en appelant la méthode `addClass()`.
 library.addClass("MaClasse", ["foo", "bar"], [grInt, grString]);
 ```
 
-D’autres paramètres optionnels existent pour l’héritage et la généricité:
+D’autres paramètres optionnels existent pour l’héritage et la généricité.
 ```d
 library.addClass("MaClasse", [], [], ["T"], "ClasseParente", [grAny("T")]);
 ```
 
-Instancier une classe se fait à l’aide de `createObject()` sur GrCall ou GrEngine:
+Instancier une classe se fait à l’aide de `createObject()` sur GrCall ou GrEngine.
 ```d
 GrObject obj = call.createObject("MaClasse");
 GrInt valeur = obj.getInt("foo");
@@ -114,6 +115,7 @@ obj.setString("bar", "Bonjour");
 
 ## Natifs
 
+Les natifs sont des types opaques, ils permettent à Grimoire d’accéder à des types binaires arbitraires.
 ```d
 library.addNative("MonType");
 ```

@@ -4,22 +4,22 @@ Grimoire possède deux types de modificateurs `const` et `pure`.
 
 `const` permet de définir une variable comme non-assignable.
 ```grimoire
-const int a = 5;
+const a: int = 5;
 a = 6; // Erreur
 a ++; // Erreur
 ```
 En revanche, il n’empêche pas la modification de son contenu.
 ```grimoire
 class Personnage {
-    string nom;
+    var nom: string;
 }
 
 event main() {
-    const Personnage perso = new Personnage {
+    const perso = @Personnage {
         nom = "Roger";
     };
 
-    perso = new Personnage {
+    perso = @Personnage {
         nom = "Robert";
     }; // Erreur
 
@@ -30,15 +30,15 @@ event main() {
 `pure`, quant à lui, rend le contenu d’un type inaltérable.
 ```grimoire
 class Personnage {
-    string nom;
+    var nom: string;
 }
 
 event main() {
-    pure Personnage perso = new Personnage {
+    var perso: pure Personnage = @Personnage {
         nom = "Roger";
     };
 
-    perso = new Personnage {
+    perso = @Personnage {
         nom = "Robert";
     }; // Autorisé
 
@@ -49,15 +49,15 @@ event main() {
 `const` et `pure` peuvent être combiné pour rendre une variable immutable.
 ```grimoire
 class Personnage {
-    string nom;
+    var nom: string;
 }
 
 event main() {
-    const pure Personnage perso = new Personnage {
+    const perso: pure Personnage = @Personnage {
         nom = "Roger";
     };
 
-    perso = new Personnage {
+    perso = @Personnage {
         nom = "Robert";
     }; // Erreur
 

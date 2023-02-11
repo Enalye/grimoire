@@ -1,81 +1,90 @@
 # Classes
 
 Classes are types that can hold fields of different types.
+Unlike many programming languages, classes in Grimoire contain no methods.
 
-## Definition
-
-Declaration is made with the `class` keyword.
 ```grimoire
-class MyClass {
-    int foo;
-    string bar;
+class Animal {
+    var name: string;
+    var numberOfLegs: int;
+    var speed: float;
 }
 ```
 
-## New
-
-To create an instance of that class (i.e. an object), you use the `new` keyword followed by the class type.
+A class is instanciated with the `@` operator.
 ```grimoire
-MyClass obj = new MyClass;
+var doggo = @Animal {};
+```
+A class doesn't have a default value, it must then be initialised.
+```grimoire
+var doggo: Animal; // Compilation error
 ```
 
-By default, all fields will be initialized with its default value, to change that, you need to use the constructor notation.
-
+Initialisation of a class's fields is done between curly braces `{}`.
 ```grimoire
-MyClass obj = new MyClass {
-	foo = 5;
-	bar = "Hello";
+Animal doggo = @Animal {
+	name = "Rex";
+	numberOfLegs = 4;
+    speed = 30f;
 };
 ```
-Unspecified fields in the constructor will still be initialized by default.
+An uninitialised field will be initialised with its default value.
+If it doesn't have one, a compilation error will occur.
+
+## Constructor
+
+The creation of an object can be done with a constructor.
+```grimoire
+event main() {
+    var doggo = @Animal("Rex");
+}
+
+func @Animal(string name) (Animal) {
+    return @Animal {
+        name = name;
+        numberOfLegs = 4;
+        speed = 30f;
+    };
+}
+```
+
+## Specialization
+
+A class can inherit another.
+```grimoire
+class Dog : Animal {
+    var typeOfDog: string;
+}
+```
+It'll have all the fields of the parent class and can be used instead of the parent class (polymorphism).
+```grimoire
+Animal animal = @Dog {};
+```
+
+## Genericity
+
+Classes can use placeholder types that'll be defined later.
+```grimoire
+class MyClass<T, A> : ParentClass<T, int> {
+	var myValue: T;
+	var myOtherValue: A;
+}
+```
 
 ## Accessing a field
 
-To access a field, use the `.` notation.
+The `.` operator let us access a class field.
 ```grimoire
-obj.foo = 5;
-obj.bar = "Hello";
-print(obj.bar);
+doggo.speed = 12.7;
+doggo.name = "Rex";
+print(doggo.name);
 ```
 
 By default, all fields are only visible to the file that declared it.
-To make them visible to all files, you need to specify them as public with the "public" keyword:
+To make them visible to all files, you need to specify them as public with the `public` keyword:
 ```grimoire
 class A {
-	public int a; // Visible globally
-	int b; // Visible only to the current file
-}
-```
-
-## Null
-
-An uninitialized class variable will be initialized to null.
-
-Like native types, you can assign "null" to a class type variable.
-
-```grimoire
-MyClass obj = null;
-if(!obj)
-	"Obj is null":print;
-```
-
-Trying to access a null object's field will raise an error.
-
-## Inheritance
-
-You can inherit fields from another class:
-```grimoire
-class MyClass : ParentClass {
-
-}
-```
-
-## Template
-
-In grimoire, you can define generic types for classes like this:
-```grimoire
-class MyClass<T, A> : ParentClass<T, int> {
-	T myValue;
-	A myOtherValue;
+	public var a: int; // Visible globally
+	var b: int; // Visible only to the current file
 }
 ```

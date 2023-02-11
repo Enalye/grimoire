@@ -1,4 +1,4 @@
-# Erreurs
+# Erreur
 
 Grimoire permet la gestion d’erreurs.
 ```grimoire

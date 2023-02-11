@@ -25,4 +25,4 @@
     1. [Defer](/fr/lang/defer)
     1. [Opérateurs](/fr/lang/operators)
 * [Intégration](/fr/api/)
-* [Bibliothèques](/fr/lib/)
+* [Bibliothèque standard](/fr/lib/)

@@ -40,7 +40,7 @@ void main() {
             bytecode = new GrBytecode;
             bytecode.load("test.grb");
         }
-        writeln(grDump(bytecode));
+        writeln(bytecode.prettify());
 
         GrEngine engine = new GrEngine;
         engine.addLibrary(stdlib);

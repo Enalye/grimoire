@@ -1,19 +1,19 @@
 # Operators
 
-Much like custom convertions, you can define your own operators by naming it accordingly.
-You also have to respect the number of inputs the operator uses (1 or 2).
+Much like custom convertions, you can define your own operators by naming the function `operator` followed by the operator to override.
+Depending if the overriden operator is a unary or binary operator, the number of parameters must match (1 or 2).
 
 ```grimoire
-event onLoad() {
+event main() {
     print(3.5 + 2);
 }
 
-function operator+(float a, int b) (float) {
-    return a + b as float;
+func operator"+"(a: float, b: int) (float) {
+    return a + b as<float>;
 }
 ```
 
-Overridable operators are:
+The list of overridable operators are:
 
 | Operator | Symbol | Note |
 | --- | --- | --- |

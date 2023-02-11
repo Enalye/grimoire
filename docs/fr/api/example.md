@@ -18,17 +18,16 @@ GrEngine engine = new GrEngine;
 engine.addLibrary(stdlib);
 engine.load(bytecode);
 
-if (engine.hasEvent("main"))
-    engine.callEvent("main");
+engine.callEvent("main");
 
 while (engine.hasTasks)
     engine.process();
 
 // Erreurs
 if (engine.isPanicking) {
-    writeln("panic: " ~ engine.panicMessage);
+    writeln("panique: " ~ engine.panicMessage);
     foreach (trace; engine.stackTraces) {
-        writeln("[", trace.pc, "] in ", trace.name, " at ", trace.file,
+        writeln("[", trace.pc, "] dans ", trace.name, " à ", trace.file,
             "(", trace.line, ",", trace.column, ")");
     }
 }

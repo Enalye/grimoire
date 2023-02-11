@@ -1,4 +1,4 @@
-# Defers
+# Defer
 
 `defer` assure l’exécution d’un bloc de code à la fin de la fonction actuelle, même en cas d’exception.
 ```grimoire

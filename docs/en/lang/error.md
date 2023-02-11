@@ -1,14 +1,11 @@
-# Error Handling
+# Error
 
-Error handling in Grimoire is done by throwing and catching errors
-
-To raise an error, simply write:
+Grimoire has a way to handle errors.
 ```grimoire
 throw "Error";
 ```
-If you do nothing about it, the entire VM will panic, because the current task does nothing to catch it.
 
-So we should probably catch it:
+`try`/`catch` blocks allow these errors to be captured.
 ```grimoire
 event onLoad() {
 	try {
@@ -19,4 +16,4 @@ event onLoad() {
 	}
 }
 ```
-And everything is fine.
+An uncaught error will put the virtual machine in a state of panic and will interrupt all the remaining tasks.

@@ -1,32 +1,32 @@
 # Channels
 
-Channels are a concept that allow synchronised communication between tasks.
-If you know them from Go, it's roughly the same.
-
-Channels are created like this:
+Channels allow synchronised messaging between tasks.
 ```grimoire
-channel(int) c = channel(int, 5);
+var chan: channel<int>;
 ```
-Here, we create a channel that will hold up to 5 int values.
-The size (5) of the channel is optional, by default, it's 1.
 
-To pass a value around, you need to use the <- operator
+By default, a channel has a capacity of 1.
+To change its capacity, we must explicitly declare it upon initialisation.
 ```grimoire
-let c = channel(int);
+var chan = channel<int, 5>; // Capacity of 5
+```
+
+The `<-` operator allow us to send or receive values from a channel.
+```grimoire
+var c = channel<int>;
 c <- 1; //We send the value 1 through the channel
-int value = <-c; //We receive the value from the channel
+var value = <-c; //We receive the value from the channel
 ```
 
-But a send or receive operation is blocking, you can't do it on the same task.
-
+If no value is available inside the channel, the receive operation is blocking until a value is sent.
+It the channel is full, the send operation becomes blocking until a value is consumed.
 ```grimoire
-task foo(channel(int) c) {
+task foo(c: channel<string>) {
 	print(<-c);
 }
 event onLoad() {
-	let c = channel(int);
+	let c: channel<string>;
 	foo(c);
 	c <- "Hello World !";
 }
 ```
-Here, foo will be blocked until something is written on the channel, then it'll print it.

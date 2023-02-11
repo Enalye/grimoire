@@ -1,12 +1,12 @@
 # Fonctions
 
-Le mot-clé `function` permet de définir une fonction globale.
+Le mot-clé `func` permet de définir une fonction globale.
 ```grimoire
-public function additionner(int a, int b) (int) {
+public func additionner(a: int, b: int) (int) {
     return a + b;
 }
 
-function comparerAvec0(int n) {
+func comparerAvec0(n: int) {
   if(n == 0) {
     print("n est égal à 0");
     return;
@@ -17,60 +17,60 @@ function comparerAvec0(int n) {
 
 Une fonction peut avoir plusieurs types de retour.
 ```grimoire
-function donneDesValeurs() (int, string, bool) {
+func donneDesValeurs() (int, string, bool) {
 	return 5, "Coucou", false;
 }
 ```
 
 ## Fonctions anonymes
 ```grimoire
-event onLoad() {
-	int a = 7;
-	function(int) (int) multiplierPar2 = function(int c) (int) {
+event main() {
+	var a = 7;
+	var multiplierPar2 = func(c: int) (int) {
 		return c * 2;
 	};
-	7:multiplierPar2:print; // Affiche 14
+	7.multiplierPar2.print; // Affiche 14
 }
 ```
 
-L’opérateur `@` permet de récupérer une référence à une fonction globale.
+L’opérateur `&` permet de récupérer une référence à une fonction globale.
 ```grimoire
-function auCarré(int i) (int) {
+func auCarré(i: int) (int) {
 	return i * i;
 };
 
-event onLoad() {
-	let f1 = @square; //Error, & has no way to know the type at during compilation (square could be overloaded).
-	let f2 = @(function(int) (int))square; //Valid, an explicit type prevent this problem.
-	f2 = @square; //Now valid, because it's now typed by the previous assignment.
+event main() {
+	var f1 = &aucarré; //Error, & has no way to know the type at during compilation (aucarré could be overloaded).
+	var f2 = &<function(int) (int)> aucarré; //Valid, an explicit type prevent this problem.
+	f2 = &aucarré; //Now valid, because it's now typed by the previous assignment.
 
-	function(int) (int) f3 = @square; //Error, can't know the type of f3 since f3 doesn't exist at the time of declaration.
-	f3 = @square; //Valid, since f3 is already declared with a type.
+	var f3: function(int) (int) = &aucarré; //Error, can't know the type of f3 since f3 doesn't exist at the time of declaration.
+	f3 = &aucarré; //Valid, since f3 is already declared with a type.
 }
 ```
 
 Le mot-clé `self` permet de récupérer une référence à la fonction actuelle.
 ```grimoire
 // Fibonacci
-function(int n) (int) {
+func(n: int) (int) {
     if(n < 2) return n;
     return self(n - 1) + self(n - 2);
-}(10):print;
+}(10).print;
 ```
 
 ## Généricité
 
-Les fonctions et tâches globales peuvent être défini avec des types génériques:
+Les fonctions et tâches globales peuvent être défini avec des types génériques.
 ```grimoire
-function<T> additionner(T a, T b)(T) {
+func<T> additionner(a: T, b: T)(T) {
     return a + b;
 }
 
-public function<A, B> additionner(A a, B b)(B) {
-    return a as B + b;
+public func<A, B> additionner(a: A, b: B)(B) {
+    return a as<B> + b;
 }
 
-function<T> operator<=>(T a, T b)(int) {
+func<T> operator"<=>"(a: T, b: T)(int) {
 	if(a < b)
 		return -1;
 	else if(a > b)
@@ -83,14 +83,14 @@ function<T> operator<=>(T a, T b)(int) {
 
 La clause `where` permet d’imposer des restrictions sur des types génériques.
 ```grimoire
-function<T> additionner(list(T) ary, T val)
+func<T> additionner(ary: list<T>, val: T)
 where T: Numeric {
-    loop(i, ary:size) {
+    loop(i, ary.size) {
         ary[i] += val;
     }
 }
 
-function<T, U> saucisse(T first, U second)
+func<T, U> saucisse(first: T, second: U)
 where T: Class,
       U: Class,
       T: Extends<U> {

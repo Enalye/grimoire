@@ -2,7 +2,7 @@
 
 L’opérateur `as` permet de convertir une valeur d’un type vers un autre.
 ```grimoire
-float a = 5 as float;
+var a: float = 5 as<float>;
 ```
 
 ## Conversion personnalisée
@@ -14,11 +14,11 @@ Elle ne peut avoir qu’un paramètre d’entrée et de sortie.
 class MaClasse {}
 
 event onLoad() {
-    let obj = new MaClasse;
-    print(obj as string); // Affiche « Salut »
+    var obj = @MaClasse;
+    print(obj as<string>); // Affiche « Salut »
 }
 
-function as(MaClasse a) (string) {
+func as(MaClasse a) (string) {
     return "Salut";
 }
 ```

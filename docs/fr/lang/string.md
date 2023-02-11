@@ -11,7 +11,7 @@ Elles peuvent s’étendre sur plusieurs lignes.
 les gens."
 ```
 
-Elles accèptent n’importe quel caractère UTF-8 valide.
+Elles acceptent n’importe quel caractère UTF-8 valide.
 ```grimoire
 "Saluton al ĉiuj, 皆さん"
 ```
@@ -25,7 +25,7 @@ Grimoire supporte un certain nombre de caractères d’échappement:
 |\\\\ |\\ |
 |\\"|"|
 
-Échapper un `"` permet d’éviter de cloturer la chaîne de caractaire.
+Échapper un `"` permet d’éviter de cloturer la chaîne de caractères.
 ```grimoire
 "Ce caractère \" est échappé"
 ```

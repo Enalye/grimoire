@@ -1,0 +1,8 @@
+* [Homepage](/fr/)
+* [Language](/fr/lang/)
+* [Integration](/fr/api/)
+    1. [Compile](/fr/api/compile)
+    1. [Run](/fr/api/run)
+    1. [Example](/fr/api/example)
+    1. [Library](/fr/api/library)
+* [Standard library](/fr/lib/)

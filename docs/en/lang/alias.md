@@ -1,16 +1,14 @@
-# Type Aliases
-
-A type alias allow types to be named differently, making long signatures shorter.
-
+# Alias
+An alias allow types to be called by a different name.
 ```grimoire
-function square(int i) (int) {
+func square(i: int) (int) {
 	return i * i;
 };
 
-alias MyFunc = function(int) (int);
+alias MyFunc = func(int) (int);
 
 event onLoad() {
-    MyFunc myFunc = &(MyFunc) square;
-	10:myFunc:print;
+    MyFunc myFunc = &<MyFunc> square;
+	10.myFunc.print;
 }
 ```

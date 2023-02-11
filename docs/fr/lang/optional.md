@@ -2,34 +2,35 @@
 
 En Grimoire, par défaut un type possède obligatoirement une valeur.
 Pour noter l’absence potentielle de valeur, on utilise un type optionnel.
+Un type optionnel se note avec un `?`.
 ```grimoire
-int? monEntier = 5;
+var x: int? = 5;
 ```
 
 Un type optionnel a pour valeur par défaut `null`.
 ```grimoire
-string? monString;
-monString:print; // -> null
+var x: string?;
+x.print; // -> null
 ```
 
 De même, on peut assigner `null` à un type optionnel.
 ```grimoire
-float? valeur = 5;
-valeur = null;
+var x: float? = 5f;
+x = null;
 ```
 
 Si le compilateur ne peut inférer le type de `null`, on doit le préciser.
 ```grimoire
-let? valeur = null(int);
-null(float):print;
+var x = null<int>;
+null<float>.print;
 ```
 
 # L’opérateur « ? »
 
 L’opérateur `?` permet de récupérer la valeur contenue dans un optionnel.
 ```grimoire
-int? x = 5;
-int y = x?;
+var x: int? = 5;
+var y: int = x?;
 ```
 
 > **Note:** Si la valeur de l’optionnel est `null`, une erreur sera lancé.
@@ -38,36 +39,36 @@ int y = x?;
 
 L’opérateur `??` permet de récupérer la valeur contenue dans un optionnel s’il n’est pas `null`, sinon, il récupère la valeur à sa droite.
 ```grimoire
-int? x;
-int y = x ?? 3;
+var x: int?;
+var y: int = x ?? 3;
 ```
 
-# L’opérateur « .? »
+# Accès optionnel à un champ avec « .? »
 
 L’opérateur `.?` est équivalent à l’accès d’un champ grâce à `.` mais appliqué à un optionnel.
 Si l’objet est `null`, alors l’expression sera ignorée.
 ```grimoire
 class MaClasse {
-    int x;
+    var x: int;
 }
 
 event main() {
-    MaClasse? maClasse;
+    var maClasse: MaClasse?;
     maClasse.?x = 5;
 }
 ```
 
-# L’opérateur « :? » et « ::? »
+# L’appel optionnel de fonction avec « .? » et « :? »
 
-L’opérateur `:?` et `::?` sont équivalent à un appel de méthode grâce à respectivement `:` et `::` mais appliqué à un optionnel.
+Les opérateurs `.?` et `:?` sont équivalent à un appel de méthode fait par respectivement `.` et `:` mais appliqué à un optionnel.
 Si l’objet est `null`, alors l’expression sera ignorée.
 ```grimoire
-function ajouter(int a, int b) (int) {
+func ajouter(a: int, b: int) (int) {
     return a + b;
 }
 
 event main() {
-    int? a;
-    a:?ajouter(10);
+    var a: int?;
+    a.?ajouter(10).print;
 }
 ```

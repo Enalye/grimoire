@@ -1,4 +1,4 @@
-# Tâches
+# Tâche
 
 Les tâches `task` sont des fils d’exécution indépendant les unes des autres, on les appelle aussi coroutines.
 
@@ -19,7 +19,7 @@ task autreTâche() {
   print("5");
 }
 
-event onLoad() {
+event main() {
   print("1");
   autreTâche();
   print("2");

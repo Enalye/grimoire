@@ -2,7 +2,7 @@
 
 `if` et `unless` permettent l’exécution d’une partie du code sous certaines conditions. 
 ```grimoire
-let a = 5;
+var a = 5;
 
 if(a < 2)
     print("a vaut moins que 2 !");
@@ -12,23 +12,23 @@ unless(a < 2)
 ```
 Les conditions peuvent s’imbriquer à l’aide de `else`.
 ```grimoire
-let a = 5;
+var a = 5;
 
 if(a > 10)
     print("a vaut plus que 10");
 else if(a >= 5)
-    print("a vaut 5 ou plus mais moins que 10");
+    print("a vaut 5 ou plus mais pas plus que 10");
 else unless(i < 2)
     print("a vaut 2 ou plus, mais moins que 5");
 else
-    print("a vaut 2 ou moins");
+    print("a vaut moins que 2");
 ```
 
 ## Switch
 
 `switch` compare une valeur avec chaque cas possible.
 ```grimoire
-let i = "Salut";
+var i = "Salut";
 
 switch(i)
 default

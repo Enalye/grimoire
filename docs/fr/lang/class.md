@@ -5,27 +5,27 @@ Contrairement à la plupart des langages de programmation, les classes en Grimoi
 
 ```grimoire
 class Animal {
-    string nom;
-    int nombreDePattes;
-    float vitesse;
+    var nom: string;
+    var nombreDePattes: int;
+    var vitesse: float;
 }
 ```
 
-Un classe s’instancie avec l’opérateur `new`.
+Un classe s’instancie avec l’opérateur `@`.
 ```grimoire
-Animal toutou = new Animal {};
+var toutou = @Animal {};
 ```
 Une classe n’a pas de valeur par défaut, elle doit donc obligatoirement être initialisée.
 ```grimoire
-Animal toutou; // Erreur de compilation
+var toutou: Animal; // Erreur de compilation
 ```
 
 L’initialisation des champs se fait entre les accolades `{}`.
 ```grimoire
-Animal toutou = new Animal {
+Animal toutou = @Animal {
 	nom = "Médor";
 	nombreDePattes = 4;
-    vitesse = 30.;
+    vitesse = 30f;
 };
 ```
 Un champ non-initialisé prendra sa valeur par défaut s’il en a une.
@@ -36,14 +36,14 @@ Si un champ n’a pas de valeur par défaut, une erreur de compilation surviendr
 La création d’un objet peut se faire au moyen d’un constructeur.
 ```grimoire
 event main() {
-    let toutou = new Animal("Médor");
+    var toutou = @Animal("Médor");
 }
 
-function new(string nom) (Animal) {
-    return new Animal {
+func @Animal(string nom) (Animal) {
+    return @Animal {
         nom = nom;
         nombreDePattes = 4;
-        vitesse = 30.;
+        vitesse = 30f;
     };
 }
 ```
@@ -53,12 +53,12 @@ function new(string nom) (Animal) {
 Une classe peut hériter d’une autre classe.
 ```grimoire
 class Chien : Animal {
-    string typeDeChien;
+    var typeDeChien: string;
 }
 ```
 Elle obtiendra les mêmes champs que le type parent et pourra être utilisé à la place du type parent (polymorphisme).
 ```grimoire
-Animal animal = new Chien {};
+Animal animal = @Chien {};
 ```
 
 ## Généricité
@@ -66,8 +66,8 @@ Animal animal = new Chien {};
 Les classes peuvent utiliser des types non-connus à l’avance.
 ```grimoire
 class MaClasse<T, A> : ClasseParente<T, int> {
-	T maValeur;
-	A monAutreValeur;
+	var maValeur: T;
+	var monAutreValeur: A;
 }
 ```
 
@@ -84,7 +84,7 @@ Par défaut, les champs sont seulement visibles à l’intérieur du fichier qui
 Pour les rendre visibles globalement, on doit les spécifier en public avec le mot-clé `public`:
 ```grimoire
 class A {
-	public int a; // Visible globalement
-	int b; // Visible seulement dans le fichier actuel
+	public var a: int; // Visible globalement
+	var b: int; // Visible seulement dans le fichier actuel
 }
 ```

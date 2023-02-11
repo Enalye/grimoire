@@ -1,3 +1,5 @@
-# Libraries
+# Standard Library
 
-This documentation regroups some useful libraries used with Grimoire.
+This documentation regroups the defintions available inside the standard library that comes with Grimoire.
+
+This library can be loaded with `grLoadStdLibrary()`.
