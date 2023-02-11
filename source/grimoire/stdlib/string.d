@@ -48,17 +48,17 @@ void grLoadStdLibString(GrLibDefinition library) {
     library.addFunction(&_push, "push", [grString, grString]);
 
     library.setDescription(GrLocale.fr_FR, "Retire le premier élément d’`str` et les retourne.
-S’il n’existe pas, retourne `null(T)`.");
+S’il n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US, "Removes the first element of `str` and returns it.
-If it doesn't exist, returns `null(T)`.");
+If it doesn't exist, returns `null<T>`.");
     library.setParameters(GrLocale.fr_FR, ["str"]);
     library.setParameters(GrLocale.en_US, ["str"]);
     library.addFunction(&_shift, "shift", [grString], [grOptional(grString)]);
 
     library.setDescription(GrLocale.fr_FR, "Retire le dernier élément d’`str` et le retourne.
-S’il n’existe pas, retourne `null(T)`.");
+S’il n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US, "Removes the last element of `str` and returns it.
-If it doesn't exist, returns `null(T)`.");
+If it doesn't exist, returns `null<T>`.");
     library.addFunction(&_pop, "pop", [grString], [grOptional(grString)]);
 
     library.setDescription(GrLocale.fr_FR,
@@ -76,9 +76,9 @@ If it doesn't exist, returns `null(T)`.");
     library.addFunction(&_pop1, "pop", [grString, grInt], [grString]);
 
     library.setDescription(GrLocale.fr_FR, "Retourne le premier élément d’`str`.
-S’il n’existe pas, retourne `null(T)`.");
+S’il n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US, "Returns the first element of `str`.
-If it doesn't exist, returns `null(T)`.");
+If it doesn't exist, returns `null<T>`.");
     library.setParameters(GrLocale.fr_FR, ["str"]);
     library.setParameters(GrLocale.en_US, ["str"]);
     library.addFunction(&_first, "first", [grPure(grString)], [
@@ -86,9 +86,9 @@ If it doesn't exist, returns `null(T)`.");
         ]);
 
     library.setDescription(GrLocale.fr_FR, "Returne le dernier élément d’`str`.
-S’il n’existe pas, retourne `null(T)`.");
+S’il n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US, "Returns the last element of `str`.
-If it doesn't exist, returns `null(T)`.");
+If it doesn't exist, returns `null<T>`.");
     library.addFunction(&_last, "last", [grPure(grString)], [
             grOptional(grString)
         ]);
@@ -133,11 +133,11 @@ If `index` is negative, `index` is calculated from the back of `str`.");
 
     library.setDescription(GrLocale.fr_FR,
         "Retourne la première occurence de `valeur` dans `str` à partir d’`index`.
-Si `valeur  n’existe pas, `null(int)` est renvoyé.
+Si `valeur`  n’existe pas, `null<int>` est renvoyé.
 Si `index` est négatif, l’`index` est calculé à partir de la fin d’`str`.");
     library.setDescription(GrLocale.en_US,
         "Returns the first occurence of `value` in `str`, starting from `index`.
-If `value` does't exist, `null(int) is returned.
+If `value` does't exist, `null<int>` is returned.
 If `index` is negative, `index` is calculated from the back of `str`.");
     library.setParameters(GrLocale.fr_FR, ["str", "valeur"]);
     library.setParameters(GrLocale.en_US, ["str", "value"]);
@@ -147,11 +147,11 @@ If `index` is negative, `index` is calculated from the back of `str`.");
 
     library.setDescription(GrLocale.fr_FR,
         "Retourne la dernière occurence de `valeur` dans `str` à partir d’`index`.
-Si `valeur  n’existe pas, `null(int)` est renvoyé.
+Si `valeur`  n’existe pas, `null<int>` est renvoyé.
 Si `index` est négatif, l’`index` est calculé à partir de la fin d’`str`.");
     library.setDescription(GrLocale.en_US,
         "Returns the last occurence of `value` in `str`, starting from `index`.
-If `value` does't exist, `null(int) is returned.
+If `value` does't exist, `null<int>` is returned.
 If `index` is negative, `index` is calculated from the back of `str`.");
     library.addFunction(&_lastIndexOf, "lastIndexOf", [
             grPure(grString), grPure(grString)

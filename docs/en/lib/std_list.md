@@ -72,13 +72,13 @@ Replace the content of `lst` by `value`.
 > first (*lst*: **pure list\<T>**) (**T?**)
 
 Returns the first element of `lst`.
-If it doesn't exist, returns `null(T)`.
+If it doesn't exist, returns `null<T>`.
 
 <a id="func_6"></a>
 > get (*lst*: **pure list\<T>**, *index*: **int**) (**T?**)
 
 Returns the element at `index`'s position.
-If it doesn't exist, returns `null(T)`.
+If it doesn't exist, returns `null<T>`.
 If `index` is negative, `index` is calculated from the back of `lst`.
 
 <a id="func_7"></a>
@@ -92,7 +92,7 @@ If `index` is negative, `index` is calculated from the back of `lst`.
 > indexOf (*lst*: **pure list\<T>**, *value*: **pure T**) (**int?**)
 
 Returns the first occurence of `value` in `lst`, starting from `index`.
-If `value` does't exist, `null(int) is returned.
+If `value` does't exist, `null<int> is returned.
 If `index` is negative, `index` is calculated from the back of `lst`.
 
 <a id="func_9"></a>
@@ -111,13 +111,13 @@ Returns `true` if `lst` contains nothing.
 > last (*lst*: **pure list\<T>**) (**T?**)
 
 Returns the last element of `lst`.
-If it doesn't exist, returns `null(T)`.
+If it doesn't exist, returns `null<T>`.
 
 <a id="func_12"></a>
 > lastIndexOf (*lst*: **pure list\<T>**, *value*: **pure T**) (**int?**)
 
 Returns the last occurence of `value` in `lst`, starting from `index`.
-If `value` does't exist, `null(int) is returned.
+If `value` does't exist, `null<int> is returned.
 If `index` is negative, `index` is calculated from the back of `lst`.
 
 <a id="func_13"></a>
@@ -129,7 +129,7 @@ Advance the iterator to the next element.
 > pop (*lst*: **list\<T>**) (**T?**)
 
 Removes the last element of `lst` and returns it.
-If it doesn't exist, returns `null(T)`.
+If it doesn't exist, returns `null<T>`.
 
 <a id="func_15"></a>
 > pop (*lst*: **list\<T>**, *quantity*: **int**) (**list\<T>**)
@@ -166,7 +166,7 @@ Returns an inverted version of `lst`.
 > shift (*lst*: **list\<T>**) (**T?**)
 
 Removes the first element of `lst` and returns it.
-If it doesn't exist, returns `null(T)`.
+If it doesn't exist, returns `null<T>`.
 
 <a id="func_22"></a>
 > shift (*lst*: **list\<T>**, *quantity*: **int**) (**list\<T>**)

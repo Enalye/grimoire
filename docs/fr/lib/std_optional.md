@@ -3,7 +3,7 @@
 Fonctions pour la manipulation d’optionnels.
 ## Description
 Un optionnel est un type pouvant contenir son propre type ou être nul.
-Son type nul correspondant vaut `null(T)` où `T` est le type concerné.
+Son type nul correspondant vaut `null<T>` où `T` est le type concerné.
 ## Opérateurs
 |Opérateur|Entrée|Sortie|
 |-|-|-|

@@ -27,13 +27,13 @@ Iterate on a queue.
 > back (*queue*: **pure Queue\<T>**) (**T?**)
 
 Returns the last element of `queue`.
-If it doesn't exist, returns `null(T)`.
+If it doesn't exist, returns `null<T>`.
 
 <a id="func_1"></a>
 > front (*queue*: **pure Queue\<T>**) (**T?**)
 
 Returns the first element of `queue`.
-If it doesn't exist, returns `null(T)`.
+If it doesn't exist, returns `null<T>`.
 
 <a id="func_2"></a>
 > isEmpty (*queue*: **pure Queue\<T>**) (**bool**)
@@ -44,7 +44,7 @@ Returns `true` if `queue` contains nothing.
 > pop (*queue*: **Queue\<T>**) (**T?**)
 
 Removes the last element of `queue` and returns it.
-If it doesn't exist, returns `null(T)`.
+If it doesn't exist, returns `null<T>`.
 
 <a id="func_4"></a>
 > push (*queue*: **Queue\<T>**, *value*: **T**)

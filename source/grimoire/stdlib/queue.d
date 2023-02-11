@@ -41,25 +41,25 @@ void grLoadStdLibQueue(GrLibDefinition library) {
     library.addFunction(&_push, "push", [queueType, grAny("T")]);
 
     library.setDescription(GrLocale.fr_FR, "Retire le dernier élément de `queue` et le retourne.
-S’il n’existe pas, retourne `null(T)`.");
+S’il n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US, "Removes the last element of `queue` and returns it.
-If it doesn't exist, returns `null(T)`.");
+If it doesn't exist, returns `null<T>`.");
     library.setParameters(GrLocale.fr_FR, ["queue"]);
     library.setParameters(GrLocale.en_US, ["queue"]);
     library.addFunction(&_pop, "pop", [queueType], [grOptional(grAny("T"))]);
 
     library.setDescription(GrLocale.fr_FR, "Retourne le premier élément de `queue`.
-S’il n’existe pas, retourne `null(T)`.");
+S’il n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US, "Returns the first element of `queue`.
-If it doesn't exist, returns `null(T)`.");
+If it doesn't exist, returns `null<T>`.");
     library.addFunction(&_front, "front", [grPure(queueType)], [
             grOptional(grAny("T"))
         ]);
 
     library.setDescription(GrLocale.fr_FR, "Returne le dernier élément de `queue`.
-S’il n’existe pas, retourne `null(T)`.");
+S’il n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US, "Returns the last element of `queue`.
-If it doesn't exist, returns `null(T)`.");
+If it doesn't exist, returns `null<T>`.");
     library.addFunction(&_back, "back", [grPure(queueType)], [
             grOptional(grAny("T"))
         ]);

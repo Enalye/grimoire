@@ -87,9 +87,9 @@ void grLoadStdLibHashMap(GrLibDefinition library) {
     library.addFunction(&_set, "set", [mapType, grPure(grString), grAny("T")]);
 
     library.setDescription(GrLocale.fr_FR,
-        "Returne la valeur associée avec `clé`.\nSi cette valeur n’existe pas, retourne `null(T)`.");
+        "Returne la valeur associée avec `clé`.\nSi cette valeur n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US,
-        "Return the value associated with `key`.\nIf the value doesn't exist, returns `null(T)`.");
+        "Return the value associated with `key`.\nIf the value doesn't exist, returns `null<T>`.");
     library.setParameters(GrLocale.fr_FR, ["hashmap", "clé"]);
     library.setParameters(GrLocale.en_US, ["hashmap", "key"]);
     library.addFunction(&_get, "get", [grPure(mapType), grString], [

@@ -3,7 +3,7 @@
 Optionals handling functions.
 ## Description
 An optiona is a type that can contains its own type or be null.
-Its null type is equal to `null(T)` where `T` is the referenced type.
+Its null type is equal to `null<T>` where `T` is the referenced type.
 ## Opérateurs
 |Opérateur|Entrée|Sortie|
 |-|-|-|

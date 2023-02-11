@@ -34,6 +34,7 @@ Une variable peut-être soit locale soit globale.
 * Une variable déclarée en **dehors** de toute fonction/tâche/etc est **globale**.
 * Une variable **locale** n’est accessible que dans le **bloc** dans lequel il a été défini.
 > Un bloc est défini par une paire d’accolades `{}`
+
 ```grimoire
 var globalVar: int; // Déclaré globalement, accessible partout.
 

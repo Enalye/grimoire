@@ -16,10 +16,10 @@ void grLoadStdLibOptional(GrLibDefinition library) {
 
     library.setModuleDescription(GrLocale.fr_FR,
         "Un optionnel est un type pouvant contenir son propre type ou être nul.
-Son type nul correspondant vaut `null(T)` où `T` est le type concerné.");
+Son type nul correspondant vaut `null<T>` où `T` est le type concerné.");
     library.setModuleDescription(GrLocale.en_US,
         "An optiona is a type that can contains its own type or be null.
-Its null type is equal to `null(T)` where `T` is the referenced type.");
+Its null type is equal to `null<T>` where `T` is the referenced type.");
 
     library.setDescription(GrLocale.fr_FR, "Retourne une version optionnelle du type.");
     library.setDescription(GrLocale.en_US, "Returns an optional version of the type.");

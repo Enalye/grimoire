@@ -60,13 +60,13 @@ Retourne un itérateur qui parcours chaque caractère de la chaîne.
 > first (*str*: **pure string**) (**string?**)
 
 Retourne le premier élément d’`str`.
-S’il n’existe pas, retourne `null(T)`.
+S’il n’existe pas, retourne `null<T>`.
 
 <a id="func_5"></a>
 > indexOf (*str*: **pure string**, *valeur*: **pure string**) (**int?**)
 
 Retourne la première occurence de `valeur` dans `str` à partir d’`index`.
-Si `valeur  n’existe pas, `null(int)` est renvoyé.
+Si `valeur`  n’existe pas, `null<int>` est renvoyé.
 Si `index` est négatif, l’`index` est calculé à partir de la fin d’`str`.
 
 <a id="func_6"></a>
@@ -85,13 +85,13 @@ Renvoie `true` si la `str` ne contient rien.
 > last (*str*: **pure string**) (**string?**)
 
 Returne le dernier élément d’`str`.
-S’il n’existe pas, retourne `null(T)`.
+S’il n’existe pas, retourne `null<T>`.
 
 <a id="func_9"></a>
 > lastIndexOf (*str*: **pure string**, *valeur*: **pure string**) (**int?**)
 
 Retourne la dernière occurence de `valeur` dans `str` à partir d’`index`.
-Si `valeur  n’existe pas, `null(int)` est renvoyé.
+Si `valeur`  n’existe pas, `null<int>` est renvoyé.
 Si `index` est négatif, l’`index` est calculé à partir de la fin d’`str`.
 
 <a id="func_10"></a>
@@ -103,7 +103,7 @@ Avance l’itérateur jusqu’au caractère suivant.
 > pop (*str*: **string**) (**string?**)
 
 Retire le dernier élément d’`str` et le retourne.
-S’il n’existe pas, retourne `null(T)`.
+S’il n’existe pas, retourne `null<T>`.
 
 <a id="func_12"></a>
 > pop (*str*: **string**, *quantité*: **int**) (**string**)
@@ -134,7 +134,7 @@ Retourne l’inverse d’`str`.
 > shift (*str*: **string**) (**string?**)
 
 Retire le premier élément d’`str` et les retourne.
-S’il n’existe pas, retourne `null(T)`.
+S’il n’existe pas, retourne `null<T>`.
 
 <a id="func_18"></a>
 > shift (*str*: **string**, *quantité*: **int**) (**string**)

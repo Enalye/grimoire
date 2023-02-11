@@ -71,7 +71,7 @@ Returns an iterator that iterate through each key/value pairs.
 > get (*hashmap*: **pure HashMap\<T>**, *key*: **string**) (**T?**)
 
 Return the value associated with `key`.
-If the value doesn't exist, returns `null(T)`.
+If the value doesn't exist, returns `null<T>`.
 
 <a id="func_7"></a>
 > getOr (*hashmap*: **pure HashMap\<T>**, *key*: **string**, *default*: **T**) (**T**)

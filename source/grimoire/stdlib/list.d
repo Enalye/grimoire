@@ -63,10 +63,10 @@ If `size` is greater than the size of `lst`, the rest is filled with `default`."
     library.addFunction(&_clear, "clear", [grList(grAny("T"))]);
 
     library.setDescription(GrLocale.fr_FR, "Retourne l’élément à l’`index` indiqué, s’il existe.
-Sinon, retourne `null(T)`.
+Sinon, retourne `null<T>`.
 Si `index` est négatif, l’`index` est calculé à partir de la fin d’`lst`.");
     library.setDescription(GrLocale.en_US, "Returns the element at `index`'s position.
-If it doesn't exist, returns `null(T)`.
+If it doesn't exist, returns `null<T>`.
 If `index` is negative, `index` is calculated from the back of `lst`.");
     library.setParameters(GrLocale.fr_FR, ["lst", "index"]);
     library.setParameters(GrLocale.en_US, ["lst", "index"]);
@@ -96,9 +96,9 @@ If `index` is negative, `index` is calculated from the back of `lst`.");
     library.addFunction(&_push, "push", [grList(grAny("T")), grAny("T")]);
 
     library.setDescription(GrLocale.fr_FR, "Retire le premier élément d’`lst` et les retourne.
-S’il n’existe pas, retourne `null(T)`.");
+S’il n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US, "Removes the first element of `lst` and returns it.
-If it doesn't exist, returns `null(T)`.");
+If it doesn't exist, returns `null<T>`.");
     library.setParameters(GrLocale.fr_FR, ["lst"]);
     library.setParameters(GrLocale.en_US, ["lst"]);
     library.addFunction(&_shift, "shift", [grList(grAny("T"))], [
@@ -106,9 +106,9 @@ If it doesn't exist, returns `null(T)`.");
         ]);
 
     library.setDescription(GrLocale.fr_FR, "Retire le dernier élément d’`lst` et le retourne.
-S’il n’existe pas, retourne `null(T)`.");
+S’il n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US, "Removes the last element of `lst` and returns it.
-If it doesn't exist, returns `null(T)`.");
+If it doesn't exist, returns `null<T>`.");
     library.addFunction(&_pop, "pop", [grList(grAny("T"))], [
             grOptional(grAny("T"))
         ]);
@@ -132,9 +132,9 @@ If it doesn't exist, returns `null(T)`.");
         ]);
 
     library.setDescription(GrLocale.fr_FR, "Retourne le premier élément d’`lst`.
-S’il n’existe pas, retourne `null(T)`.");
+S’il n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US, "Returns the first element of `lst`.
-If it doesn't exist, returns `null(T)`.");
+If it doesn't exist, returns `null<T>`.");
     library.setParameters(GrLocale.fr_FR, ["lst"]);
     library.setParameters(GrLocale.en_US, ["lst"]);
     library.addFunction(&_first, "first", [grPure(grList(grAny("T")))], [
@@ -142,9 +142,9 @@ If it doesn't exist, returns `null(T)`.");
         ]);
 
     library.setDescription(GrLocale.fr_FR, "Returne le dernier élément d’`lst`.
-S’il n’existe pas, retourne `null(T)`.");
+S’il n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US, "Returns the last element of `lst`.
-If it doesn't exist, returns `null(T)`.");
+If it doesn't exist, returns `null<T>`.");
     library.addFunction(&_last, "last", [grPure(grList(grAny("T")))], [
             grOptional(grAny("T"))
         ]);
@@ -193,11 +193,11 @@ If `index` is negative, `index` is calculated from the back of `lst`.");
 
     library.setDescription(GrLocale.fr_FR,
         "Retourne la première occurence de `valeur` dans la `lst` à partir d’`index`.
-Si `valeur  n’existe pas, `null(int)` est renvoyé.
+Si `valeur  n’existe pas, `null<int>` est renvoyé.
 Si `index` est négatif, l’`index` est calculé à partir de la fin d’`lst`.");
     library.setDescription(GrLocale.en_US,
         "Returns the first occurence of `value` in `lst`, starting from `index`.
-If `value` does't exist, `null(int) is returned.
+If `value` does't exist, `null<int> is returned.
 If `index` is negative, `index` is calculated from the back of `lst`.");
     library.setParameters(GrLocale.fr_FR, ["lst", "valeur"]);
     library.setParameters(GrLocale.en_US, ["lst", "value"]);
@@ -207,11 +207,11 @@ If `index` is negative, `index` is calculated from the back of `lst`.");
 
     library.setDescription(GrLocale.fr_FR,
         "Retourne la dernière occurence de `valeur` dans la `lst` à partir d’`index`.
-Si `valeur  n’existe pas, `null(int)` est renvoyé.
+Si `valeur  n’existe pas, `null<int>` est renvoyé.
 Si `index` est négatif, l’`index` est calculé à partir de la fin d’`lst`.");
     library.setDescription(GrLocale.en_US,
         "Returns the last occurence of `value` in `lst`, starting from `index`.
-If `value` does't exist, `null(int) is returned.
+If `value` does't exist, `null<int> is returned.
 If `index` is negative, `index` is calculated from the back of `lst`.");
     library.addFunction(&_lastIndexOf, "lastIndexOf",
         [grPure(grList(grAny("T"))), grPure(grAny("T"))], [grOptional(grInt)]);

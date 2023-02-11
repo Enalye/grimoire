@@ -71,7 +71,7 @@ Returne un itérateur permettant d’itérer sur chaque paire de clés/valeurs.
 > get (*hashmap*: **pure HashMap\<T>**, *clé*: **string**) (**T?**)
 
 Returne la valeur associée avec `clé`.
-Si cette valeur n’existe pas, retourne `null(T)`.
+Si cette valeur n’existe pas, retourne `null<T>`.
 
 <a id="func_7"></a>
 > getOr (*hashmap*: **pure HashMap\<T>**, *clé*: **string**, *défaut*: **T**) (**T**)

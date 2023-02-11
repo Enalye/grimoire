@@ -28,7 +28,7 @@ Itère sur un buffer circulaire.
 > back (*buffer*: **pure CircularBuffer\<T>**) (**T?**)
 
 Returne le dernier élément de `buffer`.
-S’il n’existe pas, retourne `null(T)`.
+S’il n’existe pas, retourne `null<T>`.
 
 <a id="func_1"></a>
 > capacity (*buffer*: **pure CircularBuffer\<T>**) (**int**)
@@ -39,7 +39,7 @@ Retourne la capacité maximale du `buffer`.
 > front (*buffer*: **pure CircularBuffer\<T>**) (**T?**)
 
 Retourne le premier élément de `buffer`.
-S’il n’existe pas, retourne `null(T)`.
+S’il n’existe pas, retourne `null<T>`.
 
 <a id="func_3"></a>
 > isEmpty (*buffer*: **pure CircularBuffer\<T>**) (**bool**)
@@ -55,7 +55,7 @@ Renvoie `true` si `buffer` est plein.
 > pop (*buffer*: **CircularBuffer\<T>**) (**T?**)
 
 Retire un élément du `buffer` et le retourne.
-S’il n’en existe pas, retourne `null(T)`.
+S’il n’en existe pas, retourne `null<T>`.
 
 <a id="func_6"></a>
 > push (*buffer*: **CircularBuffer\<T>**, *valeur*: **T**)

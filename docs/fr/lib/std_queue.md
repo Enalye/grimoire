@@ -27,13 +27,13 @@ Itère sur une queue.
 > back (*queue*: **pure Queue\<T>**) (**T?**)
 
 Returne le dernier élément de `queue`.
-S’il n’existe pas, retourne `null(T)`.
+S’il n’existe pas, retourne `null<T>`.
 
 <a id="func_1"></a>
 > front (*queue*: **pure Queue\<T>**) (**T?**)
 
 Retourne le premier élément de `queue`.
-S’il n’existe pas, retourne `null(T)`.
+S’il n’existe pas, retourne `null<T>`.
 
 <a id="func_2"></a>
 > isEmpty (*queue*: **pure Queue\<T>**) (**bool**)
@@ -44,7 +44,7 @@ Renvoie `true` si la `queue` ne contient rien.
 > pop (*queue*: **Queue\<T>**) (**T?**)
 
 Retire le dernier élément de `queue` et le retourne.
-S’il n’existe pas, retourne `null(T)`.
+S’il n’existe pas, retourne `null<T>`.
 
 <a id="func_4"></a>
 > push (*queue*: **Queue\<T>**, *valeur*: **T**)

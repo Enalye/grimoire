@@ -34,6 +34,7 @@ A variable can either be local or global.
 * A variable declared **outside** of any function/task/etc is **global**.
 * A **local** variable is only accessible inside the **block** where it was declared.
 > A block is defined by a pair of braces `{}`
+
 ```grimoire
 var globalVar: int; //Declared outside of any scope, accessible everywhere.
 

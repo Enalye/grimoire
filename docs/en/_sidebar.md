@@ -1,3 +1,4 @@
-- [Language Reference](en/lang/intro.md)
-- [Library Reference](en/lib/)
-
+* [Homepage](/en/)
+* [Language](/en/lang/)
+* [Integration](/en/api/)
+* [Standard library](/en/lib/)

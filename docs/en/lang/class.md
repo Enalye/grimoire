@@ -39,7 +39,7 @@ event main() {
     var doggo = @Animal("Rex");
 }
 
-func @Animal(string name) (Animal) {
+func @Animal(name: string) (Animal) {
     return @Animal {
         name = name;
         numberOfLegs = 4;
