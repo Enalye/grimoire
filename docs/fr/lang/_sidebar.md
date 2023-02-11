@@ -1,7 +1,7 @@
-![logo](/logo.png)
+![logo](https://raw.githubusercontent.com/Enalye/grimoire/master/logo.png)
 
-* [Accueil](/fr/)
 * * *
+* [Accueil](/fr/)
 * [Langage](/fr/lang/)
     1. [Commentaires](/fr/lang/comments)
     1. [Import](/fr/lang/import)
@@ -27,7 +27,5 @@
     1. [Erreur](/fr/lang/error)
     1. [Defer](/fr/lang/defer)
     1. [Opérateurs](/fr/lang/operators)
-* * *
 * [Intégration](/fr/api/)
-* * *
 * [Bibliothèque standard](/fr/lib/)
