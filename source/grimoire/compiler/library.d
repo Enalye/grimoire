@@ -7,6 +7,7 @@ module grimoire.compiler.library;
 
 import std.traits;
 import std.conv : to;
+import std.exception : enforce;
 import grimoire.runtime;
 import grimoire.compiler.primitive;
 import grimoire.compiler.type;
@@ -204,8 +205,8 @@ final class GrLibrary : GrLibDefinition {
     override GrType addClass(string name, string[] fields, GrType[] signature,
         string[] templateVariables = [], string parent = "", GrType[] parentTemplateSignature = [
         ]) {
-        if (fields.length != signature.length)
-            throw new Exception("class signature mismatch");
+        enforce(fields.length == signature.length, "class signature mismatch");
+
         GrClassDefinition class_ = new GrClassDefinition;
         class_.name = name;
         class_.parent = parent;
@@ -248,8 +249,8 @@ final class GrLibrary : GrLibDefinition {
     /// Definit un type natif
     override GrType addNative(string name, string[] templateVariables = [],
         string parent = "", GrType[] parentTemplateSignature = []) {
-        if (name == parent)
-            throw new Exception("`" ~ name ~ "` can't be its own parent");
+        enforce(name != parent, "`" ~ name ~ "` can't be its own parent");
+
         GrAbstractNativeDefinition native = new GrAbstractNativeDefinition;
         native.name = name;
         native.templateVariables = templateVariables;
@@ -272,20 +273,19 @@ final class GrLibrary : GrLibDefinition {
         ]) {
         bool isAbstract;
         foreach (GrType type; inSignature) {
-            if (type.isAbstract)
-                throw new Exception("`" ~ grGetPrettyFunction(name, inSignature,
-                        outSignature) ~ "` can't use type `" ~ grGetPrettyType(
-                        type) ~ "` as it is abstract");
+            enforce(!type.isAbstract, "`" ~ grGetPrettyFunction(name, inSignature,
+                    outSignature) ~ "` can't use type `" ~ grGetPrettyType(
+                    type) ~ "` as it is abstract");
+
             if (type.isAny) {
                 isAbstract = true;
                 break;
             }
         }
         foreach (GrType type; outSignature) {
-            if (type.isAbstract)
-                throw new Exception("`" ~ grGetPrettyFunction(name, inSignature,
-                        outSignature) ~ "` can't use type `" ~ grGetPrettyType(
-                        type) ~ "` as it is abstract");
+            enforce(!type.isAbstract, "`" ~ grGetPrettyFunction(name, inSignature,
+                    outSignature) ~ "` can't use type `" ~ grGetPrettyType(
+                    type) ~ "` as it is abstract");
         }
 
         GrPrimitive primitive = new GrPrimitive;
@@ -396,20 +396,37 @@ final class GrLibrary : GrLibDefinition {
             signatureSize = 1;
             break;
         }
-        if (inSignature.length != signatureSize)
-            throw new Exception("The operator `" ~ name ~ "` must take " ~ to!string(
-                    signatureSize) ~ " parameter" ~ (signatureSize > 1 ?
-                    "s" : "") ~ ": " ~ grGetPrettyFunctionCall("", inSignature));
+
+        enforce(inSignature.length == signatureSize,
+            "The operator `" ~ name ~ "` must take " ~ to!string(
+                signatureSize) ~ " parameter" ~ (signatureSize > 1 ?
+                "s" : "") ~ ": " ~ grGetPrettyFunctionCall("", inSignature));
+
         return addOperator(callback, name, inSignature, outType, constraints);
     }
 
     /// Ditto
     override GrPrimitive addOperator(GrCallback callback, string name,
         GrType[] inSignature, GrType outType, GrConstraint[] constraints = []) {
-        if (inSignature.length > 2uL)
-            throw new Exception(
-                "The operator `" ~ name ~ "` cannot take more than 2 parameters: " ~ grGetPrettyFunctionCall("",
-                    inSignature));
+
+        enforce(isOverridableOperator(name),
+            "The operator `" ~ name ~ "` is not overridable: " ~ grGetPrettyFunctionCall("",
+                inSignature));
+
+        enforce(inSignature.length <= 2,
+            "The operator `" ~ name ~ "` cannot take more than 2 parameters: " ~ grGetPrettyFunctionCall("",
+                inSignature));
+
+        enforce(inSignature.length > 0,
+            "The operator `" ~ name ~ "` is missing parameters: " ~ grGetPrettyFunctionCall("",
+                inSignature));
+
+        enforce(isOperatorUnary(name) || inSignature.length != 1,
+            "The operator `" ~ name ~ "` is not unary: " ~ grGetPrettyFunctionCall("", inSignature));
+
+        enforce(isOperatorBinary(name) || inSignature.length != 2,
+            "The operator `" ~ name ~ "` is not binary: " ~ grGetPrettyFunctionCall("", inSignature));
+
         return addFunction(callback, "@operator_" ~ name, inSignature, [outType], constraints);
     }
 

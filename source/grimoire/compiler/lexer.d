@@ -208,11 +208,6 @@ struct GrLexeme {
     string getFile() {
         return lexer.getFile(this);
     }
-
-    /// Est-ce qu’on peut surcharger cet opérateur ?
-    bool isOverridableOperator() const {
-        return type >= Type.add && type <= Type.not;
-    }
 }
 
 /// Le lexeur analyse l’entièreté du fichier et importe tous les fichiers qui y sont référencés,

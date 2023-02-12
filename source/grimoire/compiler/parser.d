@@ -904,7 +904,7 @@ final class GrParser {
                     : GrOpcode.primitiveCall, matching.prim.index);
             if (matching.prim.outSignature.length != 1uL) {
                 logError(getError(Error.opMustHave1RetVal), format(getError(matching.prim.outSignature.length > 1 ?
-                        Error.expected1RetValFoundX : Error.expected1RetValFoundXs),
+                        Error.expected1RetValFoundXs : Error.expected1RetValFoundX),
                         matching.prim.outSignature.length));
             }
             return matching.prim.outSignature[0];
@@ -915,7 +915,7 @@ final class GrParser {
             auto outSignature = addFunctionCall(matching.func, fileId);
             if (outSignature.length != 1uL) {
                 logError(getError(Error.opMustHave1RetVal), format(getError(matching.func.outSignature.length > 1 ?
-                        Error.expected1RetValFoundX : Error.expected1RetValFoundXs),
+                        Error.expected1RetValFoundXs : Error.expected1RetValFoundX),
                         matching.func.outSignature.length));
             }
             return outSignature[0];
@@ -935,7 +935,7 @@ final class GrParser {
                     : GrOpcode.primitiveCall, matching.prim.index);
             if (matching.prim.outSignature.length != 1uL) {
                 logError(getError(Error.opMustHave1RetVal), format(getError(matching.prim.outSignature.length > 1 ?
-                        Error.expected1RetValFoundX : Error.expected1RetValFoundXs),
+                        Error.expected1RetValFoundXs : Error.expected1RetValFoundX),
                         matching.prim.outSignature.length));
             }
             return matching.prim.outSignature[0];
@@ -946,7 +946,7 @@ final class GrParser {
             auto outSignature = addFunctionCall(matching.func, fileId);
             if (outSignature.length != 1uL) {
                 logError(getError(Error.opMustHave1RetVal), format(getError(matching.func.outSignature.length > 1 ?
-                        Error.expected1RetValFoundX : Error.expected1RetValFoundXs),
+                        Error.expected1RetValFoundXs : Error.expected1RetValFoundX),
                         matching.func.outSignature.length));
             }
             return outSignature[0];
@@ -2643,8 +2643,9 @@ final class GrParser {
         checkAdvance();
         string[] templateVariables = parseTemplateVariables();
         string name;
-        bool isConversion;
+        bool isConversion, isOperator;
         GrType staticType;
+        uint lexPosition;
 
         if (get().type == GrLexeme.Type.as) {
             checkAdvance();
@@ -2673,16 +2674,18 @@ final class GrParser {
         else if (get().type == GrLexeme.Type.identifier) {
             if (get().svalue == "operator") {
                 advance();
-                if (get().isOverridableOperator()) {
-                    name = "@operator_" ~ getPrettyLexemeType(get().type);
+                if (get().type == GrLexeme.Type.string_) {
+                    lexPosition = current;
+                    if (!isOverridableOperator(get().svalue)) {
+                        logError(format(getError(Error.cantOverrideXOp), get()
+                                .svalue), getError(Error.opCantBeOverriden));
+                    }
+                    name = get().svalue;
+                    isOperator = true;
                     checkAdvance();
                 }
-                else if (get().isOperator) {
-                    logError(format(getError(Error.cantOverrideXOp),
-                            getPrettyLexemeType(get().type)), getError(Error.opCantBeOverriden));
-                }
                 else {
-                    logError(format(getError(Error.expectedIdentifierFoundX),
+                    logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.string_),
                             getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
                 }
             }
@@ -2698,7 +2701,6 @@ final class GrParser {
 
         GrTemplateFunction temp = new GrTemplateFunction;
         temp.isTask = false;
-        temp.name = name;
         temp.isConversion = isConversion;
         temp.templateVariables = templateVariables;
         temp.fileId = get().fileId;
@@ -2709,11 +2711,37 @@ final class GrParser {
         temp.inSignature = parseInSignature(inputs, templateVariables);
         temp.outSignature = parseSignature(templateVariables);
 
-        if (name == "@as")
+        if (isOperator) {
+            if (temp.inSignature.length == 0 || temp.inSignature.length > 2) {
+                logError(getError(Error.opMustHave1Or2Args),
+                    getError(Error.opCantBeOverriden), "", lexPosition - current);
+            }
+
+            if (temp.outSignature.length != 1) {
+                logError(getError(Error.opMustHave1RetVal), format(getError(temp.outSignature.length > 1 ?
+                        Error.expected1RetValFoundXs : Error.expected1RetValFoundX),
+                        temp.outSignature.length), "", lexPosition - current);
+            }
+
+            if (!isOperatorUnary(name) && temp.inSignature.length == 1) {
+                logError(format(getError(Error.xNotUnaryOp), name),
+                    getError(Error.opCantBeOverriden), "", lexPosition - current);
+            }
+
+            if (!isOperatorBinary(name) && temp.inSignature.length == 2) {
+                logError(format(getError(Error.xNotBinaryOp), name),
+                    getError(Error.opCantBeOverriden), "", lexPosition - current);
+            }
+
+            name = "@operator_" ~ name;
+        }
+
+        if (isConversion)
             temp.inSignature ~= temp.outSignature;
         else if (staticType.base != GrType.Base.void_)
             temp.inSignature ~= staticType;
 
+        temp.name = name;
         temp.constraints = parseWhereStatement(templateVariables);
         templatedFunctions ~= temp;
         skipBlock(true);
@@ -7152,6 +7180,9 @@ final class GrParser {
         eventAlreadyPublic,
         cantOverrideXOp,
         opCantBeOverriden,
+        xNotUnaryOp,
+        xNotBinaryOp,
+        opMustHave1Or2Args,
         missingConstraint,
         xIsNotAKnownConstraint,
         validConstraintsAreX,
@@ -7382,6 +7413,9 @@ final class GrParser {
                 Error.eventAlreadyPublic: "event is already public",
                 Error.cantOverrideXOp: "can't override `%s` operator",
                 Error.opCantBeOverriden: "this operator can't be overriden",
+                Error.xNotUnaryOp: "`%s` is not an unary operator",
+                Error.xNotBinaryOp: "`%s` is not a binary operator",
+                Error.opMustHave1Or2Args: "an operator must have 1 or 2 arguments",
                 Error.missingConstraint: "missing constraint",
                 Error.xIsNotAKnownConstraint: "`%s` is not a known constraint",
                 Error.validConstraintsAreX: "valid constraints are: %s",
@@ -7604,6 +7638,9 @@ final class GrParser {
                 Error.eventAlreadyPublic: "les events sont déjà publiques",
                 Error.cantOverrideXOp: "impossible de surcharger l’opérateur `%s`",
                 Error.opCantBeOverriden: "cet opérateur ne peut être surchargé",
+                Error.xNotUnaryOp: "`%s` n’est pas un opérateur unaire",
+                Error.xNotBinaryOp: "`%s` n’est pas un opérateur binaire",
+                Error.opMustHave1Or2Args: "un opérateur doit avoir 1 ou 2 arguments",
                 Error.missingConstraint: "contrainte manquante",
                 Error.xIsNotAKnownConstraint: "`%s` n’est pas une contrainte connue",
                 Error.validConstraintsAreX: "les contraintes valides sont: %s",

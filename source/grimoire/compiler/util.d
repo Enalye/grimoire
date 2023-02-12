@@ -43,3 +43,105 @@ package string[] findNearestStrings(const string baseValue, const(string[]) ary,
     }
     return nearestStrings;
 }
+
+/// Est-ce qu’on peut surcharger cet opérateur ?
+bool isOverridableOperator(string op) {
+    switch (op) {
+    case "+":
+    case "-":
+    case "*":
+    case "/":
+    case "~":
+    case "%":
+    case "**":
+    case "==":
+    case "===":
+    case "<=>":
+    case "!=":
+    case ">=":
+    case ">":
+    case "<=":
+    case "<":
+    case "<<":
+    case ">>":
+    case "->":
+    case "=>":
+    case "&":
+    case "|":
+    case "^":
+    case "&&":
+    case "||":
+    case "!":
+        return true;
+    default:
+        return false;
+    }
+}
+
+/// Est-ce que l’opérateur est unaire ?
+bool isOperatorUnary(string op) {
+    switch (op) {
+    case "+":
+    case "-":
+    case "!":
+    case "~":
+        return true;
+    case "*":
+    case "/":
+    case "%":
+    case "**":
+    case "==":
+    case "===":
+    case "<=>":
+    case "!=":
+    case ">=":
+    case ">":
+    case "<=":
+    case "<":
+    case "<<":
+    case ">>":
+    case "->":
+    case "=>":
+    case "&":
+    case "|":
+    case "^":
+    case "&&":
+    case "||":
+    default:
+        return false;
+    }
+}
+
+/// Est-ce que l’opérateur est binaire ?
+bool isOperatorBinary(string op) {
+    switch (op) {
+    case "+":
+    case "-":
+    case "~":
+    case "*":
+    case "/":
+    case "%":
+    case "**":
+    case "==":
+    case "===":
+    case "<=>":
+    case "!=":
+    case ">=":
+    case ">":
+    case "<=":
+    case "<":
+    case "<<":
+    case ">>":
+    case "->":
+    case "=>":
+    case "&":
+    case "|":
+    case "^":
+    case "&&":
+    case "||":
+        return true;
+    case "!":
+    default:
+        return false;
+    }
+}
