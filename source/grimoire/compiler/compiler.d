@@ -217,7 +217,7 @@ final class GrCompiler {
 
         // les constantes
         bytecode.iconsts = parser.iconsts;
-        bytecode.rconsts = parser.rconsts;
+        bytecode.fconsts = parser.fconsts;
         bytecode.sconsts = parser.sconsts;
 
         // Les variables globales

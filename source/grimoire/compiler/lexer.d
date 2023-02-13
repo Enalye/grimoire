@@ -6,7 +6,7 @@
 module grimoire.compiler.lexer;
 
 import std.stdio, std.string, std.array, std.math, std.file;
-import std.conv : to;
+import std.conv : to, ConvOverflowException;
 import std.algorithm : canFind;
 import grimoire.assembly;
 import grimoire.compiler.data, grimoire.compiler.error, grimoire.compiler.util;
@@ -190,7 +190,7 @@ struct GrLexeme {
 
     /// Valeur flottante de la constante.
     /// `isLiteral` vaut `true` et `type` vaut `float_`.
-    GrFloat rvalue;
+    GrFloat fvalue;
 
     /// Valeur booléenne de la constante.
     /// `isLiteral` vaut `true` et `type` vaut `bool_`.
@@ -438,10 +438,13 @@ package final class GrLexer {
     }
 
     /**
-	Scan either a integer or a floating point number. \
-	Floats can start with a `.` \
-	A number finishing with `f` will be scanned as a float. \
-	Underscores `_` are ignored inside a number.
+	Analyse un nombre littéral. \
+	Les tirets du bas `_` sont ignorés à l’intérieur d’un nombre.
+    - Un entier hexadécimal commence par 0x ou 0X.
+    - Un entier octal commence par 0o ou 0o.
+    - Un entier binaire commence par 0b ou 0b.
+    - Un nombre flottant peut commencer par un point ou avoir un point au milieu mais pas finir par un point.
+    - Un nombre flottant peut finir par un `f`.
 	*/
     private void scanNumber() {
         GrLexeme lex = GrLexeme(this);
@@ -451,51 +454,76 @@ package final class GrLexer {
         bool isPrefix, isMaybeFloat, isFloat;
         bool isBinary, isOctal, isHexadecimal;
         string buffer;
+
+        lex._textLength = 0;
+
         for (;;) {
             dchar symbol = get();
 
             if (isBinary) {
-                if (symbol != '0' && symbol != '1') {
+                if (symbol == '0' || symbol == '1') {
+                    buffer ~= symbol;
+                    lex._textLength++;
+                }
+                else if (symbol == '_') {
+                    // On ne fait rien, c’est purement visuel (par ex: 0b1111_1111)
+                    lex._textLength++;
+                }
+                else {
                     if (_current)
                         _current--;
                     break;
                 }
 
-                buffer ~= symbol;
             }
             else if (isOctal) {
-                if (symbol < '0' || symbol > '7') {
+                if (symbol >= '0' && symbol <= '7') {
+                    buffer ~= symbol;
+                    lex._textLength++;
+                }
+                else if (symbol == '_') {
+                    // On ne fait rien, c’est purement visuel (par ex: 0o7_77)
+                    lex._textLength++;
+                }
+                else {
                     if (_current)
                         _current--;
                     break;
                 }
-
-                buffer ~= symbol;
             }
             else if (isHexadecimal) {
-                if (!((symbol >= '0' && symbol <= '9') || (symbol >= 'a' &&
-                        symbol <= 'f') || (symbol >= 'A' && symbol <= 'F'))) {
+                if ((symbol >= '0' && symbol <= '9') || (symbol >= 'a' &&
+                        symbol <= 'f') || (symbol >= 'A' && symbol <= 'F')) {
+                    buffer ~= symbol;
+                    lex._textLength++;
+                }
+                else if (symbol == '_') {
+                    // On ne fait rien, c’est purement visuel (par ex: 0xff_ff)
+                    lex._textLength++;
+                }
+                else {
                     if (_current)
                         _current--;
                     break;
                 }
-
-                buffer ~= symbol;
             }
             else if (isPrefix && (symbol == 'b' || symbol == 'B')) {
                 isPrefix = false;
                 isBinary = true;
                 buffer.length = 0;
+                lex._textLength++;
             }
             else if (isPrefix && (symbol == 'o' || symbol == 'O')) {
                 isPrefix = false;
                 isOctal = true;
                 buffer.length = 0;
+                lex._textLength++;
             }
             else if (isPrefix && (symbol == 'x' || symbol == 'X')) {
                 isPrefix = false;
                 isHexadecimal = true;
                 buffer.length = 0;
+                lex._textLength++;
             }
             else if (symbol >= '0' && symbol <= '9') {
                 if (isStart && symbol == '0') {
@@ -508,9 +536,11 @@ package final class GrLexer {
                 }
 
                 buffer ~= symbol;
+                lex._textLength++;
             }
             else if (symbol == '_') {
                 // On ne fait rien, c’est purement visuel (par ex: 1_000_000)
+                lex._textLength++;
             }
             else if (symbol == '.') {
                 if (isMaybeFloat) {
@@ -522,6 +552,7 @@ package final class GrLexer {
                     break;
                 }
                 isMaybeFloat = true;
+                lex._textLength++;
             }
             else if (symbol == 'f') {
                 if (isMaybeFloat) {
@@ -529,6 +560,7 @@ package final class GrLexer {
                     break;
                 }
                 isFloat = true;
+                lex._textLength++;
                 break;
             }
             else {
@@ -547,8 +579,6 @@ package final class GrLexer {
                 break;
         }
 
-        lex._textLength = cast(uint) buffer.length;
-
         if (!buffer.length && !isFloat) {
             lex.type = GrLexeme.Type.int_;
             lex.ivalue = 0;
@@ -556,32 +586,38 @@ package final class GrLexer {
             raiseError(Error.emptyNumber);
         }
 
-        if (isBinary) {
-            lex.type = GrLexeme.Type.int_;
-            lex.ivalue = to!GrInt(buffer, 2);
+        try {
+            if (isBinary) {
+                lex.type = GrLexeme.Type.int_;
+                lex.ivalue = to!GrInt(buffer, 2);
+            }
+            else if (isOctal) {
+                lex.type = GrLexeme.Type.int_;
+                lex.ivalue = to!GrInt(buffer, 8);
+            }
+            else if (isHexadecimal) {
+                lex.type = GrLexeme.Type.int_;
+                lex.ivalue = to!GrInt(buffer, 16);
+            }
+            else if (isFloat) {
+                lex.type = GrLexeme.Type.float_;
+                lex.fvalue = to!GrFloat(buffer);
+            }
+            else {
+                lex.type = GrLexeme.Type.int_;
+                lex.ivalue = to!GrInt(buffer);
+            }
         }
-        else if (isOctal) {
+        catch (ConvOverflowException) {
             lex.type = GrLexeme.Type.int_;
-            lex.ivalue = to!GrInt(buffer, 8);
-        }
-        else if (isHexadecimal) {
-            lex.type = GrLexeme.Type.int_;
-            lex.ivalue = to!GrInt(buffer, 16);
-        }
-        else if (isFloat) {
-            lex.type = GrLexeme.Type.float_;
-            lex.rvalue = to!GrFloat(buffer);
-        }
-        else {
-            lex.type = GrLexeme.Type.int_;
-            lex.ivalue = to!GrInt(buffer);
+            lex.ivalue = 0;
+            _lexemes ~= lex;
+            raiseError(Error.numberTooBig);
         }
         _lexemes ~= lex;
     }
 
-    /**
-    Scan a `"` delimited string.
-    */
+    /// Analyse une chaîne de caractères délimité par des `"`.
     void scanString() {
         GrLexeme lex = GrLexeme(this);
         lex.type = GrLexeme.Type.string_;
@@ -614,10 +650,44 @@ package final class GrLexer {
                     buffer ~= symbol;
                 }
                 else {
-                    if (symbol == 'n')
+                    switch (symbol) {
+                    case '\'':
+                        buffer ~= '\'';
+                        break;
+                    case '\\':
+                        buffer ~= '\\';
+                        break;
+                    case '?':
+                        buffer ~= '\?';
+                        break;
+                    case '0':
+                        buffer ~= '\0';
+                        break;
+                    case 'a':
+                        buffer ~= '\a';
+                        break;
+                    case 'b':
+                        buffer ~= '\b';
+                        break;
+                    case 'f':
+                        buffer ~= '\f';
+                        break;
+                    case 'n':
                         buffer ~= '\n';
-                    else
+                        break;
+                    case 'r':
+                        buffer ~= '\r';
+                        break;
+                    case 't':
+                        buffer ~= '\t';
+                        break;
+                    case 'v':
+                        buffer ~= '\v';
+                        break;
+                    default:
                         buffer ~= symbol;
+                        break;
+                    }
                 }
             }
             wasEscape = escape;
@@ -631,9 +701,7 @@ package final class GrLexer {
         _lexemes ~= lex;
     }
 
-    /**
-	Scan a symbol-based operator.
-	*/
+    /// Analyse un opérateur basé sur des symboles.
     private void scanOperator() {
         GrLexeme lex = GrLexeme(this);
         lex.isOperator = true;
@@ -954,9 +1022,7 @@ package final class GrLexer {
         }
     }
 
-    /**
-	Scan a known keyword or an identifier otherwise.
-	*/
+    /// Analyse un mot-clé connu ou un identificateur dans le cas échéant.
     private void scanWord() {
         GrLexeme lex = GrLexeme(this);
         lex.isKeyword = true;
@@ -1303,6 +1369,7 @@ package final class GrLexer {
         lexLineCountOutOfBounds,
         unexpectedEndOfFile,
         emptyNumber,
+        numberTooBig,
         expectedQuotationMarkAtBeginningOfStr,
         missingQuotationMarkAtEndOfStr,
         invalidOp,
@@ -1316,6 +1383,7 @@ package final class GrLexer {
                 Error.lexLineCountOutOfBounds: "lexeme line count out of bounds",
                 Error.unexpectedEndOfFile: "unexpected end of file",
                 Error.emptyNumber: "empty number",
+                Error.numberTooBig: "number too big",
                 Error.expectedQuotationMarkAtBeginningOfStr: "expected `\"` at the beginning of the string",
                 Error.missingQuotationMarkAtEndOfStr: "missing `\"` at the end of the string",
                 Error.invalidOp: "invalid operator",
@@ -1326,6 +1394,7 @@ package final class GrLexer {
                 Error.lexLineCountOutOfBounds: "le numéro de ligne du lexeme excède les limites",
                 Error.unexpectedEndOfFile: "fin de fichier inattendue",
                 Error.emptyNumber: "nombre vide",
+                Error.numberTooBig: "nombre trop grand",
                 Error.expectedQuotationMarkAtBeginningOfStr: "`\"` attendu au début de la chaîne",
                 Error.missingQuotationMarkAtEndOfStr: "`\"` manquant en fin de chaîne",
                 Error.invalidOp: "opérateur invalide",

@@ -31,7 +31,7 @@ import grimoire.compiler.error;
 final class GrParser {
     package {
         GrInt[] iconsts;
-        GrFloat[] rconsts;
+        GrFloat[] fconsts;
         GrStringValue[] sconsts;
 
         uint scopeLevel;
@@ -151,12 +151,12 @@ final class GrParser {
 
     /// Enregistre un nouveau flottant et retourne son id
     private uint registerFloatConstant(GrFloat value) {
-        foreach (size_t index, GrFloat fconst; rconsts) {
+        foreach (size_t index, GrFloat fconst; fconsts) {
             if (fconst == value)
                 return cast(uint) index;
         }
-        rconsts ~= value;
-        return cast(uint) rconsts.length - 1;
+        fconsts ~= value;
+        return cast(uint) fconsts.length - 1;
     }
 
     /// Enregistre une nouvelle chaîne de caractères et retourne son id
@@ -1701,8 +1701,8 @@ final class GrParser {
         foreach (size_t i, GrInt ivalue; iconsts)
             writeln(".iconst " ~ to!string(ivalue) ~ "\t;" ~ to!string(i));
 
-        foreach (size_t i, GrFloat rvalue; rconsts)
-            writeln(".fconst " ~ to!string(rvalue) ~ "\t;" ~ to!string(i));
+        foreach (size_t i, GrFloat fvalue; fconsts)
+            writeln(".fconst " ~ to!string(fvalue) ~ "\t;" ~ to!string(i));
 
         foreach (size_t i, GrStringValue svalue; sconsts)
             writeln(".sconst " ~ to!string(svalue) ~ "\t;" ~ to!string(i));
@@ -5920,7 +5920,7 @@ final class GrParser {
                 break;
             case float_:
                 currentType = GrType(GrType.Base.float_);
-                addFloatConstant(lex.rvalue);
+                addFloatConstant(lex.fvalue);
                 hasValue = true;
                 typeStack ~= currentType;
                 checkAdvance();

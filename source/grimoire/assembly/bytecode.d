@@ -203,7 +203,7 @@ final class GrBytecode {
         GrInt[] iconsts;
 
         /// Constantes flottantes.
-        GrFloat[] rconsts;
+        GrFloat[] fconsts;
 
         /// Constantes textuelles.
         GrStringValue[] sconsts;
@@ -237,7 +237,7 @@ final class GrBytecode {
     this(GrBytecode bytecode) {
         opcodes = bytecode.opcodes;
         iconsts = bytecode.iconsts;
-        rconsts = bytecode.rconsts;
+        fconsts = bytecode.fconsts;
         sconsts = bytecode.sconsts;
         primitives = bytecode.primitives;
         classes = bytecode.classes;
@@ -286,7 +286,7 @@ final class GrBytecode {
         buffer.append!uint(cast(uint) userVersion);
 
         buffer.append!uint(cast(uint) iconsts.length);
-        buffer.append!uint(cast(uint) rconsts.length);
+        buffer.append!uint(cast(uint) fconsts.length);
         buffer.append!uint(cast(uint) sconsts.length);
         buffer.append!uint(cast(uint) opcodes.length);
 
@@ -300,7 +300,7 @@ final class GrBytecode {
 
         foreach (GrInt i; iconsts)
             buffer.append!GrInt(i);
-        foreach (GrFloat i; rconsts)
+        foreach (GrFloat i; fconsts)
             buffer.append!GrFloat(i);
         foreach (string i; sconsts) {
             writeStr(buffer, i);
@@ -390,7 +390,7 @@ final class GrBytecode {
             return;
 
         iconsts.length = buffer.read!uint();
-        rconsts.length = buffer.read!uint();
+        fconsts.length = buffer.read!uint();
         sconsts.length = buffer.read!uint();
         opcodes.length = buffer.read!uint();
 
@@ -406,8 +406,8 @@ final class GrBytecode {
             iconsts[i] = buffer.read!GrInt();
         }
 
-        for (uint i; i < rconsts.length; ++i) {
-            rconsts[i] = buffer.read!GrFloat();
+        for (uint i; i < fconsts.length; ++i) {
+            fconsts[i] = buffer.read!GrFloat();
         }
 
         for (uint i; i < sconsts.length; ++i) {
@@ -537,7 +537,7 @@ final class GrBytecode {
             else if (op == GrOpcode.const_int)
                 line ~= to!string(iconsts[grGetInstructionUnsignedValue(opcode)]);
             else if (op == GrOpcode.const_float)
-                line ~= to!string(rconsts[grGetInstructionUnsignedValue(opcode)]);
+                line ~= to!string(fconsts[grGetInstructionUnsignedValue(opcode)]);
             else if (op == GrOpcode.const_bool)
                 line ~= (grGetInstructionUnsignedValue(opcode) ? "true" : "false");
             else if (op == GrOpcode.const_string || op == GrOpcode.const_meta ||

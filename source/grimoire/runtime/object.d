@@ -141,7 +141,7 @@ final class GrObject {
                 else static if (is(T == GrBool))
                     return _fields[index].value._ivalue = cast(GrInt) value;
                 else static if (is(T == GrFloat))
-                    return _fields[index].value._rvalue = value;
+                    return _fields[index].value._fvalue = value;
                 else static if (is(T == GrPointer))
                     return _fields[index].value._ovalue = value;
                 else
