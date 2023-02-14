@@ -22,12 +22,28 @@ var a; // Error, the type of « a » is unknown
 
 Without initialisation, a variable will be initialised with its default value.
 If no default value exist for this type, the program won't compile.
+> **Note:** The default value of a class or a native type is its default constructor.
 ```grimoire
-var a: float;         // 0.0 by default
-var a: HashMap<int>;  // Error
+class A1 {}
+class A2 {}
+
+func @A2() (A2) {
+    return @A2 {};
+}
+
+event main {
+    var a: float;   // 0.0 by default
+    var b: A1;      // Error
+    var c: A2;      // Call the constructor @A2()
+}
 ```
 
-> **Note:** Classes and natives don't have default value, so they **have** to be initialised.
+## Default value
+
+We can fetch the default value of a given type with `default<T>` where `T` is the type to get.
+```grimoire
+var x = default<int>; // -> 0
+```
 
 ## Scope
 A variable can either be local or global.

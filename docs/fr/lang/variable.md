@@ -22,12 +22,28 @@ var a; // Erreur, le type de « a » est inconnu
 
 Sans initialisation, une variable est initialisé par sa valeur par défaut.
 Si aucune valeur par défaut n’existe, le programme ne compilera pas.
+> **Note:** La valeur par défaut d’une classe ou d’un natif est son constructeur par défaut.
 ```grimoire
-var a: float;         // 0.0 par défaut
-var a: HashMap<int>;  // Erreur
+class A1 {}
+class A2 {}
+
+func @A2() (A2) {
+    return @A2 {};
+}
+
+event main {
+    var a: float;   // 0.0 par défaut
+    var b: A1;      // Erreur
+    var c: A2;      // Appelle le constructeur @A2()
+}
 ```
 
-> **Note:** Les classes et natifs n’ont pas de valeurs assignée par défaut, elles doivent donc **obligatoirement** être initialisées.
+## Valeur par défaut
+
+On peut récupérer la valeur par défaut d’un type grâce à `default<T>` où `T` est le type souhaité.
+```grimoire
+var x = default<int>; // -> 0
+```
 
 ## Portée
 Une variable peut-être soit locale soit globale.

@@ -5961,6 +5961,27 @@ final class GrParser {
                 }
                 typeStack ~= currentType;
                 break;
+            case default_:
+                hasValue = true;
+                checkAdvance();
+                if (get().type != GrLexeme.Type.lesser)
+                    logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.lesser),
+                            getPrettyLexemeType(get().type)), format(getError(Error.missingX),
+                            getPrettyLexemeType(GrLexeme.Type.lesser)));
+
+                checkAdvance();
+                currentType = parseType();
+                addDefaultValue(currentType, fileId);
+
+                distinguishTemplateLexemes();
+                if (get().type != GrLexeme.Type.greater)
+                    logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.greater),
+                            getPrettyLexemeType(get().type)), format(getError(Error.missingX),
+                            getPrettyLexemeType(GrLexeme.Type.greater)));
+                checkAdvance();
+
+                typeStack ~= currentType;
+                break;
             case at:
                 GrType[] types = parseStaticCall();
 
