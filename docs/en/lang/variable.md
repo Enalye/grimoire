@@ -76,7 +76,7 @@ Variable shadowing is also allowed.
 event main() {
     var x: int = 5;
 
-    if(true) {
+    {
         var x: int = 12;
         x.print; // -> 12
     }
