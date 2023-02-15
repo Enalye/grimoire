@@ -31,6 +31,7 @@ import grimoire.compiler.error;
 final class GrParser {
     package {
         GrInt[] iconsts;
+        GrUint[] uconsts;
         GrFloat[] fconsts;
         GrStringValue[] sconsts;
 
@@ -149,6 +150,16 @@ final class GrParser {
         return cast(uint) iconsts.length - 1;
     }
 
+    /// Enregistre un nouvel entier non-signé et retourne son id
+    private uint registerUintConstant(GrUint value) {
+        foreach (size_t index, GrUint uconst; uconsts) {
+            if (uconst == value)
+                return cast(uint) index;
+        }
+        uconsts ~= value;
+        return cast(uint) uconsts.length - 1;
+    }
+
     /// Enregistre un nouveau flottant et retourne son id
     private uint registerFloatConstant(GrFloat value) {
         foreach (size_t index, GrFloat fconst; fconsts) {
@@ -239,6 +250,7 @@ final class GrParser {
     private void setVariableRegister(GrVariable variable) {
         final switch (variable.type.base) with (GrType.Base) {
         case int_:
+        case uint_:
         case bool_:
         case func:
         case task:
@@ -402,6 +414,7 @@ final class GrParser {
                         getPrettyType(type)), getError(Error.invalidParamType));
                 break;
             case int_:
+            case uint_:
             case bool_:
             case func:
             case task:
@@ -468,6 +481,7 @@ final class GrParser {
                 case void_:
                 case null_:
                 case int_:
+                case uint_:
                 case float_:
                 case bool_:
                 case enum_:
@@ -775,6 +789,10 @@ final class GrParser {
 
     private void addIntConstant(GrInt value) {
         addInstruction(GrOpcode.const_int, registerIntConstant(value));
+    }
+
+    private void addUintConstant(GrUint value) {
+        addInstruction(GrOpcode.const_uint, registerUintConstant(value));
     }
 
     private void addFloatConstant(GrFloat value) {
@@ -1336,6 +1354,7 @@ final class GrParser {
             final switch (valueType.base) with (GrType.Base) {
             case bool_:
             case int_:
+            case uint_:
             case func:
             case task:
             case event:
@@ -1383,6 +1402,7 @@ final class GrParser {
             final switch (variable.type.base) with (GrType.Base) {
             case bool_:
             case int_:
+            case uint_:
             case func:
             case task:
             case event:
@@ -1409,6 +1429,7 @@ final class GrParser {
             final switch (variable.type.base) with (GrType.Base) {
             case bool_:
             case int_:
+            case uint_:
             case func:
             case task:
             case event:
@@ -1435,6 +1456,7 @@ final class GrParser {
             final switch (variable.type.base) with (GrType.Base) {
             case bool_:
             case int_:
+            case uint_:
             case func:
             case task:
             case event:
@@ -1501,6 +1523,7 @@ final class GrParser {
             final switch (variable.type.base) with (GrType.Base) {
             case bool_:
             case int_:
+            case uint_:
             case func:
             case task:
             case event:
@@ -1534,6 +1557,7 @@ final class GrParser {
             final switch (variable.type.base) with (GrType.Base) {
             case bool_:
             case int_:
+            case uint_:
             case func:
             case task:
             case event:
@@ -1825,17 +1849,17 @@ final class GrParser {
                 break;
             case task:
                 if (get(1).type != GrLexeme.Type.identifier && get(1).type != GrLexeme.Type.lesser)
-                    goto case integerType;
+                    goto case intType;
                 parseTaskDeclaration(isPublic);
                 break;
             case func:
                 if (get(1).type != GrLexeme.Type.identifier && !get(1)
                     .isOperator && get(1).type != GrLexeme.Type.as && get(1)
                     .type != GrLexeme.Type.lesser)
-                    goto case integerType;
+                    goto case intType;
                 parseFunctionDeclaration(isPublic);
                 break;
-            case integerType: .. case channelType:
+            case intType: .. case channelType:
             case var:
             case const_:
             case pure_:
@@ -2330,7 +2354,7 @@ final class GrParser {
         }
         else {
             switch (lex.type) with (GrLexeme.Type) {
-            case integerType:
+            case intType:
                 currentType.base = GrType.Base.int_;
                 checkAdvance();
                 break;
@@ -2338,7 +2362,7 @@ final class GrParser {
                 currentType.base = GrType.Base.float_;
                 checkAdvance();
                 break;
-            case booleanType:
+            case boolType:
                 currentType.base = GrType.Base.bool_;
                 checkAdvance();
                 break;
@@ -2418,6 +2442,7 @@ final class GrParser {
                 format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get().type)));
             break;
         case int_:
+        case uint_:
         case bool_:
         case func:
         case task:
@@ -2447,6 +2472,7 @@ final class GrParser {
                 format(getError(Error.expectedIdentifierFoundX), getPrettyLexemeType(get().type)));
             break;
         case int_:
+        case uint_:
         case bool_:
         case func:
         case task:
@@ -3441,13 +3467,13 @@ final class GrParser {
         GrType returnType = GrType.Base.void_;
         if (get().isType) {
             switch (get().type) with (GrLexeme.Type) {
-            case integerType:
+            case intType:
                 returnType = GrType(GrType.Base.int_);
                 break;
             case floatType:
                 returnType = GrType(GrType.Base.float_);
                 break;
-            case booleanType:
+            case boolType:
                 returnType = GrType(GrType.Base.bool_);
                 break;
             case stringType:
@@ -3613,6 +3639,7 @@ final class GrParser {
 
         final switch (subType.base) with (GrType.Base) {
         case int_:
+        case uint_:
         case bool_:
         case func:
         case task:
@@ -3984,6 +4011,7 @@ final class GrParser {
                 final switch (subType.base) with (GrType.Base) {
                 case bool_:
                 case int_:
+                case uint_:
                 case func:
                 case task:
                 case event:
@@ -4038,6 +4066,7 @@ final class GrParser {
                 final switch (subType.base) with (GrType.Base) {
                 case bool_:
                 case int_:
+                case uint_:
                 case func:
                 case task:
                 case event:
@@ -4654,6 +4683,7 @@ final class GrParser {
             case void_:
             case bool_:
             case int_:
+            case uint_:
             case float_:
             case string_:
             case enum_:
@@ -4713,6 +4743,7 @@ final class GrParser {
             case void_:
             case bool_:
             case int_:
+            case uint_:
             case float_:
             case string_:
             case enum_:
@@ -5043,6 +5074,7 @@ final class GrParser {
         final switch (subType.base) with (GrType.Base) {
         case bool_:
         case int_:
+        case uint_:
         case func:
         case task:
         case event:
@@ -5090,6 +5122,7 @@ final class GrParser {
                     final switch (subType.base) with (GrType.Base) {
                     case bool_:
                     case int_:
+                    case uint_:
                     case func:
                     case task:
                     case event:
@@ -5135,6 +5168,7 @@ final class GrParser {
                 final switch (subType.base) with (GrType.Base) {
                 case bool_:
                 case int_:
+                case uint_:
                 case func:
                 case task:
                 case event:
@@ -5246,9 +5280,12 @@ final class GrParser {
             case comma:
                 isAssignmentList = true;
                 break __skipLoop;
-            default:
+            case period:
+            case identifier:
                 checkAdvance();
                 break;
+            default:
+                break __skipLoop;
             }
         }
         current = tempPos;
@@ -5391,6 +5428,9 @@ final class GrParser {
         case enum_:
             addIntConstant(0);
             break;
+        case uint_:
+            addUintConstant(0u);
+            break;
         case float_:
             addFloatConstant(0f);
             break;
@@ -5448,6 +5488,7 @@ final class GrParser {
             final switch (subTypes[0].base) with (GrType.Base) {
             case bool_:
             case int_:
+            case uint_:
             case func:
             case task:
             case event:
@@ -5481,6 +5522,7 @@ final class GrParser {
                     format(getError(Error.tryUsingXInstead), getPrettyType(grChannel(subTypes[0]))));
             final switch (subTypes[0].base) with (GrType.Base) {
             case int_:
+            case uint_:
             case bool_:
             case func:
             case task:
@@ -5537,6 +5579,7 @@ final class GrParser {
         int counter;
         final switch (type.base) with (GrType.Base) {
         case int_:
+        case uint_:
         case bool_:
         case func:
         case task:
@@ -5840,6 +5883,7 @@ final class GrParser {
                             final switch (currentType.base) with (GrType.Base) {
                             case bool_:
                             case int_:
+                            case uint_:
                             case func:
                             case task:
                             case event:
@@ -5877,6 +5921,7 @@ final class GrParser {
                         final switch (currentType.base) with (GrType.Base) {
                         case bool_:
                         case int_:
+                        case uint_:
                         case func:
                         case task:
                         case event:
@@ -5914,6 +5959,13 @@ final class GrParser {
             case int_:
                 currentType = GrType(GrType.Base.int_);
                 addIntConstant(lex.ivalue);
+                hasValue = true;
+                typeStack ~= currentType;
+                checkAdvance();
+                break;
+            case uint_:
+                currentType = GrType(GrType.Base.uint_);
+                addUintConstant(lex.uvalue);
                 hasValue = true;
                 typeStack ~= currentType;
                 checkAdvance();
@@ -6697,6 +6749,7 @@ final class GrParser {
         final switch (type.base) with (GrType.Base) {
         case bool_:
         case int_:
+        case uint_:
         case func:
         case task:
         case event:

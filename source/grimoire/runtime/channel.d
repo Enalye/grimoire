@@ -52,6 +52,11 @@ final class GrChannel {
         bool isFull() const {
             return _size == _capacity;
         }
+
+        /// Le contenu du buffer
+        GrValue[] data() {
+            return _buffer;
+        }
     }
 
     this(uint buffSize = 1u) {

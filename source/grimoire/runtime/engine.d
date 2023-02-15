@@ -139,13 +139,15 @@ class GrEngine {
         foreach (ref globalRef; _bytecode.variables) {
             const uint typeMask = globalRef.typeMask;
             const uint index = globalRef.index;
-            if (typeMask & 0x1)
+            if (typeMask & GR_MASK_INT)
                 _globals[index]._ivalue = globalRef.ivalue;
-            else if (typeMask & 0x2)
-                _globals[index]._fvalue = globalRef.rvalue;
-            else if (typeMask & 0x4)
+            else if (typeMask & GR_MASK_UINT)
+                _globals[index]._uvalue = globalRef.uvalue;
+            else if (typeMask & GR_MASK_FLOAT)
+                _globals[index]._fvalue = globalRef.fvalue;
+            else if (typeMask & GR_MASK_STRING)
                 _globals[index]._ovalue = cast(GrPointer) new GrString(globalRef.svalue);
-            else if (typeMask & 0x8)
+            else if (typeMask & GR_MASK_POINTER)
                 _globals[index]._ovalue = null;
         }
 
@@ -391,6 +393,7 @@ class GrEngine {
 
     alias getBoolVariable = getVariable!bool;
     alias getIntVariable = getVariable!GrInt;
+    alias getUintVariable = getVariable!GrUint;
     alias getFloatVariable = getVariable!GrFloat;
     alias getPointerVariable = getVariable!GrPointer;
 
@@ -426,6 +429,9 @@ class GrEngine {
         static if (is(T == GrInt)) {
             return _globals[variable.index]._ivalue;
         }
+        else static if (is(T == GrUint)) {
+            return _globals[variable.index]._uvalue;
+        }
         else static if (is(T == GrBool)) {
             return _globals[variable.index]._ivalue > 0;
         }
@@ -439,6 +445,7 @@ class GrEngine {
 
     alias setBoolVariable = setVariable!GrBool;
     alias setIntVariable = setVariable!GrInt;
+    alias setUintVariable = setVariable!GrUint;
     alias setFloatVariable = setVariable!GrFloat;
     alias setPointerVariable = setVariable!GrPointer;
 
@@ -476,6 +483,9 @@ class GrEngine {
             throw new Exception("no global variable `" ~ name ~ "` defined");
         static if (is(T == GrInt) || is(T == GrBool)) {
             _globals[variable.index]._ivalue = value;
+        }
+        else static if (is(T == GrUint)) {
+            _globals[variable.index]._uvalue = value;
         }
         else static if (is(T == GrFloat)) {
             _globals[variable.index]._fvalue = value;
@@ -852,6 +862,14 @@ class GrEngine {
                             opcode)];
                     currentTask.pc++;
                     break;
+                case const_uint:
+                    currentTask.stackPos++;
+                    if (currentTask.stackPos == currentTask.stack.length)
+                        currentTask.stack.length *= 2;
+                    currentTask.stack[currentTask.stackPos]._uvalue = _bytecode.uconsts[grGetInstructionUnsignedValue(
+                            opcode)];
+                    currentTask.pc++;
+                    break;
                 case const_float:
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
@@ -1163,7 +1181,7 @@ class GrEngine {
                         raise(currentTask, "OverflowError");
                         break;
                     }
-                    (*r) ++;
+                    (*r)++;
                     currentTask.pc++;
                     break;
                 case increment_float:
@@ -1176,7 +1194,7 @@ class GrEngine {
                         raise(currentTask, "OverflowError");
                         break;
                     }
-                    (*r) --;
+                    (*r)--;
                     currentTask.pc++;
                     break;
                 case decrement_float:
@@ -1491,6 +1509,40 @@ class GrEngine {
         if (builder)
             return new GrObject(*builder);
         return null;
+    }
+
+    /// Récupère le nom du champ de l’énumération correspondant à une valeur donnée
+    string getEnumFieldName(string enumName, int fieldValue) {
+        foreach (enum_; _bytecode.enums) {
+            if (enum_.name == enumName) {
+                foreach (ref field; enum_.fields) {
+                    if (field.value == fieldValue) {
+                        return field.name;
+                    }
+                }
+
+                return to!string(fieldValue);
+            }
+        }
+
+        return to!string(fieldValue);
+    }
+
+    /// Récupère la valeur du champ de l’énumération correspondant à un nom donné
+    int getEnumFieldValue(string enumName, string fieldName) {
+        foreach (enum_; _bytecode.enums) {
+            if (enum_.name == enumName) {
+                foreach (ref field; enum_.fields) {
+                    if (field.name == fieldName) {
+                        return field.value;
+                    }
+                }
+
+                return 0;
+            }
+        }
+
+        return 0;
     }
 
     import core.time : MonoTime, Duration;

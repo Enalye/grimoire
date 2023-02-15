@@ -82,6 +82,7 @@ struct GrLexeme {
         decrement,
         identifier,
         int_,
+        uint_,
         float_,
         bool_,
         string_,
@@ -96,9 +97,10 @@ struct GrLexeme {
         copy,
         send,
         receive,
-        integerType,
+        intType,
+        uintType,
         floatType,
-        booleanType,
+        boolType,
         stringType,
         listType,
         channelType,
@@ -187,6 +189,10 @@ struct GrLexeme {
     /// Valeur entière de la constante.
     /// `isLiteral` vaut `true` et `type` vaut `int_`.
     GrInt ivalue;
+
+    /// Valeur entière de la constante.
+    /// `isLiteral` vaut `true` et `type` vaut `uint_`.
+    GrUint uvalue;
 
     /// Valeur flottante de la constante.
     /// `isLiteral` vaut `true` et `type` vaut `float_`.
@@ -451,7 +457,7 @@ package final class GrLexer {
         lex.isLiteral = true;
 
         bool isStart = true;
-        bool isPrefix, isMaybeFloat, isFloat;
+        bool isPrefix, isMaybeFloat, isFloat, isUnsigned;
         bool isBinary, isOctal, isHexadecimal;
         string buffer;
 
@@ -474,7 +480,6 @@ package final class GrLexer {
                         _current--;
                     break;
                 }
-
             }
             else if (isOctal) {
                 if (symbol >= '0' && symbol <= '7') {
@@ -554,12 +559,21 @@ package final class GrLexer {
                 isMaybeFloat = true;
                 lex._textLength++;
             }
-            else if (symbol == 'f') {
+            else if (symbol == 'f' || symbol == 'F') {
                 if (isMaybeFloat) {
                     _current--;
                     break;
                 }
                 isFloat = true;
+                lex._textLength++;
+                break;
+            }
+            else if (symbol == 'u' || symbol == 'U') {
+                if (isMaybeFloat || isFloat) {
+                    _current--;
+                    break;
+                }
+                isUnsigned = true;
                 lex._textLength++;
                 break;
             }
@@ -603,9 +617,27 @@ package final class GrLexer {
                 lex.type = GrLexeme.Type.float_;
                 lex.fvalue = to!GrFloat(buffer);
             }
+            else if (isUnsigned) {
+                lex.type = GrLexeme.Type.uint_;
+                lex.uvalue = to!GrUint(buffer);
+            }
             else {
-                lex.type = GrLexeme.Type.int_;
-                lex.ivalue = to!GrInt(buffer);
+                const long value = to!long(buffer);
+
+                if (value > int.max && value <= uint.max) {
+                    lex.type = GrLexeme.Type.uint_;
+                    lex.uvalue = cast(GrUint) value;
+                }
+                else if (value >= int.min && value <= int.max) {
+                    lex.type = GrLexeme.Type.int_;
+                    lex.ivalue = cast(GrInt) value;
+                }
+                else {
+                    lex.type = GrLexeme.Type.int_;
+                    lex.ivalue = 0;
+                    _lexemes ~= lex;
+                    raiseError(Error.numberTooBig);
+                }
             }
         }
         catch (ConvOverflowException) {
@@ -1160,7 +1192,11 @@ package final class GrLexer {
             lex.isType = true;
             break;
         case "int":
-            lex.type = GrLexeme.Type.integerType;
+            lex.type = GrLexeme.Type.intType;
+            lex.isType = true;
+            break;
+        case "uint":
+            lex.type = GrLexeme.Type.uintType;
             lex.isType = true;
             break;
         case "float":
@@ -1168,7 +1204,7 @@ package final class GrLexer {
             lex.isType = true;
             break;
         case "bool":
-            lex.type = GrLexeme.Type.booleanType;
+            lex.type = GrLexeme.Type.boolType;
             lex.isType = true;
             break;
         case "string":
@@ -1411,12 +1447,13 @@ private immutable string[] _prettyLexemeTypeTable = [
     "||=", "??=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+", "-", "&",
     "|", "^", "&&", "||", "??", "+", "-", "*", "/", "~", "%", "**", "==",
     "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->", "=>", "~", "!",
-    "++", "--", "identifier", "const_int", "const_float", "const_bool",
-    "const_string", "null", "public", "const", "pure", "alias", "class", "enum",
-    "where", "copy", "send", "receive", "int", "float", "bool", "string",
-    "list", "channel", "func", "task", "event", "var", "if", "unless", "else",
-    "switch", "select", "case", "default", "while", "do", "until", "for",
-    "loop", "return", "self", "die", "exit", "yield", "break", "continue"
+    "++", "--", "identifier", "const_int", "const_uint", "const_float",
+    "const_bool", "const_string", "null", "public", "const", "pure", "alias",
+    "class", "enum", "where", "copy", "send", "receive", "int", "uint",
+    "float", "bool", "string", "list", "channel", "func", "task", "event", "var",
+    "if", "unless", "else", "switch", "select", "case", "default", "while",
+    "do", "until", "for", "loop", "return", "self", "die", "exit", "yield",
+    "break", "continue"
 ];
 
 /// Renvoie une version affichable du type de jeton

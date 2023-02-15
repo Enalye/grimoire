@@ -75,7 +75,7 @@ final class GrCompiler {
 
         GrBytecode bytecode = new GrBytecode;
 
-        bytecode.grimoireVersion = GRIMOIRE_VERSION;
+        bytecode.grimoireVersion = GR_VERSION;
         bytecode.userVersion = _userVersion;
 
         foreach (func; parser.functions)
@@ -217,6 +217,7 @@ final class GrCompiler {
 
         // les constantes
         bytecode.iconsts = parser.iconsts;
+        bytecode.uconsts = parser.uconsts;
         bytecode.fconsts = parser.fconsts;
         bytecode.sconsts = parser.sconsts;
 
@@ -233,15 +234,19 @@ final class GrCompiler {
             case task:
             case event:
             case enum_:
-                variable.typeMask = 0x1;
+                variable.typeMask = GR_MASK_INT;
                 variable.ivalue = variableDef.isInitialized ? variableDef.ivalue : 0;
                 break;
+            case uint_:
+                variable.typeMask = GR_MASK_UINT;
+                variable.uvalue = variableDef.isInitialized ? variableDef.uvalue : 0u;
+                break;
             case float_:
-                variable.typeMask = 0x2;
-                variable.rvalue = variableDef.isInitialized ? variableDef.rvalue : 0f;
+                variable.typeMask = GR_MASK_FLOAT;
+                variable.fvalue = variableDef.isInitialized ? variableDef.fvalue : 0f;
                 break;
             case string_:
-                variable.typeMask = 0x4;
+                variable.typeMask = GR_MASK_STRING;
                 variable.svalue = variableDef.isInitialized ? variableDef.svalue : "";
                 break;
             case list:
@@ -249,7 +254,7 @@ final class GrCompiler {
             case native:
             case channel:
             case optional:
-                variable.typeMask = 0x8;
+                variable.typeMask = GR_MASK_POINTER;
                 break;
             case void_:
             case internalTuple:
@@ -296,17 +301,22 @@ final class GrCompiler {
                 case task:
                 case event:
                 case enum_:
-                    bytecode.primitives[id].parameters ~= 0x10000 | (
+                    bytecode.primitives[id].parameters ~= (GR_MASK_INT << 16) | (
+                        bytecode.primitives[id].params & 0xFFFF);
+                    bytecode.primitives[id].params++;
+                    break;
+                case uint_:
+                    bytecode.primitives[id].parameters ~= (GR_MASK_UINT << 16) | (
                         bytecode.primitives[id].params & 0xFFFF);
                     bytecode.primitives[id].params++;
                     break;
                 case float_:
-                    bytecode.primitives[id].parameters ~= 0x20000 | (
+                    bytecode.primitives[id].parameters ~= (GR_MASK_FLOAT << 16) | (
                         bytecode.primitives[id].params & 0xFFFF);
                     bytecode.primitives[id].params++;
                     break;
                 case string_:
-                    bytecode.primitives[id].parameters ~= 0x40000 | (
+                    bytecode.primitives[id].parameters ~= (GR_MASK_STRING << 16) | (
                         bytecode.primitives[id].params & 0xFFFF);
                     bytecode.primitives[id].params++;
                     break;
@@ -315,7 +325,7 @@ final class GrCompiler {
                 case native:
                 case channel:
                 case optional:
-                    bytecode.primitives[id].parameters ~= 0x80000 | (
+                    bytecode.primitives[id].parameters ~= (GR_MASK_POINTER << 16) | (
                         bytecode.primitives[id].params & 0xFFFF);
                     bytecode.primitives[id].params++;
                     break;
@@ -340,6 +350,19 @@ final class GrCompiler {
                 bytecode.primitives[id].outSignature ~= grMangle(
                     _data._primitives[id].outSignature[i]);
             }
+        }
+
+        // On renseigne les définitions des énumérations
+        bytecode.enums.length = _data._enumDefinitions.length;
+        for (size_t i; i < _data._enumDefinitions.length; ++i) {
+            GrBytecode.EnumReference enum_;
+            enum_.name = _data._enumDefinitions[i].name;
+            enum_.fields.length = _data._enumDefinitions[i].fields.length;
+            for (size_t y; y < _data._enumDefinitions[i].fields.length; ++y) {
+                enum_.fields[y].name = _data._enumDefinitions[i].fields[y].name;
+                enum_.fields[y].value = _data._enumDefinitions[i].fields[y].value;
+            }
+            bytecode.enums[i] = enum_;
         }
 
         // On renseigne les définitions de classes

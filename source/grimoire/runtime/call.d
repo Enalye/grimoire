@@ -102,6 +102,7 @@ final class GrCall {
     alias getValue = getParameter!GrValue;
     alias getBool = getParameter!GrBool;
     alias getInt = getParameter!GrInt;
+    alias getUint = getParameter!GrUint;
     alias getFloat = getParameter!GrFloat;
     alias getPointer = getParameter!GrPointer;
 
@@ -149,6 +150,9 @@ final class GrCall {
         else static if (is(T == GrInt)) {
             return _inputs[index].getInt();
         }
+        else static if (is(T == GrUint)) {
+            return _inputs[index].getUint();
+        }
         else static if (is(T == GrBool)) {
             return _inputs[index].getInt() > 0;
         }
@@ -163,6 +167,7 @@ final class GrCall {
     alias setValue = setResult!GrValue;
     alias setBool = setResult!GrBool;
     alias setInt = setResult!GrInt;
+    alias setUint = setResult!GrUint;
     alias setFloat = setResult!GrFloat;
     alias setPointer = setResult!GrPointer;
 
@@ -210,6 +215,9 @@ final class GrCall {
         else static if (is(T == GrInt)) {
             _outputs[_results].setInt(value);
         }
+        else static if (is(T == GrUint)) {
+            _outputs[_results].setUint(value);
+        }
         else static if (is(T == GrBool)) {
             _outputs[_results].setInt(cast(GrInt) value);
         }
@@ -231,6 +239,10 @@ final class GrCall {
 
     GrInt getIntVariable(string name) const {
         return _task.engine.getIntVariable(name);
+    }
+
+    GrUint getUintVariable(string name) const {
+        return _task.engine.getUintVariable(name);
     }
 
     T getEnumVariable(T)(string name) const {
@@ -271,6 +283,10 @@ final class GrCall {
 
     void setIntVariable(string name, GrInt value) {
         _task.engine.setIntVariable(name, value);
+    }
+
+    void setUintVariable(string name, GrUint value) {
+        _task.engine.setUintVariable(name, value);
     }
 
     void setFloatVariable(string name, GrFloat value) {
@@ -336,6 +352,16 @@ final class GrCall {
     /// Instancie un nouvel objet
     GrObject createObject(string name) {
         return _task.engine.createObject(name);
+    }
+
+    /// Récupère le nom du champ de l’énumération correspondant à une valeur donnée
+    string getEnumFieldName(string enumName, int fieldValue) {
+        return _task.engine.getEnumFieldName(enumName, fieldValue);
+    }
+
+    /// Récupère la valeur du champ de l’énumération correspondant à un nom donné
+    int getEnumFieldValue(string enumName, string fieldName) {
+        return _task.engine.getEnumFieldValue(enumName, fieldName);
     }
 
     /**

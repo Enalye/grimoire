@@ -494,6 +494,7 @@ final class GrData {
         }
         final switch (type.base) with (GrType.Base) {
         case int_:
+        case uint_:
         case float_:
         case bool_:
         case string_:
@@ -611,6 +612,7 @@ final class GrData {
             }
             final switch (second[i].base) with (GrType.Base) {
             case int_:
+            case uint_:
             case float_:
             case bool_:
             case string_:

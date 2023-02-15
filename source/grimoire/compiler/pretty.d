@@ -9,10 +9,10 @@ import std.conv : to;
 import grimoire.compiler.util, grimoire.compiler.type, grimoire.compiler.mangle;
 
 /// Enjolive un type dans un format présentable
-string grGetPrettyType(const GrType variableType) {
+string grGetPrettyType(const GrType variableType, bool showModifiers = true) {
     string result;
 
-    if (variableType.isPure) {
+    if (variableType.isPure && showModifiers) {
         result ~= "pure ";
     }
 
@@ -29,6 +29,9 @@ string grGetPrettyType(const GrType variableType) {
             break;
         case int_:
             result ~= "int";
+            break;
+        case uint_:
+            result ~= "uint";
             break;
         case float_:
             result ~= "float";

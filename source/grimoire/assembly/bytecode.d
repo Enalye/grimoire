@@ -10,7 +10,15 @@ import grimoire.assembly.symbol;
 
 /// Correspond à une version du langage. \
 /// Un bytecode ayant une version différente ne pourra pas être chargé.
-enum GRIMOIRE_VERSION = 700;
+enum GR_VERSION = 700;
+
+package(grimoire) {
+    enum GR_MASK_INT = 0x1;
+    enum GR_MASK_UINT = 0x2;
+    enum GR_MASK_FLOAT = 0x4;
+    enum GR_MASK_STRING = 0x8;
+    enum GR_MASK_POINTER = 0x10;
+}
 
 /// Instructions bas niveau de la machine virtuelle.
 enum GrOpcode {
@@ -53,6 +61,7 @@ enum GrOpcode {
     fieldLoad2,
 
     const_int,
+    const_uint,
     const_float,
     const_bool,
     const_string,
@@ -142,16 +151,16 @@ private immutable string[] _prettyInstructions = [
     "new", "chan", "snd", "rcv", "select_start", "select_end", "chan_try",
     "chan_check", "shift", "lstore", "lstore2", "lload", "gstore", "gstore2",
     "gload", "rstore", "rstore2", "frstore", "frload", "frload2", "fload",
-    "fload2", "const.i", "const.f", "const.b", "const.s", "meta", "null",
-    "gpush", "gpop", "eq.i", "eq.f", "eq.s", "neq.i", "neq.f", "neq.s", "geq.i",
-    "geq.f", "leq.i", "leq.f", "gt.i", "gt.f", "lt.i", "lt.f", "check_null",
-    "opt_try", "opt_or", "opt_call", "opt_call2", "and.i", "or.i", "not.i",
-    "cat.s", "add.i", "add.f", "sub.i", "sub.f", "mul.i", "mul.f", "div.i",
-    "div.f", "rem.i", "rem.f", "neg.i", "neg.f", "inc.i", "inc.f", "dec.i",
-    "dec.f", "copy", "swap", "setup_it", "local", "call", "acall", "pcall",
-    "spcall", "ret", "unwind", "defer", "jmp", "jmp_eq", "jmp_neq", "list",
-    "len", "idx", "idx2", "idx3", "cat.n", "append", "prepend", "eq.n",
-    "neq.n", "dbg_prfbegin", "dbg_prfend"
+    "fload2", "const.i", "const.u", "const.f", "const.b", "const.s", "meta",
+    "null", "gpush", "gpop", "eq.i", "eq.f", "eq.s", "neq.i", "neq.f",
+    "neq.s", "geq.i", "geq.f", "leq.i", "leq.f", "gt.i", "gt.f", "lt.i", "lt.f",
+    "check_null", "opt_try", "opt_or", "opt_call", "opt_call2", "and.i", "or.i",
+    "not.i", "cat.s", "add.i", "add.f", "sub.i", "sub.f", "mul.i", "mul.f",
+    "div.i", "div.f", "rem.i", "rem.f", "neg.i", "neg.f", "inc.i", "inc.f",
+    "dec.i", "dec.f", "copy", "swap", "setup_it", "local", "call", "acall",
+    "pcall", "spcall", "ret", "unwind", "defer", "jmp", "jmp_eq", "jmp_neq",
+    "list", "len", "idx", "idx2", "idx3", "cat.n", "append", "prepend",
+    "eq.n", "neq.n", "dbg_prfbegin", "dbg_prfend"
 ];
 
 /// Référence d’une classe.
@@ -179,6 +188,16 @@ final class GrBytecode {
             string[] inSignature, outSignature;
         }
 
+        struct EnumReference {
+            struct Field {
+                string name;
+                GrInt value;
+            }
+
+            string name;
+            Field[] fields;
+        }
+
         /// Référence une variable globale.
         struct Variable {
             /// L’index de la variable
@@ -187,8 +206,10 @@ final class GrBytecode {
             uint typeMask;
             /// Valeur entière initiale
             GrInt ivalue;
+            /// Valeur entière non-signée initiale
+            GrUint uvalue;
             /// Valeur flottante initiale
-            GrFloat rvalue;
+            GrFloat fvalue;
             /// Valeur textuelle initiale
             GrStringValue svalue;
         }
@@ -202,6 +223,9 @@ final class GrBytecode {
         /// Constantes entières.
         GrInt[] iconsts;
 
+        /// Constantes entières non-signées.
+        GrUint[] uconsts;
+
         /// Constantes flottantes.
         GrFloat[] fconsts;
 
@@ -210,6 +234,9 @@ final class GrBytecode {
 
         /// Primitives appelables.
         PrimitiveReference[] primitives;
+
+        /// Énumérations.
+        EnumReference[] enums;
 
         /// Toutes les classes.
         GrClassBuilder[] classes;
@@ -237,9 +264,11 @@ final class GrBytecode {
     this(GrBytecode bytecode) {
         opcodes = bytecode.opcodes;
         iconsts = bytecode.iconsts;
+        uconsts = bytecode.uconsts;
         fconsts = bytecode.fconsts;
         sconsts = bytecode.sconsts;
         primitives = bytecode.primitives;
+        enums = bytecode.enums;
         classes = bytecode.classes;
         globalsCount = bytecode.globalsCount;
         events = bytecode.events;
@@ -259,7 +288,7 @@ final class GrBytecode {
 
     /// Vérifie si la version de grimoire est correcte
     bool checkVersion(uint userVersion_ = 0u) {
-        return (grimoireVersion == GRIMOIRE_VERSION) && (userVersion == userVersion_);
+        return (grimoireVersion == GR_VERSION) && (userVersion == userVersion_);
     }
 
     /// Enregistre le bytecode dans un fichier.
@@ -286,6 +315,7 @@ final class GrBytecode {
         buffer.append!uint(cast(uint) userVersion);
 
         buffer.append!uint(cast(uint) iconsts.length);
+        buffer.append!uint(cast(uint) uconsts.length);
         buffer.append!uint(cast(uint) fconsts.length);
         buffer.append!uint(cast(uint) sconsts.length);
         buffer.append!uint(cast(uint) opcodes.length);
@@ -294,12 +324,15 @@ final class GrBytecode {
 
         buffer.append!uint(cast(uint) events.length);
         buffer.append!uint(cast(uint) primitives.length);
+        buffer.append!uint(cast(uint) enums.length);
         buffer.append!uint(cast(uint) classes.length);
         buffer.append!uint(cast(uint) variables.length);
         buffer.append!uint(cast(uint) symbols.length);
 
         foreach (GrInt i; iconsts)
             buffer.append!GrInt(i);
+        foreach (GrInt i; uconsts)
+            buffer.append!GrUint(i);
         foreach (GrFloat i; fconsts)
             buffer.append!GrFloat(i);
         foreach (string i; sconsts) {
@@ -329,6 +362,15 @@ final class GrBytecode {
             }
         }
 
+        foreach (enum_; enums) {
+            writeStr(buffer, enum_.name);
+            buffer.append!uint(cast(uint) enum_.fields.length);
+            for (size_t i; i < enum_.fields.length; ++i) {
+                writeStr(buffer, enum_.fields[i].name);
+                buffer.append!uint(enum_.fields[i].value);
+            }
+        }
+
         foreach (class_; classes) {
             writeStr(buffer, class_.name);
             buffer.append!uint(cast(uint) class_.fields.length);
@@ -341,11 +383,13 @@ final class GrBytecode {
             writeStr(buffer, name);
             buffer.append!uint(reference.index);
             buffer.append!uint(reference.typeMask);
-            if (reference.typeMask & 0x1)
+            if (reference.typeMask & GR_MASK_INT)
                 buffer.append!GrInt(reference.ivalue);
-            else if (reference.typeMask & 0x2)
-                buffer.append!GrFloat(reference.rvalue);
-            else if (reference.typeMask & 0x4)
+            else if (reference.typeMask & GR_MASK_UINT)
+                buffer.append!GrUint(reference.uvalue);
+            else if (reference.typeMask & GR_MASK_FLOAT)
+                buffer.append!GrFloat(reference.fvalue);
+            else if (reference.typeMask & GR_MASK_STRING)
                 writeStr(buffer, reference.svalue);
         }
 
@@ -386,10 +430,11 @@ final class GrBytecode {
 
         // Si la version diffère, l’encodage de la suite peut-être différent
         // On évite donc de désérialiser la suite
-        if (grimoireVersion != GRIMOIRE_VERSION)
+        if (grimoireVersion != GR_VERSION)
             return;
 
         iconsts.length = buffer.read!uint();
+        uconsts.length = buffer.read!uint();
         fconsts.length = buffer.read!uint();
         sconsts.length = buffer.read!uint();
         opcodes.length = buffer.read!uint();
@@ -398,12 +443,17 @@ final class GrBytecode {
 
         const uint eventsCount = buffer.read!uint();
         primitives.length = buffer.read!uint();
+        enums.length = buffer.read!uint();
         classes.length = buffer.read!uint();
         const uint variableCount = buffer.read!uint();
         symbols.length = buffer.read!uint();
 
         for (uint i; i < iconsts.length; ++i) {
             iconsts[i] = buffer.read!GrInt();
+        }
+
+        for (uint i; i < uconsts.length; ++i) {
+            uconsts[i] = buffer.read!GrUint();
         }
 
         for (uint i; i < fconsts.length; ++i) {
@@ -444,6 +494,16 @@ final class GrBytecode {
             }
         }
 
+        for (size_t i; i < enums.length; ++i) {
+            enums[i].name = readStr(buffer);
+            const uint fieldsCount = buffer.read!uint();
+            enums[i].fields.length = fieldsCount;
+            for (size_t y; y < fieldsCount; ++y) {
+                enums[i].fields[y].name = readStr(buffer);
+                enums[i].fields[y].value = buffer.read!uint();
+            }
+        }
+
         for (size_t i; i < classes.length; ++i) {
             GrClassBuilder class_ = new GrClassBuilder;
             class_.name = readStr(buffer);
@@ -462,11 +522,13 @@ final class GrBytecode {
             Variable reference;
             reference.index = buffer.read!uint();
             reference.typeMask = buffer.read!uint();
-            if (reference.typeMask & 0x1)
+            if (reference.typeMask & GR_MASK_INT)
                 reference.ivalue = buffer.read!GrInt();
-            else if (reference.typeMask & 0x2)
-                reference.rvalue = buffer.read!GrFloat();
-            else if (reference.typeMask & 0x4)
+            else if (reference.typeMask & GR_MASK_UINT)
+                reference.uvalue = buffer.read!GrUint();
+            else if (reference.typeMask & GR_MASK_FLOAT)
+                reference.fvalue = buffer.read!GrFloat();
+            else if (reference.typeMask & GR_MASK_STRING)
                 reference.svalue = readStr(buffer);
             variables[name] = reference;
         }
@@ -536,6 +598,8 @@ final class GrBytecode {
             }
             else if (op == GrOpcode.const_int)
                 line ~= to!string(iconsts[grGetInstructionUnsignedValue(opcode)]);
+            else if (op == GrOpcode.const_uint)
+                line ~= to!string(uconsts[grGetInstructionUnsignedValue(opcode)]);
             else if (op == GrOpcode.const_float)
                 line ~= to!string(fconsts[grGetInstructionUnsignedValue(opcode)]);
             else if (op == GrOpcode.const_bool)

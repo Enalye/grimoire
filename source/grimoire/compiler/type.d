@@ -21,6 +21,7 @@ struct GrType {
         void_,
         null_,
         int_,
+        uint_,
         float_,
         bool_,
         string_,
@@ -97,6 +98,8 @@ struct GrType {
 const GrType grVoid = GrType(GrType.Base.void_);
 /// Nombre entier
 const GrType grInt = GrType(GrType.Base.int_);
+/// Nombre entier non-signé
+const GrType grUint = GrType(GrType.Base.uint_);
 /// Nombre flottant
 const GrType grFloat = GrType(GrType.Base.float_);
 /// Type booléen
@@ -412,8 +415,10 @@ final class GrVariableDefinition {
     bool isInitialized;
     /// Valeur entière d’initialisation
     GrInt ivalue;
+    /// Valeur entière non-signée d’initialisation
+    GrInt uvalue;
     /// Valeur flottante d’initialisation
-    GrFloat rvalue;
+    GrFloat fvalue;
     /// Valeur textuelle d’initialisation
     GrStringValue svalue;
     /// Registre
@@ -515,6 +520,7 @@ package class GrFunction {
     private void freeRegister(const GrVariable variable) {
         final switch (variable.type.base) with (GrType.Base) {
         case int_:
+        case uint_:
         case bool_:
         case func:
         case task:
