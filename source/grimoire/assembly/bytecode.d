@@ -72,18 +72,24 @@ enum GrOpcode {
     globalPop,
 
     equal_int,
+    equal_uint,
     equal_float,
     equal_string,
     notEqual_int,
+    notEqual_uint,
     notEqual_float,
     notEqual_string,
     greaterOrEqual_int,
+    greaterOrEqual_uint,
     greaterOrEqual_float,
     lesserOrEqual_int,
+    lesserOrEqual_uint,
     lesserOrEqual_float,
     greater_int,
+    greater_uint,
     greater_float,
     lesser_int,
+    lesser_uint,
     lesser_float,
     checkNull,
     optionalTry,
@@ -96,20 +102,27 @@ enum GrOpcode {
     not_int,
     concatenate_string,
     add_int,
+    add_uint,
     add_float,
     substract_int,
+    substract_uint,
     substract_float,
     multiply_int,
+    multiply_uint,
     multiply_float,
     divide_int,
+    divide_uint,
     divide_float,
     remainder_int,
+    remainder_uint,
     remainder_float,
     negative_int,
     negative_float,
     increment_int,
+    increment_uint,
     increment_float,
     decrement_int,
+    decrement_uint,
     decrement_float,
 
     copy,
@@ -152,15 +165,17 @@ private immutable string[] _prettyInstructions = [
     "chan_check", "shift", "lstore", "lstore2", "lload", "gstore", "gstore2",
     "gload", "rstore", "rstore2", "frstore", "frload", "frload2", "fload",
     "fload2", "const.i", "const.u", "const.f", "const.b", "const.s", "meta",
-    "null", "gpush", "gpop", "eq.i", "eq.f", "eq.s", "neq.i", "neq.f",
-    "neq.s", "geq.i", "geq.f", "leq.i", "leq.f", "gt.i", "gt.f", "lt.i", "lt.f",
-    "check_null", "opt_try", "opt_or", "opt_call", "opt_call2", "and.i", "or.i",
-    "not.i", "cat.s", "add.i", "add.f", "sub.i", "sub.f", "mul.i", "mul.f",
-    "div.i", "div.f", "rem.i", "rem.f", "neg.i", "neg.f", "inc.i", "inc.f",
-    "dec.i", "dec.f", "copy", "swap", "setup_it", "local", "call", "acall",
-    "pcall", "spcall", "ret", "unwind", "defer", "jmp", "jmp_eq", "jmp_neq",
-    "list", "len", "idx", "idx2", "idx3", "cat.n", "append", "prepend",
-    "eq.n", "neq.n", "dbg_prfbegin", "dbg_prfend"
+    "null", "gpush", "gpop", "eq.i", "eq.u", "eq.f", "eq.s", "neq.i",
+    "neq.u", "neq.f", "neq.s", "geq.i", "geq.u", "geq.f", "leq.i", "leq.u",
+    "leq.f", "gt.i", "gt.u", "gt.f", "lt.i", "lt.u", "lt.f", "check_null",
+    "opt_try", "opt_or", "opt_call", "opt_call2", "and.i", "or.i", "not.i",
+    "cat.s", "add.i", "add.u", "add.f", "sub.i", "sub.u", "sub.f", "mul.i",
+    "mul.u", "mul.f", "div.i", "div.u", "div.f", "rem.i", "rem.u", "rem.f",
+    "neg.i", "neg.u", "neg.f", "inc.i", "inc.u", "inc.f", "dec.i", "dec.u",
+    "dec.f", "copy", "swap", "setup_it", "local", "call", "acall", "pcall",
+    "spcall", "ret", "unwind", "defer", "jmp", "jmp_eq", "jmp_neq", "list",
+    "len", "idx", "idx2", "idx3", "cat.n", "append", "prepend", "eq.n",
+    "neq.n", "dbg_prfbegin", "dbg_prfend"
 ];
 
 /// Référence d’une classe.
@@ -207,7 +222,7 @@ final class GrBytecode {
             /// Valeur entière initiale
             GrInt ivalue;
             /// Valeur entière non-signée initiale
-            GrUint uvalue;
+            GrUInt uvalue;
             /// Valeur flottante initiale
             GrFloat fvalue;
             /// Valeur textuelle initiale
@@ -224,7 +239,7 @@ final class GrBytecode {
         GrInt[] iconsts;
 
         /// Constantes entières non-signées.
-        GrUint[] uconsts;
+        GrUInt[] uconsts;
 
         /// Constantes flottantes.
         GrFloat[] fconsts;
@@ -332,7 +347,7 @@ final class GrBytecode {
         foreach (GrInt i; iconsts)
             buffer.append!GrInt(i);
         foreach (GrInt i; uconsts)
-            buffer.append!GrUint(i);
+            buffer.append!GrUInt(i);
         foreach (GrFloat i; fconsts)
             buffer.append!GrFloat(i);
         foreach (string i; sconsts) {
@@ -386,7 +401,7 @@ final class GrBytecode {
             if (reference.typeMask & GR_MASK_INT)
                 buffer.append!GrInt(reference.ivalue);
             else if (reference.typeMask & GR_MASK_UINT)
-                buffer.append!GrUint(reference.uvalue);
+                buffer.append!GrUInt(reference.uvalue);
             else if (reference.typeMask & GR_MASK_FLOAT)
                 buffer.append!GrFloat(reference.fvalue);
             else if (reference.typeMask & GR_MASK_STRING)
@@ -453,7 +468,7 @@ final class GrBytecode {
         }
 
         for (uint i; i < uconsts.length; ++i) {
-            uconsts[i] = buffer.read!GrUint();
+            uconsts[i] = buffer.read!GrUInt();
         }
 
         for (uint i; i < fconsts.length; ++i) {
@@ -525,7 +540,7 @@ final class GrBytecode {
             if (reference.typeMask & GR_MASK_INT)
                 reference.ivalue = buffer.read!GrInt();
             else if (reference.typeMask & GR_MASK_UINT)
-                reference.uvalue = buffer.read!GrUint();
+                reference.uvalue = buffer.read!GrUInt();
             else if (reference.typeMask & GR_MASK_FLOAT)
                 reference.fvalue = buffer.read!GrFloat();
             else if (reference.typeMask & GR_MASK_STRING)

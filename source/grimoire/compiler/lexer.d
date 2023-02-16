@@ -192,7 +192,7 @@ struct GrLexeme {
 
     /// Valeur entière de la constante.
     /// `isLiteral` vaut `true` et `type` vaut `uint_`.
-    GrUint uvalue;
+    GrUInt uvalue;
 
     /// Valeur flottante de la constante.
     /// `isLiteral` vaut `true` et `type` vaut `float_`.
@@ -619,14 +619,14 @@ package final class GrLexer {
             }
             else if (isUnsigned) {
                 lex.type = GrLexeme.Type.uint_;
-                lex.uvalue = to!GrUint(buffer);
+                lex.uvalue = to!GrUInt(buffer);
             }
             else {
                 const long value = to!long(buffer);
 
                 if (value > int.max && value <= uint.max) {
                     lex.type = GrLexeme.Type.uint_;
-                    lex.uvalue = cast(GrUint) value;
+                    lex.uvalue = cast(GrUInt) value;
                 }
                 else if (value >= int.min && value <= int.max) {
                     lex.type = GrLexeme.Type.int_;

@@ -393,7 +393,7 @@ class GrEngine {
 
     alias getBoolVariable = getVariable!bool;
     alias getIntVariable = getVariable!GrInt;
-    alias getUintVariable = getVariable!GrUint;
+    alias getUIntVariable = getVariable!GrUInt;
     alias getFloatVariable = getVariable!GrFloat;
     alias getPointerVariable = getVariable!GrPointer;
 
@@ -429,7 +429,7 @@ class GrEngine {
         static if (is(T == GrInt)) {
             return _globals[variable.index]._ivalue;
         }
-        else static if (is(T == GrUint)) {
+        else static if (is(T == GrUInt)) {
             return _globals[variable.index]._uvalue;
         }
         else static if (is(T == GrBool)) {
@@ -445,7 +445,7 @@ class GrEngine {
 
     alias setBoolVariable = setVariable!GrBool;
     alias setIntVariable = setVariable!GrInt;
-    alias setUintVariable = setVariable!GrUint;
+    alias setUIntVariable = setVariable!GrUInt;
     alias setFloatVariable = setVariable!GrFloat;
     alias setPointerVariable = setVariable!GrPointer;
 
@@ -484,7 +484,7 @@ class GrEngine {
         static if (is(T == GrInt) || is(T == GrBool)) {
             _globals[variable.index]._ivalue = value;
         }
-        else static if (is(T == GrUint)) {
+        else static if (is(T == GrUInt)) {
             _globals[variable.index]._uvalue = value;
         }
         else static if (is(T == GrFloat)) {
@@ -927,6 +927,13 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
+                case equal_uint:
+                    currentTask.stackPos--;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._uvalue ==
+                        currentTask.stack[currentTask.stackPos + 1]._uvalue;
+                    currentTask.pc++;
+                    break;
                 case equal_float:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue =
@@ -946,6 +953,13 @@ class GrEngine {
                     currentTask.stack[currentTask.stackPos]._ivalue =
                         currentTask.stack[currentTask.stackPos]._ivalue !=
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    currentTask.pc++;
+                    break;
+                case notEqual_uint:
+                    currentTask.stackPos--;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._uvalue !=
+                        currentTask.stack[currentTask.stackPos + 1]._uvalue;
                     currentTask.pc++;
                     break;
                 case notEqual_float:
@@ -969,6 +983,13 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
+                case greaterOrEqual_uint:
+                    currentTask.stackPos--;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._uvalue >=
+                        currentTask.stack[currentTask.stackPos + 1]._uvalue;
+                    currentTask.pc++;
+                    break;
                 case greaterOrEqual_float:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue =
@@ -981,6 +1002,13 @@ class GrEngine {
                     currentTask.stack[currentTask.stackPos]._ivalue =
                         currentTask.stack[currentTask.stackPos]._ivalue <=
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    currentTask.pc++;
+                    break;
+                case lesserOrEqual_uint:
+                    currentTask.stackPos--;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._uvalue <=
+                        currentTask.stack[currentTask.stackPos + 1]._uvalue;
                     currentTask.pc++;
                     break;
                 case lesserOrEqual_float:
@@ -997,6 +1025,13 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
                     currentTask.pc++;
                     break;
+                case greater_uint:
+                    currentTask.stackPos--;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._uvalue >
+                        currentTask.stack[currentTask.stackPos + 1]._uvalue;
+                    currentTask.pc++;
+                    break;
                 case greater_float:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue =
@@ -1009,6 +1044,13 @@ class GrEngine {
                     currentTask.stack[currentTask.stackPos]._ivalue =
                         currentTask.stack[currentTask.stackPos]._ivalue <
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    currentTask.pc++;
+                    break;
+                case lesser_uint:
+                    currentTask.stackPos--;
+                    currentTask.stack[currentTask.stackPos]._ivalue =
+                        currentTask.stack[currentTask.stackPos]._uvalue <
+                        currentTask.stack[currentTask.stackPos + 1]._uvalue;
                     currentTask.pc++;
                     break;
                 case lesser_float:
@@ -1079,6 +1121,16 @@ class GrEngine {
                     currentTask.stack[currentTask.stackPos]._ivalue = cast(int) r;
                     currentTask.pc++;
                     break;
+                case add_uint:
+                    currentTask.stackPos--;
+                    const GrUInt r = currentTask.stack[currentTask.stackPos + 1]._uvalue;
+                    const GrUInt r2 = currentTask.stack[currentTask.stackPos]._uvalue += r;
+                    if (r2 < r) {
+                        raise(currentTask, "OverflowError");
+                        break;
+                    }
+                    currentTask.pc++;
+                    break;
                 case add_float:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._fvalue +=
@@ -1108,6 +1160,17 @@ class GrEngine {
                         currentTask.stack[currentTask.stackPos + 1]._fvalue;
                     currentTask.pc++;
                     break;
+                case substract_uint:
+                    currentTask.stackPos--;
+                    GrUInt* v1 = &currentTask.stack[currentTask.stackPos]._uvalue;
+                    const GrUInt v2 = currentTask.stack[currentTask.stackPos + 1]._uvalue;
+                    if (v2 > *v1) {
+                        raise(currentTask, "OverflowError");
+                        break;
+                    }
+                    *v1 -= v2;
+                    currentTask.pc++;
+                    break;
                 case multiply_int:
                     currentTask.stackPos--;
                     const long r = cast(long) currentTask.stack[currentTask.stackPos]._ivalue * cast(
@@ -1117,6 +1180,17 @@ class GrEngine {
                         break;
                     }
                     currentTask.stack[currentTask.stackPos]._ivalue = cast(int) r;
+                    currentTask.pc++;
+                    break;
+                case multiply_uint:
+                    currentTask.stackPos--;
+                    const ulong r = ulong(currentTask.stack[currentTask.stackPos]._uvalue) * ulong(
+                        currentTask.stack[currentTask.stackPos + 1]._uvalue);
+                    if (r >> 32) {
+                        raise(currentTask, "OverflowError");
+                        break;
+                    }
+                    currentTask.stack[currentTask.stackPos]._uvalue = cast(GrUInt) r;
                     currentTask.pc++;
                     break;
                 case multiply_float:
@@ -1133,6 +1207,16 @@ class GrEngine {
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue /=
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    currentTask.pc++;
+                    break;
+                case divide_uint:
+                    if (currentTask.stack[currentTask.stackPos]._uvalue == 0) {
+                        raise(currentTask, "ZeroDivisionError");
+                        break;
+                    }
+                    currentTask.stackPos--;
+                    currentTask.stack[currentTask.stackPos]._uvalue /=
+                        currentTask.stack[currentTask.stackPos + 1]._uvalue;
                     currentTask.pc++;
                     break;
                 case divide_float:
@@ -1153,6 +1237,16 @@ class GrEngine {
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue %=
                         currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    currentTask.pc++;
+                    break;
+                case remainder_uint:
+                    if (currentTask.stack[currentTask.stackPos]._uvalue == 0) {
+                        raise(currentTask, "ZeroDivisionError");
+                        break;
+                    }
+                    currentTask.stackPos--;
+                    currentTask.stack[currentTask.stackPos]._uvalue %=
+                        currentTask.stack[currentTask.stackPos + 1]._uvalue;
                     currentTask.pc++;
                     break;
                 case remainder_float:
@@ -1184,6 +1278,15 @@ class GrEngine {
                     (*r)++;
                     currentTask.pc++;
                     break;
+                case increment_uint:
+                    auto r = &currentTask.stack[currentTask.stackPos]._uvalue;
+                    if (*r == uint.max) {
+                        raise(currentTask, "OverflowError");
+                        break;
+                    }
+                    (*r)++;
+                    currentTask.pc++;
+                    break;
                 case increment_float:
                     currentTask.stack[currentTask.stackPos]._fvalue += 1f;
                     currentTask.pc++;
@@ -1191,6 +1294,15 @@ class GrEngine {
                 case decrement_int:
                     auto r = &currentTask.stack[currentTask.stackPos]._ivalue;
                     if (*r == int.min) {
+                        raise(currentTask, "OverflowError");
+                        break;
+                    }
+                    (*r)--;
+                    currentTask.pc++;
+                    break;
+                case decrement_uint:
+                    auto r = &currentTask.stack[currentTask.stackPos]._uvalue;
+                    if (*r == uint.min) {
                         raise(currentTask, "OverflowError");
                         break;
                     }

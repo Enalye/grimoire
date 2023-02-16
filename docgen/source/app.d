@@ -39,7 +39,7 @@ void main() {
 alias LibLoader = void function(GrLibDefinition);
 void generate(GrLocale locale) {
     LibLoader[] libLoaders = [
-        &grLoadStdLibSystem, &grLoadStdLibOptional, &grLoadStdLibLog,
+        &grLoadStdLibSystem, &grLoadStdLibOptional, &grLoadStdLibIo,
         &grLoadStdLibList, &grLoadStdLibRange, &grLoadStdLibString,
         &grLoadStdLibChannel, &grLoadStdLibMath, &grLoadStdLibError,
         &grLoadStdLibTime, &grLoadStdLibTypecast, &grLoadStdLibPair,

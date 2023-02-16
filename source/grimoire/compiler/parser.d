@@ -31,7 +31,7 @@ import grimoire.compiler.error;
 final class GrParser {
     package {
         GrInt[] iconsts;
-        GrUint[] uconsts;
+        GrUInt[] uconsts;
         GrFloat[] fconsts;
         GrStringValue[] sconsts;
 
@@ -151,8 +151,8 @@ final class GrParser {
     }
 
     /// Enregistre un nouvel entier non-signé et retourne son id
-    private uint registerUintConstant(GrUint value) {
-        foreach (size_t index, GrUint uconst; uconsts) {
+    private uint registerUIntConstant(GrUInt value) {
+        foreach (size_t index, GrUInt uconst; uconsts) {
             if (uconst == value)
                 return cast(uint) index;
         }
@@ -791,8 +791,8 @@ final class GrParser {
         addInstruction(GrOpcode.const_int, registerIntConstant(value));
     }
 
-    private void addUintConstant(GrUint value) {
-        addInstruction(GrOpcode.const_uint, registerUintConstant(value));
+    private void addUIntConstant(GrUInt value) {
+        addInstruction(GrOpcode.const_uint, registerUIntConstant(value));
     }
 
     private void addFloatConstant(GrFloat value) {
@@ -1036,7 +1036,8 @@ final class GrParser {
             convertType(leftType, rightType, fileId);
             resultType = addInternalOperator(lexType, rightType, true);
         }
-        else if (leftType.base == GrType.Base.int_ && rightType.base == GrType.Base.float_) {
+        else if ((leftType.base == GrType.Base.int_ ||
+                leftType.base == GrType.Base.uint_) && rightType.base == GrType.Base.float_) {
             // Cas particulier: on a besoin de convertir l’entier en flottant
             // et d’inverser les deux valeurs
             addInstruction(GrOpcode.swap);
@@ -1214,6 +1215,53 @@ final class GrParser {
                 return GrType(GrType.Base.bool_);
             case not:
                 addInstruction(GrOpcode.not_int);
+                return GrType(GrType.Base.bool_);
+            default:
+                break;
+            }
+            break;
+        case uint_:
+            switch (lexType) with (GrLexeme.Type) {
+            case add:
+                addInstruction(GrOpcode.add_uint);
+                return GrType(GrType.Base.uint_);
+            case substract:
+                addInstruction(GrOpcode.substract_uint);
+                return GrType(GrType.Base.uint_);
+            case multiply:
+                addInstruction(GrOpcode.multiply_uint);
+                return GrType(GrType.Base.uint_);
+            case divide:
+                addInstruction(GrOpcode.divide_uint);
+                return GrType(GrType.Base.uint_);
+            case remainder:
+                addInstruction(GrOpcode.remainder_uint);
+                return GrType(GrType.Base.uint_);
+            case plus:
+                return GrType(GrType.Base.uint_);
+            case increment:
+                addInstruction(GrOpcode.increment_uint);
+                return GrType(GrType.Base.uint_);
+            case decrement:
+                addInstruction(GrOpcode.decrement_uint);
+                return GrType(GrType.Base.uint_);
+            case equal:
+                addInstruction(GrOpcode.equal_uint);
+                return GrType(GrType.Base.bool_);
+            case notEqual:
+                addInstruction(GrOpcode.notEqual_uint);
+                return GrType(GrType.Base.bool_);
+            case greater:
+                addInstruction(GrOpcode.greater_uint);
+                return GrType(GrType.Base.bool_);
+            case greaterOrEqual:
+                addInstruction(GrOpcode.greaterOrEqual_uint);
+                return GrType(GrType.Base.bool_);
+            case lesser:
+                addInstruction(GrOpcode.lesser_uint);
+                return GrType(GrType.Base.bool_);
+            case lesserOrEqual:
+                addInstruction(GrOpcode.lesserOrEqual_uint);
                 return GrType(GrType.Base.bool_);
             default:
                 break;
@@ -2356,6 +2404,10 @@ final class GrParser {
             switch (lex.type) with (GrLexeme.Type) {
             case intType:
                 currentType.base = GrType.Base.int_;
+                checkAdvance();
+                break;
+            case uintType:
+                currentType.base = GrType.Base.uint_;
                 checkAdvance();
                 break;
             case floatType:
@@ -4766,8 +4818,8 @@ final class GrParser {
             return dst;
 
         if (!noFail)
-            logError(format(getError(Error.expectedXFoundY), getPrettyType(dst),
-                    getPrettyType(src)), getError(Error.mismatchedTypes), "", -1);
+            logError(format(getError(Error.cantConvertXToY), getPrettyType(src),
+                    getPrettyType(dst)), getError(Error.noConvAvailable), "", -1);
         return GrType(GrType.Base.void_);
     }
 
@@ -5429,7 +5481,7 @@ final class GrParser {
             addIntConstant(0);
             break;
         case uint_:
-            addUintConstant(0u);
+            addUIntConstant(0u);
             break;
         case float_:
             addFloatConstant(0f);
@@ -5965,7 +6017,7 @@ final class GrParser {
                 break;
             case uint_:
                 currentType = GrType(GrType.Base.uint_);
-                addUintConstant(lex.uvalue);
+                addUIntConstant(lex.uvalue);
                 hasValue = true;
                 typeStack ~= currentType;
                 checkAdvance();
@@ -7397,7 +7449,9 @@ final class GrParser {
         xIsAbstract,
         xIsAbstractAndCannotBeInstanciated,
         expectedOptionalType,
-        opMustFollowAnOptionalType
+        opMustFollowAnOptionalType,
+        cantConvertXToY,
+        noConvAvailable
     }
 
     private string getError(Error error) {
@@ -7625,7 +7679,9 @@ final class GrParser {
                 Error.xIsAbstract: "`%s` is abstract",
                 Error.xIsAbstractAndCannotBeInstanciated: "`%s` is abstract and can't be instanciated",
                 Error.expectedOptionalType: "`?` expect an optional type",
-                Error.opMustFollowAnOptionalType: "`?` must be placed after the optional to unwrap"
+                Error.opMustFollowAnOptionalType: "`?` must be placed after the optional to unwrap",
+                Error.cantConvertXToY: "can't convert `%s` to `%s`",
+                Error.noConvAvailable: "no conversion available",
             ],
             [ // fr_FR
                 Error.eofReached: "fin de fichier atteinte",
@@ -7850,7 +7906,9 @@ final class GrParser {
                 Error.xIsAbstract: "`%s` est abstrait",
                 Error.xIsAbstractAndCannotBeInstanciated: "`%s` est abstrait et ne peut pas être instancié",
                 Error.expectedOptionalType: "`?` nécessite un type optionnel",
-                Error.opMustFollowAnOptionalType: "`?` doit être placé après le type optionnel à déballer"
+                Error.opMustFollowAnOptionalType: "`?` doit être placé après le type optionnel à déballer",
+                Error.cantConvertXToY: "impossible de convertir `%s` en `%s`",
+                Error.noConvAvailable: "aucune conversion disponible",
             ]
         ];
         return messages[_locale][error];

@@ -102,7 +102,7 @@ final class GrCall {
     alias getValue = getParameter!GrValue;
     alias getBool = getParameter!GrBool;
     alias getInt = getParameter!GrInt;
-    alias getUint = getParameter!GrUint;
+    alias getUInt = getParameter!GrUInt;
     alias getFloat = getParameter!GrFloat;
     alias getPointer = getParameter!GrPointer;
 
@@ -150,8 +150,8 @@ final class GrCall {
         else static if (is(T == GrInt)) {
             return _inputs[index].getInt();
         }
-        else static if (is(T == GrUint)) {
-            return _inputs[index].getUint();
+        else static if (is(T == GrUInt)) {
+            return _inputs[index].getUInt();
         }
         else static if (is(T == GrBool)) {
             return _inputs[index].getInt() > 0;
@@ -167,7 +167,7 @@ final class GrCall {
     alias setValue = setResult!GrValue;
     alias setBool = setResult!GrBool;
     alias setInt = setResult!GrInt;
-    alias setUint = setResult!GrUint;
+    alias setUInt = setResult!GrUInt;
     alias setFloat = setResult!GrFloat;
     alias setPointer = setResult!GrPointer;
 
@@ -215,8 +215,8 @@ final class GrCall {
         else static if (is(T == GrInt)) {
             _outputs[_results].setInt(value);
         }
-        else static if (is(T == GrUint)) {
-            _outputs[_results].setUint(value);
+        else static if (is(T == GrUInt)) {
+            _outputs[_results].setUInt(value);
         }
         else static if (is(T == GrBool)) {
             _outputs[_results].setInt(cast(GrInt) value);
@@ -241,8 +241,8 @@ final class GrCall {
         return _task.engine.getIntVariable(name);
     }
 
-    GrUint getUintVariable(string name) const {
-        return _task.engine.getUintVariable(name);
+    GrUInt getUIntVariable(string name) const {
+        return _task.engine.getUIntVariable(name);
     }
 
     T getEnumVariable(T)(string name) const {
@@ -285,8 +285,8 @@ final class GrCall {
         _task.engine.setIntVariable(name, value);
     }
 
-    void setUintVariable(string name, GrUint value) {
-        _task.engine.setUintVariable(name, value);
+    void setUIntVariable(string name, GrUInt value) {
+        _task.engine.setUIntVariable(name, value);
     }
 
     void setFloatVariable(string name, GrFloat value) {

@@ -150,7 +150,7 @@ final class GrLibrary : GrLibDefinition {
             variable.ivalue = defaultValue.getInt();
             break;
         case uint_:
-            variable.uvalue = defaultValue.getUint();
+            variable.uvalue = defaultValue.getUInt();
             break;
         case float_:
             variable.fvalue = defaultValue.getFloat();

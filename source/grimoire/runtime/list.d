@@ -26,13 +26,13 @@ final class GrList {
         _data = value;
     }
 
-    this(GrInt initialSize) {
+    this(GrUInt initialSize) {
         _data.reserve(initialSize);
     }
 
     @property {
-        pragma(inline) GrInt size() const {
-            return cast(GrInt) _data.length;
+        pragma(inline) GrUInt size() const {
+            return cast(GrUInt) _data.length;
         }
 
         pragma(inline) GrBool isEmpty() const {
@@ -40,11 +40,11 @@ final class GrList {
         }
     }
 
-    pragma(inline) GrValue opIndex(GrInt index) {
+    pragma(inline) GrValue opIndex(GrUInt index) {
         return _data[index];
     }
 
-    pragma(inline) GrValue opIndexAssign(GrValue value, GrInt index) {
+    pragma(inline) GrValue opIndexAssign(GrValue value, GrUInt index) {
         return _data[index] = value;
     }
 
@@ -67,6 +67,13 @@ final class GrList {
         GrInt[] values;
         foreach (GrValue value; _data)
             values ~= value.getInt();
+        return values;
+    }
+
+    pragma(inline) GrUInt[] getUInts() {
+        GrUInt[] values;
+        foreach (GrValue value; _data)
+            values ~= value.getUInt();
         return values;
     }
 
@@ -117,6 +124,12 @@ final class GrList {
             _data[i].setInt(values[i]);
     }
 
+    pragma(inline) void setUInts(GrUInt[] values) {
+        _data.length = values.length;
+        for (size_t i; i < _data.length; ++i)
+            _data[i].setUInt(values[i]);
+    }
+
     pragma(inline) void setEnums(T)(T[] values) {
         _data.length = values.length;
         for (size_t i; i < _data.length; ++i)
@@ -151,8 +164,8 @@ final class GrList {
         _data.length = 0;
     }
 
-    pragma(inline) void resize(GrInt size_, GrValue defaultValue) {
-        GrInt oldSize = cast(GrInt) _data.length;
+    pragma(inline) void resize(GrUInt size_, GrValue defaultValue) {
+        GrUInt oldSize = cast(GrUInt) _data.length;
         _data.length = size_;
 
         while (oldSize < size_) {
@@ -179,9 +192,9 @@ final class GrList {
         return value;
     }
 
-    pragma(inline) GrValue[] pop(GrInt size_) {
+    pragma(inline) GrValue[] pop(GrUInt size_) {
         if (_data.length < size_) {
-            size_ = cast(GrInt) _data.length;
+            size_ = cast(GrUInt) _data.length;
         }
         GrValue[] slice = _data[$ - size_ .. $];
         _data.length -= size_;
@@ -198,9 +211,9 @@ final class GrList {
         return value;
     }
 
-    pragma(inline) GrValue[] shift(GrInt size_) {
+    pragma(inline) GrValue[] shift(GrUInt size_) {
         if (_data.length < size_) {
-            size_ = cast(GrInt) _data.length;
+            size_ = cast(GrUInt) _data.length;
         }
         GrValue[] slice = _data[0 .. size_];
         _data = _data[size_ .. $];
@@ -346,7 +359,7 @@ final class GrList {
     }
 
     pragma(inline) GrBool contains(GrValue value) {
-        for (GrInt index; index < _data.length; ++index) {
+        for (GrUInt index; index < _data.length; ++index) {
             if (_data[index] == value)
                 return true;
         }

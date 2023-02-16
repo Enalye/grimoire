@@ -14,51 +14,94 @@ void grLoadStdLibTypecast(GrLibDefinition library) {
     library.setModuleInfo(GrLocale.fr_FR, "Fonctions de conversion.");
     library.setModuleInfo(GrLocale.en_US, "Conversion functions.");
 
-    //As int
-    library.addCast(&typecast_r2i, grFloat, grInt, true);
-    library.addCast(&typecast_b2i, grBool, grInt);
+    // as<int>
+    library.addCast(&u_as_i, grUInt, grInt);
+    library.addCast(&f_as_i, grFloat, grInt, true);
+    library.addCast(&b_as_i, grBool, grInt);
 
-    //As float
-    library.addCast(&typecast_i2r, grInt, grFloat);
+    // as<uint>
+    library.addCast(&i_as_u, grInt, grUInt);
+    library.addCast(&f_as_u, grFloat, grUInt, true);
+    library.addCast(&b_as_u, grBool, grUInt);
 
-    //As string
-    library.addCast(&typecast_b2s, grBool, grString);
-    library.addCast(&typecast_i2s, grInt, grString);
-    library.addCast(&typecast_r2s, grFloat, grString);
-    library.addCast(&typecast_as2s, grPure(grList(grString)), grString);
+    // as<float>
+    library.addCast(&i_as_f, grInt, grFloat);
+    library.addCast(&u_as_f, grUInt, grFloat);
 
-    //As string list
-    library.addCast(&typecast_s2as, grPure(grString), grList(grString));
+    // as<string>
+    library.addCast(&b_as_s, grBool, grString);
+    library.addCast(&i_as_s, grInt, grString);
+    library.addCast(&f_as_s, grFloat, grString);
+    library.addCast(&ls_as_s, grPure(grList(grString)), grString);
+
+    // as<list<string>>
+    library.addCast(&s_as_ls, grPure(grString), grList(grString));
 }
 
-//As int
-private void typecast_r2i(GrCall call) {
+// as<int>
+private void u_as_i(GrCall call) {
+    GrUInt value = call.getUInt(0);
+    if (value > GrInt.max) {
+        call.raise("OverflowError");
+        return;
+    }
+    call.setInt(value);
+}
+
+private void f_as_i(GrCall call) {
     call.setInt(to!GrInt(call.getFloat(0)));
 }
 
-private void typecast_b2i(GrCall call) {
+private void b_as_i(GrCall call) {
     call.setInt(to!GrInt(call.getBool(0)));
 }
 
-//As float
-private void typecast_i2r(GrCall call) {
+// as<uint>
+private void i_as_u(GrCall call) {
+    GrInt value = call.getInt(0);
+    if (value < 0) {
+        call.raise("OverflowError");
+        return;
+    }
+    call.setUInt(cast(GrUInt) value);
+}
+
+private void f_as_u(GrCall call) {
+    GrFloat value = call.getFloat(0);
+    if (value < 0) {
+        call.raise("OverflowError");
+        return;
+    }
+    call.setUInt(cast(GrUInt) value);
+}
+
+private void b_as_u(GrCall call) {
+    call.setUInt(to!GrUInt(call.getBool(0)));
+}
+
+// as<float>
+private void i_as_f(GrCall call) {
     call.setFloat(to!GrFloat(call.getInt(0)));
 }
 
-//As string
-private void typecast_b2s(GrCall call) {
+private void u_as_f(GrCall call) {
+    call.setFloat(to!GrFloat(call.getUInt(0)));
+}
+
+// as<string>
+private void b_as_s(GrCall call) {
     call.setString(call.getBool(0) ? "true" : "false");
 }
 
-private void typecast_i2s(GrCall call) {
+private void i_as_s(GrCall call) {
     call.setString(to!GrStringValue(call.getInt(0)));
 }
 
-private void typecast_r2s(GrCall call) {
+private void f_as_s(GrCall call) {
     call.setString(to!GrStringValue(call.getFloat(0)));
 }
 
-private void typecast_as2s(GrCall call) {
+private void ls_as_s(GrCall call) {
     GrStringValue result;
     foreach (const ref sub; call.getList(0).getStrings()) {
         result ~= sub;
@@ -66,11 +109,12 @@ private void typecast_as2s(GrCall call) {
     call.setString(result);
 }
 
-//As string list
-private void typecast_s2as(GrCall call) {
+// as<list<string>>
+private void s_as_ls(GrCall call) {
     GrValue[] result;
     foreach (const ref sub; call.getString(0)) {
-        result ~= GrValue(sub);
+        result ~= GrValue(to!string(sub)); //@TODO: Remplacer par un type `char`
     }
+
     call.setList(result);
 }

@@ -99,7 +99,7 @@ const GrType grVoid = GrType(GrType.Base.void_);
 /// Nombre entier
 const GrType grInt = GrType(GrType.Base.int_);
 /// Nombre entier non-signé
-const GrType grUint = GrType(GrType.Base.uint_);
+const GrType grUInt = GrType(GrType.Base.uint_);
 /// Nombre flottant
 const GrType grFloat = GrType(GrType.Base.float_);
 /// Type booléen

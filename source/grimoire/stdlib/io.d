@@ -27,7 +27,7 @@ private void _print(GrCall call) {
         case int_:
             return to!string(value.getInt());
         case uint_:
-            return to!string(value.getUint());
+            return to!string(value.getUInt());
         case bool_:
             return value.getBool() ? "true" : "false";
         case func:
