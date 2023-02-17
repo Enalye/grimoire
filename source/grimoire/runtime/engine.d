@@ -394,6 +394,7 @@ class GrEngine {
     alias getBoolVariable = getVariable!bool;
     alias getIntVariable = getVariable!GrInt;
     alias getUIntVariable = getVariable!GrUInt;
+    alias getCharVariable = getVariable!GrChar;
     alias getFloatVariable = getVariable!GrFloat;
     alias getPointerVariable = getVariable!GrPointer;
 
@@ -432,6 +433,9 @@ class GrEngine {
         else static if (is(T == GrUInt)) {
             return _globals[variable.index]._uvalue;
         }
+        else static if (is(T == GrChar)) {
+            return cast(GrChar) _globals[variable.index]._uvalue;
+        }
         else static if (is(T == GrBool)) {
             return _globals[variable.index]._ivalue > 0;
         }
@@ -446,6 +450,7 @@ class GrEngine {
     alias setBoolVariable = setVariable!GrBool;
     alias setIntVariable = setVariable!GrInt;
     alias setUIntVariable = setVariable!GrUInt;
+    alias setCharVariable = setVariable!GrChar;
     alias setFloatVariable = setVariable!GrFloat;
     alias setPointerVariable = setVariable!GrPointer;
 
@@ -484,7 +489,7 @@ class GrEngine {
         static if (is(T == GrInt) || is(T == GrBool)) {
             _globals[variable.index]._ivalue = value;
         }
-        else static if (is(T == GrUInt)) {
+        else static if (is(T == GrUInt) || is(T == GrChar)) {
             _globals[variable.index]._uvalue = value;
         }
         else static if (is(T == GrFloat)) {

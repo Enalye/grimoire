@@ -238,6 +238,7 @@ final class GrCompiler {
                 variable.ivalue = variableDef.isInitialized ? variableDef.ivalue : 0;
                 break;
             case uint_:
+            case char_:
                 variable.typeMask = GR_MASK_UINT;
                 variable.uvalue = variableDef.isInitialized ? variableDef.uvalue : 0u;
                 break;
@@ -306,6 +307,7 @@ final class GrCompiler {
                     bytecode.primitives[id].params++;
                     break;
                 case uint_:
+                case char_:
                     bytecode.primitives[id].parameters ~= (GR_MASK_UINT << 16) | (
                         bytecode.primitives[id].params & 0xFFFF);
                     bytecode.primitives[id].params++;

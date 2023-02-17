@@ -33,9 +33,10 @@ void grLoadStdLibTypecast(GrLibDefinition library) {
     library.addCast(&i_as_s, grInt, grString);
     library.addCast(&f_as_s, grFloat, grString);
     library.addCast(&ls_as_s, grPure(grList(grString)), grString);
+    library.addCast(&lc_as_s, grPure(grList(grChar)), grString);
 
     // as<list<string>>
-    library.addCast(&s_as_ls, grPure(grString), grList(grString));
+    library.addCast(&s_as_lc, grPure(grString), grList(grChar));
 }
 
 // as<int>
@@ -103,17 +104,21 @@ private void f_as_s(GrCall call) {
 
 private void ls_as_s(GrCall call) {
     GrStringValue result;
-    foreach (const ref sub; call.getList(0).getStrings()) {
+    foreach (const GrStringValue sub; call.getList(0).getStrings()) {
         result ~= sub;
     }
     call.setString(result);
 }
 
+private void lc_as_s(GrCall call) {
+    call.setString(call.getList(0).getChars());
+}
+
 // as<list<string>>
-private void s_as_ls(GrCall call) {
+private void s_as_lc(GrCall call) {
     GrValue[] result;
-    foreach (const ref sub; call.getString(0)) {
-        result ~= GrValue(to!string(sub)); //@TODO: Remplacer par un type `char`
+    foreach (const GrChar sub; call.getString(0)) {
+        result ~= GrValue(sub);
     }
 
     call.setList(result);

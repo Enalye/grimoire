@@ -24,6 +24,14 @@ final class GrString {
         data = value;
     }
 
+    this(dstring value) {
+        data = to!string(value);
+    }
+
+    this(GrChar[] values) {
+        data = to!string(cast(dstring) values);
+    }
+
     @property {
         pragma(inline) GrInt size() const {
             return cast(GrInt) data.length;

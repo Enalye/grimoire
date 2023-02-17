@@ -22,6 +22,7 @@ struct GrType {
         null_,
         int_,
         uint_,
+        char_,
         float_,
         bool_,
         string_,
@@ -104,6 +105,8 @@ const GrType grUInt = GrType(GrType.Base.uint_);
 const GrType grFloat = GrType(GrType.Base.float_);
 /// Type booléen
 const GrType grBool = GrType(GrType.Base.bool_);
+/// Type caractère
+const GrType grChar = GrType(GrType.Base.char_);
 /// Chaîne de caractères
 const GrType grString = GrType(GrType.Base.string_);
 
@@ -521,6 +524,7 @@ package class GrFunction {
         final switch (variable.type.base) with (GrType.Base) {
         case int_:
         case uint_:
+        case char_:
         case bool_:
         case func:
         case task:

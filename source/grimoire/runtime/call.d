@@ -103,6 +103,7 @@ final class GrCall {
     alias getBool = getParameter!GrBool;
     alias getInt = getParameter!GrInt;
     alias getUInt = getParameter!GrUInt;
+    alias getChar = getParameter!GrChar;
     alias getFloat = getParameter!GrFloat;
     alias getPointer = getParameter!GrPointer;
 
@@ -153,6 +154,9 @@ final class GrCall {
         else static if (is(T == GrUInt)) {
             return _inputs[index].getUInt();
         }
+        else static if (is(T == GrChar)) {
+            return _inputs[index].getChar();
+        }
         else static if (is(T == GrBool)) {
             return _inputs[index].getInt() > 0;
         }
@@ -168,6 +172,7 @@ final class GrCall {
     alias setBool = setResult!GrBool;
     alias setInt = setResult!GrInt;
     alias setUInt = setResult!GrUInt;
+    alias setChar = setResult!GrChar;
     alias setFloat = setResult!GrFloat;
     alias setPointer = setResult!GrPointer;
 
@@ -185,6 +190,14 @@ final class GrCall {
     }
 
     pragma(inline) void setString(GrStringValue value) {
+        setResult!GrPointer(cast(GrPointer) new GrString(value));
+    }
+
+    pragma(inline) void setString(dstring value) {
+        setResult!GrPointer(cast(GrPointer) new GrString(value));
+    }
+
+    pragma(inline) void setString(GrChar[] value) {
         setResult!GrPointer(cast(GrPointer) new GrString(value));
     }
 
@@ -218,6 +231,9 @@ final class GrCall {
         else static if (is(T == GrUInt)) {
             _outputs[_results].setUInt(value);
         }
+        else static if (is(T == GrChar)) {
+            _outputs[_results].setChar(value);
+        }
         else static if (is(T == GrBool)) {
             _outputs[_results].setInt(cast(GrInt) value);
         }
@@ -243,6 +259,10 @@ final class GrCall {
 
     GrUInt getUIntVariable(string name) const {
         return _task.engine.getUIntVariable(name);
+    }
+
+    GrChar getCharVariable(string name) const {
+        return _task.engine.getCharVariable(name);
     }
 
     T getEnumVariable(T)(string name) const {
@@ -287,6 +307,10 @@ final class GrCall {
 
     void setUIntVariable(string name, GrUInt value) {
         _task.engine.setUIntVariable(name, value);
+    }
+
+    void setCharVariable(string name, GrChar value) {
+        _task.engine.setCharVariable(name, value);
     }
 
     void setFloatVariable(string name, GrFloat value) {

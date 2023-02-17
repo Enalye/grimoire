@@ -83,6 +83,7 @@ struct GrLexeme {
         identifier,
         int_,
         uint_,
+        char_,
         float_,
         bool_,
         string_,
@@ -99,6 +100,7 @@ struct GrLexeme {
         receive,
         intType,
         uintType,
+        charType,
         floatType,
         boolType,
         stringType,
@@ -190,7 +192,7 @@ struct GrLexeme {
     /// `isLiteral` vaut `true` et `type` vaut `int_`.
     GrInt ivalue;
 
-    /// Valeur entière de la constante.
+    /// Valeur entière non-signée de la constante.
     /// `isLiteral` vaut `true` et `type` vaut `uint_`.
     GrUInt uvalue;
 
@@ -432,6 +434,9 @@ package final class GrLexer {
             case '{': .. case '~':
                 scanOperator();
                 break;
+            case '\'':
+                scanChar();
+                break;
             case '\"':
                 scanString();
                 break;
@@ -647,6 +652,24 @@ package final class GrLexer {
             raiseError(Error.numberTooBig);
         }
         _lexemes ~= lex;
+    }
+
+    /// Analyse un caractère délimité par des `'`.
+    void scanChar() {
+        GrLexeme lex = GrLexeme(this);
+        lex.type = GrLexeme.Type.char_;
+        lex.isLiteral = true;
+
+        if (get() != '\'')
+            raiseError(Error.expectedQuotationMarkAtBeginningOfStr);
+        _current++;
+
+        lex.uvalue = cast(GrUInt) get();
+        _lexemes ~= lex;
+        _current++;
+
+        if (get() != '\'')
+            raiseError(Error.expectedQuotationMarkAtBeginningOfStr);
     }
 
     /// Analyse une chaîne de caractères délimité par des `"`.
@@ -1199,6 +1222,10 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.uintType;
             lex.isType = true;
             break;
+        case "char":
+            lex.type = GrLexeme.Type.charType;
+            lex.isType = true;
+            break;
         case "float":
             lex.type = GrLexeme.Type.floatType;
             lex.isType = true;
@@ -1450,10 +1477,10 @@ private immutable string[] _prettyLexemeTypeTable = [
     "++", "--", "identifier", "const_int", "const_uint", "const_float",
     "const_bool", "const_string", "null", "public", "const", "pure", "alias",
     "class", "enum", "where", "copy", "send", "receive", "int", "uint",
-    "float", "bool", "string", "list", "channel", "func", "task", "event", "var",
-    "if", "unless", "else", "switch", "select", "case", "default", "while",
-    "do", "until", "for", "loop", "return", "self", "die", "exit", "yield",
-    "break", "continue"
+    "char", "float", "bool", "string", "list", "channel", "func", "task", "event",
+    "var", "if", "unless", "else", "switch", "select", "case", "default",
+    "while", "do", "until", "for", "loop", "return", "self", "die", "exit",
+    "yield", "break", "continue"
 ];
 
 /// Renvoie une version affichable du type de jeton

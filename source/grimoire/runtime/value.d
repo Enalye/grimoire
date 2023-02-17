@@ -30,6 +30,14 @@ struct GrValue {
         _fvalue = value;
     }
 
+    this(GrBool value) {
+        _ivalue = cast(GrInt) value;
+    }
+
+    this(GrChar value) {
+        _uvalue = cast(GrUInt) value;
+    }
+
     this(GrList value) {
         _ovalue = cast(GrPointer) value;
     }
@@ -84,6 +92,10 @@ struct GrValue {
         return _uvalue;
     }
 
+    pragma(inline) GrChar getChar() const {
+        return cast(GrChar) _uvalue;
+    }
+
     pragma(inline) T getEnum(T)() const {
         return cast(T) _ivalue;
     }
@@ -126,6 +138,10 @@ struct GrValue {
 
     pragma(inline) void setUInt(GrUInt value) {
         _uvalue = value;
+    }
+
+    pragma(inline) void setChar(GrChar value) {
+        _uvalue = cast(GrUInt) value;
     }
 
     pragma(inline) void setEnum(T)(T value) {

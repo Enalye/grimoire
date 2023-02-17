@@ -49,6 +49,8 @@ final class GrObject {
     alias getValue = getField!GrValue;
     alias getBool = getField!GrBool;
     alias getInt = getField!GrInt;
+    alias getUInt = getField!GrUInt;
+    alias getChar = getField!GrChar;
     alias getFloat = getField!GrFloat;
     alias getPointer = getField!GrPointer;
 
@@ -84,8 +86,12 @@ final class GrObject {
                     return _fields[index].value;
                 else static if (is(T == GrInt))
                     return _fields[index].value.getInt();
+                else static if (is(T == GrUInt))
+                    return _fields[index].value.getUInt();
                 else static if (is(T == GrBool))
-                    return cast(T) _fields[index].value.getInt();
+                    return _fields[index].value.getBool();
+                else static if (is(T == GrChar))
+                    return _fields[index].value.getChar();
                 else static if (is(T == GrFloat))
                     return _fields[index].value.getFloat();
                 else static if (is(T == GrPointer))
@@ -100,6 +106,8 @@ final class GrObject {
     alias setValue = setField!GrValue;
     alias setBool = setField!GrBool;
     alias setInt = setField!GrInt;
+    alias setUInt = setField!GrUInt;
+    alias setChar = setField!GrChar;
     alias setFloat = setField!GrFloat;
     alias setPointer = setField!GrPointer;
 
@@ -140,6 +148,10 @@ final class GrObject {
                     return _fields[index].value._ivalue = value;
                 else static if (is(T == GrBool))
                     return _fields[index].value._ivalue = cast(GrInt) value;
+                else static if (is(T == GrUInt))
+                    return _fields[index].value._uvalue = value;
+                else static if (is(T == GrChar))
+                    return _fields[index].value._uvalue = cast(GrChar) value;
                 else static if (is(T == GrFloat))
                     return _fields[index].value._fvalue = value;
                 else static if (is(T == GrPointer))

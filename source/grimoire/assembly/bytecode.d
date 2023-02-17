@@ -10,14 +10,14 @@ import grimoire.assembly.symbol;
 
 /// Correspond à une version du langage. \
 /// Un bytecode ayant une version différente ne pourra pas être chargé.
-enum GR_VERSION = 700;
+enum GR_VERSION = 800;
 
 package(grimoire) {
-    enum GR_MASK_INT = 0x1;
-    enum GR_MASK_UINT = 0x2;
-    enum GR_MASK_FLOAT = 0x4;
-    enum GR_MASK_STRING = 0x8;
-    enum GR_MASK_POINTER = 0x10;
+    enum GR_MASK_INT = 0x1 << 1;
+    enum GR_MASK_UINT = 0x1 << 2;
+    enum GR_MASK_FLOAT = 0x1 << 3;
+    enum GR_MASK_STRING = 0x1 << 4;
+    enum GR_MASK_POINTER = 0x1 << 5;
 }
 
 /// Instructions bas niveau de la machine virtuelle.
@@ -346,7 +346,7 @@ final class GrBytecode {
 
         foreach (GrInt i; iconsts)
             buffer.append!GrInt(i);
-        foreach (GrInt i; uconsts)
+        foreach (GrUInt i; uconsts)
             buffer.append!GrUInt(i);
         foreach (GrFloat i; fconsts)
             buffer.append!GrFloat(i);

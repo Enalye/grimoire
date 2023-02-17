@@ -45,7 +45,8 @@ private bool _register(GrData, GrType type, const GrType[] types) {
             type == GrType.Base.func || type == GrType.Base.task ||
             type == GrType.Base.event || type == GrType.Base.enum_;
     case uint_:
-        return type == GrType.Base.uint_;
+    case char_:
+        return type == GrType.Base.uint_ || type == GrType.Base.char_;
     case float_:
         return type == GrType.Base.float_;
     case string_:
@@ -104,6 +105,7 @@ private bool _notnullable(GrData, GrType type, const GrType[]) {
     case bool_:
     case int_:
     case uint_:
+    case char_:
     case float_:
     case enum_:
     case string_:
@@ -129,6 +131,7 @@ private bool _nullable(GrData, GrType type, const GrType[]) {
     case bool_:
     case int_:
     case uint_:
+    case char_:
     case float_:
     case enum_:
     case string_:

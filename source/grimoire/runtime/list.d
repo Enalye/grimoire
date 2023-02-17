@@ -77,6 +77,13 @@ final class GrList {
         return values;
     }
 
+    pragma(inline) GrChar[] getChars() {
+        GrChar[] values;
+        foreach (GrValue value; _data)
+            values ~= value.getChar();
+        return values;
+    }
+
     pragma(inline) T[] getEnums(T)() {
         T[] values;
         foreach (GrValue value; _data)
@@ -128,6 +135,12 @@ final class GrList {
         _data.length = values.length;
         for (size_t i; i < _data.length; ++i)
             _data[i].setUInt(values[i]);
+    }
+
+    pragma(inline) void setChars(GrChar[] values) {
+        _data.length = values.length;
+        for (size_t i; i < _data.length; ++i)
+            _data[i].setChar(values[i]);
     }
 
     pragma(inline) void setEnums(T)(T[] values) {
