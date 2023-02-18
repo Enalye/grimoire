@@ -654,22 +654,148 @@ package final class GrLexer {
         _lexemes ~= lex;
     }
 
+    /// Analyse une séquence d’échappement
+    private dchar scanEscapeCharacter(ref uint textLength) {
+        dchar symbol;
+        textLength = 1;
+
+        // Pour la gestion d’erreur
+        GrLexeme lex = GrLexeme(this);
+        lex.isLiteral = true;
+
+        if (get() != '\\') {
+            symbol = get();
+            _current++;
+            return symbol;
+        }
+        _current++;
+        textLength = 2;
+
+        switch (get()) {
+        case '\'':
+            symbol = '\'';
+            break;
+        case '\\':
+            symbol = '\\';
+            break;
+        case '?':
+            symbol = '\?';
+            break;
+        case '0':
+            symbol = '\0';
+            break;
+        case 'a':
+            symbol = '\a';
+            break;
+        case 'b':
+            symbol = '\b';
+            break;
+        case 'f':
+            symbol = '\f';
+            break;
+        case 'n':
+            symbol = '\n';
+            break;
+        case 'r':
+            symbol = '\r';
+            break;
+        case 't':
+            symbol = '\t';
+            break;
+        case 'v':
+            symbol = '\v';
+            break;
+        case 'u':
+            _current++;
+            textLength++;
+
+            if (get() != '{') {
+                lex = GrLexeme(this);
+                _lexemes ~= lex;
+                raiseError(Error.expectedLeftCurlyBraceInUnicode);
+            }
+            _current++;
+            textLength++;
+
+            dstring buffer;
+            while ((symbol = get()) != '}') {
+                if ((symbol >= '0' && symbol <= '9') || (symbol >= 'a' &&
+                        symbol <= 'f') || (symbol >= 'A' && symbol <= 'F')) {
+                    buffer ~= symbol;
+                    textLength++;
+                }
+                else {
+                    lex = GrLexeme(this);
+                    _lexemes ~= lex;
+                    raiseError(Error.unexpectedSymbolInUnicode);
+                }
+                _current++;
+            }
+            textLength++;
+
+            try {
+                const ulong value = to!ulong(buffer, 16);
+
+                if (value > 0x10FFFF) {
+                    lex.textLength = textLength;
+                    _lexemes ~= lex;
+                    raiseError(Error.unicodeTooBig);
+                }
+                symbol = cast(dchar) value;
+            }
+            catch (ConvOverflowException e) {
+                lex.textLength = textLength;
+                _lexemes ~= lex;
+                raiseError(Error.unicodeTooBig);
+            }
+
+            break;
+        default:
+            symbol = get();
+            break;
+        }
+        _current++;
+
+        return symbol;
+    }
+
     /// Analyse un caractère délimité par des `'`.
     void scanChar() {
         GrLexeme lex = GrLexeme(this);
         lex.type = GrLexeme.Type.char_;
         lex.isLiteral = true;
+        uint textLength = 0;
 
-        if (get() != '\'')
-            raiseError(Error.expectedQuotationMarkAtBeginningOfStr);
+        if (get() != '\'') {
+            lex = GrLexeme(this);
+            lex.isLiteral = true;
+            _lexemes ~= lex;
+            raiseError(Error.expectedQuoteStartChar);
+        }
         _current++;
+        textLength++;
 
-        lex.uvalue = cast(GrUInt) get();
+        dchar ch = get();
+
+        if (ch == '\\') {
+            ch = scanEscapeCharacter(textLength);
+        }
+        else {
+            _current++;
+            textLength++;
+        }
+
+        textLength++;
+        lex.textLength = textLength;
+        lex.uvalue = cast(GrUInt) ch;
         _lexemes ~= lex;
-        _current++;
 
-        if (get() != '\'')
-            raiseError(Error.expectedQuotationMarkAtBeginningOfStr);
+        if (get() != '\'') {
+            lex = GrLexeme(this);
+            lex.isLiteral = true;
+            _lexemes ~= lex;
+            raiseError(Error.missingQuoteEndChar);
+        }
     }
 
     /// Analyse une chaîne de caractères délimité par des `"`.
@@ -677,81 +803,36 @@ package final class GrLexer {
         GrLexeme lex = GrLexeme(this);
         lex.type = GrLexeme.Type.string_;
         lex.isLiteral = true;
+        uint textLength = 0;
 
         if (get() != '\"')
-            raiseError(Error.expectedQuotationMarkAtBeginningOfStr);
+            raiseError(Error.expectedQuoteStartString);
         _current++;
+        textLength++;
 
         string buffer;
-        bool escape = false;
-        bool wasEscape = false;
         for (;;) {
             if (_current >= _text.length)
-                raiseError(Error.missingQuotationMarkAtEndOfStr);
+                raiseError(Error.missingQuoteEndString);
             const dchar symbol = get();
 
             if (symbol == '\n') {
                 _positionOfLine = _current;
                 _line++;
             }
-            else if (symbol == '\"' && (!wasEscape))
+            else if (symbol == '\"')
                 break;
-            else if (symbol == '\\' && (!wasEscape)) {
-                escape = true;
+            else if (symbol == '\\')
+                buffer ~= scanEscapeCharacter(textLength);
+            else {
+                buffer ~= get();
+                _current++;
+                textLength++;
             }
-
-            if (!escape) {
-                if (!wasEscape) {
-                    buffer ~= symbol;
-                }
-                else {
-                    switch (symbol) {
-                    case '\'':
-                        buffer ~= '\'';
-                        break;
-                    case '\\':
-                        buffer ~= '\\';
-                        break;
-                    case '?':
-                        buffer ~= '\?';
-                        break;
-                    case '0':
-                        buffer ~= '\0';
-                        break;
-                    case 'a':
-                        buffer ~= '\a';
-                        break;
-                    case 'b':
-                        buffer ~= '\b';
-                        break;
-                    case 'f':
-                        buffer ~= '\f';
-                        break;
-                    case 'n':
-                        buffer ~= '\n';
-                        break;
-                    case 'r':
-                        buffer ~= '\r';
-                        break;
-                    case 't':
-                        buffer ~= '\t';
-                        break;
-                    case 'v':
-                        buffer ~= '\v';
-                        break;
-                    default:
-                        buffer ~= symbol;
-                        break;
-                    }
-                }
-            }
-            wasEscape = escape;
-            escape = false;
-
-            _current++;
         }
+        textLength++;
 
-        lex._textLength = cast(uint) buffer.length + 2u;
+        lex.textLength = textLength;
         lex.svalue = buffer;
         _lexemes ~= lex;
     }
@@ -1330,13 +1411,13 @@ package final class GrLexer {
         import std.path : dirName, buildNormalizedPath, absolutePath;
 
         if (get() != '\"')
-            raiseError(Error.expectedQuotationMarkAtBeginningOfStr);
+            raiseError(Error.expectedQuoteStartString);
         _current++;
 
         string buffer;
         for (;;) {
             if (_current >= _text.length)
-                raiseError(Error.missingQuotationMarkAtEndOfStr);
+                raiseError(Error.missingQuoteEndString);
             const dchar symbol = get();
             if (symbol == '\n') {
                 _positionOfLine = _current;
@@ -1376,7 +1457,7 @@ package final class GrLexer {
                 else if (get() == '\"')
                     advance();
                 else
-                    raiseError(Error.missingQuotationMarkAtEndOfStr);
+                    raiseError(Error.missingQuoteEndString);
 
                 // Fin du fichier
                 if (_current >= _text.length)
@@ -1433,8 +1514,13 @@ package final class GrLexer {
         unexpectedEndOfFile,
         emptyNumber,
         numberTooBig,
-        expectedQuotationMarkAtBeginningOfStr,
-        missingQuotationMarkAtEndOfStr,
+        expectedLeftCurlyBraceInUnicode,
+        unexpectedSymbolInUnicode,
+        unicodeTooBig,
+        expectedQuoteStartChar,
+        missingQuoteEndChar,
+        expectedQuoteStartString,
+        missingQuoteEndString,
         invalidOp,
         missingRightCurlyBraceAfterUsedFilesList
     }
@@ -1447,8 +1533,13 @@ package final class GrLexer {
                 Error.unexpectedEndOfFile: "unexpected end of file",
                 Error.emptyNumber: "empty number",
                 Error.numberTooBig: "number too big",
-                Error.expectedQuotationMarkAtBeginningOfStr: "expected `\"` at the beginning of the string",
-                Error.missingQuotationMarkAtEndOfStr: "missing `\"` at the end of the string",
+                Error.expectedLeftCurlyBraceInUnicode: "expected `{` in an unicode escape sequence",
+                Error.unexpectedSymbolInUnicode: "unexpected symbol in an unicode escape sequence",
+                Error.unicodeTooBig: "unicode must be at most 10FFFF",
+                Error.expectedQuoteStartChar: "expected `'` at the start of the string",
+                Error.missingQuoteEndChar: "missing `'` at the end of the string",
+                Error.expectedQuoteStartString: "expected `\"` at the start of the string",
+                Error.missingQuoteEndString: "missing `\"` at the end of the string",
                 Error.invalidOp: "invalid operator",
                 Error.missingRightCurlyBraceAfterUsedFilesList: "missing `}` after used files list"
             ],
@@ -1458,8 +1549,13 @@ package final class GrLexer {
                 Error.unexpectedEndOfFile: "fin de fichier inattendue",
                 Error.emptyNumber: "nombre vide",
                 Error.numberTooBig: "nombre trop grand",
-                Error.expectedQuotationMarkAtBeginningOfStr: "`\"` attendu au début de la chaîne",
-                Error.missingQuotationMarkAtEndOfStr: "`\"` manquant en fin de chaîne",
+                Error.expectedLeftCurlyBraceInUnicode: "`{` attendu dans la séquence d’échappement d’un unicode",
+                Error.unexpectedSymbolInUnicode: "symbole inattendu dans une séquence d’échappement d’un unicode",
+                Error.unicodeTooBig: "un unicode ne doit pas valoir plus de 10FFFF",
+                Error.expectedQuoteStartChar: "`'` attendu en début de caractère",
+                Error.missingQuoteEndChar: "`'` manquant en fin de caractère",
+                Error.expectedQuoteStartString: "`\"` attendu en début de chaîne",
+                Error.missingQuoteEndString: "`\"` manquant en fin de chaîne",
                 Error.invalidOp: "opérateur invalide",
                 Error.missingRightCurlyBraceAfterUsedFilesList: "`}` manquant après la liste des fichiers utilisés"
             ]
