@@ -407,13 +407,16 @@ package final class GrLexer {
     }
 
     /// Analyse le contenu d’un seul fichier
-    private void scanScript() {
+    private void scanScript(bool matchBlock = false) {
         // On ignore les espaces/commentaires situés au début
         advance(true);
+
+        uint blockLevel;
 
         do {
             if (_current >= _text.length)
                 break;
+
             switch (get()) {
             case '0': .. case '9':
                 scanNumber();
@@ -431,9 +434,23 @@ package final class GrLexer {
             case ':': ..
             case '@':
             case '[': .. case '^':
-            case '{': .. case '~':
+            case '|':
+            case '~':
                 scanOperator();
                 break;
+            case '{':
+                if (matchBlock) {
+                    blockLevel++;
+                }
+                goto case '@';
+            case '}':
+                if (matchBlock) {
+                    if (!blockLevel) {
+                        return;
+                    }
+                    blockLevel--;
+                }
+                goto case '@';
             case '\'':
                 scanChar();
                 break;
@@ -819,11 +836,52 @@ package final class GrLexer {
             if (symbol == '\n') {
                 _positionOfLine = _current;
                 _line++;
+
+                buffer ~= get();
+                _current++;
+                textLength++;
             }
             else if (symbol == '\"')
                 break;
             else if (symbol == '\\')
                 buffer ~= scanEscapeCharacter(textLength);
+            else if (symbol == '#') {
+                _current++;
+                textLength++;
+
+                if (get() == '{') {
+                    _current++;
+                    textLength++;
+
+                    lex.textLength = textLength;
+                    lex.svalue = buffer;
+                    _lexemes ~= lex;
+
+                    // Concaténation
+                    GrLexeme concatLex = GrLexeme(this);
+                    concatLex.isOperator = true;
+                    concatLex.type = GrLexeme.Type.concatenate;
+                    _lexemes ~= concatLex;
+
+                    scanScript(true);
+
+                    if (get() != '}') {
+                        lex = GrLexeme(this);
+                        _lexemes ~= lex;
+                        raiseError(Error.invalidOp);
+                    }
+
+                    // Concaténation
+                    _lexemes ~= concatLex;
+
+                    _current++;
+                    textLength = 1;
+                    buffer.length = 0;
+                }
+                else {
+                    buffer ~= '#';
+                }
+            }
             else {
                 buffer ~= get();
                 _current++;
