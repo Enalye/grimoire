@@ -81,10 +81,10 @@ print(doggo.name);
 ```
 
 By default, all fields are only visible to the file that declared it.
-To make them visible to all files, you need to specify them as public with the `public` keyword:
+To make them visible to other files, you need to export them with the `export` keyword:
 ```grimoire
 class A {
-	public var a: int; // Visible globally
+	export var a: int; // Visible globally
 	var b: int; // Visible only to the current file
 }
 ```

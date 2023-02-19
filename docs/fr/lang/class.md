@@ -81,10 +81,10 @@ print(toutou.nom);
 ```
 
 Par défaut, les champs sont seulement visibles à l’intérieur du fichier qui l’a déclaré.
-Pour les rendre visibles globalement, on doit les spécifier en public avec le mot-clé `public`:
+Pour les rendre visibles globalement, on doit les exporter avec le mot-clé `export`:
 ```grimoire
 class A {
-	public var a: int; // Visible globalement
+	export var a: int; // Visible globalement
 	var b: int; // Visible seulement dans le fichier actuel
 }
 ```

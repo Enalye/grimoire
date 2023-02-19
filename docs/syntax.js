@@ -21,7 +21,7 @@ Prism.languages.grimoire = {
 			punctuation: /[.\\]/
 		}
 	},
-	'keyword': /\b(?:import|public|alias|event|class|enum|where|if|unless|else|switch|select|case|default|while|do|until|for|loop|return|self|die|exit|yield|break|continue|as|try|catch|throw|defer|void|task|func|int|float|bool|string|list|channel|var|const|pure|true|false|null|not|and|or|bit_not|bit_and|bit_or|bit_xor)\b/,
+	'keyword': /\b(?:import|export|alias|event|class|enum|where|if|unless|else|switch|select|case|default|while|do|until|for|loop|return|self|die|exit|yield|break|continue|as|try|catch|throw|defer|void|task|func|int|float|bool|string|list|channel|var|const|pure|true|false|null|not|and|or|bit_not|bit_and|bit_or|bit_xor)\b/,
 	'boolean': /\b(?:true|false)\b/,
 	//'function': /[a-z0-9_]+(?=\()/i,
 	'number': /\b0[xbo][\da-f_]+\b|(?:\b\d[\d_]*\.?[\d_]*|\B\.\d[\d_]*)(?:f)?/i,

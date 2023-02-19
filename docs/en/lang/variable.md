@@ -87,15 +87,15 @@ event main() {
 
 ### Visibility
 A global variable is only visible from its own file by default.
-To access it from another file, you have to declare it as public with the `public` keyword.
+To access it from another file, you have to export it with `export`.
 ```grimoire
-public var globalVar: int; // Now you can use it from another file.
+export var globalVar: int; // Now you can use it from another file.
 ```
 
 The same is true for declared types, or even classes’ fields. 
 ```grimoire
-public class A {        // The class is visible globally.
-    public var a: int;  // a is visible globally.
+export class A {        // The class is visible globally.
+    export var a: int;  // a is visible globally.
     var b: int;         // b is only visible in the file.
 }
 ```

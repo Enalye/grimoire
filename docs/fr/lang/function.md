@@ -2,7 +2,7 @@
 
 Le mot-clé `func` permet de définir une fonction globale.
 ```grimoire
-public func additionner(a: int, b: int) (int) {
+export func additionner(a: int, b: int) (int) {
     return a + b;
 }
 
@@ -66,7 +66,7 @@ func<T> additionner(a: T, b: T)(T) {
     return a + b;
 }
 
-public func<A, B> additionner(a: A, b: B)(B) {
+export func<A, B> additionner(a: A, b: B)(B) {
     return a as<B> + b;
 }
 

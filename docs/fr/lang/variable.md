@@ -87,15 +87,15 @@ event main() {
 
 ## Visibilité
 Une variable globale n’est par défaut visible que depuis son propre fichier.
-Pour y accéder depuis un autre fichier, on doit le déclarer en public avec le mot-clé `public`:
+Pour y accéder depuis un autre fichier, on doit l'exporter avec le mot-clé `export`:
 ```grimoire
-public var variableGlobale: int; // Utilisable depuis un autre fichier
+export var variableGlobale: int; // Utilisable depuis un autre fichier
 ```
 
 Ce principe s’applique également pour les types déclarés et les champs des classes.
 ```grimoire
-public class A {        //La classe est visible globalement
-    public var a: int;  //a est visible globalement
+export class A {        //La classe est visible globalement
+    export var a: int;  //a est visible globalement
     var b: int;         //b n’est visible que depuis ce fichier
 }
 ```

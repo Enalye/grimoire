@@ -2,7 +2,7 @@
 
 The `func` keyword declares a global function.
 ```grimoire
-public func additionner(a: int, b: int) (int) {
+export func additionner(a: int, b: int) (int) {
     return a + b;
 }
 
@@ -66,7 +66,7 @@ func<T> add(a: T, b: T)(T) {
     return a + b;
 }
 
-public func<A, B> add(a: A, b: B)(B) {
+export func<A, B> add(a: A, b: B)(B) {
     return a as<B> + b;
 }
 

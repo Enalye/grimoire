@@ -88,7 +88,7 @@ struct GrLexeme {
         bool_,
         string_,
         null_,
-        public_,
+        export_,
         const_,
         pure_,
         alias_,
@@ -1248,8 +1248,8 @@ package final class GrLexer {
         case "import":
             scanUse();
             return;
-        case "public":
-            lex.type = GrLexeme.Type.public_;
+        case "export":
+            lex.type = GrLexeme.Type.export_;
             break;
         case "const":
             lex.type = GrLexeme.Type.const_;
@@ -1629,7 +1629,7 @@ private immutable string[] _prettyLexemeTypeTable = [
     "|", "^", "&&", "||", "??", "+", "-", "*", "/", "~", "%", "**", "==",
     "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->", "=>", "~", "!",
     "++", "--", "identifier", "const_int", "const_uint", "const_float",
-    "const_bool", "const_string", "null", "public", "const", "pure", "alias",
+    "const_bool", "const_string", "null", "export", "const", "pure", "alias",
     "class", "enum", "where", "copy", "send", "receive", "int", "uint",
     "char", "float", "bool", "string", "list", "channel", "func", "task", "event",
     "var", "if", "unless", "else", "switch", "select", "case", "default",

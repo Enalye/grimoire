@@ -1834,7 +1834,7 @@ final class GrParser {
         while (!isEnd()) {
             GrLexeme lex = get();
             isPublic = false;
-            if (lex.type == GrLexeme.Type.public_) {
+            if (lex.type == GrLexeme.Type.export_) {
                 isPublic = true;
                 checkAdvance();
                 lex = get();
@@ -1866,7 +1866,7 @@ final class GrParser {
         while (!isEnd()) {
             GrLexeme lex = get();
             isPublic = false;
-            if (lex.type == GrLexeme.Type.public_) {
+            if (lex.type == GrLexeme.Type.export_) {
                 isPublic = true;
                 checkAdvance();
                 lex = get();
@@ -1900,7 +1900,7 @@ final class GrParser {
         while (!isEnd()) {
             GrLexeme lex = get();
             isPublic = false;
-            if (lex.type == GrLexeme.Type.public_) {
+            if (lex.type == GrLexeme.Type.export_) {
                 isPublic = true;
                 checkAdvance();
                 lex = get();
@@ -1949,7 +1949,7 @@ final class GrParser {
         while (!isEnd()) {
             GrLexeme lex = get();
             isPublic = false;
-            if (lex.type == GrLexeme.Type.public_) {
+            if (lex.type == GrLexeme.Type.export_) {
                 isPublic = true;
                 checkAdvance();
                 lex = get();
@@ -2191,7 +2191,7 @@ final class GrParser {
             }
 
             bool isFieldPublic = false;
-            if (get().type == GrLexeme.Type.public_) {
+            if (get().type == GrLexeme.Type.export_) {
                 isFieldPublic = true;
                 checkAdvance();
             }
@@ -2704,8 +2704,8 @@ final class GrParser {
 
     private void parseEventDeclaration(bool isPublic) {
         if (isPublic)
-            logError(getError(Error.addingPubBeforeEventIsRedundant),
-                getError(Error.eventAlreadyPublic));
+            logError(getError(Error.addingExportBeforeEventIsRedundant),
+                getError(Error.eventAlreadyExported));
         checkAdvance();
         if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedIdentifierFoundX),
@@ -7351,8 +7351,8 @@ final class GrParser {
         paramShouldBeSeparatedByComma,
         expectedIdentifierFoundX,
         typesShouldBeSeparatedByComma,
-        addingPubBeforeEventIsRedundant,
-        eventAlreadyPublic,
+        addingExportBeforeEventIsRedundant,
+        eventAlreadyExported,
         cantOverrideXOp,
         opCantBeOverriden,
         xNotUnaryOp,
@@ -7586,8 +7586,8 @@ final class GrParser {
                 Error.paramShouldBeSeparatedByComma: "parameters should be separated by a comma",
                 Error.expectedIdentifierFoundX: "expected identifier, found `%s`",
                 Error.typesShouldBeSeparatedByComma: "types should be separated by a comma",
-                Error.addingPubBeforeEventIsRedundant: "adding `public` before `event` is redundant",
-                Error.eventAlreadyPublic: "event is already public",
+                Error.addingExportBeforeEventIsRedundant: "adding `export` before `event` is redundant",
+                Error.eventAlreadyExported: "event is already exported",
                 Error.cantOverrideXOp: "can't override `%s` operator",
                 Error.opCantBeOverriden: "this operator can't be overriden",
                 Error.xNotUnaryOp: "`%s` is not an unary operator",
@@ -7813,8 +7813,8 @@ final class GrParser {
                 Error.paramShouldBeSeparatedByComma: "les paramètres doivent être séparées par des virgules",
                 Error.expectedIdentifierFoundX: "identificateur attendu, `%s` trouvé",
                 Error.typesShouldBeSeparatedByComma: "les types doivent être séparés par des virgules",
-                Error.addingPubBeforeEventIsRedundant: "ajouter `public` devant `event` est redondant",
-                Error.eventAlreadyPublic: "les events sont déjà publiques",
+                Error.addingExportBeforeEventIsRedundant: "ajouter `export` devant `event` est redondant",
+                Error.eventAlreadyExported: "les events sont déjà exportés",
                 Error.cantOverrideXOp: "impossible de surcharger l’opérateur `%s`",
                 Error.opCantBeOverriden: "cet opérateur ne peut être surchargé",
                 Error.xNotUnaryOp: "`%s` n’est pas un opérateur unaire",
