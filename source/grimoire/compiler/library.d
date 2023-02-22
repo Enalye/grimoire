@@ -199,7 +199,7 @@ final class GrLibrary : GrLibDefinition {
             enum_.fields ~= field;
         }
 
-        enum_.isPublic = true;
+        enum_.isExport = true;
         _enumDefinitions ~= enum_;
 
         GrType type = GrType.Base.enum_;
@@ -220,7 +220,7 @@ final class GrLibrary : GrLibDefinition {
         class_.fields = fields;
         class_.templateVariables = templateVariables;
         class_.parentTemplateSignature = parentTemplateSignature;
-        class_.isPublic = true;
+        class_.isExport = true;
         class_.isParsed = true;
         _abstractClassDefinitions ~= class_;
 
@@ -228,7 +228,7 @@ final class GrLibrary : GrLibDefinition {
         class_.fieldConsts.length = fields.length;
         for (int i; i < class_.fieldsInfo.length; ++i) {
             class_.fieldsInfo[i].fileId = 0;
-            class_.fieldsInfo[i].isPublic = true;
+            class_.fieldsInfo[i].isExport = true;
             class_.fieldsInfo[i].position = 0;
             class_.fieldConsts[i] = false;
         }
@@ -247,7 +247,7 @@ final class GrLibrary : GrLibDefinition {
         GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
         typeAlias.name = name;
         typeAlias.type = type;
-        typeAlias.isPublic = true;
+        typeAlias.isExport = true;
         _aliasDefinitions ~= typeAlias;
         return type;
     }

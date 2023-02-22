@@ -1628,7 +1628,7 @@ private immutable string[] _prettyLexemeTypeTable = [
     "||=", "??=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+", "-", "&",
     "|", "^", "&&", "||", "??", "+", "-", "*", "/", "~", "%", "**", "==",
     "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->", "=>", "~", "!",
-    "++", "--", "identifier", "const_int", "const_uint", "const_float",
+    "++", "--", "identifier", "const_int", "const_uint", "const_char", "const_float",
     "const_bool", "const_string", "null", "export", "const", "pure", "alias",
     "class", "enum", "where", "copy", "send", "receive", "int", "uint",
     "char", "float", "bool", "string", "list", "channel", "func", "task", "event",

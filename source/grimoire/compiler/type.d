@@ -240,7 +240,7 @@ package class GrVariable {
     /// Son nom unique dans la portée
     string name;
     /// Est-elle visible depuis les autres fichiers ?
-    bool isPublic;
+    bool isExport;
     /// Le fichier d’où elle est déclarée
     uint fileId;
     /// Sa position en cas d’erreurs
@@ -290,7 +290,7 @@ final class GrTypeAliasDefinition {
     /// The type aliased.
     GrType type;
     /// Is the type visible from other files ?
-    bool isPublic;
+    bool isExport;
     /// The file where the type is declared.
     uint fileId;
 }
@@ -319,7 +319,7 @@ final class GrEnumDefinition {
     /// L’id de l’énumération
     size_t index;
     /// Est-il visible depuis les autres fichiers ?
-    bool isPublic;
+    bool isExport;
     /// Le fichier d’où il a été déclaré
     uint fileId;
 
@@ -379,7 +379,7 @@ final class GrClassDefinition {
 
     package {
         struct FieldInfo {
-            bool isPublic;
+            bool isExport;
             uint fileId;
             uint position;
         }
@@ -392,7 +392,7 @@ final class GrClassDefinition {
     /// L’id de la classe
     size_t index;
     /// Est-elle visible depuis d’autres fichiers ?
-    bool isPublic;
+    bool isExport;
     /// Le fichier dans lequel elle est déclarée
     uint fileId;
     /// A-t’elle déjà été analysé ?
@@ -475,7 +475,7 @@ package class GrFunction {
     bool[] isDeferrableSectionLocked = [false];
 
     /// Est-elle visible depuis d’autres fichiers ?
-    bool isPublic;
+    bool isExport;
     /// Le fichier d’où cette fonction est déclarée
     uint fileId;
 
@@ -567,7 +567,7 @@ package class GrTemplateFunction {
     bool isTask;
     bool isConversion;
     /// Is the function visible from other files ?
-    bool isPublic;
+    bool isExport;
     /// The file where the template is declared.
     uint fileId;
 

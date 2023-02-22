@@ -191,9 +191,9 @@ final class GrParser {
 
     /// Enregistre une nouvelle variable
     private GrVariable registerVariable(string name, GrType type, bool isAuto,
-        bool isGlobal, bool isConst, bool isPublic, bool isDeferred = false) {
+        bool isGlobal, bool isConst, bool isExport, bool isDeferred = false) {
 
-        assertNoGlobalDeclaration(name, get().fileId, isPublic);
+        assertNoGlobalDeclaration(name, get().fileId, isExport);
 
         GrVariable variable = new GrVariable;
         variable.isAuto = isAuto;
@@ -202,7 +202,7 @@ final class GrParser {
         variable.type = type;
         variable.isConst = isConst;
         variable.name = name;
-        variable.isPublic = isPublic;
+        variable.isExport = isExport;
         variable.fileId = get().fileId;
         variable.lexPosition = current;
 
@@ -219,25 +219,25 @@ final class GrParser {
         return variable;
     }
 
-    private GrVariable getGlobalVariable(string name, uint fileId, bool isPublic = false) {
+    private GrVariable getGlobalVariable(string name, uint fileId, bool isExport = false) {
         foreach (GrVariable variable; globalVariables) {
-            if (variable.name == name && (variable.fileId == fileId || variable.isPublic || isPublic))
+            if (variable.name == name && (variable.fileId == fileId || variable.isExport || isExport))
                 return variable;
         }
         return null;
     }
 
-    private void assertNoGlobalDeclaration(string name, uint fileId, bool isPublic) {
+    private void assertNoGlobalDeclaration(string name, uint fileId, bool isExport) {
         GrVariable variable;
         GrFunction func;
-        if ((variable = getGlobalVariable(name, fileId, isPublic)) !is null)
+        if ((variable = getGlobalVariable(name, fileId, isExport)) !is null)
             logError(format(getError(Error.nameXDefMultipleTimes), name),
                 format(getError(Error.xRedefHere), name), "", 0,
                 format(getError(Error.prevDefOfX), name), variable.lexPosition);
         if (_data.isPrimitiveDeclared(name))
             logError(format(getError(Error.nameXDefMultipleTimes), name),
                 format(getError(Error.prevDefPrim), name));
-        if ((func = getFunction(name, fileId, isPublic)) !is null)
+        if ((func = getFunction(name, fileId, isExport)) !is null)
             logError(format(getError(Error.nameXDefMultipleTimes), name),
                 format(getError(Error.xRedefHere), name), "", 0,
                 format(getError(Error.prevDefOfX), name), func.lexPosition);
@@ -302,7 +302,7 @@ final class GrParser {
             func.isTask = false;
             func.inSignature = [];
             func.outSignature = [];
-            func.isPublic = true;
+            func.isExport = true;
             func.fileId = 0;
             func.lexPosition = 0;
             functions ~= func;
@@ -337,7 +337,7 @@ final class GrParser {
 
     private void preBeginFunction(string name, uint fileId, GrType[] signature,
         string[] inputVariables, bool isTask, GrType[] outSignature = [],
-        bool isAnonymous = false, bool isEvent = false, bool isPublic = false) {
+        bool isAnonymous = false, bool isEvent = false, bool isExport = false) {
         GrFunction func = new GrFunction;
         func.isTask = isTask;
         func.isEvent = isEvent;
@@ -359,10 +359,10 @@ final class GrParser {
         }
         else {
             func.name = name;
-            func.isPublic = isPublic;
+            func.isExport = isExport;
 
             func.mangledName = grMangleComposite(name, signature);
-            assertNoGlobalDeclaration(func.mangledName, fileId, isPublic);
+            assertNoGlobalDeclaration(func.mangledName, fileId, isExport);
 
             func.lexPosition = current;
             functionsQueue ~= func;
@@ -455,10 +455,10 @@ final class GrParser {
         }
     }
 
-    GrFunction getFunction(string mangledName, uint fileId = 0, bool isPublic = false) {
+    GrFunction getFunction(string mangledName, uint fileId = 0, bool isExport = false) {
         foreach (GrFunction func; functions) {
             if (func.mangledName == mangledName && (func.fileId == fileId ||
-                    func.isPublic || isPublic)) {
+                    func.isExport || isExport)) {
                 return func;
             }
         }
@@ -471,7 +471,7 @@ final class GrParser {
     }
 
     auto getFirstMatchingFuncOrPrim(string name, GrType[] signature,
-        uint fileId = 0, bool isPublic = false) {
+        uint fileId = 0, bool isExport = false) {
         struct Result {
             GrPrimitive prim;
             GrFunction func;
@@ -523,7 +523,7 @@ final class GrParser {
 
         foreach (GrFunction func; functions) {
             if (func.mangledName == mangledName && (func.fileId == fileId ||
-                    func.isPublic || isPublic)) {
+                    func.isExport || isExport)) {
                 result.func = func;
                 assertSignaturePurity(result.func.inSignature);
                 return result;
@@ -531,7 +531,7 @@ final class GrParser {
         }
         foreach (GrFunction func; functionsQueue) {
             if (func.mangledName == mangledName && (func.fileId == fileId ||
-                    func.isPublic || isPublic)) {
+                    func.isExport || isExport)) {
                 result.func = func;
                 assertSignaturePurity(result.func.inSignature);
                 return result;
@@ -539,7 +539,7 @@ final class GrParser {
         }
         foreach (GrFunction func; instanciatedFunctions) {
             if (func.mangledName == mangledName && (func.fileId == fileId ||
-                    func.isPublic || isPublic)) {
+                    func.isExport || isExport)) {
                 functionsQueue ~= func;
 
                 functionStack ~= currentFunction;
@@ -561,9 +561,9 @@ final class GrParser {
         }
 
         foreach (GrFunction func; functions) {
-            if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
+            if (func.name == name && (func.fileId == fileId || func.isExport || isExport)) {
                 if (_data.isSignatureCompatible(signature, func.inSignature,
-                        false, fileId, isPublic)) {
+                        false, fileId, isExport)) {
                     result.func = func;
                     assertSignaturePurity(result.func.inSignature);
                     return result;
@@ -571,9 +571,9 @@ final class GrParser {
             }
         }
         foreach (GrFunction func; functionsQueue) {
-            if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
+            if (func.name == name && (func.fileId == fileId || func.isExport || isExport)) {
                 if (_data.isSignatureCompatible(signature, func.inSignature,
-                        false, fileId, isPublic)) {
+                        false, fileId, isExport)) {
                     result.func = func;
                     assertSignaturePurity(result.func.inSignature);
                     return result;
@@ -582,9 +582,9 @@ final class GrParser {
         }
 
         foreach (GrFunction func; instanciatedFunctions) {
-            if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
+            if (func.name == name && (func.fileId == fileId || func.isExport || isExport)) {
                 if (_data.isSignatureCompatible(signature, func.inSignature,
-                        false, fileId, isPublic)) {
+                        false, fileId, isExport)) {
                     functionsQueue ~= func;
 
                     functionStack ~= currentFunction;
@@ -607,12 +607,12 @@ final class GrParser {
         }
 
         __functionLoop: foreach (GrTemplateFunction temp; templatedFunctions) {
-            if (temp.name == name && (temp.fileId == fileId || temp.isPublic || isPublic)) {
+            if (temp.name == name && (temp.fileId == fileId || temp.isExport || isExport)) {
                 GrAnyData anyData = new GrAnyData;
                 _data.setAnyData(anyData);
 
                 if (_data.isSignatureCompatible(signature, temp.inSignature,
-                        true, fileId, isPublic)) {
+                        true, fileId, isExport)) {
                     foreach (GrConstraint constraint; temp.constraints) {
                         if (!constraint.evaluate(_data, anyData))
                             continue __functionLoop;
@@ -640,7 +640,7 @@ final class GrParser {
         return result;
     }
 
-    GrFunction getFunction(string name, GrType[] signature, uint fileId = 0, bool isPublic = false) {
+    GrFunction getFunction(string name, GrType[] signature, uint fileId = 0, bool isExport = false) {
         const string mangledName = grMangleComposite(name, signature);
 
         foreach (GrFunction func; events) {
@@ -651,33 +651,33 @@ final class GrParser {
 
         foreach (GrFunction func; functions) {
             if (func.mangledName == mangledName && (func.fileId == fileId ||
-                    func.isPublic || isPublic)) {
+                    func.isExport || isExport)) {
                 return func;
             }
         }
         foreach (GrFunction func; functions) {
-            if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
+            if (func.name == name && (func.fileId == fileId || func.isExport || isExport)) {
                 if (_data.isSignatureCompatible(signature, func.inSignature,
-                        false, fileId, isPublic))
+                        false, fileId, isExport))
                     return func;
             }
         }
         foreach (GrFunction func; functionsQueue) {
             if (func.mangledName == mangledName && (func.fileId == fileId ||
-                    func.isPublic || isPublic)) {
+                    func.isExport || isExport)) {
                 return func;
             }
         }
         foreach (GrFunction func; functionsQueue) {
-            if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
+            if (func.name == name && (func.fileId == fileId || func.isExport || isExport)) {
                 if (_data.isSignatureCompatible(signature, func.inSignature,
-                        false, fileId, isPublic))
+                        false, fileId, isExport))
                     return func;
             }
         }
         foreach (GrFunction func; instanciatedFunctions) {
             if (func.mangledName == mangledName && (func.fileId == fileId ||
-                    func.isPublic || isPublic)) {
+                    func.isExport || isExport)) {
                 functionsQueue ~= func;
 
                 functionStack ~= currentFunction;
@@ -690,9 +690,9 @@ final class GrParser {
             }
         }
         foreach (GrFunction func; instanciatedFunctions) {
-            if (func.name == name && (func.fileId == fileId || func.isPublic || isPublic)) {
+            if (func.name == name && (func.fileId == fileId || func.isExport || isExport)) {
                 if (_data.isSignatureCompatible(signature, func.inSignature,
-                        false, fileId, isPublic)) {
+                        false, fileId, isExport)) {
                     functionsQueue ~= func;
 
                     functionStack ~= currentFunction;
@@ -707,11 +707,11 @@ final class GrParser {
         }
 
         __functionLoop: foreach (GrTemplateFunction temp; templatedFunctions) {
-            if (temp.name == name && (temp.fileId == fileId || temp.isPublic || isPublic)) {
+            if (temp.name == name && (temp.fileId == fileId || temp.isExport || isExport)) {
                 GrAnyData anyData = new GrAnyData;
                 _data.setAnyData(anyData);
                 if (_data.isSignatureCompatible(signature, temp.inSignature,
-                        true, fileId, isPublic)) {
+                        true, fileId, isExport)) {
                     foreach (GrConstraint constraint; temp.constraints) {
                         if (!constraint.evaluate(_data, anyData))
                             continue __functionLoop;
@@ -1819,7 +1819,7 @@ final class GrParser {
         _data = data;
         _options = options;
 
-        bool isPublic;
+        bool isExport;
         lexemes = lexer.lexemes;
 
         beginGlobalScope();
@@ -1833,9 +1833,9 @@ final class GrParser {
         // Définitions des types
         while (!isEnd()) {
             GrLexeme lex = get();
-            isPublic = false;
+            isExport = false;
             if (lex.type == GrLexeme.Type.export_) {
-                isPublic = true;
+                isExport = true;
                 checkAdvance();
                 lex = get();
             }
@@ -1844,10 +1844,10 @@ final class GrParser {
                 checkAdvance();
                 break;
             case class_:
-                registerClassDeclaration(isPublic);
+                registerClassDeclaration(isExport);
                 break;
             case enum_:
-                parseEnumDeclaration(isPublic);
+                parseEnumDeclaration(isExport);
                 break;
             case event:
             case task:
@@ -1865,9 +1865,9 @@ final class GrParser {
         reset();
         while (!isEnd()) {
             GrLexeme lex = get();
-            isPublic = false;
+            isExport = false;
             if (lex.type == GrLexeme.Type.export_) {
-                isPublic = true;
+                isExport = true;
                 checkAdvance();
                 lex = get();
             }
@@ -1876,7 +1876,7 @@ final class GrParser {
                 checkAdvance();
                 break;
             case alias_:
-                parseTypeAliasDeclaration(isPublic);
+                parseTypeAliasDeclaration(isExport);
                 break;
             case event:
             case task:
@@ -1899,9 +1899,9 @@ final class GrParser {
         reset();
         while (!isEnd()) {
             GrLexeme lex = get();
-            isPublic = false;
+            isExport = false;
             if (lex.type == GrLexeme.Type.export_) {
-                isPublic = true;
+                isExport = true;
                 checkAdvance();
                 lex = get();
             }
@@ -1914,19 +1914,19 @@ final class GrParser {
                 skipDeclaration();
                 break;
             case event:
-                parseEventDeclaration(isPublic);
+                parseEventDeclaration(isExport);
                 break;
             case task:
                 if (get(1).type != GrLexeme.Type.identifier && get(1).type != GrLexeme.Type.lesser)
                     goto case intType;
-                parseTaskDeclaration(isPublic);
+                parseTaskDeclaration(isExport);
                 break;
             case func:
                 if (get(1).type != GrLexeme.Type.identifier && !get(1)
                     .isOperator && get(1).type != GrLexeme.Type.as && get(1)
                     .type != GrLexeme.Type.lesser)
                     goto case intType;
-                parseFunctionDeclaration(isPublic);
+                parseFunctionDeclaration(isExport);
                 break;
             case intType: .. case channelType:
             case var:
@@ -1948,9 +1948,9 @@ final class GrParser {
         beginGlobalScope();
         while (!isEnd()) {
             GrLexeme lex = get();
-            isPublic = false;
+            isExport = false;
             if (lex.type == GrLexeme.Type.export_) {
-                isPublic = true;
+                isExport = true;
                 checkAdvance();
                 lex = get();
             }
@@ -1970,10 +1970,10 @@ final class GrParser {
                 skipDeclaration();
                 break;
             case var:
-                parseVariableDeclaration(false, true, isPublic);
+                parseVariableDeclaration(false, true, isExport);
                 break;
             case const_:
-                parseVariableDeclaration(true, true, isPublic);
+                parseVariableDeclaration(true, true, isExport);
                 break;
             case alias_:
                 skipExpression();
@@ -2009,7 +2009,7 @@ final class GrParser {
 
         for (int i; i < func.templateVariables.length; ++i) {
             _data.addTemplateAlias(func.templateVariables[i],
-                func.templateSignature[i], func.fileId, func.isPublic);
+                func.templateSignature[i], func.fileId, func.isExport);
         }
         current = func.lexPosition;
         parseWhereStatement(func.templateVariables);
@@ -2040,7 +2040,7 @@ final class GrParser {
     }
 
     /// Analyse la déclaration d’un alias de type
-    private void parseTypeAliasDeclaration(bool isPublic) {
+    private void parseTypeAliasDeclaration(bool isExport) {
         const uint fileId = get().fileId;
         checkAdvance();
 
@@ -2063,14 +2063,14 @@ final class GrParser {
             logError(getError(Error.missingSemicolonAfterType), format(getError(Error.expectedXFoundY),
                     getPrettyLexemeType(GrLexeme.Type.semicolon), getPrettyLexemeType(get().type)));
 
-        if (_data.isTypeDeclared(typeAliasName, fileId, isPublic))
+        if (_data.isTypeDeclared(typeAliasName, fileId, isExport))
             logError(format(getError(Error.nameXDefMultipleTimes),
                     typeAliasName), format(getError(Error.alreadyDef), typeAliasName));
-        _data.addAlias(typeAliasName, type, fileId, isPublic);
+        _data.addAlias(typeAliasName, type, fileId, isExport);
     }
 
     /// Analyse la déclaration d’une énumération
-    private void parseEnumDeclaration(bool isPublic) {
+    private void parseEnumDeclaration(bool isExport) {
         const uint fileId = get().fileId;
         checkAdvance();
         if (get().type != GrLexeme.Type.identifier)
@@ -2104,14 +2104,14 @@ final class GrParser {
                         getPrettyLexemeType(get().type)));
             checkAdvance();
         }
-        if (_data.isTypeDeclared(enumName, fileId, isPublic))
+        if (_data.isTypeDeclared(enumName, fileId, isExport))
             logError(format(getError(Error.nameXDefMultipleTimes), enumName),
                 format(getError(Error.xAlreadyDecl), enumName));
-        _data.addEnum(enumName, fields, [], fileId, isPublic); //@TODO: Valeur des énums
+        _data.addEnum(enumName, fields, [], fileId, isExport); //@TODO: Valeur des énums
     }
 
     /// Déclare une nouvelle classe sans l’analyser
-    private void registerClassDeclaration(bool isPublic) {
+    private void registerClassDeclaration(bool isExport) {
         const uint fileId = get().fileId;
 
         checkAdvance();
@@ -2122,14 +2122,14 @@ final class GrParser {
         const string className = get().svalue;
         checkAdvance();
 
-        if (_data.isTypeDeclared(className, fileId, isPublic))
+        if (_data.isTypeDeclared(className, fileId, isExport))
             logError(format(getError(Error.nameXDefMultipleTimes), className),
                 format(getError(Error.xAlreadyDecl), className));
 
         string[] templateVariables = parseTemplateVariables();
         const uint declPosition = current;
 
-        _data.registerClass(className, fileId, isPublic, templateVariables, declPosition);
+        _data.registerClass(className, fileId, isExport, templateVariables, declPosition);
 
         skipDeclaration();
     }
@@ -2159,7 +2159,7 @@ final class GrParser {
 
         for (int i; i < class_.templateVariables.length; ++i) {
             _data.addTemplateAlias(class_.templateVariables[i],
-                class_.templateTypes[i], class_.fileId, class_.isPublic);
+                class_.templateTypes[i], class_.fileId, class_.isExport);
         }
 
         uint[] fieldPositions;
@@ -2250,7 +2250,7 @@ final class GrParser {
         class_.fieldsInfo.length = fields.length;
         for (int i; i < class_.fieldsInfo.length; ++i) {
             class_.fieldsInfo[i].fileId = class_.fileId;
-            class_.fieldsInfo[i].isPublic = fieldScopes[i];
+            class_.fieldsInfo[i].isExport = fieldScopes[i];
             class_.fieldsInfo[i].position = fieldPositions[i];
         }
         current = tempPos;
@@ -2363,7 +2363,28 @@ final class GrParser {
         }
 
         GrLexeme lex = get();
-        if (!lex.isType) {
+        if (lex.type == GrLexeme.Type.leftBracket) {
+            currentType.base = GrType.Base.list;
+            checkAdvance();
+            GrType subType = parseType(mustBeType, templateVariables);
+
+            if (get().type != GrLexeme.Type.rightBracket) {
+                logError(format(getError(Error.missingXInListSignature),
+                        getPrettyLexemeType(GrLexeme.Type.rightCurlyBrace)),
+                    format(getError(Error.expectedXFoundY),
+                        getPrettyLexemeType(GrLexeme.Type.rightCurlyBrace),
+                        getPrettyLexemeType(get().type)));
+            }
+            checkAdvance();
+
+            if (subType.base == GrType.Base.void_ || subType.base == GrType.Base.reference ||
+                subType.base == GrType.Base.internalTuple) {
+                logError(format(getError(Error.listCantBeOfTypeX),
+                        getPrettyType(grList(subType))), getError(Error.invalidListType));
+            }
+            currentType.mangledType = grMangle(subType);
+        }
+        else if (!lex.isType) {
             if (lex.type == GrLexeme.Type.identifier) {
                 foreach (tempVar; templateVariables) {
                     if (tempVar == lex.svalue) {
@@ -2450,7 +2471,6 @@ final class GrParser {
             case listType:
                 currentType.base = GrType.Base.list;
                 checkAdvance();
-                string[] temp;
                 auto signature = parseTemplateSignature(templateVariables);
                 if (signature.length > 1) {
                     logError(getError(Error.listCanOnlyContainOneTypeOfVal), getError(Error.conflictingListSignature),
@@ -2483,7 +2503,6 @@ final class GrParser {
             case channelType:
                 currentType.base = GrType.Base.channel;
                 checkAdvance();
-                string[] temp;
                 GrType[] signature = parseTemplateSignature(templateVariables);
                 if (signature.length != 1)
                     logError(getError(Error.channelCanOnlyContainOneTypeOfVal),
@@ -2702,8 +2721,8 @@ final class GrParser {
         return outSignature;
     }
 
-    private void parseEventDeclaration(bool isPublic) {
-        if (isPublic)
+    private void parseEventDeclaration(bool isExport) {
+        if (isExport)
             logError(getError(Error.addingExportBeforeEventIsRedundant),
                 getError(Error.eventAlreadyExported));
         checkAdvance();
@@ -2719,7 +2738,7 @@ final class GrParser {
         preEndFunction();
     }
 
-    private void parseTaskDeclaration(bool isPublic) {
+    private void parseTaskDeclaration(bool isExport) {
         checkAdvance();
         string[] templateVariables = parseTemplateVariables();
         if (get().type != GrLexeme.Type.identifier)
@@ -2734,7 +2753,7 @@ final class GrParser {
         temp.name = name;
         temp.templateVariables = templateVariables;
         temp.fileId = get().fileId;
-        temp.isPublic = isPublic;
+        temp.isExport = isExport;
         temp.lexPosition = current;
 
         string[] inputs;
@@ -2744,7 +2763,7 @@ final class GrParser {
         skipBlock(true);
     }
 
-    private void parseFunctionDeclaration(bool isPublic) {
+    private void parseFunctionDeclaration(bool isExport) {
         checkAdvance();
         string[] templateVariables = parseTemplateVariables();
         string name;
@@ -2809,7 +2828,7 @@ final class GrParser {
         temp.isConversion = isConversion;
         temp.templateVariables = templateVariables;
         temp.fileId = get().fileId;
-        temp.isPublic = isPublic;
+        temp.isExport = isExport;
         temp.lexPosition = current;
 
         string[] inputs;
@@ -2913,7 +2932,7 @@ final class GrParser {
 
         for (int i; i < temp.templateVariables.length; ++i) {
             _data.addTemplateAlias(temp.templateVariables[i], templateList[i],
-                temp.fileId, temp.isPublic);
+                temp.fileId, temp.isExport);
         }
 
         string[] inputs;
@@ -2948,7 +2967,7 @@ final class GrParser {
         func.inSignature = inSignature;
         func.outSignature = outSignature;
         func.fileId = temp.fileId;
-        func.isPublic = temp.isPublic;
+        func.isExport = temp.isExport;
         func.lexPosition = current;
         func.templateVariables = temp.templateVariables;
         func.templateSignature = templateList;
@@ -3497,7 +3516,7 @@ final class GrParser {
         advance();
     }
 
-    private void parseVariableDeclaration(bool isConst, bool isGlobal, bool isPublic) {
+    private void parseVariableDeclaration(bool isConst, bool isGlobal, bool isExport) {
         checkAdvance();
 
         GrType type = GrType.Base.void_;
@@ -3528,7 +3547,7 @@ final class GrParser {
         GrVariable[] lvalues;
         foreach (string identifier; identifiers) {
             GrVariable lvalue = registerVariable(identifier, type, isAuto,
-                isGlobal, isConst, isPublic, true);
+                isGlobal, isConst, isExport, true);
             lvalues ~= lvalue;
         }
 
@@ -6290,7 +6309,7 @@ final class GrParser {
                     for (int i; i < nbFields; i++) {
                         if (identifier == class_.fields[i]) {
                             if ((class_.fieldsInfo[i].fileId != fileId) &&
-                                !class_.fieldsInfo[i].isPublic)
+                                !class_.fieldsInfo[i].isExport)
                                 logError(format(getError(Error.xOnTypeYIsPrivate), identifier,
                                         getPrettyType(currentType)),
                                     getError(Error.privateField), "");
