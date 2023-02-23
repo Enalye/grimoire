@@ -6,9 +6,10 @@ Tous les éléments d’une même liste doivent être du même type.
 [1, 2, 3];
 ```
 
-Une liste est du type `list<T>` où `T` est le type des valeurs contenues dans la liste.
+Une liste est du type `list<T>` ou `[T]` où `T` est le type des valeurs contenues dans la liste.
 ```grimoire
 var x: list<int> = [1, 2, 3];
+var x: [int] = [1, 2, 3];
 ```
 
 Le compilateur ne peut pas toujours déterminer le type de la liste, comme dans le cas d’une liste vide, dans ce cas, on explicite le type.

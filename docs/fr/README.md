@@ -6,7 +6,7 @@ Le langage dispose d’un typage statique, d’un système concurrentiel et d’
 
 Ce guide assume que vous ayez une certaine connaissance d’au moins un autre langage de programmation.
 
-Ce guide est basé sur la version 0.7 de grimoire.
+Ce guide est basé sur la version 0.8 de grimoire.
 
 ```grimoire
 event main() {

@@ -69,6 +69,26 @@ void additionner(GrCall call) {
 > ***Important:***
 Notez cependant que si une opération par défaut existe, elle sera prioritaire.
 
+`addConstructor` permet de définir un constructeur à une classe ou un natif.
+
+```d
+library.addConstructor(&monType_ctor, monType);
+
+void monType_ctor(GrCall call) {
+    call.setNative(new MonType());
+}
+```
+> ***Important:***
+Un constructeur doit toujours retourner le type qu’il définit.
+
+`addStatic` permet de définir une méthode statique à une classe ou un natif.
+
+```d
+library.addStatic(&monType_foo, monType, "foo");
+
+void monType_foo(GrCall call) {
+}
+```
 
 ### Généricité
 
@@ -129,6 +149,23 @@ Tout comme les classes, on peut définir des types génériques.
 ```d
 library.addNative("MonType", ["T"], "TypeParent", [grAny("T")]);
 ```
+
+Les natifs peuvent offrir des propriétés avec `addProperty`, similaire aux champs d’une classe.
+```d
+library.addProperty(&getter, &setter, "maValeur", monTypeNatif, grInt);
+
+void getter(GrCall call) {
+    MonType monType = call.getNative!MonType(0);
+    call.setInt(monType.maValeur);
+}
+
+void setter(GrCall call) {
+    MonType monType = call.getNative!MonType(0);
+    monType.maValeur = call.getInt(1);
+    call.setInt(monType.maValeur);
+}
+```
+La présence d’un `setter` est optionnel, son absence rend la propriété comme constante.
 
 * * *
 

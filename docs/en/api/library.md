@@ -68,6 +68,26 @@ void add(GrCall call) {
 > ***Important:***
 Note that if a default operation exists, it'll use that instead.
 
+`addConstructor` defines a constructor for a class or a native.
+
+```d
+library.addConstructor(&myType_ctor, myType);
+
+void myType_ctor(GrCall call) {
+    call.setNative(new MyType());
+}
+```
+> ***Important:***
+A constructor must always returns the type it defines.
+
+`addStatic` defines a static methode for a class or a native.
+
+```d
+library.addStatic(&myType_foo, myType, "foo");
+
+void myType_foo(GrCall call) {
+}
+```
 
 ### Genericity
 
@@ -87,6 +107,16 @@ Constraints can also restrict the type.
 library.addFunction(&_print_class, "print",
     [grPure(grAny("T"))], [],
     [grConstraint("Class", grAny("T"))]);
+```
+
+`addConstraint` defines a new constraint.
+
+```grimoire
+library.addConstraint(&equals, "Equals", 1);
+
+bool equals(GrData, GrType type, const GrType[] types) {
+    return type == types[0];
+}
 ```
 
 * * *
@@ -128,6 +158,23 @@ Like classes, they can have generic types
 ```d
 library.addNative("MyType", ["T"], "ParentType", [grAny("T")]);
 ```
+
+Natives can expose properties with `addProperty`, similar to a class' fields.
+```d
+library.addProperty(&getter, &setter, "myValue", myNativeType, grInt);
+
+void getter(GrCall call) {
+    MyType myType = call.getNative!MyType(0);
+    call.setInt(myType.myValue);
+}
+
+void setter(GrCall call) {
+    MyType myType = call.getNative!MyType(0);
+    myType.myValue = call.getInt(1);
+    call.setInt(myType.myValue);
+}
+```
+The `setter` is optional, its absence make the property as if it was constant.
 
 * * *
 

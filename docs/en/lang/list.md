@@ -6,9 +6,10 @@ All the element in a list must be of the same type.
 [1, 2, 3];
 ```
 
-A list is of type `list<T>` where `T` is the type of the values contained within.
+A list is of type `list<T>` or `[T]` where `T` is the type of the values contained within.
 ```grimoire
 var x: list<int> = [1, 2, 3];
+var x: [int] = [1, 2, 3];
 ```
 
 The compiler may not be able to know the type of the list if it's empty.

@@ -6,7 +6,7 @@ The language features static typing, concurrency and an easy to use API to defin
 
 This guide assumes you have a basic understanding of at least one other programming language.
 
-This guide is based on the version 0.7 of grimoire.
+This guide is based on the version 0.8 of grimoire.
 
 ```grimoire
 event main() {
