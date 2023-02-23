@@ -1,17 +1,17 @@
 # std.queue
 
 A queue is a collection that can be manipulated on both ends.
-## Natifs
+## Natives
 ### Queue\<T>
 A queue is a collection that can be manipulated on both ends.
 ### QueueIterator\<T>
 Iterate on a queue.
-## Constructeurs
-|Fonction|Entrée|
+## Constructors
+|Function|Input|
 |-|-|
 |[@**Queue\<T>**](#ctor_0)||
-## Fonctions
-|Fonction|Entrée|Sortie|
+## Functions
+|Function|Input|Output|
 |-|-|-|
 |[back](#func_0)|*queue*: **pure Queue\<T>**|**T?**|
 |[front](#func_1)|*queue*: **pure Queue\<T>**|**T?**|
@@ -21,7 +21,7 @@ Iterate on a queue.
 
 
 ***
-## Description des fonctions
+## Function descriptions
 
 <a id="func_0"></a>
 > back (*queue*: **pure Queue\<T>**) (**T?**)

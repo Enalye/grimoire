@@ -5,7 +5,9 @@
  */
 module grimoire.compiler.compiler;
 
+import std.exception : enforce;
 import std.stdio, std.string, std.array, std.conv, std.math, std.file;
+
 import grimoire.runtime, grimoire.assembly;
 import grimoire.compiler.util, grimoire.compiler.lexer, grimoire.compiler.parser,
     grimoire.compiler.primitive, grimoire.compiler.type, grimoire.compiler.data,

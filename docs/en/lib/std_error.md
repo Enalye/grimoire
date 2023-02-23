@@ -1,8 +1,8 @@
 # std.error
 
 Functions to help error handling.
-## Fonctions
-|Fonction|Entrée|Sortie|
+## Functions
+|Function|Input|Output|
 |-|-|-|
 |[_setMeta](#func_0)|*value*: **pure string**||
 |[assert](#func_1)|*value*: **bool**, *error*: **pure string**||
@@ -10,7 +10,7 @@ Functions to help error handling.
 
 
 ***
-## Description des fonctions
+## Function descriptions
 
 <a id="func_0"></a>
 > _setMeta (*value*: **pure string**)

@@ -5,8 +5,10 @@
  */
 module grimoire.compiler.mangle;
 
+import std.exception : enforce;
 import std.conv : to;
 import std.string : indexOf;
+
 import grimoire.compiler.type;
 
 /**
@@ -35,9 +37,9 @@ GrType[] grUnmangleSignature(const string mangledSignature) {
     int i;
     while (i < mangledSignature.length) {
         // Séparateur de type
-        if (mangledSignature[i] != '$') {
-            throw new Exception("invalid unmangle signature mangling format, missing $");
-        }
+        enforce(mangledSignature[i] == '$',
+            "invalid unmangle signature mangling format, missing `$`");
+
         i++;
 
         // Valeur
@@ -93,15 +95,13 @@ GrType[] grUnmangleSignature(const string mangledSignature) {
             break;
         case 'k':
             currentType.base = GrType.Base.class_;
-            if ((i + 2) >= mangledSignature.length)
-                throw new Exception("invalid mangling format");
+            enforce((i + 2) < mangledSignature.length, "invalid mangling format");
             i++;
             currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             break;
         case 'n':
             currentType.base = GrType.Base.native;
-            if ((i + 2) >= mangledSignature.length)
-                throw new Exception("invalid mangling format");
+            enforce((i + 2) < mangledSignature.length, "invalid mangling format");
             i++;
             currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             break;
@@ -170,8 +170,8 @@ auto grUnmangleComposite(const string mangledSignature) {
 string grUnmangleBlock(const string mangledSignature, ref int i) {
     string subString;
     int blockCount = 1;
-    if (i >= mangledSignature.length || mangledSignature[i] != '(')
-        throw new Exception("invalid subType mangling format, missing (");
+    enforce(i < mangledSignature.length && mangledSignature[i] == '(',
+        "invalid subType mangling format, missing `(`");
     i++;
 
     for (; i < mangledSignature.length; i++) {
@@ -190,7 +190,7 @@ string grUnmangleBlock(const string mangledSignature, ref int i) {
         }
         subString ~= mangledSignature[i];
     }
-    throw new Exception("invalid subType mangling format, missing )");
+    throw new Exception("invalid subType mangling format, missing `)`");
 }
 
 /// Opération de décoration pour un simple type
@@ -274,8 +274,7 @@ GrType grUnmangle(const string mangledSignature) {
     int i;
     if (i < mangledSignature.length) {
         // Séparateur de type
-        if (mangledSignature[i] != '$')
-            throw new Exception("invalid unmangle mangling format, missing $");
+        enforce(mangledSignature[i] == '$', "invalid unmangle mangling format, missing `$`");
         i++;
 
         if (mangledSignature[i] == '@') {

@@ -1,15 +1,15 @@
 # std.circularbuffer
 
-## Natifs
+## Natives
 ### CircularBuffer\<T>
 ### CircularBufferIterator\<T>
 Iterate on a circular buffer.
-## Constructeurs
-|Fonction|Entrée|
+## Constructors
+|Function|Input|
 |-|-|
 |[@**CircularBuffer\<T>**](#ctor_0)|**int** *param0*|
-## Fonctions
-|Fonction|Entrée|Sortie|
+## Functions
+|Function|Input|Output|
 |-|-|-|
 |[back](#func_0)|*buffer*: **pure CircularBuffer\<T>**|**T?**|
 |[capacity](#func_1)|*buffer*: **pure CircularBuffer\<T>**|**int**|
@@ -22,7 +22,7 @@ Iterate on a circular buffer.
 
 
 ***
-## Description des fonctions
+## Function descriptions
 
 <a id="func_0"></a>
 > back (*buffer*: **pure CircularBuffer\<T>**) (**T?**)

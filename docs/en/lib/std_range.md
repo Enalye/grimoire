@@ -1,16 +1,16 @@
 # std.range
 
 Functions to iterate on series of numbers.
-## Natifs
+## Natives
 ### RangeIterator\<T>
 Iterate on a serie of numbers.
-## Opérateurs
-|Opérateur|Entrée|Sortie|
+## Opérators
+|Opérator|Input|Output|
 |-|-|-|
 |->|**int**, **int**|**RangeIterator\<int>**|
 |->|**float**, **float**|**RangeIterator\<float>**|
-## Fonctions
-|Fonction|Entrée|Sortie|
+## Functions
+|Function|Input|Output|
 |-|-|-|
 |[next](#func_0)|*iterator*: **RangeIterator\<int>**|**int?**|
 |[next](#func_1)|*iterator*: **RangeIterator\<float>**|**float?**|
@@ -21,7 +21,7 @@ Iterate on a serie of numbers.
 
 
 ***
-## Description des fonctions
+## Function descriptions
 
 <a id="func_0"></a>
 > next (*iterator*: **RangeIterator\<int>**) (**int?**)

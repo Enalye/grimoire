@@ -13,6 +13,7 @@ import std.conv;
 import std.math;
 import std.file;
 import std.meta;
+import std.exception : enforce;
 
 import grimoire.runtime;
 import grimoire.assembly;
@@ -312,8 +313,7 @@ final class GrParser {
     }
 
     private void endGlobalScope() {
-        if (!functionStack.length)
-            throw new Exception("global scope mismatch");
+        enforce(functionStack.length, "global scope mismatch");
 
         currentFunction = functionStack[$ - 1];
         functionStack.length--;
@@ -391,16 +391,13 @@ final class GrParser {
 
         currentFunction.offset += prependInstructionCount;
 
-        if (!functionStack.length)
-            throw new Exception("attempting to close a non-existing function");
-
+        enforce(functionStack.length, "attempting to close a non-existing function");
         currentFunction = functionStack[$ - 1];
         functionStack.length--;
     }
 
     private void preEndFunction() {
-        if (!functionStack.length)
-            throw new Exception("attempting to close a non-existing function");
+        enforce(functionStack.length, "attempting to close a non-existing function");
         currentFunction = functionStack[$ - 1];
         functionStack.length--;
     }
@@ -815,15 +812,14 @@ final class GrParser {
     }
 
     private void addInstruction(GrOpcode opcode, int value = 0, bool isSigned = false) {
-        if (currentFunction is null)
-            throw new Exception(
-                "the expression is located outside of a function, task, or event which is forbidden");
+        enforce(currentFunction,
+            "the expression is located outside of a function, task, or event which is forbidden");
 
         GrInstruction instruction;
         instruction.opcode = opcode;
         if (isSigned) {
-            if ((value >= 0x800000) || (-value >= 0x800000))
-                throw new Exception("an opcode's signed value is exceeding limits");
+            enforce((value < 0x800000) && (-value < 0x800000),
+                "an opcode's signed value is exceeding limits");
             instruction.value = value + 0x800000;
         }
         else
@@ -836,15 +832,14 @@ final class GrParser {
     }
 
     private void addInstructionInFront(GrOpcode opcode, int value = 0, bool isSigned = false) {
-        if (currentFunction is null)
-            throw new Exception(
-                "the expression is located outside of a function, task or event which is forbidden");
+        enforce(currentFunction,
+            "the expression is located outside of a function, task or event which is forbidden");
 
         GrInstruction instruction;
         instruction.opcode = opcode;
         if (isSigned) {
-            if ((value >= 0x800000) || (-value >= 0x800000))
-                throw new Exception("an opcode's signed value is exceeding limits");
+            enforce((value < 0x800000) && (-value < 0x800000),
+                "an opcode's signed value is exceeding limits");
             instruction.value = value + 0x800000;
         }
         else
@@ -872,18 +867,17 @@ final class GrParser {
     }
 
     private void setInstruction(GrOpcode opcode, uint index, int value = 0u, bool isSigned = false) {
-        if (currentFunction is null)
-            throw new Exception(
-                "the expression is located outside of a function, task or event which is forbidden");
+        enforce(currentFunction,
+            "the expression is located outside of a function, task or event which is forbidden");
 
-        if (index >= currentFunction.instructions.length)
-            throw new Exception("an instruction's index is exeeding the function size");
+        enforce(index < currentFunction.instructions.length,
+            "an instruction's index is exeeding the function size");
 
         GrInstruction instruction;
         instruction.opcode = opcode;
         if (isSigned) {
-            if ((value >= 0x800000) || (-value >= 0x800000))
-                throw new Exception("an opcode's signed value is exceeding limits");
+            enforce((value < 0x800000) && (-value < 0x800000),
+                "an opcode's signed value is exceeding limits");
             instruction.value = value + 0x800000;
         }
         else
@@ -1583,10 +1577,9 @@ final class GrParser {
             allowOptimization = false;
         }
 
-        if (variable.isField) {
-            throw new Exception("attempt to get field value");
-        }
-        else if (variable.isGlobal) {
+        enforce(!variable.isField, "attempt to get field value");
+
+        if (variable.isGlobal) {
             final switch (variable.type.base) with (GrType.Base) {
             case bool_:
             case int_:
@@ -1749,8 +1742,8 @@ final class GrParser {
         GrInstruction instruction;
         instruction.opcode = opcode;
         if (isSigned) {
-            if ((value >= 0x800000) || (-value >= 0x800000))
-                throw new Exception("an opcode's signed value is exceeding limits");
+            enforce((value < 0x800000) && (-value < 0x800000),
+                "an opcode's signed value is exceeding limits");
             instruction.value = value + 0x800000;
         }
         else
@@ -2376,12 +2369,6 @@ final class GrParser {
                         getPrettyLexemeType(get().type)));
             }
             checkAdvance();
-
-            if (subType.base == GrType.Base.void_ || subType.base == GrType.Base.reference ||
-                subType.base == GrType.Base.internalTuple) {
-                logError(format(getError(Error.listCantBeOfTypeX),
-                        getPrettyType(grList(subType))), getError(Error.invalidListType));
-            }
             currentType.mangledType = grMangle(subType);
         }
         else if (!lex.isType) {
@@ -2890,10 +2877,10 @@ final class GrParser {
                         getPrettyLexemeType(GrLexeme.Type.identifier),
                         getPrettyLexemeType(get().type)));
 
-            GrConstraint.Data constraintData = grGetConstraint(get().svalue);
-            if (!constraintData.predicate) {
+            GrConstraint.Data constraintData = _data.getConstraintData(get().svalue);
+            if (!constraintData) {
                 const string[] nearestValues = findNearestStrings(get().svalue,
-                    grGetAllConstraintsName());
+                    _data.getAllConstraintsName());
                 string errorNote;
                 if (nearestValues.length) {
                     foreach (size_t i, const string value; nearestValues) {
@@ -2908,7 +2895,7 @@ final class GrParser {
             }
             checkAdvance();
             GrType[] parameters = parseTemplateSignature(templateVariables);
-            constraints ~= new GrConstraint(constraintData.predicate,
+            constraints ~= GrConstraint(constraintData.predicate,
                 constraintData.arity, type, parameters);
             if (constraintData.arity != parameters.length)
                 logError(format(getError(constraintData.arity > 1 ? Error.constraintTakesXArgsButYWereSupplied
@@ -3387,8 +3374,8 @@ final class GrParser {
     }
 
     private void closeDeferrableSection() {
-        if (!currentFunction.deferrableSections.length)
-            throw new Exception("attempting to close a non-existing function");
+        enforce(currentFunction.deferrableSections.length,
+            "attempting to close a non-existing function");
 
         foreach (deferBlock; currentFunction.deferrableSections[$ - 1].deferredBlocks) {
             currentFunction.registeredDeferBlocks ~= deferBlock;
@@ -3457,8 +3444,7 @@ final class GrParser {
 
     // Ferme une section pouvant être quitté
     private void closeBreakableSection() {
-        if (!breaksJumps.length)
-            throw new Exception("attempting to close a non-existing function");
+        enforce(breaksJumps.length, "attempting to close a non-existing function");
 
         uint[] breaks = breaksJumps[$ - 1];
         breaksJumps.length--;
@@ -3487,8 +3473,7 @@ final class GrParser {
 
     // Ferme une section pouvant être réitéré
     private void closeContinuableSection() {
-        if (!continuesJumps.length)
-            throw new Exception("attempting to close a non-existing function");
+        enforce(continuesJumps.length, "attempting to close a non-existing function");
 
         uint[] continues = continuesJumps[$ - 1];
         const uint destination = continuesDestinations[$ - 1];

@@ -108,6 +108,12 @@ final class GrDoc : GrLibDefinition {
             string[GrLocale] comments;
         }
 
+        struct Constraint {
+            string name;
+            uint arity;
+            string[GrLocale] comments;
+        }
+
         Variable[] _variables;
         Enum[] _enums;
         Class[] _classes;
@@ -119,6 +125,7 @@ final class GrDoc : GrLibDefinition {
         Cast[] _casts;
         Function[] _functions;
         Property[] _properties;
+        Constraint[] _constraints;
     }
 
     this(string[] moduleName)
@@ -409,6 +416,15 @@ final class GrDoc : GrLibDefinition {
         return null;
     }
 
+    /// Enregistre une nouvelle contrainte
+    override void addConstraint(GrConstraint.Predicate, const string name, uint arity = 0) {
+        Constraint constraint;
+        constraint.name = name;
+        constraint.arity = arity;
+        constraint.comments = _comments.dup;
+        _constraints ~= constraint;
+    }
+
     private final class MarkDownGenerator {
         private string _text;
 
@@ -464,6 +480,7 @@ final class GrDoc : GrLibDefinition {
         sort!((a, b) => (a.name < b.name))(_operators);
         sort!((a, b) => (a.name < b.name))(_properties);
         sort!((a, b) => (a.name < b.name))(_functions);
+        sort!((a, b) => (a.name < b.name))(_constraints);
 
         MarkDownGenerator md = new MarkDownGenerator;
 
@@ -488,14 +505,51 @@ final class GrDoc : GrLibDefinition {
 
         const auto description = locale in _moduleDescription;
         if (description) {
-            md.addHeader("Description", 2);
+            final switch (locale) with (GrLocale) {
+            case fr_FR:
+                md.addHeader("Description", 2);
+                break;
+            case en_US:
+                md.addHeader("Description", 2);
+                break;
+            }
+
             md.addText(*description);
         }
 
-        if (_variables.length) {
-            md.addHeader("Variables", 2);
+        if (_constraints.length) {
+            final switch (locale) with (GrLocale) {
+            case fr_FR:
+                md.addHeader("Contraintes", 2);
+                md.addTableHeader(["Contrainte", "Paramètres", "Condition"]);
+                break;
+            case en_US:
+                md.addHeader("Constraints", 2);
+                md.addTableHeader(["Constraint", "Parameters", "Condition"]);
+                break;
+            }
 
-            md.addTableHeader(["Variable", "Type", "Valeur", "Description"]);
+            foreach (constraint_; _constraints) {
+                auto comment = locale in constraint_.comments;
+                md.addTable([
+                    constraint_.name, to!string(constraint_.arity),
+                    comment ? *comment: ""
+                ]);
+            }
+        }
+
+        if (_variables.length) {
+            final switch (locale) with (GrLocale) {
+            case fr_FR:
+                md.addHeader("Variables", 2);
+                md.addTableHeader(["Variable", "Type", "Valeur", "Description"]);
+                break;
+            case en_US:
+                md.addHeader("Variables", 2);
+                md.addTableHeader(["Variable", "Type", "Value", "Description"]);
+                break;
+            }
+
             foreach (var; _variables) {
                 string value;
                 switch (var.type.base) with (GrType.Base) {
@@ -524,9 +578,17 @@ final class GrDoc : GrLibDefinition {
         }
 
         if (_enums.length) {
-            md.addHeader("Énumérations", 2);
+            final switch (locale) with (GrLocale) {
+            case fr_FR:
+                md.addHeader("Énumérations", 2);
+                md.addTableHeader(["Énumération", "Valeurs", "Description"]);
+                break;
+            case en_US:
+                md.addHeader("Enumerations", 2);
+                md.addTableHeader(["Enumeration", "Values", "Description"]);
+                break;
+            }
 
-            md.addTableHeader(["Énumération", "Valeurs", "Description"]);
             foreach (enum_; _enums) {
                 string fields = "{";
                 foreach (field; enum_.fields) {
@@ -541,7 +603,14 @@ final class GrDoc : GrLibDefinition {
         }
 
         if (_classes.length) {
-            md.addHeader("Classes", 2);
+            final switch (locale) with (GrLocale) {
+            case fr_FR:
+                md.addHeader("Classes", 2);
+                break;
+            case en_US:
+                md.addHeader("Classes", 2);
+                break;
+            }
 
             foreach (class_; _classes) {
                 sort!((a, b) => (a.name < b.name))(class_.fields);
@@ -572,14 +641,31 @@ final class GrDoc : GrLibDefinition {
                         parentName ~= signature ~ ">";
                     }
                     parentName ~= "**";
-                    md.addText("Hérite de " ~ parentName);
+
+                    final switch (locale) with (GrLocale) {
+                    case fr_FR:
+                        md.addText("Hérite de " ~ parentName);
+                        break;
+                    case en_US:
+                        md.addText("Inherits from " ~ parentName);
+                        break;
+                    }
                 }
 
                 auto comment = locale in class_.comments;
                 if (comment) {
                     md.addText(*comment);
                 }
-                md.addTableHeader(["Champ", "Type", "Description"]);
+
+                final switch (locale) with (GrLocale) {
+                case fr_FR:
+                    md.addTableHeader(["Champ", "Type", "Description"]);
+                    break;
+                case en_US:
+                    md.addTableHeader(["Field", "Type", "Description"]);
+                    break;
+                }
+
                 foreach (field; class_.fields) {
                     auto fieldComment = locale in field.comments;
                     md.addTable([
@@ -591,7 +677,14 @@ final class GrDoc : GrLibDefinition {
         }
 
         if (_natives.length) {
-            md.addHeader("Natifs", 2);
+            final switch (locale) with (GrLocale) {
+            case fr_FR:
+                md.addHeader("Natifs", 2);
+                break;
+            case en_US:
+                md.addHeader("Natives", 2);
+                break;
+            }
 
             foreach (native; _natives) {
                 string nativeName = native.name;
@@ -620,7 +713,15 @@ final class GrDoc : GrLibDefinition {
                         parentName ~= signature ~ ">";
                     }
                     parentName ~= "**";
-                    md.addText("Hérite de " ~ parentName);
+
+                    final switch (locale) with (GrLocale) {
+                    case fr_FR:
+                        md.addText("Hérite de " ~ parentName);
+                        break;
+                    case en_US:
+                        md.addText("Inherits from " ~ parentName);
+                        break;
+                    }
                 }
 
                 auto comment = locale in native.comments;
@@ -631,9 +732,17 @@ final class GrDoc : GrLibDefinition {
         }
 
         if (_aliases.length) {
-            md.addHeader("Alias", 2);
+            final switch (locale) with (GrLocale) {
+            case fr_FR:
+                md.addHeader("Alias", 2);
+                md.addTableHeader(["Alias", "Type", "Commentaire"]);
+                break;
+            case en_US:
+                md.addHeader("Aliases", 2);
+                md.addTableHeader(["Alias", "Type", "Comment"]);
+                break;
+            }
 
-            md.addTableHeader(["Alias", "Type", "Commentaire"]);
             foreach (alias_; _aliases) {
                 auto comment = locale in alias_.comments;
                 md.addTable([
@@ -644,9 +753,17 @@ final class GrDoc : GrLibDefinition {
         }
 
         if (_operators.length) {
-            md.addHeader("Opérateurs", 2);
+            final switch (locale) with (GrLocale) {
+            case fr_FR:
+                md.addHeader("Opérateurs", 2);
+                md.addTableHeader(["Opérateur", "Entrée", "Sortie"]);
+                break;
+            case en_US:
+                md.addHeader("Opérators", 2);
+                md.addTableHeader(["Opérator", "Input", "Output"]);
+                break;
+            }
 
-            md.addTableHeader(["Opérateur", "Entrée", "Sortie"]);
             foreach (op; _operators) {
                 string name = op.name;
                 if (name == "||")
@@ -665,9 +782,17 @@ final class GrDoc : GrLibDefinition {
         }
 
         if (_casts.length) {
-            md.addHeader("Conversions", 2);
+            final switch (locale) with (GrLocale) {
+            case fr_FR:
+                md.addHeader("Conversions", 2);
+                md.addTableHeader(["Source", "Destination"]);
+                break;
+            case en_US:
+                md.addHeader("Conversions", 2);
+                md.addTableHeader(["Source", "Destination"]);
+                break;
+            }
 
-            md.addTableHeader(["Source", "Destination"]);
             foreach (conv; _casts) {
                 md.addTable([
                     _getPrettyType(conv.srcType), _getPrettyType(conv.dstType)
@@ -676,9 +801,17 @@ final class GrDoc : GrLibDefinition {
         }
 
         if (_constructors.length) {
-            md.addHeader("Constructeurs", 2);
+            final switch (locale) with (GrLocale) {
+            case fr_FR:
+                md.addHeader("Constructeurs", 2);
+                md.addTableHeader(["Fonction", "Entrée"]);
+                break;
+            case en_US:
+                md.addHeader("Constructors", 2);
+                md.addTableHeader(["Function", "Input"]);
+                break;
+            }
 
-            md.addTableHeader(["Fonction", "Entrée"]);
             int i;
             foreach (ctor; _constructors) {
                 string funcName = "@" ~ _getPrettyType(ctor.type);
@@ -713,25 +846,47 @@ final class GrDoc : GrLibDefinition {
         }
 
         if (_properties.length) {
-            md.addHeader("Propriétés", 2);
+            string _yes, _no;
+            final switch (locale) with (GrLocale) {
+            case fr_FR:
+                md.addHeader("Propriétés", 2);
+                md.addTableHeader([
+                    "Propriété", "Natif", "Type", "Accesseur", "Modifieur"
+                ]);
+                _yes = "oui";
+                _no = "non";
+                break;
+            case en_US:
+                md.addHeader("Properties", 2);
+                md.addTableHeader([
+                    "Property", "Native", "Type", "Setter", "Getter"
+                ]);
+                _yes = "yes";
+                _no = "no";
+                break;
+            }
 
-            md.addTableHeader([
-                "Propriété", "Natif", "Type", "Accesseur", "Modifieur"
-            ]);
             foreach (property_; _properties) {
                 md.addTable([
                     property_.name, _getPrettyType(property_.nativeType),
                     _getPrettyType(property_.propertyType),
-                    property_.hasGet ? "oui": "non",
-                    property_.hasSet ? "oui": "non"
+                    property_.hasGet ? _yes: _no, property_.hasSet ? _yes: _no
                 ]);
             }
         }
 
         if (_statics.length) {
-            md.addHeader("Fonctions Statiques", 2);
+            final switch (locale) with (GrLocale) {
+            case fr_FR:
+                md.addHeader("Fonctions Statiques", 2);
+                md.addTableHeader(["Fonction", "Entrée", "Sortie"]);
+                break;
+            case en_US:
+                md.addHeader("Static Functions", 2);
+                md.addTableHeader(["Function", "Input", "Output"]);
+                break;
+            }
 
-            md.addTableHeader(["Fonction", "Entrée", "Sortie"]);
             int i;
             foreach (static_; _statics) {
                 string funcName = "@" ~ _getPrettyType(static_.type) ~ "." ~ static_.name;
@@ -772,9 +927,17 @@ final class GrDoc : GrLibDefinition {
         }
 
         if (_functions.length) {
-            md.addHeader("Fonctions", 2);
+            final switch (locale) with (GrLocale) {
+            case fr_FR:
+                md.addHeader("Fonctions", 2);
+                md.addTableHeader(["Fonction", "Entrée", "Sortie"]);
+                break;
+            case en_US:
+                md.addHeader("Functions", 2);
+                md.addTableHeader(["Function", "Input", "Output"]);
+                break;
+            }
 
-            md.addTableHeader(["Fonction", "Entrée", "Sortie"]);
             int i;
             foreach (func; _functions) {
                 string inSignature, outSignature;
@@ -816,7 +979,15 @@ final class GrDoc : GrLibDefinition {
         md.addSeparator();
 
         if (_functions.length) {
-            md.addHeader("Description des fonctions", 2);
+            final switch (locale) with (GrLocale) {
+            case fr_FR:
+                md.addHeader("Description des fonctions", 2);
+                break;
+            case en_US:
+                md.addHeader("Function descriptions", 2);
+                break;
+            }
+
             md.skipLine();
             int i;
             foreach (func; _functions) {

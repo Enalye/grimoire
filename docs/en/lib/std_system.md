@@ -1,8 +1,8 @@
 # std.system
 
 Basic functions.
-## Fonctions
-|Fonction|Entrée|Sortie|
+## Functions
+|Function|Input|Output|
 |-|-|-|
 |[cond](#func_0)|*condition*: **bool**, *a*: **T**, *b*: **T**|**T**|
 |[swap](#func_1)|*a*: **T1**, *b*: **T2**|**T2**, **T1**|
@@ -11,7 +11,7 @@ Basic functions.
 
 
 ***
-## Description des fonctions
+## Function descriptions
 
 <a id="func_0"></a>
 > cond (*condition*: **bool**, *a*: **T**, *b*: **T**) (**T**)

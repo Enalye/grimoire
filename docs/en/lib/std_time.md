@@ -1,8 +1,8 @@
 # std.time
 
 Time related functions.
-## Fonctions
-|Fonction|Entrée|Sortie|
+## Functions
+|Function|Input|Output|
 |-|-|-|
 |[hours](#func_0)|*h*: **int**|**int**|
 |[hours](#func_1)|*h*: **float**|**int**|
@@ -16,7 +16,7 @@ Time related functions.
 
 
 ***
-## Description des fonctions
+## Function descriptions
 
 <a id="func_0"></a>
 > hours (*h*: **int**) (**int**)

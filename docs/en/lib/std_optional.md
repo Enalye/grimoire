@@ -4,8 +4,8 @@ Optionals handling functions.
 ## Description
 An optiona is a type that can contains its own type or be null.
 Its null type is equal to `null<T>` where `T` is the referenced type.
-## Opérateurs
-|Opérateur|Entrée|Sortie|
+## Opérators
+|Opérator|Input|Output|
 |-|-|-|
 |!|**bool?**|**bool?**|
 |!=|**int?**, **int?**|**bool**|
@@ -66,8 +66,8 @@ Its null type is equal to `null<T>` where `T` is the referenced type.
 |\||**int?**, **int?**|**int?**|
 |\|\||**bool?**, **bool?**|**bool?**|
 |~|**int?**|**int?**|
-## Fonctions
-|Fonction|Entrée|Sortie|
+## Functions
+|Function|Input|Output|
 |-|-|-|
 |[expect](#func_0)|*x*: **T?**, *error*: **pure string**|**T**|
 |[some](#func_1)|*x*: **T**|**T?**|
@@ -76,7 +76,7 @@ Its null type is equal to `null<T>` where `T` is the referenced type.
 
 
 ***
-## Description des fonctions
+## Function descriptions
 
 <a id="func_0"></a>
 > expect (*x*: **T?**, *error*: **pure string**) (**T**)

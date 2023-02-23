@@ -80,6 +80,8 @@ interface GrLibDefinition {
         GrType[] = [], GrConstraint[] = []);
     GrPrimitive[] addProperty(GrCallback, GrCallback, string, GrType, GrType, GrConstraint[] = [
         ]);
+    /// Enregistre une nouvelle contrainte
+    void addConstraint(GrConstraint.Predicate predicate, const string name, uint arity = 0);
 }
 
 /// Fonction renseignant une bibliothèque
@@ -108,6 +110,9 @@ final class GrLibrary : GrLibDefinition {
 
         /// Alias de noms.
         string[string] _aliases;
+
+        /// Restriction de modèle de fonction
+        GrConstraint.Data[string] _constraints;
     }
 
     override void setModule(string[]) {
@@ -470,21 +475,23 @@ final class GrLibrary : GrLibDefinition {
     override GrPrimitive[] addProperty(GrCallback getCallback, GrCallback setCallback,
         string name, GrType nativeType, GrType propertyType, GrConstraint[] constraints = [
         ]) {
-        GrPrimitive[] primitives;
+        enforce(getCallback, "the property `@" ~ grGetPrettyType(
+                nativeType) ~ "." ~ name ~ "`must define at least a getter");
 
-        if (getCallback) {
-            primitives ~= addFunction(getCallback, "@property_" ~ name,
-                [nativeType], [propertyType], constraints);
-        }
-        else {
-            throw new Exception("the property `@" ~ grGetPrettyType(
-                    nativeType) ~ "." ~ name ~ "`must define at least a getter");
-        }
+        GrPrimitive[] primitives;
+        primitives ~= addFunction(getCallback, "@property_" ~ name,
+            [nativeType], [propertyType], constraints);
+
         if (setCallback) {
             primitives ~= addFunction(setCallback, "@property_" ~ name,
                 [nativeType, propertyType], [propertyType], constraints);
         }
         return primitives;
+    }
+
+    /// Enregistre une nouvelle contrainte
+    override void addConstraint(GrConstraint.Predicate predicate, const string name, uint arity = 0) {
+        _constraints[name] = new GrConstraint.Data(predicate, arity);
     }
 
     /// Enjolive la primitive

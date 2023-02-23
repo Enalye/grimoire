@@ -1,17 +1,17 @@
 # std.pair
 
 Pair of key/value.
-## Natifs
+## Natives
 ### Pair\<K, V>
-## Opérateurs
-|Opérateur|Entrée|Sortie|
+## Opérators
+|Opérator|Input|Output|
 |-|-|-|
 |=>|**K**, **V**|**Pair\<K, V>**|
-## Propriétés
-|Propriété|Natif|Type|Accesseur|Modifieur|
+## Properties
+|Property|Native|Type|Setter|Getter|
 |-|-|-|-|-|
-|key|**Pair\<K, V>**|**K**|oui|oui|
-|value|**Pair\<K, V>**|**V**|oui|oui|
+|key|**Pair\<K, V>**|**K**|yes|yes|
+|value|**Pair\<K, V>**|**V**|yes|yes|
 
 
 ***

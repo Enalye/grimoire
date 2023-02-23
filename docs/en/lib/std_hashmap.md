@@ -1,19 +1,19 @@
 # std.hashmap
 
 Dictionary that associates values by keys.
-## Natifs
+## Natives
 ### HashMap\<T>
 Dictionary that associates values by keys.
 ### HashMapIterator\<T>
 Iterate on a hashmap.
-## Constructeurs
-|Fonction|Entrée|
+## Constructors
+|Function|Input|
 |-|-|
 |[@**HashMap\<T>**](#ctor_0)||
 |[@**HashMap\<T>**](#ctor_1)|**pure list\<string>** *param0*, **pure list\<T>** *param1*|
 |[@**HashMap\<T>**](#ctor_2)|**pure list\<Pair\<string, T>>** *param0*|
-## Fonctions
-|Fonction|Entrée|Sortie|
+## Functions
+|Function|Input|Output|
 |-|-|-|
 |[byKeys](#func_0)|*hashmap*: **pure HashMap\<T>**|**list\<string>**|
 |[byValues](#func_1)|*hashmap*: **pure HashMap\<T>**|**list\<T>**|
@@ -35,7 +35,7 @@ Iterate on a hashmap.
 
 
 ***
-## Description des fonctions
+## Function descriptions
 
 <a id="func_0"></a>
 > byKeys (*hashmap*: **pure HashMap\<T>**) (**list\<string>**)

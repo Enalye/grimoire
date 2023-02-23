@@ -6,6 +6,8 @@
 module grimoire.compiler.data;
 
 import std.conv : to;
+import std.exception : enforce;
+
 import grimoire.runtime;
 import grimoire.compiler.primitive;
 import grimoire.compiler.type;
@@ -50,6 +52,9 @@ final class GrData {
 
         /// Alias de noms.
         string[string] _aliases;
+
+        /// Restriction de modèle de fonction
+        GrConstraint.Data[string] _constraints;
     }
 
     /// Ajoute une nouvelle bibliothèque contenant ses définitions de type et de primitives
@@ -72,6 +77,10 @@ final class GrData {
 
         foreach (string name, string alias_; library._aliases) {
             _aliases[name] = alias_;
+        }
+
+        foreach (string name, GrConstraint.Data constraint; library._constraints) {
+            _constraints[name] = new GrConstraint.Data(constraint);
         }
     }
 
@@ -410,7 +419,7 @@ final class GrData {
             if (primitive.name == name) {
                 _anyData = new GrAnyData;
                 if (isSignatureCompatible(signature, primitive.inSignature, true, 0, true)) {
-                    foreach (GrConstraint constraint; primitive.constraints) {
+                    foreach (ref GrConstraint constraint; primitive.constraints) {
                         if (!constraint.evaluate(this, _anyData))
                             continue __primitiveLoop;
                     }
@@ -444,7 +453,7 @@ final class GrData {
                 _anyData = new GrAnyData;
                 if (isSignatureCompatible(signature, primitive.inSignature, true, 0, true)) {
                     assert(name.length == 0);
-                    foreach (GrConstraint constraint; primitive.constraints) {
+                    foreach (ref GrConstraint constraint; primitive.constraints) {
                         if (!constraint.evaluate(this, _anyData))
                             continue __primitiveLoop;
                     }
@@ -563,8 +572,8 @@ final class GrData {
         switch (type.base) with (GrType.Base) {
         case class_:
             GrClassDefinition classDef = getClass(type.mangledType, 0, true);
-            if (!classDef)
-                throw new Exception("undefined class `" ~ type.mangledType ~ "`");
+            enforce(classDef, "undefined class `" ~ type.mangledType ~ "`");
+
             foreach (GrType fieldType; classDef.signature) {
                 if (fieldType == type)
                     continue;
@@ -715,10 +724,20 @@ final class GrData {
         _anyData = anyData;
     }
 
+    /// Récupère les données d’une contrainte enregistrée
+    package GrConstraint.Data getConstraintData(string name) {
+        GrConstraint.Data* constraint = name in _constraints;
+        return constraint ? *constraint : null;
+    }
+
+    /// Récupère tous les noms des constraintes enregistrées
+    package const(string[]) getAllConstraintsName() {
+        return _constraints.keys;
+    }
+
     /// Formate une primitive pour être affichable
     private string getPrimitiveDisplayById(uint id) {
-        if (id >= _primitives.length)
-            throw new Exception("invalid primitive id");
+        enforce(id < _primitives.length, "invalid primitive id");
         return getPrettyPrimitive(_primitives[id]);
     }
 

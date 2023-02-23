@@ -49,8 +49,8 @@ class GrPrimitive {
         index = primitive.index;
         isExplicit = primitive.isExplicit;
         isAbstract = primitive.isAbstract;
-        foreach (const GrConstraint constraint; primitive.constraints) {
-            constraints ~= new GrConstraint(constraint);
+        foreach (const ref GrConstraint constraint; primitive.constraints) {
+            constraints ~= GrConstraint(constraint);
         }
     }
 }

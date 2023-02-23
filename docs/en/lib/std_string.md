@@ -3,11 +3,11 @@
 Built-in type.
 ## Description
 Type that contains UTF-8 characters.
-## Natifs
+## Natives
 ### StringIterator
 Iterates on characters of a string.
-## Fonctions
-|Fonction|Entrée|Sortie|
+## Functions
+|Function|Input|Output|
 |-|-|-|
 |[clear](#func_0)|*str*: **string**||
 |[contains](#func_1)|*str*: **pure string**, *value*: **pure string**|**bool**|
@@ -34,7 +34,7 @@ Iterates on characters of a string.
 
 
 ***
-## Description des fonctions
+## Function descriptions
 
 <a id="func_0"></a>
 > clear (*str*: **string**)

@@ -6,6 +6,7 @@
 module grimoire.compiler.type;
 
 import std.conv : to;
+import std.exception : enforce;
 
 import grimoire.runtime;
 import grimoire.assembly;
@@ -216,8 +217,7 @@ package GrType grPackTuple(const GrType[] types) {
 
 /// Déballe plusieurs types depuis un seul
 package GrType[] grUnpackTuple(GrType type) {
-    if (type.base != GrType.Base.internalTuple)
-        throw new Exception("Cannot unpack a not tuple type.");
+    enforce(type.base == GrType.Base.internalTuple, "the packed value is not a tuple");
     return grUnmangleSignature(type.mangledType);
 }
 

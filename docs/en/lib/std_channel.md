@@ -3,8 +3,8 @@
 Built-in type.
 ## Description
 A channel is a messaging and synchronization tool between tasks.
-## Fonctions
-|Fonction|Entrée|Sortie|
+## Functions
+|Function|Input|Output|
 |-|-|-|
 |[capacity](#func_0)|*chan*: **pure channel\<T>**|**int**|
 |[isEmpty](#func_1)|*chan*: **pure channel\<T>**|**bool**|
@@ -13,7 +13,7 @@ A channel is a messaging and synchronization tool between tasks.
 
 
 ***
-## Description des fonctions
+## Function descriptions
 
 <a id="func_0"></a>
 > capacity (*chan*: **pure channel\<T>**) (**int**)

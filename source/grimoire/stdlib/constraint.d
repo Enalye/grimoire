@@ -8,23 +8,76 @@ module grimoire.stdlib.constraint;
 import grimoire.compiler;
 import grimoire.stdlib.util;
 
-void grLoadStdLibConstraint() {
-    grAddConstraint("Pure", &_pure, 0);
-    grAddConstraint("Register", &_register, 1);
-    grAddConstraint("Enum", &_enum, 0);
-    grAddConstraint("Channel", &_channel, 0);
-    grAddConstraint("Function", &_function, 0);
-    grAddConstraint("Task", &_task, 0);
-    grAddConstraint("Callable", &_callable, 0);
-    grAddConstraint("Class", &_class, 0);
-    grAddConstraint("Native", &_native, 0);
-    grAddConstraint("Numeric", &_numeric, 0);
-    grAddConstraint("NotNullable", &_notnullable, 0);
-    grAddConstraint("Nullable", &_nullable, 0);
-    grAddConstraint("Is", &_is, 1);
-    grAddConstraint("Not", &_not, 1);
-    grAddConstraint("Base", &_base, 1);
-    grAddConstraint("Extends", &_extends, 1);
+void grLoadStdLibConstraint(GrLibDefinition library) {
+    library.setModule(["std", "constraint"]);
+
+    library.setModuleInfo(GrLocale.fr_FR, "Constraintes de base.");
+    library.setModuleInfo(GrLocale.en_US, "Basic constraints.");
+
+    library.setDescription(GrLocale.fr_FR, "Le type est pur");
+    library.setDescription(GrLocale.en_US, "The type is pure");
+    library.addConstraint(&_pure, "Pure");
+
+    library.setDescription(GrLocale.fr_FR,
+        "Les deux types utilisent le même registre de la machine virtuelle");
+    library.setDescription(GrLocale.en_US, "Both types use the same virtual machine register");
+    library.addConstraint(&_register, "Register", 1);
+
+    library.setDescription(GrLocale.fr_FR, "Le type est une énumération");
+    library.setDescription(GrLocale.en_US, "The type is an enumeration");
+    library.addConstraint(&_enum, "Enum");
+
+    library.setDescription(GrLocale.fr_FR, "Le type est un canal");
+    library.setDescription(GrLocale.en_US, "The type is a channel");
+    library.addConstraint(&_channel, "Channel");
+
+    library.setDescription(GrLocale.fr_FR, "Le type est une fonction");
+    library.setDescription(GrLocale.en_US, "The type is a function");
+    library.addConstraint(&_function, "Function");
+
+    library.setDescription(GrLocale.fr_FR, "Le type est une tâche");
+    library.setDescription(GrLocale.en_US, "The type is a task");
+    library.addConstraint(&_task, "Task");
+
+    library.setDescription(GrLocale.fr_FR, "Le type est appelable");
+    library.setDescription(GrLocale.en_US, "The type is callable");
+    library.addConstraint(&_callable, "Callable");
+
+    library.setDescription(GrLocale.fr_FR, "Le type est une classe");
+    library.setDescription(GrLocale.en_US, "The type is a class");
+    library.addConstraint(&_class, "Class");
+
+    library.setDescription(GrLocale.fr_FR, "Le type est un natif");
+    library.setDescription(GrLocale.en_US, "The type is a native");
+    library.addConstraint(&_native, "Native");
+
+    library.setDescription(GrLocale.fr_FR, "Le type est un nombre");
+    library.setDescription(GrLocale.en_US, "The type is a number");
+    library.addConstraint(&_numeric, "Numeric");
+
+    library.setDescription(GrLocale.fr_FR, "Le type doit avoir une valeur");
+    library.setDescription(GrLocale.en_US, "The type must have a value");
+    library.addConstraint(&_notnullable, "NotNullable");
+
+    library.setDescription(GrLocale.fr_FR, "Le type peut ne rien valoir");
+    library.setDescription(GrLocale.en_US, "The type can have no value");
+    library.addConstraint(&_nullable, "Nullable");
+
+    library.setDescription(GrLocale.fr_FR, "Les deux types sont égaux");
+    library.setDescription(GrLocale.en_US, "Both types are the same");
+    library.addConstraint(&_is, "Is", 1);
+
+    library.setDescription(GrLocale.fr_FR, "Les deux types sont différents");
+    library.setDescription(GrLocale.en_US, "Both types are the different");
+    library.addConstraint(&_not, "Not", 1);
+
+    library.setDescription(GrLocale.fr_FR, "Le premier type est un parent du second");
+    library.setDescription(GrLocale.en_US, "The first type is a parent of the second one");
+    library.addConstraint(&_base, "Base", 1);
+
+    library.setDescription(GrLocale.fr_FR, "Le premier type est un enfant du second");
+    library.setDescription(GrLocale.en_US, "The first type is a child of the second one");
+    library.addConstraint(&_extends, "Extends", 1);
 }
 
 private bool _pure(GrData, GrType type, const GrType[]) {

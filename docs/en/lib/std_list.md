@@ -3,11 +3,11 @@
 Built-in type.
 ## Description
 list is a collection of values of the same type.
-## Natifs
+## Natives
 ### ListIterator\<T>
 Iterate on a list.
-## Fonctions
-|Fonction|Entrée|Sortie|
+## Functions
+|Function|Input|Output|
 |-|-|-|
 |[clear](#func_0)|*lst*: **list\<T>**||
 |[contains](#func_1)|*lst*: **pure list\<T>**, *value*: **pure T**|**bool**|
@@ -41,7 +41,7 @@ Iterate on a list.
 
 
 ***
-## Description des fonctions
+## Function descriptions
 
 <a id="func_0"></a>
 > clear (*lst*: **list\<T>**)

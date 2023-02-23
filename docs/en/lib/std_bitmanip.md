@@ -1,8 +1,8 @@
 # std.bitmanip
 
 Operations to make binary operations.
-## Opérateurs
-|Opérateur|Entrée|Sortie|
+## Opérators
+|Opérator|Input|Output|
 |-|-|-|
 |&|**int**, **int**|**int**|
 |<<|**int**, **int**|**int**|

@@ -21,7 +21,6 @@ void main() {
     try {
         const GrLocale locale = GrLocale.fr_FR;
         auto startTime = MonoTime.currTime();
-        grLoadStdLibConstraint();
 
         generate(GrLocale.fr_FR);
         generate(GrLocale.en_US);
@@ -38,14 +37,7 @@ void main() {
 
 alias LibLoader = void function(GrLibDefinition);
 void generate(GrLocale locale) {
-    LibLoader[] libLoaders = [
-        &grLoadStdLibSystem, &grLoadStdLibOptional, &grLoadStdLibIo,
-        &grLoadStdLibList, &grLoadStdLibRange, &grLoadStdLibString,
-        &grLoadStdLibChannel, &grLoadStdLibMath, &grLoadStdLibError,
-        &grLoadStdLibTime, &grLoadStdLibTypecast, &grLoadStdLibPair,
-        &grLoadStdLibBitmanip, &grLoadStdLibHashMap, &grLoadStdLibQueue,
-        &grLoadStdLibCircularBuffer
-    ];
+    LibLoader[] libLoaders = grGetStdLibraryLoaders();
 
     int i;
     foreach (libLoader; libLoaders) {

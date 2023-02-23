@@ -5,6 +5,8 @@
  */
 module grimoire.runtime.task;
 
+import std.exception : enforce;
+
 import grimoire.assembly;
 
 import grimoire.runtime.engine;
@@ -207,8 +209,8 @@ final class GrTask {
 
     /// Récupère un aperçu de l’état de la tâche
     void restoreState() {
-        if (!states.length)
-            throw new Exception("Fatal error: pop task state");
+        enforce(states.length, "no task state to restore");
+
         GrTaskState state = states[$ - 1];
         stackPos = state.stackPos;
         stackFramePos = state.stackFramePos;

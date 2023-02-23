@@ -6,6 +6,8 @@
 module grimoire.assembly.bytecode;
 
 import std.file, std.bitmanip, std.array, std.outbuffer;
+import std.exception : enforce;
+
 import grimoire.assembly.symbol;
 
 /// Correspond à une version du langage. \
@@ -434,10 +436,8 @@ final class GrBytecode {
             return s;
         }
 
-        if (buffer.length < magicWord.length)
-            throw new Exception("invalid bytecode");
-        if (buffer[0 .. magicWord.length] != magicWord)
-            throw new Exception("invalid bytecode");
+        enforce(buffer.length >= magicWord.length, "invalid bytecode");
+        enforce(buffer[0 .. magicWord.length] == magicWord, "invalid bytecode");
         buffer = buffer[magicWord.length .. $];
 
         grimoireVersion = buffer.read!uint();

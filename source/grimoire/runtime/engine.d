@@ -11,6 +11,7 @@ import std.conv;
 import std.math;
 import std.algorithm.mutation : swapAt;
 import std.typecons : Nullable;
+import std.exception : enforce;
 
 import grimoire.compiler, grimoire.assembly;
 
@@ -130,8 +131,9 @@ class GrEngine {
 
         // Prépare les primitives
         for (uint i; i < _bytecode.primitives.length; ++i) {
-            if (_bytecode.primitives[i].index > _callbacks.length)
-                throw new Exception("callback index out of bounds");
+            enforce(_bytecode.primitives[i].index < _callbacks.length,
+                "callback index out of bounds");
+
             _calls ~= new GrCall(_callbacks[_bytecode.primitives[i].index],
                 _bytecode.primitives[i].name, _bytecode.primitives[i]);
         }
@@ -209,12 +211,14 @@ class GrEngine {
 
         const string mangledName = grMangleComposite(name, signature);
         const auto event = mangledName in _bytecode.events;
+
         if (event is null)
             return null;
-        if (signature.length != parameters.length)
-            throw new Exception("the number of parameters (" ~ to!string(
-                    parameters.length) ~ ") of `" ~ grGetPrettyFunctionCall(
-                    mangledName) ~ "` mismatch its definition");
+
+        enforce(signature.length == parameters.length, "the number of parameters (" ~ to!string(
+                parameters.length) ~ ") of `" ~ grGetPrettyFunctionCall(
+                mangledName) ~ "` mismatch its definition");
+
         GrTask task = new GrTask(this);
         task.pc = *event;
 
@@ -242,10 +246,9 @@ class GrEngine {
         if (!isRunning || event is null)
             return null;
 
-        if (event.signature.length != parameters.length)
-            throw new Exception("the number of parameters (" ~ to!string(
-                    parameters.length) ~ ") of `" ~ grGetPrettyFunctionCall(event.name,
-                    event.signature) ~ "` mismatch its definition");
+        enforce(event.signature.length == parameters.length, "the number of parameters (" ~ to!string(
+                parameters.length) ~ ") of `" ~ grGetPrettyFunctionCall(event.name,
+                event.signature) ~ "` mismatch its definition");
 
         GrTask task = new GrTask(this);
         task.pc = event.address;
@@ -425,8 +428,8 @@ class GrEngine {
 
     pragma(inline) private T getVariable(T)(string name) const {
         const auto variable = name in _bytecode.variables;
-        if (variable is null)
-            throw new Exception("no global variable `" ~ name ~ "` defined");
+        enforce(variable, "no global variable `" ~ name ~ "` defined");
+
         static if (is(T == GrInt)) {
             return _globals[variable.index]._ivalue;
         }
@@ -484,8 +487,8 @@ class GrEngine {
 
     pragma(inline) private void setVariable(T)(string name, T value) {
         const auto variable = name in _bytecode.variables;
-        if (variable is null)
-            throw new Exception("no global variable `" ~ name ~ "` defined");
+        enforce(variable, "no global variable `" ~ name ~ "` defined");
+
         static if (is(T == GrInt) || is(T == GrBool)) {
             _globals[variable.index]._ivalue = value;
         }

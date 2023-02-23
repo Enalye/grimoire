@@ -3,16 +3,16 @@
 ## Description
 Maths related functions.
 ## Variables
-|Variable|Type|Valeur|Description|
+|Variable|Type|Value|Description|
 |-|-|-|-|
 |PI|**float**|3.14159|Ratio between the diameter of a circle and its circumference.|
-## Opérateurs
-|Opérateur|Entrée|Sortie|
+## Opérators
+|Opérator|Input|Output|
 |-|-|-|
 |**|**int**, **int**|**int**|
 |**|**float**, **float**|**float**|
-## Fonctions
-|Fonction|Entrée|Sortie|
+## Functions
+|Function|Input|Output|
 |-|-|-|
 |[abs](#func_0)|*x*: **float**|**float**|
 |[abs](#func_1)|*x*: **int**|**int**|
@@ -51,7 +51,7 @@ Maths related functions.
 
 
 ***
-## Description des fonctions
+## Function descriptions
 
 <a id="func_0"></a>
 > abs (*x*: **float**) (**float**)

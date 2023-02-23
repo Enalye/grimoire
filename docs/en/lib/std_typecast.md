@@ -4,14 +4,20 @@ Conversion functions.
 ## Conversions
 |Source|Destination|
 |-|-|
+|**uint**|**int**|
 |**float**|**int**|
 |**bool**|**int**|
+|**int**|**uint**|
+|**float**|**uint**|
+|**bool**|**uint**|
 |**int**|**float**|
+|**uint**|**float**|
 |**bool**|**string**|
 |**int**|**string**|
 |**float**|**string**|
 |**pure list\<string>**|**string**|
-|**pure string**|**list\<string>**|
+|**pure list\<char>**|**string**|
+|**pure string**|**list\<char>**|
 
 
 ***

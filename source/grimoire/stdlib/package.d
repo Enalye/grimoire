@@ -31,7 +31,6 @@ public {
 /// Charge la bibliothèque standard
 GrLibrary grLoadStdLibrary() {
     GrLibrary library = new GrLibrary;
-    grLoadStdLibConstraint();
 
     foreach (loader; grGetStdLibraryLoaders()) {
         loader(library);
@@ -43,11 +42,11 @@ GrLibrary grLoadStdLibrary() {
 /// Retourne les fonctions de chargement de la bibliothèque standard
 GrLibLoader[] grGetStdLibraryLoaders() {
     return [
-        &grLoadStdLibSystem, &grLoadStdLibOptional, &grLoadStdLibIo,
-        &grLoadStdLibList, &grLoadStdLibRange, &grLoadStdLibString,
-        &grLoadStdLibChannel, &grLoadStdLibMath, &grLoadStdLibError,
-        &grLoadStdLibTime, &grLoadStdLibTypecast, &grLoadStdLibPair,
-        &grLoadStdLibBitmanip, &grLoadStdLibHashMap, &grLoadStdLibQueue,
-        &grLoadStdLibCircularBuffer
+        &grLoadStdLibConstraint, &grLoadStdLibSystem, &grLoadStdLibOptional,
+        &grLoadStdLibIo, &grLoadStdLibList, &grLoadStdLibRange,
+        &grLoadStdLibString, &grLoadStdLibChannel, &grLoadStdLibMath,
+        &grLoadStdLibError, &grLoadStdLibTime, &grLoadStdLibTypecast,
+        &grLoadStdLibPair, &grLoadStdLibBitmanip, &grLoadStdLibHashMap,
+        &grLoadStdLibQueue, &grLoadStdLibCircularBuffer
     ];
 }
