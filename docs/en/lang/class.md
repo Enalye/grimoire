@@ -48,6 +48,20 @@ func @Animal(name: string) (Animal) {
 }
 ```
 
+> ***Important:***
+A constructor without parameters becomes automatically the class default value.
+
+## Static method
+
+Static methods are functions that are owned by a type.
+```grimoire
+func @Animal.bark() (string) {
+    return "woof !";
+}
+
+var x = @Animal.bark();
+```
+
 ## Specialization
 
 A class can inherit another.
@@ -69,6 +83,8 @@ class MyClass<T, A> : ParentClass<T, int> {
 	var myValue: T;
 	var myOtherValue: A;
 }
+
+var x: MyClass<int, string> = @MyClass<int, string> {};
 ```
 
 ## Accessing a field

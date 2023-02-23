@@ -110,6 +110,16 @@ library.addFunction(&_print_class, "print",
     [grConstraint("Class", grAny("T"))]);
 ```
 
+`addConstraint` permet de définir une constrainte.
+
+```grimoire
+library.addConstraint(&equals, "Equals", 1);
+
+bool equals(GrData, GrType type, const GrType[] types) {
+    return type == types[0];
+}
+```
+
 * * *
 
 ## Classes

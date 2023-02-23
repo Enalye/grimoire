@@ -48,6 +48,20 @@ func @Animal(nom: string) (Animal) {
 }
 ```
 
+> ***Important:***
+Un constructeur sans paramètre devient automatiquement la valeur par défaut d’une classe.
+
+## Méthode statique
+
+Les méthodes statiques sont des fonctions qui appartiennent à un type.
+```grimoire
+func @Animal.aboyer() (string) {
+    return "ouaf !";
+}
+
+var x = @Animal.aboyer();
+```
+
 ## Spécialisation
 
 Une classe peut hériter d’une autre classe.
@@ -69,6 +83,8 @@ class MaClasse<T, A> : ClasseParente<T, int> {
 	var maValeur: T;
 	var monAutreValeur: A;
 }
+
+var x: MaClasse<int, string> = @MaClasse<int, string> {};
 ```
 
 ## Accéder à un champ
