@@ -3079,7 +3079,7 @@ final class GrParser {
                 parseDieStatement();
                 break;
             case exit:
-                parseQuitStatement();
+                parseExitStatement();
                 break;
             case yield:
                 parseYieldStatement();
@@ -3276,17 +3276,32 @@ final class GrParser {
             currentFunction.instructions[$ - 1].opcode != GrOpcode.die)
             addDie();
         advance();
+        if (get().type != GrLexeme.Type.semicolon)
+            logError(format(getError(Error.missingSemicolonAfterX), getPrettyLexemeType(GrLexeme.Type.die)),
+                format(getError(Error.expectedXFoundY),
+                    getPrettyLexemeType(GrLexeme.Type.semicolon), getPrettyLexemeType(get().type)));
+        advance();
     }
 
-    private void parseQuitStatement() {
+    private void parseExitStatement() {
         if (!currentFunction.instructions.length ||
             currentFunction.instructions[$ - 1].opcode != GrOpcode.exit)
-            addQuit();
+            addExit();
+        advance();
+        if (get().type != GrLexeme.Type.semicolon)
+            logError(format(getError(Error.missingSemicolonAfterX), getPrettyLexemeType(GrLexeme.Type.exit)),
+                format(getError(Error.expectedXFoundY),
+                    getPrettyLexemeType(GrLexeme.Type.semicolon), getPrettyLexemeType(get().type)));
         advance();
     }
 
     private void parseYieldStatement() {
         addInstruction(GrOpcode.yield, 0u);
+        advance();
+        if (get().type != GrLexeme.Type.semicolon)
+            logError(format(getError(Error.missingSemicolonAfterX), getPrettyLexemeType(GrLexeme.Type.yield)),
+                format(getError(Error.expectedXFoundY),
+                    getPrettyLexemeType(GrLexeme.Type.semicolon), getPrettyLexemeType(get().type)));
         advance();
     }
 
@@ -3462,6 +3477,11 @@ final class GrParser {
         breaksJumps[$ - 1] ~= cast(uint) currentFunction.instructions.length;
         addInstruction(GrOpcode.jump);
         advance();
+        if (get().type != GrLexeme.Type.semicolon)
+            logError(format(getError(Error.missingSemicolonAfterX), getPrettyLexemeType(GrLexeme.Type.break_)),
+                format(getError(Error.expectedXFoundY),
+                    getPrettyLexemeType(GrLexeme.Type.semicolon), getPrettyLexemeType(get().type)));
+        advance();
     }
 
     // Ouvre une section pouvant être réitéré
@@ -3498,6 +3518,11 @@ final class GrParser {
             addInstruction(GrOpcode.yield);
         continuesJumps[$ - 1] ~= cast(uint) currentFunction.instructions.length;
         addInstruction(GrOpcode.jump);
+        advance();
+        if (get().type != GrLexeme.Type.semicolon)
+            logError(format(getError(Error.missingSemicolonAfterX), getPrettyLexemeType(GrLexeme.Type.continue_)),
+                format(getError(Error.expectedXFoundY),
+                    getPrettyLexemeType(GrLexeme.Type.semicolon), getPrettyLexemeType(get().type)));
         advance();
     }
 
@@ -4617,7 +4642,7 @@ final class GrParser {
     }
 
     /// Ajoute une instruction `exit` qui arrête toutes les tâches.
-    private void addQuit() {
+    private void addExit() {
         checkDeferStatement();
         if (_options & GrOption.profile) {
             addInstruction(GrOpcode.debugProfileEnd);
@@ -7451,6 +7476,7 @@ final class GrParser {
         cantInferTypeWithoutAssignment,
         missingTypeInfoOrInitVal,
         missingSemicolonAfterAssignmentList,
+        missingSemicolonAfterX,
         typeXHasNoDefaultVal,
         cantInitThisType,
         expectedFuncNameFoundX,
@@ -7682,6 +7708,7 @@ final class GrParser {
                 Error.cantInferTypeWithoutAssignment: "can't infer the type without assignment",
                 Error.missingTypeInfoOrInitVal: "missing type information or initial value",
                 Error.missingSemicolonAfterAssignmentList: "missing `;` after assignment list",
+                Error.missingSemicolonAfterX: "missing `;` after `%s`",
                 Error.typeXHasNoDefaultVal: "the type `%s` has no default value",
                 Error.cantInitThisType: "can't initialize this type",
                 Error.expectedFuncNameFoundX: "expected function name, found `%s`",
@@ -7909,6 +7936,7 @@ final class GrParser {
                 Error.cantInferTypeWithoutAssignment: "impossible d’inférer le type sans assignation",
                 Error.missingTypeInfoOrInitVal: "information de type ou valeur initiale manquante",
                 Error.missingSemicolonAfterAssignmentList: "`;` manquant après la liste d’assignation",
+                Error.missingSemicolonAfterX: "`;` manquant après `%s`",
                 Error.typeXHasNoDefaultVal: "le type `%s` n’a pas de valeur par défaut",
                 Error.cantInitThisType: "impossible d’initialiser ce type",
                 Error.expectedFuncNameFoundX: "nom de fonction attendu, `%s` trouvé",
