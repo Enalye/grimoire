@@ -7,32 +7,32 @@
 event methods() {
     var a = "Bonjour";
 
-    assert(a:size == 7);
-    assert(!a:isEmpty);
+    assert(a.size == 7);
+    assert(!a.isEmpty);
 
-    a:push(", les amis");
-    a:unshift("Coucou ! ");
+    a.pushBack(", les amis");
+    a.pushFront("Coucou ! ");
 
-    assert(a:first? == "C");
-    assert(a:last? == "s");
+    assert(a.front? == 'C');
+    assert(a.back? == 's');
 
     assert(a == "Coucou ! Bonjour, les amis");
 
-    assert(a:contains("!"));
-    a:remove(7);
-    assert(!a:contains("!"));
+    assert(a.contains("!"));
+    a.remove(7);
+    assert(!a.contains("!"));
 
-    assert(a:indexOf("ou")? == 1);
-    assert(a:lastIndexOf("ou")? == 12);
-    assert(a:indexOf("salut") ?? -1 == -1);
-    assert(a:lastIndexOf("salut") ?? -1 == -1);
+    assert(a.find("ou")? == 1);
+    assert(a.rfind("ou")? == 12);
+    assert(a.find("salut") ?? -1 == -1);
+    assert(a.rfind("salut") ?? -1 == -1);
 
-    assert(a:slice(12, a:size) == "our, les amis");
+    assert(a.slice(12, a.size as<int>) == "our, les amis");
     assert("saucisse":reverse == "essicuas");
 
     var i: int;
-    for(char, "anticonstitutionnellement":each) {
-        assert(char == "anticonstitutionnellement":slice(i, i));
+    for(ch, "anticonstitutionnellement".chars) {
+        assert(ch == "anticonstitutionnellement".slice(i, i).front?);
         i++;
     }
 }

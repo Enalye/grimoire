@@ -43,12 +43,12 @@ class GrEngine {
         /// Signifie que la tâche impliquée n’a pas correctement géré son exception
         bool _isPanicking;
         /// Message de panique non-géré
-        GrStringValue _panicMessage;
+        string _panicMessage;
         /// Les traces d’appel sont générés chaque fois qu’une erreur est lancé
         GrStackTrace[] _stackTraces;
 
         /// Informations supplémentaires de type du compilateur
-        GrStringValue _meta;
+        string _meta;
 
         /// Primitives
         GrCallback[] _callbacks;
@@ -87,16 +87,16 @@ class GrEngine {
         }
 
         /// Le message de panique
-        GrStringValue panicMessage() const {
+        string panicMessage() const {
             return _panicMessage;
         }
 
         /// Informations supplémentaires de type du compilateur
-        GrStringValue meta() const {
+        string meta() const {
             return _meta;
         }
         /// Ditto
-        GrStringValue meta(GrStringValue meta_) {
+        string meta(string meta_) {
             return _meta = meta_;
         }
     }
@@ -362,7 +362,7 @@ class GrEngine {
     Si rien ne permet la capture de l’erreur dans la tâche, la machine virtuelle entrera en panique. \
     Chaque tâche exécura ses propres `defer` et sera tué.
     */
-    void raise(GrTask task, GrStringValue message) {
+    void raise(GrTask task, string message) {
         if (task.isPanicking)
             return;
 
@@ -461,7 +461,7 @@ class GrEngine {
         setVariable!GrInt(name, cast(GrInt) value);
     }
 
-    pragma(inline) void setStringVariable(string name, GrStringValue value) {
+    pragma(inline) void setStringVariable(string name, string value) {
         setVariable!GrPointer(name, cast(GrPointer) new GrString(value));
     }
 
@@ -575,7 +575,7 @@ class GrEngine {
 
                         // La machine virtuelle est maintenant en panique
                         _isPanicking = true;
-                        _panicMessage = (cast(GrString) _globalStackIn[$ - 1]._ovalue).data;
+                        _panicMessage = (cast(GrString) _globalStackIn[$ - 1]._ovalue).str;
                         _globalStackIn.length--;
 
                         // Tous les appels différés ont été exécuté, on tue la tâche
@@ -952,8 +952,8 @@ class GrEngine {
                 case equal_string:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue = (cast(
-                            GrString) currentTask.stack[currentTask.stackPos]._ovalue).data == (
-                        cast(GrString) currentTask.stack[currentTask.stackPos + 1]._ovalue).data;
+                            GrString) currentTask.stack[currentTask.stackPos]._ovalue).str == (
+                        cast(GrString) currentTask.stack[currentTask.stackPos + 1]._ovalue).str;
                     currentTask.pc++;
                     break;
                 case notEqual_int:
@@ -980,8 +980,8 @@ class GrEngine {
                 case notEqual_string:
                     currentTask.stackPos--;
                     currentTask.stack[currentTask.stackPos]._ivalue = (cast(
-                            GrString) currentTask.stack[currentTask.stackPos]._ovalue).data != (
-                        cast(GrString) currentTask.stack[currentTask.stackPos + 1]._ovalue).data;
+                            GrString) currentTask.stack[currentTask.stackPos]._ovalue).str != (
+                        cast(GrString) currentTask.stack[currentTask.stackPos + 1]._ovalue).str;
                     currentTask.pc++;
                     break;
                 case greaterOrEqual_int:
@@ -1147,8 +1147,8 @@ class GrEngine {
                     break;
                 case concatenate_string:
                     currentTask.stackPos--;
-                    (cast(GrString) currentTask.stack[currentTask.stackPos]._ovalue).push(
-                        (cast(GrString) currentTask.stack[currentTask.stackPos + 1]._ovalue).data);
+                    (cast(GrString) currentTask.stack[currentTask.stackPos]._ovalue).pushBack(
+                        (cast(GrString) currentTask.stack[currentTask.stackPos + 1]._ovalue));
                     currentTask.pc++;
                     break;
                 case substract_int:
@@ -1423,7 +1423,7 @@ class GrEngine {
 
                             // La machine virtuelle est en panique
                             _isPanicking = true;
-                            _panicMessage = (cast(GrString) _globalStackIn[$ - 1]._ovalue).data;
+                            _panicMessage = (cast(GrString) _globalStackIn[$ - 1]._ovalue).str;
                             _globalStackIn.length--;
 
                             // Tous les appels différés ont été exécuté, on tue la tâche

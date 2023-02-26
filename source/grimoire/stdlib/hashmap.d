@@ -14,12 +14,12 @@ import grimoire.stdlib.pair;
 /// HashMap
 private final class HashMap {
     /// Payload
-    GrValue[GrStringValue] data;
+    GrValue[string] data;
 
     /// Ctor
     this(GrString[] keys, GrValue[] values) {
         for (size_t i; i < keys.length; ++i) {
-            data[keys[i]] = values[i];
+            data[keys[i].str] = values[i];
         }
     }
     /// Ditto
@@ -33,7 +33,7 @@ private final class HashMap {
 
 /// Iterator
 private final class HashMapIterator {
-    Tuple!(GrStringValue, GrValue)[] pairs;
+    Tuple!(string, GrValue)[] pairs;
     size_t index;
 }
 
@@ -175,7 +175,7 @@ private void _newByPairs(GrCall call) {
     HashMap hashmap = new HashMap;
     GrPair[] pairs = call.getList(0).getNatives!GrPair();
     for (size_t i; i < pairs.length; ++i) {
-        hashmap.data[pairs[i].key.getString()] = pairs[i].value;
+        hashmap.data[pairs[i].key.getString().str] = pairs[i].value;
     }
     call.setNative(hashmap);
 }
@@ -203,12 +203,12 @@ private void _clear(GrCall call) {
 
 private void _set(GrCall call) {
     HashMap hashmap = call.getNative!(HashMap)(0);
-    hashmap.data[call.getString(1)] = call.getValue(2);
+    hashmap.data[call.getString(1).str] = call.getValue(2);
 }
 
 private void _get(GrCall call) {
     HashMap hashmap = call.getNative!(HashMap)(0);
-    auto p = call.getString(1) in hashmap.data;
+    auto p = call.getString(1).str in hashmap.data;
     if (p is null) {
         call.setNull();
         return;
@@ -218,24 +218,24 @@ private void _get(GrCall call) {
 
 private void _getOr(GrCall call) {
     HashMap hashmap = call.getNative!(HashMap)(0);
-    auto p = call.getString(1) in hashmap.data;
+    auto p = call.getString(1).str in hashmap.data;
     call.setValue(p ? *p : call.getValue(2));
 }
 
 private void _contains(GrCall call) {
     HashMap hashmap = call.getNative!(HashMap)(0);
-    call.setBool((call.getString(1) in hashmap.data) !is null);
+    call.setBool((call.getString(1).str in hashmap.data) !is null);
 }
 
 private void _remove(GrCall call) {
     HashMap hashmap = call.getNative!(HashMap)(0);
-    hashmap.data.remove(call.getString(1));
+    hashmap.data.remove(call.getString(1).str);
 }
 
 private void _byKeys(GrCall call) {
     HashMap hashmap = call.getNative!(HashMap)(0);
     GrValue[] ary;
-    foreach (GrStringValue key; hashmap.data.keys) {
+    foreach (string key; hashmap.data.keys) {
         ary ~= GrValue(key);
     }
     call.setList(ary);
@@ -274,7 +274,7 @@ private void _next(GrCall call) {
 private void _print_(string T)(GrCall call) {
     HashMap hashmap = call.getNative!HashMap(0);
 
-    GrStringValue result = "{";
+    string result = "{";
     bool isFirst = true;
     foreach (key, value; hashmap.data) {
         if (isFirst) {
@@ -291,7 +291,7 @@ private void _print_(string T)(GrCall call) {
         else static if (T == "float")
             result ~= to!string(value.getFloat());
         else static if (T == "string")
-            result ~= "\"" ~ value.getString() ~ "\"";
+            result ~= "\"" ~ value.getString().str ~ "\"";
         else
             static assert(false);
     }

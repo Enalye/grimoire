@@ -41,7 +41,7 @@ private void _print(GrCall call) {
         case float_:
             return to!string(value.getFloat());
         case string_:
-            return value.getString();
+            return value.getString().str;
         case optional:
             if (value.isNull())
                 return "null";

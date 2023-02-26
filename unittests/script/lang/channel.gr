@@ -24,7 +24,7 @@ event test_select() {
     select
     case(i = <- c)
         assert(i == 5);
-    yield
+    yield;
 
     select
     case(i = <- c)

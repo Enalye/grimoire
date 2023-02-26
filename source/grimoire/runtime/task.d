@@ -158,7 +158,7 @@ final class GrTask {
         setParameter!GrPointer(cast(GrPointer) value);
     }
 
-    pragma(inline) void setString(GrStringValue value) {
+    pragma(inline) void setString(string value) {
         setParameter!GrPointer(cast(GrPointer) new GrString(value));
     }
 

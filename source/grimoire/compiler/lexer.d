@@ -205,7 +205,7 @@ struct GrLexeme {
     GrBool bvalue;
 
     /// Décrit soit une valeur constante comme `"bonjour"` ou un identificateur.
-    GrStringValue svalue;
+    string svalue;
 
     /// Renvoie la ligne entière où le jeton est situé.
     string getLine() {

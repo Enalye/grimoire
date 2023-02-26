@@ -31,7 +31,9 @@ void grLoadStdLibTypecast(GrLibDefinition library) {
     // as<string>
     library.addCast(&b_as_s, grBool, grString);
     library.addCast(&i_as_s, grInt, grString);
+    library.addCast(&u_as_s, grUInt, grString);
     library.addCast(&f_as_s, grFloat, grString);
+    library.addCast(&c_as_s, grChar, grString);
     library.addCast(&ls_as_s, grPure(grList(grString)), grString);
     library.addCast(&lc_as_s, grPure(grList(grChar)), grString);
 
@@ -95,29 +97,37 @@ private void b_as_s(GrCall call) {
 }
 
 private void i_as_s(GrCall call) {
-    call.setString(to!GrStringValue(call.getInt(0)));
+    call.setString(to!string(call.getInt(0)));
+}
+
+private void u_as_s(GrCall call) {
+    call.setString(to!string(call.getUInt(0)));
 }
 
 private void f_as_s(GrCall call) {
-    call.setString(to!GrStringValue(call.getFloat(0)));
+    call.setString(to!string(call.getFloat(0)));
+}
+
+private void c_as_s(GrCall call) {
+    call.setString(to!string(call.getChar(0)));
 }
 
 private void ls_as_s(GrCall call) {
-    GrStringValue result;
-    foreach (const GrStringValue sub; call.getList(0).getStrings()) {
-        result ~= sub;
+    GrString str = new GrString;
+    foreach (const GrString sub; call.getList(0).getStrings()) {
+        str.pushBack(sub);
     }
-    call.setString(result);
+    call.setString(str);
 }
 
 private void lc_as_s(GrCall call) {
-    call.setString(call.getList(0).getChars());
+    call.setString(new GrString(call.getList(0).getChars()));
 }
 
-// as<list<string>>
+// as<list<char>>
 private void s_as_lc(GrCall call) {
     GrValue[] result;
-    foreach (const GrChar sub; call.getString(0)) {
+    foreach (const GrChar sub; call.getString(0).chars) {
         result ~= GrValue(sub);
     }
 

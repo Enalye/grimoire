@@ -423,7 +423,7 @@ final class GrVariableDefinition {
     /// Valeur flottante d’initialisation
     GrFloat fvalue;
     /// Valeur textuelle d’initialisation
-    GrStringValue svalue;
+    string svalue;
     /// Registre
     uint register;
 }

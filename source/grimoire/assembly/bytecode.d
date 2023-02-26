@@ -228,7 +228,7 @@ final class GrBytecode {
             /// Valeur flottante initiale
             GrFloat fvalue;
             /// Valeur textuelle initiale
-            GrStringValue svalue;
+            string svalue;
         }
 
         /// Version du bytecode.
@@ -247,7 +247,7 @@ final class GrBytecode {
         GrFloat[] fconsts;
 
         /// Constantes textuelles.
-        GrStringValue[] sconsts;
+        string[] sconsts;
 
         /// Primitives appelables.
         PrimitiveReference[] primitives;
@@ -320,7 +320,7 @@ final class GrBytecode {
 
     /// Sérialise le bytecode
     ubyte[] serialize() {
-        void writeStr(ref Appender!(ubyte[]) buffer, GrStringValue s) {
+        void writeStr(ref Appender!(ubyte[]) buffer, string s) {
             buffer.append!uint(cast(uint) s.length);
             buffer.put(cast(ubyte[]) s);
         }
@@ -426,8 +426,8 @@ final class GrBytecode {
 
     /// Désérialise le bytecode depuis un buffer
     void deserialize(ubyte[] buffer) {
-        GrStringValue readStr(ref ubyte[] buffer) {
-            GrStringValue s;
+        string readStr(ref ubyte[] buffer) {
+            string s;
             const uint size = buffer.read!uint();
             if (size == 0)
                 return s;

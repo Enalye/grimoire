@@ -44,7 +44,7 @@ final class GrCall {
         }
 
         /// Informations supplémentaires de type du compilateur
-        GrStringValue meta() const {
+        string meta() const {
             return _task.engine.meta;
         }
     }
@@ -189,7 +189,7 @@ final class GrCall {
         setResult!GrPointer(cast(GrPointer) value);
     }
 
-    pragma(inline) void setString(GrStringValue value) {
+    pragma(inline) void setString(string value) {
         setResult!GrPointer(cast(GrPointer) new GrString(value));
     }
 
@@ -317,7 +317,7 @@ final class GrCall {
         _task.engine.setFloatVariable(name, value);
     }
 
-    void setStringVariable(string name, GrStringValue value) {
+    void setStringVariable(string name, string value) {
         _task.engine.setStringVariable(name, value);
     }
 
@@ -346,7 +346,7 @@ final class GrCall {
     }
 
     private {
-        GrStringValue _message;
+        string _message;
         bool _hasError;
     }
 
@@ -355,11 +355,11 @@ final class GrCall {
     /// On attend donc jusqu’à ce que la primitive finisse avant \
     /// d’appeler `dispatchError()`.
     void raise(GrString message) {
-        _message = message.data;
+        _message = message.str;
         _hasError = true;
     }
     /// Ditto
-    void raise(GrStringValue message) {
+    void raise(string message) {
         _message = message;
         _hasError = true;
     }

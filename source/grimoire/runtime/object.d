@@ -115,7 +115,7 @@ final class GrObject {
         setField!GrInt(fieldName, cast(GrInt) value);
     }
 
-    pragma(inline) void setString(const string fieldName, GrStringValue value) {
+    pragma(inline) void setString(const string fieldName, string value) {
         setField!GrPointer(fieldName, cast(GrPointer) new GrString(value));
     }
 

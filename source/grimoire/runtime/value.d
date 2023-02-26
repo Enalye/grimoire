@@ -46,7 +46,7 @@ struct GrValue {
         _ovalue = cast(GrPointer) new GrList(value);
     }
 
-    this(GrStringValue value) {
+    this(string value) {
         _ovalue = cast(GrPointer) new GrString(value);
     }
 
@@ -160,7 +160,7 @@ struct GrValue {
         _ovalue = cast(GrPointer) value;
     }
 
-    pragma(inline) void setString(GrStringValue value) {
+    pragma(inline) void setString(string value) {
         (cast(GrString) _ovalue) = value;
     }
 

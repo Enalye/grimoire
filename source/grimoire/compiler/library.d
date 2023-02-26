@@ -164,7 +164,7 @@ final class GrLibrary : GrLibDefinition {
             variable.fvalue = defaultValue.getFloat();
             break;
         case string_:
-            variable.svalue = defaultValue.getString();
+            variable.svalue = defaultValue.getString().str;
             break;
         case optional:
         case class_:
