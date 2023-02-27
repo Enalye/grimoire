@@ -2078,6 +2078,9 @@ final class GrParser {
         checkAdvance();
 
         string[] fields;
+        int[] values;
+
+        int lastValue = -1;
         while (!isEnd()) {
             if (get().type == GrLexeme.Type.rightCurlyBrace) {
                 checkAdvance();
@@ -2091,6 +2094,32 @@ final class GrParser {
             checkAdvance();
             fields ~= fieldName;
 
+            if (get().type == GrLexeme.Type.assign) {
+                checkAdvance();
+
+                bool isNeg;
+                if (get().type == GrLexeme.Type.substract) {
+                    isNeg = true;
+                    checkAdvance();
+                }
+
+                if (get().type != GrLexeme.Type.int_) {
+                    logError(getError(Error.missingEnumConstantValue),
+                        format(getError(Error.expectedIntFoundX), getPrettyLexemeType(get().type)));
+                }
+
+                lastValue = get().ivalue;
+                if (isNeg)
+                    lastValue = -lastValue;
+
+                checkAdvance();
+            }
+            else {
+                lastValue++;
+            }
+
+            values ~= lastValue;
+
             if (get().type != GrLexeme.Type.semicolon)
                 logError(getError(Error.missingSemicolonAfterEnumField), format(getError(Error.expectedXFoundY),
                         getPrettyLexemeType(GrLexeme.Type.semicolon),
@@ -2100,7 +2129,7 @@ final class GrParser {
         if (_data.isTypeDeclared(enumName, fileId, isExport))
             logError(format(getError(Error.nameXDefMultipleTimes), enumName),
                 format(getError(Error.xAlreadyDecl), enumName));
-        _data.addEnum(enumName, fields, [], fileId, isExport); //@TODO: Valeur des énums
+        _data.addEnum(enumName, fields, values, fileId, isExport);
     }
 
     /// Déclare une nouvelle classe sans l’analyser
@@ -7524,6 +7553,7 @@ final class GrParser {
         funcDefHere,
         expectedDotAfterEnumType,
         missingEnumConstantName,
+        missingEnumConstantValue,
         expectedConstNameAfterEnumType,
         xIsAbstract,
         xIsAbstractAndCannotBeInstanciated,
@@ -7754,8 +7784,9 @@ final class GrParser {
                 Error.funcOrTaskExpectedFoundX: "function or task expected, found `%s`",
                 Error.funcDefHere: "function defined here",
                 Error.expectedDotAfterEnumType: "expected a `.` after the enum type",
-                Error.missingEnumConstantName: "missing the enum constant name",
-                Error.expectedConstNameAfterEnumType: "expected a constant name after the enum type",
+                Error.missingEnumConstantName: "missing the enum field name",
+                Error.missingEnumConstantValue: "missing the enum field value",
+                Error.expectedConstNameAfterEnumType: "expected an enum field name after the enum type",
                 Error.xIsAbstract: "`%s` is abstract",
                 Error.xIsAbstractAndCannotBeInstanciated: "`%s` is abstract and can't be instanciated",
                 Error.expectedOptionalType: "`?` expect an optional type",
@@ -7981,9 +8012,10 @@ final class GrParser {
                 Error.expectedXArgsFoundY: "%s arguments attendus, %s trouvé",
                 Error.funcOrTaskExpectedFoundX: "fonction ou tâche attendu, `%s` trouvé",
                 Error.funcDefHere: "fonction définie là",
-                Error.expectedDotAfterEnumType: "`.` attendu après le type d’énumération",
-                Error.missingEnumConstantName: "nom de la constante d’énumération attendu",
-                Error.expectedConstNameAfterEnumType: "nom de la constante attendue après le type d’énumération",
+                Error.expectedDotAfterEnumType: "`.` attendu après le type de l’énumération",
+                Error.missingEnumConstantName: "nom du champ de l’énumération attendu",
+                Error.missingEnumConstantValue: "valeur du champ de l’énumération attendue",
+                Error.expectedConstNameAfterEnumType: "nom du champ attendu après le type de l’énumération",
                 Error.xIsAbstract: "`%s` est abstrait",
                 Error.xIsAbstractAndCannotBeInstanciated: "`%s` est abstrait et ne peut pas être instancié",
                 Error.expectedOptionalType: "`?` nécessite un type optionnel",

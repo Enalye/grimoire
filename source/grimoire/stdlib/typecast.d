@@ -18,6 +18,9 @@ void grLoadStdLibTypecast(GrLibDefinition library) {
     library.addCast(&u_as_i, grUInt, grInt);
     library.addCast(&f_as_i, grFloat, grInt, true);
     library.addCast(&b_as_i, grBool, grInt);
+    library.addCast(&e_as_i, grAny("T"), grInt, false, [
+            grConstraint("Enum", grAny("T"))
+        ]);
 
     // as<uint>
     library.addCast(&i_as_u, grInt, grUInt);
@@ -57,6 +60,10 @@ private void f_as_i(GrCall call) {
 
 private void b_as_i(GrCall call) {
     call.setInt(to!GrInt(call.getBool(0)));
+}
+
+private void e_as_i(GrCall call) {
+    call.setInt(call.getInt(0));
 }
 
 // as<uint>

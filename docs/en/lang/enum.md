@@ -10,7 +10,7 @@ enum Color {
 }
 ```
 
-The fields of an enumeration all have an unique value.
+By default, the fields of an enumeration are assigned the value of the previous field + 1.
 ```grimoire
 event onLoad() {
 	var myColor = Color.red;
@@ -21,3 +21,16 @@ event onLoad() {
 	case(Color.blue) "The color is blue !".print;
 }
 ```
+
+We can change the value of a field.
+```grimoire
+enum Color {
+    white = -1;   //-1
+	red;          //0
+	green;        //1
+	blue = 5;     //5
+	orange;       //6
+}
+```
+> ***Note:***
+The value must be a literal integer.

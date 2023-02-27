@@ -7,6 +7,7 @@ Fonctions de conversion.
 |**uint**|**int**|
 |**float**|**int**|
 |**bool**|**int**|
+|**T**|**int**|
 |**int**|**uint**|
 |**float**|**uint**|
 |**bool**|**uint**|
