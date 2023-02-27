@@ -28,6 +28,7 @@ Iterate on a circular buffer.
 > back (*buffer*: **pure CircularBuffer\<T>**) (**T?**)
 
 Returns the last element of `buffer`.
+
 If it doesn't exist, returns `null<T>`.
 
 <a id="func_1"></a>
@@ -39,6 +40,7 @@ Returns the `buffer`'s capacity.
 > front (*buffer*: **pure CircularBuffer\<T>**) (**T?**)
 
 Returns the first element of `buffer`.
+
 If it doesn't exist, returns `null<T>`.
 
 <a id="func_3"></a>
@@ -55,6 +57,7 @@ Returns `true` if `buffer` is full.
 > pop (*buffer*: **CircularBuffer\<T>**) (**T?**)
 
 Removes an element of the `buffer` and returns it.
+
 If there aren't any, returns `null<T>`.
 
 <a id="func_6"></a>

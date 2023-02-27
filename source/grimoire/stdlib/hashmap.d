@@ -47,8 +47,8 @@ void grLoadStdLibHashMap(GrLibDefinition library) {
     library.setDescription(GrLocale.en_US, "Dictionary that associates values by keys.");
     GrType mapType = library.addNative("HashMap", ["T"]);
 
-    library.setDescription(GrLocale.fr_FR, "Itère sur une hashmap.");
-    library.setDescription(GrLocale.en_US, "Iterate on a hashmap.");
+    library.setDescription(GrLocale.fr_FR, "Itère sur les éléments d’une hashmap.");
+    library.setDescription(GrLocale.en_US, "Iterate on the elements of a hashmap.");
     GrType iteratorType = library.addNative("HashMapIterator", ["T"]);
 
     GrType pairType = grGetNativeType("Pair", [grString, grAny("T")]);
@@ -59,68 +59,68 @@ void grLoadStdLibHashMap(GrLibDefinition library) {
         ]);
     library.addConstructor(&_newByPairs, mapType, [grPure(grList(pairType))]);
 
-    library.setParameters(GrLocale.fr_FR, ["hashmap"]);
-    library.setParameters(GrLocale.en_US, ["hashmap"]);
+    library.setParameters(GrLocale.fr_FR, ["self"]);
+    library.setParameters(GrLocale.en_US, ["self"]);
 
-    library.setDescription(GrLocale.fr_FR, "Returne une copie de la `hashmap`.");
-    library.setDescription(GrLocale.fr_FR, "Returns a copy of the `hashmap`.");
+    library.setDescription(GrLocale.fr_FR, "Returne une copie de la hashmap.");
+    library.setDescription(GrLocale.fr_FR, "Returns a copy of the hashmap.");
     library.addFunction(&_copy, "copy", [grPure(mapType)], [mapType]);
 
-    library.setDescription(GrLocale.fr_FR, "Returne le nombre d’élements dans la `hashmap`.");
-    library.setDescription(GrLocale.en_US, "Returns the number of elements in the `hashmap`.");
+    library.setDescription(GrLocale.fr_FR, "Returne le nombre d’élements dans la hashmap.");
+    library.setDescription(GrLocale.en_US, "Returns the number of elements in the hashmap.");
     library.addFunction(&_size, "size", [grPure(mapType)], [grInt]);
 
-    library.setDescription(GrLocale.fr_FR, "Renvoie `true` si la `hashmap` ne contient rien.");
-    library.setDescription(GrLocale.en_US, "Returns `true` if the `hashmap` contains nothing.");
+    library.setDescription(GrLocale.fr_FR, "Renvoie `true` si la hashmap ne contient rien.");
+    library.setDescription(GrLocale.en_US, "Returns `true` if the hashmap contains nothing.");
     library.addFunction(&_isEmpty, "isEmpty", [grPure(mapType)], [grBool]);
 
-    library.setDescription(GrLocale.fr_FR, "Vide la `hashmap`.");
-    library.setDescription(GrLocale.en_US, "Clear the `hashmap`.");
+    library.setDescription(GrLocale.fr_FR, "Vide la hashmap.");
+    library.setDescription(GrLocale.en_US, "Clear the hashmap.");
     library.addFunction(&_clear, "clear", [mapType], [mapType]);
 
     library.setDescription(GrLocale.fr_FR,
-        "Ajoute la nouvelle `valeur` à la `clé` correspondante dans la `hashmap`.");
+        "Ajoute la nouvelle valeur à la clé correspondante dans la hashmap.");
     library.setDescription(GrLocale.en_US,
-        "Add the new `value` to the corresponding `key` in the `hashmap`.");
-    library.setParameters(GrLocale.fr_FR, ["hashmap", "clé", "valeur"]);
-    library.setParameters(GrLocale.en_US, ["hashmap", "key", "value"]);
+        "Add the new value to the corresponding key in the hashmap.");
+    library.setParameters(GrLocale.fr_FR, ["self", "key", "value"]);
+    library.setParameters(GrLocale.en_US, ["self", "key", "value"]);
     library.addFunction(&_set, "set", [mapType, grPure(grString), grAny("T")]);
 
     library.setDescription(GrLocale.fr_FR,
-        "Returne la valeur associée avec `clé`.\nSi cette valeur n’existe pas, retourne `null<T>`.");
+        "Returne la valeur associée avec `key`.\nSi cette valeur n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US,
         "Return the value associated with `key`.\nIf the value doesn't exist, returns `null<T>`.");
-    library.setParameters(GrLocale.fr_FR, ["hashmap", "clé"]);
-    library.setParameters(GrLocale.en_US, ["hashmap", "key"]);
+    library.setParameters(GrLocale.fr_FR, ["self", "key"]);
+    library.setParameters(GrLocale.en_US, ["self", "key"]);
     library.addFunction(&_get, "get", [grPure(mapType), grString], [
             grOptional(grAny("T"))
         ]);
 
     library.setDescription(GrLocale.fr_FR,
-        "Returne la valeur associée avec `clé`.\nSi cette valeur n’existe pas, retourne `défaut`.");
+        "Returne la valeur associée avec `key`.\nSi cette valeur n’existe pas, retourne `def`.");
     library.setDescription(GrLocale.en_US,
-        "Return the value associated with `key`.\nIf the value doesn't exist, returns `default`.");
-    library.setParameters(GrLocale.fr_FR, ["hashmap", "clé", "défaut"]);
-    library.setParameters(GrLocale.en_US, ["hashmap", "key", "default"]);
+        "Return the value associated with `key`.\nIf the value doesn't exist, returns `def`.");
+    library.setParameters(GrLocale.fr_FR, ["self", "key", "def"]);
+    library.setParameters(GrLocale.en_US, ["self", "key", "def"]);
     library.addFunction(&_getOr, "getOr", [
             grPure(mapType), grString, grAny("T")
         ], [grAny("T")]);
 
-    library.setParameters(GrLocale.fr_FR, ["hashmap", "clé"]);
-    library.setParameters(GrLocale.en_US, ["hashmap", "key"]);
+    library.setParameters(GrLocale.fr_FR, ["self", "key"]);
+    library.setParameters(GrLocale.en_US, ["self", "key"]);
 
-    library.setDescription(GrLocale.fr_FR, "Renvoie `true` si `clé` existe dans la `hashmap`.");
-    library.setDescription(GrLocale.en_US, "Returns `true` if `key` exists inside the `hashmap`.");
+    library.setDescription(GrLocale.fr_FR, "Renvoie `true` si la clé existe dans la hashmap.");
+    library.setDescription(GrLocale.en_US, "Returns `true` if the key exists inside the hashmap.");
     library.addFunction(&_contains, "contains", [grPure(mapType), grString], [
             grBool
         ]);
 
-    library.setDescription(GrLocale.fr_FR, "Retire l’entrée `clé` de la `hashmap`.");
-    library.setDescription(GrLocale.en_US, "Delete the entry `key` from the `hashmap`.");
+    library.setDescription(GrLocale.fr_FR, "Retire l’entrée `key` de la hashmap.");
+    library.setDescription(GrLocale.en_US, "Delete the entry `key` from the hashmap.");
     library.addFunction(&_remove, "remove", [mapType, grPure(grString)]);
 
-    library.setParameters(GrLocale.fr_FR, ["hashmap"]);
-    library.setParameters(GrLocale.en_US, ["hashmap"]);
+    library.setParameters(GrLocale.fr_FR, ["self"]);
+    library.setParameters(GrLocale.en_US, ["self"]);
 
     library.setDescription(GrLocale.fr_FR, "Returne la liste de toutes les clés.");
     library.setDescription(GrLocale.en_US, "Returns the list of all keys.");
@@ -151,10 +151,10 @@ void grLoadStdLibHashMap(GrLibDefinition library) {
     GrType floatHashMap = grGetNativeType("HashMap", [grFloat]);
     GrType stringHashMap = grGetNativeType("HashMap", [grString]);
 
-    library.setDescription(GrLocale.fr_FR, "Affiche le contenu d’`hashmap`.");
-    library.setDescription(GrLocale.en_US, "Display the content of `hashmap`.");
-    library.setParameters(GrLocale.fr_FR, ["hashmap"]);
-    library.setParameters(GrLocale.en_US, ["hashmap"]);
+    library.setDescription(GrLocale.fr_FR, "Affiche le contenu d’hashmap.");
+    library.setDescription(GrLocale.en_US, "Display the content of hashmap.");
+    library.setParameters(GrLocale.fr_FR, ["self"]);
+    library.setParameters(GrLocale.en_US, ["self"]);
     library.addFunction(&_print_!"bool", "print", [grPure(boolHashMap)]);
     library.addFunction(&_print_!"int", "print", [grPure(intHashMap)]);
     library.addFunction(&_print_!"float", "print", [grPure(floatHashMap)]);

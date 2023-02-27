@@ -17,9 +17,9 @@ Fonctions de conversion.
 |**uint**|**string**|
 |**float**|**string**|
 |**char**|**string**|
-|**pure list\<string>**|**string**|
-|**pure list\<char>**|**string**|
-|**pure string**|**list\<char>**|
+|**pure [string]**|**string**|
+|**pure [char]**|**string**|
+|**pure string**|**[char]**|
 
 
 ***

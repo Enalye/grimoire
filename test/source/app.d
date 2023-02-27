@@ -24,7 +24,8 @@ void main() {
 
         GrCompiler compiler = new GrCompiler;
         compiler.addLibrary(stdlib);
-        GrBytecode bytecode = compiler.compileFile("script/test.gr", GrOption.symbols, locale);
+        GrBytecode bytecode = compiler.compileFile("script/test.gr",
+            GrOption.symbols | GrOption.safe, locale);
         if (!bytecode) {
             writeln(compiler.getError().prettify(locale));
             return;

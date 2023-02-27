@@ -90,7 +90,8 @@ final class UnitTester {
     TestSerie run(string fileName) {
         TestSerie testSerie;
 
-        GrBytecode bytecode = _compiler.compileFile(fileName, GrOption.symbols, _locale);
+        GrBytecode bytecode = _compiler.compileFile(fileName,
+            GrOption.symbols | GrOption.safe, _locale);
         if (!bytecode) {
             testSerie.comment = _compiler.getError().prettify(GrLocale.fr_FR);
             return testSerie;

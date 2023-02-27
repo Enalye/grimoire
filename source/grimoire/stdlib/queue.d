@@ -22,44 +22,46 @@ void grLoadStdLibQueue(GrLibDefinition library) {
         "A queue is a collection that can be manipulated on both ends.");
     GrType queueType = library.addNative("Queue", ["T"]);
 
-    library.setDescription(GrLocale.fr_FR, "Itère sur une queue.");
-    library.setDescription(GrLocale.en_US, "Iterate on a queue.");
+    library.setDescription(GrLocale.fr_FR, "Itère sur les éléments d’une queue.");
+    library.setDescription(GrLocale.en_US, "Iterate on the elements of a queue.");
     library.addNative("QueueIterator", ["T"]);
 
     library.addConstructor(&_new, queueType);
 
-    library.setDescription(GrLocale.fr_FR, "Renvoie `true` si la `queue` ne contient rien.");
-    library.setDescription(GrLocale.en_US, "Returns `true` if `queue` contains nothing.");
-    library.setParameters(GrLocale.fr_FR, ["queue"]);
-    library.setParameters(GrLocale.en_US, ["queue"]);
+    library.setDescription(GrLocale.fr_FR, "Renvoie `true` si la queue est vide.");
+    library.setDescription(GrLocale.en_US, "Returns `true` if the queue is empty.");
+    library.setParameters(GrLocale.fr_FR, ["self"]);
+    library.setParameters(GrLocale.en_US, ["self"]);
     library.addFunction(&_isEmpty, "isEmpty", [grPure(queueType)], [grBool]);
 
-    library.setDescription(GrLocale.fr_FR, "Ajoute `valeur` en fin de `queue`.");
-    library.setDescription(GrLocale.en_US, "Appends `value` to the back of `queue`.");
-    library.setParameters(GrLocale.fr_FR, ["queue", "valeur"]);
-    library.setParameters(GrLocale.en_US, ["queue", "value"]);
-    library.addFunction(&_push, "push", [queueType, grAny("T")]);
+    library.setDescription(GrLocale.fr_FR, "Ajoute `value` à la fin de la queue.");
+    library.setDescription(GrLocale.en_US, "Appends `value` to the back of the queue.");
+    library.setParameters(GrLocale.fr_FR, ["self", "value"]);
+    library.setParameters(GrLocale.en_US, ["self", "value"]);
+    library.addFunction(&_pushBack, "pushBack", [queueType, grAny("T")]);
 
-    library.setDescription(GrLocale.fr_FR, "Retire le dernier élément de `queue` et le retourne.
-S’il n’existe pas, retourne `null<T>`.");
-    library.setDescription(GrLocale.en_US, "Removes the last element of `queue` and returns it.
-If it doesn't exist, returns `null<T>`.");
-    library.setParameters(GrLocale.fr_FR, ["queue"]);
-    library.setParameters(GrLocale.en_US, ["queue"]);
-    library.addFunction(&_pop, "pop", [queueType], [grOptional(grAny("T"))]);
+    library.setDescription(GrLocale.fr_FR, "Retire le dernier élément de la queue et le retourne.
+Si la queue est vide, retourne `null<T>`.");
+    library.setDescription(GrLocale.en_US, "Removes the last element of the queue and returns it.
+If the queue is empty, returns `null<T>`.");
+    library.setParameters(GrLocale.fr_FR, ["self"]);
+    library.setParameters(GrLocale.en_US, ["self"]);
+    library.addFunction(&_popBack, "popBack", [queueType], [
+            grOptional(grAny("T"))
+        ]);
 
-    library.setDescription(GrLocale.fr_FR, "Retourne le premier élément de `queue`.
-S’il n’existe pas, retourne `null<T>`.");
-    library.setDescription(GrLocale.en_US, "Returns the first element of `queue`.
-If it doesn't exist, returns `null<T>`.");
+    library.setDescription(GrLocale.fr_FR, "Retourne le premier élément de la queue.
+Si la queue est vide, retourne `null<T>`.");
+    library.setDescription(GrLocale.en_US, "Returns the first element of the queue.
+If the queue is empty, returns `null<T>`.");
     library.addFunction(&_front, "front", [grPure(queueType)], [
             grOptional(grAny("T"))
         ]);
 
-    library.setDescription(GrLocale.fr_FR, "Returne le dernier élément de `queue`.
-S’il n’existe pas, retourne `null<T>`.");
-    library.setDescription(GrLocale.en_US, "Returns the last element of `queue`.
-If it doesn't exist, returns `null<T>`.");
+    library.setDescription(GrLocale.fr_FR, "Returne le dernier élément de la queue.
+Si la queue est vide, retourne `null<T>`.");
+    library.setDescription(GrLocale.en_US, "Returns the last element of the queue.
+If the queue is empty, returns `null<T>`.");
     library.addFunction(&_back, "back", [grPure(queueType)], [
             grOptional(grAny("T"))
         ]);
@@ -122,12 +124,12 @@ private void _isEmpty(GrCall call) {
     call.setBool(queue.isEmpty);
 }
 
-private void _push(GrCall call) {
+private void _pushBack(GrCall call) {
     GrQueue queue = call.getNative!GrQueue(0);
     queue.push(call.getValue(1));
 }
 
-private void _pop(GrCall call) {
+private void _popBack(GrCall call) {
     GrQueue queue = call.getNative!GrQueue(0);
     if (queue.isEmpty) {
         call.setNull();

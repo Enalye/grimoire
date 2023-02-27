@@ -150,7 +150,9 @@ final class GrDoc : GrLibDefinition {
     }
 
     override void setDescription(GrLocale locale, string message = "") {
-        _comments[locale] = message;
+        import std.array : replace;
+
+        _comments[locale] = message.replace("\n", "\n\n");
     }
 
     override void setParameters(GrLocale locale, string[] parameters = []) {

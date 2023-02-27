@@ -173,11 +173,11 @@ private immutable string[] _prettyInstructions = [
     "opt_try", "opt_or", "opt_call", "opt_call2", "and.i", "or.i", "not.i",
     "cat.s", "add.i", "add.u", "add.f", "sub.i", "sub.u", "sub.f", "mul.i",
     "mul.u", "mul.f", "div.i", "div.u", "div.f", "rem.i", "rem.u", "rem.f",
-    "neg.i", "neg.u", "neg.f", "inc.i", "inc.u", "inc.f", "dec.i", "dec.u",
-    "dec.f", "copy", "swap", "setup_it", "local", "call", "acall", "pcall",
-    "spcall", "ret", "unwind", "defer", "jmp", "jmp_eq", "jmp_neq", "list",
-    "len", "idx", "idx2", "idx3", "cat.n", "append", "prepend", "eq.n",
-    "neq.n", "dbg_prfbegin", "dbg_prfend"
+    "neg.i", "neg.f", "inc.i", "inc.u", "inc.f", "dec.i", "dec.u", "dec.f",
+    "copy", "swap", "setup_it", "local", "call", "acall", "pcall", "spcall",
+    "ret", "unwind", "defer", "jmp", "jmp_eq", "jmp_neq", "list", "len", "idx",
+    "idx2", "idx3", "cat.l", "append", "prepend", "eq.l", "neq.l", "dbg_prfbegin",
+    "dbg_prfend"
 ];
 
 /// Référence d’une classe.

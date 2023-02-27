@@ -19,7 +19,7 @@ void grLoadStdLibString(GrLibDefinition library) {
     library.setModuleDescription(GrLocale.fr_FR, "Type pouvant contenir des caractères UTF-8.");
     library.setModuleDescription(GrLocale.en_US, "Type that contains UTF-8 characters.");
 
-    library.setDescription(GrLocale.fr_FR, "Retourne une copie de le chaîne.");
+    library.setDescription(GrLocale.fr_FR, "Retourne une copie de la chaîne.");
     library.setDescription(GrLocale.en_US, "Returns a copy of the string.");
     library.setParameters(GrLocale.fr_FR, ["self"]);
     library.setParameters(GrLocale.en_US, ["self"]);
@@ -41,11 +41,23 @@ void grLoadStdLibString(GrLibDefinition library) {
     library.setDescription(GrLocale.en_US, "Prepends `str` at the front of the string.");
     library.setParameters(GrLocale.fr_FR, ["self", "str"]);
     library.setParameters(GrLocale.en_US, ["self", "str"]);
-    library.addFunction(&_pushFront, "pushFront", [grString, grString]);
+    library.addFunction(&_pushFront_str, "pushFront", [
+            grString, grPure(grString)
+        ]);
+
+    library.setDescription(GrLocale.fr_FR, "Ajoute `ch` au début de la chaîne.");
+    library.setDescription(GrLocale.en_US, "Prepends `ch` at the front of the string.");
+    library.setParameters(GrLocale.fr_FR, ["self", "ch"]);
+    library.setParameters(GrLocale.en_US, ["self", "ch"]);
+    library.addFunction(&_pushFront_ch, "pushFront", [grString, grChar]);
 
     library.setDescription(GrLocale.fr_FR, "Ajoute `str` à la fin de la chaîne.");
     library.setDescription(GrLocale.en_US, "Appends `str` at the back of the string.");
-    library.addFunction(&_pushBack, "pushBack", [grString, grString]);
+    library.addFunction(&_pushBack_str, "pushBack", [grString, grPure(grString)]);
+
+    library.setDescription(GrLocale.fr_FR, "Ajoute `ch` à la fin de la chaîne.");
+    library.setDescription(GrLocale.en_US, "Appends `ch` at the back of the string.");
+    library.addFunction(&_pushBack_ch, "pushBack", [grString, grChar]);
 
     library.setDescription(GrLocale.fr_FR,
         "Retire le premier caractère de la chaîne et le retourne.
@@ -71,12 +83,16 @@ Returns `null<char>` if this string is empty.");
         "Removes the first X characters from the string and returns them.");
     library.setParameters(GrLocale.fr_FR, ["self", "count"]);
     library.setParameters(GrLocale.en_US, ["self", "count"]);
-    library.addFunction(&_popFront1, "popFront", [grString, grInt], [grString]);
+    library.addFunction(&_popFront_count, "popFront", [grString, grInt], [
+            grString
+        ]);
 
     library.setDescription(GrLocale.fr_FR, "Retire N caractères de la chaîne et les retourne.");
     library.setDescription(GrLocale.en_US,
         "Removes N characters from the string and returns them.");
-    library.addFunction(&_popBack1, "popBack", [grString, grInt], [grString]);
+    library.addFunction(&_popBack_count, "popBack", [grString, grInt], [
+            grString
+        ]);
 
     library.setDescription(GrLocale.fr_FR, "Retourne le premier caractère de la chaîne.
 Retourne `null<char>` si la chaîne est vide.");
@@ -88,29 +104,42 @@ Returns `null<char>` if this string is empty.");
             grOptional(grChar)
         ]);
 
-    library.setDescription(GrLocale.fr_FR, "Returne le dernier élément de la chaîne.
+    library.setDescription(GrLocale.fr_FR, "Returne le dernier caractère de la chaîne.
 Retourne `null<char>` si la chaîne est vide.");
-    library.setDescription(GrLocale.en_US, "Returns the last element of the string.
+    library.setDescription(GrLocale.en_US, "Returns the last character of the string.
 Returns `null<char>` if this string is empty.");
     library.addFunction(&_back, "back", [grPure(grString)], [grOptional(grChar)]);
 
-    library.setDescription(GrLocale.fr_FR, "Retire le caractère à l’index spécifié.");
-    library.setDescription(GrLocale.en_US, "Removes the character at the specified index.");
-    library.setParameters(GrLocale.fr_FR, ["self", "at"]);
-    library.setParameters(GrLocale.en_US, ["self", "at"]);
-    library.addFunction(&_remove, "remove", [grString, grInt]);
-
-    library.setDescription(GrLocale.fr_FR, "Retire les caractères de `start` à `end` inclus.");
-    library.setDescription(GrLocale.en_US,
-        "Removes the characters from `start` to `end` included.");
-    library.setParameters(GrLocale.fr_FR, ["self", "start", "end"]);
-    library.setParameters(GrLocale.en_US, ["self", "start", "end"]);
-    library.addFunction(&_remove2, "remove", [grString, grInt, grInt]);
+    library.setDescription(GrLocale.fr_FR, "Retire un caractère à la position en octet spécifiée.
+Si l’index est négatif, il est calculé à partir de la fin.
+Si l’index ne tombe pas sur un caractère, sa position sera celle du prochain caractère valide.");
+    library.setDescription(GrLocale.en_US, "Removes a character at the specified byte position.
+If the index is negative, it is calculated from the back of the string.
+If the index does not fall on a character, it'll be adjusted to the next valid character.");
+    library.setParameters(GrLocale.fr_FR, ["self", "idx"]);
+    library.setParameters(GrLocale.en_US, ["self", "idx"]);
+    library.addFunction(&_remove_idx, "remove", [grString, grInt]);
 
     library.setDescription(GrLocale.fr_FR,
-        "Retourne une portion de la chaîne de `start` jusqu’à `end` inclus.");
+        "Retire les caractères de `start` à `end` (en octets) inclus.
+Les index négatifs sont calculés à partir de la fin de la chaîne.
+Si un index ne tombe pas sur un caractère, sa position sera celle du prochain caractère valide.");
     library.setDescription(GrLocale.en_US,
-        "Returns a slice of the string from `start` to `end` included.");
+        "Removes the characters from `start` to `end` (in bytes) included.
+Negative indexes are calculated from the back of the string.
+If an index does not fall on a character, it'll be adjusted to the next valid character.");
+    library.setParameters(GrLocale.fr_FR, ["self", "start", "end"]);
+    library.setParameters(GrLocale.en_US, ["self", "start", "end"]);
+    library.addFunction(&_remove_slice, "remove", [grString, grInt, grInt]);
+
+    library.setDescription(GrLocale.fr_FR,
+        "Retourne une portion de la chaîne de `start` jusqu’à `end` (en octets) inclus.
+Les index négatifs sont calculés à partir de la fin de la chaîne.
+Si un index ne tombe pas sur un caractère, sa position sera celle du prochain caractère valide.");
+    library.setDescription(GrLocale.en_US,
+        "Returns a slice of the string from `start` to `end` (in bytes) included.
+Negative indexes are calculated from the back of the string.
+If an index does not fall on a character, it'll be adjusted to the next valid character.");
     library.addFunction(&_slice, "slice", [grPure(grString), grInt, grInt], [
             grString
         ]);
@@ -121,16 +150,35 @@ Returns `null<char>` if this string is empty.");
     library.setParameters(GrLocale.en_US, ["str"]);
     library.addFunction(&_reverse, "reverse", [grPure(grString)], [grString]);
 
-    library.setDescription(GrLocale.fr_FR, "Insère un caractère dans la chaîne à l’index spécifié.
+    library.setDescription(GrLocale.fr_FR,
+        "Insère `str` dans la chaîne à l’index spécifié (en octets).
 Si l’index dépasse la taille de la chaîne, il est ajouté à la fin.
-Si l’index est négatif, il est calculé à partir de la fin.");
+Si l’index est négatif, il est calculé à partir de la fin.
+Si un index ne tombe pas sur un caractère, sa position sera celle du prochain caractère valide.");
     library.setDescription(GrLocale.en_US,
-        "Insert a character in the string at the specified index.
+        "Insert `str` in the string at the specified index (in bytes).
 If the index is greater than the size of the string, it's appended at the back.
-If the index is negative, the index is calculated from the back.");
-    library.setParameters(GrLocale.fr_FR, ["self", "at", "ch"]);
-    library.setParameters(GrLocale.en_US, ["self", "at", "ch"]);
-    library.addFunction(&_insert, "insert", [grString, grInt, grPure(grString)]);
+If the index is negative, the index is calculated from the back.
+If an index does not fall on a character, it'll be adjusted to the next valid character.");
+    library.setParameters(GrLocale.fr_FR, ["self", "idx", "str"]);
+    library.setParameters(GrLocale.en_US, ["self", "idx", "str"]);
+    library.addFunction(&_insert_str, "insert", [
+            grString, grInt, grPure(grString)
+        ]);
+
+    library.setDescription(GrLocale.fr_FR,
+        "Insère un caractère dans la chaîne à l’index spécifié (en octets).
+Si l’index dépasse la taille de la chaîne, il est ajouté à la fin.
+Si l’index est négatif, il est calculé à partir de la fin.
+Si un index ne tombe pas sur un caractère, sa position sera celle du prochain caractère valide.");
+    library.setDescription(GrLocale.en_US,
+        "Insert a character in the string at the specified index (in bytes).
+If the index is greater than the size of the string, it's appended at the back.
+If the index is negative, the index is calculated from the back.
+If an index does not fall on a character, it'll be adjusted to the next valid character.");
+    library.setParameters(GrLocale.fr_FR, ["self", "idx", "ch"]);
+    library.setParameters(GrLocale.en_US, ["self", "idx", "ch"]);
+    library.addFunction(&_insert_ch, "insert", [grString, grInt, grChar]);
 
     library.setDescription(GrLocale.fr_FR,
         "Retourne la première occurence de `str` dans la chaîne.
@@ -145,11 +193,11 @@ If `index` is negative, `index` is calculated from the back of the string.");
         [grOptional(grUInt)]);
 
     library.setDescription(GrLocale.fr_FR,
-        "Retourne la première occurence de `str` dans la chaîne à partir de `idx`.
+        "Retourne la première occurence de `str` dans la chaîne à partir de `idx` (en octets).
 Si `valeur`  n’existe pas, `null<uint>` est renvoyé.
 Si `index` est négatif, l’`index` est calculé à partir de la fin de la chaîne.");
     library.setDescription(GrLocale.en_US,
-        "Returns the first occurence of `value` in the string, starting from `idx`.
+        "Returns the first occurence of `value` in the string, starting from `idx` (in bytes).
 If `value` does't exist, `null<uint>` is returned.
 If `index` is negative, `index` is calculated from the back of the string.");
     library.setParameters(GrLocale.fr_FR, ["self", "str", "idx"]);
@@ -171,11 +219,11 @@ If `index` is negative, `index` is calculated from the back of the string.");
             grPure(grString)], [grOptional(grUInt)]);
 
     library.setDescription(GrLocale.fr_FR,
-        "Retourne la dernière occurence de `str` dans la chaîne à partir de `idx`.
+        "Retourne la dernière occurence de `str` dans la chaîne à partir de `idx` (en octets).
 Si `valeur`  n’existe pas, `null<uint>` est renvoyé.
 Si `index` est négatif, l’`index` est calculé à partir de la fin de la chaîne.");
     library.setDescription(GrLocale.en_US,
-        "Returns the last occurence of `str` in the string, starting from `idx`.
+        "Returns the last occurence of `str` in the string, starting from `idx` (in bytes).
 If `value` does't exist, `null<uint>` is returned.
 If `index` is negative, `index` is calculated from the back of the string.");
     library.setParameters(GrLocale.fr_FR, ["self", "str", "idx"]);
@@ -243,14 +291,24 @@ private void _clear(GrCall call) {
     self.clear();
 }
 
-private void _pushFront(GrCall call) {
+private void _pushFront_str(GrCall call) {
     GrString self = call.getString(0);
     self.pushFront(call.getString(1));
 }
 
-private void _pushBack(GrCall call) {
+private void _pushFront_ch(GrCall call) {
+    GrString self = call.getString(0);
+    self.pushFront(call.getChar(1));
+}
+
+private void _pushBack_str(GrCall call) {
     GrString self = call.getString(0);
     self.pushBack(call.getString(1));
+}
+
+private void _pushBack_ch(GrCall call) {
+    GrString self = call.getString(0);
+    self.pushBack(call.getChar(1));
 }
 
 private void _popFront(GrCall call) {
@@ -271,10 +329,11 @@ private void _popBack(GrCall call) {
         call.setNull();
         return;
     }
+
     call.setChar(self.popBack());
 }
 
-private void _popFront1(GrCall call) {
+private void _popFront_count(GrCall call) {
     GrString self = call.getString(0);
     GrInt size = call.getInt(1);
 
@@ -286,7 +345,7 @@ private void _popFront1(GrCall call) {
     call.setString(self.popFront(size));
 }
 
-private void _popBack1(GrCall call) {
+private void _popBack_count(GrCall call) {
     GrString self = call.getString(0);
     GrInt size = call.getInt(1);
 
@@ -320,14 +379,14 @@ private void _back(GrCall call) {
     call.setChar(self.back());
 }
 
-private void _remove(GrCall call) {
+private void _remove_idx(GrCall call) {
     GrString str = call.getString(0);
     GrInt idx = call.getInt(1);
 
     str.remove(idx);
 }
 
-private void _remove2(GrCall call) {
+private void _remove_slice(GrCall call) {
     GrString str = call.getString(0);
     GrInt start = call.getInt(1);
     GrInt end = call.getInt(2);
@@ -347,12 +406,20 @@ private void _reverse(GrCall call) {
     call.setString(call.getString(0).reverse());
 }
 
-private void _insert(GrCall call) {
+private void _insert_str(GrCall call) {
     GrString self = call.getString(0);
     GrInt idx = call.getInt(1);
     GrString str = call.getString(2);
 
     self.insert(idx, str);
+}
+
+private void _insert_ch(GrCall call) {
+    GrString self = call.getString(0);
+    GrInt idx = call.getInt(1);
+    GrChar ch = call.getChar(2);
+
+    self.insert(idx, ch);
 }
 
 private void _find(GrCall call) {

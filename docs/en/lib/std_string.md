@@ -20,23 +20,26 @@ Iterates on code points of a string.
 |[find](#func_6)|*self*: **pure string**, *str*: **pure string**|**uint?**|
 |[find](#func_7)|*self*: **pure string**, *str*: **pure string**, *idx*: **int**|**uint?**|
 |[front](#func_8)|*self*: **pure string**|**char?**|
-|[insert](#func_9)|*self*: **string**, *at*: **int**, *ch*: **pure string**||
-|[isEmpty](#func_10)|*self*: **pure string**|**bool**|
-|[next](#func_11)|*it*: **Bytes**|**int?**|
-|[next](#func_12)|*iterator*: **Chars**|**char?**|
-|[popBack](#func_13)|*self*: **string**|**char?**|
-|[popBack](#func_14)|*self*: **string**, *count*: **int**|**string**|
-|[popFront](#func_15)|*self*: **string**|**char?**|
-|[popFront](#func_16)|*self*: **string**, *count*: **int**|**string**|
-|[pushBack](#func_17)|*self*: **string**, *str*: **string**||
-|[pushFront](#func_18)|*self*: **string**, *str*: **string**||
-|[remove](#func_19)|*self*: **string**, *at*: **int**||
-|[remove](#func_20)|*self*: **string**, *start*: **int**, *end*: **int**||
-|[reverse](#func_21)|*str*: **pure string**|**string**|
-|[rfind](#func_22)|*self*: **pure string**, *str*: **pure string**|**uint?**|
-|[rfind](#func_23)|*self*: **pure string**, *str*: **pure string**, *idx*: **int**|**uint?**|
-|[size](#func_24)|*self*: **pure string**|**uint**|
-|[slice](#func_25)|*self*: **pure string**, *start*: **int**, *end*: **int**|**string**|
+|[insert](#func_9)|*self*: **string**, *idx*: **int**, *str*: **pure string**||
+|[insert](#func_10)|*self*: **string**, *idx*: **int**, *ch*: **char**||
+|[isEmpty](#func_11)|*self*: **pure string**|**bool**|
+|[next](#func_12)|*it*: **Bytes**|**int?**|
+|[next](#func_13)|*iterator*: **Chars**|**char?**|
+|[popBack](#func_14)|*self*: **string**|**char?**|
+|[popBack](#func_15)|*self*: **string**, *count*: **int**|**string**|
+|[popFront](#func_16)|*self*: **string**|**char?**|
+|[popFront](#func_17)|*self*: **string**, *count*: **int**|**string**|
+|[pushBack](#func_18)|*self*: **string**, *ch*: **pure string**||
+|[pushBack](#func_19)|*self*: **string**, *ch*: **char**||
+|[pushFront](#func_20)|*self*: **string**, *str*: **pure string**||
+|[pushFront](#func_21)|*self*: **string**, *ch*: **char**||
+|[remove](#func_22)|*self*: **string**, *idx*: **int**||
+|[remove](#func_23)|*self*: **string**, *start*: **int**, *end*: **int**||
+|[reverse](#func_24)|*str*: **pure string**|**string**|
+|[rfind](#func_25)|*self*: **pure string**, *str*: **pure string**|**uint?**|
+|[rfind](#func_26)|*self*: **pure string**, *str*: **pure string**, *idx*: **int**|**uint?**|
+|[size](#func_27)|*self*: **pure string**|**uint**|
+|[slice](#func_28)|*self*: **pure string**, *start*: **int**, *end*: **int**|**string**|
 
 
 ***
@@ -45,7 +48,8 @@ Iterates on code points of a string.
 <a id="func_0"></a>
 > back (*self*: **pure string**) (**char?**)
 
-Returns the last element of the string.
+Returns the last character of the string.
+
 Returns `null<char>` if this string is empty.
 
 <a id="func_1"></a>
@@ -77,112 +81,160 @@ Returns a copy of the string.
 > find (*self*: **pure string**, *str*: **pure string**) (**uint?**)
 
 Returns the first occurence of `value` in the string.
+
 If `value` does't exist, `null<uint>` is returned.
+
 If `index` is negative, `index` is calculated from the back of the string.
 
 <a id="func_7"></a>
 > find (*self*: **pure string**, *str*: **pure string**, *idx*: **int**) (**uint?**)
 
-Returns the first occurence of `value` in the string, starting from `idx`.
+Returns the first occurence of `value` in the string, starting from `idx` (in bytes).
+
 If `value` does't exist, `null<uint>` is returned.
+
 If `index` is negative, `index` is calculated from the back of the string.
 
 <a id="func_8"></a>
 > front (*self*: **pure string**) (**char?**)
 
 Returns the first character of the string.
+
 Returns `null<char>` if this string is empty.
 
 <a id="func_9"></a>
-> insert (*self*: **string**, *at*: **int**, *ch*: **pure string**)
+> insert (*self*: **string**, *idx*: **int**, *str*: **pure string**)
 
-Insert a character in the string at the specified index.
+Insert `str` in the string at the specified index (in bytes).
+
 If the index is greater than the size of the string, it's appended at the back.
+
 If the index is negative, the index is calculated from the back.
 
+If an index does not fall on a character, it'll be adjusted to the next valid character.
+
 <a id="func_10"></a>
+> insert (*self*: **string**, *idx*: **int**, *ch*: **char**)
+
+Insert a character in the string at the specified index (in bytes).
+
+If the index is greater than the size of the string, it's appended at the back.
+
+If the index is negative, the index is calculated from the back.
+
+If an index does not fall on a character, it'll be adjusted to the next valid character.
+
+<a id="func_11"></a>
 > isEmpty (*self*: **pure string**) (**bool**)
 
 Returns `true` if the string is empty.
 
-<a id="func_11"></a>
+<a id="func_12"></a>
 > next (*it*: **Bytes**) (**int?**)
 
 Advances the iterator until the next byte.
 
-<a id="func_12"></a>
+<a id="func_13"></a>
 > next (*iterator*: **Chars**) (**char?**)
 
 Advances the iterator until the next character.
 
-<a id="func_13"></a>
+<a id="func_14"></a>
 > popBack (*self*: **string**) (**char?**)
 
 Removes the last character of the string and returns it.
+
 Returns `null<char>` if this string is empty.
 
-<a id="func_14"></a>
+<a id="func_15"></a>
 > popBack (*self*: **string**, *count*: **int**) (**string**)
 
 Removes N characters from the string and returns them.
 
-<a id="func_15"></a>
+<a id="func_16"></a>
 > popFront (*self*: **string**) (**char?**)
 
 Removes the first character of the string and returns it.
+
 Returns `null<char>` if this string is empty.
 
-<a id="func_16"></a>
+<a id="func_17"></a>
 > popFront (*self*: **string**, *count*: **int**) (**string**)
 
 Removes the first X characters from the string and returns them.
 
-<a id="func_17"></a>
-> pushBack (*self*: **string**, *str*: **string**)
+<a id="func_18"></a>
+> pushBack (*self*: **string**, *ch*: **pure string**)
 
 Appends `str` at the back of the string.
 
-<a id="func_18"></a>
-> pushFront (*self*: **string**, *str*: **string**)
+<a id="func_19"></a>
+> pushBack (*self*: **string**, *ch*: **char**)
+
+Appends `ch` at the back of the string.
+
+<a id="func_20"></a>
+> pushFront (*self*: **string**, *str*: **pure string**)
 
 Prepends `str` at the front of the string.
 
-<a id="func_19"></a>
-> remove (*self*: **string**, *at*: **int**)
+<a id="func_21"></a>
+> pushFront (*self*: **string**, *ch*: **char**)
 
-Removes the character at the specified index.
+Prepends `ch` at the front of the string.
 
-<a id="func_20"></a>
+<a id="func_22"></a>
+> remove (*self*: **string**, *idx*: **int**)
+
+Removes a character at the specified byte position.
+
+If the index is negative, it is calculated from the back of the string.
+
+If the index does not fall on a character, it'll be adjusted to the next valid character.
+
+<a id="func_23"></a>
 > remove (*self*: **string**, *start*: **int**, *end*: **int**)
 
-Removes the characters from `start` to `end` included.
+Removes the characters from `start` to `end` (in bytes) included.
 
-<a id="func_21"></a>
+Negative indexes are calculated from the back of the string.
+
+If an index does not fall on a character, it'll be adjusted to the next valid character.
+
+<a id="func_24"></a>
 > reverse (*str*: **pure string**) (**string**)
 
 Returns an inverted version of the string.
 
-<a id="func_22"></a>
+<a id="func_25"></a>
 > rfind (*self*: **pure string**, *str*: **pure string**) (**uint?**)
 
 Returns the last occurence of `str` in the string.
+
 If `value` does't exist, `null<uint>` is returned.
+
 If `index` is negative, `index` is calculated from the back of the string.
 
-<a id="func_23"></a>
+<a id="func_26"></a>
 > rfind (*self*: **pure string**, *str*: **pure string**, *idx*: **int**) (**uint?**)
 
-Returns the last occurence of `str` in the string, starting from `idx`.
+Returns the last occurence of `str` in the string, starting from `idx` (in bytes).
+
 If `value` does't exist, `null<uint>` is returned.
+
 If `index` is negative, `index` is calculated from the back of the string.
 
-<a id="func_24"></a>
+<a id="func_27"></a>
 > size (*self*: **pure string**) (**uint**)
 
 Returns the size of the string in bytes.
 
-<a id="func_25"></a>
+<a id="func_28"></a>
 > slice (*self*: **pure string**, *start*: **int**, *end*: **int**) (**string**)
 
-Returns a slice of the string from `start` to `end` included.
+Returns a slice of the string from `start` to `end` (in bytes) included.
+
+Negative indexes are calculated from the back of the string.
+
+If an index does not fall on a character, it'll be adjusted to the next valid character.
 

@@ -20,7 +20,7 @@ Internal function.
 <a id="func_1"></a>
 > assert (*value*: **bool**, *error*: **pure string**)
 
-If `value` is false, throw the exception `errror`.
+If `value` is false, throw the exception.
 
 <a id="func_2"></a>
 > assert (*value*: **bool**)

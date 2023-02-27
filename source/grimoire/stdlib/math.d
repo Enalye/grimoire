@@ -176,12 +176,12 @@ Returns the ratio between 0 and 1 of `value` from `source` to `destination`.");
     library.addFunction(&_isNaN, "isNaN", [grFloat], [grBool]);
 
     library.setDescription(GrLocale.fr_FR,
-        "Approche `x` de `cible` par incrément de `pas` sans le dépasser.
-Un `pas` négatif l’éloigne de `destination` d’autant.");
+        "Approche `x` de `target` par pas de `step` sans le dépasser.
+Un pas négatif l’éloigne de `target` d’autant.");
     library.setDescription(GrLocale.en_US,
         "Approach `x` up to `target` by increment of `step` without overshooting it.
-A negative `step` distances from `target` by that much.");
-    library.setParameters(GrLocale.fr_FR, ["x", "cible", "pas"]);
+A negative step distances from `target` by that much.");
+    library.setParameters(GrLocale.fr_FR, ["x", "target", "step"]);
     library.setParameters(GrLocale.en_US, ["x", "target", "step"]);
     library.addFunction(&_approach_i, "approach", [grInt, grInt, grInt], [grInt]);
     library.addFunction(&_approach_r, "approach", [grFloat, grFloat, grFloat], [

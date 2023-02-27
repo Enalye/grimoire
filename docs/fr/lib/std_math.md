@@ -17,8 +17,8 @@ Fonctions liées aux maths.
 |[abs](#func_0)|*x*: **float**|**float**|
 |[abs](#func_1)|*x*: **int**|**int**|
 |[acos](#func_2)|*radians*: **float**|**float**|
-|[approach](#func_3)|*x*: **float**, *cible*: **float**, *pas*: **float**|**float**|
-|[approach](#func_4)|*x*: **int**, *cible*: **int**, *pas*: **int**|**int**|
+|[approach](#func_3)|*x*: **float**, *target*: **float**, *step*: **float**|**float**|
+|[approach](#func_4)|*x*: **int**, *target*: **int**, *step*: **int**|**int**|
 |[asin](#func_5)|*radians*: **float**|**float**|
 |[atan](#func_6)|*radians*: **float**|**float**|
 |[atan2](#func_7)|*a*: **float**, *b*: **float**|**float**|
@@ -69,16 +69,18 @@ Retourne la valeur absolue de `x`.
 Retourne l’arc cosinus de `radians`.
 
 <a id="func_3"></a>
-> approach (*x*: **float**, *cible*: **float**, *pas*: **float**) (**float**)
+> approach (*x*: **float**, *target*: **float**, *step*: **float**) (**float**)
 
-Approche `x` de `cible` par incrément de `pas` sans le dépasser.
-Un `pas` négatif l’éloigne de `destination` d’autant.
+Approche `x` de `target` par pas de `step` sans le dépasser.
+
+Un pas négatif l’éloigne de `target` d’autant.
 
 <a id="func_4"></a>
-> approach (*x*: **int**, *cible*: **int**, *pas*: **int**) (**int**)
+> approach (*x*: **int**, *target*: **int**, *step*: **int**) (**int**)
 
-Approche `x` de `cible` par incrément de `pas` sans le dépasser.
-Un `pas` négatif l’éloigne de `destination` d’autant.
+Approche `x` de `target` par pas de `step` sans le dépasser.
+
+Un pas négatif l’éloigne de `target` d’autant.
 
 <a id="func_5"></a>
 > asin (*radians*: **float**) (**float**)
@@ -199,6 +201,7 @@ Retourne une valeur aléatoire comprise entre `min` et `max` inclus.
 > rlerp (*source*: **float**, *destination*: **float**, *valeur*: **float**) (**float**)
 
 Opération inverse de lerp.
+
 Retourne le ratio entre 0 et 1 de `valeur` par rapport à `source` et `destination`
 
 <a id="func_29"></a>

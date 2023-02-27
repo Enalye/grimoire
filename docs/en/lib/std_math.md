@@ -72,13 +72,15 @@ Returns the arc cosine of `radians`.
 > approach (*x*: **float**, *target*: **float**, *step*: **float**) (**float**)
 
 Approach `x` up to `target` by increment of `step` without overshooting it.
-A negative `step` distances from `target` by that much.
+
+A negative step distances from `target` by that much.
 
 <a id="func_4"></a>
 > approach (*x*: **int**, *target*: **int**, *step*: **int**) (**int**)
 
 Approach `x` up to `target` by increment of `step` without overshooting it.
-A negative `step` distances from `target` by that much.
+
+A negative step distances from `target` by that much.
 
 <a id="func_5"></a>
 > asin (*radians*: **float**) (**float**)
@@ -199,6 +201,7 @@ Returns a random value between `min` and `max` included.
 > rlerp (*source*: **float**, *destination*: **float**, *value*: **float**) (**float**)
 
 Reverse lerp operation.
+
 Returns the ratio between 0 and 1 of `value` from `source` to `destination`.
 
 <a id="func_29"></a>

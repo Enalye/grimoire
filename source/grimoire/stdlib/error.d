@@ -14,22 +14,22 @@ void grLoadStdLibError(GrLibDefinition library) {
     library.setModuleInfo(GrLocale.en_US, "Functions to help error handling.");
 
     library.setDescription(GrLocale.fr_FR,
-        "Si `valeur` est faux, lance une exception `\"AssertError\"`.");
+        "Si `value` est faux, lance une exception `\"AssertError\"`.");
     library.setDescription(GrLocale.en_US,
         "If `value` is false, throw an exception `\"AssertError\"`.");
-    library.setParameters(GrLocale.fr_FR, ["valeur"]);
+    library.setParameters(GrLocale.fr_FR, ["value"]);
     library.setParameters(GrLocale.en_US, ["value"]);
     library.addFunction(&_assert, "assert", [grBool]);
 
-    library.setDescription(GrLocale.fr_FR, "Si `valeur` est faux, lance l’exception `erreur`.");
-    library.setDescription(GrLocale.en_US, "If `value` is false, throw the exception `errror`.");
-    library.setParameters(GrLocale.fr_FR, ["valeur", "erreur"]);
+    library.setDescription(GrLocale.fr_FR, "Si `value` est faux, lance l’exception.");
+    library.setDescription(GrLocale.en_US, "If `value` is false, throw the exception.");
+    library.setParameters(GrLocale.fr_FR, ["value", "erreur"]);
     library.setParameters(GrLocale.en_US, ["value", "error"]);
     library.addFunction(&_assert_msg, "assert", [grBool, grPure(grString)]);
 
     library.setDescription(GrLocale.fr_FR, "Fonction interne.");
     library.setDescription(GrLocale.en_US, "Internal function.");
-    library.setParameters(GrLocale.fr_FR, ["valeur"]);
+    library.setParameters(GrLocale.fr_FR, ["value"]);
     library.setParameters(GrLocale.en_US, ["value"]);
     library.addFunction(&_setMeta, "_setMeta", [grPure(grString)]);
 }

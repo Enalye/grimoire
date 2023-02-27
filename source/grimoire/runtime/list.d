@@ -5,6 +5,8 @@
  */
 module grimoire.runtime.list;
 
+import std.exception : enforce;
+
 import grimoire.assembly;
 
 import grimoire.runtime.value;
@@ -187,49 +189,51 @@ final class GrList {
         }
     }
 
-    pragma(inline) GrValue first() {
+    pragma(inline) GrValue front() {
+        enforce(_data.length > 0, "empty list");
         return _data[0];
     }
 
-    pragma(inline) GrValue last() {
+    pragma(inline) GrValue back() {
+        enforce(_data.length > 0, "empty list");
         return _data[$ - 1];
     }
 
-    pragma(inline) void push(GrValue value) {
+    pragma(inline) void pushBack(GrValue value) {
         _data ~= value;
     }
 
-    pragma(inline) GrValue pop() {
+    pragma(inline) GrValue popBack() {
         GrValue value = _data[$ - 1];
         _data.length--;
         return value;
     }
 
-    pragma(inline) GrValue[] pop(GrUInt size_) {
-        if (_data.length < size_) {
-            size_ = cast(GrUInt) _data.length;
+    pragma(inline) GrValue[] popBack(GrUInt count) {
+        if (_data.length < count) {
+            count = cast(GrUInt) _data.length;
         }
-        GrValue[] slice = _data[$ - size_ .. $];
-        _data.length -= size_;
+        GrValue[] slice = _data[$ - count .. $];
+        _data.length -= count;
         return slice;
     }
 
-    pragma(inline) void unshift(GrValue value) {
+    pragma(inline) void pushFront(GrValue value) {
         _data = value ~ _data;
     }
 
-    pragma(inline) GrValue shift() {
+    pragma(inline) GrValue popFront() {
         GrValue value = _data[0];
         _data = _data[1 .. $];
         return value;
     }
 
-    pragma(inline) GrValue[] shift(GrUInt size_) {
-        if (_data.length < size_) {
-            size_ = cast(GrUInt) _data.length;
+    pragma(inline) GrValue[] popFront(GrUInt count) {
+        if (_data.length < count) {
+            count = cast(GrUInt) _data.length;
         }
-        GrValue[] slice = _data[0 .. size_];
-        _data = _data[size_ .. $];
+        GrValue[] slice = _data[0 .. count];
+        _data = _data[count .. $];
         return slice;
     }
 
@@ -355,20 +359,28 @@ final class GrList {
         _data.sort!((a, b) => a.getString() < b.getString())();
     }
 
-    pragma(inline) GrInt indexOf(GrValue value) {
-        for (GrInt index; index < _data.length; ++index) {
-            if (_data[index] == value)
-                return index;
+    pragma(inline) GrUInt find(ref bool found, GrValue value) {
+        for (long index; index < _data.length; ++index) {
+            if (_data[index] == value) {
+                found = true;
+                return cast(GrUInt) index;
+            }
         }
-        return -1;
+
+        found = false;
+        return 0;
     }
 
-    pragma(inline) GrInt lastIndexOf(GrValue value) {
-        for (GrInt index = (cast(GrInt) _data.length) - 1; index > 0; --index) {
-            if (_data[index] == value)
-                return index;
+    pragma(inline) GrUInt rfind(ref bool found, GrValue value) {
+        for (long index = (cast(GrInt) _data.length) - 1; index > 0; --index) {
+            if (_data[index] == value) {
+                found = true;
+                return cast(GrUInt) index;
+            }
         }
-        return -1;
+
+        found = false;
+        return 0;
     }
 
     pragma(inline) GrBool contains(GrValue value) {

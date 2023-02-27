@@ -1520,7 +1520,7 @@ class GrEngine {
                     const GrInt listSize = grGetInstructionUnsignedValue(opcode);
                     GrList list = new GrList(listSize);
                     for (GrInt i = listSize - 1; i >= 0; i--)
-                        list.push(currentTask.stack[currentTask.stackPos - i]);
+                        list.pushBack(currentTask.stack[currentTask.stackPos - i]);
                     currentTask.stackPos -= listSize - 1;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;

@@ -82,7 +82,9 @@ Its null type is equal to `null<T>` where `T` is the referenced type.
 > expect (*x*: **T?**, *error*: **pure string**) (**T**)
 
 Checks if an optionnal is null.
+
 If it is, the exception `error` is thrown.
+
 Otherwise, the non-optional version of `x` is returned.
 
 <a id="func_1"></a>
@@ -94,13 +96,17 @@ Returns an optional version of the type.
 > unwrap (*x*: **T?**) (**T**)
 
 Checks if an optionnal is null.
+
 If it is, the exception `"UnwrapError"` is thrown.
+
 Otherwise, the non-optional version of `x` is returned.
 
 <a id="func_3"></a>
 > unwrapOr (*x*: **T?**, *default*: **T**) (**T**)
 
 Checks if an optionnal is null.
+
 If it is, the `default` value is returned.
+
 Otherwise, the non-optional version of `x` is returned.
 

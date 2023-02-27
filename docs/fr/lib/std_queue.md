@@ -5,7 +5,7 @@ Une queue est une collection pouvant être manipulé par les deux bouts.
 ### Queue\<T>
 Une queue est une collection pouvant être manipulé par les deux bouts.
 ### QueueIterator\<T>
-Itère sur une queue.
+Itère sur les éléments d’une queue.
 ## Constructeurs
 |Fonction|Entrée|
 |-|-|
@@ -13,41 +13,44 @@ Itère sur une queue.
 ## Fonctions
 |Fonction|Entrée|Sortie|
 |-|-|-|
-|[back](#func_0)|*queue*: **pure Queue\<T>**|**T?**|
-|[front](#func_1)|*queue*: **pure Queue\<T>**|**T?**|
-|[isEmpty](#func_2)|*queue*: **pure Queue\<T>**|**bool**|
-|[pop](#func_3)|*queue*: **Queue\<T>**|**T?**|
-|[push](#func_4)|*queue*: **Queue\<T>**, *valeur*: **T**||
+|[back](#func_0)|*self*: **pure Queue\<T>**|**T?**|
+|[front](#func_1)|*self*: **pure Queue\<T>**|**T?**|
+|[isEmpty](#func_2)|*self*: **pure Queue\<T>**|**bool**|
+|[popBack](#func_3)|*self*: **Queue\<T>**|**T?**|
+|[pushBack](#func_4)|*self*: **Queue\<T>**, *value*: **T**||
 
 
 ***
 ## Description des fonctions
 
 <a id="func_0"></a>
-> back (*queue*: **pure Queue\<T>**) (**T?**)
+> back (*self*: **pure Queue\<T>**) (**T?**)
 
-Returne le dernier élément de `queue`.
-S’il n’existe pas, retourne `null<T>`.
+Returne le dernier élément de la queue.
+
+Si la queue est vide, retourne `null<T>`.
 
 <a id="func_1"></a>
-> front (*queue*: **pure Queue\<T>**) (**T?**)
+> front (*self*: **pure Queue\<T>**) (**T?**)
 
-Retourne le premier élément de `queue`.
-S’il n’existe pas, retourne `null<T>`.
+Retourne le premier élément de la queue.
+
+Si la queue est vide, retourne `null<T>`.
 
 <a id="func_2"></a>
-> isEmpty (*queue*: **pure Queue\<T>**) (**bool**)
+> isEmpty (*self*: **pure Queue\<T>**) (**bool**)
 
-Renvoie `true` si la `queue` ne contient rien.
+Renvoie `true` si la queue est vide.
 
 <a id="func_3"></a>
-> pop (*queue*: **Queue\<T>**) (**T?**)
+> popBack (*self*: **Queue\<T>**) (**T?**)
 
-Retire le dernier élément de `queue` et le retourne.
-S’il n’existe pas, retourne `null<T>`.
+Retire le dernier élément de la queue et le retourne.
+
+Si la queue est vide, retourne `null<T>`.
 
 <a id="func_4"></a>
-> push (*queue*: **Queue\<T>**, *valeur*: **T**)
+> pushBack (*self*: **Queue\<T>**, *value*: **T**)
 
-Ajoute `valeur` en fin de `queue`.
+Ajoute `value` à la fin de la queue.
 

@@ -57,7 +57,7 @@ string grGetPrettyType(const GrType variableType, bool showModifiers = true) {
             result ~= "?";
             break;
         case list:
-            result ~= "list<";
+            result ~= "[";
             int i;
             auto parameters = grUnmangleSignature(variableType.mangledType);
             foreach (parameter; parameters) {
@@ -66,7 +66,7 @@ string grGetPrettyType(const GrType variableType, bool showModifiers = true) {
                     result ~= ", ";
                 i++;
             }
-            result ~= ">";
+            result ~= "]";
             break;
         case channel:
             result ~= "channel<";

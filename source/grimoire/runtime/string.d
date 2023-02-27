@@ -7,6 +7,7 @@ module grimoire.runtime.string;
 
 import std.string, std.utf;
 import std.conv : to;
+import std.algorithm : max;
 
 import grimoire.assembly;
 import grimoire.runtime.value;
@@ -281,7 +282,7 @@ final class GrString {
             index2 = (cast(GrInt) _bytes.length) - 1;
 
         index1 = findCharBoundary(index1);
-        index2 = findCharEndBoundary(index2);
+        index2 = findCharEndBoundary(max(index1, index2));
 
         if (index1 == 0 && (index2 + 1) == _bytes.length) {
             _bytes.length = 0;
@@ -324,7 +325,7 @@ final class GrString {
             index2 = (cast(GrInt) _bytes.length - 1);
 
         index1 = findCharBoundary(index1);
-        index2 = findCharEndBoundary(index2);
+        index2 = findCharEndBoundary(max(index1, index2));
 
         if (index1 == 0 && (index2 + 1) == _bytes.length)
             return new GrString(_bytes);
@@ -353,6 +354,32 @@ final class GrString {
         }
 
         return str;
+    }
+
+    pragma(inline) void insert(GrInt index, GrChar ch) {
+        index = findCharBoundary(index);
+
+        if (index >= _bytes.length) {
+            pushBack(ch);
+            return;
+        }
+
+        if (index <= 0) {
+            pushFront(ch);
+            return;
+        }
+
+        char[4] buf;
+        size_t len = encode(buf, ch);
+        _bytes.length += len;
+
+        GrByte[] bytes;
+        bytes.length = len;
+
+        for (size_t i; i < len; ++i)
+            bytes[i] = buf[i];
+
+        _bytes = _bytes[0 .. index] ~ bytes ~ _bytes[index .. $];
     }
 
     pragma(inline) void insert(GrInt index, GrString str) {

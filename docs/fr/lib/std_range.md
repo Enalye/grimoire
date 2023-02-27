@@ -14,10 +14,10 @@ Itère sur une série de nombres.
 |-|-|-|
 |[next](#func_0)|*itérateur*: **RangeIterator\<int>**|**int?**|
 |[next](#func_1)|*itérateur*: **RangeIterator\<float>**|**float?**|
-|[range](#func_2)|*début*: **int**, *fin*: **int**|**RangeIterator\<int>**|
-|[range](#func_3)|*début*: **int**, *fin*: **int**, *pas*: **int**|**RangeIterator\<int>**|
-|[range](#func_4)|*début*: **float**, *fin*: **float**|**RangeIterator\<float>**|
-|[range](#func_5)|*début*: **float**, *fin*: **float**, *pas*: **float**|**RangeIterator\<float>**|
+|[range](#func_2)|*start*: **int**, *end*: **int**|**RangeIterator\<int>**|
+|[range](#func_3)|*start*: **int**, *end*: **int**, *step*: **int**|**RangeIterator\<int>**|
+|[range](#func_4)|*start*: **float**, *end*: **float**|**RangeIterator\<float>**|
+|[range](#func_5)|*start*: **float**, *end*: **float**, *step*: **float**|**RangeIterator\<float>**|
 
 
 ***
@@ -34,22 +34,22 @@ Avance jusqu’au nombre suivant de la série.
 Avance jusqu’au nombre suivant de la série.
 
 <a id="func_2"></a>
-> range (*début*: **int**, *fin*: **int**) (**RangeIterator\<int>**)
+> range (*start*: **int**, *end*: **int**) (**RangeIterator\<int>**)
 
-Retourne un itérateur qui part de `début` jusqu’à `fin` inclus.
+Retourne un itérateur qui part de `start` jusqu’à `end` inclus.
 
 <a id="func_3"></a>
-> range (*début*: **int**, *fin*: **int**, *pas*: **int**) (**RangeIterator\<int>**)
+> range (*start*: **int**, *end*: **int**, *step*: **int**) (**RangeIterator\<int>**)
 
-Retourne un itérateur qui part de `début` jusqu’à `fin` inclus par incréments de `pas`.
+Retourne un itérateur qui part de `start` jusqu’à `end` inclus par pas de `step`.
 
 <a id="func_4"></a>
-> range (*début*: **float**, *fin*: **float**) (**RangeIterator\<float>**)
+> range (*start*: **float**, *end*: **float**) (**RangeIterator\<float>**)
 
-Retourne un itérateur qui part de `début` jusqu’à `fin` inclus.
+Retourne un itérateur qui part de `start` jusqu’à `end` inclus.
 
 <a id="func_5"></a>
-> range (*début*: **float**, *fin*: **float**, *pas*: **float**) (**RangeIterator\<float>**)
+> range (*start*: **float**, *end*: **float**, *step*: **float**) (**RangeIterator\<float>**)
 
-Retourne un itérateur qui part de `début` jusqu’à `fin` inclus par incréments de `pas`.
+Retourne un itérateur qui part de `start` jusqu’à `end` inclus par pas de `step`.
 

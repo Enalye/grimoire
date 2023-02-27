@@ -13,5 +13,10 @@
         "**/doc": true,     
         "**/License*": true,      
         "**/data": true,        
-    }
+    },
+    "dscanner.ignoredKeys": [
+        "dscanner.suspicious.unmodified",
+        "dscanner.confusing.argument_parameter_mismatch",
+        "dscanner.style.long_line"
+    ]
 }

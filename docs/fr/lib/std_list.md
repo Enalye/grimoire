@@ -2,204 +2,225 @@
 
 Type de base.
 ## Description
-list est une collection de valeurs d’un même type.
+Une liste est une collection de valeurs d’un même type.
 ## Natifs
 ### ListIterator\<T>
 Itère sur une liste.
 ## Fonctions
 |Fonction|Entrée|Sortie|
 |-|-|-|
-|[clear](#func_0)|*lst*: **list\<T>**||
-|[contains](#func_1)|*lst*: **pure list\<T>**, *valeur*: **pure T**|**bool**|
-|[copy](#func_2)|*lst*: **pure list\<T>**|**list\<T>**|
-|[each](#func_3)|*lst*: **list\<T>**|**ListIterator\<T>**|
-|[fill](#func_4)|*lst*: **list\<T>**, *valeur*: **T**||
-|[first](#func_5)|*lst*: **pure list\<T>**|**T?**|
-|[get](#func_6)|*lst*: **pure list\<T>**, *index*: **int**|**T?**|
-|[getOr](#func_7)|*lst*: **pure list\<T>**, *index*: **int**, *défaut*: **T**|**T**|
-|[indexOf](#func_8)|*lst*: **pure list\<T>**, *valeur*: **pure T**|**int?**|
-|[insert](#func_9)|*lst*: **list\<T>**, *index*: **int**, *valeur*: **T**||
-|[isEmpty](#func_10)|*lst*: **pure list\<T>**|**bool**|
-|[last](#func_11)|*lst*: **pure list\<T>**|**T?**|
-|[lastIndexOf](#func_12)|*lst*: **pure list\<T>**, *valeur*: **pure T**|**int?**|
-|[next](#func_13)|*itérateur*: **ListIterator\<T>**|**T?**|
-|[pop](#func_14)|*lst*: **list\<T>**|**T?**|
-|[pop](#func_15)|*lst*: **list\<T>**, *quantité*: **int**|**list\<T>**|
-|[push](#func_16)|*lst*: **list\<T>**, *valeur*: **T**||
-|[remove](#func_17)|*lst*: **list\<T>**, *index*: **int**||
-|[remove](#func_18)|*lst*: **list\<T>**, *indexDébut*: **int**, *indexFin*: **int**||
-|[resize](#func_19)|*lst*: **list\<T>**, *taille*: **int**, *défaut*: **T**||
-|[reverse](#func_20)|*lst*: **pure list\<T>**|**list\<T>**|
-|[shift](#func_21)|*lst*: **list\<T>**|**T?**|
-|[shift](#func_22)|*lst*: **list\<T>**, *quantité*: **int**|**list\<T>**|
-|[size](#func_23)|*lst*: **pure list\<T>**|**int**|
-|[slice](#func_24)|*lst*: **pure list\<T>**, *indexDébut*: **int**, *indexFin*: **int**|**list\<T>**|
-|[sort](#func_25)|*lst*: **list\<int>**||
-|[sort](#func_26)|*lst*: **list\<float>**||
-|[sort](#func_27)|*lst*: **list\<string>**||
-|[unshift](#func_28)|*lst*: **list\<T>**, *valeur*: **T**||
+|[back](#func_0)|*self*: **pure [T]**|**T?**|
+|[clear](#func_1)|*self*: **[T]**||
+|[contains](#func_2)|*self*: **pure [T]**, *value*: **pure T**|**bool**|
+|[copy](#func_3)|*self*: **pure [T]**|**[T]**|
+|[each](#func_4)|*self*: **[T]**|**ListIterator\<T>**|
+|[fill](#func_5)|*self*: **[T]**, *value*: **T**||
+|[find](#func_6)|*self*: **pure [T]**, *value*: **pure T**|**uint?**|
+|[front](#func_7)|*self*: **pure [T]**|**T?**|
+|[get](#func_8)|*self*: **pure [T]**, *idx*: **int**|**T?**|
+|[getOr](#func_9)|*self*: **pure [T]**, *idx*: **int**, *def*: **T**|**T**|
+|[insert](#func_10)|*self*: **[T]**, *idx*: **int**, *value*: **T**||
+|[isEmpty](#func_11)|*self*: **pure [T]**|**bool**|
+|[next](#func_12)|*itérateur*: **ListIterator\<T>**|**T?**|
+|[popBack](#func_13)|*self*: **[T]**|**T?**|
+|[popBack](#func_14)|*self*: **[T]**, *count*: **int**|**[T]**|
+|[popFront](#func_15)|*self*: **[T]**|**T?**|
+|[popFront](#func_16)|*self*: **[T]**, *count*: **uint**|**[T]**|
+|[pushBack](#func_17)|*self*: **[T]**, *value*: **T**||
+|[pushFront](#func_18)|*self*: **[T]**, *value*: **T**||
+|[remove](#func_19)|*self*: **[T]**, *idx*: **int**||
+|[remove](#func_20)|*self*: **[T]**, *start*: **int**, *end*: **int**||
+|[resize](#func_21)|*self*: **[T]**, *len*: **int**, *def*: **T**||
+|[reverse](#func_22)|*self*: **pure [T]**|**[T]**|
+|[rfind](#func_23)|*self*: **pure [T]**, *value*: **pure T**|**uint?**|
+|[size](#func_24)|*self*: **pure [T]**|**int**|
+|[slice](#func_25)|*self*: **pure [T]**, *start*: **int**, *end*: **int**|**[T]**|
+|[sort](#func_26)|*self*: **[int]**||
+|[sort](#func_27)|*self*: **[float]**||
+|[sort](#func_28)|*self*: **[string]**||
 
 
 ***
 ## Description des fonctions
 
 <a id="func_0"></a>
-> clear (*lst*: **list\<T>**)
+> back (*self*: **pure [T]**) (**T?**)
 
-Vide la `lst`.
+Returne le dernier élément de la liste.
+
+S’il n’existe pas, retourne `null<T>`.
 
 <a id="func_1"></a>
-> contains (*lst*: **pure list\<T>**, *valeur*: **pure T**) (**bool**)
+> clear (*self*: **[T]**)
 
-Renvoie `true` si `valeur` est présent dans la `lst`.
+Vide la liste.
 
 <a id="func_2"></a>
-> copy (*lst*: **pure list\<T>**) (**list\<T>**)
+> contains (*self*: **pure [T]**, *value*: **pure T**) (**bool**)
 
-Retourne une copie d’`lst`.
+Renvoie `true` si `value` est présent dans la liste.
 
 <a id="func_3"></a>
-> each (*lst*: **list\<T>**) (**ListIterator\<T>**)
+> copy (*self*: **pure [T]**) (**[T]**)
 
-Returne un itérateur permettant d’itérer sur chaque élément d’`lst`.
+Retourne une copie de la liste.
 
 <a id="func_4"></a>
-> fill (*lst*: **list\<T>**, *valeur*: **T**)
+> each (*self*: **[T]**) (**ListIterator\<T>**)
 
-Remplace le contenu d’`lst` par `valeur`.
+Returne un itérateur permettant d’itérer sur chaque élément de la liste.
 
 <a id="func_5"></a>
-> first (*lst*: **pure list\<T>**) (**T?**)
+> fill (*self*: **[T]**, *value*: **T**)
 
-Retourne le premier élément d’`lst`.
-S’il n’existe pas, retourne `null<T>`.
+Remplace le contenu de la liste par `value`.
 
 <a id="func_6"></a>
-> get (*lst*: **pure list\<T>**, *index*: **int**) (**T?**)
+> find (*self*: **pure [T]**, *value*: **pure T**) (**uint?**)
 
-Retourne l’élément à l’`index` indiqué, s’il existe.
-Sinon, retourne `null<T>`.
-Si `index` est négatif, l’`index` est calculé à partir de la fin d’`lst`.
+Retourne la première occurence de `value` dans la liste à partir de l’index.
+
+Si `value`  n’existe pas, `null<int>` est renvoyé.
+
+Un index négatif est calculé à partir de la fin de la liste.
 
 <a id="func_7"></a>
-> getOr (*lst*: **pure list\<T>**, *index*: **int**, *défaut*: **T**) (**T**)
+> front (*self*: **pure [T]**) (**T?**)
 
-Retourne l’élément à l’`index` indiqué, s’il existe.
-Sinon, retourne la valeur par `défaut`.
-Si `index` est négatif, l’`index` est calculé à partir de la fin d’`lst`.
+Retourne le premier élément de la liste.
 
-<a id="func_8"></a>
-> indexOf (*lst*: **pure list\<T>**, *valeur*: **pure T**) (**int?**)
-
-Retourne la première occurence de `valeur` dans la `lst` à partir d’`index`.
-Si `valeur  n’existe pas, `null<int>` est renvoyé.
-Si `index` est négatif, l’`index` est calculé à partir de la fin d’`lst`.
-
-<a id="func_9"></a>
-> insert (*lst*: **list\<T>**, *index*: **int**, *valeur*: **T**)
-
-Insère `valeur` dans la `lst` à l’`index` spécifié.
-Si `index` dépasse la taille d’`lst`, `valeur` est ajouté en fin de `lst`.
-Si `index` est négatif, l’`index` est calculé à partir de la fin d’`lst`.
-
-<a id="func_10"></a>
-> isEmpty (*lst*: **pure list\<T>**) (**bool**)
-
-Renvoie `true` si la `lst` ne contient rien.
-
-<a id="func_11"></a>
-> last (*lst*: **pure list\<T>**) (**T?**)
-
-Returne le dernier élément d’`lst`.
 S’il n’existe pas, retourne `null<T>`.
 
+<a id="func_8"></a>
+> get (*self*: **pure [T]**, *idx*: **int**) (**T?**)
+
+Retourne l’élément à l’index indiqué, s’il existe.
+
+Sinon, retourne `null<T>`.
+
+Un index négatif est calculé à partir de la fin de la liste.
+
+<a id="func_9"></a>
+> getOr (*self*: **pure [T]**, *idx*: **int**, *def*: **T**) (**T**)
+
+Retourne l’élément à l’index indiqué, s’il existe.
+
+Sinon, retourne la value par défaut `def`.
+
+Un index négatif est calculé à partir de la fin de la liste.
+
+<a id="func_10"></a>
+> insert (*self*: **[T]**, *idx*: **int**, *value*: **T**)
+
+Insère `value` dans la liste à l’`index` spécifié.
+
+Si `index` dépasse la taille de la liste, `value` est ajouté en fin de the list.
+
+Un index négatif est calculé à partir de la fin de la liste.
+
+<a id="func_11"></a>
+> isEmpty (*self*: **pure [T]**) (**bool**)
+
+Renvoie `true` si la liste est vide.
+
 <a id="func_12"></a>
-> lastIndexOf (*lst*: **pure list\<T>**, *valeur*: **pure T**) (**int?**)
-
-Retourne la dernière occurence de `valeur` dans la `lst` à partir d’`index`.
-Si `valeur  n’existe pas, `null<int>` est renvoyé.
-Si `index` est négatif, l’`index` est calculé à partir de la fin d’`lst`.
-
-<a id="func_13"></a>
 > next (*itérateur*: **ListIterator\<T>**) (**T?**)
 
 Avance l’itérateur à l’élément suivant.
 
-<a id="func_14"></a>
-> pop (*lst*: **list\<T>**) (**T?**)
+<a id="func_13"></a>
+> popBack (*self*: **[T]**) (**T?**)
 
-Retire le dernier élément d’`lst` et le retourne.
+Retire le dernier élément de la liste et le retourne.
+
 S’il n’existe pas, retourne `null<T>`.
+
+<a id="func_14"></a>
+> popBack (*self*: **[T]**, *count*: **int**) (**[T]**)
+
+Retire les N derniers éléments de la liste et les retourne.
 
 <a id="func_15"></a>
-> pop (*lst*: **list\<T>**, *quantité*: **int**) (**list\<T>**)
+> popFront (*self*: **[T]**) (**T?**)
 
-Retire `quantité` éléments d’`lst` et les retourne.
+Retire le premier élément de la liste et les retourne.
 
-<a id="func_16"></a>
-> push (*lst*: **list\<T>**, *valeur*: **T**)
-
-Ajoute `valeur` en fin de `lst`.
-
-<a id="func_17"></a>
-> remove (*lst*: **list\<T>**, *index*: **int**)
-
-Retire l’élément à l’`index` spécifié.
-
-<a id="func_18"></a>
-> remove (*lst*: **list\<T>**, *indexDébut*: **int**, *indexFin*: **int**)
-
-Retire les éléments de `indexDébut` à `indexFin` inclus.
-
-<a id="func_19"></a>
-> resize (*lst*: **list\<T>**, *taille*: **int**, *défaut*: **T**)
-
-Redimmensionne la `lst`.
-Si `taille` dépasse la taille d’`lst`, l’exédent est initialisé à `défaut`.
-
-<a id="func_20"></a>
-> reverse (*lst*: **pure list\<T>**) (**list\<T>**)
-
-Retourne l’inverse d’`lst`.
-
-<a id="func_21"></a>
-> shift (*lst*: **list\<T>**) (**T?**)
-
-Retire le premier élément d’`lst` et les retourne.
 S’il n’existe pas, retourne `null<T>`.
 
-<a id="func_22"></a>
-> shift (*lst*: **list\<T>**, *quantité*: **int**) (**list\<T>**)
+<a id="func_16"></a>
+> popFront (*self*: **[T]**, *count*: **uint**) (**[T]**)
 
-Retire les premiers `quantité` éléments d’`lst` et les retourne.
+Retire les N premiers éléments de la liste et les retourne.
+
+<a id="func_17"></a>
+> pushBack (*self*: **[T]**, *value*: **T**)
+
+Ajoute `value` à la fin de la liste.
+
+<a id="func_18"></a>
+> pushFront (*self*: **[T]**, *value*: **T**)
+
+Ajoute `value` au début de la liste.
+
+<a id="func_19"></a>
+> remove (*self*: **[T]**, *idx*: **int**)
+
+Retire l’élément à l’index spécifié.
+
+Un index négatif est calculé à partir de la fin de la liste.
+
+<a id="func_20"></a>
+> remove (*self*: **[T]**, *start*: **int**, *end*: **int**)
+
+Retire les éléments de `start` à `end` inclus.
+
+Un index négatif est calculé à partir de la fin de la liste.
+
+<a id="func_21"></a>
+> resize (*self*: **[T]**, *len*: **int**, *def*: **T**)
+
+Redimmensionne la liste.
+
+Si `len` est plus grand que la taille de la liste, l’exédent est initialisé avec `def`.
+
+<a id="func_22"></a>
+> reverse (*self*: **pure [T]**) (**[T]**)
+
+Retourne une version inversée de la liste.
 
 <a id="func_23"></a>
-> size (*lst*: **pure list\<T>**) (**int**)
+> rfind (*self*: **pure [T]**, *value*: **pure T**) (**uint?**)
 
-Renvoie la taille d’`lst`.
+Retourne la dernière occurence de `value` dans la liste à partir de l’index.
+
+Si `value`  n’existe pas, `null<int>` est renvoyé.
+
+Un index négatif est calculé à partir de la fin de la liste.
 
 <a id="func_24"></a>
-> slice (*lst*: **pure list\<T>**, *indexDébut*: **int**, *indexFin*: **int**) (**list\<T>**)
+> size (*self*: **pure [T]**) (**int**)
 
-Retourne une portion d’`lst` de `indexDébut` jusqu’à `indexFin` inclus.
+Renvoie la taille de la liste.
 
 <a id="func_25"></a>
-> sort (*lst*: **list\<int>**)
+> slice (*self*: **pure [T]**, *start*: **int**, *end*: **int**) (**[T]**)
 
-Trie la `lst`.
+Retourne une portion de la liste de `start` jusqu’à `end` inclus.
+
+Un index négatif est calculé à partir de la fin de la liste.
 
 <a id="func_26"></a>
-> sort (*lst*: **list\<float>**)
+> sort (*self*: **[int]**)
 
-Trie la `lst`.
+Trie la liste.
 
 <a id="func_27"></a>
-> sort (*lst*: **list\<string>**)
+> sort (*self*: **[float]**)
 
-Trie la `lst`.
+Trie la liste.
 
 <a id="func_28"></a>
-> unshift (*lst*: **list\<T>**, *valeur*: **T**)
+> sort (*self*: **[string]**)
 
-Ajoute `valeur` en début de `lst`.
+Trie la liste.
 
