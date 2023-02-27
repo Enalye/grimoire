@@ -14,7 +14,9 @@ Conversion functions.
 |**uint**|**float**|
 |**bool**|**string**|
 |**int**|**string**|
+|**uint**|**string**|
 |**float**|**string**|
+|**char**|**string**|
 |**pure list\<string>**|**string**|
 |**pure list\<char>**|**string**|
 |**pure string**|**list\<char>**|

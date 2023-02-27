@@ -4,155 +4,185 @@ Built-in type.
 ## Description
 Type that contains UTF-8 characters.
 ## Natives
-### StringIterator
-Iterates on characters of a string.
+### Bytes
+Iterates on each byte of a string.
+### Chars
+Iterates on code points of a string.
 ## Functions
 |Function|Input|Output|
 |-|-|-|
-|[clear](#func_0)|*str*: **string**||
-|[contains](#func_1)|*str*: **pure string**, *value*: **pure string**|**bool**|
-|[copy](#func_2)|*str*: **pure string**|**string**|
-|[each](#func_3)|*str*: **string**|**StringIterator**|
-|[first](#func_4)|*str*: **pure string**|**string?**|
-|[indexOf](#func_5)|*str*: **pure string**, *value*: **pure string**|**int?**|
-|[insert](#func_6)|*str*: **string**, *index*: **int**, *value*: **pure string**||
-|[isEmpty](#func_7)|*str*: **pure string**|**bool**|
-|[last](#func_8)|*str*: **pure string**|**string?**|
-|[lastIndexOf](#func_9)|*str*: **pure string**, *value*: **pure string**|**int?**|
-|[next](#func_10)|*iterator*: **StringIterator**|**string?**|
-|[pop](#func_11)|*str*: **string**|**string?**|
-|[pop](#func_12)|*str*: **string**, *quantity*: **int**|**string**|
-|[push](#func_13)|*str*: **string**, *value*: **string**||
-|[remove](#func_14)|*str*: **string**, *index*: **int**||
-|[remove](#func_15)|*str*: **string**, *startIndex*: **int**, *endIndex*: **int**||
-|[reverse](#func_16)|*str*: **pure string**|**string**|
-|[shift](#func_17)|*str*: **string**|**string?**|
-|[shift](#func_18)|*str*: **string**, *quantity*: **int**|**string**|
-|[size](#func_19)|*str*: **pure string**|**int**|
-|[slice](#func_20)|*str*: **pure string**, *startIndex*: **int**, *endIndex*: **int**|**string**|
-|[unshift](#func_21)|*str*: **string**, *value*: **string**||
+|[back](#func_0)|*self*: **pure string**|**char?**|
+|[bytes](#func_1)|*self*: **string**|**Bytes**|
+|[chars](#func_2)|*str*: **string**|**Chars**|
+|[clear](#func_3)|*self*: **string**||
+|[contains](#func_4)|*self*: **pure string**, *str*: **pure string**|**bool**|
+|[copy](#func_5)|*self*: **pure string**|**string**|
+|[find](#func_6)|*self*: **pure string**, *str*: **pure string**|**uint?**|
+|[find](#func_7)|*self*: **pure string**, *str*: **pure string**, *idx*: **int**|**uint?**|
+|[front](#func_8)|*self*: **pure string**|**char?**|
+|[insert](#func_9)|*self*: **string**, *at*: **int**, *ch*: **pure string**||
+|[isEmpty](#func_10)|*self*: **pure string**|**bool**|
+|[next](#func_11)|*it*: **Bytes**|**int?**|
+|[next](#func_12)|*iterator*: **Chars**|**char?**|
+|[popBack](#func_13)|*self*: **string**|**char?**|
+|[popBack](#func_14)|*self*: **string**, *count*: **int**|**string**|
+|[popFront](#func_15)|*self*: **string**|**char?**|
+|[popFront](#func_16)|*self*: **string**, *count*: **int**|**string**|
+|[pushBack](#func_17)|*self*: **string**, *str*: **string**||
+|[pushFront](#func_18)|*self*: **string**, *str*: **string**||
+|[remove](#func_19)|*self*: **string**, *at*: **int**||
+|[remove](#func_20)|*self*: **string**, *start*: **int**, *end*: **int**||
+|[reverse](#func_21)|*str*: **pure string**|**string**|
+|[rfind](#func_22)|*self*: **pure string**, *str*: **pure string**|**uint?**|
+|[rfind](#func_23)|*self*: **pure string**, *str*: **pure string**, *idx*: **int**|**uint?**|
+|[size](#func_24)|*self*: **pure string**|**uint**|
+|[slice](#func_25)|*self*: **pure string**, *start*: **int**, *end*: **int**|**string**|
 
 
 ***
 ## Function descriptions
 
 <a id="func_0"></a>
-> clear (*str*: **string**)
+> back (*self*: **pure string**) (**char?**)
 
-Cleanup `str`.
+Returns the last element of the string.
+Returns `null<char>` if this string is empty.
 
 <a id="func_1"></a>
-> contains (*str*: **pure string**, *value*: **pure string**) (**bool**)
+> bytes (*self*: **string**) (**Bytes**)
 
-Returns `true` if `value` exists in `str`.
+Returns an iterator that iterate through each byte.
 
 <a id="func_2"></a>
-> copy (*str*: **pure string**) (**string**)
+> chars (*str*: **string**) (**Chars**)
 
-Returns a copy of `str`.
+Returns an iterator that iterate through each code point.
 
 <a id="func_3"></a>
-> each (*str*: **string**) (**StringIterator**)
+> clear (*self*: **string**)
 
-Returns an iterator that iterate through each character.
+Clear the content of the string.
 
 <a id="func_4"></a>
-> first (*str*: **pure string**) (**string?**)
+> contains (*self*: **pure string**, *str*: **pure string**) (**bool**)
 
-Returns the first element of `str`.
-If it doesn't exist, returns `null<T>`.
+Returns `true` if `str` exists in the string.
 
 <a id="func_5"></a>
-> indexOf (*str*: **pure string**, *value*: **pure string**) (**int?**)
+> copy (*self*: **pure string**) (**string**)
 
-Returns the first occurence of `value` in `str`, starting from `index`.
-If `value` does't exist, `null<int>` is returned.
-If `index` is negative, `index` is calculated from the back of `str`.
+Returns a copy of the string.
 
 <a id="func_6"></a>
-> insert (*str*: **string**, *index*: **int**, *value*: **pure string**)
+> find (*self*: **pure string**, *str*: **pure string**) (**uint?**)
 
-Insert `value` in `str` at the specified `index`.
-If `index` is greater than the size of `str`, `value` is appended at the back of `str`.
-If `index` is negative, `index` is calculated from the back of `str`.
+Returns the first occurence of `value` in the string.
+If `value` does't exist, `null<uint>` is returned.
+If `index` is negative, `index` is calculated from the back of the string.
 
 <a id="func_7"></a>
-> isEmpty (*str*: **pure string**) (**bool**)
+> find (*self*: **pure string**, *str*: **pure string**, *idx*: **int**) (**uint?**)
 
-Returns `true` if `str` contains nothing.
+Returns the first occurence of `value` in the string, starting from `idx`.
+If `value` does't exist, `null<uint>` is returned.
+If `index` is negative, `index` is calculated from the back of the string.
 
 <a id="func_8"></a>
-> last (*str*: **pure string**) (**string?**)
+> front (*self*: **pure string**) (**char?**)
 
-Returns the last element of `str`.
-If it doesn't exist, returns `null<T>`.
+Returns the first character of the string.
+Returns `null<char>` if this string is empty.
 
 <a id="func_9"></a>
-> lastIndexOf (*str*: **pure string**, *value*: **pure string**) (**int?**)
+> insert (*self*: **string**, *at*: **int**, *ch*: **pure string**)
 
-Returns the last occurence of `value` in `str`, starting from `index`.
-If `value` does't exist, `null<int>` is returned.
-If `index` is negative, `index` is calculated from the back of `str`.
+Insert a character in the string at the specified index.
+If the index is greater than the size of the string, it's appended at the back.
+If the index is negative, the index is calculated from the back.
 
 <a id="func_10"></a>
-> next (*iterator*: **StringIterator**) (**string?**)
+> isEmpty (*self*: **pure string**) (**bool**)
+
+Returns `true` if the string is empty.
+
+<a id="func_11"></a>
+> next (*it*: **Bytes**) (**int?**)
+
+Advances the iterator until the next byte.
+
+<a id="func_12"></a>
+> next (*iterator*: **Chars**) (**char?**)
 
 Advances the iterator until the next character.
 
-<a id="func_11"></a>
-> pop (*str*: **string**) (**string?**)
-
-Removes the last element of `str` and returns it.
-If it doesn't exist, returns `null<T>`.
-
-<a id="func_12"></a>
-> pop (*str*: **string**, *quantity*: **int**) (**string**)
-
-Removes `quantity` elements from `str` and returns them.
-
 <a id="func_13"></a>
-> push (*str*: **string**, *value*: **string**)
+> popBack (*self*: **string**) (**char?**)
 
-Appends `value` to the back of `str`.
+Removes the last character of the string and returns it.
+Returns `null<char>` if this string is empty.
 
 <a id="func_14"></a>
-> remove (*str*: **string**, *index*: **int**)
+> popBack (*self*: **string**, *count*: **int**) (**string**)
 
-Removes the element at the specified `index`.
+Removes N characters from the string and returns them.
 
 <a id="func_15"></a>
-> remove (*str*: **string**, *startIndex*: **int**, *endIndex*: **int**)
+> popFront (*self*: **string**) (**char?**)
 
-Removes the elements from `startIndex` to `endIndex` included.
+Removes the first character of the string and returns it.
+Returns `null<char>` if this string is empty.
 
 <a id="func_16"></a>
-> reverse (*str*: **pure string**) (**string**)
+> popFront (*self*: **string**, *count*: **int**) (**string**)
 
-Returns an inverted version of `str`.
+Removes the first X characters from the string and returns them.
 
 <a id="func_17"></a>
-> shift (*str*: **string**) (**string?**)
+> pushBack (*self*: **string**, *str*: **string**)
 
-Removes the first element of `str` and returns it.
-If it doesn't exist, returns `null<T>`.
+Appends `str` at the back of the string.
 
 <a id="func_18"></a>
-> shift (*str*: **string**, *quantity*: **int**) (**string**)
+> pushFront (*self*: **string**, *str*: **string**)
 
-Removes the first `quantity` elements from `str` and returns them.
+Prepends `str` at the front of the string.
 
 <a id="func_19"></a>
-> size (*str*: **pure string**) (**int**)
+> remove (*self*: **string**, *at*: **int**)
 
-Returns the size of `str`.
+Removes the character at the specified index.
 
 <a id="func_20"></a>
-> slice (*str*: **pure string**, *startIndex*: **int**, *endIndex*: **int**) (**string**)
+> remove (*self*: **string**, *start*: **int**, *end*: **int**)
 
-Returns a slice of `str` from `startIndex` to `endIndex` included.
+Removes the characters from `start` to `end` included.
 
 <a id="func_21"></a>
-> unshift (*str*: **string**, *value*: **string**)
+> reverse (*str*: **pure string**) (**string**)
 
-Prepends `value` to the front of `str`.
+Returns an inverted version of the string.
+
+<a id="func_22"></a>
+> rfind (*self*: **pure string**, *str*: **pure string**) (**uint?**)
+
+Returns the last occurence of `str` in the string.
+If `value` does't exist, `null<uint>` is returned.
+If `index` is negative, `index` is calculated from the back of the string.
+
+<a id="func_23"></a>
+> rfind (*self*: **pure string**, *str*: **pure string**, *idx*: **int**) (**uint?**)
+
+Returns the last occurence of `str` in the string, starting from `idx`.
+If `value` does't exist, `null<uint>` is returned.
+If `index` is negative, `index` is calculated from the back of the string.
+
+<a id="func_24"></a>
+> size (*self*: **pure string**) (**uint**)
+
+Returns the size of the string in bytes.
+
+<a id="func_25"></a>
+> slice (*self*: **pure string**, *start*: **int**, *end*: **int**) (**string**)
+
+Returns a slice of the string from `start` to `end` included.
 
