@@ -161,25 +161,6 @@ enum GrOpcode {
     debugProfileEnd
 }
 
-private immutable string[] _prettyInstructions = [
-    "nop", "throw", "try", "catch", "die", "exit", "yield", "task", "atask",
-    "new", "chan", "snd", "rcv", "select_start", "select_end", "chan_try",
-    "chan_check", "shift", "lstore", "lstore2", "lload", "gstore", "gstore2",
-    "gload", "rstore", "rstore2", "frstore", "frload", "frload2", "fload",
-    "fload2", "const.i", "const.u", "const.f", "const.b", "const.s", "meta",
-    "null", "gpush", "gpop", "eq.i", "eq.u", "eq.f", "eq.s", "neq.i",
-    "neq.u", "neq.f", "neq.s", "geq.i", "geq.u", "geq.f", "leq.i", "leq.u",
-    "leq.f", "gt.i", "gt.u", "gt.f", "lt.i", "lt.u", "lt.f", "check_null",
-    "opt_try", "opt_or", "opt_call", "opt_call2", "and.i", "or.i", "not.i",
-    "cat.s", "add.i", "add.u", "add.f", "sub.i", "sub.u", "sub.f", "mul.i",
-    "mul.u", "mul.f", "div.i", "div.u", "div.f", "rem.i", "rem.u", "rem.f",
-    "neg.i", "neg.f", "inc.i", "inc.u", "inc.f", "dec.i", "dec.u", "dec.f",
-    "copy", "swap", "setup_it", "local", "call", "acall", "pcall", "spcall",
-    "ret", "unwind", "defer", "jmp", "jmp_eq", "jmp_neq", "list", "len", "idx",
-    "idx2", "idx3", "cat.l", "append", "prepend", "eq.l", "neq.l", "dbg_prfbegin",
-    "dbg_prfend"
-];
-
 /// Référence d’une classe.
 package(grimoire) class GrClassBuilder {
     /// Nom de la classe
@@ -569,6 +550,247 @@ final class GrBytecode {
 
     /// Formate la liste des instructions du bytecode dans un format lisible.
     string prettify() {
+        string getPrettyInstruction(GrOpcode op) {
+            final switch (op) with (GrOpcode) {
+            case nop:
+                return "nop";
+            case throw_:
+                return "throw";
+            case try_:
+                return "try";
+            case catch_:
+                return "catch";
+            case die:
+                return "die";
+            case exit:
+                return "exit";
+            case yield:
+                return "yield";
+            case task:
+                return "task";
+            case anonymousTask:
+                return "atask";
+            case new_:
+                return "new";
+            case channel:
+                return "chan";
+            case send:
+                return "snd";
+            case receive:
+                return "rcv";
+            case startSelectChannel:
+                return "select_start";
+            case endSelectChannel:
+                return "select_end";
+            case tryChannel:
+                return "chan_try";
+            case checkChannel:
+                return "chan_check";
+            case shiftStack:
+                return "shift";
+            case localStore:
+                return "lstore";
+            case localStore2:
+                return "lstore2";
+            case localLoad:
+                return "lload";
+            case globalStore:
+                return "gstore";
+            case globalStore2:
+                return "gstore2";
+            case globalLoad:
+                return "glLoad";
+            case refStore:
+                return "rstore";
+            case refStore2:
+                return "rstore2";
+            case fieldRefStore:
+                return "frstore";
+            case fieldRefLoad:
+                return "frload";
+            case fieldRefLoad2:
+                return "frload2";
+            case fieldLoad:
+                return "fload";
+            case fieldLoad2:
+                return "fload2";
+            case const_int:
+                return "const.i";
+            case const_uint:
+                return "const.u";
+            case const_float:
+                return "const.f";
+            case const_bool:
+                return "const.b";
+            case const_string:
+                return "const.s";
+            case const_meta:
+                return "meta";
+            case const_null:
+                return "null";
+            case globalPush:
+                return "gpush";
+            case globalPop:
+                return "gpop";
+            case equal_int:
+                return "eq.i";
+            case equal_uint:
+                return "eq.u";
+            case equal_float:
+                return "eq.f";
+            case equal_string:
+                return "eq.s";
+            case notEqual_int:
+                return "neq.i";
+            case notEqual_uint:
+                return "neq.u";
+            case notEqual_float:
+                return "neq.f";
+            case notEqual_string:
+                return "neq.s";
+            case greaterOrEqual_int:
+                return "geq.i";
+            case greaterOrEqual_uint:
+                return "geq.u";
+            case greaterOrEqual_float:
+                return "geq.f";
+            case lesserOrEqual_int:
+                return "leq.i";
+            case lesserOrEqual_uint:
+                return "leq.u";
+            case lesserOrEqual_float:
+                return "leq.f";
+            case greater_int:
+                return "gt.i";
+            case greater_uint:
+                return "gt.u";
+            case greater_float:
+                return "gt.f";
+            case lesser_int:
+                return "lt.i";
+            case lesser_uint:
+                return "lt.u";
+            case lesser_float:
+                return "lt.f";
+            case checkNull:
+                return "check_null";
+            case optionalTry:
+                return "opt_try";
+            case optionalOr:
+                return "opt_or";
+            case optionalCall:
+                return "opt_call";
+            case optionalCall2:
+                return "opt_call2";
+            case and_int:
+                return "and.i";
+            case or_int:
+                return "or.i";
+            case not_int:
+                return "not.i";
+            case concatenate_string:
+                return "cat.s";
+            case add_int:
+                return "add.i";
+            case add_uint:
+                return "add.u";
+            case add_float:
+                return "add.f";
+            case substract_int:
+                return "sub.i";
+            case substract_uint:
+                return "sub.u";
+            case substract_float:
+                return "sub.f";
+            case multiply_int:
+                return "mul.i";
+            case multiply_uint:
+                return "mul.u";
+            case multiply_float:
+                return "mul.f";
+            case divide_int:
+                return "div.i";
+            case divide_uint:
+                return "div.u";
+            case divide_float:
+                return "div.f";
+            case remainder_int:
+                return "rem.i";
+            case remainder_uint:
+                return "rem.u";
+            case remainder_float:
+                return "rem.f";
+            case negative_int:
+                return "neg.i";
+            case negative_float:
+                return "neg.f";
+            case increment_int:
+                return "inc.i";
+            case increment_uint:
+                return "inc.u";
+            case increment_float:
+                return "inc.f";
+            case decrement_int:
+                return "dec.i";
+            case decrement_uint:
+                return "dec.u";
+            case decrement_float:
+                return "dec.f";
+            case copy:
+                return "copy";
+            case swap:
+                return "swap";
+            case setupIterator:
+                return "setup_it";
+            case localStack:
+                return "local";
+            case call:
+                return "call";
+            case anonymousCall:
+                return "acall";
+            case primitiveCall:
+                return "pcall";
+            case safePrimitiveCall:
+                return "spcall";
+            case return_:
+                return "ret";
+            case unwind:
+                return "unwind";
+            case defer:
+                return "defer";
+            case jump:
+                return "jmp";
+            case jumpEqual:
+                return "jmp_eq";
+            case jumpNotEqual:
+                return "jmp_neq";
+            case list:
+                return "list";
+            case length_list:
+                return "len";
+            case index_list:
+                return "idx";
+            case index2_list:
+                return "idx2";
+            case index3_list:
+                return "idx3";
+            case concatenate_list:
+                return "cat.l";
+            case append_list:
+                return "append";
+            case prepend_list:
+                return "prepend";
+            case equal_list:
+                return "eq.l";
+            case notEqual_list:
+                return "neq.l";
+            case debugProfileBegin:
+                return "dbg_prfbegin";
+            case debugProfileEnd:
+                return "dbg_prfend";
+            }
+        }
+
         import std.conv : to;
         import std.string : leftJustify;
         import grimoire.compiler;
@@ -579,7 +801,7 @@ final class GrBytecode {
             GrOpcode op = cast(GrOpcode) grGetInstructionOpcode(opcode);
 
             string line = leftJustify("[" ~ to!string(i) ~ "]", 10) ~ leftJustify(
-                _prettyInstructions[op], 15);
+                getPrettyInstruction(op), 15);
             if ((op == GrOpcode.task) || (op >= GrOpcode.localStore &&
                     op <= GrOpcode.localLoad) || (op >= GrOpcode.globalStore && op <= GrOpcode.globalLoad) ||
                 op == GrOpcode.globalPush || (op >= GrOpcode.localStack && op <= GrOpcode.call) ||
