@@ -1,6 +1,6 @@
 # Number
 
-There are 3 types of number in Grimoire: integers `int` (signed) and `uint` (unsigned) and floating point values `float`.
+There are 4 types of number in Grimoire: integers `int` (signed), `uint` and `byte` (both unsigned) and floating point values `float`.
 
 > **Note**: All numbers can have a `_` inserted between digits to make a big number more readable:
 ```grimoire
@@ -9,7 +9,7 @@ There are 3 types of number in Grimoire: integers `int` (signed) and `uint` (uns
 
 ## Integer
 
-Integral numbers represent the set of all positive natural number and their negative counterpart, they contain no fractionnal part.
+Integral numbers `int` represent the set of all positive natural number and their negative counterpart, they contain no fractionnal part.
 They can contain a number between -2³¹ (-2 147 483 648) and 2³¹-1 (2 147 483 647).
 Exceeding those values will raise an `OverflowError` error.
 
@@ -26,7 +26,7 @@ They can be preceded with `0b` for a binary number, `0x` for a hexadecimal numbe
 
 ## Entier non-signé
 
-Contrary to signed integers, unsigned integers cannot be negative.
+Contrary to signed integers, unsigned integers `uint` cannot be negative.
 They can contain a number between 0 and 2³²-1 (4 294 967 295).
 Exceeding those values will raise an `OverflowError` error.
 
@@ -39,9 +39,20 @@ Alternately, every literal integer greater than 2 147 483 647 is automatically u
 12U
 ```
 
+## Byte
+
+`byte` works like `uint` but on a single byte.
+They can contain a number between 0 and 2⁸-1 (255).
+Exceeding those values will raise an `OverflowError` error.
+They can be written with a postfix `b` or `B`.
+
+```grimoire
+128b
+```
+
 ## Floating point number
 
-Floating point numbers represent the set of all real number, they have a fractionnal part.
+Floating point numbers `float` represent the set of all real number, they have a fractionnal part.
 They can be written with a period `.` except at the last position, or with a postfix `f` or `F`.
 ```grimoire
 2.3
