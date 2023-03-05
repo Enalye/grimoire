@@ -11,6 +11,7 @@ Basic constraints.
 |Enum|0|The type is an enumeration|
 |Extends|1|The first type is a child of the second one|
 |Function|0|The type is a function|
+|Integral|0|The type is an integral number|
 |Is|1|Both types are the same|
 |Native|0|The type is a native|
 |Not|1|Both types are the different|

@@ -23,7 +23,7 @@ Iterates on code points of a string.
 |[insert](#func_9)|*self*: **string**, *idx*: **int**, *str*: **pure string**||
 |[insert](#func_10)|*self*: **string**, *idx*: **int**, *ch*: **char**||
 |[isEmpty](#func_11)|*self*: **pure string**|**bool**|
-|[next](#func_12)|*it*: **Bytes**|**int?**|
+|[next](#func_12)|*it*: **Bytes**|**byte?**|
 |[next](#func_13)|*iterator*: **Chars**|**char?**|
 |[popBack](#func_14)|*self*: **string**|**char?**|
 |[popBack](#func_15)|*self*: **string**, *count*: **int**|**string**|
@@ -130,7 +130,7 @@ If an index does not fall on a character, it'll be adjusted to the next valid ch
 Returns `true` if the string is empty.
 
 <a id="func_12"></a>
-> next (*it*: **Bytes**) (**int?**)
+> next (*it*: **Bytes**) (**byte?**)
 
 Advances the iterator until the next byte.
 

@@ -253,7 +253,7 @@ If `index` is negative, `index` is calculated from the back of the string.");
     library.setDescription(GrLocale.en_US, "Advances the iterator until the next byte.");
     library.setParameters(GrLocale.fr_FR, ["it"]);
     library.setParameters(GrLocale.en_US, ["it"]);
-    library.addFunction(&_bytes_next, "next", [bytesType], [grOptional(grInt)]); //@TODO: Changer par byte
+    library.addFunction(&_bytes_next, "next", [bytesType], [grOptional(grByte)]);
 
     library.setDescription(GrLocale.fr_FR, "Itère sur les points de code d’une chaîne.");
     library.setDescription(GrLocale.en_US, "Iterates on code points of a string.");

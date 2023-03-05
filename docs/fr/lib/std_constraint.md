@@ -11,6 +11,7 @@ Constraintes de base.
 |Enum|0|Le type est une énumération|
 |Extends|1|Le premier type est un enfant du second|
 |Function|0|Le type est une fonction|
+|Integral|0|Le type est un nombre intégral|
 |Is|1|Les deux types sont égaux|
 |Native|0|Le type est un natif|
 |Not|1|Les deux types sont différents|

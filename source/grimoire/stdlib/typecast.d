@@ -18,6 +18,7 @@ void grLoadStdLibTypecast(GrLibDefinition library) {
     library.addCast(&uint_as_int, grUInt, grInt);
     library.addCast(&float_as_int, grFloat, grInt, true);
     library.addCast(&bool_as_int, grBool, grInt);
+    library.addCast(&byte_as_int, grByte, grInt);
     library.addCast(&enum_as_int, grAny("T"), grInt, false, [
             grConstraint("Enum", grAny("T"))
         ]);
@@ -26,10 +27,18 @@ void grLoadStdLibTypecast(GrLibDefinition library) {
     library.addCast(&int_as_uint, grInt, grUInt);
     library.addCast(&float_as_uint, grFloat, grUInt, true);
     library.addCast(&bool_as_uint, grBool, grUInt);
+    library.addCast(&byte_as_uint, grByte, grUInt);
+
+    // as<byte>
+    library.addCast(&int_as_byte, grInt, grByte, true);
+    library.addCast(&uint_as_byte, grUInt, grByte, true);
+    library.addCast(&float_as_byte, grFloat, grByte, true);
+    library.addCast(&bool_as_byte, grBool, grByte, true);
 
     // as<float>
     library.addCast(&int_as_float, grInt, grFloat);
     library.addCast(&uint_as_float, grUInt, grFloat);
+    library.addCast(&byte_as_float, grByte, grFloat);
 
     // as<string>
     library.addCast(&bool_as_str, grBool, grString);
@@ -37,6 +46,7 @@ void grLoadStdLibTypecast(GrLibDefinition library) {
     library.addCast(&uint_as_str, grUInt, grString);
     library.addCast(&float_as_str, grFloat, grString);
     library.addCast(&char_as_str, grChar, grString);
+    library.addCast(&byte_as_str, grByte, grString);
     library.addCast(&listStr_as_str, grPure(grList(grString)), grString);
     library.addCast(&listChar_as_str, grPure(grList(grChar)), grString);
 
@@ -55,11 +65,20 @@ private void uint_as_int(GrCall call) {
 }
 
 private void float_as_int(GrCall call) {
-    call.setInt(to!GrInt(call.getFloat(0)));
+    GrFloat value = call.getFloat(0);
+    if (value < GrInt.min || value > GrInt.max) {
+        call.raise("OverflowError");
+        return;
+    }
+    call.setInt(cast(GrInt) value);
 }
 
 private void bool_as_int(GrCall call) {
     call.setInt(to!GrInt(call.getBool(0)));
+}
+
+private void byte_as_int(GrCall call) {
+    call.setInt(to!GrInt(call.getByte(0)));
 }
 
 private void enum_as_int(GrCall call) {
@@ -78,7 +97,7 @@ private void int_as_uint(GrCall call) {
 
 private void float_as_uint(GrCall call) {
     GrFloat value = call.getFloat(0);
-    if (value < 0) {
+    if (value < 0f || value > GrUInt.max) {
         call.raise("OverflowError");
         return;
     }
@@ -89,6 +108,42 @@ private void bool_as_uint(GrCall call) {
     call.setUInt(to!GrUInt(call.getBool(0)));
 }
 
+private void byte_as_uint(GrCall call) {
+    call.setUInt(to!GrUInt(call.getByte(0)));
+}
+
+// as<byte>
+private void int_as_byte(GrCall call) {
+    GrInt value = call.getInt(0);
+    if (value < 0 || value > GrByte.max) {
+        call.raise("OverflowError");
+        return;
+    }
+    call.setByte(cast(GrByte) value);
+}
+
+private void uint_as_byte(GrCall call) {
+    GrUInt value = call.getUInt(0);
+    if (value > GrByte.max) {
+        call.raise("OverflowError");
+        return;
+    }
+    call.setByte(cast(GrByte) value);
+}
+
+private void float_as_byte(GrCall call) {
+    GrFloat value = call.getFloat(0);
+    if (value < 0f || value > GrByte.max) {
+        call.raise("OverflowError");
+        return;
+    }
+    call.setByte(cast(GrByte) value);
+}
+
+private void bool_as_byte(GrCall call) {
+    call.setByte(to!GrByte(call.getBool(0)));
+}
+
 // as<float>
 private void int_as_float(GrCall call) {
     call.setFloat(to!GrFloat(call.getInt(0)));
@@ -96,6 +151,10 @@ private void int_as_float(GrCall call) {
 
 private void uint_as_float(GrCall call) {
     call.setFloat(to!GrFloat(call.getUInt(0)));
+}
+
+private void byte_as_float(GrCall call) {
+    call.setFloat(to!GrFloat(call.getByte(0)));
 }
 
 // as<string>
@@ -117,6 +176,10 @@ private void float_as_str(GrCall call) {
 
 private void char_as_str(GrCall call) {
     call.setString(to!string(call.getChar(0)));
+}
+
+private void byte_as_str(GrCall call) {
+    call.setString(to!string(call.getByte(0)));
 }
 
 private void listStr_as_str(GrCall call) {

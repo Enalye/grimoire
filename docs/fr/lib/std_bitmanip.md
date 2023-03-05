@@ -5,11 +5,23 @@ Opérations pour effectuer des opérations binaires.
 |Opérateur|Entrée|Sortie|
 |-|-|-|
 |&|**int**, **int**|**int**|
+|&|**uint**, **uint**|**uint**|
+|&|**byte**, **byte**|**byte**|
 |<<|**int**, **int**|**int**|
+|<<|**uint**, **uint**|**uint**|
+|<<|**byte**, **byte**|**byte**|
 |>>|**int**, **int**|**int**|
-|^|**int**, **int**|**int**|
+|>>|**uint**, **uint**|**uint**|
+|>>|**byte**, **byte**|**byte**|
+|^|**byte**, **byte**|**byte**|
+|^|**uint**, **uint**|**uint**|
+|^|**byte**, **byte**|**byte**|
 |\||**int**, **int**|**int**|
+|\||**uint**, **uint**|**uint**|
+|\||**byte**, **byte**|**byte**|
 |~|**int**|**int**|
+|~|**uint**|**uint**|
+|~|**byte**|**byte**|
 
 
 ***

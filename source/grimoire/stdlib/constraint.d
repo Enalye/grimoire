@@ -55,6 +55,10 @@ void grLoadStdLibConstraint(GrLibDefinition library) {
     library.setDescription(GrLocale.en_US, "The type is a number");
     library.addConstraint(&_numeric, "Numeric");
 
+    library.setDescription(GrLocale.fr_FR, "Le type est un nombre intégral");
+    library.setDescription(GrLocale.en_US, "The type is an integral number");
+    library.addConstraint(&_integral, "Integral");
+
     library.setDescription(GrLocale.fr_FR, "Le type doit avoir une valeur");
     library.setDescription(GrLocale.en_US, "The type must have a value");
     library.addConstraint(&_notnullable, "NotNullable");
@@ -154,6 +158,11 @@ private bool _native(GrData, GrType type, const GrType[]) {
 private bool _numeric(GrData, GrType type, const GrType[]) {
     return type.base == GrType.Base.int_ || type.base == GrType.Base.uint_ ||
         type.base == GrType.Base.byte_ || type.base == GrType.Base.float_;
+}
+
+private bool _integral(GrData, GrType type, const GrType[]) {
+    return type.base == GrType.Base.int_ || type.base == GrType.Base.uint_ ||
+        type.base == GrType.Base.byte_;
 }
 
 private bool _notnullable(GrData, GrType type, const GrType[]) {
