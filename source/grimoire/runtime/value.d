@@ -15,47 +15,52 @@ package(grimoire) enum GR_NULL = 0xffffUL << 48;
 
 struct GrValue {
     package(grimoire) union {
-        GrInt _ivalue;
-        GrUInt _uvalue;
-        GrFloat _fvalue;
-        GrPointer _ovalue;
+        GrInt _intValue;
+        GrUInt _uintValue;
+        GrByte _byteValue;
+        GrFloat _floatValue;
+        GrPointer _ptrValue;
         ulong _bytes;
     }
 
     this(GrInt value) {
-        _ivalue = value;
+        _intValue = value;
     }
 
     this(GrFloat value) {
-        _fvalue = value;
+        _floatValue = value;
     }
 
     this(GrBool value) {
-        _ivalue = cast(GrInt) value;
+        _intValue = cast(GrInt) value;
     }
 
     this(GrChar value) {
-        _uvalue = cast(GrUInt) value;
+        _uintValue = cast(GrUInt) value;
+    }
+
+    this(GrByte value) {
+        _byteValue = value;
     }
 
     this(GrList value) {
-        _ovalue = cast(GrPointer) value;
+        _ptrValue = cast(GrPointer) value;
     }
 
     this(GrValue[] value) {
-        _ovalue = cast(GrPointer) new GrList(value);
+        _ptrValue = cast(GrPointer) new GrList(value);
     }
 
     this(string value) {
-        _ovalue = cast(GrPointer) new GrString(value);
+        _ptrValue = cast(GrPointer) new GrString(value);
     }
 
     this(GrObject value) {
-        _ovalue = cast(GrPointer) value;
+        _ptrValue = cast(GrPointer) value;
     }
 
     this(T)(T value) if (is(T == class)) {
-        _ovalue = cast(GrPointer) value;
+        _ptrValue = cast(GrPointer) value;
     }
 
     this(T)(T[] values) {
@@ -63,11 +68,11 @@ struct GrValue {
         foreach (value; values) {
             list.push(GrValue(value));
         }
-        _ovalue = cast(GrPointer) list;
+        _ptrValue = cast(GrPointer) list;
     }
 
     this(GrPointer value) {
-        _ovalue = value;
+        _ptrValue = value;
     }
 
     @property {
@@ -81,106 +86,114 @@ struct GrValue {
     }
 
     pragma(inline) GrBool getBool() const {
-        return cast(GrBool) _ivalue;
+        return cast(GrBool) _intValue;
     }
 
     pragma(inline) GrInt getInt() const {
-        return _ivalue;
+        return _intValue;
     }
 
     pragma(inline) GrUInt getUInt() const {
-        return _uvalue;
+        return _uintValue;
     }
 
     pragma(inline) GrChar getChar() const {
-        return cast(GrChar) _uvalue;
+        return cast(GrChar) _uintValue;
+    }
+
+    pragma(inline) GrByte getByte() const {
+        return _byteValue;
     }
 
     pragma(inline) T getEnum(T)() const {
-        return cast(T) _ivalue;
+        return cast(T) _intValue;
     }
 
     pragma(inline) GrFloat getFloat() const {
-        return _fvalue;
+        return _floatValue;
     }
 
     pragma(inline) GrPointer getPointer() const {
-        return cast(GrPointer) _ovalue;
+        return cast(GrPointer) _ptrValue;
     }
 
     pragma(inline) GrString getString() const {
-        return cast(GrString) _ovalue;
+        return cast(GrString) _ptrValue;
     }
 
     pragma(inline) GrList getList() const {
-        return cast(GrList) _ovalue;
+        return cast(GrList) _ptrValue;
     }
 
     pragma(inline) GrChannel getChannel() const {
-        return cast(GrChannel) _ovalue;
+        return cast(GrChannel) _ptrValue;
     }
 
     pragma(inline) GrObject getObject() const {
-        return cast(GrObject) _ovalue;
+        return cast(GrObject) _ptrValue;
     }
 
     pragma(inline) T getNative(T)() const {
-        return cast(T) _ovalue;
+        return cast(T) _ptrValue;
     }
 
     pragma(inline) void setBool(GrBool value) {
-        _ivalue = cast(GrInt) value;
+        _intValue = cast(GrInt) value;
     }
 
     pragma(inline) void setInt(GrInt value) {
-        _ivalue = value;
+        _intValue = value;
     }
 
     pragma(inline) void setUInt(GrUInt value) {
-        _uvalue = value;
+        _uintValue = value;
     }
 
     pragma(inline) void setChar(GrChar value) {
-        _uvalue = cast(GrUInt) value;
+        _uintValue = cast(GrUInt) value;
+    }
+
+    pragma(inline) void setByte(GrByte value) {
+        _byteValue = value;
     }
 
     pragma(inline) void setEnum(T)(T value) {
-        _ivalue = cast(GrInt) value;
+        _intValue = cast(GrInt) value;
     }
 
     pragma(inline) void setFloat(GrFloat value) {
-        _fvalue = value;
+        _floatValue = value;
     }
 
     pragma(inline) void setPointer(GrPointer value) {
-        _ovalue = value;
+        _ptrValue = value;
     }
 
     pragma(inline) void setString(GrString value) {
-        _ovalue = cast(GrPointer) value;
+        _ptrValue = cast(GrPointer) value;
     }
 
     pragma(inline) void setString(string value) {
-        (cast(GrString) _ovalue) = value;
+        (cast(GrString) _ptrValue) = value;
     }
 
     pragma(inline) void setList(GrList value) {
-        _ovalue = cast(GrPointer) value;
+        _ptrValue = cast(GrPointer) value;
     }
 
     pragma(inline) void setList(GrValue[] value) {
-        _ovalue = cast(GrPointer) new GrList(value);
+        _ptrValue = cast(GrPointer) new GrList(value);
     }
 
     pragma(inline) void setChannel(GrChannel value) {
-        _ovalue = cast(GrPointer) value;
+        _ptrValue = cast(GrPointer) value;
     }
 
     pragma(inline) void setObject(GrObject value) {
-        _ovalue = cast(GrPointer) value;
+        _ptrValue = cast(GrPointer) value;
     }
 
     pragma(inline) void setNative(T)(T value) {
-        _ovalue = cast(GrPointer) value;
+        _ptrValue = cast(GrPointer) value;
     }
 }

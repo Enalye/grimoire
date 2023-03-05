@@ -148,23 +148,26 @@ final class GrLibrary : GrLibDefinition {
 
         final switch (type.base) with (GrType.Base) {
         case bool_:
-            variable.ivalue = defaultValue.getBool();
+            variable.intValue = defaultValue.getBool();
             break;
         case int_:
         case enum_:
-            variable.ivalue = defaultValue.getInt();
+            variable.intValue = defaultValue.getInt();
             break;
         case uint_:
-            variable.uvalue = defaultValue.getUInt();
+            variable.uintValue = defaultValue.getUInt();
+            break;
+        case byte_:
+            variable.uintValue = defaultValue.getByte();
             break;
         case char_:
-            variable.uvalue = defaultValue.getChar();
+            variable.uintValue = defaultValue.getChar();
             break;
         case float_:
-            variable.fvalue = defaultValue.getFloat();
+            variable.floatValue = defaultValue.getFloat();
             break;
         case string_:
-            variable.svalue = defaultValue.getString().str;
+            variable.strValue = defaultValue.getString().str;
             break;
         case optional:
         case class_:

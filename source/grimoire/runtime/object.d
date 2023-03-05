@@ -145,17 +145,17 @@ final class GrObject {
                 static if (is(T == GrValue))
                     return _fields[index].value = value;
                 else static if (is(T == GrInt))
-                    return _fields[index].value._ivalue = value;
+                    return _fields[index].value._intValue = value;
                 else static if (is(T == GrBool))
-                    return _fields[index].value._ivalue = cast(GrInt) value;
+                    return _fields[index].value._intValue = cast(GrInt) value;
                 else static if (is(T == GrUInt))
-                    return _fields[index].value._uvalue = value;
+                    return _fields[index].value._uintValue = value;
                 else static if (is(T == GrChar))
-                    return _fields[index].value._uvalue = cast(GrChar) value;
+                    return _fields[index].value._uintValue = cast(GrChar) value;
                 else static if (is(T == GrFloat))
-                    return _fields[index].value._fvalue = value;
+                    return _fields[index].value._floatValue = value;
                 else static if (is(T == GrPointer))
-                    return _fields[index].value._ovalue = value;
+                    return _fields[index].value._ptrValue = value;
                 else
                     static assert(false, "invalid field type `" ~ T.stringof ~ "`");
             }

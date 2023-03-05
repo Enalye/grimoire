@@ -104,6 +104,7 @@ final class GrCall {
     alias getInt = getParameter!GrInt;
     alias getUInt = getParameter!GrUInt;
     alias getChar = getParameter!GrChar;
+    alias getByte = getParameter!GrByte;
     alias getFloat = getParameter!GrFloat;
     alias getPointer = getParameter!GrPointer;
 
@@ -157,6 +158,9 @@ final class GrCall {
         else static if (is(T == GrChar)) {
             return _inputs[index].getChar();
         }
+        else static if (is(T == GrByte)) {
+            return _inputs[index].getByte();
+        }
         else static if (is(T == GrBool)) {
             return _inputs[index].getInt() > 0;
         }
@@ -173,6 +177,7 @@ final class GrCall {
     alias setInt = setResult!GrInt;
     alias setUInt = setResult!GrUInt;
     alias setChar = setResult!GrChar;
+    alias setByte = setResult!GrByte;
     alias setFloat = setResult!GrFloat;
     alias setPointer = setResult!GrPointer;
 
@@ -234,6 +239,9 @@ final class GrCall {
         else static if (is(T == GrChar)) {
             _outputs[_results].setChar(value);
         }
+        else static if (is(T == GrByte)) {
+            _outputs[_results].setByte(value);
+        }
         else static if (is(T == GrBool)) {
             _outputs[_results].setInt(cast(GrInt) value);
         }
@@ -263,6 +271,10 @@ final class GrCall {
 
     GrChar getCharVariable(string name) const {
         return _task.engine.getCharVariable(name);
+    }
+
+    GrByte getByteVariable(string name) const {
+        return _task.engine.getByteVariable(name);
     }
 
     T getEnumVariable(T)(string name) const {
@@ -311,6 +323,10 @@ final class GrCall {
 
     void setCharVariable(string name, GrChar value) {
         _task.engine.setCharVariable(name, value);
+    }
+
+    void setByteVariable(string name, GrByte value) {
+        _task.engine.setByteVariable(name, value);
     }
 
     void setFloatVariable(string name, GrFloat value) {

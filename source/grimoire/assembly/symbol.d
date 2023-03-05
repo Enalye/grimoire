@@ -9,9 +9,9 @@ import std.format, std.file, std.bitmanip, std.array, std.outbuffer;
 import std.conv : to;
 
 alias GrBool = bool;
-alias GrByte = ubyte;
 alias GrInt = int;
 alias GrUInt = uint;
+alias GrByte = ubyte;
 alias GrChar = dchar;
 alias GrFloat = double;
 alias GrPointer = void*;

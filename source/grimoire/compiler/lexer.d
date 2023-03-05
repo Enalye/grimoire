@@ -83,6 +83,7 @@ struct GrLexeme {
         identifier,
         int_,
         uint_,
+        byte_,
         char_,
         float_,
         bool_,
@@ -100,6 +101,7 @@ struct GrLexeme {
         receive,
         intType,
         uintType,
+        byteType,
         charType,
         floatType,
         boolType,
@@ -188,24 +190,30 @@ struct GrLexeme {
     /// Les types natifs ou les classes n’en font pas partie.
     bool isType;
 
-    /// Valeur entière de la constante.
-    /// `isLiteral` vaut `true` et `type` vaut `int_`.
-    GrInt ivalue;
+    union {
+        /// Valeur entière de la constante.
+        /// `isLiteral` vaut `true` et `type` vaut `int_`.
+        GrInt intValue;
 
-    /// Valeur entière non-signée de la constante.
-    /// `isLiteral` vaut `true` et `type` vaut `uint_`.
-    GrUInt uvalue;
+        /// Valeur entière non-signée de la constante.
+        /// `isLiteral` vaut `true` et `type` vaut `uint_`.
+        GrUInt uintValue;
 
-    /// Valeur flottante de la constante.
-    /// `isLiteral` vaut `true` et `type` vaut `float_`.
-    GrFloat fvalue;
+        /// Valeur entière non-signée sur 1 octet de la constante.
+        /// `isLiteral` vaut `true` et `type` vaut `byte_`.
+        GrByte byteValue;
 
-    /// Valeur booléenne de la constante.
-    /// `isLiteral` vaut `true` et `type` vaut `bool_`.
-    GrBool bvalue;
+        /// Valeur flottante de la constante.
+        /// `isLiteral` vaut `true` et `type` vaut `float_`.
+        GrFloat floatValue;
+
+        /// Valeur booléenne de la constante.
+        /// `isLiteral` vaut `true` et `type` vaut `bool_`.
+        GrBool boolValue;
+    }
 
     /// Décrit soit une valeur constante comme `"bonjour"` ou un identificateur.
-    string svalue;
+    string strValue;
 
     /// Renvoie la ligne entière où le jeton est situé.
     string getLine() {
@@ -275,9 +283,9 @@ package final class GrLexer {
         // Traduit les alias
         foreach (ref lexeme; _lexemes) {
             if (lexeme.type == GrLexeme.Type.identifier) {
-                string* name = (lexeme.svalue in _data._aliases);
+                string* name = (lexeme.strValue in _data._aliases);
                 if (name) {
-                    lexeme.svalue = *name;
+                    lexeme.strValue = *name;
                 }
             }
         }
@@ -479,7 +487,7 @@ package final class GrLexer {
         lex.isLiteral = true;
 
         bool isStart = true;
-        bool isPrefix, isMaybeFloat, isFloat, isUnsigned;
+        bool isPrefix, isMaybeFloat, isFloat, isUnsigned, isByte;
         bool isBinary, isOctal, isHexadecimal;
         string buffer;
 
@@ -599,6 +607,15 @@ package final class GrLexer {
                 lex._textLength++;
                 break;
             }
+            else if (symbol == 'b' || symbol == 'B') {
+                if (isMaybeFloat || isFloat) {
+                    _current--;
+                    break;
+                }
+                isByte = true;
+                lex._textLength++;
+                break;
+            }
             else {
                 if (_current)
                     _current--;
@@ -617,7 +634,7 @@ package final class GrLexer {
 
         if (!buffer.length && !isFloat) {
             lex.type = GrLexeme.Type.int_;
-            lex.ivalue = 0;
+            lex.intValue = 0;
             _lexemes ~= lex;
             raiseError(Error.emptyNumber);
         }
@@ -625,38 +642,42 @@ package final class GrLexer {
         try {
             if (isBinary) {
                 lex.type = GrLexeme.Type.int_;
-                lex.ivalue = to!GrInt(buffer, 2);
+                lex.intValue = to!GrInt(buffer, 2);
             }
             else if (isOctal) {
                 lex.type = GrLexeme.Type.int_;
-                lex.ivalue = to!GrInt(buffer, 8);
+                lex.intValue = to!GrInt(buffer, 8);
             }
             else if (isHexadecimal) {
                 lex.type = GrLexeme.Type.int_;
-                lex.ivalue = to!GrInt(buffer, 16);
+                lex.intValue = to!GrInt(buffer, 16);
             }
             else if (isFloat) {
                 lex.type = GrLexeme.Type.float_;
-                lex.fvalue = to!GrFloat(buffer);
+                lex.floatValue = to!GrFloat(buffer);
             }
             else if (isUnsigned) {
                 lex.type = GrLexeme.Type.uint_;
-                lex.uvalue = to!GrUInt(buffer);
+                lex.uintValue = to!GrUInt(buffer);
+            }
+            else if (isByte) {
+                lex.type = GrLexeme.Type.byte_;
+                lex.byteValue = to!GrByte(buffer);
             }
             else {
                 const long value = to!long(buffer);
 
                 if (value > int.max && value <= uint.max) {
                     lex.type = GrLexeme.Type.uint_;
-                    lex.uvalue = cast(GrUInt) value;
+                    lex.uintValue = cast(GrUInt) value;
                 }
                 else if (value >= int.min && value <= int.max) {
                     lex.type = GrLexeme.Type.int_;
-                    lex.ivalue = cast(GrInt) value;
+                    lex.intValue = cast(GrInt) value;
                 }
                 else {
                     lex.type = GrLexeme.Type.int_;
-                    lex.ivalue = 0;
+                    lex.intValue = 0;
                     _lexemes ~= lex;
                     raiseError(Error.numberTooBig);
                 }
@@ -664,7 +685,7 @@ package final class GrLexer {
         }
         catch (ConvOverflowException) {
             lex.type = GrLexeme.Type.int_;
-            lex.ivalue = 0;
+            lex.intValue = 0;
             _lexemes ~= lex;
             raiseError(Error.numberTooBig);
         }
@@ -804,7 +825,7 @@ package final class GrLexer {
 
         textLength++;
         lex.textLength = textLength;
-        lex.uvalue = cast(GrUInt) ch;
+        lex.uintValue = cast(GrUInt) ch;
         _lexemes ~= lex;
 
         if (get() != '\'') {
@@ -854,7 +875,7 @@ package final class GrLexer {
                     textLength++;
 
                     lex.textLength = textLength;
-                    lex.svalue = buffer;
+                    lex.strValue = buffer;
                     _lexemes ~= lex;
 
                     // Concaténation
@@ -891,7 +912,7 @@ package final class GrLexer {
         textLength++;
 
         lex.textLength = textLength;
-        lex.svalue = buffer;
+        lex.strValue = buffer;
         _lexemes ~= lex;
     }
 
@@ -1361,6 +1382,10 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.uintType;
             lex.isType = true;
             break;
+        case "byte":
+            lex.type = GrLexeme.Type.byteType;
+            lex.isType = true;
+            break;
         case "char":
             lex.type = GrLexeme.Type.charType;
             lex.isType = true;
@@ -1393,13 +1418,13 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.bool_;
             lex.isKeyword = false;
             lex.isLiteral = true;
-            lex.bvalue = true;
+            lex.boolValue = true;
             break;
         case "false":
             lex.type = GrLexeme.Type.bool_;
             lex.isKeyword = false;
             lex.isLiteral = true;
-            lex.bvalue = false;
+            lex.boolValue = false;
             break;
         case "null":
             lex.type = GrLexeme.Type.null_;
@@ -1449,7 +1474,7 @@ package final class GrLexer {
         default:
             lex.isKeyword = false;
             lex.type = GrLexeme.Type.identifier;
-            lex.svalue = to!string(buffer);
+            lex.strValue = to!string(buffer);
             break;
         }
 
@@ -1622,24 +1647,242 @@ package final class GrLexer {
     }
 }
 
-private immutable string[] _prettyLexemeTypeTable = [
-    "", "[", "]", "(", ")", "{", "}", ".", ";", ":", "::", ",", "@", "$",
-    "?", "as", "try", "catch", "error", "defer", "=", "&=", "|=", "^=", "&&=",
-    "||=", "??=", "+=", "-=", "*=", "/=", "~=", "%=", "**=", "+", "-", "&",
-    "|", "^", "&&", "||", "??", "+", "-", "*", "/", "~", "%", "**", "==",
-    "===", "<=>", "!=", ">=", ">", "<=", "<", "<<", ">>", "->", "=>", "~", "!",
-    "++", "--", "identifier", "const_int", "const_uint", "const_char", "const_float",
-    "const_bool", "const_string", "null", "export", "const", "pure", "alias",
-    "class", "enum", "where", "copy", "send", "receive", "int", "uint",
-    "char", "float", "bool", "string", "list", "channel", "func", "task", "event",
-    "var", "if", "unless", "else", "switch", "select", "case", "default",
-    "while", "do", "until", "for", "loop", "return", "self", "die", "exit",
-    "yield", "break", "continue"
-];
-
 /// Renvoie une version affichable du type de jeton
 string grGetPrettyLexemeType(GrLexeme.Type lexType) {
-    return _prettyLexemeTypeTable[lexType];
+    final switch (lexType) with (GrLexeme.Type) {
+    case nothing:
+        return "";
+    case leftBracket:
+        return "[";
+    case rightBracket:
+        return "]";
+    case leftParenthesis:
+        return "(";
+    case rightParenthesis:
+        return ")";
+    case leftCurlyBrace:
+        return "{";
+    case rightCurlyBrace:
+        return "}";
+    case period:
+        return ".";
+    case semicolon:
+        return ";";
+    case colon:
+        return ":";
+    case doubleColon:
+        return "::";
+    case comma:
+        return ",";
+    case at:
+        return "@";
+    case pointer:
+        return "$";
+    case optional:
+        return "?";
+    case as:
+        return "as";
+    case try_:
+        return "try";
+    case catch_:
+        return "catch";
+    case throw_:
+        return "error";
+    case defer:
+        return "defer";
+    case assign:
+        return "=";
+    case bitwiseAndAssign:
+        return "&=";
+    case bitwiseOrAssign:
+        return "|=";
+    case bitwiseXorAssign:
+        return "^=";
+    case andAssign:
+        return "&&=";
+    case orAssign:
+        return "||=";
+    case optionalOrAssign:
+        return "??=";
+    case addAssign:
+        return "+=";
+    case substractAssign:
+        return "-=";
+    case multiplyAssign:
+        return "*=";
+    case divideAssign:
+        return "/=";
+    case concatenateAssign:
+        return "~=";
+    case remainderAssign:
+        return "%=";
+    case powerAssign:
+        return "**=";
+    case plus:
+        return "+";
+    case minus:
+        return "-";
+    case bitwiseAnd:
+        return "&";
+    case bitwiseOr:
+        return "|";
+    case bitwiseXor:
+        return "^";
+    case and:
+        return "&&";
+    case or:
+        return "||";
+    case optionalOr:
+        return "??";
+    case add:
+        return "+";
+    case substract:
+        return "-";
+    case multiply:
+        return "*";
+    case divide:
+        return "/";
+    case concatenate:
+        return "~";
+    case remainder:
+        return "%";
+    case power:
+        return "**";
+    case equal:
+        return "==";
+    case doubleEqual:
+        return "===";
+    case threeWayComparison:
+        return "<=>";
+    case notEqual:
+        return "!=";
+    case greaterOrEqual:
+        return ">=";
+    case greater:
+        return ">";
+    case lesserOrEqual:
+        return "<=";
+    case lesser:
+        return "<";
+    case leftShift:
+        return "<<";
+    case rightShift:
+        return ">>";
+    case interval:
+        return "->";
+    case arrow:
+        return "=>";
+    case bitwiseNot:
+        return "~";
+    case not:
+        return "!";
+    case increment:
+        return "++";
+    case decrement:
+        return "--";
+    case identifier:
+        return "identifier";
+    case int_:
+        return "const_int";
+    case uint_:
+        return "const_uint";
+    case byte_:
+        return "const_byte";
+    case char_:
+        return "const_char";
+    case float_:
+        return "const_float";
+    case bool_:
+        return "const_bool";
+    case string_:
+        return "const_string";
+    case null_:
+        return "null";
+    case export_:
+        return "export";
+    case const_:
+        return "const";
+    case pure_:
+        return "pure";
+    case alias_:
+        return "alias";
+    case class_:
+        return "class";
+    case enum_:
+        return "enum";
+    case where:
+        return "where";
+    case copy:
+        return "copy";
+    case send:
+        return "send";
+    case receive:
+        return "receive";
+    case intType:
+        return "int";
+    case uintType:
+        return "uint";
+    case byteType:
+        return "byte";
+    case charType:
+        return "char";
+    case floatType:
+        return "float";
+    case boolType:
+        return "bool";
+    case stringType:
+        return "string";
+    case listType:
+        return "list";
+    case channelType:
+        return "channel";
+    case func:
+        return "func";
+    case task:
+        return "task";
+    case event:
+        return "event";
+    case var:
+        return "var";
+    case if_:
+        return "if";
+    case unless:
+        return "unless";
+    case else_:
+        return "else";
+    case switch_:
+        return "switch";
+    case select:
+        return "select";
+    case case_:
+        return "case";
+    case default_:
+        return "default";
+    case while_:
+        return "while";
+    case do_:
+        return "do";
+    case until:
+        return "until";
+    case for_:
+        return "for";
+    case loop:
+        return "loop";
+    case return_:
+        return "return";
+    case self:
+        return "self";
+    case die:
+        return "die";
+    case exit:
+        return "exit";
+    case yield:
+        return "yield";
+    case break_:
+        return "break";
+    case continue_:
+        return "continue";
+    }
 }
 
 /// Décrit une erreur lexicale

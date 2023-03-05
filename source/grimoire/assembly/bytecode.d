@@ -17,9 +17,10 @@ enum GR_VERSION = 800;
 package(grimoire) {
     enum GR_MASK_INT = 0x1 << 1;
     enum GR_MASK_UINT = 0x1 << 2;
-    enum GR_MASK_FLOAT = 0x1 << 3;
-    enum GR_MASK_STRING = 0x1 << 4;
-    enum GR_MASK_POINTER = 0x1 << 5;
+    enum GR_MASK_BYTE = 0x1 << 3;
+    enum GR_MASK_FLOAT = 0x1 << 4;
+    enum GR_MASK_STRING = 0x1 << 5;
+    enum GR_MASK_POINTER = 0x1 << 6;
 }
 
 /// Instructions bas niveau de la machine virtuelle.
@@ -64,6 +65,7 @@ enum GrOpcode {
 
     const_int,
     const_uint,
+    const_byte,
     const_float,
     const_bool,
     const_string,
@@ -75,23 +77,29 @@ enum GrOpcode {
 
     equal_int,
     equal_uint,
+    equal_byte,
     equal_float,
     equal_string,
     notEqual_int,
     notEqual_uint,
+    notEqual_byte,
     notEqual_float,
     notEqual_string,
     greaterOrEqual_int,
     greaterOrEqual_uint,
+    greaterOrEqual_byte,
     greaterOrEqual_float,
     lesserOrEqual_int,
     lesserOrEqual_uint,
+    lesserOrEqual_byte,
     lesserOrEqual_float,
     greater_int,
     greater_uint,
+    greater_byte,
     greater_float,
     lesser_int,
     lesser_uint,
+    lesser_byte,
     lesser_float,
     checkNull,
     optionalTry,
@@ -105,26 +113,33 @@ enum GrOpcode {
     concatenate_string,
     add_int,
     add_uint,
+    add_byte,
     add_float,
     substract_int,
     substract_uint,
+    substract_byte,
     substract_float,
     multiply_int,
     multiply_uint,
+    multiply_byte,
     multiply_float,
     divide_int,
     divide_uint,
+    divide_byte,
     divide_float,
     remainder_int,
     remainder_uint,
+    remainder_byte,
     remainder_float,
     negative_int,
     negative_float,
     increment_int,
     increment_uint,
+    increment_byte,
     increment_float,
     decrement_int,
     decrement_uint,
+    decrement_byte,
     decrement_float,
 
     copy,
@@ -202,14 +217,19 @@ final class GrBytecode {
             uint index;
             /// Type de valeur
             uint typeMask;
-            /// Valeur entière initiale
-            GrInt ivalue;
-            /// Valeur entière non-signée initiale
-            GrUInt uvalue;
-            /// Valeur flottante initiale
-            GrFloat fvalue;
-            /// Valeur textuelle initiale
-            string svalue;
+            /// Valeur initiale
+            union {
+                /// Valeur entière
+                GrInt intValue;
+                /// Valeur entière non-signée
+                GrUInt uintValue;
+                /// Valeur sur 1 octet
+                GrByte byteValue;
+                /// Valeur flottante
+                GrFloat floatValue;
+                /// Valeur textuelle
+                string strValue;
+            }
         }
 
         /// Version du bytecode.
@@ -219,16 +239,19 @@ final class GrBytecode {
         uint[] opcodes;
 
         /// Constantes entières.
-        GrInt[] iconsts;
+        GrInt[] intConsts;
 
         /// Constantes entières non-signées.
-        GrUInt[] uconsts;
+        GrUInt[] uintConsts;
+
+        /// Constantes sur 1 octet.
+        GrByte[] byteConsts;
 
         /// Constantes flottantes.
-        GrFloat[] fconsts;
+        GrFloat[] floatConsts;
 
         /// Constantes textuelles.
-        string[] sconsts;
+        string[] strConsts;
 
         /// Primitives appelables.
         PrimitiveReference[] primitives;
@@ -261,10 +284,11 @@ final class GrBytecode {
     /// Charger depuis un bytecode
     this(GrBytecode bytecode) {
         opcodes = bytecode.opcodes;
-        iconsts = bytecode.iconsts;
-        uconsts = bytecode.uconsts;
-        fconsts = bytecode.fconsts;
-        sconsts = bytecode.sconsts;
+        intConsts = bytecode.intConsts;
+        uintConsts = bytecode.uintConsts;
+        byteConsts = bytecode.byteConsts;
+        floatConsts = bytecode.floatConsts;
+        strConsts = bytecode.strConsts;
         primitives = bytecode.primitives;
         enums = bytecode.enums;
         classes = bytecode.classes;
@@ -312,10 +336,11 @@ final class GrBytecode {
         buffer.append!uint(cast(uint) grimoireVersion);
         buffer.append!uint(cast(uint) userVersion);
 
-        buffer.append!uint(cast(uint) iconsts.length);
-        buffer.append!uint(cast(uint) uconsts.length);
-        buffer.append!uint(cast(uint) fconsts.length);
-        buffer.append!uint(cast(uint) sconsts.length);
+        buffer.append!uint(cast(uint) intConsts.length);
+        buffer.append!uint(cast(uint) uintConsts.length);
+        buffer.append!uint(cast(uint) byteConsts.length);
+        buffer.append!uint(cast(uint) floatConsts.length);
+        buffer.append!uint(cast(uint) strConsts.length);
         buffer.append!uint(cast(uint) opcodes.length);
 
         buffer.append!uint(globalsCount);
@@ -327,13 +352,15 @@ final class GrBytecode {
         buffer.append!uint(cast(uint) variables.length);
         buffer.append!uint(cast(uint) symbols.length);
 
-        foreach (GrInt i; iconsts)
+        foreach (GrInt i; intConsts)
             buffer.append!GrInt(i);
-        foreach (GrUInt i; uconsts)
+        foreach (GrUInt i; uintConsts)
             buffer.append!GrUInt(i);
-        foreach (GrFloat i; fconsts)
+        foreach (GrByte i; byteConsts)
+            buffer.append!GrByte(i);
+        foreach (GrFloat i; floatConsts)
             buffer.append!GrFloat(i);
-        foreach (string i; sconsts) {
+        foreach (string i; strConsts) {
             writeStr(buffer, i);
         }
         // Opcodes
@@ -382,13 +409,15 @@ final class GrBytecode {
             buffer.append!uint(reference.index);
             buffer.append!uint(reference.typeMask);
             if (reference.typeMask & GR_MASK_INT)
-                buffer.append!GrInt(reference.ivalue);
+                buffer.append!GrInt(reference.intValue);
             else if (reference.typeMask & GR_MASK_UINT)
-                buffer.append!GrUInt(reference.uvalue);
+                buffer.append!GrUInt(reference.uintValue);
+            else if (reference.typeMask & GR_MASK_BYTE)
+                buffer.append!GrByte(reference.byteValue);
             else if (reference.typeMask & GR_MASK_FLOAT)
-                buffer.append!GrFloat(reference.fvalue);
+                buffer.append!GrFloat(reference.floatValue);
             else if (reference.typeMask & GR_MASK_STRING)
-                writeStr(buffer, reference.svalue);
+                writeStr(buffer, reference.strValue);
         }
 
         // Sérialise les symboles
@@ -429,10 +458,11 @@ final class GrBytecode {
         if (grimoireVersion != GR_VERSION)
             return;
 
-        iconsts.length = buffer.read!uint();
-        uconsts.length = buffer.read!uint();
-        fconsts.length = buffer.read!uint();
-        sconsts.length = buffer.read!uint();
+        intConsts.length = buffer.read!uint();
+        uintConsts.length = buffer.read!uint();
+        byteConsts.length = buffer.read!uint();
+        floatConsts.length = buffer.read!uint();
+        strConsts.length = buffer.read!uint();
         opcodes.length = buffer.read!uint();
 
         globalsCount = buffer.read!uint();
@@ -444,20 +474,24 @@ final class GrBytecode {
         const uint variableCount = buffer.read!uint();
         symbols.length = buffer.read!uint();
 
-        for (uint i; i < iconsts.length; ++i) {
-            iconsts[i] = buffer.read!GrInt();
+        for (uint i; i < intConsts.length; ++i) {
+            intConsts[i] = buffer.read!GrInt();
         }
 
-        for (uint i; i < uconsts.length; ++i) {
-            uconsts[i] = buffer.read!GrUInt();
+        for (uint i; i < uintConsts.length; ++i) {
+            uintConsts[i] = buffer.read!GrUInt();
         }
 
-        for (uint i; i < fconsts.length; ++i) {
-            fconsts[i] = buffer.read!GrFloat();
+        for (uint i; i < byteConsts.length; ++i) {
+            byteConsts[i] = buffer.read!GrByte();
         }
 
-        for (uint i; i < sconsts.length; ++i) {
-            sconsts[i] = readStr(buffer);
+        for (uint i; i < floatConsts.length; ++i) {
+            floatConsts[i] = buffer.read!GrFloat();
+        }
+
+        for (uint i; i < strConsts.length; ++i) {
+            strConsts[i] = readStr(buffer);
         }
 
         // Opcodes
@@ -519,13 +553,15 @@ final class GrBytecode {
             reference.index = buffer.read!uint();
             reference.typeMask = buffer.read!uint();
             if (reference.typeMask & GR_MASK_INT)
-                reference.ivalue = buffer.read!GrInt();
+                reference.intValue = buffer.read!GrInt();
             else if (reference.typeMask & GR_MASK_UINT)
-                reference.uvalue = buffer.read!GrUInt();
+                reference.uintValue = buffer.read!GrUInt();
+            else if (reference.typeMask & GR_MASK_BYTE)
+                reference.byteValue = buffer.read!GrByte();
             else if (reference.typeMask & GR_MASK_FLOAT)
-                reference.fvalue = buffer.read!GrFloat();
+                reference.floatValue = buffer.read!GrFloat();
             else if (reference.typeMask & GR_MASK_STRING)
-                reference.svalue = readStr(buffer);
+                reference.strValue = readStr(buffer);
             variables[name] = reference;
         }
 
@@ -618,10 +654,12 @@ final class GrBytecode {
                 return "const.i";
             case const_uint:
                 return "const.u";
+            case const_byte:
+                return "const.b";
             case const_float:
                 return "const.f";
             case const_bool:
-                return "const.b";
+                return "const.bool";
             case const_string:
                 return "const.s";
             case const_meta:
@@ -636,6 +674,8 @@ final class GrBytecode {
                 return "eq.i";
             case equal_uint:
                 return "eq.u";
+            case equal_byte:
+                return "eq.b";
             case equal_float:
                 return "eq.f";
             case equal_string:
@@ -644,6 +684,8 @@ final class GrBytecode {
                 return "neq.i";
             case notEqual_uint:
                 return "neq.u";
+            case notEqual_byte:
+                return "neq.b";
             case notEqual_float:
                 return "neq.f";
             case notEqual_string:
@@ -652,24 +694,32 @@ final class GrBytecode {
                 return "geq.i";
             case greaterOrEqual_uint:
                 return "geq.u";
+            case greaterOrEqual_byte:
+                return "geq.b";
             case greaterOrEqual_float:
                 return "geq.f";
             case lesserOrEqual_int:
                 return "leq.i";
             case lesserOrEqual_uint:
                 return "leq.u";
+            case lesserOrEqual_byte:
+                return "leq.b";
             case lesserOrEqual_float:
                 return "leq.f";
             case greater_int:
                 return "gt.i";
             case greater_uint:
                 return "gt.u";
+            case greater_byte:
+                return "gt.b";
             case greater_float:
                 return "gt.f";
             case lesser_int:
                 return "lt.i";
             case lesser_uint:
                 return "lt.u";
+            case lesser_byte:
+                return "lt.b";
             case lesser_float:
                 return "lt.f";
             case checkNull:
@@ -694,30 +744,40 @@ final class GrBytecode {
                 return "add.i";
             case add_uint:
                 return "add.u";
+            case add_byte:
+                return "add.b";
             case add_float:
                 return "add.f";
             case substract_int:
                 return "sub.i";
             case substract_uint:
                 return "sub.u";
+            case substract_byte:
+                return "sub.b";
             case substract_float:
                 return "sub.f";
             case multiply_int:
                 return "mul.i";
             case multiply_uint:
                 return "mul.u";
+            case multiply_byte:
+                return "mul.b";
             case multiply_float:
                 return "mul.f";
             case divide_int:
                 return "div.i";
             case divide_uint:
                 return "div.u";
+            case divide_byte:
+                return "div.b";
             case divide_float:
                 return "div.f";
             case remainder_int:
                 return "rem.i";
             case remainder_uint:
                 return "rem.u";
+            case remainder_byte:
+                return "rem.b";
             case remainder_float:
                 return "rem.f";
             case negative_int:
@@ -728,12 +788,16 @@ final class GrBytecode {
                 return "inc.i";
             case increment_uint:
                 return "inc.u";
+            case increment_byte:
+                return "inc.b";
             case increment_float:
                 return "inc.f";
             case decrement_int:
                 return "dec.i";
             case decrement_uint:
                 return "dec.u";
+            case decrement_byte:
+                return "dec.b";
             case decrement_float:
                 return "dec.f";
             case copy:
@@ -834,16 +898,18 @@ final class GrBytecode {
                 }
             }
             else if (op == GrOpcode.const_int)
-                line ~= to!string(iconsts[grGetInstructionUnsignedValue(opcode)]);
+                line ~= to!string(intConsts[grGetInstructionUnsignedValue(opcode)]);
             else if (op == GrOpcode.const_uint)
-                line ~= to!string(uconsts[grGetInstructionUnsignedValue(opcode)]);
+                line ~= to!string(uintConsts[grGetInstructionUnsignedValue(opcode)]);
+            else if (op == GrOpcode.const_byte)
+                line ~= to!string(byteConsts[grGetInstructionUnsignedValue(opcode)]);
             else if (op == GrOpcode.const_float)
-                line ~= to!string(fconsts[grGetInstructionUnsignedValue(opcode)]);
+                line ~= to!string(floatConsts[grGetInstructionUnsignedValue(opcode)]);
             else if (op == GrOpcode.const_bool)
                 line ~= (grGetInstructionUnsignedValue(opcode) ? "true" : "false");
             else if (op == GrOpcode.const_string || op == GrOpcode.const_meta ||
                 op == GrOpcode.debugProfileBegin)
-                line ~= "\"" ~ to!string(sconsts[grGetInstructionUnsignedValue(opcode)]) ~ "\"";
+                line ~= "\"" ~ to!string(strConsts[grGetInstructionUnsignedValue(opcode)]) ~ "\"";
             else if (op >= GrOpcode.jump && op <= GrOpcode.jumpNotEqual)
                 line ~= to!string(i + grGetInstructionSignedValue(opcode));
             else if (op == GrOpcode.defer || op == GrOpcode.try_ || op == GrOpcode.catch_ ||

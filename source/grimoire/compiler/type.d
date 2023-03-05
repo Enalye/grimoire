@@ -23,6 +23,7 @@ struct GrType {
         null_,
         int_,
         uint_,
+        byte_,
         char_,
         float_,
         bool_,
@@ -108,6 +109,8 @@ const GrType grFloat = GrType(GrType.Base.float_);
 const GrType grBool = GrType(GrType.Base.bool_);
 /// Type caractère
 const GrType grChar = GrType(GrType.Base.char_);
+/// Type octet
+const GrType grByte = GrType(GrType.Base.byte_);
 /// Chaîne de caractères
 const GrType grString = GrType(GrType.Base.string_);
 
@@ -416,14 +419,21 @@ final class GrVariableDefinition {
     bool isConst;
     /// A-t’elle une valeur d’initialisation ?
     bool isInitialized;
-    /// Valeur entière d’initialisation
-    GrInt ivalue;
-    /// Valeur entière non-signée d’initialisation
-    GrInt uvalue;
-    /// Valeur flottante d’initialisation
-    GrFloat fvalue;
-    /// Valeur textuelle d’initialisation
-    string svalue;
+
+    /// Valeurs d’initialisation
+    union {
+        /// Valeur entière
+        GrInt intValue;
+        /// Valeur entière non-signée
+        GrUInt uintValue;
+        /// Valeur sur 1 octet
+        GrByte byteValue;
+        /// Valeur flottante
+        GrFloat floatValue;
+        /// Valeur textuelle
+        string strValue;
+    }
+
     /// Registre
     uint register;
 }
@@ -524,6 +534,7 @@ package class GrFunction {
         final switch (variable.type.base) with (GrType.Base) {
         case int_:
         case uint_:
+        case byte_:
         case char_:
         case bool_:
         case func:

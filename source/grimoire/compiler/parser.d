@@ -31,10 +31,11 @@ import grimoire.compiler.error;
 /// les instructions qui seront liés ensuite par le compilateur.
 final class GrParser {
     package {
-        GrInt[] iconsts;
-        GrUInt[] uconsts;
-        GrFloat[] fconsts;
-        string[] sconsts;
+        GrInt[] intConsts;
+        GrUInt[] uintConsts;
+        GrByte[] byteConsts;
+        GrFloat[] floatConsts;
+        string[] strConsts;
 
         uint scopeLevel;
 
@@ -143,42 +144,52 @@ final class GrParser {
 
     /// Enregistre un nouvel entier et retourne son id
     private uint registerIntConstant(GrInt value) {
-        foreach (size_t index, GrInt iconst; iconsts) {
-            if (iconst == value)
+        foreach (size_t index, GrInt intConst; intConsts) {
+            if (intConst == value)
                 return cast(uint) index;
         }
-        iconsts ~= value;
-        return cast(uint) iconsts.length - 1;
+        intConsts ~= value;
+        return cast(uint) intConsts.length - 1;
     }
 
     /// Enregistre un nouvel entier non-signé et retourne son id
     private uint registerUIntConstant(GrUInt value) {
-        foreach (size_t index, GrUInt uconst; uconsts) {
-            if (uconst == value)
+        foreach (size_t index, GrUInt uintConst; uintConsts) {
+            if (uintConst == value)
                 return cast(uint) index;
         }
-        uconsts ~= value;
-        return cast(uint) uconsts.length - 1;
+        uintConsts ~= value;
+        return cast(uint) uintConsts.length - 1;
+    }
+
+    /// Enregistre un nouvel octet non-signé et retourne son id
+    private uint registerByteConstant(GrByte value) {
+        foreach (size_t index, GrByte byteConst; byteConsts) {
+            if (byteConst == value)
+                return cast(uint) index;
+        }
+        byteConsts ~= value;
+        return cast(uint) byteConsts.length - 1;
     }
 
     /// Enregistre un nouveau flottant et retourne son id
     private uint registerFloatConstant(GrFloat value) {
-        foreach (size_t index, GrFloat fconst; fconsts) {
-            if (fconst == value)
+        foreach (size_t index, GrFloat floatConst; floatConsts) {
+            if (floatConst == value)
                 return cast(uint) index;
         }
-        fconsts ~= value;
-        return cast(uint) fconsts.length - 1;
+        floatConsts ~= value;
+        return cast(uint) floatConsts.length - 1;
     }
 
     /// Enregistre une nouvelle chaîne de caractères et retourne son id
     private uint registerStringConstant(string value) {
-        foreach (size_t index, string sconst; sconsts) {
-            if (sconst == value)
+        foreach (size_t index, string strConst; strConsts) {
+            if (strConst == value)
                 return cast(uint) index;
         }
-        sconsts ~= value;
-        return cast(uint) sconsts.length - 1;
+        strConsts ~= value;
+        return cast(uint) strConsts.length - 1;
     }
 
     /// Enregistre une variable locale spéciale, utilisé par ex. pour les itérateurs
@@ -253,6 +264,7 @@ final class GrParser {
         case int_:
         case uint_:
         case char_:
+        case byte_:
         case bool_:
         case func:
         case task:
@@ -413,6 +425,7 @@ final class GrParser {
                 break;
             case int_:
             case uint_:
+            case byte_:
             case char_:
             case bool_:
             case func:
@@ -482,6 +495,7 @@ final class GrParser {
                 case int_:
                 case uint_:
                 case char_:
+                case byte_:
                 case float_:
                 case bool_:
                 case enum_:
@@ -793,6 +807,10 @@ final class GrParser {
 
     private void addUIntConstant(GrUInt value) {
         addInstruction(GrOpcode.const_uint, registerUIntConstant(value));
+    }
+
+    private void addByteConstant(GrByte value) {
+        addInstruction(GrOpcode.const_byte, registerByteConstant(value));
     }
 
     private void addFloatConstant(GrFloat value) {
@@ -1276,6 +1294,53 @@ final class GrParser {
                 break;
             }
             break;
+        case byte_:
+            switch (lexType) with (GrLexeme.Type) {
+            case add:
+                addInstruction(GrOpcode.add_byte);
+                return GrType(GrType.Base.byte_);
+            case substract:
+                addInstruction(GrOpcode.substract_byte);
+                return GrType(GrType.Base.byte_);
+            case multiply:
+                addInstruction(GrOpcode.multiply_byte);
+                return GrType(GrType.Base.byte_);
+            case divide:
+                addInstruction(GrOpcode.divide_byte);
+                return GrType(GrType.Base.byte_);
+            case remainder:
+                addInstruction(GrOpcode.remainder_byte);
+                return GrType(GrType.Base.byte_);
+            case plus:
+                return GrType(GrType.Base.byte_);
+            case increment:
+                addInstruction(GrOpcode.increment_byte);
+                return GrType(GrType.Base.byte_);
+            case decrement:
+                addInstruction(GrOpcode.decrement_byte);
+                return GrType(GrType.Base.byte_);
+            case equal:
+                addInstruction(GrOpcode.equal_byte);
+                return GrType(GrType.Base.bool_);
+            case notEqual:
+                addInstruction(GrOpcode.notEqual_byte);
+                return GrType(GrType.Base.bool_);
+            case greater:
+                addInstruction(GrOpcode.greater_byte);
+                return GrType(GrType.Base.bool_);
+            case greaterOrEqual:
+                addInstruction(GrOpcode.greaterOrEqual_byte);
+                return GrType(GrType.Base.bool_);
+            case lesser:
+                addInstruction(GrOpcode.lesser_byte);
+                return GrType(GrType.Base.bool_);
+            case lesserOrEqual:
+                addInstruction(GrOpcode.lesserOrEqual_byte);
+                return GrType(GrType.Base.bool_);
+            default:
+                break;
+            }
+            break;
         case float_:
             switch (lexType) with (GrLexeme.Type) {
             case add:
@@ -1413,6 +1478,7 @@ final class GrParser {
             case int_:
             case uint_:
             case char_:
+            case byte_:
             case func:
             case task:
             case event:
@@ -1462,6 +1528,7 @@ final class GrParser {
             case int_:
             case uint_:
             case char_:
+            case byte_:
             case func:
             case task:
             case event:
@@ -1490,6 +1557,7 @@ final class GrParser {
             case int_:
             case uint_:
             case char_:
+            case byte_:
             case func:
             case task:
             case event:
@@ -1518,6 +1586,7 @@ final class GrParser {
             case int_:
             case uint_:
             case char_:
+            case byte_:
             case func:
             case task:
             case event:
@@ -1585,6 +1654,7 @@ final class GrParser {
             case int_:
             case uint_:
             case char_:
+            case byte_:
             case func:
             case task:
             case event:
@@ -1620,6 +1690,7 @@ final class GrParser {
             case int_:
             case uint_:
             case char_:
+            case byte_:
             case func:
             case task:
             case event:
@@ -1784,14 +1855,14 @@ final class GrParser {
 
     package void dump() {
         writeln("Code Generated:\n");
-        foreach (size_t i, GrInt ivalue; iconsts)
-            writeln(".iconst " ~ to!string(ivalue) ~ "\t;" ~ to!string(i));
+        foreach (size_t i, GrInt intValue; intConsts)
+            writeln(".intConst " ~ to!string(intValue) ~ "\t;" ~ to!string(i));
 
-        foreach (size_t i, GrFloat fvalue; fconsts)
-            writeln(".fconst " ~ to!string(fvalue) ~ "\t;" ~ to!string(i));
+        foreach (size_t i, GrFloat floatValue; floatConsts)
+            writeln(".floatConst " ~ to!string(floatValue) ~ "\t;" ~ to!string(i));
 
-        foreach (size_t i, string svalue; sconsts)
-            writeln(".sconst " ~ to!string(svalue) ~ "\t;" ~ to!string(i));
+        foreach (size_t i, string strValue; strConsts)
+            writeln(".strConst " ~ to!string(strValue) ~ "\t;" ~ to!string(i));
 
         foreach (GrFunction func; functions) {
             if (func.isEvent)
@@ -2040,7 +2111,7 @@ final class GrParser {
         if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedTypeAliasNameFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
-        const string typeAliasName = get().svalue;
+        const string typeAliasName = get().strValue;
         checkAdvance();
 
         if (get().type != GrLexeme.Type.colon)
@@ -2069,7 +2140,7 @@ final class GrParser {
         if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedEnumNameFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
-        const string enumName = get().svalue;
+        const string enumName = get().strValue;
         checkAdvance();
         if (get().type != GrLexeme.Type.leftCurlyBrace)
             logError(getError(Error.enumDefNotHaveBody), format(getError(Error.expectedXFoundY),
@@ -2090,7 +2161,7 @@ final class GrParser {
                 logError(format(getError(Error.expectedEnumFieldFoundX),
                         getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
 
-            auto fieldName = get().svalue;
+            auto fieldName = get().strValue;
             checkAdvance();
             fields ~= fieldName;
 
@@ -2108,7 +2179,7 @@ final class GrParser {
                         format(getError(Error.expectedIntFoundX), getPrettyLexemeType(get().type)));
                 }
 
-                lastValue = get().ivalue;
+                lastValue = get().intValue;
                 if (isNeg)
                     lastValue = -lastValue;
 
@@ -2141,7 +2212,7 @@ final class GrParser {
             logError(format(getError(Error.expectedClassNameFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
 
-        const string className = get().svalue;
+        const string className = get().strValue;
         checkAdvance();
 
         if (_data.isTypeDeclared(className, fileId, isExport))
@@ -2193,7 +2264,7 @@ final class GrParser {
             if (get().type != GrLexeme.Type.identifier)
                 logError(getError(Error.parentClassNameMissing),
                     format(getError(Error.expectedClassNameFoundX), getPrettyLexemeType(get().type)));
-            parentClassName = get().svalue;
+            parentClassName = get().strValue;
             checkAdvance();
             parentClassName = grMangleComposite(parentClassName, parseTemplateSignature());
         }
@@ -2230,7 +2301,7 @@ final class GrParser {
                 if (get().type == GrLexeme.Type.comma)
                     checkAdvance();
 
-                const string fieldName = get().svalue;
+                const string fieldName = get().strValue;
                 fields ~= fieldName;
                 fieldScopes ~= isFieldPublic;
                 fieldPositions ~= current;
@@ -2403,24 +2474,24 @@ final class GrParser {
         else if (!lex.isType) {
             if (lex.type == GrLexeme.Type.identifier) {
                 foreach (tempVar; templateVariables) {
-                    if (tempVar == lex.svalue) {
+                    if (tempVar == lex.strValue) {
                         checkAdvance();
-                        currentType = grAny(lex.svalue);
+                        currentType = grAny(lex.strValue);
                         break;
                     }
                 }
             }
             if (!currentType.isAny) {
                 if (lex.type == GrLexeme.Type.identifier &&
-                    _data.isTypeAlias(lex.svalue, lex.fileId, false)) {
-                    currentType = _data.getTypeAlias(lex.svalue, lex.fileId).type;
+                    _data.isTypeAlias(lex.strValue, lex.fileId, false)) {
+                    currentType = _data.getTypeAlias(lex.strValue, lex.fileId).type;
                     checkAdvance();
                 }
                 else if (lex.type == GrLexeme.Type.identifier &&
-                    _data.isClass(lex.svalue, lex.fileId, false)) {
+                    _data.isClass(lex.strValue, lex.fileId, false)) {
                     currentType.base = GrType.Base.class_;
                     checkAdvance();
-                    currentType.mangledType = grMangleComposite(lex.svalue,
+                    currentType.mangledType = grMangleComposite(lex.strValue,
                         parseTemplateSignature(templateVariables));
                     if (mustBeType) {
                         GrClassDefinition class_ = getClass(currentType.mangledType, lex.fileId);
@@ -2431,16 +2502,16 @@ final class GrParser {
                     }
                 }
                 else if (lex.type == GrLexeme.Type.identifier &&
-                    _data.isEnum(lex.svalue, lex.fileId, false)) {
+                    _data.isEnum(lex.strValue, lex.fileId, false)) {
                     currentType.base = GrType.Base.enum_;
-                    currentType.mangledType = lex.svalue;
+                    currentType.mangledType = lex.strValue;
                     checkAdvance();
                 }
-                else if (lex.type == GrLexeme.Type.identifier && _data.isNative(lex.svalue)) {
+                else if (lex.type == GrLexeme.Type.identifier && _data.isNative(lex.strValue)) {
                     currentType.base = GrType.Base.native;
-                    currentType.mangledType = lex.svalue;
+                    currentType.mangledType = lex.strValue;
                     checkAdvance();
-                    currentType.mangledType = grMangleComposite(lex.svalue,
+                    currentType.mangledType = grMangleComposite(lex.strValue,
                         parseTemplateSignature(templateVariables));
                     if (mustBeType) {
                         GrNativeDefinition native = _data.getNative(currentType.mangledType);
@@ -2452,7 +2523,7 @@ final class GrParser {
                 }
                 else if (mustBeType) {
                     const string typeName = lex.type == GrLexeme.Type.identifier ?
-                        lex.svalue : getPrettyLexemeType(lex.type);
+                        lex.strValue : getPrettyLexemeType(lex.type);
                     logError(format(getError(Error.xNotValidType), typeName),
                         format(getError(Error.expectedValidTypeFoundX), typeName));
                 }
@@ -2466,6 +2537,10 @@ final class GrParser {
                 break;
             case uintType:
                 currentType.base = GrType.Base.uint_;
+                checkAdvance();
+                break;
+            case byteType:
+                currentType.base = GrType.Base.byte_;
                 checkAdvance();
                 break;
             case charType:
@@ -2556,6 +2631,7 @@ final class GrParser {
         case int_:
         case uint_:
         case char_:
+        case byte_:
         case bool_:
         case func:
         case task:
@@ -2587,6 +2663,7 @@ final class GrParser {
         case int_:
         case uint_:
         case char_:
+        case byte_:
         case bool_:
         case func:
         case task:
@@ -2624,7 +2701,7 @@ final class GrParser {
             if (get().type != GrLexeme.Type.identifier)
                 logError(format(getError(Error.expectedIdentifierFoundX),
                         getPrettyLexemeType(get().type)), getError(Error.missingTemplateVal));
-            variables ~= get().svalue;
+            variables ~= get().strValue;
             checkAdvance();
 
             distinguishTemplateLexemes();
@@ -2690,7 +2767,7 @@ final class GrParser {
             if (get().type != GrLexeme.Type.identifier)
                 logError(format(getError(Error.expectedIdentifierFoundX),
                         getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
-            inputVariables ~= lex.svalue;
+            inputVariables ~= lex.strValue;
             checkAdvance();
 
             if (get().type != GrLexeme.Type.colon)
@@ -2745,7 +2822,7 @@ final class GrParser {
         if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedIdentifierFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
-        string name = get().svalue;
+        string name = get().strValue;
         string[] inputs;
         checkAdvance();
         GrType[] signature = parseInSignature(inputs);
@@ -2761,7 +2838,7 @@ final class GrParser {
             logError(format(getError(Error.expectedIdentifierFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
 
-        string name = get().svalue;
+        string name = get().strValue;
         checkAdvance();
 
         GrTemplateFunction temp = new GrTemplateFunction;
@@ -2807,20 +2884,20 @@ final class GrParser {
                     logError(format(getError(Error.expectedIdentifierFoundX),
                             getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
 
-                name ~= "." ~ get().svalue;
+                name ~= "." ~ get().strValue;
                 checkAdvance();
             }
         }
         else if (get().type == GrLexeme.Type.identifier) {
-            if (get().svalue == "operator") {
+            if (get().strValue == "operator") {
                 advance();
                 if (get().type == GrLexeme.Type.string_) {
                     lexPosition = current;
-                    if (!isOverridableOperator(get().svalue)) {
+                    if (!isOverridableOperator(get().strValue)) {
                         logError(format(getError(Error.cantOverrideXOp), get()
-                                .svalue), getError(Error.opCantBeOverriden));
+                                .strValue), getError(Error.opCantBeOverriden));
                     }
-                    name = get().svalue;
+                    name = get().strValue;
                     isOperator = true;
                     checkAdvance();
                 }
@@ -2830,7 +2907,7 @@ final class GrParser {
                 }
             }
             else {
-                name = get().svalue;
+                name = get().strValue;
                 checkAdvance();
             }
         }
@@ -2906,9 +2983,9 @@ final class GrParser {
                         getPrettyLexemeType(GrLexeme.Type.identifier),
                         getPrettyLexemeType(get().type)));
 
-            GrConstraint.Data constraintData = _data.getConstraintData(get().svalue);
+            GrConstraint.Data constraintData = _data.getConstraintData(get().strValue);
             if (!constraintData) {
-                const string[] nearestValues = findNearestStrings(get().svalue,
+                const string[] nearestValues = findNearestStrings(get().strValue,
                     _data.getAllConstraintsName());
                 string errorNote;
                 if (nearestValues.length) {
@@ -2920,7 +2997,7 @@ final class GrParser {
                     errorNote ~= ".";
                 }
                 logError(getError(Error.missingConstraint), format(getError(Error.xIsNotAKnownConstraint),
-                        get().svalue), format(getError(Error.validConstraintsAreX), errorNote));
+                        get().strValue), format(getError(Error.validConstraintsAreX), errorNote));
             }
             checkAdvance();
             GrType[] parameters = parseTemplateSignature(templateVariables);
@@ -3368,7 +3445,7 @@ final class GrParser {
                 logError(getError(Error.missingIdentifier),
                     format(getError(Error.expectedIdentifierFoundX),
                         getPrettyLexemeType(get().type)));
-            GrVariable errVariable = registerVariable(get().svalue, grString,
+            GrVariable errVariable = registerVariable(get().strValue, grString,
                 false, false, false, false);
 
             advance();
@@ -3570,7 +3647,7 @@ final class GrParser {
                 logError(format(getError(Error.expectedIdentifierFoundX),
                         getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
 
-            identifiers ~= get().svalue;
+            identifiers ~= get().strValue;
             checkAdvance();
         }
         while (get().type == GrLexeme.Type.comma);
@@ -3754,7 +3831,7 @@ final class GrParser {
             if (lex.type != GrLexeme.Type.int_)
                 logError(getError(Error.chanSizeMustBePositive),
                     format(getError(Error.expectedIntFoundX), getPrettyLexemeType(get().type)));
-            channelSize = lex.ivalue > int.max ? 1 : cast(int) lex.ivalue;
+            channelSize = lex.intValue > int.max ? 1 : cast(int) lex.intValue;
             if (channelSize < 1)
                 logError(getError(Error.chanSizeMustBeOneOrHigher),
                     format(getError(Error.expectedAtLeastSizeOf1FoundX), channelSize));
@@ -3778,6 +3855,7 @@ final class GrParser {
         case int_:
         case uint_:
         case char_:
+        case byte_:
         case bool_:
         case func:
         case task:
@@ -4086,7 +4164,7 @@ final class GrParser {
         if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedIdentifierFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
-        const string identifier = get().svalue;
+        const string identifier = get().strValue;
         checkAdvance();
 
         if (get().type == GrLexeme.Type.colon) {
@@ -4151,6 +4229,7 @@ final class GrParser {
                 case int_:
                 case uint_:
                 case char_:
+                case byte_:
                 case func:
                 case task:
                 case event:
@@ -4207,6 +4286,7 @@ final class GrParser {
                 case int_:
                 case uint_:
                 case char_:
+                case byte_:
                 case func:
                 case task:
                 case event:
@@ -4825,6 +4905,7 @@ final class GrParser {
             case int_:
             case uint_:
             case char_:
+            case byte_:
             case float_:
             case string_:
             case enum_:
@@ -4886,6 +4967,7 @@ final class GrParser {
             case int_:
             case uint_:
             case char_:
+            case byte_:
             case float_:
             case string_:
             case enum_:
@@ -4993,7 +5075,7 @@ final class GrParser {
                         break;
                     }
                     else if (get().type == GrLexeme.Type.identifier) {
-                        const string fieldName = get().svalue;
+                        const string fieldName = get().strValue;
                         checkAdvance();
                         bool hasField = false;
 
@@ -5065,7 +5147,7 @@ final class GrParser {
                     logError(format(getError(Error.expectedIdentifierFoundX),
                             getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
 
-                name ~= "." ~ get().svalue;
+                name ~= "." ~ get().strValue;
                 checkAdvance();
             }
 
@@ -5156,7 +5238,7 @@ final class GrParser {
                 if (lex.type != GrLexeme.Type.int_)
                     logError(getError(Error.listSizeMustBePositive),
                         format(getError(Error.expectedIntFoundX), getPrettyLexemeType(get().type)));
-                defaultListSize = lex.ivalue > int.max ? 0 : cast(int) lex.ivalue;
+                defaultListSize = lex.intValue > int.max ? 0 : cast(int) lex.intValue;
                 if (defaultListSize < 0)
                     logError(getError(Error.listSizeMustBeZeroOrHigher),
                         format(getError(Error.expectedAtLeastSizeOf1FoundX), defaultListSize));
@@ -5218,6 +5300,7 @@ final class GrParser {
         case int_:
         case uint_:
         case char_:
+        case byte_:
         case func:
         case task:
         case event:
@@ -5267,6 +5350,7 @@ final class GrParser {
                     case int_:
                     case uint_:
                     case char_:
+                    case byte_:
                     case func:
                     case task:
                     case event:
@@ -5314,6 +5398,7 @@ final class GrParser {
                 case int_:
                 case uint_:
                 case char_:
+                case byte_:
                 case func:
                 case task:
                 case event:
@@ -5387,7 +5472,7 @@ final class GrParser {
             logError(format(getError(Error.expectedVarFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingVar));
 
-        const string identifierName = get().svalue;
+        const string identifierName = get().strValue;
 
         checkAdvance();
 
@@ -5577,6 +5662,9 @@ final class GrParser {
         case char_:
             addUIntConstant(0u);
             break;
+        case byte_:
+            addByteConstant(0u);
+            break;
         case float_:
             addFloatConstant(0f);
             break;
@@ -5636,6 +5724,7 @@ final class GrParser {
             case int_:
             case uint_:
             case char_:
+            case byte_:
             case func:
             case task:
             case event:
@@ -5671,6 +5760,7 @@ final class GrParser {
             case int_:
             case uint_:
             case char_:
+            case byte_:
             case bool_:
             case func:
             case task:
@@ -5729,6 +5819,7 @@ final class GrParser {
         case int_:
         case uint_:
         case char_:
+        case byte_:
         case bool_:
         case func:
         case task:
@@ -5809,10 +5900,10 @@ final class GrParser {
 
         if (type.base != GrType.Base.func && type.base != GrType.Base.task &&
             type.base != GrType.Base.event)
-            logError(format(getError(Error.cantInferTypeOfX), get().svalue),
+            logError(format(getError(Error.cantInferTypeOfX), get().strValue),
                 getError(Error.funcTypeCantBeInferred));
 
-        GrType funcType = addFunctionAddress(get().svalue,
+        GrType funcType = addFunctionAddress(get().strValue,
             grUnmangleSignature(type.mangledType), get().fileId);
         type = convertType(funcType, type, fileId);
         checkAdvance();
@@ -6034,6 +6125,7 @@ final class GrParser {
                             case int_:
                             case uint_:
                             case char_:
+                            case byte_:
                             case func:
                             case task:
                             case event:
@@ -6073,6 +6165,7 @@ final class GrParser {
                         case int_:
                         case uint_:
                         case char_:
+                        case byte_:
                         case func:
                         case task:
                         case event:
@@ -6109,42 +6202,49 @@ final class GrParser {
                 break;
             case int_:
                 currentType = GrType(GrType.Base.int_);
-                addIntConstant(lex.ivalue);
+                addIntConstant(lex.intValue);
                 hasValue = true;
                 typeStack ~= currentType;
                 checkAdvance();
                 break;
             case uint_:
                 currentType = GrType(GrType.Base.uint_);
-                addUIntConstant(lex.uvalue);
+                addUIntConstant(lex.uintValue);
+                hasValue = true;
+                typeStack ~= currentType;
+                checkAdvance();
+                break;
+            case byte_:
+                currentType = GrType(GrType.Base.byte_);
+                addByteConstant(lex.byteValue);
                 hasValue = true;
                 typeStack ~= currentType;
                 checkAdvance();
                 break;
             case char_:
                 currentType = GrType(GrType.Base.char_);
-                addUIntConstant(lex.uvalue);
+                addUIntConstant(lex.uintValue);
                 hasValue = true;
                 typeStack ~= currentType;
                 checkAdvance();
                 break;
             case float_:
                 currentType = GrType(GrType.Base.float_);
-                addFloatConstant(lex.fvalue);
+                addFloatConstant(lex.floatValue);
                 hasValue = true;
                 typeStack ~= currentType;
                 checkAdvance();
                 break;
             case bool_:
                 currentType = GrType(GrType.Base.bool_);
-                addBoolConstant(lex.bvalue);
+                addBoolConstant(lex.boolValue);
                 hasValue = true;
                 typeStack ~= currentType;
                 checkAdvance();
                 break;
             case string_:
                 currentType = GrType(GrType.Base.string_);
-                addStringConstant(lex.svalue);
+                addStringConstant(lex.strValue);
                 hasValue = true;
                 typeStack ~= currentType;
                 checkAdvance();
@@ -6235,7 +6335,7 @@ final class GrParser {
                 if (get().type != GrLexeme.Type.identifier)
                     logError(format(getError(Error.expectedFieldNameFoundX),
                             getPrettyLexemeType(get().type)), getError(Error.missingField));
-                const string identifier = get().svalue;
+                const string identifier = get().strValue;
 
                 if (currentType.base == GrType.Base.native) {
                     GrNativeDefinition native = _data.getNative(currentType.mangledType);
@@ -6909,6 +7009,7 @@ final class GrParser {
         case int_:
         case uint_:
         case char_:
+        case byte_:
         case func:
         case task:
         case event:
@@ -7034,7 +7135,7 @@ final class GrParser {
         GrType returnType = GrType.Base.void_;
         const GrLexeme identifier = get();
         bool isFunctionCall = false, isMethodCall = false, hasParenthesis = false;
-        string identifierName = identifier.svalue;
+        string identifierName = identifier.strValue;
         const uint fileId = identifier.fileId;
 
         advance();
@@ -7210,8 +7311,8 @@ final class GrParser {
                 }
             }
         }
-        else if (_data.isEnum(identifier.svalue, fileId, false)) {
-            const GrEnumDefinition definition = _data.getEnum(identifier.svalue, fileId);
+        else if (_data.isEnum(identifier.strValue, fileId, false)) {
+            const GrEnumDefinition definition = _data.getEnum(identifier.strValue, fileId);
             if (get().type != GrLexeme.Type.period)
                 logError(getError(Error.expectedDotAfterEnumType),
                     getError(Error.missingEnumConstantName));
@@ -7219,7 +7320,7 @@ final class GrParser {
             if (get().type != GrLexeme.Type.identifier)
                 logError(getError(Error.expectedConstNameAfterEnumType),
                     getError(Error.missingEnumConstantName));
-            const string fieldName = get().svalue;
+            const string fieldName = get().strValue;
             if (!definition.hasField(fieldName)) {
                 string[] fieldNames;
                 foreach (field; definition.fields) {

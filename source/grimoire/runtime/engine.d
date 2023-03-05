@@ -142,15 +142,15 @@ class GrEngine {
             const uint typeMask = globalRef.typeMask;
             const uint index = globalRef.index;
             if (typeMask & GR_MASK_INT)
-                _globals[index]._ivalue = globalRef.ivalue;
+                _globals[index]._intValue = globalRef.intValue;
             else if (typeMask & GR_MASK_UINT)
-                _globals[index]._uvalue = globalRef.uvalue;
+                _globals[index]._uintValue = globalRef.uintValue;
             else if (typeMask & GR_MASK_FLOAT)
-                _globals[index]._fvalue = globalRef.fvalue;
+                _globals[index]._floatValue = globalRef.floatValue;
             else if (typeMask & GR_MASK_STRING)
-                _globals[index]._ovalue = cast(GrPointer) new GrString(globalRef.svalue);
+                _globals[index]._ptrValue = cast(GrPointer) new GrString(globalRef.strValue);
             else if (typeMask & GR_MASK_POINTER)
-                _globals[index]._ovalue = null;
+                _globals[index]._ptrValue = null;
         }
 
         // Indexe les classes
@@ -398,6 +398,7 @@ class GrEngine {
     alias getIntVariable = getVariable!GrInt;
     alias getUIntVariable = getVariable!GrUInt;
     alias getCharVariable = getVariable!GrChar;
+    alias getByteVariable = getVariable!GrByte;
     alias getFloatVariable = getVariable!GrFloat;
     alias getPointerVariable = getVariable!GrPointer;
 
@@ -431,22 +432,25 @@ class GrEngine {
         enforce(variable, "no global variable `" ~ name ~ "` defined");
 
         static if (is(T == GrInt)) {
-            return _globals[variable.index]._ivalue;
+            return _globals[variable.index]._intValue;
         }
         else static if (is(T == GrUInt)) {
-            return _globals[variable.index]._uvalue;
+            return _globals[variable.index]._uintValue;
         }
         else static if (is(T == GrChar)) {
-            return cast(GrChar) _globals[variable.index]._uvalue;
+            return cast(GrChar) _globals[variable.index]._uintValue;
+        }
+        else static if (is(T == GrByte)) {
+            return _globals[variable.index]._byteValue;
         }
         else static if (is(T == GrBool)) {
-            return _globals[variable.index]._ivalue > 0;
+            return _globals[variable.index]._intValue > 0;
         }
         else static if (is(T == GrFloat)) {
-            return _globals[variable.index]._fvalue;
+            return _globals[variable.index]._floatValue;
         }
         else static if (is(T == GrPointer)) {
-            return cast(GrPointer) _globals[variable.index]._ovalue;
+            return cast(GrPointer) _globals[variable.index]._ptrValue;
         }
     }
 
@@ -454,6 +458,7 @@ class GrEngine {
     alias setIntVariable = setVariable!GrInt;
     alias setUIntVariable = setVariable!GrUInt;
     alias setCharVariable = setVariable!GrChar;
+    alias setByteVariable = setVariable!GrByte;
     alias setFloatVariable = setVariable!GrFloat;
     alias setPointerVariable = setVariable!GrPointer;
 
@@ -490,16 +495,19 @@ class GrEngine {
         enforce(variable, "no global variable `" ~ name ~ "` defined");
 
         static if (is(T == GrInt) || is(T == GrBool)) {
-            _globals[variable.index]._ivalue = value;
+            _globals[variable.index]._intValue = value;
         }
         else static if (is(T == GrUInt) || is(T == GrChar)) {
-            _globals[variable.index]._uvalue = value;
+            _globals[variable.index]._uintValue = value;
+        }
+        else static if (is(T == GrByte)) {
+            _globals[variable.index]._byteValue = value;
         }
         else static if (is(T == GrFloat)) {
-            _globals[variable.index]._fvalue = value;
+            _globals[variable.index]._floatValue = value;
         }
         else static if (is(T == GrPointer)) {
-            _globals[variable.index]._ovalue = value;
+            _globals[variable.index]._ptrValue = value;
         }
     }
 
@@ -575,7 +583,7 @@ class GrEngine {
 
                         // La machine virtuelle est maintenant en panique
                         _isPanicking = true;
-                        _panicMessage = (cast(GrString) _globalStackIn[$ - 1]._ovalue).str;
+                        _panicMessage = (cast(GrString) _globalStackIn[$ - 1]._ptrValue).str;
                         _globalStackIn.length--;
 
                         // Tous les appels différés ont été exécuté, on tue la tâche
@@ -607,7 +615,7 @@ class GrEngine {
                     break;
                 case anonymousTask:
                     GrTask nTask = new GrTask(this);
-                    nTask.pc = cast(uint) currentTask.stack[currentTask.stackPos]._ivalue;
+                    nTask.pc = cast(uint) currentTask.stack[currentTask.stackPos]._intValue;
                     currentTask.stackPos--;
                     _createdTasks ~= nTask;
                     currentTask.pc++;
@@ -651,7 +659,7 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) new GrObject(
+                    currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer) new GrObject(
                         _bytecode.classes[grGetInstructionUnsignedValue(opcode)]);
                     currentTask.pc++;
                     break;
@@ -659,13 +667,13 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(
+                    currentTask.stack[currentTask.stackPos]._ptrValue = cast(
                         GrPointer) new GrChannel(grGetInstructionUnsignedValue(opcode));
                     currentTask.pc++;
                     break;
                 case send:
                     GrChannel chan = cast(GrChannel) currentTask
-                        .stack[currentTask.stackPos - 1]._ovalue;
+                        .stack[currentTask.stackPos - 1]._ptrValue;
                     if (!chan.isOwned) {
                         if (currentTask.isEvaluatingChannel) {
                             currentTask.restoreState();
@@ -701,7 +709,7 @@ class GrEngine {
                     break;
                 case receive:
                     GrChannel chan = cast(GrChannel) currentTask
-                        .stack[currentTask.stackPos]._ovalue;
+                        .stack[currentTask.stackPos]._ptrValue;
                     if (!chan.isOwned) {
                         if (currentTask.isEvaluatingChannel) {
                             currentTask.restoreState();
@@ -800,13 +808,13 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case refStore:
-                    *(cast(GrValue*) currentTask.stack[currentTask.stackPos - 1]._ovalue) = currentTask
+                    *(cast(GrValue*) currentTask.stack[currentTask.stackPos - 1]._ptrValue) = currentTask
                         .stack[currentTask.stackPos];
                     currentTask.stackPos -= 2;
                     currentTask.pc++;
                     break;
                 case refStore2:
-                    *(cast(GrValue*) currentTask.stack[currentTask.stackPos - 1]._ovalue) = currentTask
+                    *(cast(GrValue*) currentTask.stack[currentTask.stackPos - 1]._ptrValue) = currentTask
                         .stack[currentTask.stackPos];
                     currentTask.stack[currentTask.stackPos - 1] =
                         currentTask.stack[currentTask.stackPos];
@@ -815,7 +823,7 @@ class GrEngine {
                     break;
                 case fieldRefStore:
                     currentTask.stackPos--;
-                    (cast(GrField) currentTask.stack[currentTask.stackPos]._ovalue).value =
+                    (cast(GrField) currentTask.stack[currentTask.stackPos]._ptrValue).value =
                         currentTask.stack[currentTask.stackPos + 1];
                     currentTask.stack[currentTask.stackPos] =
                         currentTask.stack[currentTask.stackPos + 1];
@@ -823,12 +831,12 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case fieldRefLoad:
-                    if (!currentTask.stack[currentTask.stackPos]._ovalue) {
+                    if (!currentTask.stack[currentTask.stackPos]._ptrValue) {
                         raise(currentTask, "NullError");
                         break;
                     }
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer)(
-                        (cast(GrObject) currentTask.stack[currentTask.stackPos]._ovalue)
+                    currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer)(
+                        (cast(GrObject) currentTask.stack[currentTask.stackPos]._ptrValue)
                             ._fields[grGetInstructionUnsignedValue(opcode)]);
                     currentTask.pc++;
                     break;
@@ -836,18 +844,18 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer)(
-                        (cast(GrObject) currentTask.stack[currentTask.stackPos - 1]._ovalue)
+                    currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer)(
+                        (cast(GrObject) currentTask.stack[currentTask.stackPos - 1]._ptrValue)
                             ._fields[grGetInstructionUnsignedValue(opcode)]);
                     currentTask.pc++;
                     break;
                 case fieldLoad:
-                    if (!currentTask.stack[currentTask.stackPos]._ovalue) {
+                    if (!currentTask.stack[currentTask.stackPos]._ptrValue) {
                         raise(currentTask, "NullError");
                         break;
                     }
                     currentTask.stack[currentTask.stackPos] = (cast(
-                            GrObject) currentTask.stack[currentTask.stackPos]._ovalue)
+                            GrObject) currentTask.stack[currentTask.stackPos]._ptrValue)
                         ._fields[grGetInstructionUnsignedValue(opcode)].value;
                     currentTask.pc++;
                     break;
@@ -856,41 +864,49 @@ class GrEngine {
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
                     GrField field = (cast(
-                            GrObject) currentTask.stack[currentTask.stackPos - 1]._ovalue)
+                            GrObject) currentTask.stack[currentTask.stackPos - 1]._ptrValue)
                         ._fields[grGetInstructionUnsignedValue(opcode)];
                     currentTask.stack[currentTask.stackPos] = field.value;
-                    currentTask.stack[currentTask.stackPos - 1]._ovalue = cast(GrPointer) field;
+                    currentTask.stack[currentTask.stackPos - 1]._ptrValue = cast(GrPointer) field;
                     currentTask.pc++;
                     break;
                 case const_int:
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos]._ivalue = _bytecode.iconsts[grGetInstructionUnsignedValue(
-                            opcode)];
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        _bytecode.intConsts[grGetInstructionUnsignedValue(opcode)];
                     currentTask.pc++;
                     break;
                 case const_uint:
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos]._uvalue = _bytecode.uconsts[grGetInstructionUnsignedValue(
-                            opcode)];
+                    currentTask.stack[currentTask.stackPos]._uintValue =
+                        _bytecode.uintConsts[grGetInstructionUnsignedValue(opcode)];
+                    currentTask.pc++;
+                    break;
+                case const_byte:
+                    currentTask.stackPos++;
+                    if (currentTask.stackPos == currentTask.stack.length)
+                        currentTask.stack.length *= 2;
+                    currentTask.stack[currentTask.stackPos]._byteValue =
+                        _bytecode.byteConsts[grGetInstructionUnsignedValue(opcode)];
                     currentTask.pc++;
                     break;
                 case const_float:
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos]._fvalue = _bytecode.fconsts[grGetInstructionUnsignedValue(
-                            opcode)];
+                    currentTask.stack[currentTask.stackPos]._floatValue =
+                        _bytecode.floatConsts[grGetInstructionUnsignedValue(opcode)];
                     currentTask.pc++;
                     break;
                 case const_bool:
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos]._ivalue = grGetInstructionUnsignedValue(
+                    currentTask.stack[currentTask.stackPos]._intValue = grGetInstructionUnsignedValue(
                         opcode);
                     currentTask.pc++;
                     break;
@@ -898,12 +914,12 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) new GrString(
-                        _bytecode.sconsts[grGetInstructionUnsignedValue(opcode)]);
+                    currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer) new GrString(
+                        _bytecode.strConsts[grGetInstructionUnsignedValue(opcode)]);
                     currentTask.pc++;
                     break;
                 case const_meta:
-                    _meta = _bytecode.sconsts[grGetInstructionUnsignedValue(opcode)];
+                    _meta = _bytecode.strConsts[grGetInstructionUnsignedValue(opcode)];
                     currentTask.pc++;
                     break;
                 case const_null:
@@ -930,146 +946,184 @@ class GrEngine {
                     break;
                 case equal_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._ivalue ==
-                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._intValue ==
+                        currentTask.stack[currentTask.stackPos + 1]._intValue;
                     currentTask.pc++;
                     break;
                 case equal_uint:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._uvalue ==
-                        currentTask.stack[currentTask.stackPos + 1]._uvalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._uintValue ==
+                        currentTask.stack[currentTask.stackPos + 1]._uintValue;
+                    currentTask.pc++;
+                    break;
+                case equal_byte:
+                    currentTask.stackPos--;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._byteValue ==
+                        currentTask.stack[currentTask.stackPos + 1]._byteValue;
                     currentTask.pc++;
                     break;
                 case equal_float:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._fvalue ==
-                        currentTask.stack[currentTask.stackPos + 1]._fvalue;
+                    currentTask.stack[currentTask.stackPos]._intValue = currentTask.stack[currentTask.stackPos]
+                        ._floatValue == currentTask.stack[currentTask.stackPos + 1]._floatValue;
                     currentTask.pc++;
                     break;
                 case equal_string:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue = (cast(
-                            GrString) currentTask.stack[currentTask.stackPos]._ovalue).str == (
-                        cast(GrString) currentTask.stack[currentTask.stackPos + 1]._ovalue).str;
+                    currentTask.stack[currentTask.stackPos]._intValue = (cast(
+                            GrString) currentTask.stack[currentTask.stackPos]._ptrValue).str == (
+                        cast(GrString) currentTask.stack[currentTask.stackPos + 1]._ptrValue).str;
                     currentTask.pc++;
                     break;
                 case notEqual_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._ivalue !=
-                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._intValue !=
+                        currentTask.stack[currentTask.stackPos + 1]._intValue;
                     currentTask.pc++;
                     break;
                 case notEqual_uint:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._uvalue !=
-                        currentTask.stack[currentTask.stackPos + 1]._uvalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._uintValue !=
+                        currentTask.stack[currentTask.stackPos + 1]._uintValue;
+                    currentTask.pc++;
+                    break;
+                case notEqual_byte:
+                    currentTask.stackPos--;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._byteValue !=
+                        currentTask.stack[currentTask.stackPos + 1]._byteValue;
                     currentTask.pc++;
                     break;
                 case notEqual_float:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._fvalue !=
-                        currentTask.stack[currentTask.stackPos + 1]._fvalue;
+                    currentTask.stack[currentTask.stackPos]._intValue = currentTask.stack[currentTask.stackPos]
+                        ._floatValue != currentTask.stack[currentTask.stackPos + 1]._floatValue;
                     currentTask.pc++;
                     break;
                 case notEqual_string:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue = (cast(
-                            GrString) currentTask.stack[currentTask.stackPos]._ovalue).str != (
-                        cast(GrString) currentTask.stack[currentTask.stackPos + 1]._ovalue).str;
+                    currentTask.stack[currentTask.stackPos]._intValue = (cast(
+                            GrString) currentTask.stack[currentTask.stackPos]._ptrValue).str != (
+                        cast(GrString) currentTask.stack[currentTask.stackPos + 1]._ptrValue).str;
                     currentTask.pc++;
                     break;
                 case greaterOrEqual_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._ivalue >=
-                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._intValue >=
+                        currentTask.stack[currentTask.stackPos + 1]._intValue;
                     currentTask.pc++;
                     break;
                 case greaterOrEqual_uint:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._uvalue >=
-                        currentTask.stack[currentTask.stackPos + 1]._uvalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._uintValue >=
+                        currentTask.stack[currentTask.stackPos + 1]._uintValue;
+                    currentTask.pc++;
+                    break;
+                case greaterOrEqual_byte:
+                    currentTask.stackPos--;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._byteValue >=
+                        currentTask.stack[currentTask.stackPos + 1]._byteValue;
                     currentTask.pc++;
                     break;
                 case greaterOrEqual_float:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._fvalue >=
-                        currentTask.stack[currentTask.stackPos + 1]._fvalue;
+                    currentTask.stack[currentTask.stackPos]._intValue = currentTask.stack[currentTask.stackPos]
+                        ._floatValue >= currentTask.stack[currentTask.stackPos + 1]._floatValue;
                     currentTask.pc++;
                     break;
                 case lesserOrEqual_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._ivalue <=
-                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._intValue <=
+                        currentTask.stack[currentTask.stackPos + 1]._intValue;
                     currentTask.pc++;
                     break;
                 case lesserOrEqual_uint:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._uvalue <=
-                        currentTask.stack[currentTask.stackPos + 1]._uvalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._uintValue <=
+                        currentTask.stack[currentTask.stackPos + 1]._uintValue;
+                    currentTask.pc++;
+                    break;
+                case lesserOrEqual_byte:
+                    currentTask.stackPos--;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._byteValue <=
+                        currentTask.stack[currentTask.stackPos + 1]._byteValue;
                     currentTask.pc++;
                     break;
                 case lesserOrEqual_float:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._fvalue <=
-                        currentTask.stack[currentTask.stackPos + 1]._fvalue;
+                    currentTask.stack[currentTask.stackPos]._intValue = currentTask.stack[currentTask.stackPos]
+                        ._floatValue <= currentTask.stack[currentTask.stackPos + 1]._floatValue;
                     currentTask.pc++;
                     break;
                 case greater_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._ivalue >
-                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._intValue >
+                        currentTask.stack[currentTask.stackPos + 1]._intValue;
                     currentTask.pc++;
                     break;
                 case greater_uint:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._uvalue >
-                        currentTask.stack[currentTask.stackPos + 1]._uvalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._uintValue >
+                        currentTask.stack[currentTask.stackPos + 1]._uintValue;
+                    currentTask.pc++;
+                    break;
+                case greater_byte:
+                    currentTask.stackPos--;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._byteValue >
+                        currentTask.stack[currentTask.stackPos + 1]._byteValue;
                     currentTask.pc++;
                     break;
                 case greater_float:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._fvalue >
-                        currentTask.stack[currentTask.stackPos + 1]._fvalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._floatValue >
+                        currentTask.stack[currentTask.stackPos + 1]._floatValue;
                     currentTask.pc++;
                     break;
                 case lesser_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._ivalue <
-                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._intValue <
+                        currentTask.stack[currentTask.stackPos + 1]._intValue;
                     currentTask.pc++;
                     break;
                 case lesser_uint:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._uvalue <
-                        currentTask.stack[currentTask.stackPos + 1]._uvalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._uintValue <
+                        currentTask.stack[currentTask.stackPos + 1]._uintValue;
+                    currentTask.pc++;
+                    break;
+                case lesser_byte:
+                    currentTask.stackPos--;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._byteValue <
+                        currentTask.stack[currentTask.stackPos + 1]._byteValue;
                     currentTask.pc++;
                     break;
                 case lesser_float:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        currentTask.stack[currentTask.stackPos]._fvalue <
-                        currentTask.stack[currentTask.stackPos + 1]._fvalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._floatValue <
+                        currentTask.stack[currentTask.stackPos + 1]._floatValue;
                     currentTask.pc++;
                     break;
                 case checkNull:
-                    currentTask.stack[currentTask.stackPos]._ivalue =
+                    currentTask.stack[currentTask.stackPos]._intValue =
                         currentTask.stack[currentTask.stackPos]._bytes != GR_NULL;
                     currentTask.pc++;
                     break;
@@ -1103,36 +1157,48 @@ class GrEngine {
                     break;
                 case and_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue = currentTask.stack[currentTask.stackPos]._ivalue &&
-                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._intValue &&
+                        currentTask.stack[currentTask.stackPos + 1]._intValue;
                     currentTask.pc++;
                     break;
                 case or_int:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue = currentTask.stack[currentTask.stackPos]._ivalue ||
-                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        currentTask.stack[currentTask.stackPos]._intValue ||
+                        currentTask.stack[currentTask.stackPos + 1]._intValue;
                     currentTask.pc++;
                     break;
                 case not_int:
-                    currentTask.stack[currentTask.stackPos]._ivalue =
-                        !currentTask.stack[currentTask.stackPos]._ivalue;
+                    currentTask.stack[currentTask.stackPos]._intValue =
+                        !currentTask.stack[currentTask.stackPos]._intValue;
                     currentTask.pc++;
                     break;
                 case add_int:
                     currentTask.stackPos--;
-                    const long r = cast(long) currentTask.stack[currentTask.stackPos]._ivalue + cast(
-                        long) currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    const long r = cast(long) currentTask.stack[currentTask.stackPos]._intValue + cast(
+                        long) currentTask.stack[currentTask.stackPos + 1]._intValue;
                     if (r < int.min || r > int.max) {
                         raise(currentTask, "OverflowError");
                         break;
                     }
-                    currentTask.stack[currentTask.stackPos]._ivalue = cast(int) r;
+                    currentTask.stack[currentTask.stackPos]._intValue = cast(int) r;
                     currentTask.pc++;
                     break;
                 case add_uint:
                     currentTask.stackPos--;
-                    const GrUInt r = currentTask.stack[currentTask.stackPos + 1]._uvalue;
-                    const GrUInt r2 = currentTask.stack[currentTask.stackPos]._uvalue += r;
+                    const GrUInt r = currentTask.stack[currentTask.stackPos + 1]._uintValue;
+                    const GrUInt r2 = currentTask.stack[currentTask.stackPos]._uintValue += r;
+                    if (r2 < r) {
+                        raise(currentTask, "OverflowError");
+                        break;
+                    }
+                    currentTask.pc++;
+                    break;
+                case add_byte:
+                    currentTask.stackPos--;
+                    const GrByte r = currentTask.stack[currentTask.stackPos + 1]._byteValue;
+                    const GrByte r2 = currentTask.stack[currentTask.stackPos]._byteValue += r;
                     if (r2 < r) {
                         raise(currentTask, "OverflowError");
                         break;
@@ -1141,37 +1207,48 @@ class GrEngine {
                     break;
                 case add_float:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._fvalue +=
-                        currentTask.stack[currentTask.stackPos + 1]._fvalue;
+                    currentTask.stack[currentTask.stackPos]._floatValue +=
+                        currentTask.stack[currentTask.stackPos + 1]._floatValue;
                     currentTask.pc++;
                     break;
                 case concatenate_string:
                     currentTask.stackPos--;
-                    (cast(GrString) currentTask.stack[currentTask.stackPos]._ovalue).pushBack(
-                        (cast(GrString) currentTask.stack[currentTask.stackPos + 1]._ovalue));
+                    (cast(GrString) currentTask.stack[currentTask.stackPos]._ptrValue).pushBack(
+                        (cast(GrString) currentTask.stack[currentTask.stackPos + 1]._ptrValue));
                     currentTask.pc++;
                     break;
                 case substract_int:
                     currentTask.stackPos--;
-                    const long r = cast(long) currentTask.stack[currentTask.stackPos]._ivalue - cast(
-                        long) currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    const long r = cast(long) currentTask.stack[currentTask.stackPos]._intValue - cast(
+                        long) currentTask.stack[currentTask.stackPos + 1]._intValue;
                     if (r < int.min || r > int.max) {
                         raise(currentTask, "OverflowError");
                         break;
                     }
-                    currentTask.stack[currentTask.stackPos]._ivalue = cast(int) r;
+                    currentTask.stack[currentTask.stackPos]._intValue = cast(int) r;
                     currentTask.pc++;
                     break;
                 case substract_float:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._fvalue -=
-                        currentTask.stack[currentTask.stackPos + 1]._fvalue;
+                    currentTask.stack[currentTask.stackPos]._floatValue -=
+                        currentTask.stack[currentTask.stackPos + 1]._floatValue;
                     currentTask.pc++;
                     break;
                 case substract_uint:
                     currentTask.stackPos--;
-                    GrUInt* v1 = &currentTask.stack[currentTask.stackPos]._uvalue;
-                    const GrUInt v2 = currentTask.stack[currentTask.stackPos + 1]._uvalue;
+                    GrUInt* v1 = &currentTask.stack[currentTask.stackPos]._uintValue;
+                    const GrUInt v2 = currentTask.stack[currentTask.stackPos + 1]._uintValue;
+                    if (v2 > *v1) {
+                        raise(currentTask, "OverflowError");
+                        break;
+                    }
+                    *v1 -= v2;
+                    currentTask.pc++;
+                    break;
+                case substract_byte:
+                    currentTask.stackPos--;
+                    GrByte* v1 = &currentTask.stack[currentTask.stackPos]._byteValue;
+                    const GrByte v2 = currentTask.stack[currentTask.stackPos + 1]._byteValue;
                     if (v2 > *v1) {
                         raise(currentTask, "OverflowError");
                         break;
@@ -1181,105 +1258,136 @@ class GrEngine {
                     break;
                 case multiply_int:
                     currentTask.stackPos--;
-                    const long r = cast(long) currentTask.stack[currentTask.stackPos]._ivalue * cast(
-                        long) currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    const long r = cast(long) currentTask.stack[currentTask.stackPos]._intValue * cast(
+                        long) currentTask.stack[currentTask.stackPos + 1]._intValue;
                     if (r < int.min || r > int.max) {
                         raise(currentTask, "OverflowError");
                         break;
                     }
-                    currentTask.stack[currentTask.stackPos]._ivalue = cast(int) r;
+                    currentTask.stack[currentTask.stackPos]._intValue = cast(int) r;
                     currentTask.pc++;
                     break;
                 case multiply_uint:
                     currentTask.stackPos--;
-                    const ulong r = ulong(currentTask.stack[currentTask.stackPos]._uvalue) * ulong(
-                        currentTask.stack[currentTask.stackPos + 1]._uvalue);
+                    const ulong r = ulong(currentTask.stack[currentTask.stackPos]._uintValue) * ulong(
+                        currentTask.stack[currentTask.stackPos + 1]._uintValue);
                     if (r >> 32) {
                         raise(currentTask, "OverflowError");
                         break;
                     }
-                    currentTask.stack[currentTask.stackPos]._uvalue = cast(GrUInt) r;
+                    currentTask.stack[currentTask.stackPos]._uintValue = cast(GrUInt) r;
+                    currentTask.pc++;
+                    break;
+                case multiply_byte:
+                    currentTask.stackPos--;
+                    const uint r = uint(currentTask.stack[currentTask.stackPos]._byteValue) * uint(
+                        currentTask.stack[currentTask.stackPos + 1]._byteValue);
+                    if (r >> 8) {
+                        raise(currentTask, "OverflowError");
+                        break;
+                    }
+                    currentTask.stack[currentTask.stackPos]._byteValue = cast(GrByte) r;
                     currentTask.pc++;
                     break;
                 case multiply_float:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._fvalue *=
-                        currentTask.stack[currentTask.stackPos + 1]._fvalue;
+                    currentTask.stack[currentTask.stackPos]._floatValue *=
+                        currentTask.stack[currentTask.stackPos + 1]._floatValue;
                     currentTask.pc++;
                     break;
                 case divide_int:
-                    if (currentTask.stack[currentTask.stackPos]._ivalue == 0) {
+                    if (currentTask.stack[currentTask.stackPos]._intValue == 0) {
                         raise(currentTask, "ZeroDivisionError");
                         break;
                     }
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue /=
-                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    currentTask.stack[currentTask.stackPos]._intValue /=
+                        currentTask.stack[currentTask.stackPos + 1]._intValue;
                     currentTask.pc++;
                     break;
                 case divide_uint:
-                    if (currentTask.stack[currentTask.stackPos]._uvalue == 0) {
+                    if (currentTask.stack[currentTask.stackPos]._uintValue == 0) {
                         raise(currentTask, "ZeroDivisionError");
                         break;
                     }
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._uvalue /=
-                        currentTask.stack[currentTask.stackPos + 1]._uvalue;
+                    currentTask.stack[currentTask.stackPos]._uintValue /=
+                        currentTask.stack[currentTask.stackPos + 1]._uintValue;
+                    currentTask.pc++;
+                    break;
+                case divide_byte:
+                    if (currentTask.stack[currentTask.stackPos]._byteValue == 0) {
+                        raise(currentTask, "ZeroDivisionError");
+                        break;
+                    }
+                    currentTask.stackPos--;
+                    currentTask.stack[currentTask.stackPos]._byteValue /=
+                        currentTask.stack[currentTask.stackPos + 1]._byteValue;
                     currentTask.pc++;
                     break;
                 case divide_float:
-                    if (currentTask.stack[currentTask.stackPos]._fvalue == 0f) {
+                    if (currentTask.stack[currentTask.stackPos]._floatValue == 0f) {
                         raise(currentTask, "ZeroDivisionError");
                         break;
                     }
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._fvalue /=
-                        currentTask.stack[currentTask.stackPos + 1]._fvalue;
+                    currentTask.stack[currentTask.stackPos]._floatValue /=
+                        currentTask.stack[currentTask.stackPos + 1]._floatValue;
                     currentTask.pc++;
                     break;
                 case remainder_int:
-                    if (currentTask.stack[currentTask.stackPos]._ivalue == 0) {
+                    if (currentTask.stack[currentTask.stackPos]._intValue == 0) {
                         raise(currentTask, "ZeroDivisionError");
                         break;
                     }
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue %=
-                        currentTask.stack[currentTask.stackPos + 1]._ivalue;
+                    currentTask.stack[currentTask.stackPos]._intValue %=
+                        currentTask.stack[currentTask.stackPos + 1]._intValue;
                     currentTask.pc++;
                     break;
                 case remainder_uint:
-                    if (currentTask.stack[currentTask.stackPos]._uvalue == 0) {
+                    if (currentTask.stack[currentTask.stackPos]._uintValue == 0) {
                         raise(currentTask, "ZeroDivisionError");
                         break;
                     }
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._uvalue %=
-                        currentTask.stack[currentTask.stackPos + 1]._uvalue;
+                    currentTask.stack[currentTask.stackPos]._uintValue %=
+                        currentTask.stack[currentTask.stackPos + 1]._uintValue;
+                    currentTask.pc++;
+                    break;
+                case remainder_byte:
+                    if (currentTask.stack[currentTask.stackPos]._byteValue == 0) {
+                        raise(currentTask, "ZeroDivisionError");
+                        break;
+                    }
+                    currentTask.stackPos--;
+                    currentTask.stack[currentTask.stackPos]._byteValue %=
+                        currentTask.stack[currentTask.stackPos + 1]._byteValue;
                     currentTask.pc++;
                     break;
                 case remainder_float:
-                    if (currentTask.stack[currentTask.stackPos]._fvalue == 0f) {
+                    if (currentTask.stack[currentTask.stackPos]._floatValue == 0f) {
                         raise(currentTask, "ZeroDivisionError");
                         break;
                     }
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._fvalue %=
-                        currentTask.stack[currentTask.stackPos + 1]._fvalue;
+                    currentTask.stack[currentTask.stackPos]._floatValue %=
+                        currentTask.stack[currentTask.stackPos + 1]._floatValue;
                     currentTask.pc++;
                     break;
                 case negative_int:
-                    currentTask.stack[currentTask.stackPos]._ivalue = -currentTask
-                        .stack[currentTask.stackPos]._ivalue;
+                    currentTask.stack[currentTask.stackPos]._intValue = -currentTask
+                        .stack[currentTask.stackPos]._intValue;
                     currentTask.pc++;
                     break;
                 case negative_float:
-                    currentTask.stack[currentTask.stackPos]._fvalue = -currentTask
-                        .stack[currentTask.stackPos]._fvalue;
+                    currentTask.stack[currentTask.stackPos]._floatValue = -currentTask
+                        .stack[currentTask.stackPos]._floatValue;
                     currentTask.pc++;
                     break;
                 case increment_int:
-                    auto r = &currentTask.stack[currentTask.stackPos]._ivalue;
-                    if (*r == int.max) {
+                    auto r = &currentTask.stack[currentTask.stackPos]._intValue;
+                    if (*r == GrInt.max) {
                         raise(currentTask, "OverflowError");
                         break;
                     }
@@ -1287,8 +1395,17 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case increment_uint:
-                    auto r = &currentTask.stack[currentTask.stackPos]._uvalue;
-                    if (*r == uint.max) {
+                    auto r = &currentTask.stack[currentTask.stackPos]._uintValue;
+                    if (*r == GrUInt.max) {
+                        raise(currentTask, "OverflowError");
+                        break;
+                    }
+                    (*r)++;
+                    currentTask.pc++;
+                    break;
+                case increment_byte:
+                    auto r = &currentTask.stack[currentTask.stackPos]._byteValue;
+                    if (*r == GrByte.max) {
                         raise(currentTask, "OverflowError");
                         break;
                     }
@@ -1296,12 +1413,12 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case increment_float:
-                    currentTask.stack[currentTask.stackPos]._fvalue += 1f;
+                    currentTask.stack[currentTask.stackPos]._floatValue += 1f;
                     currentTask.pc++;
                     break;
                 case decrement_int:
-                    auto r = &currentTask.stack[currentTask.stackPos]._ivalue;
-                    if (*r == int.min) {
+                    auto r = &currentTask.stack[currentTask.stackPos]._intValue;
+                    if (*r == GrInt.min) {
                         raise(currentTask, "OverflowError");
                         break;
                     }
@@ -1309,8 +1426,17 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case decrement_uint:
-                    auto r = &currentTask.stack[currentTask.stackPos]._uvalue;
-                    if (*r == uint.min) {
+                    auto r = &currentTask.stack[currentTask.stackPos]._uintValue;
+                    if (*r == GrUInt.min) {
+                        raise(currentTask, "OverflowError");
+                        break;
+                    }
+                    (*r)--;
+                    currentTask.pc++;
+                    break;
+                case decrement_byte:
+                    auto r = &currentTask.stack[currentTask.stackPos]._byteValue;
+                    if (*r == GrByte.min) {
                         raise(currentTask, "OverflowError");
                         break;
                     }
@@ -1318,7 +1444,7 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case decrement_float:
-                    currentTask.stack[currentTask.stackPos]._fvalue -= 1f;
+                    currentTask.stack[currentTask.stackPos]._floatValue -= 1f;
                     currentTask.pc++;
                     break;
                 case copy:
@@ -1334,9 +1460,9 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case setupIterator:
-                    if (currentTask.stack[currentTask.stackPos]._ivalue < 0)
-                        currentTask.stack[currentTask.stackPos]._ivalue = 0;
-                    currentTask.stack[currentTask.stackPos]._ivalue++;
+                    if (currentTask.stack[currentTask.stackPos]._intValue < 0)
+                        currentTask.stack[currentTask.stackPos]._intValue = 0;
+                    currentTask.stack[currentTask.stackPos]._intValue++;
                     currentTask.pc++;
                     break;
                 case return_:
@@ -1423,7 +1549,7 @@ class GrEngine {
 
                             // La machine virtuelle est en panique
                             _isPanicking = true;
-                            _panicMessage = (cast(GrString) _globalStackIn[$ - 1]._ovalue).str;
+                            _panicMessage = (cast(GrString) _globalStackIn[$ - 1]._ptrValue).str;
                             _globalStackIn.length--;
 
                             // Tous les appels différés ont été exécuté, on tue la tâche
@@ -1475,7 +1601,7 @@ class GrEngine {
                     currentTask.stackFramePos++;
                     uint pos = currentTask.stackPos - cast(int) grGetInstructionUnsignedValue(
                         opcode);
-                    currentTask.pc = cast(uint) currentTask.stack[pos]._ivalue;
+                    currentTask.pc = cast(uint) currentTask.stack[pos]._intValue;
 
                     // On décale toute la signature
                     while (pos != currentTask.stackPos)
@@ -1503,14 +1629,14 @@ class GrEngine {
                     currentTask.pc += grGetInstructionSignedValue(opcode);
                     break;
                 case jumpEqual:
-                    if (currentTask.stack[currentTask.stackPos]._ivalue)
+                    if (currentTask.stack[currentTask.stackPos]._intValue)
                         currentTask.pc++;
                     else
                         currentTask.pc += grGetInstructionSignedValue(opcode);
                     currentTask.stackPos--;
                     break;
                 case jumpNotEqual:
-                    if (currentTask.stack[currentTask.stackPos]._ivalue)
+                    if (currentTask.stack[currentTask.stackPos]._intValue)
                         currentTask.pc += grGetInstructionSignedValue(opcode);
                     else
                         currentTask.pc++;
@@ -1524,12 +1650,13 @@ class GrEngine {
                     currentTask.stackPos -= listSize - 1;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) list;
+                    currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer) list;
                     currentTask.pc++;
                     break;
                 case index_list:
-                    GrList list = cast(GrList) currentTask.stack[currentTask.stackPos - 1]._ovalue;
-                    GrInt idx = currentTask.stack[currentTask.stackPos]._ivalue;
+                    GrList list = cast(GrList) currentTask.stack[currentTask.stackPos - 1]
+                        ._ptrValue;
+                    GrInt idx = currentTask.stack[currentTask.stackPos]._intValue;
                     if (idx < 0) {
                         idx = list.size + idx;
                     }
@@ -1538,12 +1665,13 @@ class GrEngine {
                         break;
                     }
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ovalue = &list._data[idx];
+                    currentTask.stack[currentTask.stackPos]._ptrValue = &list._data[idx];
                     currentTask.pc++;
                     break;
                 case index2_list:
-                    GrList list = cast(GrList) currentTask.stack[currentTask.stackPos - 1]._ovalue;
-                    GrInt idx = currentTask.stack[currentTask.stackPos]._ivalue;
+                    GrList list = cast(GrList) currentTask.stack[currentTask.stackPos - 1]
+                        ._ptrValue;
+                    GrInt idx = currentTask.stack[currentTask.stackPos]._intValue;
                     if (idx < 0) {
                         idx = list.size + idx;
                     }
@@ -1556,8 +1684,9 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case index3_list:
-                    GrList list = cast(GrList) currentTask.stack[currentTask.stackPos - 1]._ovalue;
-                    GrInt idx = currentTask.stack[currentTask.stackPos]._ivalue;
+                    GrList list = cast(GrList) currentTask.stack[currentTask.stackPos - 1]
+                        ._ptrValue;
+                    GrInt idx = currentTask.stack[currentTask.stackPos]._intValue;
                     if (idx < 0) {
                         idx = list.size + idx;
                     }
@@ -1565,48 +1694,48 @@ class GrEngine {
                         raise(currentTask, "IndexError");
                         break;
                     }
-                    currentTask.stack[currentTask.stackPos - 1]._ovalue = &list._data[idx];
+                    currentTask.stack[currentTask.stackPos - 1]._ptrValue = &list._data[idx];
                     currentTask.stack[currentTask.stackPos] = list[idx];
                     currentTask.pc++;
                     break;
                 case length_list:
-                    currentTask.stack[currentTask.stackPos]._ivalue = (cast(
-                            GrList) currentTask.stack[currentTask.stackPos]._ovalue).size;
+                    currentTask.stack[currentTask.stackPos]._intValue = (cast(
+                            GrList) currentTask.stack[currentTask.stackPos]._ptrValue).size;
                     currentTask.pc++;
                     break;
                 case concatenate_list:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) new GrList(
-                        (cast(GrList) currentTask.stack[currentTask.stackPos]._ovalue).getValues() ~ (
-                            cast(GrList) currentTask.stack[currentTask.stackPos + 1]._ovalue).getValues());
+                    currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer) new GrList(
+                        (cast(GrList) currentTask.stack[currentTask.stackPos]._ptrValue).getValues() ~ (
+                            cast(GrList) currentTask.stack[currentTask.stackPos + 1]._ptrValue).getValues());
                     currentTask.pc++;
                     break;
                 case append_list:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) new GrList(
-                        (cast(GrList) currentTask.stack[currentTask.stackPos]._ovalue).getValues() ~
+                    currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer) new GrList(
+                        (cast(GrList) currentTask.stack[currentTask.stackPos]._ptrValue).getValues() ~
                             currentTask.stack[currentTask.stackPos + 1]);
                     currentTask.pc++;
                     break;
                 case prepend_list:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ovalue = cast(GrPointer) new GrList(
+                    currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer) new GrList(
                         currentTask.stack[currentTask.stackPos] ~ (cast(
-                            GrList) currentTask.stack[currentTask.stackPos + 1]._ovalue).getValues());
+                            GrList) currentTask.stack[currentTask.stackPos + 1]._ptrValue).getValues());
                     currentTask.pc++;
                     break;
                 case equal_list:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue = (cast(
-                            GrList) currentTask.stack[currentTask.stackPos]._ovalue).getValues() == (
-                        cast(GrList) currentTask.stack[currentTask.stackPos + 1]._ovalue).getValues();
+                    currentTask.stack[currentTask.stackPos]._intValue = (cast(
+                            GrList) currentTask.stack[currentTask.stackPos]._ptrValue).getValues() == (
+                        cast(GrList) currentTask.stack[currentTask.stackPos + 1]._ptrValue).getValues();
                     currentTask.pc++;
                     break;
                 case notEqual_list:
                     currentTask.stackPos--;
-                    currentTask.stack[currentTask.stackPos]._ivalue = (cast(
-                            GrList) currentTask.stack[currentTask.stackPos]._ovalue).getValues() != (
-                        cast(GrList) currentTask.stack[currentTask.stackPos + 1]._ovalue).getValues();
+                    currentTask.stack[currentTask.stackPos]._intValue = (cast(
+                            GrList) currentTask.stack[currentTask.stackPos]._ptrValue).getValues() != (
+                        cast(GrList) currentTask.stack[currentTask.stackPos + 1]._ptrValue).getValues();
                     currentTask.pc++;
                     break;
                 case debugProfileBegin:
@@ -1759,7 +1888,7 @@ class GrEngine {
         else {
             auto debugFunc = new DebugFunction;
             debugFunc._pc = pc;
-            debugFunc._name = _bytecode.sconsts[grGetInstructionUnsignedValue(opcode)];
+            debugFunc._name = _bytecode.strConsts[grGetInstructionUnsignedValue(opcode)];
             debugFunc._start = MonoTime.currTime();
             _debugFunctions[pc] = debugFunc;
             _debugFunctionsStack ~= debugFunc;

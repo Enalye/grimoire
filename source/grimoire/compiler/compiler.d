@@ -218,10 +218,11 @@ final class GrCompiler {
         opcodes[$ - 1] = makeOpcode(cast(uint) GrOpcode.unwind, 0);
 
         // les constantes
-        bytecode.iconsts = parser.iconsts;
-        bytecode.uconsts = parser.uconsts;
-        bytecode.fconsts = parser.fconsts;
-        bytecode.sconsts = parser.sconsts;
+        bytecode.intConsts = parser.intConsts;
+        bytecode.uintConsts = parser.uintConsts;
+        bytecode.byteConsts = parser.byteConsts;
+        bytecode.floatConsts = parser.floatConsts;
+        bytecode.strConsts = parser.strConsts;
 
         // Les variables globales
         bytecode.globalsCount = parser.globalsCount;
@@ -237,20 +238,24 @@ final class GrCompiler {
             case event:
             case enum_:
                 variable.typeMask = GR_MASK_INT;
-                variable.ivalue = variableDef.isInitialized ? variableDef.ivalue : 0;
+                variable.intValue = variableDef.isInitialized ? variableDef.intValue : 0;
                 break;
             case uint_:
             case char_:
                 variable.typeMask = GR_MASK_UINT;
-                variable.uvalue = variableDef.isInitialized ? variableDef.uvalue : 0u;
+                variable.uintValue = variableDef.isInitialized ? variableDef.uintValue : 0u;
+                break;
+            case byte_:
+                variable.typeMask = GR_MASK_BYTE;
+                variable.byteValue = variableDef.isInitialized ? variableDef.byteValue : 0u;
                 break;
             case float_:
                 variable.typeMask = GR_MASK_FLOAT;
-                variable.fvalue = variableDef.isInitialized ? variableDef.fvalue : 0f;
+                variable.floatValue = variableDef.isInitialized ? variableDef.floatValue : 0f;
                 break;
             case string_:
                 variable.typeMask = GR_MASK_STRING;
-                variable.svalue = variableDef.isInitialized ? variableDef.svalue : "";
+                variable.strValue = variableDef.isInitialized ? variableDef.strValue : "";
                 break;
             case list:
             case class_:
@@ -311,6 +316,11 @@ final class GrCompiler {
                 case uint_:
                 case char_:
                     bytecode.primitives[id].parameters ~= (GR_MASK_UINT << 16) | (
+                        bytecode.primitives[id].params & 0xFFFF);
+                    bytecode.primitives[id].params++;
+                    break;
+                case byte_:
+                    bytecode.primitives[id].parameters ~= (GR_MASK_BYTE << 16) | (
                         bytecode.primitives[id].params & 0xFFFF);
                     bytecode.primitives[id].params++;
                     break;
