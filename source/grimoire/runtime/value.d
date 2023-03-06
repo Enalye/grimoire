@@ -66,7 +66,7 @@ struct GrValue {
     this(T)(T[] values) {
         GrList list = new GrList;
         foreach (value; values) {
-            list.push(GrValue(value));
+            list.pushBack(GrValue(value));
         }
         _ptrValue = cast(GrPointer) list;
     }

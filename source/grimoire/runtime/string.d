@@ -18,6 +18,8 @@ final class GrString {
         GrByte[] _bytes;
     }
 
+    alias str this;
+
     this() {
     }
 
