@@ -5,4 +5,5 @@
     1. [Exécution](/fr/api/run)
     1. [Exemple](/fr/api/example)
     1. [Bibliothèque](/fr/api/library)
+    1. [Primitive](/fr/api/primitive)
 * [Bibliothèque standard](/fr/lib/)
