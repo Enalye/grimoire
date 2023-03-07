@@ -39,6 +39,9 @@ class GrEngine {
         /// Liste des tâche en exécution
         GrTask[] _tasks, _createdTasks;
 
+        /// Empêche la création de nouvelles tâches après un exit
+        bool _allowEventCall;
+
         /// État de panique global
         /// Signifie que la tâche impliquée n’a pas correctement géré son exception
         bool _isPanicking;
@@ -160,6 +163,7 @@ class GrEngine {
         }
 
         isRunning = true;
+        _allowEventCall = true;
         return true;
     }
 
@@ -206,7 +210,7 @@ class GrEngine {
     GrTask callEvent(const string name, const GrType[] signature = [],
         GrValue[] parameters = [], Priority priority = Priority.normal) {
 
-        if (!isRunning)
+        if (!isRunning || !_allowEventCall)
             return null;
 
         const string mangledName = grMangleComposite(name, signature);
@@ -243,7 +247,7 @@ class GrEngine {
     /// Ditto
     GrTask callEvent(const GrEvent event, GrValue[] parameters = [],
         Priority priority = Priority.normal) {
-        if (!isRunning || event is null)
+        if (!isRunning || !_allowEventCall || event is null)
             return null;
 
         enforce(event.signature.length == parameters.length, "the number of parameters (" ~ to!string(
@@ -271,10 +275,6 @@ class GrEngine {
         return task;
     }
 
-    package(grimoire) void pushTask(GrTask task) {
-        _createdTasks ~= task;
-    }
-
     /// Capture une erreur non-géré et tue la machine virtuelle
     void panic() {
         _tasks.length = 0;
@@ -288,16 +288,14 @@ class GrEngine {
             auto func = getFunctionInfo(task.pc);
             if (func.isNull) {
                 trace.name = "?";
-            }
-            else {
+            } else {
                 trace.name = func.get.name;
                 trace.file = func.get.file;
                 uint index = cast(uint)(cast(int) trace.pc - cast(int) func.get.start);
                 if (index < 0 || index >= func.get.positions.length) {
                     trace.line = 0;
                     trace.column = 0;
-                }
-                else {
+                } else {
                     auto position = func.get.positions[index];
                     trace.line = position.line;
                     trace.column = position.column;
@@ -312,16 +310,14 @@ class GrEngine {
             auto func = getFunctionInfo(trace.pc);
             if (func.isNull) {
                 trace.name = "?";
-            }
-            else {
+            } else {
                 trace.name = func.get.name;
                 trace.file = func.get.file;
                 uint index = cast(uint)(cast(int) trace.pc - cast(int) func.get.start);
                 if (index < 0 || index >= func.get.positions.length) {
                     trace.line = 1;
                     trace.column = 0;
-                }
-                else {
+                } else {
                     auto position = func.get.positions[index];
                     trace.line = position.line;
                     trace.column = position.column;
@@ -340,8 +336,7 @@ class GrEngine {
                 if (info.start <= position && info.start + info.length > position) {
                     if (bestInfo.isNull) {
                         bestInfo = info;
-                    }
-                    else {
+                    } else {
                         if (bestInfo.get.length > info.length) {
                             bestInfo = info;
                         }
@@ -377,8 +372,7 @@ class GrEngine {
         if (task.callStack.length && task.callStack[task.stackFramePos].exceptionHandlers.length) {
             // Un gestionnaire d’erreur a été trouvé dans la fonction, on y va
             task.pc = task.callStack[task.stackFramePos].exceptionHandlers[$ - 1];
-        }
-        else {
+        } else {
             // Aucun gestionnaire d’erreur de trouvé dans la fonction,
             // on déroule le code différé, puis on quitte la fonction.
             task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
@@ -392,6 +386,7 @@ class GrEngine {
             task.isKilled = true;
         }
         _createdTasks.length = 0;
+        _allowEventCall = false;
     }
 
     alias getBoolVariable = getVariable!bool;
@@ -433,23 +428,17 @@ class GrEngine {
 
         static if (is(T == GrInt)) {
             return _globals[variable.index]._intValue;
-        }
-        else static if (is(T == GrUInt)) {
+        } else static if (is(T == GrUInt)) {
             return _globals[variable.index]._uintValue;
-        }
-        else static if (is(T == GrChar)) {
+        } else static if (is(T == GrChar)) {
             return cast(GrChar) _globals[variable.index]._uintValue;
-        }
-        else static if (is(T == GrByte)) {
+        } else static if (is(T == GrByte)) {
             return _globals[variable.index]._byteValue;
-        }
-        else static if (is(T == GrBool)) {
+        } else static if (is(T == GrBool)) {
             return _globals[variable.index]._intValue > 0;
-        }
-        else static if (is(T == GrFloat)) {
+        } else static if (is(T == GrFloat)) {
             return _globals[variable.index]._floatValue;
-        }
-        else static if (is(T == GrPointer)) {
+        } else static if (is(T == GrPointer)) {
             return cast(GrPointer) _globals[variable.index]._ptrValue;
         }
     }
@@ -496,17 +485,13 @@ class GrEngine {
 
         static if (is(T == GrInt) || is(T == GrBool)) {
             _globals[variable.index]._intValue = value;
-        }
-        else static if (is(T == GrUInt) || is(T == GrChar)) {
+        } else static if (is(T == GrUInt) || is(T == GrChar)) {
             _globals[variable.index]._uintValue = value;
-        }
-        else static if (is(T == GrByte)) {
+        } else static if (is(T == GrByte)) {
             _globals[variable.index]._byteValue = value;
-        }
-        else static if (is(T == GrFloat)) {
+        } else static if (is(T == GrFloat)) {
             _globals[variable.index]._floatValue = value;
-        }
-        else static if (is(T == GrPointer)) {
+        } else static if (is(T == GrPointer)) {
             _globals[variable.index]._ptrValue = value;
         }
     }
@@ -554,8 +539,7 @@ class GrEngine {
                         currentTask.pc =
                             currentTask.callStack[currentTask.stackFramePos]
                             .exceptionHandlers[$ - 1];
-                    }
-                    // Aucun gestionnaire d’erreur de trouvé dans la fonction,
+                    } // Aucun gestionnaire d’erreur de trouvé dans la fonction,
                     // on déroule le code différé, puis on quitte la fonction.
 
                     // On vérifie les appel différés puisqu’on va quitter la fonction
@@ -566,8 +550,7 @@ class GrEngine {
                         currentTask.callStack[currentTask.stackFramePos].deferStack.length--;
                         // La recherche d’un gestionnaire d’erreur sera fait par l’`unwind`
                         // après que tous les `defer` aient été appelé dans cette fonction
-                    }
-                    else if (currentTask.stackFramePos) {
+                    } else if (currentTask.stackFramePos) {
                         // Puis on quitte vers la fonction précédente,
                         // `raise` sera de nouveau exécuté
                         currentTask.stackFramePos--;
@@ -576,8 +559,7 @@ class GrEngine {
 
                         if (_isDebug)
                             _debugProfileEnd();
-                    }
-                    else {
+                    } else {
                         // On tue les autres tâches
                         killTasks();
 
@@ -602,8 +584,7 @@ class GrEngine {
                         currentTask.isPanicking = false;
                         _stackTraces.length = 0;
                         currentTask.pc++;
-                    }
-                    else {
+                    } else {
                         currentTask.pc += grGetInstructionSignedValue(opcode);
                     }
                     break;
@@ -630,8 +611,7 @@ class GrEngine {
 
                         // On marque la tâche comme morte afin que la pile soit déroulée
                         currentTask.isKilled = true;
-                    }
-                    else if (currentTask.stackFramePos) {
+                    } else if (currentTask.stackFramePos) {
                         // Puis on retourne à la fonction précédente sans modifier le pointeur d’instruction
                         currentTask.stackFramePos--;
                         currentTask.localsPos -=
@@ -639,8 +619,7 @@ class GrEngine {
 
                         // On marque la tâche comme morte afin que la pile soit déroulée
                         currentTask.isKilled = true;
-                    }
-                    else {
+                    } else {
                         // il y a plus rien à faire, on tue la tâche
                         currentTask.isKilled = true;
                         _tasks = _tasks.remove(index);
@@ -680,28 +659,24 @@ class GrEngine {
                             currentTask.isLocked = true;
                             currentTask.isEvaluatingChannel = false;
                             currentTask.pc = currentTask.selectPositionJump;
-                        }
-                        else {
+                        } else {
                             currentTask.stackPos -= 2;
                             raise(currentTask, "ChannelError");
                         }
-                    }
-                    else if (chan.canSend) {
+                    } else if (chan.canSend) {
                         currentTask.isLocked = false;
                         chan.send(currentTask.stack[currentTask.stackPos]);
                         currentTask.stack[currentTask.stackPos - 1] =
                             currentTask.stack[currentTask.stackPos];
                         currentTask.stackPos--;
                         currentTask.pc++;
-                    }
-                    else {
+                    } else {
                         currentTask.isLocked = true;
                         if (currentTask.isEvaluatingChannel) {
                             currentTask.restoreState();
                             currentTask.isEvaluatingChannel = false;
                             currentTask.pc = currentTask.selectPositionJump;
-                        }
-                        else {
+                        } else {
                             index++;
                             continue tasksLabel;
                         }
@@ -716,26 +691,22 @@ class GrEngine {
                             currentTask.isLocked = true;
                             currentTask.isEvaluatingChannel = false;
                             currentTask.pc = currentTask.selectPositionJump;
-                        }
-                        else {
+                        } else {
                             currentTask.stackPos--;
                             raise(currentTask, "ChannelError");
                         }
-                    }
-                    else if (chan.canReceive) {
+                    } else if (chan.canReceive) {
                         currentTask.isLocked = false;
                         currentTask.stack[currentTask.stackPos] = chan.receive();
                         currentTask.pc++;
-                    }
-                    else {
+                    } else {
                         chan.setReceiverReady();
                         currentTask.isLocked = true;
                         if (currentTask.isEvaluatingChannel) {
                             currentTask.restoreState();
                             currentTask.isEvaluatingChannel = false;
                             currentTask.pc = currentTask.selectPositionJump;
-                        }
-                        else {
+                        } else {
                             index++;
                             continue tasksLabel;
                         }
@@ -1151,8 +1122,7 @@ class GrEngine {
                     if (currentTask.stack[currentTask.stackPos]._bytes == GR_NULL) {
                         currentTask.pc += grGetInstructionSignedValue(opcode);
                         currentTask.stackPos--;
-                    }
-                    else
+                    } else
                         currentTask.pc++;
                     break;
                 case and_int:
@@ -1471,15 +1441,13 @@ class GrEngine {
                     if (currentTask.stackFramePos < 0 && currentTask.isKilled) {
                         _tasks = _tasks.remove(index);
                         continue tasksLabel;
-                    }
-                    // On vérifie les appel différés
+                    } // On vérifie les appel différés
                     else if (currentTask.callStack[currentTask.stackFramePos].deferStack.length) {
                         // Dépile le dernier `defer` et l’exécute
                         currentTask.pc =
                             currentTask.callStack[currentTask.stackFramePos].deferStack[$ - 1];
                         currentTask.callStack[currentTask.stackFramePos].deferStack.length--;
-                    }
-                    else {
+                    } else {
                         // Puis on retourne vers la fonction précédente
                         currentTask.stackFramePos--;
                         currentTask.pc =
@@ -1494,15 +1462,13 @@ class GrEngine {
                     if (currentTask.stackFramePos < 0) {
                         _tasks = _tasks.remove(index);
                         continue tasksLabel;
-                    }
-                    // On vérifie les appel différés
+                    } // On vérifie les appel différés
                     else if (currentTask.callStack[currentTask.stackFramePos].deferStack.length) {
                         // Dépile le dernier `defer` et l’exécute
                         currentTask.pc =
                             currentTask.callStack[currentTask.stackFramePos].deferStack[$ - 1];
                         currentTask.callStack[currentTask.stackFramePos].deferStack.length--;
-                    }
-                    else if (currentTask.isKilled) {
+                    } else if (currentTask.isKilled) {
                         if (currentTask.stackFramePos) {
                             // Puis on retourne vers la fonction précédente sans modifier le pointeur d’instruction
                             currentTask.stackFramePos--;
@@ -1511,14 +1477,12 @@ class GrEngine {
 
                             if (_isDebug)
                                 _debugProfileEnd();
-                        }
-                        else {
+                        } else {
                             // Tous les appels différés ont été exécuté, on tue la tâche
                             _tasks = _tasks.remove(index);
                             continue tasksLabel;
                         }
-                    }
-                    else if (currentTask.isPanicking) {
+                    } else if (currentTask.isPanicking) {
                         //An exception has been raised without any try/catch inside the function.
                         //So all deferred code is run here before searching in the parent function.
                         if (currentTask.stackFramePos) {
@@ -1538,8 +1502,7 @@ class GrEngine {
                                     currentTask.callStack[currentTask.stackFramePos].exceptionHandlers[$ -
                                         1];
                             }
-                        }
-                        else {
+                        } else {
                             // On tue les autres tâches
                             foreach (otherTask; _tasks) {
                                 otherTask.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
@@ -1556,8 +1519,7 @@ class GrEngine {
                             _tasks = _tasks.remove(index);
                             continue tasksLabel;
                         }
-                    }
-                    else {
+                    } else {
                         // Puis on quitte vers la fonction précédente
                         currentTask.stackFramePos--;
                         currentTask.pc =
@@ -1884,8 +1846,7 @@ class GrEngine {
         if (p) {
             p._start = MonoTime.currTime();
             _debugFunctionsStack ~= *p;
-        }
-        else {
+        } else {
             auto debugFunc = new DebugFunction;
             debugFunc._pc = pc;
             debugFunc._name = _bytecode.strConsts[grGetInstructionUnsignedValue(opcode)];
