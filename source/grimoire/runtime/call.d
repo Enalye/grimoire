@@ -223,7 +223,7 @@ final class GrCall {
     }
 
     pragma(inline) void setNative(T)(T value) {
-        setResult!GrPointer(cast(GrPointer) value);
+        setResult!GrPointer(*cast(GrPointer*)&value);
     }
 
     pragma(inline) private void setResult(T)(T value) {

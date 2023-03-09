@@ -136,7 +136,7 @@ final class GrObject {
     }
 
     pragma(inline) void setNative(T)(const string fieldName, T value) {
-        setField!GrPointer(fieldName, cast(GrPointer) value);
+        setField!GrPointer(fieldName, *cast(GrPointer*)&value);
     }
 
     pragma(inline) private T setField(T)(const string fieldName, T value) {

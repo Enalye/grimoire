@@ -476,7 +476,7 @@ class GrEngine {
     }
 
     pragma(inline) void setNativeVariable(T)(string name, T value) {
-        setVariable!GrPointer(name, cast(GrPointer) value);
+        setVariable!GrPointer(name, *cast(GrPointer*)&value);
     }
 
     pragma(inline) private void setVariable(T)(string name, T value) {
@@ -539,7 +539,7 @@ class GrEngine {
                         currentTask.pc =
                             currentTask.callStack[currentTask.stackFramePos]
                             .exceptionHandlers[$ - 1];
-                    } // Aucun gestionnaire d’erreur de trouvé dans la fonction,
+                    }  // Aucun gestionnaire d’erreur de trouvé dans la fonction,
                     // on déroule le code différé, puis on quitte la fonction.
 
                     // On vérifie les appel différés puisqu’on va quitter la fonction
@@ -1441,7 +1441,7 @@ class GrEngine {
                     if (currentTask.stackFramePos < 0 && currentTask.isKilled) {
                         _tasks = _tasks.remove(index);
                         continue tasksLabel;
-                    } // On vérifie les appel différés
+                    }  // On vérifie les appel différés
                     else if (currentTask.callStack[currentTask.stackFramePos].deferStack.length) {
                         // Dépile le dernier `defer` et l’exécute
                         currentTask.pc =
@@ -1462,7 +1462,7 @@ class GrEngine {
                     if (currentTask.stackFramePos < 0) {
                         _tasks = _tasks.remove(index);
                         continue tasksLabel;
-                    } // On vérifie les appel différés
+                    }  // On vérifie les appel différés
                     else if (currentTask.callStack[currentTask.stackFramePos].deferStack.length) {
                         // Dépile le dernier `defer` et l’exécute
                         currentTask.pc =

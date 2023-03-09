@@ -179,7 +179,7 @@ final class GrTask {
     }
 
     pragma(inline) void setNative(T)(T value) {
-        setParameter!GrPointer(cast(GrPointer) value);
+        setParameter!GrPointer(*cast(GrPointer*)&value);
     }
 
     pragma(inline) private void setParameter(T)(T value) {

@@ -194,6 +194,6 @@ struct GrValue {
     }
 
     pragma(inline) void setNative(T)(T value) {
-        _ptrValue = cast(GrPointer) value;
+        _ptrValue = *cast(GrPointer*)&value;
     }
 }
