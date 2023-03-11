@@ -55,6 +55,8 @@ final class GrData {
 
         /// Restriction de modèle de fonction
         GrConstraint.Data[string] _constraints;
+
+        GrPrimitive _currentPrimitive;
     }
 
     /// Ajoute une nouvelle bibliothèque contenant ses définitions de type et de primitives
@@ -472,6 +474,7 @@ final class GrData {
         // On considère que la signature a déjà été validé par `isSignatureCompatible`
         // pour être entièrement compatible avec la primitive
         GrPrimitive primitive = new GrPrimitive(templatePrimitive);
+        _currentPrimitive = primitive;
         for (int i; i < primitive.inSignature.length; ++i) {
             primitive.inSignature[i] = reifyType(primitive.inSignature[i]);
             checkUnknownClasses(primitive.inSignature[i]);
@@ -573,8 +576,9 @@ final class GrData {
         switch (type.base) with (GrType.Base) {
         case class_:
             GrClassDefinition classDef = getClass(type.mangledType, 0, true);
-            enforce(classDef, "undefined class `" ~ type.mangledType ~ "`");
-
+            enforce(classDef,
+                "undefined class `" ~ type.mangledType ~ "` in `" ~ getPrettyPrimitive(
+                    _currentPrimitive) ~ "`");
             foreach (GrType fieldType; classDef.signature) {
                 if (fieldType == type)
                     continue;
@@ -614,8 +618,7 @@ final class GrData {
                 const GrType registeredType = _anyData.get(second[i].mangledType);
                 if (registeredType.base == GrType.Base.void_) {
                     _anyData.set(second[i].mangledType, first[i]);
-                }
-                else {
+                } else {
                     if (registeredType != first[i])
                         return false;
                 }
@@ -747,6 +750,9 @@ final class GrData {
     private string getPrettyPrimitive(const GrPrimitive primitive) {
         import std.string : indexOf;
 
+        if (!primitive)
+            return "";
+
         string result = primitive.name;
         auto nbParameters = primitive.inSignature.length;
 
@@ -774,9 +780,11 @@ final class GrData {
         }
         result ~= ")";
         for (int i; i < primitive.outSignature.length; i++) {
-            result ~= i ? ", " : " ";
+            result ~= i ? ", " : " (";
             result ~= grGetPrettyType(primitive.outSignature[i]);
         }
+        if(primitive.outSignature.length)
+            result ~= ")";
         return result;
     }
 }
