@@ -50,9 +50,6 @@ final class GrData {
         /// Les pointeurs de fonction liés aux primitives.
         GrCallback[] _callbacks;
 
-        /// Alias de noms.
-        string[string] _aliases;
-
         /// Restriction de modèle de fonction
         GrConstraint.Data[string] _constraints;
 
@@ -76,10 +73,6 @@ final class GrData {
             _abstractPrimitives ~= prim;
         }
         _callbacks ~= library._callbacks;
-
-        foreach (string name, string alias_; library._aliases) {
-            _aliases[name] = alias_;
-        }
 
         foreach (string name, GrConstraint.Data constraint; library._constraints) {
             _constraints[name] = new GrConstraint.Data(constraint);
@@ -361,13 +354,15 @@ final class GrData {
     }
 
     /// Renvoie la définition de l’alias de type
-    GrTypeAliasDefinition getTypeAlias(const string name, uint fileId) {
+    GrTypeAliasDefinition getTypeAlias(const string name, uint fileId, bool isExport = false) {
         foreach (typeAlias; _templateAliasDefinitions) {
-            if (typeAlias.name == name && (typeAlias.fileId == fileId || typeAlias.isExport))
+            if (typeAlias.name == name && (typeAlias.fileId == fileId ||
+                    typeAlias.isExport || isExport))
                 return typeAlias;
         }
         foreach (typeAlias; _aliasDefinitions) {
-            if (typeAlias.name == name && (typeAlias.fileId == fileId || typeAlias.isExport))
+            if (typeAlias.name == name && (typeAlias.fileId == fileId ||
+                    typeAlias.isExport || isExport))
                 return typeAlias;
         }
         return null;
@@ -454,7 +449,7 @@ final class GrData {
             if (primitive.name == name) {
                 _anyData = new GrAnyData;
                 if (isSignatureCompatible(signature, primitive.inSignature, true, 0, true)) {
-                    assert(name.length == 0);
+                    enforce(name.length == 0);
                     foreach (ref GrConstraint constraint; primitive.constraints) {
                         if (!constraint.evaluate(this, _anyData))
                             continue __primitiveLoop;
@@ -469,6 +464,90 @@ final class GrData {
         return null;
     }
 
+    /// Vérifie si les bibliothèques se réfèrent à des types inconnus
+    package void checkUnknownTypes() {
+        bool checkType(GrType type) {
+            import std.algorithm.searching : findSplitBefore;
+
+            switch (type.base) with (GrType.Base) {
+            case native:
+                const string name = findSplitBefore(type.mangledType, "$")[0];
+                return isNative(name);
+            case class_:
+                const string name = findSplitBefore(type.mangledType, "$")[0];
+                return isClass(name);
+            case enum_:
+                return isEnum(type.mangledType);
+            case optional:
+            case channel:
+            case list:
+                return checkType(grUnmangle(type.mangledType));
+            case func:
+                foreach (GrType param; grUnmangleSignature(type.mangledReturnType)) {
+                    if (!checkType(param))
+                        return false;
+                }
+                goto case event;
+            case event:
+            case task:
+                foreach (GrType param; grUnmangleSignature(type.mangledType)) {
+                    if (!checkType(param))
+                        return false;
+                }
+                return true;
+            default:
+                return true;
+            }
+        }
+
+        void checkPrimitiveSignature(GrPrimitive primitive) {
+            foreach (type; primitive.inSignature) {
+                enforce(checkType(type), "type `" ~ grGetPrettyType(
+                        type) ~ "` is not declared in primitive `" ~ getPrettyPrimitive(
+                        primitive) ~ "`");
+            }
+            foreach (type; primitive.outSignature) {
+                enforce(checkType(type), "type `" ~ grGetPrettyType(
+                        type) ~ "` is not declared in primitive `" ~ getPrettyPrimitive(
+                        primitive) ~ "`");
+            }
+        }
+
+        void checkClassSignature(GrClassDefinition class_) {
+            foreach (type; class_.signature) {
+                enforce(checkType(type),
+                    "type `" ~ grGetPrettyType(
+                        type) ~ "` is not declared in class `" ~ class_.name ~ "`");
+            }
+        }
+
+        foreach (alias_; _aliasDefinitions) {
+            enforce(checkType(alias_.type), "type `" ~ grGetPrettyType(
+                    alias_.type) ~ "` is not declared in alias `" ~ alias_.name ~ "`");
+        }
+
+        foreach (class_; _abstractClassDefinitions) {
+            checkClassSignature(class_);
+        }
+
+        foreach (class_; _classDefinitions) {
+            checkClassSignature(class_);
+        }
+
+        foreach (primitive; _abstractPrimitives) {
+            checkPrimitiveSignature(primitive);
+        }
+
+        foreach (primitive; _primitives) {
+            checkPrimitiveSignature(primitive);
+        }
+
+        foreach (variable; _variableDefinitions) {
+            enforce(checkType(variable.type), "type `" ~ grGetPrettyType(
+                    variable.type) ~ "` is not declared in variable `" ~ variable.name ~ "`");
+        }
+    }
+
     /// Transforme un modèle de primitive en primitive concrète
     package GrPrimitive reifyPrimitive(const GrPrimitive templatePrimitive) {
         // On considère que la signature a déjà été validé par `isSignatureCompatible`
@@ -478,18 +557,18 @@ final class GrData {
         for (int i; i < primitive.inSignature.length; ++i) {
             primitive.inSignature[i] = reifyType(primitive.inSignature[i]);
             checkUnknownClasses(primitive.inSignature[i]);
-            assert(!primitive.inSignature[i].isAbstract, "the primitive `" ~ grGetPrettyFunction(primitive.name,
+            enforce(!primitive.inSignature[i].isAbstract, "the primitive `" ~ grGetPrettyFunction(primitive.name,
                     primitive.inSignature, primitive.outSignature) ~ "` is abstract");
         }
         for (int i; i < primitive.outSignature.length; ++i) {
             primitive.outSignature[i] = reifyType(primitive.outSignature[i]);
             checkUnknownClasses(primitive.outSignature[i]);
-            assert(!primitive.outSignature[i].isAbstract, "the primitive `" ~ grGetPrettyFunction(primitive.name,
+            enforce(!primitive.outSignature[i].isAbstract, "the primitive `" ~ grGetPrettyFunction(primitive.name,
                     primitive.inSignature, primitive.outSignature) ~ "` is abstract");
         }
         primitive.mangledName = grMangleComposite(primitive.name, primitive.inSignature);
         primitive.index = cast(uint) _primitives.length;
-        assert(!isPrimitiveDeclared(primitive.mangledName),
+        enforce(!isPrimitiveDeclared(primitive.mangledName),
             "`" ~ getPrettyPrimitive(primitive) ~ "` is already declared");
         _primitives ~= primitive;
         return primitive;
@@ -499,7 +578,7 @@ final class GrData {
     private GrType reifyType(const GrType type) {
         GrType result = type;
         if (type.isAny) {
-            assert(_anyData, "missing template database");
+            enforce(_anyData, "missing template database");
             result = _anyData.get(type.mangledType);
             if (result.base == GrType.Base.void_)
                 result.isAbstract = true;
@@ -783,7 +862,7 @@ final class GrData {
             result ~= i ? ", " : " (";
             result ~= grGetPrettyType(primitive.outSignature[i]);
         }
-        if(primitive.outSignature.length)
+        if (primitive.outSignature.length)
             result ~= ")";
         return result;
     }

@@ -279,16 +279,6 @@ package final class GrLexer {
 
             _fileId++;
         }
-
-        // Traduit les alias
-        foreach (ref lexeme; _lexemes) {
-            if (lexeme.type == GrLexeme.Type.identifier) {
-                string* name = (lexeme.strValue in _data._aliases);
-                if (name) {
-                    lexeme.strValue = *name;
-                }
-            }
-        }
     }
 
     /// Récupère toute la ligne sur lequel un lexème est présent.

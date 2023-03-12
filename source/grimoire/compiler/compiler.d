@@ -44,6 +44,8 @@ final class GrCompiler {
     GrBytecode compileFile(string fileName, int options = GrOption.none,
         GrLocale locale = GrLocale.en_US) {
         _error = null;
+        _data.checkUnknownTypes();
+
         try {
             GrLexer lexer = new GrLexer(locale);
             lexer.scanFile(_data, fileName);
