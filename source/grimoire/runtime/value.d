@@ -84,6 +84,14 @@ struct GrValue {
         _ptrValue = value;
     }
 
+    static {
+        GrValue asNull() {
+            GrValue value;
+            value._bytes = GR_NULL;
+            return value;
+        }
+    }
+
     @property {
         pragma(inline) GrBool isNull() const {
             return _bytes == GR_NULL;
