@@ -10,6 +10,7 @@ Basic constraints.
 |Class|0|The type is a class|
 |Enum|0|The type is an enumeration|
 |Extends|1|The first type is a child of the second one|
+|Floating|0|The type is a floating point number|
 |Function|0|The type is a function|
 |Integral|0|The type is an integral number|
 |Is|1|Both types are the same|

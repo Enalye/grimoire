@@ -10,6 +10,7 @@ Constraintes de base.
 |Class|0|Le type est une classe|
 |Enum|0|Le type est une énumération|
 |Extends|1|Le premier type est un enfant du second|
+|Floating|0|Le type est un nombre flottant|
 |Function|0|Le type est une fonction|
 |Integral|0|Le type est un nombre intégral|
 |Is|1|Les deux types sont égaux|

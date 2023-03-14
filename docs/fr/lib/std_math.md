@@ -5,7 +5,7 @@ Fonctions liées aux maths.
 ## Variables
 |Variable|Type|Valeur|Description|
 |-|-|-|-|
-|PI|**float**|3.14159|Rapport entre le diamètre du cercle et sa circonférence.|
+|PI|**double**|3.14159|Rapport entre le diamètre du cercle et sa circonférence.|
 ## Opérateurs
 |Opérateur|Entrée|Sortie|
 |-|-|-|

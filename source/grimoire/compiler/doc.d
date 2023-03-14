@@ -554,15 +554,36 @@ final class GrDoc : GrLibDefinition {
 
             foreach (var; _variables) {
                 string value;
-                switch (var.type.base) with (GrType.Base) {
+                GrType.Base varType = var.type.base;
+                if (varType == GrType.Base.optional) {
+                    varType = grUnmangle(var.type.mangledType).base;
+
+                    if (var.value.isNull) {
+                        value = "null";
+                        continue;
+                    }
+                }
+                switch (varType) with (GrType.Base) {
                 case bool_:
                     value = to!string(var.value.getBool());
                     break;
                 case int_:
                     value = to!string(var.value.getInt());
                     break;
+                case uint_:
+                    value = to!string(var.value.getUInt());
+                    break;
+                case byte_:
+                    value = to!string(var.value.getByte());
+                    break;
+                case char_:
+                    value = to!string(var.value.getChar());
+                    break;
                 case float_:
                     value = to!string(var.value.getFloat());
+                    break;
+                case double_:
+                    value = to!string(var.value.getDouble());
                     break;
                 case string_:
                     value = to!string(var.value.getString());
