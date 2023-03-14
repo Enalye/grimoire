@@ -19,6 +19,7 @@ struct GrValue {
         GrUInt _uintValue;
         GrByte _byteValue;
         GrFloat _floatValue;
+        GrDouble _doubleValue;
         GrPointer _ptrValue;
         ulong _bytes;
     }
@@ -27,8 +28,16 @@ struct GrValue {
         _intValue = value;
     }
 
+    this(GrUInt value) {
+        _uintValue = value;
+    }
+
     this(GrFloat value) {
         _floatValue = value;
+    }
+
+    this(GrDouble value) {
+        _doubleValue = value;
     }
 
     this(GrBool value) {
@@ -113,6 +122,10 @@ struct GrValue {
         return _floatValue;
     }
 
+    pragma(inline) GrDouble getDouble() const {
+        return _doubleValue;
+    }
+
     pragma(inline) GrPointer getPointer() const {
         return cast(GrPointer) _ptrValue;
     }
@@ -163,6 +176,10 @@ struct GrValue {
 
     pragma(inline) void setFloat(GrFloat value) {
         _floatValue = value;
+    }
+
+    pragma(inline) void setDouble(GrDouble value) {
+        _doubleValue = value;
     }
 
     pragma(inline) void setPointer(GrPointer value) {

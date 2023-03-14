@@ -106,6 +106,7 @@ final class GrCall {
     alias getChar = getParameter!GrChar;
     alias getByte = getParameter!GrByte;
     alias getFloat = getParameter!GrFloat;
+    alias getDouble = getParameter!GrDouble;
     alias getPointer = getParameter!GrPointer;
 
     pragma(inline) GrBool isNull(uint index)
@@ -167,6 +168,9 @@ final class GrCall {
         else static if (is(T == GrFloat)) {
             return _inputs[index].getFloat();
         }
+        else static if (is(T == GrDouble)) {
+            return _inputs[index].getDouble();
+        }
         else static if (is(T == GrPointer)) {
             return _inputs[index].getPointer();
         }
@@ -179,6 +183,7 @@ final class GrCall {
     alias setChar = setResult!GrChar;
     alias setByte = setResult!GrByte;
     alias setFloat = setResult!GrFloat;
+    alias setDouble = setResult!GrDouble;
     alias setPointer = setResult!GrPointer;
 
     pragma(inline) void setNull() {
@@ -248,6 +253,9 @@ final class GrCall {
         else static if (is(T == GrFloat)) {
             _outputs[_results].setFloat(value);
         }
+        else static if (is(T == GrDouble)) {
+            _outputs[_results].setDouble(value);
+        }
         else static if (is(T == GrString)) {
             _outputs[_results].setString(value);
         }
@@ -283,6 +291,10 @@ final class GrCall {
 
     GrFloat getFloatVariable(string name) const {
         return _task.engine.getFloatVariable(name);
+    }
+
+    GrFloat getDoubleVariable(string name) const {
+        return _task.engine.getDoubleVariable(name);
     }
 
     GrPointer getPointerVariable(string name) const {
@@ -329,8 +341,8 @@ final class GrCall {
         _task.engine.setByteVariable(name, value);
     }
 
-    void setFloatVariable(string name, GrFloat value) {
-        _task.engine.setFloatVariable(name, value);
+    void setDoubleVariable(string name, GrDouble value) {
+        _task.engine.setDoubleVariable(name, value);
     }
 
     void setStringVariable(string name, string value) {

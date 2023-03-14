@@ -35,6 +35,7 @@ final class GrParser {
         GrUInt[] uintConsts;
         GrByte[] byteConsts;
         GrFloat[] floatConsts;
+        GrDouble[] doubleConsts;
         string[] strConsts;
 
         uint scopeLevel;
@@ -182,6 +183,16 @@ final class GrParser {
         return cast(uint) floatConsts.length - 1;
     }
 
+    /// Enregistre un nouveau flottant double précision et retourne son id
+    private uint registerDoubleConstant(GrDouble value) {
+        foreach (size_t index, GrFloat doubleConst; doubleConsts) {
+            if (doubleConst == value)
+                return cast(uint) index;
+        }
+        doubleConsts ~= value;
+        return cast(uint) doubleConsts.length - 1;
+    }
+
     /// Enregistre une nouvelle chaîne de caractères et retourne son id
     private uint registerStringConstant(string value) {
         foreach (size_t index, string strConst; strConsts) {
@@ -271,6 +282,7 @@ final class GrParser {
         case event:
         case enum_:
         case float_:
+        case double_:
         case string_:
         case optional:
         case list:
@@ -433,6 +445,7 @@ final class GrParser {
             case event:
             case enum_:
             case float_:
+            case double_:
             case string_:
             case optional:
             case list:
@@ -497,6 +510,7 @@ final class GrParser {
                 case char_:
                 case byte_:
                 case float_:
+                case double_:
                 case bool_:
                 case enum_:
                 case func:
@@ -817,6 +831,10 @@ final class GrParser {
         addInstruction(GrOpcode.const_float, registerFloatConstant(value));
     }
 
+    private void addDoubleConstant(GrDouble value) {
+        addInstruction(GrOpcode.const_double, registerDoubleConstant(value));
+    }
+
     private void addBoolConstant(bool value) {
         addInstruction(GrOpcode.const_bool, value);
     }
@@ -1051,8 +1069,7 @@ final class GrParser {
             convertType(leftType, rightType, fileId);
             resultType = addInternalOperator(lexType, rightType, true);
         }
-        else if ((leftType.base == GrType.Base.int_ ||
-                leftType.base == GrType.Base.uint_) && rightType.base == GrType.Base.float_) {
+        else if (leftType.isIntegral && rightType.isFloating) {
             // Cas particulier: on a besoin de convertir l’entier en flottant
             // et d’inverser les deux valeurs
             addInstruction(GrOpcode.swap);
@@ -1409,6 +1426,74 @@ final class GrParser {
                 break;
             }
             break;
+        case double_:
+            switch (lexType) with (GrLexeme.Type) {
+            case add:
+                addInstruction(GrOpcode.add_double);
+                return GrType(GrType.Base.double_);
+            case substract:
+                if (isSwapped)
+                    addInstruction(GrOpcode.swap);
+                addInstruction(GrOpcode.substract_double);
+                return GrType(GrType.Base.double_);
+            case multiply:
+                addInstruction(GrOpcode.multiply_double);
+                return GrType(GrType.Base.double_);
+            case divide:
+                if (isSwapped)
+                    addInstruction(GrOpcode.swap);
+                addInstruction(GrOpcode.divide_double);
+                return GrType(GrType.Base.double_);
+            case remainder:
+                if (isSwapped)
+                    addInstruction(GrOpcode.swap);
+                addInstruction(GrOpcode.remainder_double);
+                return GrType(GrType.Base.double_);
+            case minus:
+                addInstruction(GrOpcode.negative_double);
+                return GrType(GrType.Base.double_);
+            case plus:
+                return GrType(GrType.Base.double_);
+            case increment:
+                addInstruction(GrOpcode.increment_double);
+                return GrType(GrType.Base.double_);
+            case decrement:
+                addInstruction(GrOpcode.decrement_double);
+                return GrType(GrType.Base.double_);
+            case equal:
+                addInstruction(GrOpcode.equal_double);
+                return GrType(GrType.Base.bool_);
+            case notEqual:
+                addInstruction(GrOpcode.notEqual_double);
+                return GrType(GrType.Base.bool_);
+            case greater:
+                if (isSwapped)
+                    addInstruction(GrOpcode.lesserOrEqual_double);
+                else
+                    addInstruction(GrOpcode.greater_double);
+                return GrType(GrType.Base.bool_);
+            case greaterOrEqual:
+                if (isSwapped)
+                    addInstruction(GrOpcode.lesser_double);
+                else
+                    addInstruction(GrOpcode.greaterOrEqual_double);
+                return GrType(GrType.Base.bool_);
+            case lesser:
+                if (isSwapped)
+                    addInstruction(GrOpcode.greaterOrEqual_double);
+                else
+                    addInstruction(GrOpcode.lesser_double);
+                return GrType(GrType.Base.bool_);
+            case lesserOrEqual:
+                if (isSwapped)
+                    addInstruction(GrOpcode.greater_double);
+                else
+                    addInstruction(GrOpcode.lesserOrEqual_double);
+                return GrType(GrType.Base.bool_);
+            default:
+                break;
+            }
+            break;
         case string_:
             switch (lexType) with (GrLexeme.Type) {
             case concatenate:
@@ -1486,6 +1571,7 @@ final class GrParser {
             case channel:
             case enum_:
             case float_:
+            case double_:
             case string_:
             case class_:
             case list:
@@ -1534,6 +1620,7 @@ final class GrParser {
             case event:
             case enum_:
             case float_:
+            case double_:
             case string_:
             case optional:
             case native:
@@ -1563,6 +1650,7 @@ final class GrParser {
             case event:
             case enum_:
             case float_:
+            case double_:
             case string_:
             case optional:
             case channel:
@@ -1592,6 +1680,7 @@ final class GrParser {
             case event:
             case enum_:
             case float_:
+            case double_:
             case string_:
             case optional:
             case list:
@@ -1660,6 +1749,7 @@ final class GrParser {
             case event:
             case enum_:
             case float_:
+            case double_:
             case string_:
             case optional:
             case list:
@@ -1696,6 +1786,7 @@ final class GrParser {
             case event:
             case enum_:
             case float_:
+            case double_:
             case string_:
             case optional:
             case list:
@@ -1858,11 +1949,20 @@ final class GrParser {
         foreach (size_t i, GrInt intValue; intConsts)
             writeln(".intConst " ~ to!string(intValue) ~ "\t;" ~ to!string(i));
 
+        foreach (size_t i, GrUInt uintValue; uintConsts)
+            writeln(".uintConst " ~ to!string(uintValue) ~ "\t;" ~ to!string(i));
+
+        foreach (size_t i, GrByte byteValue; byteConsts)
+            writeln(".byteConst " ~ to!string(byteValue) ~ "\t;" ~ to!string(i));
+
         foreach (size_t i, GrFloat floatValue; floatConsts)
             writeln(".floatConst " ~ to!string(floatValue) ~ "\t;" ~ to!string(i));
 
+        foreach (size_t i, GrDouble doubleValue; doubleConsts)
+            writeln(".doubleConst " ~ to!string(doubleValue) ~ "\t;" ~ to!string(i));
+
         foreach (size_t i, string strValue; strConsts)
-            writeln(".strConst " ~ to!string(strValue) ~ "\t;" ~ to!string(i));
+            writeln(".strConst " ~ strValue ~ "\t;" ~ to!string(i));
 
         foreach (GrFunction func; functions) {
             if (func.isEvent)
@@ -2551,6 +2651,10 @@ final class GrParser {
                 currentType.base = GrType.Base.float_;
                 checkAdvance();
                 break;
+            case doubleType:
+                currentType.base = GrType.Base.double_;
+                checkAdvance();
+                break;
             case boolType:
                 currentType.base = GrType.Base.bool_;
                 checkAdvance();
@@ -2638,6 +2742,7 @@ final class GrParser {
         case event:
         case enum_:
         case float_:
+        case double_:
         case string_:
         case class_:
         case optional:
@@ -2670,6 +2775,7 @@ final class GrParser {
         case event:
         case enum_:
         case float_:
+        case double_:
         case string_:
         case class_:
         case optional:
@@ -2985,8 +3091,8 @@ final class GrParser {
 
             GrConstraint.Data constraintData = _data.getConstraintData(get().strValue);
             if (!constraintData) {
-                const string[] nearestValues = findNearestStrings(get().strValue,
-                    _data.getAllConstraintsName());
+                const string[] nearestValues = findNearestStrings(get()
+                        .strValue, _data.getAllConstraintsName());
                 string errorNote;
                 if (nearestValues.length) {
                     foreach (size_t i, const string value; nearestValues) {
@@ -3687,6 +3793,9 @@ final class GrParser {
             case floatType:
                 returnType = GrType(GrType.Base.float_);
                 break;
+            case doubleType:
+                returnType = GrType(GrType.Base.double_);
+                break;
             case boolType:
                 returnType = GrType(GrType.Base.bool_);
                 break;
@@ -3862,6 +3971,7 @@ final class GrParser {
         case event:
         case enum_:
         case float_:
+        case double_:
         case string_:
         case class_:
         case optional:
@@ -4235,6 +4345,7 @@ final class GrParser {
                 case event:
                 case enum_:
                 case float_:
+                case double_:
                 case string_:
                 case optional:
                 case list:
@@ -4292,6 +4403,7 @@ final class GrParser {
                 case event:
                 case enum_:
                 case float_:
+                case double_:
                 case string_:
                 case optional:
                 case list:
@@ -4907,6 +5019,7 @@ final class GrParser {
             case char_:
             case byte_:
             case float_:
+            case double_:
             case string_:
             case enum_:
                 return dst;
@@ -4969,6 +5082,7 @@ final class GrParser {
             case char_:
             case byte_:
             case float_:
+            case double_:
             case string_:
             case enum_:
             case list:
@@ -5306,6 +5420,7 @@ final class GrParser {
         case event:
         case enum_:
         case float_:
+        case double_:
         case string_:
         case optional:
         case list:
@@ -5356,6 +5471,7 @@ final class GrParser {
                     case event:
                     case enum_:
                     case float_:
+                    case double_:
                     case string_:
                     case optional:
                     case list:
@@ -5404,6 +5520,7 @@ final class GrParser {
                 case event:
                 case enum_:
                 case float_:
+                case double_:
                 case string_:
                 case optional:
                 case list:
@@ -5668,6 +5785,9 @@ final class GrParser {
         case float_:
             addFloatConstant(0f);
             break;
+        case double_:
+            addDoubleConstant(0.0);
+            break;
         case string_:
             addStringConstant("");
             break;
@@ -5730,6 +5850,7 @@ final class GrParser {
             case event:
             case enum_:
             case float_:
+            case double_:
             case string_:
             case optional:
             case list:
@@ -5767,6 +5888,7 @@ final class GrParser {
             case event:
             case enum_:
             case float_:
+            case double_:
             case string_:
             case class_:
             case optional:
@@ -5826,6 +5948,7 @@ final class GrParser {
         case event:
         case enum_:
         case float_:
+        case double_:
         case string_:
         case class_:
         case optional:
@@ -6131,6 +6254,7 @@ final class GrParser {
                             case event:
                             case enum_:
                             case float_:
+                            case double_:
                             case string_:
                             case optional:
                             case list:
@@ -6171,6 +6295,7 @@ final class GrParser {
                         case event:
                         case enum_:
                         case float_:
+                        case double_:
                         case string_:
                         case optional:
                         case list:
@@ -6231,6 +6356,13 @@ final class GrParser {
             case float_:
                 currentType = GrType(GrType.Base.float_);
                 addFloatConstant(lex.floatValue);
+                hasValue = true;
+                typeStack ~= currentType;
+                checkAdvance();
+                break;
+            case double_:
+                currentType = GrType(GrType.Base.double_);
+                addDoubleConstant(lex.doubleValue);
                 hasValue = true;
                 typeStack ~= currentType;
                 checkAdvance();
@@ -7015,6 +7147,7 @@ final class GrParser {
         case event:
         case enum_:
         case float_:
+        case double_:
         case string_:
         case reference:
         case channel:

@@ -42,6 +42,9 @@ string grGetPrettyType(const GrType variableType, bool showModifiers = true) {
         case float_:
             result ~= "float";
             break;
+        case double_:
+            result ~= "double";
+            break;
         case bool_:
             result ~= "bool";
             break;

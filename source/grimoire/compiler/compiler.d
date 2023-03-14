@@ -224,6 +224,7 @@ final class GrCompiler {
         bytecode.uintConsts = parser.uintConsts;
         bytecode.byteConsts = parser.byteConsts;
         bytecode.floatConsts = parser.floatConsts;
+        bytecode.doubleConsts = parser.doubleConsts;
         bytecode.strConsts = parser.strConsts;
 
         // Les variables globales
@@ -254,6 +255,10 @@ final class GrCompiler {
             case float_:
                 variable.typeMask = GR_MASK_FLOAT;
                 variable.floatValue = variableDef.isInitialized ? variableDef.floatValue : 0f;
+                break;
+            case double_:
+                variable.typeMask = GR_MASK_DOUBLE;
+                variable.doubleValue = variableDef.isInitialized ? variableDef.doubleValue : 0f;
                 break;
             case string_:
                 variable.typeMask = GR_MASK_STRING;
@@ -304,6 +309,8 @@ final class GrCompiler {
             for (size_t i; i < inSignature.length; ++i) {
                 const GrType type = inSignature[i];
                 bytecode.primitives[id].inSignature ~= grMangle(type);
+
+                int mask;
                 final switch (type.base) with (GrType.Base) {
                 case bool_:
                 case int_:
@@ -311,39 +318,30 @@ final class GrCompiler {
                 case task:
                 case event:
                 case enum_:
-                    bytecode.primitives[id].parameters ~= (GR_MASK_INT << 16) | (
-                        bytecode.primitives[id].params & 0xFFFF);
-                    bytecode.primitives[id].params++;
+                    mask = GR_MASK_INT;
                     break;
                 case uint_:
                 case char_:
-                    bytecode.primitives[id].parameters ~= (GR_MASK_UINT << 16) | (
-                        bytecode.primitives[id].params & 0xFFFF);
-                    bytecode.primitives[id].params++;
+                    mask = GR_MASK_UINT;
                     break;
                 case byte_:
-                    bytecode.primitives[id].parameters ~= (GR_MASK_BYTE << 16) | (
-                        bytecode.primitives[id].params & 0xFFFF);
-                    bytecode.primitives[id].params++;
+                    mask = GR_MASK_BYTE;
                     break;
                 case float_:
-                    bytecode.primitives[id].parameters ~= (GR_MASK_FLOAT << 16) | (
-                        bytecode.primitives[id].params & 0xFFFF);
-                    bytecode.primitives[id].params++;
+                    mask = GR_MASK_FLOAT;
+                    break;
+                case double_:
+                    mask = GR_MASK_DOUBLE;
                     break;
                 case string_:
-                    bytecode.primitives[id].parameters ~= (GR_MASK_STRING << 16) | (
-                        bytecode.primitives[id].params & 0xFFFF);
-                    bytecode.primitives[id].params++;
+                    mask = GR_MASK_STRING;
                     break;
                 case list:
                 case class_:
                 case native:
                 case channel:
                 case optional:
-                    bytecode.primitives[id].parameters ~= (GR_MASK_POINTER << 16) | (
-                        bytecode.primitives[id].params & 0xFFFF);
-                    bytecode.primitives[id].params++;
+                    mask = GR_MASK_POINTER;
                     break;
                 case void_:
                 case internalTuple:
@@ -361,6 +359,10 @@ final class GrCompiler {
                                 type));
                     }
                 }
+
+                bytecode.primitives[id].parameters ~= (mask << 16) | (
+                    bytecode.primitives[id].params & 0xFFFF);
+                bytecode.primitives[id].params++;
             }
             for (size_t i; i < _data._primitives[id].outSignature.length; ++i) {
                 bytecode.primitives[id].outSignature ~= grMangle(

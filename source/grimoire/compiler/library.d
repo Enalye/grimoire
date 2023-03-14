@@ -166,6 +166,9 @@ final class GrLibrary : GrLibDefinition {
         case float_:
             variable.floatValue = defaultValue.getFloat();
             break;
+        case double_:
+            variable.doubleValue = defaultValue.getDouble();
+            break;
         case string_:
             variable.strValue = defaultValue.getString().str;
             break;

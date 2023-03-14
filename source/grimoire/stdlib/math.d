@@ -19,7 +19,7 @@ void grLoadStdLibMath(GrLibDefinition library) {
         "Rapport entre le diamètre du cercle et sa circonférence.");
     library.setDescription(GrLocale.en_US,
         "Ratio between the diameter of a circle and its circumference.");
-    library.addVariable("PI", grFloat, GrValue(PI), true);
+    library.addVariable("PI", grDouble, GrValue(cast(GrDouble) PI), true);
 
     library.setDescription(GrLocale.fr_FR, "Renvoie la plus petite valeur entre `a` et `b`.");
     library.setDescription(GrLocale.en_US, "Returns the smallest value between `a` and `b`.");

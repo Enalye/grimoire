@@ -589,6 +589,7 @@ final class GrData {
         case byte_:
         case char_:
         case float_:
+        case double_:
         case bool_:
         case string_:
             break;
@@ -697,7 +698,8 @@ final class GrData {
                 const GrType registeredType = _anyData.get(second[i].mangledType);
                 if (registeredType.base == GrType.Base.void_) {
                     _anyData.set(second[i].mangledType, first[i]);
-                } else {
+                }
+                else {
                     if (registeredType != first[i])
                         return false;
                 }
@@ -709,6 +711,7 @@ final class GrData {
             case byte_:
             case char_:
             case float_:
+            case double_:
             case bool_:
             case string_:
                 if (first[i].base == second[i].base)

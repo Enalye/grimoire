@@ -1,6 +1,8 @@
 # Nombre
 
-Grimoire possède 3 types de nombres: les entiers `int` (signé), `uint` et `byte` (tout deux non-signé) et les flottants `float`.
+Grimoire possède 2 types de nombres:
+- Les entiers: `int`, `uint`, `byte`.
+- Les flottants: `float` et `double`.
 
 > **Note**: Tous les nombres peuvent avoir un `_` inséré entre des chiffres pour rendre un grand nombre plus lisible:
 ```grimoire
@@ -52,15 +54,21 @@ On le note en affixant un nombre entier de `b` ou `B`.
 
 ## Nombre à virgule flottante
 
-Les nombres à virgule flottante `float` désignent l’ensemble des nombres réels, ils disposent d’une partie fractionnaire.
-On les note soit à l’aide d’un point `.` sauf en dernière position, soit avec un `f` ou `F` postfixé.
+Les nombres à virgule flottante désignent l’ensemble des nombres réels, ils disposent d’une partie fractionnaire.
+On les note soit à l’aide d’un point `.` sauf en dernière position, soit avec un suffixe (`f`, `F`, `d` ou `D`).
+
+Un `float` est un flottant en simple précision, il nécessite obligatoirement un `f` ou un `F` postfixé pour être noté.
+
+Un `double` est un flottant avec le double de la précision d’un `float`, on peut le noter avec un `d` ou `D` postfixé ou sans suffixe.
 ```grimoire
-2.3
-.25
-0f
--8f
-9.35f
-7.0f
-.6f
-2_156.000_987f
+2.3             // double
+.25             // double
+0f              // float
+-8f             // float
+-8d             // double
+9.35F           // float
+7.0f            // float
+.6f             // float
+.0D             // double
+2_156.000_987f  // float
 ```

@@ -26,6 +26,7 @@ struct GrType {
         byte_,
         char_,
         float_,
+        double_,
         bool_,
         string_,
         optional,
@@ -54,6 +55,45 @@ struct GrType {
     bool isAbstract;
     /// Le type est-il mutable ?
     bool isPure;
+
+    @property {
+        bool isNumeric() const {
+            return isIntegral() || isFloating();
+        }
+
+        bool isIntegral() const {
+            switch (base) with (Base) {
+            case int_:
+            case uint_:
+            case byte_:
+                return true;
+            default:
+                return false;
+            }
+        }
+
+        bool isFloating() const {
+            switch (base) with (Base) {
+            case float_:
+            case double_:
+                return true;
+            default:
+                return false;
+            }
+        }
+
+        bool isValid() const {
+            switch (base) with (Base) {
+            case void_:
+            case null_:
+            case internalTuple:
+            case reference:
+                return false;
+            default:
+                return true;
+            }
+        }
+    }
 
     /// Type simple
     this(Base base_) {
@@ -105,6 +145,8 @@ const GrType grInt = GrType(GrType.Base.int_);
 const GrType grUInt = GrType(GrType.Base.uint_);
 /// Nombre flottant
 const GrType grFloat = GrType(GrType.Base.float_);
+/// Nombre flottant double précision
+const GrType grDouble = GrType(GrType.Base.double_);
 /// Type booléen
 const GrType grBool = GrType(GrType.Base.bool_);
 /// Type caractère
@@ -430,6 +472,8 @@ final class GrVariableDefinition {
         GrByte byteValue;
         /// Valeur flottante
         GrFloat floatValue;
+        /// Valeur flottante double précision
+        GrDouble doubleValue;
         /// Valeur textuelle
         string strValue;
     }
@@ -542,6 +586,7 @@ package class GrFunction {
         case event:
         case enum_:
         case float_:
+        case double_:
         case string_:
         case list:
         case optional:

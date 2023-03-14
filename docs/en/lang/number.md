@@ -1,6 +1,8 @@
 # Number
 
-There are 4 types of number in Grimoire: integers `int` (signed), `uint` and `byte` (both unsigned) and floating point values `float`.
+There are 2 types of number in Grimoire:
+- Integral: `int`, `uint`, `byte`.
+- Floats: `float`, `double`.
 
 > **Note**: All numbers can have a `_` inserted between digits to make a big number more readable:
 ```grimoire
@@ -52,15 +54,21 @@ They can be written with a postfix `b` or `B`.
 
 ## Floating point number
 
-Floating point numbers `float` represent the set of all real number, they have a fractionnal part.
-They can be written with a period `.` except at the last position, or with a postfix `f` or `F`.
+Floating point numbers represent the set of all real number, they have a fractionnal part.
+They can be written either with a period `.` except at the last position, or with a suffix (`f`, `F`, `d` or `D`).
+
+A `float` is a single precision floating point value, it must have a postfix `f` or `F`.
+
+A `double` is a floating point value with double the precision of a `float`, we can write it with a postfix `d` or `D` or without any suffix.
 ```grimoire
-2.3
-.25
-0f
--8f
-9.35f
-7.0f
-.6f
-2_156.000_987f
+2.3             // double
+.25             // double
+0f              // float
+-8f             // float
+-8d             // double
+9.35F           // float
+7.0f            // float
+.6f             // float
+.0D             // double
+2_156.000_987f  // float
 ```

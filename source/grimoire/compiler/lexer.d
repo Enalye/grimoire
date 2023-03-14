@@ -86,6 +86,7 @@ struct GrLexeme {
         byte_,
         char_,
         float_,
+        double_,
         bool_,
         string_,
         null_,
@@ -104,6 +105,7 @@ struct GrLexeme {
         byteType,
         charType,
         floatType,
+        doubleType,
         boolType,
         stringType,
         listType,
@@ -206,6 +208,10 @@ struct GrLexeme {
         /// Valeur flottante de la constante.
         /// `isLiteral` vaut `true` et `type` vaut `float_`.
         GrFloat floatValue;
+
+        /// Valeur flottante en double-précision de la constante.
+        /// `isLiteral` vaut `true` et `type` vaut `double_`.
+        GrDouble doubleValue;
 
         /// Valeur booléenne de la constante.
         /// `isLiteral` vaut `true` et `type` vaut `bool_`.
@@ -477,7 +483,7 @@ package final class GrLexer {
         lex.isLiteral = true;
 
         bool isStart = true;
-        bool isPrefix, isMaybeFloat, isFloat, isUnsigned, isByte;
+        bool isPrefix, isMaybeFloat, isFloat, isDouble, isUnsigned, isByte;
         bool isBinary, isOctal, isHexadecimal;
         string buffer;
 
@@ -558,6 +564,7 @@ package final class GrLexer {
                     buffer ~= '.';
                     isMaybeFloat = false;
                     isFloat = true;
+                    isDouble = true;
                 }
 
                 buffer ~= symbol;
@@ -577,6 +584,7 @@ package final class GrLexer {
                     break;
                 }
                 isMaybeFloat = true;
+                isDouble = true;
                 lex._textLength++;
             }
             else if (symbol == 'f' || symbol == 'F') {
@@ -585,6 +593,17 @@ package final class GrLexer {
                     break;
                 }
                 isFloat = true;
+                isDouble = false;
+                lex._textLength++;
+                break;
+            }
+            else if (symbol == 'd' || symbol == 'D') {
+                if (isMaybeFloat) {
+                    _current--;
+                    break;
+                }
+                isFloat = true;
+                isDouble = true;
                 lex._textLength++;
                 break;
             }
@@ -643,8 +662,14 @@ package final class GrLexer {
                 lex.intValue = to!GrInt(buffer, 16);
             }
             else if (isFloat) {
-                lex.type = GrLexeme.Type.float_;
-                lex.floatValue = to!GrFloat(buffer);
+                if (isDouble) {
+                    lex.type = GrLexeme.Type.double_;
+                    lex.doubleValue = to!GrDouble(buffer);
+                }
+                else {
+                    lex.type = GrLexeme.Type.float_;
+                    lex.floatValue = to!GrFloat(buffer);
+                }
             }
             else if (isUnsigned) {
                 lex.type = GrLexeme.Type.uint_;
@@ -1384,6 +1409,10 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.floatType;
             lex.isType = true;
             break;
+        case "double":
+            lex.type = GrLexeme.Type.doubleType;
+            lex.isType = true;
+            break;
         case "bool":
             lex.type = GrLexeme.Type.boolType;
             lex.isType = true;
@@ -1782,6 +1811,8 @@ string grGetPrettyLexemeType(GrLexeme.Type lexType) {
         return "const_char";
     case float_:
         return "const_float";
+    case double_:
+        return "const_double";
     case bool_:
         return "const_bool";
     case string_:
@@ -1818,6 +1849,8 @@ string grGetPrettyLexemeType(GrLexeme.Type lexType) {
         return "char";
     case floatType:
         return "float";
+    case doubleType:
+        return "double";
     case boolType:
         return "bool";
     case stringType:

@@ -13,7 +13,8 @@ alias GrInt = int;
 alias GrUInt = uint;
 alias GrByte = ubyte;
 alias GrChar = dchar;
-alias GrFloat = double;
+alias GrFloat = float;
+alias GrDouble = double;
 alias GrPointer = void*;
 
 /// Trace d’appels

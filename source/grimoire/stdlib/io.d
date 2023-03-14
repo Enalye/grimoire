@@ -42,6 +42,8 @@ private void _print(GrCall call) {
             return type.mangledType ~ "." ~ call.getEnumFieldName(type.mangledType, value.getInt());
         case float_:
             return to!string(value.getFloat());
+        case double_:
+            return to!string(value.getDouble());
         case string_:
             return value.getString().str;
         case optional:

@@ -19,8 +19,9 @@ package(grimoire) {
     enum GR_MASK_UINT = 0x1 << 2;
     enum GR_MASK_BYTE = 0x1 << 3;
     enum GR_MASK_FLOAT = 0x1 << 4;
-    enum GR_MASK_STRING = 0x1 << 5;
-    enum GR_MASK_POINTER = 0x1 << 6;
+    enum GR_MASK_DOUBLE = 0x1 << 5;
+    enum GR_MASK_STRING = 0x1 << 6;
+    enum GR_MASK_POINTER = 0x1 << 7;
 }
 
 /// Instructions bas niveau de la machine virtuelle.
@@ -67,6 +68,7 @@ enum GrOpcode {
     const_uint,
     const_byte,
     const_float,
+    const_double,
     const_bool,
     const_string,
     const_meta,
@@ -79,28 +81,34 @@ enum GrOpcode {
     equal_uint,
     equal_byte,
     equal_float,
+    equal_double,
     equal_string,
     notEqual_int,
     notEqual_uint,
     notEqual_byte,
     notEqual_float,
+    notEqual_double,
     notEqual_string,
     greaterOrEqual_int,
     greaterOrEqual_uint,
     greaterOrEqual_byte,
     greaterOrEqual_float,
+    greaterOrEqual_double,
     lesserOrEqual_int,
     lesserOrEqual_uint,
     lesserOrEqual_byte,
     lesserOrEqual_float,
+    lesserOrEqual_double,
     greater_int,
     greater_uint,
     greater_byte,
     greater_float,
+    greater_double,
     lesser_int,
     lesser_uint,
     lesser_byte,
     lesser_float,
+    lesser_double,
     checkNull,
     optionalTry,
     optionalOr,
@@ -115,32 +123,40 @@ enum GrOpcode {
     add_uint,
     add_byte,
     add_float,
+    add_double,
     substract_int,
     substract_uint,
     substract_byte,
     substract_float,
+    substract_double,
     multiply_int,
     multiply_uint,
     multiply_byte,
     multiply_float,
+    multiply_double,
     divide_int,
     divide_uint,
     divide_byte,
     divide_float,
+    divide_double,
     remainder_int,
     remainder_uint,
     remainder_byte,
     remainder_float,
+    remainder_double,
     negative_int,
     negative_float,
+    negative_double,
     increment_int,
     increment_uint,
     increment_byte,
     increment_float,
+    increment_double,
     decrement_int,
     decrement_uint,
     decrement_byte,
     decrement_float,
+    decrement_double,
 
     copy,
     swap,
@@ -227,6 +243,8 @@ final class GrBytecode {
                 GrByte byteValue;
                 /// Valeur flottante
                 GrFloat floatValue;
+                /// Valeur flottante double précision
+                GrFloat doubleValue;
                 /// Valeur textuelle
                 string strValue;
             }
@@ -249,6 +267,9 @@ final class GrBytecode {
 
         /// Constantes flottantes.
         GrFloat[] floatConsts;
+
+        /// Constantes flottantes double précision.
+        GrDouble[] doubleConsts;
 
         /// Constantes textuelles.
         string[] strConsts;
@@ -288,6 +309,7 @@ final class GrBytecode {
         uintConsts = bytecode.uintConsts;
         byteConsts = bytecode.byteConsts;
         floatConsts = bytecode.floatConsts;
+        doubleConsts = bytecode.doubleConsts;
         strConsts = bytecode.strConsts;
         primitives = bytecode.primitives;
         enums = bytecode.enums;
@@ -340,6 +362,7 @@ final class GrBytecode {
         buffer.append!uint(cast(uint) uintConsts.length);
         buffer.append!uint(cast(uint) byteConsts.length);
         buffer.append!uint(cast(uint) floatConsts.length);
+        buffer.append!uint(cast(uint) doubleConsts.length);
         buffer.append!uint(cast(uint) strConsts.length);
         buffer.append!uint(cast(uint) opcodes.length);
 
@@ -360,6 +383,8 @@ final class GrBytecode {
             buffer.append!GrByte(i);
         foreach (GrFloat i; floatConsts)
             buffer.append!GrFloat(i);
+        foreach (GrFloat i; doubleConsts)
+            buffer.append!GrDouble(i);
         foreach (string i; strConsts) {
             writeStr(buffer, i);
         }
@@ -416,6 +441,8 @@ final class GrBytecode {
                 buffer.append!GrByte(reference.byteValue);
             else if (reference.typeMask & GR_MASK_FLOAT)
                 buffer.append!GrFloat(reference.floatValue);
+            else if (reference.typeMask & GR_MASK_DOUBLE)
+                buffer.append!GrFloat(reference.doubleValue);
             else if (reference.typeMask & GR_MASK_STRING)
                 writeStr(buffer, reference.strValue);
         }
@@ -462,6 +489,7 @@ final class GrBytecode {
         uintConsts.length = buffer.read!uint();
         byteConsts.length = buffer.read!uint();
         floatConsts.length = buffer.read!uint();
+        doubleConsts.length = buffer.read!uint();
         strConsts.length = buffer.read!uint();
         opcodes.length = buffer.read!uint();
 
@@ -488,6 +516,10 @@ final class GrBytecode {
 
         for (uint i; i < floatConsts.length; ++i) {
             floatConsts[i] = buffer.read!GrFloat();
+        }
+
+        for (uint i; i < doubleConsts.length; ++i) {
+            doubleConsts[i] = buffer.read!GrDouble();
         }
 
         for (uint i; i < strConsts.length; ++i) {
@@ -560,6 +592,8 @@ final class GrBytecode {
                 reference.byteValue = buffer.read!GrByte();
             else if (reference.typeMask & GR_MASK_FLOAT)
                 reference.floatValue = buffer.read!GrFloat();
+            else if (reference.typeMask & GR_MASK_DOUBLE)
+                reference.doubleValue = buffer.read!GrDouble();
             else if (reference.typeMask & GR_MASK_STRING)
                 reference.strValue = readStr(buffer);
             variables[name] = reference;
@@ -658,6 +692,8 @@ final class GrBytecode {
                 return "const.b";
             case const_float:
                 return "const.f";
+            case const_double:
+                return "const.d";
             case const_bool:
                 return "const.bool";
             case const_string:
@@ -678,6 +714,8 @@ final class GrBytecode {
                 return "eq.b";
             case equal_float:
                 return "eq.f";
+            case equal_double:
+                return "eq.d";
             case equal_string:
                 return "eq.s";
             case notEqual_int:
@@ -688,6 +726,8 @@ final class GrBytecode {
                 return "neq.b";
             case notEqual_float:
                 return "neq.f";
+            case notEqual_double:
+                return "neq.d";
             case notEqual_string:
                 return "neq.s";
             case greaterOrEqual_int:
@@ -698,6 +738,8 @@ final class GrBytecode {
                 return "geq.b";
             case greaterOrEqual_float:
                 return "geq.f";
+            case greaterOrEqual_double:
+                return "geq.d";
             case lesserOrEqual_int:
                 return "leq.i";
             case lesserOrEqual_uint:
@@ -706,6 +748,8 @@ final class GrBytecode {
                 return "leq.b";
             case lesserOrEqual_float:
                 return "leq.f";
+            case lesserOrEqual_double:
+                return "leq.d";
             case greater_int:
                 return "gt.i";
             case greater_uint:
@@ -714,6 +758,8 @@ final class GrBytecode {
                 return "gt.b";
             case greater_float:
                 return "gt.f";
+            case greater_double:
+                return "gt.d";
             case lesser_int:
                 return "lt.i";
             case lesser_uint:
@@ -722,6 +768,8 @@ final class GrBytecode {
                 return "lt.b";
             case lesser_float:
                 return "lt.f";
+            case lesser_double:
+                return "lt.d";
             case checkNull:
                 return "check_null";
             case optionalTry:
@@ -748,6 +796,8 @@ final class GrBytecode {
                 return "add.b";
             case add_float:
                 return "add.f";
+            case add_double:
+                return "add.d";
             case substract_int:
                 return "sub.i";
             case substract_uint:
@@ -756,6 +806,8 @@ final class GrBytecode {
                 return "sub.b";
             case substract_float:
                 return "sub.f";
+            case substract_double:
+                return "sub.d";
             case multiply_int:
                 return "mul.i";
             case multiply_uint:
@@ -764,6 +816,8 @@ final class GrBytecode {
                 return "mul.b";
             case multiply_float:
                 return "mul.f";
+            case multiply_double:
+                return "mul.d";
             case divide_int:
                 return "div.i";
             case divide_uint:
@@ -772,6 +826,8 @@ final class GrBytecode {
                 return "div.b";
             case divide_float:
                 return "div.f";
+            case divide_double:
+                return "div.d";
             case remainder_int:
                 return "rem.i";
             case remainder_uint:
@@ -780,10 +836,14 @@ final class GrBytecode {
                 return "rem.b";
             case remainder_float:
                 return "rem.f";
+            case remainder_double:
+                return "rem.d";
             case negative_int:
                 return "neg.i";
             case negative_float:
                 return "neg.f";
+            case negative_double:
+                return "neg.d";
             case increment_int:
                 return "inc.i";
             case increment_uint:
@@ -792,6 +852,8 @@ final class GrBytecode {
                 return "inc.b";
             case increment_float:
                 return "inc.f";
+            case increment_double:
+                return "inc.d";
             case decrement_int:
                 return "dec.i";
             case decrement_uint:
@@ -800,6 +862,8 @@ final class GrBytecode {
                 return "dec.b";
             case decrement_float:
                 return "dec.f";
+            case decrement_double:
+                return "dec.d";
             case copy:
                 return "copy";
             case swap:
