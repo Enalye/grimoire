@@ -57,10 +57,12 @@ struct GrType {
     bool isPure;
 
     @property {
+        /// Définit-il un type numérique ?
         bool isNumeric() const {
             return isIntegral() || isFloating();
         }
 
+        /// Définit-il un type intégral ?
         bool isIntegral() const {
             switch (base) with (Base) {
             case int_:
@@ -72,6 +74,7 @@ struct GrType {
             }
         }
 
+        /// Définit-il un type à virgule flottante ?
         bool isFloating() const {
             switch (base) with (Base) {
             case float_:
@@ -82,15 +85,39 @@ struct GrType {
             }
         }
 
+        /// Est-il utilisable ?
         bool isValid() const {
             switch (base) with (Base) {
             case void_:
             case null_:
             case internalTuple:
-            case reference:
                 return false;
             default:
                 return true;
+            }
+        }
+
+        /// Est-il reservé au compilateur ?
+        bool isInternal() const {
+            switch (base) with (Base) {
+            case void_:
+            case null_:
+            case internalTuple:
+            case reference:
+                return true;
+            default:
+                return false;
+            }
+        }
+
+        /// Peut-il ne rien valoir ?
+        bool isNullable() const {
+            switch (base) with (Base) {
+            case optional:
+            case null_:
+                return true;
+            default:
+                return false;
             }
         }
     }
