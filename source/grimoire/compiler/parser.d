@@ -7030,24 +7030,42 @@ final class GrParser {
         error.info = info;
         error.note = note;
 
-        GrLexeme lex = (isEnd() && offset >= 0) ? get(-1) : get(offset);
-        error.filePath = lex.getFile();
-        error.lineText = lex.getLine().replace("\t", " ");
-        error.line = lex.line + 1u; // Par convention, la première ligne commence à 1, et non 0.
-        error.column = lex.column;
-        error.textLength = lex.textLength;
+        if (lexemes.length) {
+            GrLexeme lex = (isEnd() && offset >= 0) ? get(-1) : get(offset);
+            error.filePath = lex.getFile();
+            error.lineText = lex.getLine().replace("\t", " ");
+            error.line = lex.line + 1u; // Par convention, la première ligne commence à 1, et non 0.
+            error.column = lex.column;
+            error.textLength = lex.textLength;
+        }
+        else {
+            error.filePath = "";
+            error.lineText = "";
+            error.line = 1u; // Par convention, la première ligne commence à 1, et non 0.
+            error.column = 0u;
+            error.textLength = 0u;
+        }
 
         if (otherInfo.length) {
             error.otherInfo = otherInfo;
 
             set(otherPos);
 
-            GrLexeme otherLex = isEnd() ? get(-1) : get();
-            error.otherFilePath = otherLex.getFile();
-            error.otherLineText = otherLex.getLine().replace("\t", " ");
-            error.otherLine = otherLex.line + 1u; // Par convention, la première ligne commence à 1, et non 0.
-            error.otherColumn = otherLex.column;
-            error.otherTextLength = otherLex.textLength;
+            if (lexemes.length) {
+                GrLexeme otherLex = isEnd() ? get(-1) : get();
+                error.otherFilePath = otherLex.getFile();
+                error.otherLineText = otherLex.getLine().replace("\t", " ");
+                error.otherLine = otherLex.line + 1u; // Par convention, la première ligne commence à 1, et non 0.
+                error.otherColumn = otherLex.column;
+                error.otherTextLength = otherLex.textLength;
+            }
+            else {
+                error.otherFilePath = "";
+                error.otherLineText = "";
+                error.otherLine = 1u; // Par convention, la première ligne commence à 1, et non 0.
+                error.otherColumn = 0u;
+                error.otherTextLength = 0u;
+            }
         }
         throw new GrParserException(error);
     }
@@ -7283,467 +7301,922 @@ final class GrParser {
     }
 
     private string getError(Error error) {
-        immutable string[Error][GrLocale.max + 1] messages = [
-            [ // en_US
-                Error.eofReached: "reached the end of the file",
-                Error.eof: "unexpected end of file",
-                Error.unknownFunc: "unknown function",
-                Error.unknownVar: "unknown variable",
-                Error.unknownOp: "unknown operator",
-                Error.unknownClass: "unknown class",
-                Error.unknownType: "unknown type",
-                Error.unknownOpPriority: "unknown operator priority",
-                Error.unknownField: "unknown field",
-                Error.invalidType: "invalid type",
-                Error.invalidParamType: "invalid parameter type",
-                Error.invalidChanType: "invalid channel type",
-                Error.invalidListType: "invalid list type",
-                Error.invalidListIndexType: "invalid list index type",
-                Error.xNotDef: "`%s` is not defined",
-                Error.xNotDecl: "`%s` is not declared",
-                Error.nameXDefMultipleTimes: "the name `%s` is defined multiple times",
-                Error.xRedefHere: "`%s` is redefined here",
-                Error.prevDefOfX: "previous definition of `%s`",
-                Error.prevDefPrim: "`%s` is already defined as a primitive",
-                Error.alreadyDef: "`%s` is already declared",
-                Error.cantDefVarOfTypeX: "can't define a variable of type %s",
-                Error.cantUseTypeAsParam: "can't use `%s` as a parameter type",
-                Error.opMustHave1RetVal: "an operator must have only one return value",
-                Error.expected1RetValFoundX: "expected 1 return value, found %s return value",
-                Error.expected1RetValFoundXs: "expected 1 return value, found %s return values",
-                Error.cantUseOpOnMultipleVal: "can't use an operator on multiple values",
-                Error.exprYieldsMultipleVal: "the expression yields multiple values",
-                Error.noXUnaryOpDefForY: "there is no `%s` unary operator defined for `%s`",
-                Error.noXBinaryOpDefForYAndZ: "there is no `%s` binary operator defined for `%s` and `%s`",
-                Error.exprIsConstAndCantBeModified: "the expression is const and can't be modified",
-                Error.xIsConstAndCantBeModified: "`%s` is const and can't be modified",
-                Error.cantModifyAConst: "can't modify a const",
-                Error.cantCallXWithArgsYBecausePure: "can't call `%s` with arguments `%s` because a pure parameter is mutable",
-                Error.callCanCauseASideEffect: "this call may trigger a side effet",
-                Error.maybeUsePure: "maybe you should change the function's parameter to `pure` ?",
-                Error.cantAssignToAXVar: "can't assign to a `%s` variable",
-                Error.ValNotAssignable: "the value is not assignable",
-                Error.cantInferTypeOfVar: "can't infer the type of variable",
-                Error.varNotInit: "the variable has not been initialized",
-                Error.locVarUsedNotAssigned: "the local variable is being used without being assigned",
-                Error.cantGetValueOfX: "can't get the value of `%s`",
-                Error.valNotFetchable: "the value is not fetchable",
-                Error.globalDeclExpected: "a global declaration is expected",
-                Error.globalDeclExpectedFoundX: "a global declaration is expected, found `%s`",
-                Error.funcMissingRetAtEnd: "the function is missing a return at the end of the scope",
-                Error.missingRet: "missing `return`",
-                Error.expectedTypeAliasNameFoundX: "expected type alias name, found `%s`",
-                Error.expectedEnumNameFoundX: "expected enum name, found `%s`",
-                Error.expectedXFoundY: "expected `%s`, found `%s`",
-                Error.missingIdentifier: "missing identifier",
-                Error.missingColonBeforeType: "missing `:` before type",
-                Error.missingSemicolonAfterType: "missing `;` after type",
-                Error.enumDefNotHaveBody: "the enum definition does not have a body",
-                Error.expectedEnumFieldFoundX: "expected enum field, found `%s`",
-                Error.missingSemicolonAfterEnumField: "missing `;` after type enum field",
-                Error.xAlreadyDecl: "`%s` is already declared",
-                Error.expectedClassNameFoundX: "expected class name, found `%s`",
-                Error.parentClassNameMissing: "the parent class name is missing",
-                Error.classHaveNoBody: "the class does not have a body",
-                Error.missingSemicolonAfterClassFieldDecl: "missing `;` after class field declaration",
-                Error.xCantInheritFromY: "`%s` can't inherit from `%s`",
-                Error.xIncludedRecursively: "`%s` is included recursively",
-                Error.recursiveInheritence: "recursive inheritence",
-                Error.fieldXDeclMultipleTimes: "the field `%s` is declared multiple times",
-                Error.recursiveDecl: "recursive declaration",
-                Error.xNotValidType: "`%s` is not a valid type",
-                Error.expectedValidTypeFoundX: "expected a valid type, found `%s`",
-                Error.listCanOnlyContainOneTypeOfVal: "a list can only contain one type of value",
-                Error.conflictingListSignature: "conflicting list signature",
-                Error.tryUsingXInstead: "try using `%s` instead",
-                Error.channelCanOnlyContainOneTypeOfVal: "a channel can only contain one type of value",
-                Error.conflictingChannelSignature: "conflicting channel signature",
-                Error.missingTemplateVal: "missing template value",
-                Error.templateValShouldBeSeparatedByComma: "template values should be separated by a comma",
-                Error.templateTypesShouldBeSeparatedByComma: "template types should be separated by a comma",
-                Error.missingParentheses: "missing parentheses",
-                Error.paramShouldBeSeparatedByComma: "parameters should be separated by a comma",
-                Error.expectedIdentifierFoundX: "expected identifier, found `%s`",
-                Error.typesShouldBeSeparatedByComma: "types should be separated by a comma",
-                Error.addingExportBeforeEventIsRedundant: "adding `export` before `event` is redundant",
-                Error.eventAlreadyExported: "event is already exported",
-                Error.cantOverrideXOp: "can't override `%s` operator",
-                Error.opCantBeOverriden: "this operator can't be overriden",
-                Error.xNotUnaryOp: "`%s` is not an unary operator",
-                Error.xNotBinaryOp: "`%s` is not a binary operator",
-                Error.opMustHave1Or2Args: "an operator must have 1 or 2 arguments",
-                Error.missingConstraint: "missing constraint",
-                Error.xIsNotAKnownConstraint: "`%s` is not a known constraint",
-                Error.validConstraintsAreX: "valid constraints are: %s",
-                Error.expectedColonAfterType: "`:` expected after a type",
-                Error.constraintTakesXArgButYWereSupplied: "the constraint takes %s argument but %s were supplied",
-                Error.constraintTakesXArgsButYWereSupplied: "the constraint takes %s arguments but %s were supplied",
-                Error.convMustHave1RetVal: "a conversion must have only one return value",
-                Error.convMustHave1Param: "a conversion must have only one parameter",
-                Error.expected1ParamFoundX: "expected 1 parameter, found %s parameter",
-                Error.expected1ParamFoundXs: "expected 1 parameter, found %s parameters",
-                Error.missingCurlyBraces: "missing curly braces",
-                Error.expectedIntFoundX: "expected int_, found `%s`",
-                Error.deferInsideDefer: "`defer` inside another `defer`",
-                Error.cantDeferInsideDefer: "can't `defer` inside another `defer`",
-                Error.xInsideDefer: "`%s` inside a defer",
-                Error.cantXInsideDefer: "can't `%s` inside a defer",
-                Error.breakOutsideLoop: "`break` outside of a loop",
-                Error.cantBreakOutsideLoop: "can't `break` outside of a loop",
-                Error.continueOutsideLoop: "`continue` outside of a loop",
-                Error.cantContinueOutsideLoop: "can't `continue` outside of a loop",
-                Error.xNotValidRetType: "`%s` is not a valid return type",
-                Error.chanSizeMustBePositive: "a channel size must be a positive integer value",
-                Error.listSizeMustBePositive: "an list size must be a positive integer value",
-                Error.missingCommaOrGreaterInsideChanSignature: "missing `,` or `>` inside channel signature",
-                Error.missingCommaOrGreaterInsideListSignature: "missing `,` or `>` inside list signature",
-                Error.missingXInChanSignature: "missing `%s` after the channel signature",
-                Error.missingXInListSignature: "missing `%s` after the list signature",
-                Error.missingXInNullSignature: "missing `%s` after the null signature",
-                Error.chanSizeMustBeOneOrHigher: "the channel size must be one or higher",
-                Error.listSizeMustBeZeroOrHigher: "the list size must be zero or higher",
-                Error.expectedAtLeastSizeOf1FoundX: "expected at least a size of 1, found %s",
-                Error.expectedCommaOrGreaterFoundX: "expected `,` or `>`, found `%s`",
-                Error.chanCantBeOfTypeX: "a channel can't be of type `%s`",
-                Error.missingParenthesesAfterX: "missing parentheses after `%s`",
-                Error.missingCommaInX: "missing comma in `%s`",
-                Error.onlyOneDefaultCasePerX: "there must be only up to one default case per `%s`",
-                Error.defaultCaseAlreadyDef: "default case already defined",
-                Error.prevDefaultCaseDef: "previous default case definition",
-                Error.missingWhileOrUntilAfterLoop: "missing `while` or `until` after the loop",
-                Error.expectedWhileOrUntilFoundX: "expected `while` or `until`, found `%s`",
-                Error.listCantBeOfTypeX: "a list can't be of type `%s`",
-                Error.primXMustRetOptional: "the primitive `%s` must return an optional type",
-                Error.signatureMismatch: "signature mismatch",
-                Error.funcXMustRetOptional: "the function `%s` must return an optional type",
-                Error.notIterable: "not iterable",
-                Error.forCantIterateOverX: "for can't iterate over a `%s`",
-                Error.cantEvalArityUnknownCompound: "can't evaluate the arity of an unknown compound",
-                Error.arityEvalError: "arity evaluation error",
-                Error.typeOfIteratorMustBeIntNotX: "the type of the iterator must be an `int`, not `%s`",
-                Error.iteratorMustBeInt: "the iterator must be an `int`",
-                Error.mismatchedNumRetVal: "mismatched number of return values",
-                Error.expectedXRetValFoundY: "expected %s return value, found %s",
-                Error.expectedXRetValsFoundY: "expected %s return values, found %s",
-                Error.retSignatureOfTypeX: "the return signature is of type `%s`",
-                Error.retTypeXNotMatchSignatureY: "the returned type `%s` does not match the signature `%s`",
-                Error.expectedXVal: "expected `%s` value",
-                Error.opNotListedInOpPriorityTable: "the operator is not listed in the operator priority table",
-                Error.mismatchedTypes: "mismatched types",
-                Error.missingX: "missing `%s`",
-                Error.xNotClassType: "`%s` is not a class type",
-                Error.fieldXInitMultipleTimes: "the field `%s` is initialized multiple times",
-                Error.xAlreadyInit: "`%s` is already initialized",
-                Error.prevInit: "previous initialization",
-                Error.fieldXNotExist: "the field `%s` doesn't exist",
-                Error.expectedFieldNameFoundX: "expected field name, found `%s`",
-                Error.missingField: "missing field",
-                Error.indexesShouldBeSeparatedByComma: "indexes should be separated by a comma",
-                Error.missingVal: "missing value",
-                Error.expectedIndexFoundComma: "an index is expected, found `,`",
-                Error.expectedIntFoundNothing: "expected `int`, found nothing",
-                Error.noValToConv: "no value to convert",
-                Error.expectedVarFoundX: "expected variable, found `%s`",
-                Error.missingVar: "missing variable",
-                Error.exprYieldsNoVal: "the expression yields no value",
-                Error.expectedValFoundNothing: "expected value, found nothing",
-                Error.missingSemicolonAfterExprList: "missing `;` after expression list",
-                Error.tryingAssignXValsToYVar: "trying to assign `%s` values to %s variable",
-                Error.tryingAssignXValsToYVars: "trying to assign `%s` values to %s variables",
-                Error.moreValThanVarToAssign: "there are more values than variable to assign to",
-                Error.assignationMissingVal: "the assignation is missing a value",
-                Error.expressionEmpty: "the expression is empty",
-                Error.firstValOfAssignmentListCantBeEmpty: "first value of an assignment list can't be empty",
-                Error.cantInferTypeWithoutAssignment: "can't infer the type without assignment",
-                Error.missingTypeInfoOrInitVal: "missing type information or initial value",
-                Error.missingSemicolonAfterAssignmentList: "missing `;` after assignment list",
-                Error.missingSemicolonAfterX: "missing `;` after `%s`",
-                Error.typeXHasNoDefaultVal: "the type `%s` has no default value",
-                Error.cantInitThisType: "can't initialize this type",
-                Error.expectedFuncNameFoundX: "expected function name, found `%s`",
-                Error.missingFuncName: "missing function name",
-                Error.cantInferTypeOfX: "can't infer the type of `%s`",
-                Error.funcTypeCantBeInferred: "the function type can't be inferred",
-                Error.unexpectedXFoundInExpr: "unexpected `%s` found in expression",
-                Error.xCantExistInsideThisExpr: "a `%s` can't exist inside this expression",
-                Error.methodCallMustBePlacedAfterVal: "a method call must be placed after a value",
-                Error.listCantBeIndexedByX: "a list can't be indexed by a `%s`",
-                Error.cantAccessFieldOnTypeX: "can't access a field on type `%s`",
-                Error.expectedClassFoundX: "expected a class, found `%s`",
-                Error.xOnTypeYIsPrivate: "`%s` on type `%s` is private",
-                Error.privateField: "private field",
-                Error.noFieldXOnTypeY: "no field `%s` on type `%s`",
-                Error.availableFieldsAreX: "available fields are: %s",
-                Error.missingParamOnMethodCall: "missing parameter on method call",
-                Error.xMustBePlacedAfterVal: "`%s` must be placed after a value",
-                Error.xMustBeInsideFuncOrTask: "`%s` must be inside a function or a task",
-                Error.xRefNoFuncNorTask: "`%s` references no function nor task",
-                Error.valBeforeAssignationNotReferenceable: "the value before assignation is not referenceable",
-                Error.missingRefBeforeAssignation: "missing reference before assignation",
-                Error.cantDoThisKindOfOpOnLeftSideOfAssignement: "can't do this kind of operation on the left side of an assignment",
-                Error.unexpectedOp: "unexpected operation",
-                Error.unOpMustHave1Operand: "an unary operation must have 1 operand",
-                Error.binOpMustHave2Operands: "a binary operation must have 2 operands",
-                Error.unexpectedXSymbolInExpr: "unexpected `%s` symbol in the expression",
-                Error.unexpectedSymbol: "unexpected symbol",
-                Error.missingSemicolonAtEndOfExpr: "missing `;` at the end of the expression",
-                Error.cantLoadFieldOfTypeX: "can't load a field of type `%s`",
-                Error.fieldTypeIsInvalid: "the field type is invalid",
-                Error.xNotCallable: "`%s` is not callable",
-                Error.xNotFuncNorTask: "`%s` is not a function nor a task",
-                Error.funcTakesXArgButMoreWereSupplied: "the function takes %s argument but more were supplied",
-                Error.funcTakesXArgsButMoreWereSupplied: "the function takes %s arguments but more were supplied",
-                Error.funcIsOfTypeX: "the function is of type `%s`",
-                Error.expectedXArg: "expected %s argument",
-                Error.expectedXArgs: "expected %s arguments",
-                Error.funcTakesXArgButYWereSupplied: "the function takes %s argument but %s were supplied",
-                Error.funcTakesXArgsButYWereSupplied: "the function takes %s arguments but %s were supplied",
-                Error.expectedXArgFoundY: "expected %s argument, found %s",
-                Error.expectedXArgsFoundY: "expected %s arguments, found %s",
-                Error.funcOrTaskExpectedFoundX: "function or task expected, found `%s`",
-                Error.funcDefHere: "function defined here",
-                Error.expectedDotAfterEnumType: "expected a `.` after the enum type",
-                Error.missingEnumConstantName: "missing the enum field name",
-                Error.missingEnumConstantValue: "missing the enum field value",
-                Error.expectedConstNameAfterEnumType: "expected an enum field name after the enum type",
-                Error.xIsAbstract: "`%s` is abstract",
-                Error.xIsAbstractAndCannotBeInstanciated: "`%s` is abstract and can't be instanciated",
-                Error.expectedOptionalType: "`?` expect an optional type",
-                Error.opMustFollowAnOptionalType: "`?` must be placed after the optional to unwrap",
-                Error.cantConvertXToY: "can't convert `%s` to `%s`",
-                Error.noConvAvailable: "no conversion available",
-            ],
-            [ // fr_FR
-                Error.eofReached: "fin de fichier atteinte",
-                Error.eof: "fin de fichier inattendue",
-                Error.unknownFunc: "fonction inconnue",
-                Error.unknownVar: "variable inconnue",
-                Error.unknownOp: "opérateur inconnu",
-                Error.unknownClass: "classe inconnue",
-                Error.unknownType: "type inconnu",
-                Error.unknownOpPriority: "priorité d’opérateur inconnue",
-                Error.unknownField: "champ inconnu",
-                Error.invalidType: "type invalide",
-                Error.invalidParamType: "type de paramètre invalide",
-                Error.invalidChanType: "type de canal invalide",
-                Error.invalidListType: "type de liste invalide",
-                Error.invalidListIndexType: "type d’index de liste invalide",
-                Error.xNotDef: "`%s` n’est pas défini",
-                Error.xNotDecl: "`%s` n’est pas déclaré",
-                Error.nameXDefMultipleTimes: "le nom `%s` est défini plusieurs fois",
-                Error.xRedefHere: "`%s` est redéfini ici",
-                Error.prevDefOfX: "précédente définition de `%s`",
-                Error.prevDefPrim: "`%s` est déjà défini en tant que primitive",
-                Error.alreadyDef: "`%s` est déjà défini",
-                Error.cantDefVarOfTypeX: "impossible définir une variable du type %s",
-                Error.cantUseTypeAsParam: "impossible d’utiliser `%s` comme type de paramètre",
-                Error.opMustHave1RetVal: "un operateur ne doit avoir qu'une valeur de retour",
-                Error.expected1RetValFoundX: "1 valeur de retour attendue, %s valeur trouvée",
-                Error.expected1RetValFoundXs: "1 valeur de retour attendue, %s valeurs trouvées",
-                Error.cantUseOpOnMultipleVal: "impossible d’utiliser un opérateur sur plusieurs valeurs",
-                Error.exprYieldsMultipleVal: "l’expression délivre plusieurs valeurs",
-                Error.noXUnaryOpDefForY: "il n’y a pas d’opérateur unaire `%s` défini pour `%s`",
-                Error.noXBinaryOpDefForYAndZ: "il n’y pas d’opérateur binaire `%s` défini pour `%s` et `%s`",
-                Error.exprIsConstAndCantBeModified: "l’expression est constante et ne peut être assigné",
-                Error.xIsConstAndCantBeModified: "`%s` est constant et ne peut être assigné",
-                Error.cantModifyAConst: "impossible de modifier un type constant",
-                Error.cantCallXWithArgsYBecausePure: "impossible d’appeler `%s` avec les arguments `%s` car un paramètre pur est modifiable",
-                Error.callCanCauseASideEffect: "l’appel risque de créer un effet de bord",
-                Error.maybeUsePure: "peut-être voudriez-vous changer le paramètre de la fonction en `pure` ?",
-                Error.cantAssignToAXVar: "impossible d’assigner à une variable `%s`",
-                Error.ValNotAssignable: "la valeur est non-assignable",
-                Error.cantInferTypeOfVar: "impossible d’inférer le type de la variable",
-                Error.varNotInit: "la variable n’a pas été initialisée",
-                Error.locVarUsedNotAssigned: "la variable locale est utilisée sans avoir été assignée",
-                Error.cantGetValueOfX: "impossible de récupérer la valeure de `%s`",
-                Error.valNotFetchable: "la valeur n’est pas récupérable",
-                Error.globalDeclExpected: "une déclaration globale est attendue",
-                Error.globalDeclExpectedFoundX: "une déclaration globale est attendue, `%s` trouvé",
-                Error.funcMissingRetAtEnd: "il manque un retour en fin de fonction",
-                Error.missingRet: "`return` manquant",
-                Error.expectedTypeAliasNameFoundX: "nom d’alias de type attendu, `%s` trouvé",
-                Error.expectedEnumNameFoundX: "nom d'énumération attendu, `%s` trouvé",
-                Error.expectedXFoundY: "`%s` attendu, `%s` trouvé",
-                Error.missingIdentifier: "identificateur attendu",
-                Error.missingColonBeforeType: "`:` manquant avant le type",
-                Error.missingSemicolonAfterType: "`;` manquant après le type",
-                Error.enumDefNotHaveBody: "la définition de l’énumération n’a pas de corps",
-                Error.expectedEnumFieldFoundX: "champ attendu dans l’énumération, `%s` trouvé",
-                Error.missingSemicolonAfterEnumField: "`;` manquant après le champ de l’énumération",
-                Error.xAlreadyDecl: "`%s` est déjà déclaré",
-                Error.expectedClassNameFoundX: "nom de classe attendu, `%s` trouvé",
-                Error.parentClassNameMissing: "le nom de la classe parente est manquante",
-                Error.classHaveNoBody: "la classe n’a pas de corps",
-                Error.missingSemicolonAfterClassFieldDecl: "`;` manquant après le champ de la classe",
-                Error.xCantInheritFromY: "`%s` ne peut pas hériter de `%s`",
-                Error.xIncludedRecursively: "`%s` est inclus récursivement",
-                Error.recursiveInheritence: "héritage récursif",
-                Error.fieldXDeclMultipleTimes: "le champ `%s` est déclaré plusieurs fois",
-                Error.recursiveDecl: "déclaration récursive",
-                Error.xNotValidType: "`%s` n’est pas un type valide",
-                Error.expectedValidTypeFoundX: "type valide attendu, `%s` trouvé",
-                Error.listCanOnlyContainOneTypeOfVal: "une liste ne peut contenir qu’un type de valeur",
-                Error.conflictingListSignature: "signature de liste conflictuelle",
-                Error.tryUsingXInstead: "utilisez plutôt `%s`",
-                Error.channelCanOnlyContainOneTypeOfVal: "un canal ne peut contenir qu’un type de valeur",
-                Error.conflictingChannelSignature: "signature de canal conflictuelle",
-                Error.missingTemplateVal: "valeur de patron manquante",
-                Error.templateValShouldBeSeparatedByComma: "les valeurs de patron doivent être séparées par des virgules",
-                Error.templateTypesShouldBeSeparatedByComma: "les types de patron doivent être séparés par des virgules",
-                Error.missingParentheses: "parenthèses manquantes",
-                Error.paramShouldBeSeparatedByComma: "les paramètres doivent être séparées par des virgules",
-                Error.expectedIdentifierFoundX: "identificateur attendu, `%s` trouvé",
-                Error.typesShouldBeSeparatedByComma: "les types doivent être séparés par des virgules",
-                Error.addingExportBeforeEventIsRedundant: "ajouter `export` devant `event` est redondant",
-                Error.eventAlreadyExported: "les events sont déjà exportés",
-                Error.cantOverrideXOp: "impossible de surcharger l’opérateur `%s`",
-                Error.opCantBeOverriden: "cet opérateur ne peut être surchargé",
-                Error.xNotUnaryOp: "`%s` n’est pas un opérateur unaire",
-                Error.xNotBinaryOp: "`%s` n’est pas un opérateur binaire",
-                Error.opMustHave1Or2Args: "un opérateur doit avoir 1 ou 2 arguments",
-                Error.missingConstraint: "contrainte manquante",
-                Error.xIsNotAKnownConstraint: "`%s` n’est pas une contrainte connue",
-                Error.validConstraintsAreX: "les contraintes valides sont: %s",
-                Error.expectedColonAfterType: "`:` attendu après le type",
-                Error.constraintTakesXArgButYWereSupplied: "cette contrainte prend %s argument mais %s ont été fournis",
-                Error.constraintTakesXArgsButYWereSupplied: "cette contrainte prend %s arguments mais %s ont été fournis",
-                Error.convMustHave1RetVal: "une conversion ne peut avoir qu’une seule valeur de retour",
-                Error.convMustHave1Param: "une conversion ne peut avoir qu’un seul paramètre",
-                Error.expected1ParamFoundX: "1 paramètre attendu, %s paramètre trouvé",
-                Error.expected1ParamFoundXs: "1 paramètre attendu, %s paramètres trouvés",
-                Error.missingCurlyBraces: "accolades manquantes",
-                Error.expectedIntFoundX: "entier attendu, `%s` trouvé",
-                Error.deferInsideDefer: "`defer` à l’intérieur d’un autre `defer`",
-                Error.cantDeferInsideDefer: "impossible de faire un `defer` dans un autre `defer`",
-                Error.xInsideDefer: "`%s` à l’intérieur d’un `defer`",
-                Error.cantXInsideDefer: "impossible de faire un `%s` dans un `defer`",
-                Error.breakOutsideLoop: "`break` en dehors d’une boucle",
-                Error.cantBreakOutsideLoop: "impossible de `break` en dehors d’une boucle",
-                Error.continueOutsideLoop: "`continue` en dehors d’une boucle",
-                Error.cantContinueOutsideLoop: "impossible de `continue` en dehors d’une boucle",
-                Error.xNotValidRetType: "`%s` n’est pas un type de retour valide",
-                Error.chanSizeMustBePositive: "la taille d’un canal doit être un entier positif",
-                Error.listSizeMustBePositive: "la taille d’une liste doit être un entier positif",
-                Error.missingCommaOrGreaterInsideChanSignature: "`,` ou `)` manquant dans la signature du canal",
-                Error.missingCommaOrGreaterInsideListSignature: "`,` ou `)` manquant dans la signature de la liste",
-                Error.missingXInChanSignature: "`%s` manquantes après la signature du canal",
-                Error.missingXInListSignature: "`%s` manquantes après la signature de la liste",
-                Error.missingXInNullSignature: "`%s` manquantes après la signature du type nul",
-                Error.chanSizeMustBeOneOrHigher: "la taille du canal doit être de un ou plus",
-                Error.listSizeMustBeZeroOrHigher: "la taille d’une liste doit être supérieure à zéro",
-                Error.expectedAtLeastSizeOf1FoundX: "une taille de 1 minimum attendue, %s trouvé",
-                Error.expectedCommaOrGreaterFoundX: "`,` ou `>` attendu, `%s` trouvé",
-                Error.chanCantBeOfTypeX: "un canal ne peut être de type `%s`",
-                Error.missingParenthesesAfterX: "parenthèses manquantes après `%s`",
-                Error.missingCommaInX: "virgule manquante dans `%s`",
-                Error.onlyOneDefaultCasePerX: "il ne peut y avoir un maximum d’un cas par défaut dans un `%s`",
-                Error.defaultCaseAlreadyDef: "le cas par défaut a déjà été défini",
-                Error.prevDefaultCaseDef: "précédente définition du cas par défaut",
-                Error.missingWhileOrUntilAfterLoop: "`tant` ou `jusque` manquant après la boucle",
-                Error.expectedWhileOrUntilFoundX: "`tant` ou `jusque` attendu, `%s` trouvé",
-                Error.listCantBeOfTypeX: "une liste ne peut pas être de type `%s`",
-                Error.primXMustRetOptional: "la primitive `%s` doit retourner un type optionnel",
-                Error.signatureMismatch: "la signature ne correspond pas",
-                Error.funcXMustRetOptional: "la function `%s` doit retourner un type optionnel",
-                Error.notIterable: "non-itérable",
-                Error.forCantIterateOverX: "for ne peut itérer sur `%s`",
-                Error.cantEvalArityUnknownCompound: "impossible de calculer l’arité d’un composé inconnu",
-                Error.arityEvalError: "erreur de calcul d’arité",
-                Error.typeOfIteratorMustBeIntNotX: "le type d’un itérateur doit être un entier, pas `%s`",
-                Error.iteratorMustBeInt: "l’itérateur doit être un entier",
-                Error.mismatchedNumRetVal: "le nombre de valeur de retour ne correspond pas",
-                Error.expectedXRetValFoundY: "%s valeur de retour attendue, %s trouvé",
-                Error.expectedXRetValsFoundY: "%s valeurs de retour attendues, %s trouvé",
-                Error.retSignatureOfTypeX: "la signature de retour est `%s`",
-                Error.retTypeXNotMatchSignatureY: "le type retourné `%s` ne correspond pas avec la signature `%s`",
-                Error.expectedXVal: "type `%s` attendu",
-                Error.opNotListedInOpPriorityTable: "l’opérateur n’est pas listé dans la liste de priorité d’opérateurs",
-                Error.mismatchedTypes: "types différents",
-                Error.missingX: "`%s` manquant",
-                Error.xNotClassType: "`%s` n’est pas un type de classe",
-                Error.fieldXInitMultipleTimes: "le champ `%s` est initialisé plusieurs fois",
-                Error.xAlreadyInit: "`%s` est déjà initialisé",
-                Error.prevInit: "initialisation précédente",
-                Error.fieldXNotExist: "le champ `%s` n’existe pas",
-                Error.expectedFieldNameFoundX: "nom de champ attendu, `%s` trouvé",
-                Error.missingField: "champ manquant",
-                Error.indexesShouldBeSeparatedByComma: "les index doivent être séparés par une virgule",
-                Error.missingVal: "valeur manquante",
-                Error.expectedIndexFoundComma: "un index est attendu, `,` trouvé",
-                Error.expectedIntFoundNothing: "entier attendu, rien de trouvé",
-                Error.noValToConv: "aucune valeur à convertir",
-                Error.expectedVarFoundX: "variable attendu, `%s` trouvé",
-                Error.missingVar: "variable manquante",
-                Error.exprYieldsNoVal: "l’expression ne rend aucune valeur",
-                Error.expectedValFoundNothing: "valeur attendue, rien de trouvé",
-                Error.missingSemicolonAfterExprList: "`;` manquant après la liste d’expressions",
-                Error.tryingAssignXValsToYVar: "tentative d’assigner `%s` valeurs à %s variable",
-                Error.tryingAssignXValsToYVars: "tentative d’assigner `%s` valeurs à %s variables",
-                Error.moreValThanVarToAssign: "il y a plus de valeurs que de variables auquels affecter",
-                Error.assignationMissingVal: "il manque une valeur à l’assignation",
-                Error.expressionEmpty: "l’expression est vide",
-                Error.firstValOfAssignmentListCantBeEmpty: "la première valeur d’une liste d’assignation ne peut être vide",
-                Error.cantInferTypeWithoutAssignment: "impossible d’inférer le type sans assignation",
-                Error.missingTypeInfoOrInitVal: "information de type ou valeur initiale manquante",
-                Error.missingSemicolonAfterAssignmentList: "`;` manquant après la liste d’assignation",
-                Error.missingSemicolonAfterX: "`;` manquant après `%s`",
-                Error.typeXHasNoDefaultVal: "le type `%s` n’a pas de valeur par défaut",
-                Error.cantInitThisType: "impossible d’initialiser ce type",
-                Error.expectedFuncNameFoundX: "nom de fonction attendu, `%s` trouvé",
-                Error.missingFuncName: "nom de fonction manquant",
-                Error.cantInferTypeOfX: "impossible d’inférer le type de `%s`",
-                Error.funcTypeCantBeInferred: "le type de la fonction ne peut pas être inféré",
-                Error.unexpectedXFoundInExpr: "`%s` inattendu dans l’expression",
-                Error.xCantExistInsideThisExpr: "un `%s` ne peut exister dans l’expression",
-                Error.methodCallMustBePlacedAfterVal: "un appel de méthode doit se placer après une valeur",
-                Error.listCantBeIndexedByX: "une liste ne peut pas être indexé par un `%s`",
-                Error.cantAccessFieldOnTypeX: "impossible d’accéder à un champ sur `%s`",
-                Error.expectedClassFoundX: "classe attendue, `%s` trouvé",
-                Error.xOnTypeYIsPrivate: "`%s` du type `%s` est privé",
-                Error.privateField: "champ privé",
-                Error.noFieldXOnTypeY: "aucun champ `%s` dans `%s`",
-                Error.availableFieldsAreX: "les champs disponibles sont: %s",
-                Error.missingParamOnMethodCall: "paramètre manquant dans l’appel de méthode",
-                Error.xMustBePlacedAfterVal: "`%s` doit être placé après une valeur",
-                Error.xMustBeInsideFuncOrTask: "`%s` doit être à l’intérieur d’une fonction ou d’une tâche",
-                Error.xRefNoFuncNorTask: "`%s` ne référence aucune fonction ou tâche",
-                Error.valBeforeAssignationNotReferenceable: "la valeur devant l’assignation n’est pas référençable",
-                Error.missingRefBeforeAssignation: "référence manquante avant l’assignation",
-                Error.cantDoThisKindOfOpOnLeftSideOfAssignement: "ce genre d’opération est impossible à gauche d’une assignation",
-                Error.unexpectedOp: "opération inattendue",
-                Error.unOpMustHave1Operand: "une opération unaire doit avoir 1 opérande",
-                Error.binOpMustHave2Operands: "une opération binaire doit avoir 2 opérandes",
-                Error.unexpectedXSymbolInExpr: "symbole `%s` inattendu dans l’expression",
-                Error.unexpectedSymbol: "symbole inattendu",
-                Error.missingSemicolonAtEndOfExpr: "`;` manquant en fin d’expression",
-                Error.cantLoadFieldOfTypeX: "impossible de charger un champ de type `%s`",
-                Error.fieldTypeIsInvalid: "le type de champ est invalide",
-                Error.xNotCallable: "`%s` n’est pas appelable",
-                Error.xNotFuncNorTask: "`%s` n’est ni une fonction ni une tâche",
-                Error.funcTakesXArgButMoreWereSupplied: "cette fonction prend %s argument mais plus ont été fournis",
-                Error.funcTakesXArgsButMoreWereSupplied: "cette fonction prend %s arguments mais plus ont été fournis",
-                Error.funcIsOfTypeX: "cette fonction est de type `%s`",
-                Error.expectedXArg: "%s argument attendu",
-                Error.expectedXArgs: "%s arguments attendus",
-                Error.funcTakesXArgButYWereSupplied: "cette fonction prend %s argument mais %s ont été fournis",
-                Error.funcTakesXArgsButYWereSupplied: "cette fonction prend %s arguments mais %s ont été fournis",
-                Error.expectedXArgFoundY: "%s argument attendu, %s trouvé",
-                Error.expectedXArgsFoundY: "%s arguments attendus, %s trouvé",
-                Error.funcOrTaskExpectedFoundX: "fonction ou tâche attendu, `%s` trouvé",
-                Error.funcDefHere: "fonction définie là",
-                Error.expectedDotAfterEnumType: "`.` attendu après le type de l’énumération",
-                Error.missingEnumConstantName: "nom du champ de l’énumération attendu",
-                Error.missingEnumConstantValue: "valeur du champ de l’énumération attendue",
-                Error.expectedConstNameAfterEnumType: "nom du champ attendu après le type de l’énumération",
-                Error.xIsAbstract: "`%s` est abstrait",
-                Error.xIsAbstractAndCannotBeInstanciated: "`%s` est abstrait et ne peut pas être instancié",
-                Error.expectedOptionalType: "`?` nécessite un type optionnel",
-                Error.opMustFollowAnOptionalType: "`?` doit être placé après le type optionnel à déballer",
-                Error.cantConvertXToY: "impossible de convertir `%s` en `%s`",
-                Error.noConvAvailable: "aucune conversion disponible",
-            ]
-        ];
-        return messages[_locale][error];
+        final switch (_locale) with (GrLocale) {
+        case en_US:
+            final switch (error) with (Error) {
+            case eofReached:
+                return "reached the end of the file";
+            case eof:
+                return "unexpected end of file";
+            case unknownFunc:
+                return "unknown function";
+            case unknownVar:
+                return "unknown variable";
+            case unknownOp:
+                return "unknown operator";
+            case unknownClass:
+                return "unknown class";
+            case unknownType:
+                return "unknown type";
+            case unknownOpPriority:
+                return "unknown operator priority";
+            case unknownField:
+                return "unknown field";
+            case invalidType:
+                return "invalid type";
+            case invalidParamType:
+                return "invalid parameter type";
+            case invalidChanType:
+                return "invalid channel type";
+            case invalidListType:
+                return "invalid list type";
+            case invalidListIndexType:
+                return "invalid list index type";
+            case xNotDef:
+                return "`%s` is not defined";
+            case xNotDecl:
+                return "`%s` is not declared";
+            case nameXDefMultipleTimes:
+                return "the name `%s` is defined multiple times";
+            case xRedefHere:
+                return "`%s` is redefined here";
+            case prevDefOfX:
+                return "previous definition of `%s`";
+            case prevDefPrim:
+                return "`%s` is already defined as a primitive";
+            case alreadyDef:
+                return "`%s` is already declared";
+            case cantDefVarOfTypeX:
+                return "can't define a variable of type %s";
+            case cantUseTypeAsParam:
+                return "can't use `%s` as a parameter type";
+            case opMustHave1RetVal:
+                return "an operator must have only one return value";
+            case expected1RetValFoundX:
+                return "expected 1 return value, found %s return value";
+            case expected1RetValFoundXs:
+                return "expected 1 return value, found %s return values";
+            case cantUseOpOnMultipleVal:
+                return "can't use an operator on multiple values";
+            case exprYieldsMultipleVal:
+                return "the expression yields multiple values";
+            case noXUnaryOpDefForY:
+                return "there is no `%s` unary operator defined for `%s`";
+            case noXBinaryOpDefForYAndZ:
+                return "there is no `%s` binary operator defined for `%s` and `%s`";
+            case exprIsConstAndCantBeModified:
+                return "the expression is const and can't be modified";
+            case xIsConstAndCantBeModified:
+                return "`%s` is const and can't be modified";
+            case cantModifyAConst:
+                return "can't modify a const";
+            case cantCallXWithArgsYBecausePure:
+                return "can't call `%s` with arguments `%s` because a pure parameter is mutable";
+            case callCanCauseASideEffect:
+                return "this call may trigger a side effet";
+            case maybeUsePure:
+                return "maybe you should change the function's parameter to `pure` ?";
+            case cantAssignToAXVar:
+                return "can't assign to a `%s` variable";
+            case ValNotAssignable:
+                return "the value is not assignable";
+            case cantInferTypeOfVar:
+                return "can't infer the type of variable";
+            case varNotInit:
+                return "the variable has not been initialized";
+            case locVarUsedNotAssigned:
+                return "the local variable is being used without being assigned";
+            case cantGetValueOfX:
+                return "can't get the value of `%s`";
+            case valNotFetchable:
+                return "the value is not fetchable";
+            case globalDeclExpected:
+                return "a global declaration is expected";
+            case globalDeclExpectedFoundX:
+                return "a global declaration is expected, found `%s`";
+            case funcMissingRetAtEnd:
+                return "the function is missing a return at the end of the scope";
+            case missingRet:
+                return "missing `return`";
+            case expectedTypeAliasNameFoundX:
+                return "expected type alias name, found `%s`";
+            case expectedEnumNameFoundX:
+                return "expected enum name, found `%s`";
+            case expectedXFoundY:
+                return "expected `%s`, found `%s`";
+            case missingIdentifier:
+                return "missing identifier";
+            case missingColonBeforeType:
+                return "missing `:` before type";
+            case missingSemicolonAfterType:
+                return "missing `;` after type";
+            case enumDefNotHaveBody:
+                return "the enum definition does not have a body";
+            case expectedEnumFieldFoundX:
+                return "expected enum field, found `%s`";
+            case missingSemicolonAfterEnumField:
+                return "missing `;` after type enum field";
+            case xAlreadyDecl:
+                return "`%s` is already declared";
+            case expectedClassNameFoundX:
+                return "expected class name, found `%s`";
+            case parentClassNameMissing:
+                return "the parent class name is missing";
+            case classHaveNoBody:
+                return "the class does not have a body";
+            case missingSemicolonAfterClassFieldDecl:
+                return "missing `;` after class field declaration";
+            case xCantInheritFromY:
+                return "`%s` can't inherit from `%s`";
+            case xIncludedRecursively:
+                return "`%s` is included recursively";
+            case recursiveInheritence:
+                return "recursive inheritence";
+            case fieldXDeclMultipleTimes:
+                return "the field `%s` is declared multiple times";
+            case recursiveDecl:
+                return "recursive declaration";
+            case xNotValidType:
+                return "`%s` is not a valid type";
+            case expectedValidTypeFoundX:
+                return "expected a valid type, found `%s`";
+            case listCanOnlyContainOneTypeOfVal:
+                return "a list can only contain one type of value";
+            case conflictingListSignature:
+                return "conflicting list signature";
+            case tryUsingXInstead:
+                return "try using `%s` instead";
+            case channelCanOnlyContainOneTypeOfVal:
+                return "a channel can only contain one type of value";
+            case conflictingChannelSignature:
+                return "conflicting channel signature";
+            case missingTemplateVal:
+                return "missing template value";
+            case templateValShouldBeSeparatedByComma:
+                return "template values should be separated by a comma";
+            case templateTypesShouldBeSeparatedByComma:
+                return "template types should be separated by a comma";
+            case missingParentheses:
+                return "missing parentheses";
+            case paramShouldBeSeparatedByComma:
+                return "parameters should be separated by a comma";
+            case expectedIdentifierFoundX:
+                return "expected identifier, found `%s`";
+            case typesShouldBeSeparatedByComma:
+                return "types should be separated by a comma";
+            case addingExportBeforeEventIsRedundant:
+                return "adding `export` before `event` is redundant";
+            case eventAlreadyExported:
+                return "event is already exported";
+            case cantOverrideXOp:
+                return "can't override `%s` operator";
+            case opCantBeOverriden:
+                return "this operator can't be overriden";
+            case xNotUnaryOp:
+                return "`%s` is not an unary operator";
+            case xNotBinaryOp:
+                return "`%s` is not a binary operator";
+            case opMustHave1Or2Args:
+                return "an operator must have 1 or 2 arguments";
+            case missingConstraint:
+                return "missing constraint";
+            case xIsNotAKnownConstraint:
+                return "`%s` is not a known constraint";
+            case validConstraintsAreX:
+                return "valid constraints are: %s";
+            case expectedColonAfterType:
+                return "`:` expected after a type";
+            case constraintTakesXArgButYWereSupplied:
+                return "the constraint takes %s argument but %s were supplied";
+            case constraintTakesXArgsButYWereSupplied:
+                return "the constraint takes %s arguments but %s were supplied";
+            case convMustHave1RetVal:
+                return "a conversion must have only one return value";
+            case convMustHave1Param:
+                return "a conversion must have only one parameter";
+            case expected1ParamFoundX:
+                return "expected 1 parameter, found %s parameter";
+            case expected1ParamFoundXs:
+                return "expected 1 parameter, found %s parameters";
+            case missingCurlyBraces:
+                return "missing curly braces";
+            case expectedIntFoundX:
+                return "expected int_, found `%s`";
+            case deferInsideDefer:
+                return "`defer` inside another `defer`";
+            case cantDeferInsideDefer:
+                return "can't `defer` inside another `defer`";
+            case xInsideDefer:
+                return "`%s` inside a defer";
+            case cantXInsideDefer:
+                return "can't `%s` inside a defer";
+            case breakOutsideLoop:
+                return "`break` outside of a loop";
+            case cantBreakOutsideLoop:
+                return "can't `break` outside of a loop";
+            case continueOutsideLoop:
+                return "`continue` outside of a loop";
+            case cantContinueOutsideLoop:
+                return "can't `continue` outside of a loop";
+            case xNotValidRetType:
+                return "`%s` is not a valid return type";
+            case chanSizeMustBePositive:
+                return "a channel size must be a positive integer value";
+            case listSizeMustBePositive:
+                return "an list size must be a positive integer value";
+            case missingCommaOrGreaterInsideChanSignature:
+                return "missing `,` or `>` inside channel signature";
+            case missingCommaOrGreaterInsideListSignature:
+                return "missing `,` or `>` inside list signature";
+            case missingXInChanSignature:
+                return "missing `%s` after the channel signature";
+            case missingXInListSignature:
+                return "missing `%s` after the list signature";
+            case missingXInNullSignature:
+                return "missing `%s` after the null signature";
+            case chanSizeMustBeOneOrHigher:
+                return "the channel size must be one or higher";
+            case listSizeMustBeZeroOrHigher:
+                return "the list size must be zero or higher";
+            case expectedAtLeastSizeOf1FoundX:
+                return "expected at least a size of 1, found %s";
+            case expectedCommaOrGreaterFoundX:
+                return "expected `,` or `>`, found `%s`";
+            case chanCantBeOfTypeX:
+                return "a channel can't be of type `%s`";
+            case missingParenthesesAfterX:
+                return "missing parentheses after `%s`";
+            case missingCommaInX:
+                return "missing comma in `%s`";
+            case onlyOneDefaultCasePerX:
+                return "there must be only up to one default case per `%s`";
+            case defaultCaseAlreadyDef:
+                return "default case already defined";
+            case prevDefaultCaseDef:
+                return "previous default case definition";
+            case missingWhileOrUntilAfterLoop:
+                return "missing `while` or `until` after the loop";
+            case expectedWhileOrUntilFoundX:
+                return "expected `while` or `until`, found `%s`";
+            case listCantBeOfTypeX:
+                return "a list can't be of type `%s`";
+            case primXMustRetOptional:
+                return "the primitive `%s` must return an optional type";
+            case signatureMismatch:
+                return "signature mismatch";
+            case funcXMustRetOptional:
+                return "the function `%s` must return an optional type";
+            case notIterable:
+                return "not iterable";
+            case forCantIterateOverX:
+                return "for can't iterate over a `%s`";
+            case cantEvalArityUnknownCompound:
+                return "can't evaluate the arity of an unknown compound";
+            case arityEvalError:
+                return "arity evaluation error";
+            case typeOfIteratorMustBeIntNotX:
+                return "the type of the iterator must be an `int`, not `%s`";
+            case iteratorMustBeInt:
+                return "the iterator must be an `int`";
+            case mismatchedNumRetVal:
+                return "mismatched number of return values";
+            case expectedXRetValFoundY:
+                return "expected %s return value, found %s";
+            case expectedXRetValsFoundY:
+                return "expected %s return values, found %s";
+            case retSignatureOfTypeX:
+                return "the return signature is of type `%s`";
+            case retTypeXNotMatchSignatureY:
+                return "the returned type `%s` does not match the signature `%s`";
+            case expectedXVal:
+                return "expected `%s` value";
+            case opNotListedInOpPriorityTable:
+                return "the operator is not listed in the operator priority table";
+            case mismatchedTypes:
+                return "mismatched types";
+            case missingX:
+                return "missing `%s`";
+            case xNotClassType:
+                return "`%s` is not a class type";
+            case fieldXInitMultipleTimes:
+                return "the field `%s` is initialized multiple times";
+            case xAlreadyInit:
+                return "`%s` is already initialized";
+            case prevInit:
+                return "previous initialization";
+            case fieldXNotExist:
+                return "the field `%s` doesn't exist";
+            case expectedFieldNameFoundX:
+                return "expected field name, found `%s`";
+            case missingField:
+                return "missing field";
+            case indexesShouldBeSeparatedByComma:
+                return "indexes should be separated by a comma";
+            case missingVal:
+                return "missing value";
+            case expectedIndexFoundComma:
+                return "an index is expected, found `,`";
+            case expectedIntFoundNothing:
+                return "expected `int`, found nothing";
+            case noValToConv:
+                return "no value to convert";
+            case expectedVarFoundX:
+                return "expected variable, found `%s`";
+            case missingVar:
+                return "missing variable";
+            case exprYieldsNoVal:
+                return "the expression yields no value";
+            case expectedValFoundNothing:
+                return "expected value, found nothing";
+            case missingSemicolonAfterExprList:
+                return "missing `;` after expression list";
+            case tryingAssignXValsToYVar:
+                return "trying to assign `%s` values to %s variable";
+            case tryingAssignXValsToYVars:
+                return "trying to assign `%s` values to %s variables";
+            case moreValThanVarToAssign:
+                return "there are more values than variable to assign to";
+            case assignationMissingVal:
+                return "the assignation is missing a value";
+            case expressionEmpty:
+                return "the expression is empty";
+            case firstValOfAssignmentListCantBeEmpty:
+                return "first value of an assignment list can't be empty";
+            case cantInferTypeWithoutAssignment:
+                return "can't infer the type without assignment";
+            case missingTypeInfoOrInitVal:
+                return "missing type information or initial value";
+            case missingSemicolonAfterAssignmentList:
+                return "missing `;` after assignment list";
+            case missingSemicolonAfterX:
+                return "missing `;` after `%s`";
+            case typeXHasNoDefaultVal:
+                return "the type `%s` has no default value";
+            case cantInitThisType:
+                return "can't initialize this type";
+            case expectedFuncNameFoundX:
+                return "expected function name, found `%s`";
+            case missingFuncName:
+                return "missing function name";
+            case cantInferTypeOfX:
+                return "can't infer the type of `%s`";
+            case funcTypeCantBeInferred:
+                return "the function type can't be inferred";
+            case unexpectedXFoundInExpr:
+                return "unexpected `%s` found in expression";
+            case xCantExistInsideThisExpr:
+                return "a `%s` can't exist inside this expression";
+            case methodCallMustBePlacedAfterVal:
+                return "a method call must be placed after a value";
+            case listCantBeIndexedByX:
+                return "a list can't be indexed by a `%s`";
+            case cantAccessFieldOnTypeX:
+                return "can't access a field on type `%s`";
+            case expectedClassFoundX:
+                return "expected a class, found `%s`";
+            case xOnTypeYIsPrivate:
+                return "`%s` on type `%s` is private";
+            case privateField:
+                return "private field";
+            case noFieldXOnTypeY:
+                return "no field `%s` on type `%s`";
+            case availableFieldsAreX:
+                return "available fields are: %s";
+            case missingParamOnMethodCall:
+                return "missing parameter on method call";
+            case xMustBePlacedAfterVal:
+                return "`%s` must be placed after a value";
+            case xMustBeInsideFuncOrTask:
+                return "`%s` must be inside a function or a task";
+            case xRefNoFuncNorTask:
+                return "`%s` references no function nor task";
+            case valBeforeAssignationNotReferenceable:
+                return "the value before assignation is not referenceable";
+            case missingRefBeforeAssignation:
+                return "missing reference before assignation";
+            case cantDoThisKindOfOpOnLeftSideOfAssignement:
+                return "can't do this kind of operation on the left side of an assignment";
+            case unexpectedOp:
+                return "unexpected operation";
+            case unOpMustHave1Operand:
+                return "an unary operation must have 1 operand";
+            case binOpMustHave2Operands:
+                return "a binary operation must have 2 operands";
+            case unexpectedXSymbolInExpr:
+                return "unexpected `%s` symbol in the expression";
+            case unexpectedSymbol:
+                return "unexpected symbol";
+            case missingSemicolonAtEndOfExpr:
+                return "missing `;` at the end of the expression";
+            case cantLoadFieldOfTypeX:
+                return "can't load a field of type `%s`";
+            case fieldTypeIsInvalid:
+                return "the field type is invalid";
+            case xNotCallable:
+                return "`%s` is not callable";
+            case xNotFuncNorTask:
+                return "`%s` is not a function nor a task";
+            case funcTakesXArgButMoreWereSupplied:
+                return "the function takes %s argument but more were supplied";
+            case funcTakesXArgsButMoreWereSupplied:
+                return "the function takes %s arguments but more were supplied";
+            case funcIsOfTypeX:
+                return "the function is of type `%s`";
+            case expectedXArg:
+                return "expected %s argument";
+            case expectedXArgs:
+                return "expected %s arguments";
+            case funcTakesXArgButYWereSupplied:
+                return "the function takes %s argument but %s were supplied";
+            case funcTakesXArgsButYWereSupplied:
+                return "the function takes %s arguments but %s were supplied";
+            case expectedXArgFoundY:
+                return "expected %s argument, found %s";
+            case expectedXArgsFoundY:
+                return "expected %s arguments, found %s";
+            case funcOrTaskExpectedFoundX:
+                return "function or task expected, found `%s`";
+            case funcDefHere:
+                return "function defined here";
+            case expectedDotAfterEnumType:
+                return "expected a `.` after the enum type";
+            case missingEnumConstantName:
+                return "missing the enum field name";
+            case missingEnumConstantValue:
+                return "missing the enum field value";
+            case expectedConstNameAfterEnumType:
+                return "expected an enum field name after the enum type";
+            case xIsAbstract:
+                return "`%s` is abstract";
+            case xIsAbstractAndCannotBeInstanciated:
+                return "`%s` is abstract and can't be instanciated";
+            case expectedOptionalType:
+                return "`?` expect an optional type";
+            case opMustFollowAnOptionalType:
+                return "`?` must be placed after the optional to unwrap";
+            case cantConvertXToY:
+                return "can't convert `%s` to `%s`";
+            case noConvAvailable:
+                return "no conversion available";
+            }
+        case fr_FR:
+            final switch (error) with (Error) {
+            case eofReached:
+                return "fin de fichier atteinte";
+            case eof:
+                return "fin de fichier inattendue";
+            case unknownFunc:
+                return "fonction inconnue";
+            case unknownVar:
+                return "variable inconnue";
+            case unknownOp:
+                return "opérateur inconnu";
+            case unknownClass:
+                return "classe inconnue";
+            case unknownType:
+                return "type inconnu";
+            case unknownOpPriority:
+                return "priorité d’opérateur inconnue";
+            case unknownField:
+                return "champ inconnu";
+            case invalidType:
+                return "type invalide";
+            case invalidParamType:
+                return "type de paramètre invalide";
+            case invalidChanType:
+                return "type de canal invalide";
+            case invalidListType:
+                return "type de liste invalide";
+            case invalidListIndexType:
+                return "type d’index de liste invalide";
+            case xNotDef:
+                return "`%s` n’est pas défini";
+            case xNotDecl:
+                return "`%s` n’est pas déclaré";
+            case nameXDefMultipleTimes:
+                return "le nom `%s` est défini plusieurs fois";
+            case xRedefHere:
+                return "`%s` est redéfini ici";
+            case prevDefOfX:
+                return "précédente définition de `%s`";
+            case prevDefPrim:
+                return "`%s` est déjà défini en tant que primitive";
+            case alreadyDef:
+                return "`%s` est déjà défini";
+            case cantDefVarOfTypeX:
+                return "impossible définir une variable du type %s";
+            case cantUseTypeAsParam:
+                return "impossible d’utiliser `%s` comme type de paramètre";
+            case opMustHave1RetVal:
+                return "un operateur ne doit avoir qu'une valeur de retour";
+            case expected1RetValFoundX:
+                return "1 valeur de retour attendue, %s valeur trouvée";
+            case expected1RetValFoundXs:
+                return "1 valeur de retour attendue, %s valeurs trouvées";
+            case cantUseOpOnMultipleVal:
+                return "impossible d’utiliser un opérateur sur plusieurs valeurs";
+            case exprYieldsMultipleVal:
+                return "l’expression délivre plusieurs valeurs";
+            case noXUnaryOpDefForY:
+                return "il n’y a pas d’opérateur unaire `%s` défini pour `%s`";
+            case noXBinaryOpDefForYAndZ:
+                return "il n’y pas d’opérateur binaire `%s` défini pour `%s` et `%s`";
+            case exprIsConstAndCantBeModified:
+                return "l’expression est constante et ne peut être assigné";
+            case xIsConstAndCantBeModified:
+                return "`%s` est constant et ne peut être assigné";
+            case cantModifyAConst:
+                return "impossible de modifier un type constant";
+            case cantCallXWithArgsYBecausePure:
+                return "impossible d’appeler `%s` avec les arguments `%s` car un paramètre pur est modifiable";
+            case callCanCauseASideEffect:
+                return "l’appel risque de créer un effet de bord";
+            case maybeUsePure:
+                return "peut-être voudriez-vous changer le paramètre de la fonction en `pure` ?";
+            case cantAssignToAXVar:
+                return "impossible d’assigner à une variable `%s`";
+            case ValNotAssignable:
+                return "la valeur est non-assignable";
+            case cantInferTypeOfVar:
+                return "impossible d’inférer le type de la variable";
+            case varNotInit:
+                return "la variable n’a pas été initialisée";
+            case locVarUsedNotAssigned:
+                return "la variable locale est utilisée sans avoir été assignée";
+            case cantGetValueOfX:
+                return "impossible de récupérer la valeure de `%s`";
+            case valNotFetchable:
+                return "la valeur n’est pas récupérable";
+            case globalDeclExpected:
+                return "une déclaration globale est attendue";
+            case globalDeclExpectedFoundX:
+                return "une déclaration globale est attendue, `%s` trouvé";
+            case funcMissingRetAtEnd:
+                return "il manque un retour en fin de fonction";
+            case missingRet:
+                return "`return` manquant";
+            case expectedTypeAliasNameFoundX:
+                return "nom d’alias de type attendu, `%s` trouvé";
+            case expectedEnumNameFoundX:
+                return "nom d'énumération attendu, `%s` trouvé";
+            case expectedXFoundY:
+                return "`%s` attendu, `%s` trouvé";
+            case missingIdentifier:
+                return "identificateur attendu";
+            case missingColonBeforeType:
+                return "`:` manquant avant le type";
+            case missingSemicolonAfterType:
+                return "`;` manquant après le type";
+            case enumDefNotHaveBody:
+                return "la définition de l’énumération n’a pas de corps";
+            case expectedEnumFieldFoundX:
+                return "champ attendu dans l’énumération, `%s` trouvé";
+            case missingSemicolonAfterEnumField:
+                return "`;` manquant après le champ de l’énumération";
+            case xAlreadyDecl:
+                return "`%s` est déjà déclaré";
+            case expectedClassNameFoundX:
+                return "nom de classe attendu, `%s` trouvé";
+            case parentClassNameMissing:
+                return "le nom de la classe parente est manquante";
+            case classHaveNoBody:
+                return "la classe n’a pas de corps";
+            case missingSemicolonAfterClassFieldDecl:
+                return "`;` manquant après le champ de la classe";
+            case xCantInheritFromY:
+                return "`%s` ne peut pas hériter de `%s`";
+            case xIncludedRecursively:
+                return "`%s` est inclus récursivement";
+            case recursiveInheritence:
+                return "héritage récursif";
+            case fieldXDeclMultipleTimes:
+                return "le champ `%s` est déclaré plusieurs fois";
+            case recursiveDecl:
+                return "déclaration récursive";
+            case xNotValidType:
+                return "`%s` n’est pas un type valide";
+            case expectedValidTypeFoundX:
+                return "type valide attendu, `%s` trouvé";
+            case listCanOnlyContainOneTypeOfVal:
+                return "une liste ne peut contenir qu’un type de valeur";
+            case conflictingListSignature:
+                return "signature de liste conflictuelle";
+            case tryUsingXInstead:
+                return "utilisez plutôt `%s`";
+            case channelCanOnlyContainOneTypeOfVal:
+                return "un canal ne peut contenir qu’un type de valeur";
+            case conflictingChannelSignature:
+                return "signature de canal conflictuelle";
+            case missingTemplateVal:
+                return "valeur de patron manquante";
+            case templateValShouldBeSeparatedByComma:
+                return "les valeurs de patron doivent être séparées par des virgules";
+            case templateTypesShouldBeSeparatedByComma:
+                return "les types de patron doivent être séparés par des virgules";
+            case missingParentheses:
+                return "parenthèses manquantes";
+            case paramShouldBeSeparatedByComma:
+                return "les paramètres doivent être séparées par des virgules";
+            case expectedIdentifierFoundX:
+                return "identificateur attendu, `%s` trouvé";
+            case typesShouldBeSeparatedByComma:
+                return "les types doivent être séparés par des virgules";
+            case addingExportBeforeEventIsRedundant:
+                return "ajouter `export` devant `event` est redondant";
+            case eventAlreadyExported:
+                return "les events sont déjà exportés";
+            case cantOverrideXOp:
+                return "impossible de surcharger l’opérateur `%s`";
+            case opCantBeOverriden:
+                return "cet opérateur ne peut être surchargé";
+            case xNotUnaryOp:
+                return "`%s` n’est pas un opérateur unaire";
+            case xNotBinaryOp:
+                return "`%s` n’est pas un opérateur binaire";
+            case opMustHave1Or2Args:
+                return "un opérateur doit avoir 1 ou 2 arguments";
+            case missingConstraint:
+                return "contrainte manquante";
+            case xIsNotAKnownConstraint:
+                return "`%s` n’est pas une contrainte connue";
+            case validConstraintsAreX:
+                return "les contraintes valides sont: %s";
+            case expectedColonAfterType:
+                return "`:` attendu après le type";
+            case constraintTakesXArgButYWereSupplied:
+                return "cette contrainte prend %s argument mais %s ont été fournis";
+            case constraintTakesXArgsButYWereSupplied:
+                return "cette contrainte prend %s arguments mais %s ont été fournis";
+            case convMustHave1RetVal:
+                return "une conversion ne peut avoir qu’une seule valeur de retour";
+            case convMustHave1Param:
+                return "une conversion ne peut avoir qu’un seul paramètre";
+            case expected1ParamFoundX:
+                return "1 paramètre attendu, %s paramètre trouvé";
+            case expected1ParamFoundXs:
+                return "1 paramètre attendu, %s paramètres trouvés";
+            case missingCurlyBraces:
+                return "accolades manquantes";
+            case expectedIntFoundX:
+                return "entier attendu, `%s` trouvé";
+            case deferInsideDefer:
+                return "`defer` à l’intérieur d’un autre `defer`";
+            case cantDeferInsideDefer:
+                return "impossible de faire un `defer` dans un autre `defer`";
+            case xInsideDefer:
+                return "`%s` à l’intérieur d’un `defer`";
+            case cantXInsideDefer:
+                return "impossible de faire un `%s` dans un `defer`";
+            case breakOutsideLoop:
+                return "`break` en dehors d’une boucle";
+            case cantBreakOutsideLoop:
+                return "impossible de `break` en dehors d’une boucle";
+            case continueOutsideLoop:
+                return "`continue` en dehors d’une boucle";
+            case cantContinueOutsideLoop:
+                return "impossible de `continue` en dehors d’une boucle";
+            case xNotValidRetType:
+                return "`%s` n’est pas un type de retour valide";
+            case chanSizeMustBePositive:
+                return "la taille d’un canal doit être un entier positif";
+            case listSizeMustBePositive:
+                return "la taille d’une liste doit être un entier positif";
+            case missingCommaOrGreaterInsideChanSignature:
+                return "`,` ou `)` manquant dans la signature du canal";
+            case missingCommaOrGreaterInsideListSignature:
+                return "`,` ou `)` manquant dans la signature de la liste";
+            case missingXInChanSignature:
+                return "`%s` manquantes après la signature du canal";
+            case missingXInListSignature:
+                return "`%s` manquantes après la signature de la liste";
+            case missingXInNullSignature:
+                return "`%s` manquantes après la signature du type nul";
+            case chanSizeMustBeOneOrHigher:
+                return "la taille du canal doit être de un ou plus";
+            case listSizeMustBeZeroOrHigher:
+                return "la taille d’une liste doit être supérieure à zéro";
+            case expectedAtLeastSizeOf1FoundX:
+                return "une taille de 1 minimum attendue, %s trouvé";
+            case expectedCommaOrGreaterFoundX:
+                return "`,` ou `>` attendu, `%s` trouvé";
+            case chanCantBeOfTypeX:
+                return "un canal ne peut être de type `%s`";
+            case missingParenthesesAfterX:
+                return "parenthèses manquantes après `%s`";
+            case missingCommaInX:
+                return "virgule manquante dans `%s`";
+            case onlyOneDefaultCasePerX:
+                return "il ne peut y avoir un maximum d’un cas par défaut dans un `%s`";
+            case defaultCaseAlreadyDef:
+                return "le cas par défaut a déjà été défini";
+            case prevDefaultCaseDef:
+                return "précédente définition du cas par défaut";
+            case missingWhileOrUntilAfterLoop:
+                return "`tant` ou `jusque` manquant après la boucle";
+            case expectedWhileOrUntilFoundX:
+                return "`tant` ou `jusque` attendu, `%s` trouvé";
+            case listCantBeOfTypeX:
+                return "une liste ne peut pas être de type `%s`";
+            case primXMustRetOptional:
+                return "la primitive `%s` doit retourner un type optionnel";
+            case signatureMismatch:
+                return "la signature ne correspond pas";
+            case funcXMustRetOptional:
+                return "la function `%s` doit retourner un type optionnel";
+            case notIterable:
+                return "non-itérable";
+            case forCantIterateOverX:
+                return "for ne peut itérer sur `%s`";
+            case cantEvalArityUnknownCompound:
+                return "impossible de calculer l’arité d’un composé inconnu";
+            case arityEvalError:
+                return "erreur de calcul d’arité";
+            case typeOfIteratorMustBeIntNotX:
+                return "le type d’un itérateur doit être un entier, pas `%s`";
+            case iteratorMustBeInt:
+                return "l’itérateur doit être un entier";
+            case mismatchedNumRetVal:
+                return "le nombre de valeur de retour ne correspond pas";
+            case expectedXRetValFoundY:
+                return "%s valeur de retour attendue, %s trouvé";
+            case expectedXRetValsFoundY:
+                return "%s valeurs de retour attendues, %s trouvé";
+            case retSignatureOfTypeX:
+                return "la signature de retour est `%s`";
+            case retTypeXNotMatchSignatureY:
+                return "le type retourné `%s` ne correspond pas avec la signature `%s`";
+            case expectedXVal:
+                return "type `%s` attendu";
+            case opNotListedInOpPriorityTable:
+                return "l’opérateur n’est pas listé dans la liste de priorité d’opérateurs";
+            case mismatchedTypes:
+                return "types différents";
+            case missingX:
+                return "`%s` manquant";
+            case xNotClassType:
+                return "`%s` n’est pas un type de classe";
+            case fieldXInitMultipleTimes:
+                return "le champ `%s` est initialisé plusieurs fois";
+            case xAlreadyInit:
+                return "`%s` est déjà initialisé";
+            case prevInit:
+                return "initialisation précédente";
+            case fieldXNotExist:
+                return "le champ `%s` n’existe pas";
+            case expectedFieldNameFoundX:
+                return "nom de champ attendu, `%s` trouvé";
+            case missingField:
+                return "champ manquant";
+            case indexesShouldBeSeparatedByComma:
+                return "les index doivent être séparés par une virgule";
+            case missingVal:
+                return "valeur manquante";
+            case expectedIndexFoundComma:
+                return "un index est attendu, `,` trouvé";
+            case expectedIntFoundNothing:
+                return "entier attendu, rien de trouvé";
+            case noValToConv:
+                return "aucune valeur à convertir";
+            case expectedVarFoundX:
+                return "variable attendu, `%s` trouvé";
+            case missingVar:
+                return "variable manquante";
+            case exprYieldsNoVal:
+                return "l’expression ne rend aucune valeur";
+            case expectedValFoundNothing:
+                return "valeur attendue, rien de trouvé";
+            case missingSemicolonAfterExprList:
+                return "`;` manquant après la liste d’expressions";
+            case tryingAssignXValsToYVar:
+                return "tentative d’assigner `%s` valeurs à %s variable";
+            case tryingAssignXValsToYVars:
+                return "tentative d’assigner `%s` valeurs à %s variables";
+            case moreValThanVarToAssign:
+                return "il y a plus de valeurs que de variables auquels affecter";
+            case assignationMissingVal:
+                return "il manque une valeur à l’assignation";
+            case expressionEmpty:
+                return "l’expression est vide";
+            case firstValOfAssignmentListCantBeEmpty:
+                return "la première valeur d’une liste d’assignation ne peut être vide";
+            case cantInferTypeWithoutAssignment:
+                return "impossible d’inférer le type sans assignation";
+            case missingTypeInfoOrInitVal:
+                return "information de type ou valeur initiale manquante";
+            case missingSemicolonAfterAssignmentList:
+                return "`;` manquant après la liste d’assignation";
+            case missingSemicolonAfterX:
+                return "`;` manquant après `%s`";
+            case typeXHasNoDefaultVal:
+                return "le type `%s` n’a pas de valeur par défaut";
+            case cantInitThisType:
+                return "impossible d’initialiser ce type";
+            case expectedFuncNameFoundX:
+                return "nom de fonction attendu, `%s` trouvé";
+            case missingFuncName:
+                return "nom de fonction manquant";
+            case cantInferTypeOfX:
+                return "impossible d’inférer le type de `%s`";
+            case funcTypeCantBeInferred:
+                return "le type de la fonction ne peut pas être inféré";
+            case unexpectedXFoundInExpr:
+                return "`%s` inattendu dans l’expression";
+            case xCantExistInsideThisExpr:
+                return "un `%s` ne peut exister dans l’expression";
+            case methodCallMustBePlacedAfterVal:
+                return "un appel de méthode doit se placer après une valeur";
+            case listCantBeIndexedByX:
+                return "une liste ne peut pas être indexé par un `%s`";
+            case cantAccessFieldOnTypeX:
+                return "impossible d’accéder à un champ sur `%s`";
+            case expectedClassFoundX:
+                return "classe attendue, `%s` trouvé";
+            case xOnTypeYIsPrivate:
+                return "`%s` du type `%s` est privé";
+            case privateField:
+                return "champ privé";
+            case noFieldXOnTypeY:
+                return "aucun champ `%s` dans `%s`";
+            case availableFieldsAreX:
+                return "les champs disponibles sont: %s";
+            case missingParamOnMethodCall:
+                return "paramètre manquant dans l’appel de méthode";
+            case xMustBePlacedAfterVal:
+                return "`%s` doit être placé après une valeur";
+            case xMustBeInsideFuncOrTask:
+                return "`%s` doit être à l’intérieur d’une fonction ou d’une tâche";
+            case xRefNoFuncNorTask:
+                return "`%s` ne référence aucune fonction ou tâche";
+            case valBeforeAssignationNotReferenceable:
+                return "la valeur devant l’assignation n’est pas référençable";
+            case missingRefBeforeAssignation:
+                return "référence manquante avant l’assignation";
+            case cantDoThisKindOfOpOnLeftSideOfAssignement:
+                return "ce genre d’opération est impossible à gauche d’une assignation";
+            case unexpectedOp:
+                return "opération inattendue";
+            case unOpMustHave1Operand:
+                return "une opération unaire doit avoir 1 opérande";
+            case binOpMustHave2Operands:
+                return "une opération binaire doit avoir 2 opérandes";
+            case unexpectedXSymbolInExpr:
+                return "symbole `%s` inattendu dans l’expression";
+            case unexpectedSymbol:
+                return "symbole inattendu";
+            case missingSemicolonAtEndOfExpr:
+                return "`;` manquant en fin d’expression";
+            case cantLoadFieldOfTypeX:
+                return "impossible de charger un champ de type `%s`";
+            case fieldTypeIsInvalid:
+                return "le type de champ est invalide";
+            case xNotCallable:
+                return "`%s` n’est pas appelable";
+            case xNotFuncNorTask:
+                return "`%s` n’est ni une fonction ni une tâche";
+            case funcTakesXArgButMoreWereSupplied:
+                return "cette fonction prend %s argument mais plus ont été fournis";
+            case funcTakesXArgsButMoreWereSupplied:
+                return "cette fonction prend %s arguments mais plus ont été fournis";
+            case funcIsOfTypeX:
+                return "cette fonction est de type `%s`";
+            case expectedXArg:
+                return "%s argument attendu";
+            case expectedXArgs:
+                return "%s arguments attendus";
+            case funcTakesXArgButYWereSupplied:
+                return "cette fonction prend %s argument mais %s ont été fournis";
+            case funcTakesXArgsButYWereSupplied:
+                return "cette fonction prend %s arguments mais %s ont été fournis";
+            case expectedXArgFoundY:
+                return "%s argument attendu, %s trouvé";
+            case expectedXArgsFoundY:
+                return "%s arguments attendus, %s trouvé";
+            case funcOrTaskExpectedFoundX:
+                return "fonction ou tâche attendu, `%s` trouvé";
+            case funcDefHere:
+                return "fonction définie là";
+            case expectedDotAfterEnumType:
+                return "`.` attendu après le type de l’énumération";
+            case missingEnumConstantName:
+                return "nom du champ de l’énumération attendu";
+            case missingEnumConstantValue:
+                return "valeur du champ de l’énumération attendue";
+            case expectedConstNameAfterEnumType:
+                return "nom du champ attendu après le type de l’énumération";
+            case xIsAbstract:
+                return "`%s` est abstrait";
+            case xIsAbstractAndCannotBeInstanciated:
+                return "`%s` est abstrait et ne peut pas être instancié";
+            case expectedOptionalType:
+                return "`?` nécessite un type optionnel";
+            case opMustFollowAnOptionalType:
+                return "`?` doit être placé après le type optionnel à déballer";
+            case cantConvertXToY:
+                return "impossible de convertir `%s` en `%s`";
+            case noConvAvailable:
+                return "aucune conversion disponible";
+            }
+        }
     }
 }
 

@@ -135,7 +135,7 @@ struct GrLexeme {
         continue_,
     }
 
-    this(GrLexer _lexer) {
+    private this(GrLexer _lexer) {
         _line = _lexer._line;
         _column = _lexer._current - _lexer._positionOfLine;
         _fileId = _lexer._fileId;
@@ -288,26 +288,32 @@ package final class GrLexer {
     }
 
     /// Récupère toute la ligne sur lequel un lexème est présent.
-    package string getLine(GrLexeme lex) {
+    package string getLine(GrLexeme lex) nothrow {
         if (lex._fileId >= _filesImported.length)
-            raiseError(Error.lexFileIdOutOfBounds);
-        auto _text = to!dstring(readText(_filesImported[lex._fileId]));
-        _lines = split(_text, "\n");
-        if (lex._line >= _lines.length)
-            raiseError(Error.lexLineCountOutOfBounds);
-        return to!string(_lines[lex._line]);
+            return "";
+        dstring txt;
+        try {
+            txt = to!dstring(readText(_filesImported[lex._fileId]));
+            _lines = split(txt, "\n");
+            if (lex._line >= _lines.length)
+                return "";
+            return to!string(_lines[lex._line]);
+        }
+        catch (Exception e) {
+            return "";
+        }
     }
 
     /// Récupère le fichier où le lexème est présent.
-    package string getFile(GrLexeme lex) {
+    package string getFile(GrLexeme lex) nothrow {
         if (lex._fileId >= _filesImported.length)
-            raiseError(Error.lexFileIdOutOfBounds);
+            return "";
         return _filesImported[lex._fileId];
     }
     /// Ditto
-    package string getFile(size_t fileId) {
+    package string getFile(size_t fileId) nothrow {
         if (fileId >= _filesImported.length)
-            raiseError(Error.lexFileIdOutOfBounds);
+            return "";
         return _filesImported[fileId];
     }
 
@@ -414,6 +420,10 @@ package final class GrLexer {
     private void scanScript(bool matchBlock = false) {
         // On ignore les espaces/commentaires situés au début
         advance(true);
+
+        if (_current >= _text.length) {
+            _lexemes ~= GrLexeme(this);
+        }
 
         uint blockLevel;
 
@@ -1595,14 +1605,14 @@ package final class GrLexer {
             GrLexeme lexeme = _lexemes[$ - 1];
             error.filePath = to!string(lexeme.getFile());
             error.lineText = to!string(lexeme.getLine()).replace("\t", " ");
-            error.line = lexeme._line + 1u; // Par convention, la première ligne comment à partir de 1, et non 0
+            error.line = lexeme._line + 1u; // Par convention, la première ligne commence à partir de 1, et non 0
             error.column = lexeme._column;
             error.textLength = lexeme._textLength;
         }
         else {
             error.filePath = to!string(_file);
             error.lineText = to!string(_lines[_line]);
-            error.line = _line + 1u; // Par convention, la première ligne comment à partir de 1, et non 0
+            error.line = _line + 1u; // Par convention, la première ligne commence à partir de 1, et non 0
             error.column = _current - _positionOfLine;
             error.textLength = 0u;
         }
@@ -1628,41 +1638,70 @@ package final class GrLexer {
     }
 
     private string getLexerError(Error error, GrLocale locale) {
-        immutable string[Error][GrLocale.max + 1] messages = [
-            [
-                Error.lexFileIdOutOfBounds: "lexeme file id out of bounds",
-                Error.lexLineCountOutOfBounds: "lexeme line count out of bounds",
-                Error.unexpectedEndOfFile: "unexpected end of file",
-                Error.emptyNumber: "empty number",
-                Error.numberTooBig: "number too big",
-                Error.expectedLeftCurlyBraceInUnicode: "expected `{` in an unicode escape sequence",
-                Error.unexpectedSymbolInUnicode: "unexpected symbol in an unicode escape sequence",
-                Error.unicodeTooBig: "unicode must be at most 10FFFF",
-                Error.expectedQuoteStartChar: "expected `'` at the start of the string",
-                Error.missingQuoteEndChar: "missing `'` at the end of the string",
-                Error.expectedQuoteStartString: "expected `\"` at the start of the string",
-                Error.missingQuoteEndString: "missing `\"` at the end of the string",
-                Error.invalidOp: "invalid operator",
-                Error.missingRightCurlyBraceAfterUsedFilesList: "missing `}` after used files list"
-            ],
-            [
-                Error.lexFileIdOutOfBounds: "l’id de fichier du lexeme excède les limites",
-                Error.lexLineCountOutOfBounds: "le numéro de ligne du lexeme excède les limites",
-                Error.unexpectedEndOfFile: "fin de fichier inattendue",
-                Error.emptyNumber: "nombre vide",
-                Error.numberTooBig: "nombre trop grand",
-                Error.expectedLeftCurlyBraceInUnicode: "`{` attendu dans la séquence d’échappement d’un unicode",
-                Error.unexpectedSymbolInUnicode: "symbole inattendu dans une séquence d’échappement d’un unicode",
-                Error.unicodeTooBig: "un unicode ne doit pas valoir plus de 10FFFF",
-                Error.expectedQuoteStartChar: "`'` attendu en début de caractère",
-                Error.missingQuoteEndChar: "`'` manquant en fin de caractère",
-                Error.expectedQuoteStartString: "`\"` attendu en début de chaîne",
-                Error.missingQuoteEndString: "`\"` manquant en fin de chaîne",
-                Error.invalidOp: "opérateur invalide",
-                Error.missingRightCurlyBraceAfterUsedFilesList: "`}` manquant après la liste des fichiers utilisés"
-            ]
-        ];
-        return messages[locale][error];
+        final switch (locale) with (GrLocale) {
+        case en_US:
+            final switch (error) with (Error) {
+            case lexFileIdOutOfBounds:
+                return "lexeme file id out of bounds";
+            case lexLineCountOutOfBounds:
+                return "lexeme line count out of bounds";
+            case unexpectedEndOfFile:
+                return "unexpected end of file";
+            case emptyNumber:
+                return "empty number";
+            case numberTooBig:
+                return "number too big";
+            case expectedLeftCurlyBraceInUnicode:
+                return "expected `{` in an unicode escape sequence";
+            case unexpectedSymbolInUnicode:
+                return "unexpected symbol in an unicode escape sequence";
+            case unicodeTooBig:
+                return "unicode must be at most 10FFFF";
+            case expectedQuoteStartChar:
+                return "expected `'` at the start of the string";
+            case missingQuoteEndChar:
+                return "missing `'` at the end of the string";
+            case expectedQuoteStartString:
+                return "expected `\"` at the start of the string";
+            case missingQuoteEndString:
+                return "missing `\"` at the end of the string";
+            case invalidOp:
+                return "invalid operator";
+            case missingRightCurlyBraceAfterUsedFilesList:
+                return "missing `}` after used files list";
+            }
+        case fr_FR:
+            final switch (error) with (Error) {
+            case lexFileIdOutOfBounds:
+                return "l’id de fichier du lexeme excède les limites";
+            case lexLineCountOutOfBounds:
+                return "le numéro de ligne du lexeme excède les limites";
+            case unexpectedEndOfFile:
+                return "fin de fichier inattendue";
+            case emptyNumber:
+                return "nombre vide";
+            case numberTooBig:
+                return "nombre trop grand";
+            case expectedLeftCurlyBraceInUnicode:
+                return "`{` attendu dans la séquence d’échappement d’un unicode";
+            case unexpectedSymbolInUnicode:
+                return "symbole inattendu dans une séquence d’échappement d’un unicode";
+            case unicodeTooBig:
+                return "un unicode ne doit pas valoir plus de 10FFFF";
+            case expectedQuoteStartChar:
+                return "`'` attendu en début de caractère";
+            case missingQuoteEndChar:
+                return "`'` manquant en fin de caractère";
+            case expectedQuoteStartString:
+                return "`\"` attendu en début de chaîne";
+            case missingQuoteEndString:
+                return "`\"` manquant en fin de chaîne";
+            case invalidOp:
+                return "opérateur invalide";
+            case missingRightCurlyBraceAfterUsedFilesList:
+                return "`}` manquant après la liste des fichiers utilisés";
+            }
+        }
     }
 }
 
