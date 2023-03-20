@@ -314,7 +314,7 @@ package class GrVariable {
     /// Est-elle visible depuis les autres fichiers ?
     bool isExport;
     /// Le fichier d’où elle est déclarée
-    uint fileId;
+    size_t fileId;
     /// Sa position en cas d’erreurs
     uint lexPosition;
     /// La variable peut-elle ne rien valoir ?
@@ -364,7 +364,7 @@ final class GrTypeAliasDefinition {
     /// Is the type visible from other files ?
     bool isExport;
     /// The file where the type is declared.
-    uint fileId;
+    size_t fileId;
 }
 
 /**
@@ -393,7 +393,7 @@ final class GrEnumDefinition {
     /// Est-il visible depuis les autres fichiers ?
     bool isExport;
     /// Le fichier d’où il a été déclaré
-    uint fileId;
+    size_t fileId;
 
     /// Est-ce qu’il a ce champ ?
     bool hasField(const string name_) const {
@@ -452,7 +452,7 @@ final class GrClassDefinition {
     package {
         struct FieldInfo {
             bool isExport;
-            uint fileId;
+            size_t fileId;
             uint position;
         }
 
@@ -466,7 +466,7 @@ final class GrClassDefinition {
     /// Est-elle visible depuis d’autres fichiers ?
     bool isExport;
     /// Le fichier dans lequel elle est déclarée
-    uint fileId;
+    size_t fileId;
     /// A-t’elle déjà été analysé ?
     bool isParsed;
 }
@@ -558,12 +558,12 @@ package class GrFunction {
     /// Est-elle visible depuis d’autres fichiers ?
     bool isExport;
     /// Le fichier d’où cette fonction est déclarée
-    uint fileId;
+    size_t fileId;
 
     uint lexPosition;
 
     struct DebugPositionSymbol {
-        uint line, column;
+        size_t line, column;
     }
 
     DebugPositionSymbol[] debugSymbol;
@@ -652,7 +652,7 @@ package class GrTemplateFunction {
     /// Is the function visible from other files ?
     bool isExport;
     /// The file where the template is declared.
-    uint fileId;
+    size_t fileId;
 
     string[] templateVariables;
 
@@ -668,7 +668,7 @@ package class GrFunctionCall {
     GrFunction caller, functionToCall;
     GrType expectedType;
     bool isAddress;
-    uint fileId;
+    size_t fileId;
 }
 
 package class GrDeferrableSection {

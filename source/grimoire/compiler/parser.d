@@ -242,7 +242,7 @@ final class GrParser {
         return variable;
     }
 
-    private GrVariable getGlobalVariable(string name, uint fileId, bool isExport = false) {
+    private GrVariable getGlobalVariable(string name, size_t fileId, bool isExport = false) {
         foreach (GrVariable variable; globalVariables) {
             if (variable.name == name && (variable.fileId == fileId || variable.isExport || isExport))
                 return variable;
@@ -250,7 +250,7 @@ final class GrParser {
         return null;
     }
 
-    private void assertNoGlobalDeclaration(string name, uint fileId, bool isExport) {
+    private void assertNoGlobalDeclaration(string name, size_t fileId, bool isExport) {
         GrVariable variable;
         GrFunction func;
         if ((variable = getGlobalVariable(name, fileId, isExport)) !is null)
@@ -321,7 +321,7 @@ final class GrParser {
         functionStack.length--;
     }
 
-    private void beginFunction(string name, uint fileId, GrType[] signature, bool isEvent = false) {
+    private void beginFunction(string name, size_t fileId, GrType[] signature, bool isEvent = false) {
         const string mangledName = grMangleComposite(name, signature);
 
         GrFunction func;
@@ -337,7 +337,7 @@ final class GrParser {
         currentFunction = func;
     }
 
-    private void preBeginFunction(string name, uint fileId, GrType[] signature,
+    private void preBeginFunction(string name, size_t fileId, GrType[] signature,
         string[] inputVariables, bool isTask, GrType[] outSignature = [],
         bool isAnonymous = false, bool isEvent = false, bool isExport = false) {
         GrFunction func = new GrFunction;
@@ -433,7 +433,7 @@ final class GrParser {
         }
     }
 
-    GrFunction getFunction(string mangledName, uint fileId = 0, bool isExport = false) {
+    GrFunction getFunction(string mangledName, size_t fileId = 0, bool isExport = false) {
         foreach (GrFunction func; functions) {
             if (func.mangledName == mangledName && (func.fileId == fileId ||
                     func.isExport || isExport)) {
@@ -449,7 +449,7 @@ final class GrParser {
     }
 
     auto getFirstMatchingFuncOrPrim(string name, GrType[] signature,
-        uint fileId = 0, bool isExport = false) {
+        size_t fileId = 0, bool isExport = false) {
         struct Result {
             GrPrimitive prim;
             GrFunction func;
@@ -620,7 +620,7 @@ final class GrParser {
         return result;
     }
 
-    GrFunction getFunction(string name, GrType[] signature, uint fileId = 0, bool isExport = false) {
+    GrFunction getFunction(string name, GrType[] signature, size_t fileId = 0, bool isExport = false) {
         const string mangledName = grMangleComposite(name, signature);
 
         foreach (GrFunction func; events) {
@@ -744,7 +744,7 @@ final class GrParser {
         return null;
     }
 
-    GrFunction getAnonymousFunction(string name, GrType[] signature, uint fileId) {
+    GrFunction getAnonymousFunction(string name, GrType[] signature, size_t fileId) {
         foreach (GrFunction func; anonymousFunctions) {
             if (func.mangledName == name)
                 return func;
@@ -759,7 +759,7 @@ final class GrParser {
     }
 
     /// Récupère une variable déclarée
-    private GrVariable getVariable(string name, uint fileId) {
+    private GrVariable getVariable(string name, size_t fileId) {
         GrVariable globalVar = getGlobalVariable(name, fileId);
         if (globalVar !is null)
             return globalVar;
@@ -852,7 +852,7 @@ final class GrParser {
             lexPos = cast(uint)((cast(int) lexemes.length) - 1);
         }
         GrLexeme lex = lexemes[lexPos];
-        symbol.line = lex.line + 1;
+        symbol.line = lex.line;
         symbol.column = lex.column;
         currentFunction.debugSymbol ~= symbol;
     }
@@ -899,7 +899,7 @@ final class GrParser {
     }
 
     private GrType addCustomBinaryOperator(GrLexeme.Type lexType,
-        GrType leftType, GrType rightType, uint fileId) {
+        GrType leftType, GrType rightType, size_t fileId) {
         string name = "@operator_" ~ getPrettyLexemeType(lexType);
         GrType[] signature = [leftType, rightType];
 
@@ -930,7 +930,7 @@ final class GrParser {
         return grVoid;
     }
 
-    private GrType addCustomUnaryOperator(GrLexeme.Type lexType, const GrType type, uint fileId) {
+    private GrType addCustomUnaryOperator(GrLexeme.Type lexType, const GrType type, size_t fileId) {
         string name = "@operator_" ~ getPrettyLexemeType(lexType);
         GrType[] signature = [type];
 
@@ -962,7 +962,7 @@ final class GrParser {
     }
 
     private GrType addBinaryOperator(GrLexeme.Type lexType, GrType leftType,
-        GrType rightType, uint fileId) {
+        GrType rightType, size_t fileId) {
         if (leftType.base == GrType.Base.internalTuple || rightType.base ==
             GrType.Base.internalTuple)
             logError(getError(Error.cantUseOpOnMultipleVal), getError(Error.exprYieldsMultipleVal));
@@ -1061,7 +1061,7 @@ final class GrParser {
         return resultType;
     }
 
-    private GrType addUnaryOperator(GrLexeme.Type lexType, const GrType type, uint fileId) {
+    private GrType addUnaryOperator(GrLexeme.Type lexType, const GrType type, size_t fileId) {
         if (type.base == GrType.Base.internalTuple)
             logError(getError(Error.cantUseOpOnMultipleVal), getError(Error.exprYieldsMultipleVal));
         GrType resultType = GrType.Base.void_;
@@ -1077,7 +1077,7 @@ final class GrParser {
         return resultType;
     }
 
-    private GrType addOperator(GrLexeme.Type lexType, ref GrType[] typeStack, uint fileId) {
+    private GrType addOperator(GrLexeme.Type lexType, ref GrType[] typeStack, size_t fileId) {
         if (isBinaryOperator(lexType)) {
             typeStack[$ - 2] = addBinaryOperator(lexType, typeStack[$ - 2],
                 typeStack[$ - 1], fileId);
@@ -1499,7 +1499,7 @@ final class GrParser {
         return GrType(GrType.Base.void_);
     }
 
-    private void addSetInstruction(GrVariable variable, uint fileId,
+    private void addSetInstruction(GrVariable variable, size_t fileId,
         GrType valueType = grVoid, bool isExpectingValue = false, bool isInitialization = false) {
         _isAssignationOptimizable = true;
         if (variable.isConst && !isInitialization) {
@@ -1640,7 +1640,7 @@ final class GrParser {
         }
     }
 
-    private GrType addFunctionAddress(string name, GrType[] signature, uint fileId) {
+    private GrType addFunctionAddress(string name, GrType[] signature, size_t fileId) {
         if (name == "@global")
             return grVoid;
         GrFunctionCall call = new GrFunctionCall;
@@ -1663,7 +1663,7 @@ final class GrParser {
         return grVoid;
     }
 
-    private GrType addFunctionAddress(GrFunction func, uint fileId) {
+    private GrType addFunctionAddress(GrFunction func, size_t fileId) {
         if (func.name == "@global")
             return grVoid;
         GrFunctionCall call = new GrFunctionCall;
@@ -1677,7 +1677,7 @@ final class GrParser {
         return grGetFunctionAsType(func);
     }
 
-    private GrType[] addFunctionCall(string name, GrType[] signature, uint fileId) {
+    private GrType[] addFunctionCall(string name, GrType[] signature, size_t fileId) {
         GrFunctionCall call = new GrFunctionCall;
         call.name = name;
         call.signature = signature;
@@ -1707,7 +1707,7 @@ final class GrParser {
         return [];
     }
 
-    private GrType[] addFunctionCall(GrFunction func, uint fileId) {
+    private GrType[] addFunctionCall(GrFunction func, size_t fileId) {
         GrFunctionCall call = new GrFunctionCall;
         call.name = func.name;
         call.signature = func.inSignature;
@@ -2035,7 +2035,7 @@ final class GrParser {
 
     /// Analyse la déclaration d’un alias de type
     private void parseTypeAliasDeclaration(bool isExport) {
-        const uint fileId = get().fileId;
+        const size_t fileId = get().fileId;
         checkAdvance();
 
         if (get().type != GrLexeme.Type.identifier)
@@ -2065,7 +2065,7 @@ final class GrParser {
 
     /// Analyse la déclaration d’une énumération
     private void parseEnumDeclaration(bool isExport) {
-        const uint fileId = get().fileId;
+        const size_t fileId = get().fileId;
         checkAdvance();
         if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedEnumNameFoundX),
@@ -2135,7 +2135,7 @@ final class GrParser {
 
     /// Déclare une nouvelle classe sans l’analyser
     private void registerClassDeclaration(bool isExport) {
-        const uint fileId = get().fileId;
+        const size_t fileId = get().fileId;
 
         checkAdvance();
         if (get().type != GrLexeme.Type.identifier)
@@ -2159,7 +2159,7 @@ final class GrParser {
 
     /// Récupère une classe. \
     /// Réifie la classe si besoin.
-    private GrClassDefinition getClass(string mangledType, uint fileId) {
+    private GrClassDefinition getClass(string mangledType, size_t fileId) {
         GrClassDefinition class_ = _data.getClass(mangledType, fileId);
         if (!class_)
             return null;
@@ -2283,7 +2283,7 @@ final class GrParser {
 
     /// Récupère les champs et la signature de la classe mère
     private void resolveClassInheritence(GrClassDefinition class_) {
-        uint fileId = class_.fileId;
+        size_t fileId = class_.fileId;
         string parent = class_.parent;
         GrClassDefinition lastClass = class_;
         string[] usedClasses = [class_.name];
@@ -3323,7 +3323,7 @@ final class GrParser {
 
         parseBlock();
 
-        const uint fileId = get().fileId;
+        const size_t fileId = get().fileId;
         if (get().type == GrLexeme.Type.catch_) {
             advance();
 
@@ -3724,7 +3724,7 @@ final class GrParser {
                     getPrettyLexemeType(get().type)));
 
         advance();
-        const uint fileId = get().fileId;
+        const size_t fileId = get().fileId;
         GrType switchType = parseSubExpression().type;
         GrVariable switchVar = registerSpecialVariable("switch", switchType);
         addSetInstruction(switchVar, fileId);
@@ -4015,7 +4015,7 @@ final class GrParser {
             advance();
         }
 
-        const uint fileId = get().fileId;
+        const size_t fileId = get().fileId;
         if (get().type != GrLexeme.Type.leftParenthesis)
             logError(format(getError(Error.missingParenthesesAfterX), getPrettyLexemeType(GrLexeme.Type.for_)),
                 format(getError(Error.expectedXFoundY),
@@ -4347,7 +4347,7 @@ final class GrParser {
         bool isInfinite, hasCustomIterator;
         GrVariable iterator, customIterator;
 
-        const uint fileId = get().fileId;
+        const size_t fileId = get().fileId;
         currentFunction.openScope();
         advance();
 
@@ -4448,7 +4448,7 @@ final class GrParser {
     ---
     */
     private void parseReturnStatement() {
-        const uint fileId = get().fileId;
+        const size_t fileId = get().fileId;
 
         checkDeferStatement();
         checkAdvance();
@@ -4671,7 +4671,7 @@ final class GrParser {
     }
 
     /// Tente de convertir le type source au type destinataire.
-    private GrType convertType(GrType src, GrType dst, uint fileId = 0,
+    private GrType convertType(GrType src, GrType dst, size_t fileId = 0,
         bool noFail = false, bool isExplicit = false) {
         if (src.base == dst.base) {
             final switch (src.base) with (GrType.Base) {
@@ -4764,7 +4764,7 @@ final class GrParser {
 
     /// Convertit avec une fonction
     private GrType addCustomConversion(GrType leftType, GrType rightType,
-        bool isExplicit, uint fileId) {
+        bool isExplicit, size_t fileId) {
         GrType resultType = GrType.Base.void_;
 
         // Contrairement aux autres fonctions, on a besoin que le type de retour (`rightType`)
@@ -4815,7 +4815,7 @@ final class GrParser {
         if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.identifier),
                     getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
-        uint fileId = get().fileId;
+        size_t fileId = get().fileId;
         GrType objectType = parseType(true);
 
         // Init
@@ -4984,7 +4984,7 @@ final class GrParser {
     private GrType parseListBuilder() {
         GrType listType = GrType(GrType.Base.list);
         GrType subType = grVoid;
-        const uint fileId = get().fileId;
+        const size_t fileId = get().fileId;
         int listSize, defaultListSize;
 
         // Type explicite comme: list<int>[1, 2, 3] ou taille par défaut comme: list<int>(5, 0)
@@ -5073,7 +5073,7 @@ final class GrParser {
     }
 
     private GrType parseListIndex(GrType listType) {
-        const uint fileId = get().fileId;
+        const size_t fileId = get().fileId;
         advance();
 
         for (;;) {
@@ -5153,7 +5153,7 @@ final class GrParser {
             logError(getError(Error.noValToConv), getError(Error.missingVal));
         checkAdvance();
 
-        const uint fileId = get().fileId;
+        const size_t fileId = get().fileId;
         if (get().type != GrLexeme.Type.lesser)
             logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.lesser),
                     getPrettyLexemeType(get().type)), format(getError(Error.missingX),
@@ -5176,7 +5176,7 @@ final class GrParser {
 
     /// Analyse un élément assignable nommé ou `lvalue`
     private GrVariable parseLValue() {
-        const uint fileId = get().fileId;
+        const size_t fileId = get().fileId;
         if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedVarFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingVar));
@@ -5285,7 +5285,7 @@ final class GrParser {
 
     /// Analyse la partie droite d’une assignation multiple et les associe avec les `lvalues`
     private void parseAssignList(GrVariable[] lvalues, bool isInitialization = false) {
-        const uint fileId = get().fileId;
+        const size_t fileId = get().fileId;
         switch (get().type) with (GrLexeme.Type) {
         case assign:
             advance();
@@ -5360,7 +5360,7 @@ final class GrParser {
         }
     }
 
-    private void addDefaultValue(GrType type, uint fileId) {
+    private void addDefaultValue(GrType type, size_t fileId) {
         final switch (type.base) with (GrType.Base) {
         case int_:
         case bool_:
@@ -5553,7 +5553,7 @@ final class GrParser {
     ---
     */
     private GrType parseFunctionPointer() {
-        const uint fileId = get().fileId;
+        const size_t fileId = get().fileId;
         if (get().type != GrLexeme.Type.lesser)
             logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.lesser),
                     getPrettyLexemeType(get().type)), format(getError(Error.missingX),
@@ -5620,7 +5620,7 @@ final class GrParser {
             hadReference = false, isRightUnaryOperator = true, isEndOfExpression = false;
 
         GrSubExprResult result;
-        uint fileId;
+        size_t fileId;
 
         do {
             if (hasValue && currentType != lastType && lastType != grVoid) {
@@ -6653,7 +6653,7 @@ final class GrParser {
 
     /// Analyse un appel de fonction sur un type anonyme
     private GrType parseAnonymousCall(GrType type, GrType selfType = grVoid) {
-        const uint fileId = get().fileId;
+        const size_t fileId = get().fileId;
 
         if (type.base != GrType.Base.func && type.base != GrType.Base.task)
             logError(format(getError(Error.xNotCallable), getPrettyType(type)),
@@ -6754,7 +6754,7 @@ final class GrParser {
         const GrLexeme identifier = get();
         bool isFunctionCall = false, isMethodCall = false, hasParenthesis = false;
         string identifierName = identifier.strValue;
-        const uint fileId = identifier.fileId;
+        const size_t fileId = identifier.fileId;
 
         advance();
 
@@ -7034,7 +7034,7 @@ final class GrParser {
             GrLexeme lex = (isEnd() && offset >= 0) ? get(-1) : get(offset);
             error.filePath = lex.getFile();
             error.lineText = lex.getLine().replace("\t", " ");
-            error.line = lex.line + 1u; // Par convention, la première ligne commence à 1, et non 0.
+            error.line = lex.line;
             error.column = lex.column;
             error.textLength = lex.textLength;
         }
@@ -7055,7 +7055,7 @@ final class GrParser {
                 GrLexeme otherLex = isEnd() ? get(-1) : get();
                 error.otherFilePath = otherLex.getFile();
                 error.otherLineText = otherLex.getLine().replace("\t", " ");
-                error.otherLine = otherLex.line + 1u; // Par convention, la première ligne commence à 1, et non 0.
+                error.otherLine = otherLex.line;
                 error.otherColumn = otherLex.column;
                 error.otherTextLength = otherLex.textLength;
             }

@@ -26,9 +26,9 @@ struct GrStackTrace {
     /// Fichier source d’où la trace a été générée
     string file;
     /// Position dans le fichier source où l’erreur est survenue
-    uint line;
+    size_t line;
     /// Ditto
-    uint column;
+    size_t column;
 }
 
 /// Représente des informations de déboguage.
@@ -55,9 +55,9 @@ abstract class GrSymbol {
 final class GrFunctionSymbol : GrSymbol {
     public {
         /// Position de la fonction dans le bytecode
-        uint start;
+        size_t start;
         /// Nombre d’opcodes dans la fonction
-        uint length;
+        size_t length;
         /// Nom de la fonction
         string name;
         /// Fichier où la fonction est définie
@@ -65,7 +65,7 @@ final class GrFunctionSymbol : GrSymbol {
         /// Position d’origine du fichier source pour chaque instruction
         struct Position {
             /// Position source
-            uint line, column;
+            size_t line, column;
         }
         /// Ditto
         Position[] positions;
@@ -77,31 +77,31 @@ final class GrFunctionSymbol : GrSymbol {
 
     /// Sérialise le symbole vers le bytecode
     override void serialize(ref Appender!(ubyte[]) buffer) {
-        buffer.append!uint(start);
-        buffer.append!uint(length);
+        buffer.append!size_t(start);
+        buffer.append!size_t(length);
 
         writeStr(buffer, name);
         writeStr(buffer, file);
 
-        buffer.append!uint(cast(uint) positions.length);
-        for (uint i; i < positions.length; ++i) {
-            buffer.append!uint(positions[i].line);
-            buffer.append!uint(positions[i].column);
+        buffer.append!size_t(positions.length);
+        for (size_t i; i < positions.length; ++i) {
+            buffer.append!size_t(positions[i].line);
+            buffer.append!size_t(positions[i].column);
         }
     }
 
     /// Désérialise the symbole depuis le bytecode
     override void deserialize(ref ubyte[] buffer) {
-        start = buffer.read!uint();
-        length = buffer.read!uint();
+        start = buffer.read!size_t();
+        length = buffer.read!size_t();
 
         name = readStr(buffer);
         file = readStr(buffer);
 
-        positions.length = buffer.read!uint();
-        for (uint i; i < positions.length; ++i) {
-            positions[i].line = buffer.read!uint();
-            positions[i].column = buffer.read!uint();
+        positions.length = buffer.read!size_t();
+        for (size_t i; i < positions.length; ++i) {
+            positions[i].line = buffer.read!size_t();
+            positions[i].column = buffer.read!size_t();
         }
     }
 

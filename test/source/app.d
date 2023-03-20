@@ -24,8 +24,14 @@ void main() {
 
         GrCompiler compiler = new GrCompiler;
         compiler.addLibrary(stdlib);
-        GrBytecode bytecode = compiler.compileFile("script/test.gr",
-            GrOption.symbols | GrOption.safe, locale);
+
+        compiler.addSource(`
+export func foo()(string) {
+    return "Hello";
+}`);
+        compiler.addFile("script/test.gr");
+
+        GrBytecode bytecode = compiler.compile(GrOption.symbols | GrOption.safe, locale);
         if (!bytecode) {
             writeln(compiler.getError().prettify(locale));
             return;

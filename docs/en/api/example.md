@@ -7,7 +7,12 @@ GrLibrary stdlib = grLoadStdLibrary();
 // Compilation
 GrCompiler compiler = new GrCompiler;
 compiler.addLibrary(stdlib);
-GrBytecode bytecode = compiler.compileFile("script.gr", GrOption.symbols, GrLocale.en_US);
+compiler.addSource(`
+event main() {
+    print("Hello World !");
+}`);
+
+GrBytecode bytecode = compiler.compile(GrOption.symbols, GrLocale.en_US);
 if (!bytecode) {
     writeln(compiler.getError().prettify(locale));
     return;

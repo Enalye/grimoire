@@ -3,10 +3,8 @@
 A program must first be compiled before being run.
 ```d
 GrCompiler compiler = new GrCompiler;
-GrBytecode bytecode = compiler.compileFile(
-    "script.gr",
-    GrOption.none,
-    GrLocale.en_US);
+compiler.addFile("script.gr");
+GrBytecode bytecode = compiler.compileFile(GrOption.none, GrLocale.en_US);
 ```
 * `GrLocale` changes the language of error messages.
 * `GrOption` adds compilation data:
@@ -16,8 +14,7 @@ GrBytecode bytecode = compiler.compileFile(
     * `GrOption.safe`: Changes some instruction by more secure ones.
 
 ```d
-GrBytecode bytecode = compiler.compileFile(
-    "script.gr",
+GrBytecode bytecode = compiler.compile(
     GrOption.symbols | GrOption.profile | GrOption.safe,
     GrLocale.en_US);
 ```
@@ -28,14 +25,17 @@ if (!bytecode)
     writeln(compiler.getError().prettify());
 ```
 
-Required libraries must be added before compiling.
+Required libraries and scripts must be added before compiling.
 ```d
 GrLibrary stdlib = grLoadStdLibrary(); 
 
 GrCompiler compiler = new GrCompiler;
 compiler.addLibrary(stdlib);
 
-GrBytecode bytecode = compiler.compileFile("script.gr");
+compiler.addSource(`export func hello() { "Hello World !".print; }`});
+compiler.addFile("script.gr");
+
+GrBytecode bytecode = compiler.compile();
 ```
 
 The bytecode can be saved or loaded into a file.

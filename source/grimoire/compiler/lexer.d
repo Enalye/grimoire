@@ -8,7 +8,9 @@ module grimoire.compiler.lexer;
 import std.stdio, std.string, std.array, std.math, std.file;
 import std.conv : to, ConvOverflowException;
 import std.algorithm : canFind;
+
 import grimoire.assembly;
+
 import grimoire.compiler.data, grimoire.compiler.error, grimoire.compiler.util;
 
 /// Décrit la plus petite unité lexicale présent dans un fichier source
@@ -136,6 +138,7 @@ struct GrLexeme {
     }
 
     private this(GrLexer _lexer) {
+        _file = _lexer._file;
         _line = _lexer._line;
         _column = _lexer._current - _lexer._positionOfLine;
         _fileId = _lexer._fileId;
@@ -147,31 +150,34 @@ struct GrLexeme {
         GrLexer lexer;
 
         /// L’id du fichier dans lequel il est présent
-        uint _fileId;
+        size_t _fileId;
+
+        /// Le fichier dans lequel il est présent
+        GrScriptFile _file;
 
         /// Informations sur sa position en cas d’erreur
-        uint _line, _column, _textLength = 1;
+        size_t _line, _column, _textLength = 1;
     }
 
     @property {
         /// Sa ligne
-        uint line() const {
-            return _line;
+        size_t line() const {
+            return _line + _file.getLineOffset();
         }
         /// Sa colonne
-        uint column() const {
+        size_t column() const {
             return _column;
         }
         /// Taille du texte
-        uint textLength() const {
+        size_t textLength() const {
             return _textLength;
         }
         /// Ditto
-        uint textLength(uint textLength_) {
+        size_t textLength(size_t textLength_) {
             return _textLength = textLength_;
         }
         /// L’id du fichier
-        uint fileId() const {
+        size_t fileId() const {
             return _fileId;
         }
     }
@@ -222,13 +228,126 @@ struct GrLexeme {
     string strValue;
 
     /// Renvoie la ligne entière où le jeton est situé.
-    string getLine() {
-        return lexer.getLine(this);
+    string getLine() nothrow {
+        dstring txt;
+        try {
+            txt = _file.getText();
+            dstring[] lines = split(txt, "\n");
+            if (_line >= lines.length)
+                return "";
+            return to!string(lines[_line]);
+        }
+        catch (Exception e) {
+            return "";
+        }
     }
 
     /// Renvoie le nom du fichier où le jeton est situé.
-    string getFile() {
-        return lexer.getFile(this);
+    string getFile() const nothrow {
+        return _file.getPath();
+    }
+}
+
+/// Fichier de compilation
+package final class GrScriptFile {
+    private {
+        enum Type {
+            virtual,
+            system
+        }
+
+        Type _type;
+
+        string _path;
+        size_t _line;
+        dstring _source;
+    }
+
+    static {
+        /// Construit un fichier depuis du code source
+        GrScriptFile fromSource(dstring source, string path, size_t line) {
+            GrScriptFile file = new GrScriptFile;
+            file._make!(Type.virtual)(source, path, line);
+            return file;
+        }
+
+        /// Construit un fichier depuis un fichier système
+        GrScriptFile fromPath(string path, GrScriptFile relativeTo = null) {
+            GrScriptFile file = new GrScriptFile;
+            file._make!(Type.system)(_sanitizePath(path, relativeTo));
+            return file;
+        }
+
+        /// Transforme le chemin en chemin natif du système
+        private string _sanitizePath(string path, GrScriptFile relativeTo = null) {
+            import std.path : dirName, buildNormalizedPath, absolutePath;
+            import std.regex : replaceAll, regex;
+            import std.path : dirSeparator;
+
+            path = replaceAll(path, regex(r"\\/|/|\\"), dirSeparator);
+
+            if (relativeTo)
+                path = buildNormalizedPath(dirName(relativeTo._path), path);
+            else
+                path = buildNormalizedPath(path);
+
+            return absolutePath(path);
+        }
+    }
+
+    private this() {
+    }
+
+    /// Construit un fichier depuis du code source
+    private void _make(Type type = Type.virtual)(dstring source, string path, size_t line) {
+        _type = type;
+        _source = source;
+        _path = path;
+        _line = line;
+    }
+
+    /// Construit un fichier depuis un fichier système
+    private void _make(Type type = Type.system)(string path) {
+        _type = type;
+        _path = path;
+    }
+
+    /// Retourne le contenu du fichier
+    dstring getText() const {
+        final switch (_type) with (Type) {
+        case virtual:
+            return _source;
+        case system:
+            return to!dstring(readText(_path));
+        }
+    }
+
+    /// Retourne le chemin du fichier
+    string getPath() const nothrow {
+        return _path;
+    }
+
+    /// La ligne de départ du fichier
+    size_t getLineOffset() const {
+        final switch (_type) with (Type) {
+        case virtual:
+            return _line;
+        case system:
+            return 1; // Par convention, la première ligne commence à 1, et non 0.
+        }
+    }
+
+    bool opEquals(const GrScriptFile other) const {
+        final switch (_type) with (Type) {
+        case virtual:
+            return false;
+        case system:
+            return other._type == Type.system;
+        }
+    }
+
+    override size_t toHash() const @trusted {
+        return typeid(this).getHash(cast(void*) this);
     }
 }
 
@@ -236,11 +355,11 @@ struct GrLexeme {
 /// puis génère une série de lexème qui seront analysé par le parseur.
 package final class GrLexer {
     private {
-        string[] _filesToImport, _filesImported;
+        GrScriptFile[] _filesToImport, _filesImported;
+        GrScriptFile _file;
         dstring[] _lines;
-        string _file;
         dstring _text;
-        uint _line, _current, _positionOfLine, _fileId;
+        size_t _line, _current, _positionOfLine, _fileId;
         GrLexeme[] _lexemes;
         GrLocale _locale;
         GrData _data;
@@ -257,23 +376,28 @@ package final class GrLexer {
         _locale = locale;
     }
 
+    void addFile(GrScriptFile file) {
+        foreach (other; _filesToImport) {
+            if (file == other)
+                return;
+        }
+
+        foreach (other; _filesImported) {
+            if (file == other)
+                return;
+        }
+
+        _filesToImport ~= file;
+    }
+
     /// Analyse le fichier racine et toutes ses dépendances.
-    void scanFile(GrData data, string fileName) {
-        import std.path : buildNormalizedPath, absolutePath;
-
+    void scan(GrData data) {
         _data = data;
-
-        string filePath = to!string(fileName);
-        filePath = buildNormalizedPath(convertPathToImport(filePath));
-        filePath = absolutePath(filePath);
-        fileName = to!string(filePath);
-
-        _filesToImport ~= fileName;
 
         while (_filesToImport.length) {
             _file = _filesToImport[$ - 1];
             _filesImported ~= _file;
-            _text = to!dstring(readText(_file));
+            _text = _file.getText();
             _filesToImport.length--;
 
             _line = 0u;
@@ -287,34 +411,11 @@ package final class GrLexer {
         }
     }
 
-    /// Récupère toute la ligne sur lequel un lexème est présent.
-    package string getLine(GrLexeme lex) nothrow {
-        if (lex._fileId >= _filesImported.length)
-            return "";
-        dstring txt;
-        try {
-            txt = to!dstring(readText(_filesImported[lex._fileId]));
-            _lines = split(txt, "\n");
-            if (lex._line >= _lines.length)
-                return "";
-            return to!string(_lines[lex._line]);
-        }
-        catch (Exception e) {
-            return "";
-        }
-    }
-
-    /// Récupère le fichier où le lexème est présent.
-    package string getFile(GrLexeme lex) nothrow {
-        if (lex._fileId >= _filesImported.length)
-            return "";
-        return _filesImported[lex._fileId];
-    }
     /// Ditto
     package string getFile(size_t fileId) nothrow {
         if (fileId >= _filesImported.length)
             return "";
-        return _filesImported[fileId];
+        return _filesImported[fileId].getPath();
     }
 
     /// Renvoie le caractère présent à la position du curseur.
@@ -1510,18 +1611,8 @@ package final class GrLexer {
         _lexemes ~= lex;
     }
 
-    /// Transforme le chemin en chemin natif du système.
-    private string convertPathToImport(string path) {
-        import std.regex : replaceAll, regex;
-        import std.path : dirSeparator;
-
-        return replaceAll(path, regex(r"\\/|/|\\"), dirSeparator);
-    }
-
     /// Ajoute un seul chemin de fichier délimité par `"` à la liste de fichiers à importer.
     private void scanFilePath() {
-        import std.path : dirName, buildNormalizedPath, absolutePath;
-
         if (get() != '\"')
             raiseError(Error.expectedQuoteStartString);
         _current++;
@@ -1541,13 +1632,8 @@ package final class GrLexer {
             buffer ~= symbol;
             _current++;
         }
-        string filePath = to!string(buffer);
-        filePath = buildNormalizedPath(dirName(to!string(_file)), convertPathToImport(filePath));
-        filePath = absolutePath(filePath);
-        buffer = to!string(filePath);
-        if (_filesImported.canFind(buffer) || _filesToImport.canFind(buffer))
-            return;
-        _filesToImport ~= buffer;
+
+        addFile(GrScriptFile.fromPath(buffer, _file));
     }
 
     /// Analyse la directive `import`.

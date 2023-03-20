@@ -19,6 +19,7 @@ final class GrCompiler {
     private {
         GrData _data;
         GrError _error;
+        GrScriptFile[] _files;
         uint _userVersion;
     }
 
@@ -32,6 +33,20 @@ final class GrCompiler {
         _data.addLibrary(library);
     }
 
+    /// Ajoute du code source à la liste des scripts à compiler
+    void addSource(string source, string file = __FILE_FULL_PATH__, size_t line = __LINE__) {
+        addSource(to!dstring(source), file, line);
+    }
+    /// Ditto
+    void addSource(dstring source, string file = __FILE_FULL_PATH__, size_t line = __LINE__) {
+        _files ~= GrScriptFile.fromSource(source, file, line);
+    }
+
+    /// Ajoute un fichier à la liste des scripts à compiler
+    void addFile(string path) {
+        _files ~= GrScriptFile.fromPath(path);
+    }
+
     /** 
      * Compile un fichier source en bytecode
      * Paramètres:
@@ -41,14 +56,18 @@ final class GrCompiler {
      * Returne:
      *  Le bytecode généré, sinon vérifiez `getError()`
      */
-    GrBytecode compileFile(string fileName, int options = GrOption.none,
-        GrLocale locale = GrLocale.en_US) {
+    GrBytecode compile(int options = GrOption.none, GrLocale locale = GrLocale.en_US) {
         _error = null;
         _data.checkUnknownTypes();
 
         try {
             GrLexer lexer = new GrLexer(locale);
-            lexer.scanFile(_data, fileName);
+
+            foreach (GrScriptFile file; _files) {
+                lexer.addFile(file);
+            }
+
+            lexer.scan(_data);
 
             GrParser parser = new GrParser(locale);
             parser.parseScript(_data, lexer, options);

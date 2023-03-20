@@ -80,7 +80,7 @@ final class GrData {
     }
 
     /// Ce type est-il déjà déclaré dans ce fichier ?
-    package bool isTypeDeclared(const string name, uint fileId, bool isExport) const {
+    package bool isTypeDeclared(const string name, size_t fileId, bool isExport) const {
         if (isEnum(name, fileId, isExport))
             return true;
         if (isClass(name, fileId, isExport))
@@ -107,7 +107,7 @@ final class GrData {
 
     /// Définit une énumération
     package GrType addEnum(const string name, const string[] fieldNames,
-        const int[] values, uint fileId, bool isExport) {
+        const int[] values, size_t fileId, bool isExport) {
         GrEnumDefinition enumDef = new GrEnumDefinition;
         enumDef.name = name;
 
@@ -133,7 +133,7 @@ final class GrData {
     }
 
     /// Définit une classe
-    package void registerClass(const string name, uint fileId, bool isExport,
+    package void registerClass(const string name, size_t fileId, bool isExport,
         string[] templateVariables, uint position) {
         GrClassDefinition class_ = new GrClassDefinition;
         class_.name = name;
@@ -145,7 +145,7 @@ final class GrData {
     }
 
     /// Definit un alias de type
-    package GrType addAlias(const string name, const GrType type, uint fileId, bool isExport) {
+    package GrType addAlias(const string name, const GrType type, size_t fileId, bool isExport) {
         GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
         typeAlias.name = name;
         typeAlias.type = type;
@@ -156,7 +156,8 @@ final class GrData {
     }
 
     /// Definit un alias temporaire pour la généricité
-    package GrType addTemplateAlias(const string name, const GrType type, uint fileId, bool isExport) {
+    package GrType addTemplateAlias(const string name, const GrType type,
+        size_t fileId, bool isExport) {
         GrTypeAliasDefinition typeAlias = new GrTypeAliasDefinition;
         typeAlias.name = name;
         typeAlias.type = type;
@@ -172,7 +173,7 @@ final class GrData {
     }
 
     /// L’énumération existe-elle ?
-    package bool isEnum(const string name, uint fileId, bool isExport) const {
+    package bool isEnum(const string name, size_t fileId, bool isExport) const {
         foreach (enumType; _enumDefinitions) {
             if (enumType.name == name && (enumType.fileId == fileId || enumType.isExport || isExport))
                 return true;
@@ -190,7 +191,7 @@ final class GrData {
     }
 
     /// La classe existe-elle ?
-    package bool isClass(const string name, uint fileId, bool isExport) const {
+    package bool isClass(const string name, size_t fileId, bool isExport) const {
         foreach (class_; _abstractClassDefinitions) {
             if (class_.name == name && (class_.fileId == fileId || class_.isExport || isExport))
                 return true;
@@ -208,7 +209,7 @@ final class GrData {
     }
 
     /// L’alias existe-il ?
-    package bool isTypeAlias(const string name, uint fileId, bool isExport) const {
+    package bool isTypeAlias(const string name, size_t fileId, bool isExport) const {
         foreach (typeAlias; _templateAliasDefinitions) {
             if (typeAlias.name == name && (typeAlias.fileId == fileId ||
                     typeAlias.isExport || isExport))
@@ -281,7 +282,7 @@ final class GrData {
     }
 
     /// Renvoie la définition de l’énumération
-    GrEnumDefinition getEnum(const string name, uint fileId) {
+    GrEnumDefinition getEnum(const string name, size_t fileId) {
         import std.conv : to;
 
         foreach (enumType; _enumDefinitions) {
@@ -292,7 +293,7 @@ final class GrData {
     }
 
     /// Renvoie la définition de la classe
-    GrClassDefinition getClass(const string mangledName, uint fileId, bool isExport = false) {
+    GrClassDefinition getClass(const string mangledName, size_t fileId, bool isExport = false) {
         import std.algorithm.searching : findSplitBefore;
 
         foreach (class_; _classDefinitions) {
@@ -354,7 +355,7 @@ final class GrData {
     }
 
     /// Renvoie la définition de l’alias de type
-    GrTypeAliasDefinition getTypeAlias(const string name, uint fileId, bool isExport = false) {
+    GrTypeAliasDefinition getTypeAlias(const string name, size_t fileId, bool isExport = false) {
         foreach (typeAlias; _templateAliasDefinitions) {
             if (typeAlias.name == name && (typeAlias.fileId == fileId ||
                     typeAlias.isExport || isExport))
@@ -687,7 +688,7 @@ final class GrData {
 
     /// Vérifie si la première signature correspond ou peut être promu (par héritage) à la seconde
     bool isSignatureCompatible(const GrType[] first, const GrType[] second,
-        bool isAbstract, uint fileId, bool isExport = false) {
+        bool isAbstract, size_t fileId, bool isExport = false) {
         if (first.length != second.length)
             return false;
         __signatureLoop: for (int i; i < first.length; ++i) {
