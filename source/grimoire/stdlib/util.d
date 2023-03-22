@@ -7,7 +7,7 @@ module grimoire.stdlib.util;
 
 import grimoire.assembly, grimoire.compiler;
 
-package {
+private {
     void function(string) _stdOut = &_defaultOutput;
 }
 
@@ -29,4 +29,8 @@ private void _defaultOutput(string message) {
     import std.stdio : writeln;
 
     writeln(message);
+}
+
+pragma(inline) void grPrint(string message) {
+    _stdOut(message);
 }

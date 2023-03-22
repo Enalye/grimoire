@@ -88,5 +88,5 @@ private void _print(GrCall call) {
         }
     }
 
-    _stdOut(formatValue(grUnmangle(call.getInType(0)), call.getValue(0)));
+    grPrint(formatValue(grUnmangle(call.getInType(0)), call.getValue(0)));
 }

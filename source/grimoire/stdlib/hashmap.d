@@ -296,5 +296,5 @@ private void _print_(string T)(GrCall call) {
             static assert(false);
     }
     result ~= "}";
-    _stdOut(result);
+    grPrint(result);
 }
