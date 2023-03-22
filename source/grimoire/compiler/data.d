@@ -768,6 +768,8 @@ final class GrData {
                         continue __signatureLoop;
                     }
                     const GrClassDefinition classType = getClass(className, fileId, isExport);
+                    enforce(classType, "class type `" ~ className ~ "` does not exist");
+
                     if (!classType.parent.length)
                         return false;
                     className = classType.parent;
@@ -789,6 +791,8 @@ final class GrData {
                         continue __signatureLoop;
                     }
                     const GrNativeDefinition nativeType = getNative(nativeName);
+                    enforce(nativeType, "native type `" ~ nativeName ~ "` does not exist");
+
                     if (!nativeType.parent.length)
                         return false;
                     nativeName = nativeType.parent;
