@@ -356,8 +356,10 @@ final class GrParser {
             anonymousFunctions ~= func;
             func.lexPosition = current;
 
+            func.makeClosure();
+
             // Remplacé par l’adresse de la fonction dans `solveFunctionCalls()`
-            addInstruction(GrOpcode.const_int, 0u);
+            addInstruction(GrOpcode.closure, 0u);
         }
         else {
             func.name = name;
@@ -1656,7 +1658,7 @@ final class GrParser {
         if (func !is null) {
             call.functionToCall = func;
             call.position = cast(uint) currentFunction.instructions.length;
-            addInstruction(GrOpcode.const_int, 0);
+            addInstruction(GrOpcode.address, 0u);
 
             return grGetFunctionAsType(func);
         }
@@ -1673,7 +1675,7 @@ final class GrParser {
         call.isAddress = true;
         call.functionToCall = func;
         call.position = cast(uint) currentFunction.instructions.length;
-        addInstruction(GrOpcode.const_int, 0);
+        addInstruction(GrOpcode.address, 0u);
         return grGetFunctionAsType(func);
     }
 
@@ -1757,8 +1759,8 @@ final class GrParser {
                 func = getAnonymousFunction(call.name, call.signature, call.fileId);
             if (func) {
                 if (call.isAddress)
-                    setOpcode(opcodes, call.position, GrOpcode.const_int,
-                        registerIntConstant(func.position));
+                    setOpcode(opcodes, call.position, GrOpcode.address,
+                        registerUIntConstant(func.position));
                 else if (func.isTask)
                     setOpcode(opcodes, call.position, GrOpcode.task, func.position);
                 else
@@ -1771,7 +1773,7 @@ final class GrParser {
 
         foreach (func; anonymousFunctions)
             setOpcode(opcodes, func.anonParent.position + func.anonParent.offset + func.anonReference,
-                GrOpcode.const_int, registerIntConstant(func.position));
+                GrOpcode.closure, registerUIntConstant(func.position));
     }
 
     package void dump() {

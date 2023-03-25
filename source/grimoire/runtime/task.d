@@ -9,12 +9,13 @@ import std.exception : enforce;
 
 import grimoire.assembly;
 
-import grimoire.runtime.engine;
-import grimoire.runtime.value;
-import grimoire.runtime.string;
-import grimoire.runtime.list;
 import grimoire.runtime.channel;
+import grimoire.runtime.closure;
+import grimoire.runtime.engine;
+import grimoire.runtime.list;
 import grimoire.runtime.object;
+import grimoire.runtime.string;
+import grimoire.runtime.value;
 
 /// Représente un appel de fonction dans la pile d’appels
 struct GrStackFrame {
@@ -63,6 +64,9 @@ final class GrTask {
 
     /// La machine virtuelle
     GrEngine engine;
+
+    /// Contexte parent de la fonction/tâche
+    GrClosure closure;
 
     /// Pile des variables locales
     GrValue[] locals;

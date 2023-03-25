@@ -601,6 +601,15 @@ package class GrFunction {
         scopes.length--;
     }
 
+    void makeClosure() {
+        if (!anonParent || anonParent.name == "@global")
+            return;
+
+        registerAvailables = anonParent.registerAvailables;
+        scopes = anonParent.scopes;
+        localsCount = anonParent.localsCount;
+    }
+
     private void freeRegister(const GrVariable variable) {
         final switch (variable.type.base) with (GrType.Base) {
         case int_:

@@ -8,15 +8,17 @@ module grimoire.runtime.call;
 import std.conv : to;
 import std.exception : enforce;
 
-import grimoire.assembly, grimoire.compiler;
+import grimoire.assembly;
+import grimoire.compiler;
 
-import grimoire.runtime.task;
+import grimoire.runtime.channel;
+import grimoire.runtime.closure;
 import grimoire.runtime.event;
-import grimoire.runtime.value;
+import grimoire.runtime.list;
 import grimoire.runtime.object;
 import grimoire.runtime.string;
-import grimoire.runtime.list;
-import grimoire.runtime.channel;
+import grimoire.runtime.task;
+import grimoire.runtime.value;
 
 /// Type des fonctions de rappel des primitives
 alias GrCallback = void function(GrCall);
@@ -136,7 +138,7 @@ final class GrCall {
     }
 
     pragma(inline) GrEvent getEvent(uint index) const {
-        return _task.engine.getEvent(getParameter!GrInt(index));
+        return _task.engine.getEvent(cast(GrClosure) getParameter!GrPointer(index));
     }
 
     pragma(inline) T getNative(T)(uint index) const {
@@ -225,6 +227,11 @@ final class GrCall {
 
     pragma(inline) void setObject(GrObject value) {
         setResult!GrPointer(cast(GrPointer) value);
+    }
+
+    pragma(inline) void setEvent(GrEvent value) {
+        enforce(value.closure, "event has no closure");
+        setResult!GrPointer(cast(GrPointer) value.closure);
     }
 
     pragma(inline) void setNative(T)(T value) {
@@ -429,7 +436,7 @@ final class GrCall {
         return _task.engine.callEvent(name, signature, parameters);
     }
     /// Ditto
-    GrTask callEvent(const GrEvent event, GrValue[] parameters = []) {
+    GrTask callEvent(GrEvent event, GrValue[] parameters = []) {
         return _task.engine.callEvent(event, parameters);
     }
 

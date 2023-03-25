@@ -165,6 +165,8 @@ enum GrOpcode {
 
     localStack,
     call,
+    address,
+    closure,
     anonymousCall,
     primitiveCall,
     safePrimitiveCall,
@@ -874,6 +876,10 @@ final class GrBytecode {
                 return "local";
             case call:
                 return "call";
+            case address:
+                return "addr";
+            case closure:
+                return "closure";
             case anonymousCall:
                 return "acall";
             case primitiveCall:
@@ -930,56 +936,87 @@ final class GrBytecode {
 
             string line = leftJustify("[" ~ to!string(i) ~ "]", 10) ~ leftJustify(
                 getPrettyInstruction(op), 15);
-            if ((op == GrOpcode.task) || (op >= GrOpcode.localStore &&
-                    op <= GrOpcode.localLoad) || (op >= GrOpcode.globalStore && op <= GrOpcode.globalLoad) ||
-                op == GrOpcode.globalPush || (op >= GrOpcode.localStack && op <= GrOpcode.call) ||
-                (op == GrOpcode.new_) || (op >= GrOpcode.fieldRefLoad &&
-                    op <= GrOpcode.fieldLoad2) || (op == GrOpcode.channel) || (op == GrOpcode.list))
-                line ~= to!string(grGetInstructionUnsignedValue(opcode));
-            else if (op == GrOpcode.fieldRefStore)
-                line ~= to!string(grGetInstructionSignedValue(opcode));
-            else if (op == GrOpcode.shiftStack)
-                line ~= to!string(grGetInstructionSignedValue(opcode));
-            else if (op == GrOpcode.anonymousCall)
-                line ~= to!string(grGetInstructionUnsignedValue(opcode));
-            else if (op == GrOpcode.primitiveCall || op == GrOpcode.safePrimitiveCall) {
-                const uint index = grGetInstructionUnsignedValue(opcode);
-                if (index < primitives.length) {
-                    const GrBytecode.PrimitiveReference primitive = primitives[index];
 
-                    GrType[] inSignature, outSignature;
-                    foreach (type; primitive.inSignature) {
-                        inSignature ~= grUnmangle(type);
-                    }
-                    foreach (type; primitive.outSignature) {
-                        outSignature ~= grUnmangle(type);
-                    }
+            switch (op) with (GrOpcode) {
+            case task:
+            case localStore: .. case localLoad:
+            case globalStore: .. case globalLoad:
+            case globalPush:
+            case localStack: .. case call:
+            case new_:
+            case fieldRefLoad: .. case fieldLoad2:
+            case channel:
+            case list:
+                line ~= to!string(grGetInstructionUnsignedValue(opcode));
+                break;
+            case fieldRefStore:
+                line ~= to!string(grGetInstructionSignedValue(opcode));
+                break;
+            case shiftStack:
+                line ~= to!string(grGetInstructionSignedValue(opcode));
+                break;
+            case anonymousCall:
+                line ~= to!string(grGetInstructionUnsignedValue(opcode));
+                break;
+            case primitiveCall:
+            case safePrimitiveCall: {
+                    const uint index = grGetInstructionUnsignedValue(opcode);
+                    if (index < primitives.length) {
+                        const GrBytecode.PrimitiveReference primitive = primitives[index];
 
-                    line ~= grGetPrettyFunction(primitive.name, inSignature, outSignature);
+                        GrType[] inSignature, outSignature;
+                        foreach (type; primitive.inSignature) {
+                            inSignature ~= grUnmangle(type);
+                        }
+                        foreach (type; primitive.outSignature) {
+                            outSignature ~= grUnmangle(type);
+                        }
+
+                        line ~= grGetPrettyFunction(primitive.name, inSignature, outSignature);
+                    }
+                    else {
+                        line ~= to!string(index);
+                    }
                 }
-                else {
-                    line ~= to!string(index);
-                }
-            }
-            else if (op == GrOpcode.const_int)
-                line ~= to!string(intConsts[grGetInstructionUnsignedValue(opcode)]);
-            else if (op == GrOpcode.const_uint)
+                break;
+            case address:
+            case closure:
                 line ~= to!string(uintConsts[grGetInstructionUnsignedValue(opcode)]);
-            else if (op == GrOpcode.const_byte)
+                break;
+            case const_int:
+                line ~= to!string(intConsts[grGetInstructionUnsignedValue(opcode)]);
+                break;
+            case const_uint:
+                line ~= to!string(uintConsts[grGetInstructionUnsignedValue(opcode)]);
+                break;
+            case const_byte:
                 line ~= to!string(byteConsts[grGetInstructionUnsignedValue(opcode)]);
-            else if (op == GrOpcode.const_float)
+                break;
+            case const_float:
                 line ~= to!string(floatConsts[grGetInstructionUnsignedValue(opcode)]);
-            else if (op == GrOpcode.const_bool)
+                break;
+            case const_bool:
                 line ~= (grGetInstructionUnsignedValue(opcode) ? "true" : "false");
-            else if (op == GrOpcode.const_string || op == GrOpcode.const_meta ||
-                op == GrOpcode.debugProfileBegin)
+                break;
+            case const_string:
+            case const_meta:
+            case debugProfileBegin:
                 line ~= "\"" ~ to!string(strConsts[grGetInstructionUnsignedValue(opcode)]) ~ "\"";
-            else if (op >= GrOpcode.jump && op <= GrOpcode.jumpNotEqual)
+                break;
+            case jump: .. case jumpNotEqual:
                 line ~= to!string(i + grGetInstructionSignedValue(opcode));
-            else if (op == GrOpcode.defer || op == GrOpcode.try_ || op == GrOpcode.catch_ ||
-                op == GrOpcode.tryChannel || op == GrOpcode.optionalCall ||
-                op == GrOpcode.optionalCall2)
+                break;
+            case defer:
+            case try_:
+            case catch_:
+            case tryChannel:
+            case optionalCall:
+            case optionalCall2:
                 line ~= to!string(i + grGetInstructionSignedValue(opcode));
+                break;
+            default:
+                break;
+            }
 
             i++;
             result ~= line ~ "\n";

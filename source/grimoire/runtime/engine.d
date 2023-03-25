@@ -15,14 +15,15 @@ import std.exception : enforce;
 
 import grimoire.compiler, grimoire.assembly;
 
-import grimoire.runtime.task;
+import grimoire.runtime.call;
+import grimoire.runtime.channel;
+import grimoire.runtime.closure;
 import grimoire.runtime.event;
-import grimoire.runtime.value;
+import grimoire.runtime.list;
 import grimoire.runtime.object;
 import grimoire.runtime.string;
-import grimoire.runtime.list;
-import grimoire.runtime.channel;
-import grimoire.runtime.call;
+import grimoire.runtime.task;
+import grimoire.runtime.value;
 
 /// La machine virtuelle de grimoire
 class GrEngine {
@@ -183,10 +184,10 @@ class GrEngine {
 
     /// Récupère un événement à l’adresse indiqué. \
     /// Si l’adresse ne correspond à aucun événement, il ne sera pas retourné.
-    GrEvent getEvent(GrInt address_) const {
+    GrEvent getEvent(GrClosure closure) const {
         foreach (string name, uint address; _bytecode.events) {
-            if (address == address_)
-                return new GrEvent(name, address);
+            if (address == closure.pc)
+                return new GrEvent(name, address, closure);
         }
         return null;
     }
@@ -196,7 +197,7 @@ class GrEngine {
         const string mangledName = grMangleComposite(name_, signature);
         foreach (string name, uint address; _bytecode.events) {
             if (mangledName == name)
-                return new GrEvent(name, address);
+                return new GrEvent(name, address, null);
         }
         return null;
     }
@@ -247,8 +248,7 @@ class GrEngine {
     }
 
     /// Ditto
-    GrTask callEvent(const GrEvent event, GrValue[] parameters = [],
-        Priority priority = Priority.normal) {
+    GrTask callEvent(GrEvent event, GrValue[] parameters = [], Priority priority = Priority.normal) {
         if (!isRunning || !_allowEventCall || event is null)
             return null;
 
@@ -265,6 +265,7 @@ class GrEngine {
         for (size_t i; i < parameters.length; ++i)
             task.stack[i] = parameters[i];
         task.stackPos = (cast(int) parameters.length) - 1;
+        task.closure = event.closure;
 
         final switch (priority) with (Priority) {
         case immediate:
@@ -631,7 +632,15 @@ class GrEngine {
                     break;
                 case anonymousTask:
                     GrTask nTask = new GrTask(this);
-                    nTask.pc = cast(uint) currentTask.stack[currentTask.stackPos]._intValue;
+
+                    GrClosure closure = cast(GrClosure) currentTask
+                        .stack[currentTask.stackPos]._ptrValue;
+                    nTask.pc = closure.pc;
+
+                    if (closure.caller) {
+                        nTask.closure = closure;
+                    }
+
                     currentTask.stackPos--;
                     _createdTasks ~= nTask;
                     currentTask.pc++;
@@ -1689,6 +1698,12 @@ class GrEngine {
                     if ((currentTask.localsPos + stackSize) >= currentTask.localsLimit)
                         currentTask.doubleLocalsStackSize(currentTask.localsPos + stackSize);
                     currentTask.pc++;
+
+                    if (currentTask.closure) {
+                        currentTask.locals[currentTask.localsPos .. currentTask.localsPos +
+                            currentTask.closure.locals.length] = currentTask.closure.locals;
+                        currentTask.closure = null;
+                    }
                     break;
                 case call:
                     if ((currentTask.stackFramePos + 1) >= currentTask.callStackLimit)
@@ -1700,6 +1715,24 @@ class GrEngine {
                     currentTask.stackFramePos++;
                     currentTask.pc = grGetInstructionUnsignedValue(opcode);
                     break;
+                case address:
+                    currentTask.stackPos++;
+                    if (currentTask.stackPos == currentTask.stack.length)
+                        currentTask.stack.length *= 2;
+                    GrClosure closure = new GrClosure(null,
+                        _bytecode.uintConsts[grGetInstructionUnsignedValue(opcode)]);
+                    currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer) closure;
+                    currentTask.pc++;
+                    break;
+                case closure:
+                    currentTask.stackPos++;
+                    if (currentTask.stackPos == currentTask.stack.length)
+                        currentTask.stack.length *= 2;
+                    GrClosure closure = new GrClosure(currentTask,
+                        _bytecode.uintConsts[grGetInstructionUnsignedValue(opcode)]);
+                    currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer) closure;
+                    currentTask.pc++;
+                    break;
                 case anonymousCall:
                     if ((currentTask.stackFramePos + 1) >= currentTask.callStackLimit)
                         currentTask.doubleCallStackSize();
@@ -1710,7 +1743,12 @@ class GrEngine {
                     currentTask.stackFramePos++;
                     uint pos = currentTask.stackPos - cast(int) grGetInstructionUnsignedValue(
                         opcode);
-                    currentTask.pc = cast(uint) currentTask.stack[pos]._intValue;
+                    GrClosure closure = cast(GrClosure) currentTask.stack[pos]._ptrValue;
+                    currentTask.pc = closure.pc;
+
+                    if (closure.caller) {
+                        currentTask.closure = closure;
+                    }
 
                     // On décale toute la signature
                     while (pos != currentTask.stackPos)
