@@ -2643,9 +2643,7 @@ final class GrParser {
         GrType[] inSignature;
 
         if (get().type != GrLexeme.Type.leftParenthesis)
-            logError(getError(Error.missingParentheses), format(getError(Error.expectedXFoundY),
-                    getPrettyLexemeType(GrLexeme.Type.leftParenthesis),
-                    getPrettyLexemeType(get().type)));
+            return [];
 
         bool startLoop = true;
         for (;;) {
