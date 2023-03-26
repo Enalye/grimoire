@@ -2293,14 +2293,13 @@ final class GrParser {
         while (parent.length) {
             GrClassDefinition parentClass = getClass(parent, fileId);
             if (!parentClass) {
-                set(lastClass.position + 2u);
-                logError(format(getError(Error.xCantInheritFromY),
-                        getPrettyType(grGetClassType(class_.name)), parent),
-                    getError(Error.unknownClass));
+                set(lastClass.position + 1u);
+                logError(format(getError(Error.xCantInheritFromY), getPrettyType(grGetClassType(class_.name)),
+                        grUnmangleComposite(parent).name), getError(Error.unknownClass));
             }
             for (int i; i < usedClasses.length; ++i) {
                 if (parent == usedClasses[i]) {
-                    set(lastClass.position + 2u);
+                    set(lastClass.position + 1u);
                     logError(format(getError(Error.xIncludedRecursively),
                             getPrettyType(grGetClassType(parent))),
                         getError(Error.recursiveInheritence));

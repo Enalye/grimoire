@@ -99,9 +99,6 @@ private bool _register(GrData, GrType type, const GrType[] types) {
     case int_:
     case bool_:
     case enum_:
-    case func:
-    case task:
-    case event:
         return type == GrType.Base.int_ || type == GrType.Base.bool_ ||
             type == GrType.Base.func || type == GrType.Base.task ||
             type == GrType.Base.event || type == GrType.Base.enum_;
@@ -121,6 +118,9 @@ private bool _register(GrData, GrType type, const GrType[] types) {
     case channel:
     case class_:
     case native:
+    case func:
+    case task:
+    case event:
     case reference:
     case null_:
         return type == GrType.Base.optional || type == GrType.Base.class_ ||
