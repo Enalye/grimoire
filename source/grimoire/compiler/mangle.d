@@ -123,6 +123,11 @@ GrType[] grUnmangleSignature(const string mangledSignature) {
             currentType.base = GrType.Base.task;
             currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             break;
+        case 'v':
+            i++;
+            currentType.base = GrType.Base.event;
+            currentType.mangledType = grUnmangleBlock(mangledSignature, i);
+            break;
         case 'c':
             i++;
             currentType.base = GrType.Base.channel;
@@ -371,6 +376,12 @@ GrType grUnmangle(const string mangledSignature) {
         case 't':
             i++;
             currentType.base = GrType.Base.task;
+            currentType.mangledType = grUnmangleBlock(mangledSignature, i);
+            i++;
+            break;
+        case 'v':
+            i++;
+            currentType.base = GrType.Base.event;
             currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             i++;
             break;

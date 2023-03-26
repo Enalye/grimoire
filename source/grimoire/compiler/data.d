@@ -721,12 +721,18 @@ final class GrData {
             case list:
             case channel:
             case optional:
-                if (first[i].base != second[i].base)
+                if (first[i].base != second[i].base) {
+                    if (isSignatureCompatible([first[i]],
+                            [grUnmangle(second[i].mangledType)], isAbstract, fileId, isExport))
+                        continue;
                     return false;
-                if (isSignatureCompatible([grUnmangle(first[i].mangledType)],
-                        [grUnmangle(second[i].mangledType)], isAbstract, fileId, isExport))
-                    continue;
-                return false;
+                }
+                else {
+                    if (isSignatureCompatible([grUnmangle(first[i].mangledType)],
+                            [grUnmangle(second[i].mangledType)], isAbstract, fileId, isExport))
+                        continue;
+                    return false;
+                }
             case func:
                 if (first[i].base != second[i].base)
                     return false;

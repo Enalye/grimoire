@@ -201,7 +201,7 @@ GrType grChannel(GrType subType) {
 }
 
 /// Renvoie une fonction avec sa signature
-GrType grFunction(GrType[] inSignature, GrType[] outSignature = []) {
+GrType grFunction(GrType[] inSignature = [], GrType[] outSignature = []) {
     GrType type = GrType.Base.func;
     type.mangledType = grMangleSignature(inSignature);
     type.mangledReturnType = grMangleSignature(outSignature);
@@ -209,12 +209,12 @@ GrType grFunction(GrType[] inSignature, GrType[] outSignature = []) {
 }
 
 /// Renvoie une tâche avec sa signature
-GrType grTask(GrType[] signature) {
+GrType grTask(GrType[] signature = []) {
     return GrType(GrType.Base.task, grMangleSignature(signature));
 }
 
 /// Renvoie un événement avec sa signature
-GrType grEvent(GrType[] signature) {
+GrType grEvent(GrType[] signature = []) {
     return GrType(GrType.Base.event, grMangleSignature(signature));
 }
 
