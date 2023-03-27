@@ -895,6 +895,18 @@ class GrEngine {
                     currentTask.stack[currentTask.stackPos - 1]._ptrValue = cast(GrPointer) field;
                     currentTask.pc++;
                     break;
+                case parentStore:
+                    currentTask.stackPos--;
+                    GrObject obj = cast(GrObject) currentTask.stack[currentTask.stackPos]._ptrValue;
+                    obj._nativeParent = currentTask.stack[currentTask.stackPos + 1]._ptrValue;
+                    currentTask.pc++;
+                    break;
+                case parentLoad:
+                    currentTask.stack[currentTask.stackPos]._ptrValue = (cast(
+                            GrObject) currentTask.stack[currentTask.stackPos]._ptrValue)
+                        ._nativeParent;
+                    currentTask.pc++;
+                    break;
                 case const_int:
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)

@@ -438,6 +438,8 @@ final class GrClassDefinition {
     string name;
     /// Sa classe mère
     string parent;
+    /// S’il hérite d’un natif, sa référence
+    GrNativeDefinition nativeParent;
     /// Types des champs
     GrType[] signature;
     /// Noms des champs

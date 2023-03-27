@@ -2293,9 +2293,16 @@ final class GrParser {
         while (parent.length) {
             GrClassDefinition parentClass = getClass(parent, fileId);
             if (!parentClass) {
-                set(lastClass.position + 1u);
-                logError(format(getError(Error.xCantInheritFromY), getPrettyType(grGetClassType(class_.name)),
-                        grUnmangleComposite(parent).name), getError(Error.unknownClass));
+                GrNativeDefinition parentNative = _data.getNative(parent);
+
+                if (!parentNative) {
+                    set(lastClass.position + 1u);
+                    logError(format(getError(Error.xCantInheritFromY), getPrettyType(grGetClassType(class_.name)),
+                            grUnmangleComposite(parent).name), getError(Error.unknownClass));
+                }
+
+                class_.nativeParent = parentNative;
+                break;
             }
             for (int i; i < usedClasses.length; ++i) {
                 if (parent == usedClasses[i]) {
@@ -4672,6 +4679,7 @@ final class GrParser {
     /// Tente de convertir le type source au type destinataire.
     private GrType convertType(GrType src, GrType dst, size_t fileId = 0,
         bool noFail = false, bool isExplicit = false) {
+
         if (src.base == dst.base) {
             final switch (src.base) with (GrType.Base) {
             case func:
@@ -4703,7 +4711,7 @@ final class GrParser {
                     if (className == dst.mangledType)
                         return dst;
                     const GrClassDefinition classType = getClass(className, fileId);
-                    if (!classType.parent.length)
+                    if (!classType || !classType.parent.length)
                         break;
                     className = classType.parent;
                 }
@@ -4722,11 +4730,28 @@ final class GrParser {
                     if (dst.mangledType == nativeName)
                         return dst;
                     const GrNativeDefinition nativeType = _data.getNative(nativeName);
-                    if (!nativeType.parent.length)
+                    if (!nativeType || !nativeType.parent.length)
                         break;
                     nativeName = nativeType.parent;
                 }
                 break;
+            }
+        }
+
+        if (src.base == GrType.Base.class_ && dst.base == GrType.Base.native) {
+            GrClassDefinition class_ = getClass(src.mangledType, fileId);
+            if (class_ && class_.nativeParent) {
+                string nativeName = class_.nativeParent.name;
+                for (;;) {
+                    if (nativeName == dst.mangledType) {
+                        addInstruction(GrOpcode.parentLoad);
+                        return dst;
+                    }
+                    const GrNativeDefinition nativeType = _data.getNative(nativeName);
+                    if (!nativeType || !nativeType.parent.length)
+                        break;
+                    nativeName = nativeType.parent;
+                }
             }
         }
 
@@ -4828,6 +4853,27 @@ final class GrParser {
                     logError(format(getError(Error.xNotDecl),
                             getPrettyType(objectType)), getError(Error.unknownClass), "", -1);
                 addInstruction(GrOpcode.new_, cast(uint) class_.index);
+
+                // Si la classe a un parent natif, on l’instancie ici, puis on l’associe avec parentStore
+                if (class_.nativeParent) {
+                    string name = "@static_" ~ grUnmangleComposite(class_.nativeParent.name).name;
+                    GrType[] signature = [
+                        GrType(GrType.Base.native, class_.nativeParent.name)
+                    ];
+                    auto matching = getFirstMatchingFuncOrPrim(name, signature, fileId);
+                    if (matching.prim) {
+                        addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
+                                : GrOpcode.primitiveCall, matching.prim.index);
+                    }
+                    else if (matching.func) {
+                        addFunctionCall(matching.func, fileId);
+                    }
+                    else {
+                        logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
+                                signature)), getError(Error.unknownFunc), "", -1);
+                    }
+                    addInstruction(GrOpcode.parentStore);
+                }
 
                 bool[] initFields;
                 uint[] lexPositions;
@@ -5975,20 +6021,38 @@ final class GrParser {
                             getPrettyLexemeType(get().type)), getError(Error.missingField));
                 const string identifier = get().strValue;
 
-                if (currentType.base == GrType.Base.native) {
-                    GrNativeDefinition native = _data.getNative(currentType.mangledType);
+                GrNativeDefinition nativeParent;
+                if (currentType.base == GrType.Base.class_) {
+                    GrClassDefinition class_ = getClass(currentType.mangledType, get().fileId);
+                    if (!class_)
+                        logError(format(getError(Error.xNotDecl),
+                                getPrettyType(currentType)), getError(Error.unknownType));
+
+                    if (class_.nativeParent) {
+                        nativeParent = class_.nativeParent;
+                    }
+                }
+
+                if (currentType.base == GrType.Base.native || nativeParent) {
+                    GrNativeDefinition native = nativeParent ? nativeParent : _data.getNative(
+                        currentType.mangledType);
                     if (!native)
                         logError(format(getError(Error.xNotDecl),
                                 getPrettyType(currentType)), getError(Error.unknownType));
 
                     const string propertyName = "@property_" ~ identifier;
-                    GrType[] signature = [currentType];
+                    GrType[] signature = nativeParent ? [
+                        GrType(GrType.Base.native, nativeParent.name)
+                    ] : [currentType];
 
                     GrLexeme.Type operatorType = get(1).type;
 
                     auto getFunc = getFirstMatchingFuncOrPrim(propertyName, signature, fileId);
                     if (getFunc.prim) {
                         checkAdvance();
+
+                        if (nativeParent)
+                            addInstruction(GrOpcode.parentLoad);
 
                         if (operatorType != GrLexeme.Type.assign) {
                             if (requireLValue(operatorType)) {
@@ -6077,7 +6141,7 @@ final class GrParser {
                         break;
                     }
                 }
-                else if (currentType.base == GrType.Base.class_) {
+                if (currentType.base == GrType.Base.class_) {
                     GrClassDefinition class_ = getClass(currentType.mangledType, get().fileId);
                     if (!class_)
                         logError(format(getError(Error.xNotDecl),

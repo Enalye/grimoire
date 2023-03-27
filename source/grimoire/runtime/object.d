@@ -12,22 +12,25 @@ import grimoire.runtime.string;
 import grimoire.runtime.list;
 
 /**
-A single field of an object. \
-We can't know at runtime the type of a field,
-so you need to check with its type definition.
+Un champ d’un objet. \
+On ne peut pas savoir le type du champs durant l’exécution,
+il faut donc se référer à sa définition de type.
 */
 package final class GrField {
     string name;
     GrValue value;
 }
 
-/// Object value in Grimoire runtime.
+/// Instance d’une classe
 final class GrObject {
     package {
-        /// Inner fields, indexes are known at compile time.
+        /// Référence un parent qui serait un type natif
+        GrPointer _nativeParent;
+
+        /// Champs de l’objet, les index sont connus à la compilation
         GrField[] _fields;
 
-        /// Build from definition
+        /// Init depuis sa définition
         this(const GrClassBuilder class_) {
             _fields.length = class_.fields.length;
             for (size_t index; index < _fields.length; ++index) {
@@ -37,13 +40,17 @@ final class GrObject {
         }
     }
 
-    /// Build from raw fields
+    /// Init avec des champs bruts
     this(const string[] fields_) {
         _fields.length = fields_.length;
         for (size_t index; index < _fields.length; ++index) {
             _fields[index] = new GrField;
             _fields[index].name = fields_[index];
         }
+    }
+
+    pragma(inline) T getNativeParent(T)() {
+        return cast(T) cast(Object) _nativeParent;
     }
 
     alias getValue = getField!GrValue;

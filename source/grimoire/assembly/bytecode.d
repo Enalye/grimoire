@@ -63,6 +63,8 @@ enum GrOpcode {
     fieldRefLoad2,
     fieldLoad,
     fieldLoad2,
+    parentStore,
+    parentLoad,
 
     const_int,
     const_uint,
@@ -686,6 +688,10 @@ final class GrBytecode {
                 return "fload";
             case fieldLoad2:
                 return "fload2";
+            case parentStore:
+                return "pstore";
+            case parentLoad:
+                return "pload";
             case const_int:
                 return "const.i";
             case const_uint:

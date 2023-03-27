@@ -310,6 +310,7 @@ final class GrData {
                 GrClassDefinition generatedClass = new GrClassDefinition;
                 generatedClass.name = mangledName;
                 generatedClass.parent = class_.parent;
+                generatedClass.nativeParent = class_.nativeParent;
                 generatedClass.signature = class_.signature;
                 generatedClass.fields = class_.fields;
                 generatedClass.templateVariables = class_.templateVariables;
