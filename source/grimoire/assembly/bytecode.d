@@ -202,6 +202,8 @@ package(grimoire) class GrClassBuilder {
     string name;
     /// Les champs de la classe
     string[] fields;
+    /// Hérite-t’il d’un parent natif ?
+    bool inheritFromNative;
 }
 
 /// Forme compilée d’un code grimoire.
@@ -431,6 +433,7 @@ final class GrBytecode {
             foreach (field; class_.fields) {
                 writeStr(buffer, field);
             }
+            buffer.append!bool(class_.inheritFromNative);
         }
 
         foreach (string name, ref Variable reference; variables) {
@@ -578,6 +581,7 @@ final class GrBytecode {
             for (size_t y; y < class_.fields.length; ++y) {
                 class_.fields[y] = readStr(buffer);
             }
+            class_.inheritFromNative = buffer.read!bool();
 
             classes[i] = class_;
         }

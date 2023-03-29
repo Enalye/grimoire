@@ -407,6 +407,7 @@ final class GrCompiler {
             GrClassBuilder class_ = new GrClassBuilder;
             class_.name = _data._classDefinitions[i].name;
             class_.fields = _data._classDefinitions[i].fields;
+            class_.inheritFromNative = _data._classDefinitions[i].nativeParent !is null;
             bytecode.classes ~= class_;
         }
 

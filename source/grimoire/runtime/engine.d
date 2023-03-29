@@ -1914,10 +1914,28 @@ class GrEngine {
     }
 
     /// Instancie un nouvel objet
-    GrObject createObject(string name) {
+    GrObject createObject(T)(string name) {
         GrClassBuilder* builder = (name in _classBuilders);
-        if (builder)
-            return new GrObject(*builder);
+        if (builder) {
+            enforce(!builder.inheritFromNative,
+                "this class inherits from a native parent, use `createObject(T)(string name, T nativeParent)` instead");
+            GrObject obj = new GrObject(*builder);
+            return obj;
+        }
+        return null;
+    }
+
+    /// Ditto
+    GrObject createObject(T)(string name, T nativeParent) if (is(T == class)) {
+        GrClassBuilder* builder = (name in _classBuilders);
+        if (builder) {
+            enforce(!builder.inheritFromNative,
+                "this class doesn't inherit from a native parent, use `createObject(T)(string name)` instead");
+            enforce(nativeParent, "the `nativeParent` attribute can't be null");
+            GrObject obj = new GrObject(*builder);
+            obj._nativeParent = *(cast(GrPointer*)&nativeParent);
+            return obj;
+        }
         return null;
     }
 

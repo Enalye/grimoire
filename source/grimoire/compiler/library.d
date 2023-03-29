@@ -54,32 +54,74 @@ interface GrLibDefinition {
         not,
     }
 
-    void setModule(string[]);
-    void setDescription(GrLocale, string = "");
-    void setParameters(GrLocale, string[] = []);
-    void setModuleInfo(GrLocale, string);
-    void setModuleDescription(GrLocale, string);
-    GrType addVariable(string, GrType);
-    GrType addVariable(string, GrType, GrValue, bool = false);
-    GrType addEnum(string, string[], int[] = []);
-    GrType addClass(string, string[], GrType[], string[] = [], string = "", GrType[] = [
+    /// Assigne un nom au module (ex: `["std", "hashmap"]`)
+    void setModule(string[] name);
+
+    /// Ajoute une description à la déclaration suivante
+    void setDescription(GrLocale locale, string message = "");
+
+    /// Ajoute des paramètres d’entrée à la déclaration suivante
+    void setParameters(GrLocale locale, string[] parameters = []);
+
+    /// Ajoute un message sous le nom du module
+    void setModuleInfo(GrLocale locale, string message);
+
+    /// Ajoute une description au module
+    void setModuleDescription(GrLocale locale, string message);
+
+    /// Définit une variable
+    GrType addVariable(string name, GrType type);
+
+    /// Définit une variable avec une valeur initiale
+    GrType addVariable(string name, GrType type, GrValue defaultValue, bool isConst = false);
+
+    /// Definit une énumération
+    GrType addEnum(string name, string[] fields, int[] values = []);
+
+    /// Definit une classe
+    GrType addClass(string name, string[] fields, GrType[] signature,
+        string[] templateVariables = [], string parent = "", GrType[] parentTemplateSignature = [
         ]);
-    GrType addAlias(string, GrType);
-    GrType addNative(string, string[] = [], string = "", GrType[] = []);
-    GrPrimitive addFunction(GrCallback, string, GrType[] = [], GrType[] = [], GrConstraint[] = [
+
+    /// Definit un alias de type
+    GrType addAlias(string name, GrType type);
+
+    /// Definit un type natif
+    GrType addNative(string name, string[] templateVariables = [],
+        string parent = "", GrType[] parentTemplateSignature = []);
+
+    /// Definit une nouvelle primitive
+    GrPrimitive addFunction(GrCallback callback, string name, GrType[] inSignature = [
+        ], GrType[] outSignature = [], GrConstraint[] constraints = []);
+
+    /// Surcharge un opérateur binaire ou unaire tel que `+`, `==`, etc
+    GrPrimitive addOperator(GrCallback callback, Operator operator,
+        GrType[] inSignature, GrType outType, GrConstraint[] constraints = []);
+
+    /// Ditto
+    GrPrimitive addOperator(GrCallback callback, string name,
+        GrType[] inSignature, GrType outType, GrConstraint[] constraints = []);
+
+    /// Définit une convertion entre deux types différents
+    GrPrimitive addCast(GrCallback callback, GrType inType, GrType outType,
+        bool isExplicit = false, GrConstraint[] constraints = []);
+
+    /// Ajoute un constructeur
+    GrPrimitive addConstructor(GrCallback callback, GrType type,
+        GrType[] inSignature = [], GrConstraint[] constraints = []);
+
+    /// Ajoute une fonction statique lié à un type
+    GrPrimitive addStatic(GrCallback callback, GrType type, string name,
+        GrType[] = [], GrType[] = [], GrConstraint[] constraints = []);
+
+    /// Définit des primitives qui agiront comme un champ d’une classe mais pour un natif. \
+    /// Laisser `setCallback` à `null` rendra la propriété constante.
+    /// * `getCallback` prend `nativeType`  en entrée et doit renvoyer `propertyType` en sortie.
+    /// * `setCallback` prend `nativeType` et `propertyType`  en entrée et doit renvoyer `propertyType` en sortie.
+    GrPrimitive[] addProperty(GrCallback getCallback, GrCallback setCallback,
+        string name, GrType nativeType, GrType propertyType, GrConstraint[] constraints = [
         ]);
-    GrPrimitive addOperator(GrCallback, Operator operator, GrType[],
-        GrType outType, GrConstraint[] = []);
-    GrPrimitive addOperator(GrCallback, string, GrType[], GrType outType, GrConstraint[] = [
-        ]);
-    GrPrimitive addCast(GrCallback, GrType, GrType, bool = false, GrConstraint[] = [
-        ]);
-    GrPrimitive addConstructor(GrCallback, GrType, GrType[] = [], GrConstraint[] = [
-        ]);
-    GrPrimitive addStatic(GrCallback, GrType, string, GrType[] = [],
-        GrType[] = [], GrConstraint[] = []);
-    GrPrimitive[] addProperty(GrCallback, GrCallback, string, GrType, GrType, GrConstraint[] = [
-        ]);
+
     /// Enregistre une nouvelle contrainte
     void addConstraint(GrConstraint.Predicate predicate, const string name, uint arity = 0);
 }
@@ -318,7 +360,7 @@ final class GrLibrary : GrLibDefinition {
         return primitive;
     }
 
-    /// Surcharge un opérateur binaire ou untaire tel que `+`, `==`, etc
+    /// Surcharge un opérateur binaire ou unaire tel que `+`, `==`, etc
     override GrPrimitive addOperator(GrCallback callback, Operator operator,
         GrType[] inSignature, GrType outType, GrConstraint[] constraints = []) {
         string name;

@@ -410,8 +410,13 @@ final class GrCall {
     }
 
     /// Instancie un nouvel objet
-    GrObject createObject(string name) {
+    GrObject createObject(T)(string name) {
         return _task.engine.createObject(name);
+    }
+
+    /// Ditto
+    GrObject createObject(T)(string name, T nativeParent) if (is(T == class)) {
+        return _task.engine.createObject(name, nativeParent);
     }
 
     /// Récupère le nom du champ de l’énumération correspondant à une valeur donnée
