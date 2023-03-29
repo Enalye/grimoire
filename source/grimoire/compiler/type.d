@@ -317,6 +317,8 @@ package class GrVariable {
     size_t fileId;
     /// Sa position en cas d’erreurs
     uint lexPosition;
+    /// Ditto
+    bool hasLexPosition;
     /// La variable peut-elle ne rien valoir ?
     bool isOptional;
     /// Position de l’instruction optionnelle
@@ -562,7 +564,7 @@ package class GrFunction {
     /// Le fichier d’où cette fonction est déclarée
     size_t fileId;
 
-    uint lexPosition;
+    uint lexPosition, nameLexPosition;
 
     struct DebugPositionSymbol {
         size_t line, column;
@@ -669,7 +671,7 @@ package class GrTemplateFunction {
 
     GrConstraint[] constraints;
 
-    uint lexPosition;
+    uint lexPosition, nameLexPosition;
 }
 
 package class GrFunctionCall {

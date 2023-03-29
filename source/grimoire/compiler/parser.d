@@ -213,10 +213,60 @@ final class GrParser {
     }
 
     /// Enregistre une nouvelle variable
-    private GrVariable registerVariable(string name, GrType type, bool isAuto,
-        bool isGlobal, bool isConst, bool isExport, bool isDeferred = false) {
+    private GrVariable registerVariable(string name, GrType type, bool isAuto, bool isGlobal, bool isConst,
+        bool isExport, bool isDeferred = false, uint lexPosition = 0, bool hasPosition = false) {
 
-        assertNoGlobalDeclaration(name, get().fileId, isExport);
+        size_t fileId = get().fileId;
+
+        { // On vérifie si d’autres définitions existent
+            bool isAlreadyDeclared, hasDeclPosition;
+            uint declPosition;
+
+            foreach (GrVariable variable; globalVariables) {
+                if (variable.name == name && (variable.fileId == fileId ||
+                        variable.isExport || isExport)) {
+                    isAlreadyDeclared = true;
+                    declPosition = variable.lexPosition;
+                    hasDeclPosition = variable.hasLexPosition;
+                    break;
+                }
+            }
+
+            if (!isAlreadyDeclared) {
+                foreach (primitive; _data._abstractPrimitives) {
+                    if (primitive.name == name) {
+                        isAlreadyDeclared = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!isAlreadyDeclared) {
+                foreach (GrTemplateFunction func; templatedFunctions) {
+                    if (func.name == name && (func.fileId == fileId || func.isExport || isExport)) {
+                        isAlreadyDeclared = true;
+                        declPosition = func.nameLexPosition;
+                        hasDeclPosition = true;
+                    }
+                }
+            }
+
+            if (isAlreadyDeclared) {
+                if (hasPosition) {
+                    current = lexPosition;
+                }
+
+                if (hasDeclPosition) {
+                    logError(format(getError(Error.nameXDefMultipleTimes), name),
+                        format(getError(Error.xRedefHere), name), "", 0,
+                        format(getError(Error.prevDefOfX), name), declPosition);
+                }
+                else {
+                    logError(format(getError(Error.nameXDefMultipleTimes),
+                            name), format(getError(Error.prevDefPrim), name));
+                }
+            }
+        }
 
         GrVariable variable = new GrVariable;
         variable.isAuto = isAuto;
@@ -226,8 +276,15 @@ final class GrParser {
         variable.isConst = isConst;
         variable.name = name;
         variable.isExport = isExport;
-        variable.fileId = get().fileId;
-        variable.lexPosition = current;
+        variable.fileId = fileId;
+
+        if (hasPosition) {
+            variable.hasLexPosition = true;
+            variable.lexPosition = lexPosition;
+        }
+        else {
+            variable.lexPosition = current;
+        }
 
         if (!isAuto)
             setVariableRegister(variable);
@@ -248,26 +305,6 @@ final class GrParser {
                 return variable;
         }
         return null;
-    }
-
-    private void assertNoGlobalDeclaration(string name, size_t fileId, bool isExport) {
-        GrVariable variable;
-        GrFunction func;
-        if ((variable = getGlobalVariable(name, fileId, isExport)) !is null)
-            logError(format(getError(Error.nameXDefMultipleTimes), name),
-                format(getError(Error.xRedefHere), name), "", 0,
-                format(getError(Error.prevDefOfX), name), variable.lexPosition);
-        if (_data.isPrimitiveDeclared(name))
-            logError(format(getError(Error.nameXDefMultipleTimes), name),
-                format(getError(Error.prevDefPrim), name));
-        if ((func = getFunction(name, fileId, isExport)) !is null)
-            logError(format(getError(Error.nameXDefMultipleTimes), name),
-                format(getError(Error.xRedefHere), name), "", 0,
-                format(getError(Error.prevDefOfX), name), func.lexPosition);
-        if ((func = getEvent(name)) !is null)
-            logError(format(getError(Error.nameXDefMultipleTimes), name),
-                format(getError(Error.xRedefHere), name), "", 0,
-                format(getError(Error.prevDefOfX), name), func.lexPosition);
     }
 
     private void setVariableRegister(GrVariable variable) {
@@ -337,9 +374,9 @@ final class GrParser {
         currentFunction = func;
     }
 
-    private void preBeginFunction(string name, size_t fileId, GrType[] signature,
-        string[] inputVariables, bool isTask, GrType[] outSignature = [],
-        bool isAnonymous = false, bool isEvent = false, bool isExport = false) {
+    private void preBeginFunction(string name, uint nameLexPosition, size_t fileId,
+        GrType[] signature, string[] inputVariables, bool isTask, GrType[] outSignature = [
+        ], bool isAnonymous = false, bool isEvent = false, bool isExport = false) {
         GrFunction func = new GrFunction;
         func.isTask = isTask;
         func.isEvent = isEvent;
@@ -347,6 +384,7 @@ final class GrParser {
         func.inSignature = signature;
         func.outSignature = outSignature;
         func.fileId = fileId;
+        func.nameLexPosition = nameLexPosition;
 
         if (isAnonymous) {
             func.anonParent = currentFunction;
@@ -366,7 +404,54 @@ final class GrParser {
             func.isExport = isExport;
 
             func.mangledName = grMangleComposite(name, signature);
-            assertNoGlobalDeclaration(func.mangledName, fileId, isExport);
+
+            { // On vérifie si d’autres définitions existent
+                bool isAlreadyDeclared, isPrimitive;
+                uint declPosition;
+
+                foreach (GrVariable variable; globalVariables) {
+                    if (variable.name == name && (variable.fileId == fileId ||
+                            variable.isExport || isExport)) {
+                        isAlreadyDeclared = true;
+                        declPosition = variable.lexPosition;
+                        break;
+                    }
+                }
+
+                foreach (primitive; _data._abstractPrimitives) {
+                    if (primitive.mangledName == func.mangledName) {
+                        isAlreadyDeclared = true;
+                        isPrimitive = true;
+                        break;
+                    }
+                }
+
+                foreach (GrTemplateFunction otherFunc; templatedFunctions) {
+                    if (otherFunc.name == name && (otherFunc.fileId == fileId ||
+                            otherFunc.isExport || isExport)) {
+                        if (grMangleComposite(otherFunc.name,
+                                otherFunc.inSignature) == func.mangledName) {
+                            isAlreadyDeclared = true;
+                            declPosition = otherFunc.nameLexPosition;
+                        }
+                    }
+                }
+
+                if (isAlreadyDeclared) {
+                    current = nameLexPosition;
+
+                    if (isPrimitive) {
+                        logError(format(getError(Error.funcXDefMultipleTimes),
+                                grGetPrettyFunction(func)),
+                            format(getError(Error.prevDefPrim), name));
+                    }
+                    else {
+                        logError(format(getError(Error.funcXDefMultipleTimes),
+                                grGetPrettyFunction(func)), format(getError(Error.xRedefHere), name), "", 0,
+                            format(getError(Error.prevDefOfX), name), declPosition);
+                    }
+                }
+            }
 
             func.lexPosition = current;
             functionsQueue ~= func;
@@ -2871,10 +2956,12 @@ final class GrParser {
             logError(format(getError(Error.expectedIdentifierFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
         string name = get().strValue;
+        uint nameLexPosition = current;
         string[] inputs;
         checkAdvance();
         GrType[] signature = parseInSignature(inputs);
-        preBeginFunction(name, get().fileId, signature, inputs, false, [], false, true, true);
+        preBeginFunction(name, nameLexPosition, get().fileId, signature,
+            inputs, false, [], false, true, true);
         skipBlock(true);
         preEndFunction();
     }
@@ -2887,6 +2974,7 @@ final class GrParser {
                     getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
 
         string name = get().strValue;
+        uint nameLexPosition = current;
         checkAdvance();
 
         GrTemplateFunction temp = new GrTemplateFunction;
@@ -2895,6 +2983,7 @@ final class GrParser {
         temp.templateVariables = templateVariables;
         temp.fileId = get().fileId;
         temp.isExport = isExport;
+        temp.nameLexPosition = nameLexPosition;
         temp.lexPosition = current;
 
         string[] inputs;
@@ -2911,6 +3000,7 @@ final class GrParser {
         bool isConversion, isOperator;
         GrType staticType;
         uint lexPosition;
+        uint nameLexPosition = current;
 
         if (get().type == GrLexeme.Type.as) {
             checkAdvance();
@@ -2919,6 +3009,7 @@ final class GrParser {
         }
         else if (get().type == GrLexeme.Type.at) {
             checkAdvance();
+            nameLexPosition = current;
             staticType = parseType(true, templateVariables);
             name = "@static_" ~ grUnmangleComposite(staticType.mangledType).name;
 
@@ -2932,6 +3023,7 @@ final class GrParser {
                     logError(format(getError(Error.expectedIdentifierFoundX),
                             getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
 
+                nameLexPosition = current;
                 name ~= "." ~ get().strValue;
                 checkAdvance();
             }
@@ -2970,6 +3062,7 @@ final class GrParser {
         temp.templateVariables = templateVariables;
         temp.fileId = get().fileId;
         temp.isExport = isExport;
+        temp.nameLexPosition = nameLexPosition;
         temp.lexPosition = current;
 
         string[] inputs;
@@ -3109,6 +3202,7 @@ final class GrParser {
         func.outSignature = outSignature;
         func.fileId = temp.fileId;
         func.isExport = temp.isExport;
+        func.nameLexPosition = temp.nameLexPosition;
         func.lexPosition = current;
         func.templateVariables = temp.templateVariables;
         func.templateSignature = templateList;
@@ -3119,6 +3213,7 @@ final class GrParser {
     }
 
     private GrType parseAnonymousFunction(bool isTask, bool isEvent) {
+        uint nameLexPosition = current;
         checkAdvance();
 
         string[] inputs;
@@ -3129,8 +3224,8 @@ final class GrParser {
             // Type de retour
             outSignature = parseSignature();
         }
-        preBeginFunction("$anon", get().fileId, inSignature, inputs, isTask,
-            outSignature, true, isEvent);
+        preBeginFunction("$anon", nameLexPosition, get().fileId, inSignature,
+            inputs, isTask, outSignature, true, isEvent);
         openDeferrableSection();
         parseBlock();
 
@@ -3687,6 +3782,7 @@ final class GrParser {
         bool isAuto;
 
         string[] identifiers;
+        uint[] nameLexPositions;
         do {
             if (get().type == GrLexeme.Type.comma)
                 checkAdvance();
@@ -3696,6 +3792,7 @@ final class GrParser {
                         getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
 
             identifiers ~= get().strValue;
+            nameLexPositions ~= current;
             checkAdvance();
         }
         while (get().type == GrLexeme.Type.comma);
@@ -3709,9 +3806,9 @@ final class GrParser {
         }
 
         GrVariable[] lvalues;
-        foreach (string identifier; identifiers) {
+        foreach (size_t i, string identifier; identifiers) {
             GrVariable lvalue = registerVariable(identifier, type, isAuto,
-                isGlobal, isConst, isExport, true);
+                isGlobal, isConst, isExport, true, nameLexPositions[i], true);
             lvalues ~= lvalue;
         }
 
@@ -5634,13 +5731,15 @@ final class GrParser {
             addStringConstant("");
             break;
         case func:
+            uint nameLexPosition = current;
             GrType[] inSignature = grUnmangleSignature(type.mangledType);
             GrType[] outSignature = grUnmangleSignature(type.mangledReturnType);
             string[] inputs;
             for (int i; i < inSignature.length; ++i) {
                 inputs ~= to!string(i);
             }
-            preBeginFunction("$anon", fileId, inSignature, inputs, false, outSignature, true);
+            preBeginFunction("$anon", nameLexPosition, fileId, inSignature,
+                inputs, false, outSignature, true);
             openDeferrableSection();
             foreach (outType; outSignature) {
                 addDefaultValue(outType, fileId);
@@ -5651,12 +5750,14 @@ final class GrParser {
             endFunction();
             break;
         case task:
+            uint nameLexPosition = current;
             GrType[] inSignature = grUnmangleSignature(type.mangledType);
             string[] inputs;
             for (int i; i < inSignature.length; ++i) {
                 inputs ~= to!string(i);
             }
-            preBeginFunction("$anon", fileId, inSignature, inputs, true, [], true);
+            preBeginFunction("$anon", nameLexPosition, fileId, inSignature,
+                inputs, true, [], true);
             openDeferrableSection();
             addDie();
             closeDeferrableSection();
@@ -5664,12 +5765,14 @@ final class GrParser {
             endFunction();
             break;
         case event:
+            uint nameLexPosition = current;
             GrType[] inSignature = grUnmangleSignature(type.mangledType);
             string[] inputs;
             for (int i; i < inSignature.length; ++i) {
                 inputs ~= to!string(i);
             }
-            preBeginFunction("$anon", fileId, inSignature, inputs, true, [], true, true);
+            preBeginFunction("$anon", nameLexPosition, fileId, inSignature,
+                inputs, true, [], true, true);
             openDeferrableSection();
             addDie();
             closeDeferrableSection();
@@ -7298,8 +7401,6 @@ final class GrParser {
         error.info = info;
         error.note = note;
 
-        //assert(message.length == 0);
-
         if (lexemes.length) {
             GrLexeme lex = (isEnd() && offset >= 0) ? get(-1) : get(offset);
             error.filePath = lex.getFile();
@@ -7344,6 +7445,7 @@ final class GrParser {
         eofReached,
         eof,
         nameXDefMultipleTimes,
+        funcXDefMultipleTimes,
         xRedefHere,
         prevDefOfX,
         prevDefPrim,
@@ -7608,6 +7710,8 @@ final class GrParser {
                 return "`%s` is not declared";
             case nameXDefMultipleTimes:
                 return "the name `%s` is defined multiple times";
+            case funcXDefMultipleTimes:
+                return "the function `%s` is defined multiple times";
             case xRedefHere:
                 return "`%s` is redefined here";
             case prevDefOfX:
@@ -8065,6 +8169,8 @@ final class GrParser {
                 return "`%s` n’est pas déclaré";
             case nameXDefMultipleTimes:
                 return "le nom `%s` est défini plusieurs fois";
+            case funcXDefMultipleTimes:
+                return "la fonction `%s` est définie plusieurs fois";
             case xRedefHere:
                 return "`%s` est redéfini ici";
             case prevDefOfX:
