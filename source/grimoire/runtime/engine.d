@@ -1588,7 +1588,9 @@ class GrEngine {
                     currentTask.pc++;
                     break;
                 case swap:
-                    swapAt(currentTask.stack, currentTask.stackPos - 1, currentTask.stackPos);
+                    swapAt(currentTask.stack,
+                        currentTask.stackPos - cast(int) grGetInstructionUnsignedValue(opcode),
+                        currentTask.stackPos);
                     currentTask.pc++;
                     break;
                 case setupIterator:

@@ -81,7 +81,8 @@ final class GrCall {
         _callback(this);
 
         static if (isSafe) {
-            enforce(_results == _outSignature.length, "the primitive `" ~ prettify() ~ "` returned " ~ to!string(
+            enforce(_results == _outSignature.length || _hasError,
+                "the primitive `" ~ prettify() ~ "` returned " ~ to!string(
                     _results) ~ " value(s) instead of " ~ to!string(_outSignature.length));
         }
 

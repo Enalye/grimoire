@@ -41,7 +41,7 @@ final class GrParser {
         uint scopeLevel;
 
         GrVariable[] globalVariables;
-        GrFunction[] instanciatedFunctions, functionsQueue, functions, events;
+        GrFunction[] functionsQueue, functions, events;
         GrFunction[] anonymousFunctions;
         GrTemplateFunction[] templatedFunctions;
 
@@ -457,7 +457,7 @@ final class GrParser {
             GrFunction func;
         }
 
-        void assertSignaturePurity(GrType[] funcSignature) {
+        bool checkSignaturePurity(GrType[] funcSignature) {
             for (int i; i < signature.length; ++i) {
                 final switch (signature[i].base) with (GrType.Base) {
                 case void_:
@@ -483,45 +483,300 @@ final class GrParser {
                 case channel:
                 case reference:
                     if (signature[i].isPure && !funcSignature[i].isPure) {
-                        logError(format(getError(Error.cantCallXWithArgsYBecausePure),
-                                grGetPrettyFunctionCall(name, funcSignature),
-                                grGetPrettyFunctionCall("", signature)),
-                            getError(Error.callCanCauseASideEffect),
-                            getError(Error.maybeUsePure), -1);
+                        return false;
                     }
                     continue;
                 }
             }
+            return true;
         }
 
         Result result;
 
-        const string mangledName = grMangleComposite(name, signature);
-        result.prim = _data.getPrimitive(mangledName);
-        if (result.prim) {
-            assertSignaturePurity(result.prim.inSignature);
-            return result;
+        struct AvailableFunc {
+            enum Type {
+                function_,
+                primitive,
+                tempFunction,
+                tempPrimitive
+            }
+
+            Type type;
+
+            union {
+                GrFunction func;
+                GrPrimitive prim;
+                GrTemplateFunction tempFunc;
+            }
         }
 
-        foreach (GrFunction func; functions) {
-            if (func.mangledName == mangledName && (func.fileId == fileId ||
-                    func.isExport || isExport)) {
-                result.func = func;
-                assertSignaturePurity(result.func.inSignature);
-                return result;
+        AvailableFunc[] fetchAvailableFuncs(string name, size_t fileId, bool isExport) {
+            AvailableFunc[] availableFuncs;
+            foreach (GrFunction func; functions ~ functionsQueue) {
+                if (func.name == name && (func.fileId == fileId || func.isExport || isExport)) {
+                    AvailableFunc av;
+                    av.func = func;
+                    av.type = AvailableFunc.Type.function_;
+                    availableFuncs ~= av;
+                }
             }
-        }
-        foreach (GrFunction func; functionsQueue) {
-            if (func.mangledName == mangledName && (func.fileId == fileId ||
-                    func.isExport || isExport)) {
-                result.func = func;
-                assertSignaturePurity(result.func.inSignature);
-                return result;
+            foreach (GrTemplateFunction func; templatedFunctions) {
+                if (func.name == name && (func.fileId == fileId || func.isExport || isExport)) {
+                    AvailableFunc av;
+                    av.tempFunc = func;
+                    av.type = AvailableFunc.Type.tempFunction;
+                    availableFuncs ~= av;
+                }
             }
+            foreach (GrPrimitive prim; _data._primitives) {
+                if (prim.name == name) {
+                    AvailableFunc av;
+                    av.prim = prim;
+                    av.type = AvailableFunc.Type.primitive;
+                    availableFuncs ~= av;
+                }
+            }
+            foreach (GrPrimitive prim; _data._abstractPrimitives) {
+                if (prim.name == name) {
+                    AvailableFunc av;
+                    av.prim = prim;
+                    av.type = AvailableFunc.Type.tempPrimitive;
+                    availableFuncs ~= av;
+                }
+            }
+
+            return availableFuncs;
         }
-        foreach (GrFunction func; instanciatedFunctions) {
-            if (func.mangledName == mangledName && (func.fileId == fileId ||
-                    func.isExport || isExport)) {
+
+        AvailableFunc[] filterAvailableFuncs(AvailableFunc[] availableFuncs,
+            string name, GrType[] signature, size_t fileId, bool isExport) {
+
+            const string mangledName = grMangleComposite(name, signature);
+            int minScore = int.max - 1;
+            AvailableFunc[] filteredFuncs;
+
+            if (name == "@as")
+                minScore = 0;
+
+            foreach (AvailableFunc av; availableFuncs) {
+                int currentScore = int.max;
+
+                final switch (av.type) with (AvailableFunc.Type) {
+                case function_:
+                    if (av.func.mangledName == mangledName) {
+                        currentScore = -2;
+                    }
+                    else if (minScore >= -1 && _data.isSignatureCompatible(signature,
+                            av.func.inSignature, false, fileId, isExport)) {
+                        if (checkSignaturePurity(av.func.inSignature))
+                            currentScore = -1;
+                    }
+                    else if (minScore > 0) {
+                        uint nbOperations;
+                        if (convertSignature(nbOperations, signature,
+                                av.func.inSignature, false, fileId, true)) {
+                            if (checkSignaturePurity(av.func.inSignature))
+                                currentScore = nbOperations + 1;
+                        }
+                    }
+                    break;
+                case primitive:
+                    if (av.prim.mangledName == mangledName) {
+                        currentScore = -2;
+                    }
+                    else if (minScore >= -1 && _data.isSignatureCompatible(signature,
+                            av.prim.inSignature, false, fileId, true)) {
+                        if (checkSignaturePurity(av.prim.inSignature))
+                            currentScore = -1;
+                    }
+                    else if (minScore > 0) {
+                        uint nbOperations;
+                        if (convertSignature(nbOperations, signature,
+                                av.prim.inSignature, false, fileId, true)) {
+                            if (checkSignaturePurity(av.prim.inSignature))
+                                currentScore = nbOperations + 1;
+                        }
+                    }
+                    break;
+                case tempFunction:
+                    GrAnyData anyData = new GrAnyData;
+                    _data.setAnyData(anyData);
+
+                    if (minScore >= 0 && _data.isSignatureCompatible(signature,
+                            av.tempFunc.inSignature, true, fileId, isExport)) {
+                        bool isValid = true;
+                        foreach (ref GrConstraint constraint; av.tempFunc.constraints) {
+                            if (!constraint.evaluate(_data, anyData)) {
+                                isValid = false;
+                                break;
+                            }
+                        }
+                        if (isValid && checkSignaturePurity(av.tempFunc.inSignature))
+                            currentScore = 0;
+                    }
+                    else if (minScore > 0) {
+                        uint nbOperations;
+                        anyData = new GrAnyData;
+                        _data.setAnyData(anyData);
+
+                        if (convertSignature(nbOperations, signature,
+                                av.tempFunc.inSignature, true, fileId, true)) {
+                            bool isValid = true;
+                            foreach (ref GrConstraint constraint; av.tempFunc.constraints) {
+                                if (!constraint.evaluate(_data, anyData)) {
+                                    isValid = false;
+                                    break;
+                                }
+                            }
+                            if (isValid && checkSignaturePurity(av.tempFunc.inSignature))
+                                currentScore = nbOperations + 1;
+                        }
+                    }
+                    break;
+                case tempPrimitive:
+                    GrAnyData anyData = new GrAnyData;
+                    _data.setAnyData(anyData);
+
+                    if (minScore >= 0 && _data.isSignatureCompatible(signature,
+                            av.prim.inSignature, true, fileId, true)) {
+                        bool isValid = true;
+                        foreach (ref GrConstraint constraint; av.prim.constraints) {
+                            if (!constraint.evaluate(_data, anyData)) {
+                                isValid = false;
+                                break;
+                            }
+                        }
+                        if (isValid && checkSignaturePurity(av.prim.inSignature))
+                            currentScore = 0;
+                    }
+                    else if (minScore > 0) {
+                        uint nbOperations;
+                        anyData = new GrAnyData;
+                        _data.setAnyData(anyData);
+
+                        if (convertSignature(nbOperations, signature,
+                                av.prim.inSignature, true, fileId, true)) {
+                            bool isValid = true;
+                            foreach (ref GrConstraint constraint; av.prim.constraints) {
+                                if (!constraint.evaluate(_data, anyData)) {
+                                    isValid = false;
+                                    break;
+                                }
+                            }
+                            if (isValid && checkSignaturePurity(av.prim.inSignature))
+                                currentScore = nbOperations + 1;
+                        }
+                    }
+                    break;
+                }
+
+                if (currentScore == minScore) {
+                    filteredFuncs ~= av;
+                }
+                if (currentScore < minScore) {
+                    minScore = currentScore;
+                    filteredFuncs.length = 0;
+                    filteredFuncs ~= av;
+                }
+            }
+
+            return filteredFuncs;
+        }
+
+        AvailableFunc[] filterRemainingFuncs(AvailableFunc[] availableFuncs) {
+            AvailableFunc[] filteredFuncs;
+            bool hasReifiedFunc;
+
+            foreach (AvailableFunc av; availableFuncs) {
+                final switch (av.type) with (AvailableFunc.Type) {
+                case function_:
+                case primitive:
+                    if (!hasReifiedFunc) {
+                        hasReifiedFunc = true;
+                        filteredFuncs.length = 0;
+                    }
+                    filteredFuncs ~= av;
+                    break;
+                case tempFunction:
+                case tempPrimitive:
+                    if (hasReifiedFunc) {
+                        continue;
+                    }
+                    filteredFuncs ~= av;
+                    break;
+                }
+            }
+
+            return filteredFuncs;
+        }
+
+        AvailableFunc[] availableFuncs = fetchAvailableFuncs(name, fileId, isExport);
+        availableFuncs = filterAvailableFuncs(availableFuncs, name, signature, fileId, isExport);
+        availableFuncs = filterRemainingFuncs(availableFuncs);
+
+        if (availableFuncs.length > 1) {
+            string[] matchingFuncNames;
+            foreach (AvailableFunc av; availableFuncs) {
+                final switch (av.type) with (AvailableFunc.Type) {
+                case function_:
+                    matchingFuncNames ~= getPrettyFunction(av.func);
+                    break;
+                case primitive:
+                    matchingFuncNames ~= grGetPrettyFunction(av.prim.name,
+                        av.prim.inSignature, av.prim.outSignature);
+                    break;
+                case tempFunction:
+                    matchingFuncNames ~= grGetPrettyFunction(av.tempFunc.name,
+                        av.tempFunc.inSignature, av.tempFunc.outSignature);
+                    break;
+                case tempPrimitive:
+                    matchingFuncNames ~= grGetPrettyFunction(av.prim.name,
+                        av.prim.inSignature, av.prim.outSignature);
+                    break;
+                }
+            }
+            string errorNote;
+            if (matchingFuncNames.length) {
+                foreach (size_t i, const string value; matchingFuncNames) {
+                    errorNote ~= "`" ~ value ~ "`";
+                    if ((i + 1) < matchingFuncNames.length)
+                        errorNote ~= ", ";
+                }
+                errorNote ~= ".";
+            }
+
+            logError(format(getError(Error.callXIsAmbiguous), grGetPrettyFunctionCall(name, signature)),
+                getError(Error.callMatchesSeveralInstances),
+                format(getError(Error.matchingInstancesAreX), errorNote), -1);
+        }
+        else if (availableFuncs.length) {
+            AvailableFunc bestMatch = availableFuncs[0];
+            uint nbOperations;
+
+            final switch (bestMatch.type) with (AvailableFunc.Type) {
+            case function_:
+                convertSignature(nbOperations, signature,
+                    bestMatch.func.inSignature, false, fileId, false);
+                result.func = bestMatch.func;
+                break;
+            case primitive:
+                convertSignature(nbOperations, signature,
+                    bestMatch.prim.inSignature, false, fileId, false);
+                result.prim = bestMatch.prim;
+                break;
+            case tempFunction:
+                GrAnyData anyData = new GrAnyData;
+                _data.setAnyData(anyData);
+
+                convertSignature(nbOperations, signature,
+                    bestMatch.tempFunc.inSignature, true, fileId, false);
+
+                GrType[] templateSignature;
+                for (int i; i < bestMatch.tempFunc.templateVariables.length; ++i) {
+                    templateSignature ~= anyData.get(bestMatch.tempFunc.templateVariables[i]);
+                }
+                GrFunction func = parseTemplatedFunctionDeclaration(bestMatch.tempFunc,
+                    templateSignature);
                 functionsQueue ~= func;
 
                 functionStack ~= currentFunction;
@@ -531,94 +786,18 @@ final class GrParser {
                 functionStack.length--;
 
                 result.func = func;
-                assertSignaturePurity(result.func.inSignature);
-                return result;
-            }
-        }
-
-        result.prim = _data.getCompatiblePrimitive(name, signature);
-        if (result.prim) {
-            assertSignaturePurity(result.prim.inSignature);
-            return result;
-        }
-
-        foreach (GrFunction func; functions) {
-            if (func.name == name && (func.fileId == fileId || func.isExport || isExport)) {
-                if (_data.isSignatureCompatible(signature, func.inSignature,
-                        false, fileId, isExport)) {
-                    result.func = func;
-                    assertSignaturePurity(result.func.inSignature);
-                    return result;
-                }
-            }
-        }
-        foreach (GrFunction func; functionsQueue) {
-            if (func.name == name && (func.fileId == fileId || func.isExport || isExport)) {
-                if (_data.isSignatureCompatible(signature, func.inSignature,
-                        false, fileId, isExport)) {
-                    result.func = func;
-                    assertSignaturePurity(result.func.inSignature);
-                    return result;
-                }
-            }
-        }
-
-        foreach (GrFunction func; instanciatedFunctions) {
-            if (func.name == name && (func.fileId == fileId || func.isExport || isExport)) {
-                if (_data.isSignatureCompatible(signature, func.inSignature,
-                        false, fileId, isExport)) {
-                    functionsQueue ~= func;
-
-                    functionStack ~= currentFunction;
-                    currentFunction = func;
-                    generateFunctionInputs();
-                    currentFunction = functionStack[$ - 1];
-                    functionStack.length--;
-
-                    result.func = func;
-                    assertSignaturePurity(result.func.inSignature);
-                    return result;
-                }
-            }
-        }
-
-        result.prim = _data.getAbstractPrimitive(name, signature);
-        if (result.prim) {
-            assertSignaturePurity(result.prim.inSignature);
-            return result;
-        }
-
-        __functionLoop: foreach (GrTemplateFunction temp; templatedFunctions) {
-            if (temp.name == name && (temp.fileId == fileId || temp.isExport || isExport)) {
+                break;
+            case tempPrimitive:
                 GrAnyData anyData = new GrAnyData;
                 _data.setAnyData(anyData);
 
-                if (_data.isSignatureCompatible(signature, temp.inSignature,
-                        true, fileId, isExport)) {
-                    foreach (GrConstraint constraint; temp.constraints) {
-                        if (!constraint.evaluate(_data, anyData))
-                            continue __functionLoop;
-                    }
-                    GrType[] templateSignature;
-                    for (int i; i < temp.templateVariables.length; ++i) {
-                        templateSignature ~= anyData.get(temp.templateVariables[i]);
-                    }
-                    GrFunction func = parseTemplatedFunctionDeclaration(temp, templateSignature);
-                    functionsQueue ~= func;
+                convertSignature(nbOperations, signature,
+                    bestMatch.prim.inSignature, true, fileId, false);
 
-                    functionStack ~= currentFunction;
-                    currentFunction = func;
-                    generateFunctionInputs();
-                    currentFunction = functionStack[$ - 1];
-                    functionStack.length--;
-
-                    result.func = func;
-                    assertSignaturePurity(result.func.inSignature);
-                    return result;
-                }
+                result.prim = _data.reifyPrimitive(bestMatch.prim);
+                break;
             }
         }
-
         return result;
     }
 
@@ -655,36 +834,6 @@ final class GrParser {
                 if (_data.isSignatureCompatible(signature, func.inSignature,
                         false, fileId, isExport))
                     return func;
-            }
-        }
-        foreach (GrFunction func; instanciatedFunctions) {
-            if (func.mangledName == mangledName && (func.fileId == fileId ||
-                    func.isExport || isExport)) {
-                functionsQueue ~= func;
-
-                functionStack ~= currentFunction;
-                currentFunction = func;
-                generateFunctionInputs();
-                currentFunction = functionStack[$ - 1];
-                functionStack.length--;
-
-                return func;
-            }
-        }
-        foreach (GrFunction func; instanciatedFunctions) {
-            if (func.name == name && (func.fileId == fileId || func.isExport || isExport)) {
-                if (_data.isSignatureCompatible(signature, func.inSignature,
-                        false, fileId, isExport)) {
-                    functionsQueue ~= func;
-
-                    functionStack ~= currentFunction;
-                    currentFunction = func;
-                    generateFunctionInputs();
-                    currentFunction = functionStack[$ - 1];
-                    functionStack.length--;
-
-                    return func;
-                }
             }
         }
 
@@ -1022,14 +1171,14 @@ final class GrParser {
         }
         else if (lexType == GrLexeme.Type.concatenate &&
             rightType.base == GrType.Base.string_ && leftType != rightType) {
-            addInstruction(GrOpcode.swap);
+            addInstruction(GrOpcode.swap, 1);
             convertType(leftType, rightType, fileId);
             resultType = addInternalOperator(lexType, rightType, true);
         }
         else if (leftType.isIntegral && rightType.isFloating) {
             // Cas particulier: on a besoin de convertir l’entier en flottant
             // et d’inverser les deux valeurs
-            addInstruction(GrOpcode.swap);
+            addInstruction(GrOpcode.swap, 1);
             convertType(leftType, rightType, fileId);
             resultType = addInternalOperator(lexType, rightType, true);
 
@@ -1322,7 +1471,7 @@ final class GrParser {
                 return GrType(GrType.Base.float_);
             case substract:
                 if (isSwapped)
-                    addInstruction(GrOpcode.swap);
+                    addInstruction(GrOpcode.swap, 1);
                 addInstruction(GrOpcode.substract_float);
                 return GrType(GrType.Base.float_);
             case multiply:
@@ -1330,12 +1479,12 @@ final class GrParser {
                 return GrType(GrType.Base.float_);
             case divide:
                 if (isSwapped)
-                    addInstruction(GrOpcode.swap);
+                    addInstruction(GrOpcode.swap, 1);
                 addInstruction(GrOpcode.divide_float);
                 return GrType(GrType.Base.float_);
             case remainder:
                 if (isSwapped)
-                    addInstruction(GrOpcode.swap);
+                    addInstruction(GrOpcode.swap, 1);
                 addInstruction(GrOpcode.remainder_float);
                 return GrType(GrType.Base.float_);
             case minus:
@@ -1390,7 +1539,7 @@ final class GrParser {
                 return GrType(GrType.Base.double_);
             case substract:
                 if (isSwapped)
-                    addInstruction(GrOpcode.swap);
+                    addInstruction(GrOpcode.swap, 1);
                 addInstruction(GrOpcode.substract_double);
                 return GrType(GrType.Base.double_);
             case multiply:
@@ -1398,12 +1547,12 @@ final class GrParser {
                 return GrType(GrType.Base.double_);
             case divide:
                 if (isSwapped)
-                    addInstruction(GrOpcode.swap);
+                    addInstruction(GrOpcode.swap, 1);
                 addInstruction(GrOpcode.divide_double);
                 return GrType(GrType.Base.double_);
             case remainder:
                 if (isSwapped)
-                    addInstruction(GrOpcode.swap);
+                    addInstruction(GrOpcode.swap, 1);
                 addInstruction(GrOpcode.remainder_double);
                 return GrType(GrType.Base.double_);
             case minus:
@@ -1455,7 +1604,7 @@ final class GrParser {
             switch (lexType) with (GrLexeme.Type) {
             case concatenate:
                 if (isSwapped)
-                    addInstruction(GrOpcode.swap);
+                    addInstruction(GrOpcode.swap, 1);
                 addInstruction(GrOpcode.concatenate_string);
                 return GrType(GrType.Base.string_);
             case equal:
@@ -4676,9 +4825,60 @@ final class GrParser {
         }
     }
 
+    private bool convertSignature(ref uint operations, GrType[] srcSignature,
+        GrType[] dstSignature, bool isAbstract = false, size_t fileId = 0, bool isTest = false) {
+        const size_t len = srcSignature.length;
+        if (len != dstSignature.length)
+            return false;
+
+        if (len == 0)
+            return true;
+
+        operations = 0;
+
+        int[] swapOperations;
+
+        for (size_t i = 0; (i + 1) < len; ++i) {
+            GrType srcType = srcSignature[i];
+            GrType dstType = dstSignature[i];
+
+            if (!_data.isSignatureCompatible([srcType], [dstType], isAbstract, fileId)) {
+                int op = (cast(int)(len - i)) - 1;
+                swapOperations ~= op;
+
+                if (!isTest)
+                    addInstruction(GrOpcode.swap, op);
+
+                GrType result = convertType(srcType, dstType, fileId, true, false, isTest);
+                if (result.base == GrType.Base.void_)
+                    return false;
+                operations++;
+            }
+        }
+
+        if (!isTest) {
+            foreach_reverse (op; swapOperations) {
+                addInstruction(GrOpcode.swap, op);
+            }
+        }
+
+        if (len >= 1) {
+            GrType srcType = srcSignature[$ - 1];
+            GrType dstType = dstSignature[$ - 1];
+
+            if (!_data.isSignatureCompatible([srcType], [dstType], isAbstract, fileId)) {
+                GrType result = convertType(srcType, dstType, fileId, true, false, isTest);
+                if (result.base == GrType.Base.void_)
+                    return false;
+                operations++;
+            }
+        }
+        return true;
+    }
+
     /// Tente de convertir le type source au type destinataire.
     private GrType convertType(GrType src, GrType dst, size_t fileId = 0,
-        bool noFail = false, bool isExplicit = false) {
+        bool noFail = false, bool isExplicit = false, bool isTest = false) {
 
         if (src.base == dst.base) {
             final switch (src.base) with (GrType.Base) {
@@ -4744,7 +4944,8 @@ final class GrParser {
                 string nativeName = class_.nativeParent.name;
                 for (;;) {
                     if (nativeName == dst.mangledType) {
-                        addInstruction(GrOpcode.parentLoad);
+                        if (!isTest)
+                            addInstruction(GrOpcode.parentLoad);
                         return dst;
                     }
                     const GrNativeDefinition nativeType = _data.getNative(nativeName);
@@ -4761,7 +4962,7 @@ final class GrParser {
 
             GrType subType = grUnmangle(dst.mangledType);
 
-            if (convertType(src, subType, fileId, noFail, isExplicit).base == subType.base)
+            if (convertType(src, subType, fileId, noFail, isExplicit, isTest).base == subType.base)
                 return dst;
         }
 
@@ -4771,13 +4972,14 @@ final class GrParser {
 
         if (dst.base == GrType.Base.bool_) {
             if (src.isNullable) {
-                addInstruction(GrOpcode.checkNull);
+                if (!isTest)
+                    addInstruction(GrOpcode.checkNull);
                 return dst;
             }
         }
 
         // Conversion personnalisée
-        if (addCustomConversion(src, dst, isExplicit, get().fileId) == dst)
+        if (addCustomConversion(src, dst, isExplicit, get().fileId, isTest) == dst)
             return dst;
 
         if (!noFail)
@@ -4788,7 +4990,7 @@ final class GrParser {
 
     /// Convertit avec une fonction
     private GrType addCustomConversion(GrType leftType, GrType rightType,
-        bool isExplicit, size_t fileId) {
+        bool isExplicit, size_t fileId, bool isTest = false) {
         GrType resultType = GrType.Base.void_;
 
         // Contrairement aux autres fonctions, on a besoin que le type de retour (`rightType`)
@@ -4803,8 +5005,10 @@ final class GrParser {
             // Par ex: float -> int à cause d’un risque de perte d’information.
             if (matching.prim.isExplicit && !isExplicit)
                 return resultType;
-            addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
-                    : GrOpcode.primitiveCall, matching.prim.index);
+            if (!isTest) {
+                addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
+                        : GrOpcode.primitiveCall, matching.prim.index);
+            }
             if (matching.prim.outSignature.length != 1uL) {
                 logError(getError(Error.opMustHave1RetVal), format(getError(matching.prim.outSignature.length > 1 ?
                         Error.expectedXRetValsFoundY : Error.expectedXRetValFoundY),
@@ -4816,7 +5020,8 @@ final class GrParser {
         // fonction
         if (resultType.base == GrType.Base.void_) {
             if (matching.func) {
-                addFunctionCall(matching.func, fileId);
+                if (!isTest)
+                    addFunctionCall(matching.func, fileId);
                 if (matching.func.outSignature.length != 1uL) {
                     logError(getError(Error.opMustHave1RetVal), format(getError(matching.func.outSignature.length > 1 ?
                             Error.expectedXRetValsFoundY : Error.expectedXRetValFoundY),
@@ -7093,6 +7298,8 @@ final class GrParser {
         error.info = info;
         error.note = note;
 
+        //assert(message.length == 0);
+
         if (lexemes.length) {
             GrLexeme lex = (isEnd() && offset >= 0) ? get(-1) : get(offset);
             error.filePath = lex.getFile();
@@ -7160,9 +7367,9 @@ final class GrParser {
         exprIsConstAndCantBeModified,
         xIsConstAndCantBeModified,
         cantModifyAConst,
-        cantCallXWithArgsYBecausePure,
-        callCanCauseASideEffect,
-        maybeUsePure,
+        callXIsAmbiguous,
+        callMatchesSeveralInstances,
+        matchingInstancesAreX,
         cantAssignToAXVar,
         ValNotAssignable,
         cantInferTypeOfVar,
@@ -7433,12 +7640,12 @@ final class GrParser {
                 return "`%s` is const and can't be modified";
             case cantModifyAConst:
                 return "can't modify a const";
-            case cantCallXWithArgsYBecausePure:
-                return "can't call `%s` with arguments `%s` because a pure parameter is mutable";
-            case callCanCauseASideEffect:
-                return "this call may trigger a side effet";
-            case maybeUsePure:
-                return "maybe you should change the function's parameter to `pure` ?";
+            case callXIsAmbiguous:
+                return "the call `%s` to an overloaded function is ambiguous";
+            case callMatchesSeveralInstances:
+                return "this call matches several instances";
+            case matchingInstancesAreX:
+                return "matching instances are: %s";
             case cantAssignToAXVar:
                 return "can't assign to a `%s` variable";
             case ValNotAssignable:
@@ -7890,12 +8097,12 @@ final class GrParser {
                 return "`%s` est constant et ne peut être assigné";
             case cantModifyAConst:
                 return "impossible de modifier un type constant";
-            case cantCallXWithArgsYBecausePure:
-                return "impossible d’appeler `%s` avec les arguments `%s` car un paramètre pur est modifiable";
-            case callCanCauseASideEffect:
-                return "l’appel risque de créer un effet de bord";
-            case maybeUsePure:
-                return "peut-être voudriez-vous changer le paramètre de la fonction en `pure` ?";
+            case callXIsAmbiguous:
+                return "l’appel `%s` d’une fonction surchargée est ambigüe";
+            case callMatchesSeveralInstances:
+                return "l’appel correspond à plusieurs instances";
+            case matchingInstancesAreX:
+                return "les instances correspondantes sont: %s";
             case cantAssignToAXVar:
                 return "impossible d’assigner à une variable `%s`";
             case ValNotAssignable:

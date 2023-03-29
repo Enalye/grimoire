@@ -953,6 +953,7 @@ final class GrBytecode {
             case fieldRefLoad: .. case fieldLoad2:
             case channel:
             case list:
+            case swap:
                 line ~= to!string(grGetInstructionUnsignedValue(opcode));
                 break;
             case fieldRefStore:
