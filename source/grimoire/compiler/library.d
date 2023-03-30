@@ -112,7 +112,8 @@ interface GrLibDefinition {
 
     /// Ajoute une fonction statique lié à un type
     GrPrimitive addStatic(GrCallback callback, GrType type, string name,
-        GrType[] = [], GrType[] = [], GrConstraint[] constraints = []);
+        GrType[] inSignature = [], GrType[] outSignature = [], GrConstraint[] constraints = [
+        ]);
 
     /// Définit des primitives qui agiront comme un champ d’une classe mais pour un natif. \
     /// Laisser `setCallback` à `null` rendra la propriété constante.
