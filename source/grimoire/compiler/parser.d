@@ -6397,6 +6397,9 @@ final class GrParser {
                                         GrLexeme.Type.bitwiseAndAssign - GrLexeme.Type.bitwiseAnd),
                                     currentType, subType, fileId);
                             }
+                            else {
+                                currentType = subType;
+                            }
                         }
                         else if (operatorType == GrLexeme.Type.increment ||
                             operatorType == GrLexeme.Type.decrement) {
@@ -6407,6 +6410,8 @@ final class GrParser {
                         }
 
                         if (isSet) {
+                            if (signature.length > 1)
+                                signature[1] = currentType;
                             auto setFunc = getFirstMatchingFuncOrPrim(propertyName,
                                 signature, fileId);
                             if (setFunc.prim) {
