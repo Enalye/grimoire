@@ -542,6 +542,17 @@ final class GrParser {
             GrFunction func;
         }
 
+        size_t arity = signature.length;
+
+        if (name == "@as") {
+            arity = 1;
+        }
+        else if (name.length >= "@static_".length && name[0 .. "@static_".length] == "@static_") {
+            if (signature.length) {
+                arity--;
+            }
+        }
+
         bool checkSignaturePurity(GrType[] funcSignature) {
             for (int i; i < signature.length; ++i) {
                 final switch (signature[i].base) with (GrType.Base) {
@@ -658,7 +669,7 @@ final class GrParser {
                     }
                     else if (minScore > 0) {
                         uint nbOperations;
-                        if (convertSignature(nbOperations, signature,
+                        if (convertSignature(nbOperations, signature, arity,
                                 av.func.inSignature, false, fileId, true)) {
                             if (checkSignaturePurity(av.func.inSignature))
                                 currentScore = nbOperations + 1;
@@ -676,7 +687,7 @@ final class GrParser {
                     }
                     else if (minScore > 0) {
                         uint nbOperations;
-                        if (convertSignature(nbOperations, signature,
+                        if (convertSignature(nbOperations, signature, arity,
                                 av.prim.inSignature, false, fileId, true)) {
                             if (checkSignaturePurity(av.prim.inSignature))
                                 currentScore = nbOperations + 1;
@@ -704,7 +715,7 @@ final class GrParser {
                         anyData = new GrAnyData;
                         _data.setAnyData(anyData);
 
-                        if (convertSignature(nbOperations, signature,
+                        if (convertSignature(nbOperations, signature, arity,
                                 av.tempFunc.inSignature, true, fileId, true)) {
                             bool isValid = true;
                             foreach (ref GrConstraint constraint; av.tempFunc.constraints) {
@@ -739,7 +750,7 @@ final class GrParser {
                         anyData = new GrAnyData;
                         _data.setAnyData(anyData);
 
-                        if (convertSignature(nbOperations, signature,
+                        if (convertSignature(nbOperations, signature, arity,
                                 av.prim.inSignature, true, fileId, true)) {
                             bool isValid = true;
                             foreach (ref GrConstraint constraint; av.prim.constraints) {
@@ -840,12 +851,12 @@ final class GrParser {
 
             final switch (bestMatch.type) with (AvailableFunc.Type) {
             case function_:
-                convertSignature(nbOperations, signature,
+                convertSignature(nbOperations, signature, arity,
                     bestMatch.func.inSignature, false, fileId, false);
                 result.func = bestMatch.func;
                 break;
             case primitive:
-                convertSignature(nbOperations, signature,
+                convertSignature(nbOperations, signature, arity,
                     bestMatch.prim.inSignature, false, fileId, false);
                 result.prim = bestMatch.prim;
                 break;
@@ -853,7 +864,7 @@ final class GrParser {
                 GrAnyData anyData = new GrAnyData;
                 _data.setAnyData(anyData);
 
-                convertSignature(nbOperations, signature,
+                convertSignature(nbOperations, signature, arity,
                     bestMatch.tempFunc.inSignature, true, fileId, false);
 
                 GrType[] templateSignature;
@@ -876,7 +887,7 @@ final class GrParser {
                 GrAnyData anyData = new GrAnyData;
                 _data.setAnyData(anyData);
 
-                convertSignature(nbOperations, signature,
+                convertSignature(nbOperations, signature, arity,
                     bestMatch.prim.inSignature, true, fileId, false);
 
                 result.prim = _data.reifyPrimitive(bestMatch.prim);
@@ -4922,7 +4933,7 @@ final class GrParser {
         }
     }
 
-    private bool convertSignature(ref uint operations, GrType[] srcSignature,
+    private bool convertSignature(ref uint operations, GrType[] srcSignature, size_t arity,
         GrType[] dstSignature, bool isAbstract = false, size_t fileId = 0, bool isTest = false) {
         const size_t len = srcSignature.length;
         if (len != dstSignature.length)
@@ -4930,6 +4941,9 @@ final class GrParser {
 
         if (len == 0)
             return true;
+
+        if (arity > len || arity < 0)
+            arity = len;
 
         operations = 0;
 
@@ -4939,8 +4953,14 @@ final class GrParser {
             GrType srcType = srcSignature[i];
             GrType dstType = dstSignature[i];
 
+            if ((i + 1) >= arity) {
+                if (!_data.isSignatureCompatible([srcType], [dstType], isAbstract, fileId)) {
+                    return false;
+                }
+            }
+
             if (!_data.isSignatureCompatible([srcType], [dstType], isAbstract, fileId)) {
-                int op = (cast(int)(len - i)) - 1;
+                int op = (cast(int)(arity - i)) - 1;
                 swapOperations ~= op;
 
                 if (!isTest)
@@ -4964,10 +4984,15 @@ final class GrParser {
             GrType dstType = dstSignature[$ - 1];
 
             if (!_data.isSignatureCompatible([srcType], [dstType], isAbstract, fileId)) {
-                GrType result = convertType(srcType, dstType, fileId, true, false, isTest);
-                if (result.base == GrType.Base.void_)
+                if (len > arity) {
                     return false;
-                operations++;
+                }
+                else {
+                    GrType result = convertType(srcType, dstType, fileId, true, false, isTest);
+                    if (result.base == GrType.Base.void_)
+                        return false;
+                    operations++;
+                }
             }
         }
         return true;
