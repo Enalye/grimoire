@@ -342,7 +342,7 @@ package final class GrScriptFile {
         case virtual:
             return false;
         case system:
-            return other._type == Type.system;
+            return (other._type == Type.system) && (_path == other._path);
         }
     }
 
