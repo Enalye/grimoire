@@ -192,6 +192,10 @@ final class GrDoc : GrLibDefinition {
         return type;
     }
 
+    override GrType addEnum(string name, GrNativeEnum loader) {
+        return addEnum(name, loader.fields, loader.values);
+    }
+
     override GrType addClass(string name, string[] fields, GrType[] signature,
         string[] templateVariables = [], string parent = "", GrType[] parentTemplateSignature = [
         ]) {

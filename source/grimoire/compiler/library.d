@@ -78,6 +78,9 @@ interface GrLibDefinition {
     /// Definit une énumération
     GrType addEnum(string name, string[] fields, int[] values = []);
 
+    /// Ditto
+    GrType addEnum(string name, GrNativeEnum loader);
+
     /// Definit une classe
     GrType addClass(string name, string[] fields, GrType[] signature,
         string[] templateVariables = [], string parent = "", GrType[] parentTemplateSignature = [
@@ -259,6 +262,11 @@ final class GrLibrary : GrLibDefinition {
         GrType type = GrType.Base.enum_;
         type.mangledType = name;
         return type;
+    }
+
+    /// Ditto
+    override GrType addEnum(string name, GrNativeEnum loader) {
+        return addEnum(name, loader.fields, loader.values);
     }
 
     /// Definit une classe
