@@ -1914,7 +1914,7 @@ class GrEngine {
     }
 
     /// Instancie un nouvel objet
-    GrObject createObject(T)(string name) {
+    GrObject createObject(string name) {
         GrClassBuilder* builder = (name in _classBuilders);
         if (builder) {
             enforce(!builder.inheritFromNative,

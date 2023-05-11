@@ -410,7 +410,7 @@ final class GrCall {
     }
 
     /// Instancie un nouvel objet
-    GrObject createObject(T)(string name) {
+    GrObject createObject(string name) {
         return _task.engine.createObject(name);
     }
 

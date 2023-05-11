@@ -85,6 +85,24 @@ struct GrType {
             }
         }
 
+        /// Priorité en fonction du type de nombre 
+        uint numericPriority() const {
+            switch (base) with (Base) {
+            case byte_:
+                return 1;
+            case uint_:
+                return 2;
+            case int_:
+                return 3;
+            case float_:
+                return 4;
+            case double_:
+                return 5;
+            default:
+                return 0;
+            }
+        }
+
         /// Est-il utilisable ?
         bool isValid() const {
             switch (base) with (Base) {
