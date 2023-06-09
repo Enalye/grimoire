@@ -389,7 +389,7 @@ final class GrBytecode {
             buffer.append!GrByte(i);
         foreach (GrFloat i; floatConsts)
             buffer.append!GrFloat(i);
-        foreach (GrFloat i; doubleConsts)
+        foreach (GrDouble i; doubleConsts)
             buffer.append!GrDouble(i);
         foreach (string i; strConsts) {
             writeStr(buffer, i);
@@ -449,7 +449,7 @@ final class GrBytecode {
             else if (reference.typeMask & GR_MASK_FLOAT)
                 buffer.append!GrFloat(reference.floatValue);
             else if (reference.typeMask & GR_MASK_DOUBLE)
-                buffer.append!GrFloat(reference.doubleValue);
+                buffer.append!GrDouble(reference.doubleValue);
             else if (reference.typeMask & GR_MASK_STRING)
                 writeStr(buffer, reference.strValue);
         }
