@@ -51,9 +51,6 @@ class GrEngine {
         /// Les traces d’appel sont générés chaque fois qu’une erreur est lancé
         GrStackTrace[] _stackTraces;
 
-        /// Informations supplémentaires de type du compilateur
-        string _meta;
-
         /// Primitives
         GrCallback[] _callbacks;
         /// Ditto
@@ -93,15 +90,6 @@ class GrEngine {
         /// Le message de panique
         string panicMessage() const {
             return _panicMessage;
-        }
-
-        /// Informations supplémentaires de type du compilateur
-        string meta() const {
-            return _meta;
-        }
-        /// Ditto
-        string meta(string meta_) {
-            return _meta = meta_;
         }
     }
 
@@ -556,6 +544,10 @@ class GrEngine {
                 case nop:
                     currentTask.pc++;
                     break;
+                case extend:
+                    // On ne doit jamais tomber sur cet opcode directement
+                    raise(currentTask, "InvalidOpcode");
+                    break;
                 case throw_:
                     if (!currentTask.isPanicking) {
                         // Message d’erreur
@@ -961,10 +953,6 @@ class GrEngine {
                         currentTask.stack.length *= 2;
                     currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer) new GrString(
                         _bytecode.strConsts[grGetInstructionUnsignedValue(opcode)]);
-                    currentTask.pc++;
-                    break;
-                case const_meta:
-                    _meta = _bytecode.strConsts[grGetInstructionUnsignedValue(opcode)];
                     currentTask.pc++;
                     break;
                 case const_null:
@@ -1745,17 +1733,13 @@ class GrEngine {
 
                     const uint pc = _bytecode.uintConsts[grGetInstructionUnsignedValue(opcode)];
 
-                    // Cet opcode est forcément suivi de closure2
+                    // Cet opcode est forcément suivi de extend
                     const uint size = grGetInstructionUnsignedValue(_bytecode.opcodes[currentTask.pc + 1]);
 
                     GrClosure closure = new GrClosure(currentTask, pc, size);
                     currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer) closure;
 
                     currentTask.pc += 2;
-                    break;
-                case closure2:
-                    // On ne doit jamais tomber sur cet opcode directement
-                    raise(currentTask, "InvalidOpcode");
                     break;
                 case anonymousCall:
                     if ((currentTask.stackFramePos + 1) >= currentTask.callStackLimit)

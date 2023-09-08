@@ -26,12 +26,6 @@ void grLoadStdLibError(GrLibDefinition library) {
     library.setParameters(GrLocale.fr_FR, ["value", "erreur"]);
     library.setParameters(GrLocale.en_US, ["value", "error"]);
     library.addFunction(&_assert_msg, "assert", [grBool, grPure(grString)]);
-
-    library.setDescription(GrLocale.fr_FR, "Fonction interne.");
-    library.setDescription(GrLocale.en_US, "Internal function.");
-    library.setParameters(GrLocale.fr_FR, ["value"]);
-    library.setParameters(GrLocale.en_US, ["value"]);
-    library.addFunction(&_setMeta, "_setMeta", [grPure(grString)]);
 }
 
 private void _assert(GrCall call) {
@@ -44,9 +38,4 @@ private void _assert_msg(GrCall call) {
     const GrBool value = call.getBool(0);
     if (!value)
         call.raise(call.getString(1));
-}
-
-private void _setMeta(GrCall call) {
-    const string value = call.getString(0).str;
-    call.task.engine.meta = value;
 }

@@ -395,7 +395,7 @@ final class GrParser {
             addInstruction(GrOpcode.closure, 0u);
 
             // Limite la taille de la pile à celle qu’attend la tâche
-            addInstruction(GrOpcode.closure2, func.anonParent.localsCount);
+            addInstruction(GrOpcode.extend, func.anonParent.localsCount);
         } else {
             func.name = name;
             func.isExport = isExport;
@@ -1031,10 +1031,6 @@ final class GrParser {
 
     private void addStringConstant(string value) {
         addInstruction(GrOpcode.const_string, registerStringConstant(value));
-    }
-
-    private void addMetaConstant(string value) {
-        addInstruction(GrOpcode.const_meta, registerStringConstant(value));
     }
 
     private void addInstruction(GrOpcode opcode, int value = 0, bool isSigned = false) {

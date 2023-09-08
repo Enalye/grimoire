@@ -44,11 +44,6 @@ final class GrCall {
         GrTask task() {
             return _task;
         }
-
-        /// Informations supplémentaires de type du compilateur
-        string meta() const {
-            return _task.engine.meta;
-        }
     }
 
     package(grimoire) this(GrCallback callback, string name,

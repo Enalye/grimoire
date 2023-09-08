@@ -12,7 +12,7 @@ import grimoire.assembly.symbol;
 
 /// Correspond à une version du langage. \
 /// Un bytecode ayant une version différente ne pourra pas être chargé.
-enum GR_VERSION = 800;
+enum GR_VERSION = 801;
 
 package(grimoire) {
     enum GR_MASK_INT = 0x1 << 1;
@@ -27,6 +27,7 @@ package(grimoire) {
 /// Instructions bas niveau de la machine virtuelle.
 enum GrOpcode {
     nop,
+    extend,
     throw_,
     try_,
     catch_,
@@ -73,7 +74,6 @@ enum GrOpcode {
     const_double,
     const_bool,
     const_string,
-    const_meta,
     const_null,
 
     globalPush,
@@ -169,7 +169,6 @@ enum GrOpcode {
     call,
     address,
     closure,
-    closure2,
     anonymousCall,
     primitiveCall,
     safePrimitiveCall,
@@ -633,6 +632,8 @@ final class GrBytecode {
             final switch (op) with (GrOpcode) {
             case nop:
                 return "nop";
+            case extend:
+                return "extend";
             case throw_:
                 return "throw";
             case try_:
@@ -711,8 +712,6 @@ final class GrBytecode {
                 return "const.bool";
             case const_string:
                 return "const.s";
-            case const_meta:
-                return "meta";
             case const_null:
                 return "null";
             case globalPush:
@@ -891,8 +890,6 @@ final class GrBytecode {
                 return "addr";
             case closure:
                 return "closure";
-            case closure2:
-                return "closure2";
             case anonymousCall:
                 return "acall";
             case primitiveCall:
@@ -961,7 +958,7 @@ final class GrBytecode {
             case channel:
             case list:
             case swap:
-            case closure2:
+            case extend:
                 line ~= to!string(grGetInstructionUnsignedValue(opcode));
                 break;
             case fieldRefStore:
@@ -1014,7 +1011,6 @@ final class GrBytecode {
                 line ~= (grGetInstructionUnsignedValue(opcode) ? "true" : "false");
                 break;
             case const_string:
-            case const_meta:
             case debugProfileBegin:
                 line ~= "\"" ~ to!string(strConsts[grGetInstructionUnsignedValue(opcode)]) ~ "\"";
                 break;
