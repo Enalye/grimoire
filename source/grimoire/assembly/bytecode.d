@@ -169,6 +169,7 @@ enum GrOpcode {
     call,
     address,
     closure,
+    closure2,
     anonymousCall,
     primitiveCall,
     safePrimitiveCall,
@@ -890,6 +891,8 @@ final class GrBytecode {
                 return "addr";
             case closure:
                 return "closure";
+            case closure2:
+                return "closure2";
             case anonymousCall:
                 return "acall";
             case primitiveCall:
@@ -958,6 +961,7 @@ final class GrBytecode {
             case channel:
             case list:
             case swap:
+            case closure2:
                 line ~= to!string(grGetInstructionUnsignedValue(opcode));
                 break;
             case fieldRefStore:

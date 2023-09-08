@@ -1742,10 +1742,20 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    GrClosure closure = new GrClosure(currentTask,
-                        _bytecode.uintConsts[grGetInstructionUnsignedValue(opcode)]);
+
+                    const uint pc = _bytecode.uintConsts[grGetInstructionUnsignedValue(opcode)];
+
+                    // Cet opcode est forcément suivi de closure2
+                    const uint size = grGetInstructionUnsignedValue(_bytecode.opcodes[currentTask.pc + 1]);
+
+                    GrClosure closure = new GrClosure(currentTask, pc, size);
                     currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer) closure;
-                    currentTask.pc++;
+
+                    currentTask.pc += 2;
+                    break;
+                case closure2:
+                    // On ne doit jamais tomber sur cet opcode directement
+                    raise(currentTask, "InvalidOpcode");
                     break;
                 case anonymousCall:
                     if ((currentTask.stackFramePos + 1) >= currentTask.callStackLimit)

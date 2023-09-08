@@ -393,6 +393,9 @@ final class GrParser {
 
             // Remplacé par l’adresse de la fonction dans `solveFunctionCalls()`
             addInstruction(GrOpcode.closure, 0u);
+
+            // Limite la taille de la pile à celle qu’attend la tâche
+            addInstruction(GrOpcode.closure2, func.anonParent.localsCount);
         } else {
             func.name = name;
             func.isExport = isExport;

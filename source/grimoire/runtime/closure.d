@@ -20,8 +20,17 @@ final class GrClosure {
         caller = caller_;
 
         if (caller) {
-            locals = caller.locals[caller.localsPos ..
+            locals = caller.locals[caller.localsPos .. caller.localsPos +
                 caller.callStack[caller.stackFramePos].localStackSize];
+        }
+    }
+
+    package this(GrTask caller_, uint pc_, uint size) {
+        pc = pc_;
+        caller = caller_;
+
+        if (caller) {
+            locals = caller.locals[caller.localsPos .. caller.localsPos + size];
         }
     }
 }
