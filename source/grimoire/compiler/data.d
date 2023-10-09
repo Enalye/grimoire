@@ -741,6 +741,69 @@ final class GrData {
         return true;
     }
 
+    /// Calcule un score basé
+    int getTypeSpecializationScore(const GrType type) {
+        int result;
+
+        if (type.isAny) {
+            return result;
+        }
+
+        final switch (type.base) with (GrType.Base) {
+        case int_:
+        case uint_:
+        case byte_:
+        case char_:
+        case float_:
+        case double_:
+        case bool_:
+        case string_:
+        case enum_:
+        case void_:
+        case null_:
+        case internalTuple:
+        case reference:
+            result++;
+            break;
+        case list:
+        case channel:
+        case optional:
+            result++;
+            GrType subType = grUnmangle(type.mangledType);
+            result += getTypeSpecializationScore(subType);
+            break;
+        case func:
+            result++;
+            GrType[] inSignature = grUnmangleSignature(type.mangledType);
+            GrType[] outSignature = grUnmangleSignature(type.mangledReturnType);
+            foreach (GrType subType; inSignature) {
+                result += getTypeSpecializationScore(subType);
+            }
+            foreach (GrType subType; outSignature) {
+                result += getTypeSpecializationScore(subType);
+            }
+            break;
+        case task:
+        case event:
+            result++;
+            GrType[] inSignature = grUnmangleSignature(type.mangledType);
+            foreach (GrType subType; inSignature) {
+                result += getTypeSpecializationScore(subType);
+            }
+            break;
+        case class_:
+        case native:
+            result++;
+            GrType[] signature = grUnmangleComposite(type.mangledType).signature;
+            foreach (GrType subType; signature) {
+                result += getTypeSpecializationScore(subType);
+            }
+            break;
+        }
+
+        return result;
+    }
+
     void setAnyData(GrAnyData anyData) {
         _anyData = anyData;
     }

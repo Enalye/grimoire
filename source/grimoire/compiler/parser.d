@@ -260,7 +260,8 @@ final class GrParser {
                     logError(format(getError(Error.nameXDefMultipleTimes), name),
                         format(getError(Error.xRedefHere), name), "", 0,
                         format(getError(Error.prevDefOfX), name), declPosition);
-                } else {
+                }
+                else {
                     logError(format(getError(Error.nameXDefMultipleTimes),
                             name), format(getError(Error.prevDefPrim), name));
                 }
@@ -280,7 +281,8 @@ final class GrParser {
         if (hasPosition) {
             variable.hasLexPosition = true;
             variable.lexPosition = lexPosition;
-        } else {
+        }
+        else {
             variable.lexPosition = current;
         }
 
@@ -314,11 +316,13 @@ final class GrParser {
         if (variable.isGlobal) {
             variable.register = globalsCount;
             globalsCount++;
-        } else {
+        }
+        else {
             if (currentFunction.registerAvailables.length) {
                 variable.register = currentFunction.registerAvailables[$ - 1];
                 currentFunction.registerAvailables.length--;
-            } else {
+            }
+            else {
                 variable.register = currentFunction.localsCount;
                 currentFunction.localsCount++;
             }
@@ -330,7 +334,8 @@ final class GrParser {
         if (globalScope) {
             functionStack ~= currentFunction;
             currentFunction = globalScope;
-        } else {
+        }
+        else {
             GrFunction func = new GrFunction;
             func.name = "@global";
             func.mangledName = func.name;
@@ -396,7 +401,8 @@ final class GrParser {
 
             // Limite la taille de la pile à celle qu’attend la tâche
             addInstruction(GrOpcode.extend, func.anonParent.localsCount);
-        } else {
+        }
+        else {
             func.name = name;
             func.isExport = isExport;
 
@@ -441,7 +447,8 @@ final class GrParser {
                         logError(format(getError(Error.funcXDefMultipleTimes),
                                 grGetPrettyFunction(func)),
                             format(getError(Error.prevDefPrim), name));
-                    } else {
+                    }
+                    else {
                         logError(format(getError(Error.funcXDefMultipleTimes),
                                 grGetPrettyFunction(func)), format(getError(Error.xRedefHere), name), "", 0,
                             format(getError(Error.prevDefOfX), name), declPosition);
@@ -542,7 +549,8 @@ final class GrParser {
 
         if (name == "@as") {
             arity = 1;
-        } else if (name.length >= "@static_".length && name[0 .. "@static_".length] == "@static_") {
+        }
+        else if (name.length >= "@static_".length && name[0 .. "@static_".length] == "@static_") {
             if (signature.length) {
                 arity--;
             }
@@ -656,11 +664,13 @@ final class GrParser {
                 case function_:
                     if (av.func.mangledName == mangledName) {
                         currentScore = -2;
-                    } else if (minScore >= -1 && _data.isSignatureCompatible(signature,
+                    }
+                    else if (minScore >= -1 && _data.isSignatureCompatible(signature,
                             av.func.inSignature, false, fileId, isExport)) {
                         if (checkSignaturePurity(av.func.inSignature))
                             currentScore = -1;
-                    } else if (minScore > 0) {
+                    }
+                    else if (minScore > 0) {
                         uint nbOperations;
                         if (convertSignature(nbOperations, signature, arity,
                                 av.func.inSignature, false, fileId, true)) {
@@ -672,11 +682,13 @@ final class GrParser {
                 case primitive:
                     if (av.prim.mangledName == mangledName) {
                         currentScore = -2;
-                    } else if (minScore >= -1 && _data.isSignatureCompatible(signature,
+                    }
+                    else if (minScore >= -1 && _data.isSignatureCompatible(signature,
                             av.prim.inSignature, false, fileId, true)) {
                         if (checkSignaturePurity(av.prim.inSignature))
                             currentScore = -1;
-                    } else if (minScore > 0) {
+                    }
+                    else if (minScore > 0) {
                         uint nbOperations;
                         if (convertSignature(nbOperations, signature, arity,
                                 av.prim.inSignature, false, fileId, true)) {
@@ -700,7 +712,8 @@ final class GrParser {
                         }
                         if (isValid && checkSignaturePurity(av.tempFunc.inSignature))
                             currentScore = 0;
-                    } else if (minScore > 0) {
+                    }
+                    else if (minScore > 0) {
                         uint nbOperations;
                         anyData = new GrAnyData;
                         _data.setAnyData(anyData);
@@ -734,7 +747,8 @@ final class GrParser {
                         }
                         if (isValid && checkSignaturePurity(av.prim.inSignature))
                             currentScore = 0;
-                    } else if (minScore > 0) {
+                    }
+                    else if (minScore > 0) {
                         uint nbOperations;
                         anyData = new GrAnyData;
                         _data.setAnyData(anyData);
@@ -768,7 +782,49 @@ final class GrParser {
             return filteredFuncs;
         }
 
-        AvailableFunc[] filterRemainingFuncs(AvailableFunc[] availableFuncs) {
+        AvailableFunc[] filterSpecializedFuncs(AvailableFunc[] availableFuncs) {
+            AvailableFunc[] filteredFuncs = availableFuncs;
+
+            for (size_t paramIdx; paramIdx < arity; ++paramIdx) {
+                int minScore = -1;
+                availableFuncs = filteredFuncs;
+                filteredFuncs.length = 0;
+
+                if (availableFuncs.length <= 1) {
+                    return availableFuncs;
+                }
+
+                foreach (AvailableFunc av; availableFuncs) {
+                    int score;
+
+                    final switch (av.type) with (AvailableFunc.Type) {
+                    case function_:
+                        score = _data.getTypeSpecializationScore(av.func.inSignature[paramIdx]);
+                        break;
+                    case primitive:
+                    case tempPrimitive:
+                        score = _data.getTypeSpecializationScore(av.prim.inSignature[paramIdx]);
+                        break;
+                    case tempFunction:
+                        score = _data.getTypeSpecializationScore(av.tempFunc.inSignature[paramIdx]);
+                        break;
+                    }
+
+                    if (score > minScore) {
+                        minScore = score;
+                        filteredFuncs.length = 0;
+                        filteredFuncs ~= av;
+                    }
+                    else if (score == minScore) {
+                        filteredFuncs ~= av;
+                    }
+                }
+            }
+
+            return filteredFuncs;
+        }
+
+        AvailableFunc[] filterReifiedFuncs(AvailableFunc[] availableFuncs) {
             AvailableFunc[] filteredFuncs;
             bool hasReifiedFunc;
 
@@ -797,7 +853,8 @@ final class GrParser {
 
         AvailableFunc[] availableFuncs = fetchAvailableFuncs(name, fileId, isExport);
         availableFuncs = filterAvailableFuncs(availableFuncs, name, signature, fileId, isExport);
-        availableFuncs = filterRemainingFuncs(availableFuncs);
+        availableFuncs = filterSpecializedFuncs(availableFuncs);
+        availableFuncs = filterReifiedFuncs(availableFuncs);
 
         if (availableFuncs.length > 1) {
             string[] matchingFuncNames;
@@ -833,7 +890,8 @@ final class GrParser {
             logError(format(getError(Error.callXIsAmbiguous), grGetPrettyFunctionCall(name, signature)),
                 getError(Error.callMatchesSeveralInstances),
                 format(getError(Error.matchingInstancesAreX), errorNote), -1);
-        } else if (availableFuncs.length) {
+        }
+        else if (availableFuncs.length) {
             AvailableFunc bestMatch = availableFuncs[0];
             uint nbOperations;
 
@@ -1043,7 +1101,8 @@ final class GrParser {
             enforce((value < 0x800000) && (-value < 0x800000),
                 "an opcode's signed value is exceeding limits");
             instruction.value = value + 0x800000;
-        } else
+        }
+        else
             instruction.value = value;
         currentFunction.instructions ~= instruction;
 
@@ -1062,7 +1121,8 @@ final class GrParser {
             enforce((value < 0x800000) && (-value < 0x800000),
                 "an opcode's signed value is exceeding limits");
             instruction.value = value + 0x800000;
-        } else
+        }
+        else
             instruction.value = value;
         currentFunction.instructions = instruction ~ currentFunction.instructions;
 
@@ -1099,7 +1159,8 @@ final class GrParser {
             enforce((value < 0x800000) && (-value < 0x800000),
                 "an opcode's signed value is exceeding limits");
             instruction.value = value + 0x800000;
-        } else
+        }
+        else
             instruction.value = value;
         currentFunction.instructions[index] = instruction;
     }
@@ -1199,8 +1260,9 @@ final class GrParser {
         if (lexType != GrLexeme.Type.optionalOr) {
             if (leftType.base == GrType.Base.optional && rightType.base != GrType.Base.optional) {
                 rightType = grOptional(rightType);
-            } else if (rightType.base == GrType.Base.optional &&
-                leftType.base != GrType.Base.optional) {
+            }
+            else if (rightType.base == GrType.Base.optional && leftType.base != GrType
+                .Base.optional) {
                 leftType = grOptional(leftType);
             }
         }
@@ -1213,38 +1275,45 @@ final class GrParser {
                 convertType(rightType, optionalType, fileId);
             addInstruction(GrOpcode.optionalOr);
             resultType = rightType;
-        } else if (leftType.base == GrType.Base.enum_ && rightType.base == GrType.Base.enum_ &&
+        }
+        else if (leftType.base == GrType.Base.enum_ && rightType.base == GrType.Base.enum_ &&
             leftType.mangledType == rightType.mangledType) {
             resultType = addInternalOperator(lexType, leftType);
-        } else if (leftType.base == GrType.Base.channel) {
+        }
+        else if (leftType.base == GrType.Base.channel) {
             GrType channelType = grUnmangle(leftType.mangledType);
             convertType(rightType, channelType, fileId);
             resultType = addInternalOperator(lexType, leftType);
             if (resultType.base == GrType.Base.void_) {
                 resultType = addCustomBinaryOperator(lexType, leftType, rightType, fileId);
             }
-        } else if (lexType == GrLexeme.Type.concatenate &&
+        }
+        else if (lexType == GrLexeme.Type.concatenate &&
             leftType.base == GrType.Base.list && leftType != rightType) {
             const GrType subType = grUnmangle(leftType.mangledType);
             convertType(rightType, subType, fileId);
             addInstruction(GrOpcode.append_list);
             resultType = leftType;
-        } else if (lexType == GrLexeme.Type.concatenate &&
+        }
+        else if (lexType == GrLexeme.Type.concatenate &&
             rightType.base == GrType.Base.list && leftType != rightType) {
             const GrType subType = grUnmangle(rightType.mangledType);
             convertType(leftType, subType, fileId);
             addInstruction(GrOpcode.prepend_list);
             resultType = rightType;
-        } else if (lexType == GrLexeme.Type.concatenate &&
+        }
+        else if (lexType == GrLexeme.Type.concatenate &&
             leftType.base == GrType.Base.string_ && leftType != rightType) {
             convertType(rightType, leftType, fileId);
             resultType = addInternalOperator(lexType, leftType);
-        } else if (lexType == GrLexeme.Type.concatenate &&
+        }
+        else if (lexType == GrLexeme.Type.concatenate &&
             rightType.base == GrType.Base.string_ && leftType != rightType) {
             addInstruction(GrOpcode.swap, 1);
             convertType(leftType, rightType, fileId);
             resultType = addInternalOperator(lexType, rightType, true);
-        } else if (leftType.isFloating && rightType.isIntegral) {
+        }
+        else if (leftType.isFloating && rightType.isIntegral) {
             // On converti l’entier en flottant
             convertType(rightType, leftType, fileId);
             resultType = addInternalOperator(lexType, leftType);
@@ -1253,7 +1322,8 @@ final class GrParser {
             if (resultType.base == GrType.Base.void_) {
                 resultType = addCustomBinaryOperator(lexType, rightType, rightType, fileId);
             }
-        } else if (leftType.isIntegral && rightType.isFloating) {
+        }
+        else if (leftType.isIntegral && rightType.isFloating) {
             // Cas particulier: on a besoin de convertir l’entier en flottant
             // et d’inverser les deux valeurs
             addInstruction(GrOpcode.swap, 1);
@@ -1264,12 +1334,14 @@ final class GrParser {
             if (resultType.base == GrType.Base.void_) {
                 resultType = addCustomBinaryOperator(lexType, rightType, rightType, fileId);
             }
-        } else if (leftType != rightType) {
+        }
+        else if (leftType != rightType) {
             if (leftType.isNumeric && rightType.isNumeric) {
                 if (leftType.numericPriority > rightType.numericPriority) {
                     convertType(rightType, leftType, fileId);
                     resultType = addInternalOperator(lexType, leftType);
-                } else {
+                }
+                else {
                     addInstruction(GrOpcode.swap, 1);
                     convertType(leftType, rightType, fileId);
                     resultType = addInternalOperator(lexType, rightType, true);
@@ -1288,7 +1360,8 @@ final class GrParser {
                     resultType = addBinaryOperator(lexType, resultType, resultType, fileId);
                 }
             }
-        } else {
+        }
+        else {
             resultType = addInternalOperator(lexType, leftType);
             if (resultType.base == GrType.Base.void_) {
                 resultType = addCustomBinaryOperator(lexType, leftType, rightType, fileId);
@@ -1323,7 +1396,8 @@ final class GrParser {
                 typeStack[$ - 1], fileId);
             typeStack.length--;
             return typeStack[$ - 1];
-        } else if (isUnaryOperator(lexType)) {
+        }
+        else if (isUnaryOperator(lexType)) {
             typeStack[$ - 1] = addUnaryOperator(lexType, typeStack[$ - 1], fileId);
             return typeStack[$ - 1];
         }
@@ -1790,7 +1864,8 @@ final class GrParser {
 
             addInstruction(GrOpcode.fieldRefStore, (isExpectingValue ||
                     variable.isOptional) ? 0 : -1, true);
-        } else if (variable.isGlobal) {
+        }
+        else if (variable.isGlobal) {
             if (variable.type.isInternal) {
                 logError(format(getError(Error.cantAssignToAXVar),
                         getPrettyType(variable.type)), getError(Error.ValNotAssignable));
@@ -1798,7 +1873,8 @@ final class GrParser {
 
             addInstruction(isExpectingValue ? GrOpcode.globalStore2
                     : GrOpcode.globalStore, variable.register);
-        } else {
+        }
+        else {
             if (variable.type.isInternal) {
                 logError(format(getError(Error.cantAssignToAXVar),
                         getPrettyType(variable.type)), getError(Error.ValNotAssignable));
@@ -1858,7 +1934,8 @@ final class GrParser {
                 currentFunction.instructions[$ - 1].opcode = GrOpcode.globalStore2;
             else
                 addInstruction(GrOpcode.globalLoad, variable.register);
-        } else {
+        }
+        else {
             if (!variable.isInitialized)
                 logError(getError(Error.locVarUsedNotAssigned), getError(Error.varNotInit));
 
@@ -1935,7 +2012,8 @@ final class GrParser {
             addInstruction(GrOpcode.call, 0);
 
             return func.outSignature;
-        } else
+        }
+        else
             logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                     signature)), getError(Error.unknownFunc), "", -1);
 
@@ -1972,7 +2050,8 @@ final class GrParser {
             enforce((value < 0x800000) && (-value < 0x800000),
                 "an opcode's signed value is exceeding limits");
             instruction.value = value + 0x800000;
-        } else
+        }
+        else
             instruction.value = value;
 
         uint makeOpcode(uint instr, uint value) {
@@ -1997,7 +2076,8 @@ final class GrParser {
                     setOpcode(opcodes, call.position, GrOpcode.task, func.position);
                 else
                     setOpcode(opcodes, call.position, GrOpcode.call, func.position);
-            } else
+            }
+            else
                 logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(call.name,
                         call.signature)), getError(Error.unknownFunc));
         }
@@ -2225,7 +2305,8 @@ final class GrParser {
         if (func.isEvent) {
             func.index = cast(uint) events.length;
             events ~= func;
-        } else {
+        }
+        else {
             func.index = cast(uint) functions.length;
             functions ~= func;
         }
@@ -2245,12 +2326,14 @@ final class GrParser {
             if (!currentFunction.instructions.length ||
                 currentFunction.instructions[$ - 1].opcode != GrOpcode.die)
                 addDie();
-        } else {
+        }
+        else {
             if (!currentFunction.outSignature.length) {
                 if (!currentFunction.instructions.length ||
                     currentFunction.instructions[$ - 1].opcode != GrOpcode.return_)
                     addReturn();
-            } else {
+            }
+            else {
                 if (!currentFunction.instructions.length ||
                     currentFunction.instructions[$ - 1].opcode != GrOpcode.return_)
                     logError(getError(Error.funcMissingRetAtEnd), getError(Error.missingRet));
@@ -2344,7 +2427,8 @@ final class GrParser {
                     lastValue = -lastValue;
 
                 checkAdvance();
-            } else {
+            }
+            else {
                 lastValue++;
             }
 
@@ -2394,7 +2478,8 @@ final class GrParser {
             return null;
         if (_mustDeferClassDeclaration) {
             _deferredClassDeclarations ~= class_;
-        } else {
+        }
+        else {
             parseClassDeclaration(class_);
         }
         return class_;
@@ -2555,7 +2640,8 @@ final class GrParser {
                     if (class_.fieldsInfo[i].position < class_.fieldsInfo[y].position) {
                         first = i;
                         second = y;
-                    } else {
+                    }
+                    else {
                         first = y;
                         second = i;
                     }
@@ -2583,7 +2669,8 @@ final class GrParser {
         while (!isEnd()) {
             if (get().type != GrLexeme.Type.leftCurlyBrace) {
                 checkAdvance();
-            } else {
+            }
+            else {
                 skipBlock();
                 return;
             }
@@ -2632,7 +2719,8 @@ final class GrParser {
             }
             checkAdvance();
             currentType.mangledType = grMangle(subType);
-        } else if (!lex.isType) {
+        }
+        else if (!lex.isType) {
             if (lex.type == GrLexeme.Type.identifier) {
                 foreach (tempVar; templateVariables) {
                     if (tempVar == lex.strValue) {
@@ -2647,7 +2735,8 @@ final class GrParser {
                     _data.isTypeAlias(lex.strValue, lex.fileId, false)) {
                     currentType = _data.getTypeAlias(lex.strValue, lex.fileId).type;
                     checkAdvance();
-                } else if (lex.type == GrLexeme.Type.identifier &&
+                }
+                else if (lex.type == GrLexeme.Type.identifier &&
                     _data.isClass(lex.strValue, lex.fileId, false)) {
                     currentType.base = GrType.Base.class_;
                     checkAdvance();
@@ -2660,12 +2749,14 @@ final class GrParser {
                                 format(getError(Error.xIsAbstractAndCannotBeInstanciated),
                                     getPrettyType(currentType)), "", -1);
                     }
-                } else if (lex.type == GrLexeme.Type.identifier &&
+                }
+                else if (lex.type == GrLexeme.Type.identifier &&
                     _data.isEnum(lex.strValue, lex.fileId, false)) {
                     currentType.base = GrType.Base.enum_;
                     currentType.mangledType = lex.strValue;
                     checkAdvance();
-                } else if (lex.type == GrLexeme.Type.identifier && _data.isNative(lex.strValue)) {
+                }
+                else if (lex.type == GrLexeme.Type.identifier && _data.isNative(lex.strValue)) {
                     currentType.base = GrType.Base.native;
                     currentType.mangledType = lex.strValue;
                     checkAdvance();
@@ -2678,14 +2769,16 @@ final class GrParser {
                                 format(getError(Error.xIsAbstractAndCannotBeInstanciated),
                                     getPrettyType(currentType)), "", -1);
                     }
-                } else if (mustBeType) {
+                }
+                else if (mustBeType) {
                     const string typeName = lex.type == GrLexeme.Type.identifier ?
                         lex.strValue : getPrettyLexemeType(lex.type);
                     logError(format(getError(Error.xNotValidType), typeName),
                         format(getError(Error.expectedValidTypeFoundX), typeName));
                 }
             }
-        } else {
+        }
+        else {
             switch (lex.type) with (GrLexeme.Type) {
             case intType:
                 currentType.base = GrType.Base.int_;
@@ -2727,7 +2820,8 @@ final class GrParser {
                     logError(getError(Error.listCanOnlyContainOneTypeOfVal), getError(Error.conflictingListSignature),
                         format(getError(Error.tryUsingXInstead),
                             getPrettyType(grList(signature[0]))), -1);
-                } else if (signature.length == 0) {
+                }
+                else if (signature.length == 0) {
                     logError(getError(Error.listCanOnlyContainOneTypeOfVal), format(getError(Error.expectedXFoundY),
                             getPrettyLexemeType(GrLexeme.Type.lesser),
                             getPrettyLexemeType(get().type)));
@@ -2827,7 +2921,8 @@ final class GrParser {
             if (lex.type == GrLexeme.Type.greater) {
                 checkAdvance();
                 break;
-            } else if (lex.type != GrLexeme.Type.comma)
+            }
+            else if (lex.type != GrLexeme.Type.comma)
                 logError(getError(Error.templateValShouldBeSeparatedByComma), format(getError(Error.expectedXFoundY),
                         getPrettyLexemeType(GrLexeme.Type.comma), getPrettyLexemeType(lex.type)));
             checkAdvance();
@@ -2853,7 +2948,8 @@ final class GrParser {
             if (lex.type == GrLexeme.Type.greater) {
                 checkAdvance();
                 break;
-            } else if (lex.type != GrLexeme.Type.comma)
+            }
+            else if (lex.type != GrLexeme.Type.comma)
                 logError(getError(Error.templateTypesShouldBeSeparatedByComma), format(getError(Error.expectedXFoundY),
                         getPrettyLexemeType(GrLexeme.Type.comma), getPrettyLexemeType(lex.type)));
             checkAdvance();
@@ -2919,7 +3015,8 @@ final class GrParser {
             if (lex.type == GrLexeme.Type.rightParenthesis) {
                 checkAdvance();
                 break;
-            } else if (lex.type != GrLexeme.Type.comma)
+            }
+            else if (lex.type != GrLexeme.Type.comma)
                 logError(getError(Error.typesShouldBeSeparatedByComma), format(getError(Error.expectedXFoundY),
                         getPrettyLexemeType(GrLexeme.Type.comma), getPrettyLexemeType(lex.type)));
             checkAdvance();
@@ -2986,7 +3083,8 @@ final class GrParser {
             checkAdvance();
             name = "@as";
             isConversion = true;
-        } else if (get().type == GrLexeme.Type.at) {
+        }
+        else if (get().type == GrLexeme.Type.at) {
             checkAdvance();
             nameLexPosition = current;
             staticType = parseType(true, templateVariables);
@@ -3006,7 +3104,8 @@ final class GrParser {
                 name ~= "." ~ get().strValue;
                 checkAdvance();
             }
-        } else if (get().type == GrLexeme.Type.identifier) {
+        }
+        else if (get().type == GrLexeme.Type.identifier) {
             if (get().strValue == "operator") {
                 advance();
                 if (get().type == GrLexeme.Type.string_) {
@@ -3018,15 +3117,18 @@ final class GrParser {
                     name = get().strValue;
                     isOperator = true;
                     checkAdvance();
-                } else {
+                }
+                else {
                     logError(format(getError(Error.expectedXFoundY), getPrettyLexemeType(GrLexeme.Type.string_),
                             getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
                 }
-            } else {
+            }
+            else {
                 name = get().strValue;
                 checkAdvance();
             }
-        } else {
+        }
+        else {
             logError(format(getError(Error.expectedIdentifierFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
         }
@@ -3164,7 +3266,8 @@ final class GrParser {
                 }
 
                 inSignature ~= outSignature[0];
-            } else
+            }
+            else
                 outSignature = parseSignature();
         }
 
@@ -3207,12 +3310,14 @@ final class GrParser {
             if (!currentFunction.instructions.length ||
                 currentFunction.instructions[$ - 1].opcode != GrOpcode.die)
                 addDie();
-        } else {
+        }
+        else {
             if (!outSignature.length) {
                 if (!currentFunction.instructions.length ||
                     currentFunction.instructions[$ - 1].opcode != GrOpcode.return_)
                     addReturn();
-            } else {
+            }
+            else {
                 if (!currentFunction.instructions.length ||
                     currentFunction.instructions[$ - 1].opcode != GrOpcode.return_)
                     logError(getError(Error.funcMissingRetAtEnd), getError(Error.missingRet));
@@ -3244,7 +3349,8 @@ final class GrParser {
                 logError(getError(Error.eof), format(getError(Error.expectedXFoundY),
                         getPrettyLexemeType(GrLexeme.Type.rightCurlyBrace),
                         getPrettyLexemeType(get().type)));
-        } else if (mustBeMultiline) {
+        }
+        else if (mustBeMultiline) {
             logError(getError(Error.missingCurlyBraces), format(getError(Error.expectedXFoundY),
                     getPrettyLexemeType(GrLexeme.Type.leftCurlyBrace),
                     getPrettyLexemeType(get().type)));
@@ -3328,7 +3434,8 @@ final class GrParser {
                     break;
                 parseStatement();
             }
-        } else {
+        }
+        else {
             if (get().type != GrLexeme.Type.semicolon)
                 parseStatement();
             else if (get().type == GrLexeme.Type.semicolon)
@@ -3355,7 +3462,8 @@ final class GrParser {
                 logError(getError(Error.eof), format(getError(Error.expectedXFoundY),
                         getPrettyLexemeType(GrLexeme.Type.rightCurlyBrace),
                         getPrettyLexemeType(get().type)));
-        } else if (mustBeMultiline) {
+        }
+        else if (mustBeMultiline) {
             logError(getError(Error.missingCurlyBraces), format(getError(Error.expectedXFoundY),
                     getPrettyLexemeType(GrLexeme.Type.leftCurlyBrace),
                     getPrettyLexemeType(get().type)));
@@ -3478,7 +3586,8 @@ final class GrParser {
                         getPrettyLexemeType(GrLexeme.Type.rightCurlyBrace),
                         getPrettyLexemeType(get().type)));
             checkAdvance();
-        } else {
+        }
+        else {
             if (get().type != GrLexeme.Type.semicolon)
                 skipStatement();
             else if (get().type == GrLexeme.Type.semicolon)
@@ -3580,7 +3689,8 @@ final class GrParser {
                 cast(uint)(capturePosition - isolatePosition), true);
             setInstruction(GrOpcode.catch_, cast(uint) capturePosition,
                 cast(uint)(endPosition - capturePosition), true);
-        } else {
+        }
+        else {
             const auto capturePosition = currentFunction.instructions.length;
             addInstruction(GrOpcode.catch_);
             addInstruction(GrOpcode.globalPop);
@@ -3767,7 +3877,8 @@ final class GrParser {
         if (get().type == GrLexeme.Type.colon) {
             checkAdvance();
             type = parseType(true);
-        } else {
+        }
+        else {
             isAuto = true;
         }
 
@@ -3863,7 +3974,8 @@ final class GrParser {
                     // On met la destination du saut du `if`/`unless` s’il n’est pas vérifié
                     setInstruction(isNegative ? GrOpcode.jumpNotEqual : GrOpcode.jumpEqual, jumpPosition,
                         cast(int)(currentFunction.instructions.length - jumpPosition), true);
-                } else
+                }
+                else
                     parseBlock(true);
             }
         }
@@ -3899,7 +4011,8 @@ final class GrParser {
                 logError(getError(Error.chanSizeMustBeOneOrHigher),
                     format(getError(Error.expectedAtLeastSizeOf1FoundX), channelSize));
             checkAdvance();
-        } else if (lex.type != GrLexeme.Type.greater) {
+        }
+        else if (lex.type != GrLexeme.Type.greater) {
             logError(getError(Error.missingCommaOrGreaterInsideChanSignature),
                 format(getError(Error.expectedCommaOrGreaterFoundX),
                     getPrettyLexemeType(get().type)));
@@ -4073,7 +4186,8 @@ final class GrParser {
             current = defaultCasePosition;
             parseBlock(true);
             current = tmp;
-        } else {
+        }
+        else {
             // Sans cas par défaut, `select` est une opération bloquante jusqu’à ce q’un cas soit traité.
             // On ajoute donc un `yield`, puis on saute au début du `select` pour l’évaluer à nouveau.
             addInstruction(GrOpcode.yield);
@@ -4212,7 +4326,8 @@ final class GrParser {
         if (get().type == GrLexeme.Type.colon) {
             checkAdvance();
             type = parseType(true);
-        } else {
+        }
+        else {
             isAuto = true;
         }
 
@@ -4344,14 +4459,16 @@ final class GrParser {
                                 [containerType])), getError(Error.signatureMismatch));
                     }
                     subType = grUnmangle(nextPrim.outSignature[0].mangledType);
-                } else if (nextFunc) {
+                }
+                else if (nextFunc) {
                     if (nextFunc.outSignature.length != 1 ||
                         nextFunc.outSignature[0].base != GrType.Base.optional) {
                         logError(format(getError(Error.funcXMustRetOptional),
                                 getPrettyFunction(nextFunc)), getError(Error.signatureMismatch));
                     }
                     subType = grUnmangle(nextFunc.outSignature[0].mangledType);
-                } else {
+                }
+                else {
                     logError(format(getError(Error.xNotDef), getPrettyFunctionCall("next",
                             [containerType])), getError(Error.notIterable));
                 }
@@ -4579,7 +4696,8 @@ final class GrParser {
                     customIterator.isAuto = false;
                     customIterator.type = grInt;
                     setVariableRegister(customIterator);
-                } else if (customIterator.type != grInt) {
+                }
+                else if (customIterator.type != grInt) {
                     logError(format(getError(Error.typeOfIteratorMustBeIntNotX),
                             getPrettyType(customIterator.type)), getError(Error.iteratorMustBeInt));
                 }
@@ -4604,7 +4722,8 @@ final class GrParser {
             convertType(type, grInt, fileId);
             addInstruction(GrOpcode.setupIterator);
             addSetInstruction(iterator, fileId);
-        } else
+        }
+        else
             isInfinite = true;
 
         // `for` peut avoir un `break` ou un `continue`.
@@ -4666,7 +4785,8 @@ final class GrParser {
             if (!currentFunction.instructions.length ||
                 currentFunction.instructions[$ - 1].opcode != GrOpcode.die)
                 addDie();
-        } else {
+        }
+        else {
             GrType[] expressionTypes;
             for (;;) {
                 if (expressionTypes.length >= currentFunction.outSignature.length) {
@@ -4697,10 +4817,12 @@ final class GrParser {
                             expressionTypes ~= convertType(subType,
                                 currentFunction.outSignature[expressionTypes.length], fileId);
                         }
-                    } else
+                    }
+                    else
                         logError(getError(Error.exprYieldsNoVal),
                             getError(Error.expectedValFoundNothing));
-                } else if (type.base != GrType.Base.void_) {
+                }
+                else if (type.base != GrType.Base.void_) {
                     expressionTypes ~= convertType(type,
                         currentFunction.outSignature[expressionTypes.length], fileId);
                 }
@@ -4930,7 +5052,8 @@ final class GrParser {
             if (!_data.isSignatureCompatible([srcType], [dstType], isAbstract, fileId)) {
                 if (len > arity) {
                     return false;
-                } else {
+                }
+                else {
                     GrType result = convertType(srcType, dstType, fileId, true, false, isTest);
                     if (result.base == GrType.Base.void_)
                         return false;
@@ -5134,9 +5257,11 @@ final class GrParser {
                     if (matching.prim) {
                         addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
                                 : GrOpcode.primitiveCall, matching.prim.index);
-                    } else if (matching.func) {
+                    }
+                    else if (matching.func) {
                         addFunctionCall(matching.func, fileId);
-                    } else {
+                    }
+                    else {
                         logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                                 signature)), getError(Error.unknownFunc), "", -1);
                     }
@@ -5153,7 +5278,8 @@ final class GrParser {
                     if (get().type == GrLexeme.Type.rightCurlyBrace) {
                         checkAdvance();
                         break;
-                    } else if (get().type == GrLexeme.Type.identifier) {
+                    }
+                    else if (get().type == GrLexeme.Type.identifier) {
                         const string fieldName = get().strValue;
                         checkAdvance();
                         bool hasField = false;
@@ -5186,7 +5312,8 @@ final class GrParser {
                         if (!hasField)
                             logError(format(getError(Error.fieldXNotExist),
                                     fieldName), getError(Error.unknownField));
-                    } else {
+                    }
+                    else {
                         logError(format(getError(Error.expectedFieldNameFoundX),
                                 getPrettyLexemeType(get().type)), getError(Error.missingField));
                     }
@@ -5215,7 +5342,8 @@ final class GrParser {
                         getPrettyType(objectType)), getError(Error.invalidType), "", -1);
                 break;
             }
-        } else {
+        }
+        else {
             string name = "@static_" ~ grUnmangleComposite(objectType.mangledType).name;
 
             if (get().type == GrLexeme.Type.period) {
@@ -5233,7 +5361,8 @@ final class GrParser {
                 advance();
                 if (get().type == GrLexeme.Type.rightParenthesis) {
                     advance();
-                } else {
+                }
+                else {
                     for (;;) {
                         auto type = parseSubExpression(
                             GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_TERMINATE_PARENTHESIS |
@@ -5245,7 +5374,8 @@ final class GrParser {
                             else
                                 logError(getError(Error.exprYieldsNoVal),
                                     getError(Error.expectedValFoundNothing));
-                        } else
+                        }
+                        else
                             signature ~= type;
 
                         if (get().type == GrLexeme.Type.rightParenthesis) {
@@ -5264,10 +5394,12 @@ final class GrParser {
                 addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
                         : GrOpcode.primitiveCall, matching.prim.index);
                 outputs = matching.prim.outSignature;
-            } else if (matching.func) {
+            }
+            else if (matching.func) {
                 addFunctionCall(matching.func, fileId);
                 outputs = matching.func.outSignature;
-            } else {
+            }
+            else {
                 logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(name,
                         signature)), getError(Error.unknownFunc), "", -1);
             }
@@ -5316,7 +5448,8 @@ final class GrParser {
                     logError(getError(Error.listSizeMustBeZeroOrHigher),
                         format(getError(Error.expectedAtLeastSizeOf1FoundX), defaultListSize));
                 checkAdvance();
-            } else if (lex.type != GrLexeme.Type.greater) {
+            }
+            else if (lex.type != GrLexeme.Type.greater) {
                 logError(getError(Error.missingCommaOrGreaterInsideListSignature),
                     format(getError(Error.expectedCommaOrGreaterFoundX),
                         getPrettyLexemeType(get().type)));
@@ -5344,7 +5477,8 @@ final class GrParser {
                     if (subType.base == GrType.Base.void_)
                         logError(format(getError(Error.listCantBeOfTypeX),
                                 getPrettyType(listType)), getError(Error.invalidListType));
-                } else {
+                }
+                else {
                     convertType(parseSubExpression(
                             GR_SUBEXPR_TERMINATE_BRACKET | GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_EXPECTING_VALUE)
                             .type, subType, fileId);
@@ -5550,7 +5684,8 @@ final class GrParser {
             while (get().type == GrLexeme.Type.comma);
 
             parseAssignList(lvalues);
-        } else {
+        }
+        else {
             parseSubExpression(GR_SUBEXPR_TERMINATE_SEMICOLON | GR_SUBEXPR_MUST_CLEAN);
             checkAdvance();
         }
@@ -5572,7 +5707,8 @@ final class GrParser {
                     foreach (subType; types)
                         expressionTypes ~= subType;
                 }
-            } else if (type.base != GrType.Base.void_)
+            }
+            else if (type.base != GrType.Base.void_)
                 expressionTypes ~= type;
             if (get().type != GrLexeme.Type.comma)
                 break;
@@ -5597,7 +5733,8 @@ final class GrParser {
                 logError(format(getError(lvalues.length > 1 ? Error.tryingAssignXValsToYVars
                         : Error.tryingAssignXValsToYVar), expressionTypes.length, lvalues.length),
                     getError(Error.moreValThanVarToAssign), "", -1);
-            } else if (!expressionTypes.length) {
+            }
+            else if (!expressionTypes.length) {
                 logError(getError(Error.assignationMissingVal),
                     getError(Error.expressionEmpty), "", -1);
             }
@@ -5615,7 +5752,8 @@ final class GrParser {
             if (passThrough) {
                 if (expressionTypes[expressionIndex].base == GrType.Base.void_) {
                     skippedLvalues ~= lvalues[variableIndex];
-                } else {
+                }
+                else {
                     addSetInstruction(lvalues[variableIndex], fileId,
                         lvalues[variableIndex + 1].type, false, isInitialization);
                 }
@@ -5625,7 +5763,8 @@ final class GrParser {
             while (variableIndex >= 0) {
                 if (expressionTypes[expressionIndex].base == GrType.Base.void_) {
                     skippedLvalues ~= lvalues[variableIndex];
-                } else {
+                }
+                else {
                     while (skippedLvalues.length) {
                         addSetInstruction(skippedLvalues[$ - 1], fileId,
                             expressionTypes[expressionIndex], true, isInitialization);
@@ -5771,11 +5910,13 @@ final class GrParser {
                         : GrOpcode.primitiveCall, matching.prim.index);
                 if (matching.prim.outSignature.length != 1 || matching.prim.outSignature[0] != type)
                     goto case void_;
-            } else if (matching.func) {
+            }
+            else if (matching.func) {
                 addFunctionCall(matching.func, fileId);
                 if (matching.func.outSignature.length != 1 || matching.func.outSignature[0] != type)
                     goto case void_;
-            } else {
+            }
+            else {
                 goto case void_;
             }
             break;
@@ -5929,7 +6070,8 @@ final class GrParser {
             if (hasValue && currentType != lastType && lastType != grVoid) {
                 lastType = currentType;
                 currentType = lastType;
-            } else
+            }
+            else
                 lastType = currentType;
 
             isRightUnaryOperator = false;
@@ -5991,12 +6133,14 @@ final class GrParser {
                     }
                     if (currentType.base == GrType.Base.void_) {
                         typeStack.length--;
-                    } else {
+                    }
+                    else {
                         hadValue = false;
                         hasValue = true;
                         typeStack[$ - 1] = currentType;
                     }
-                } else {
+                }
+                else {
                     advance();
                     currentType = parseSubExpression().type;
                     advance();
@@ -6048,7 +6192,8 @@ final class GrParser {
                         }
                         currentType = grPackTuple(types);
                     }
-                } else if (isOptionalCall) {
+                }
+                else if (isOptionalCall) {
                     currentType = grOptional(currentType);
                     nbReturnValues = 1;
                 }
@@ -6110,7 +6255,8 @@ final class GrParser {
                             currentType
                         ]);
                         lvalues ~= refVar;
-                    } else {
+                    }
+                    else {
                         if (!currentType.isValid) {
                             logError(format(getError(Error.listCantBeIndexedByX),
                                     getPrettyType(currentType)),
@@ -6123,7 +6269,8 @@ final class GrParser {
                     lastType = currentType;
                     typeStack[$ - 1] = currentType;
                     hasValue = true;
-                } else {
+                }
+                else {
                     currentType = parseListBuilder();
                     typeStack ~= currentType;
                     hasValue = true;
@@ -6241,7 +6388,8 @@ final class GrParser {
                 hadValue = false;
                 if (currentType.base == GrType.Base.void_) {
                     hasValue = false;
-                } else {
+                }
+                else {
                     hasValue = true;
                 }
 
@@ -6331,17 +6479,20 @@ final class GrParser {
                                 else
                                     logError(getError(Error.exprYieldsNoVal),
                                         getError(Error.expectedValFoundNothing));
-                            } else
+                            }
+                            else
                                 signature ~= subType;
 
                             if (operatorType != GrLexeme.Type.assign) {
                                 currentType = addBinaryOperator(operatorType - (
                                         GrLexeme.Type.bitwiseAndAssign - GrLexeme.Type.bitwiseAnd),
                                     currentType, subType, fileId);
-                            } else {
+                            }
+                            else {
                                 currentType = subType;
                             }
-                        } else if (operatorType == GrLexeme.Type.increment ||
+                        }
+                        else if (operatorType == GrLexeme.Type.increment ||
                             operatorType == GrLexeme.Type.decrement) {
                             isSet = true;
                             checkAdvance();
@@ -6366,7 +6517,8 @@ final class GrParser {
                                         logError(getError(Error.exprYieldsNoVal),
                                             getError(Error.expectedValFoundNothing));
                                 }
-                            } else {
+                            }
+                            else {
                                 logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(propertyName,
                                         signature)), getError(Error.unknownFunc), "", -1);
                             }
@@ -6476,7 +6628,8 @@ final class GrParser {
                                     typeStack.length--;
                                     hadValue = false;
                                     hasValue = false;
-                                } else {
+                                }
+                                else {
                                     hadValue = false;
                                     hasValue = true;
                                     typeStack[$ - 1] = currentType;
@@ -6549,7 +6702,8 @@ final class GrParser {
                             }
                             currentType = grPackTuple(types);
                         }
-                    } else if (isOptionalCall) {
+                    }
+                    else if (isOptionalCall) {
                         currentType = grOptional(currentType);
                         nbReturnValues = 1;
                     }
@@ -6591,9 +6745,11 @@ final class GrParser {
                         addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
                                 : GrOpcode.primitiveCall, matching.prim.index);
                         outputs = matching.prim.outSignature;
-                    } else if (matching.func) {
+                    }
+                    else if (matching.func) {
                         outputs = addFunctionCall(matching.func, fileId);
-                    } else {
+                    }
+                    else {
                         logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(identifier,
                                 signature)), getError(Error.unknownFunc), "", -1);
                     }
@@ -6618,7 +6774,8 @@ final class GrParser {
                         else
                             logError(getError(Error.exprYieldsNoVal),
                                 getError(Error.expectedValFoundNothing));
-                    } else
+                    }
+                    else
                         signature ~= subType;
 
                     if (operatorType != GrLexeme.Type.assign && signature.length != 1)
@@ -6631,7 +6788,8 @@ final class GrParser {
                                 GrLexeme.Type.bitwiseAndAssign - GrLexeme.Type.bitwiseAnd),
                             currentType, subType, fileId);
                     }
-                } else if (operatorType == GrLexeme.Type.increment ||
+                }
+                else if (operatorType == GrLexeme.Type.increment ||
                     operatorType == GrLexeme.Type.decrement) {
                     if (outputs.length != 1)
                         logError(getError(Error.unOpMustHave1Operand),
@@ -6653,9 +6811,11 @@ final class GrParser {
                         currentType = grPackTuple(matching.prim.outSignature);
                         if (currentType.base == GrType.Base.internalTuple) {
                             outputs = grUnpackTuple(currentType);
-                        } else if (currentType != grVoid)
+                        }
+                        else if (currentType != grVoid)
                             outputs = [currentType];
-                    } else {
+                    }
+                    else {
                         logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(identifier,
                                 signature)), getError(Error.unknownFunc), "", -1);
                     }
@@ -6686,7 +6846,8 @@ final class GrParser {
                     hadValue = false;
                     hasLValue = false;
                     hadLValue = false;
-                } else {
+                }
+                else {
                     hasValue = false;
                     hadValue = false;
                     hasLValue = false;
@@ -6838,7 +6999,8 @@ final class GrParser {
                 if (hadValue && isRightUnaryOperator) {
                     hasValue = true;
                     hadValue = false;
-                } else
+                }
+                else
                     hasValue = false;
                 checkAdvance();
                 break;
@@ -7002,10 +7164,12 @@ final class GrParser {
                                 }
                                 signature ~= convertType(types[y], anonSignature[i], fileId);
                             }
-                        } else
+                        }
+                        else
                             logError(getError(Error.exprYieldsNoVal),
                                 getError(Error.expectedValFoundNothing));
-                    } else {
+                    }
+                    else {
                         signature ~= convertType(subType, anonSignature[i], fileId);
                         i++;
                     }
@@ -7015,7 +7179,8 @@ final class GrParser {
                     }
                     advance();
                 }
-            } else {
+            }
+            else {
                 checkAdvance();
             }
         }
@@ -7042,7 +7207,8 @@ final class GrParser {
                 offset--;
 
             addInstruction(GrOpcode.anonymousCall, offset);
-        } else
+        }
+        else
             addInstruction(GrOpcode.anonymousTask, 0u);
         return retTypes;
     }
@@ -7125,10 +7291,12 @@ final class GrParser {
                                     }
                                     signature ~= convertType(types[y], anonSignature[i], fileId);
                                 }
-                            } else
+                            }
+                            else
                                 logError(getError(Error.exprYieldsNoVal),
                                     getError(Error.expectedValFoundNothing));
-                        } else {
+                        }
+                        else {
                             signature ~= convertType(subType, anonSignature[i], fileId);
                             i++;
                         }
@@ -7150,7 +7318,8 @@ final class GrParser {
                     }
                     if (hasParenthesis && get().type == GrLexeme.Type.rightParenthesis)
                         advance();
-                } else {
+                }
+                else {
                     if (hasParenthesis && get().type == GrLexeme.Type.rightParenthesis)
                         advance();
                     if (signature.length != anonSignature.length) {
@@ -7177,7 +7346,8 @@ final class GrParser {
                     addInstruction(GrOpcode.anonymousCall, 0u);
                 else if (variable.type.base == GrType.Base.task)
                     addInstruction(GrOpcode.anonymousTask, 0u);
-            } else {
+            }
+            else {
                 if (isMethodCall) {
                     if (selfType.base == GrType.Base.internalTuple)
                         signature ~= grUnpackTuple(selfType);
@@ -7198,7 +7368,8 @@ final class GrParser {
                             else
                                 logError(getError(Error.exprYieldsNoVal),
                                     getError(Error.expectedValFoundNothing));
-                        } else
+                        }
+                        else
                             signature ~= type;
 
                         if (get().type == GrLexeme.Type.rightParenthesis)
@@ -7215,14 +7386,17 @@ final class GrParser {
                     addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
                             : GrOpcode.primitiveCall, matching.prim.index);
                     returnType = grPackTuple(matching.prim.outSignature);
-                } else if (matching.func) {
+                }
+                else if (matching.func) {
                     returnType = grPackTuple(addFunctionCall(matching.func, fileId));
-                } else {
+                }
+                else {
                     logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(identifierName,
                             signature)), getError(Error.unknownFunc), "", -1);
                 }
             }
-        } else if (_data.isEnum(identifier.strValue, fileId, false)) {
+        }
+        else if (_data.isEnum(identifier.strValue, fileId, false)) {
             const GrEnumDefinition definition = _data.getEnum(identifier.strValue, fileId);
             if (get().type != GrLexeme.Type.period)
                 logError(getError(Error.expectedDotAfterEnumType),
@@ -7256,7 +7430,8 @@ final class GrParser {
             returnType = GrType(GrType.Base.enum_);
             returnType.mangledType = definition.name;
             addIntConstant(definition.getField(fieldName));
-        } else {
+        }
+        else {
             // Variable déclarée
             variableRef = getVariable(identifierName, fileId);
             returnType = variableRef.type;
@@ -7329,7 +7504,8 @@ final class GrParser {
             error.line = lex.line;
             error.column = lex.column;
             error.textLength = lex.textLength;
-        } else {
+        }
+        else {
             error.filePath = "";
             error.lineText = "";
             error.line = 1u; // Par convention, la première ligne commence à 1, et non 0.
@@ -7349,7 +7525,8 @@ final class GrParser {
                 error.otherLine = otherLex.line;
                 error.otherColumn = otherLex.column;
                 error.otherTextLength = otherLex.textLength;
-            } else {
+            }
+            else {
                 error.otherFilePath = "";
                 error.otherLineText = "";
                 error.otherLine = 1u; // Par convention, la première ligne commence à 1, et non 0.
