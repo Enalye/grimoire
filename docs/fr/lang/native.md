@@ -13,4 +13,4 @@ map.set("cerise", 12);
 En terme d’usage, un natif suit les mêmes régles d’héritage, de généricité, de constructeurs, de méthode statiques et de champs qu’une classe.
 
 > ***Important:***
-Un type natif ne peut pas hériter d’une classe et inversement.
+Un type natif ne peut pas hériter d’une classe. En revanche, une classe peut hériter d’un type natif.

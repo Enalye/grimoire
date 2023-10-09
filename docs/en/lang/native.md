@@ -13,4 +13,4 @@ map.set("strawberry", 12);
 In terms of usage, a native follows the same rules of inheritance, genericity, constructors, static methods and fields as a class.
 
 > ***Important:***
-A native type can't inherit from a class and a class can't inherit from a native type.
+A native type can't inherit from a class but a class can inherit from a native type.
