@@ -8,7 +8,6 @@ module grimoire.assembly.bytecode;
 import std.file, std.bitmanip, std.array, std.outbuffer;
 import std.exception : enforce;
 
-import grimoire.assembly.aot;
 import grimoire.assembly.symbol;
 
 /// Correspond à une version du langage. \
@@ -625,12 +624,6 @@ final class GrBytecode {
             symbol.deserialize(buffer);
             symbols[i] = symbol;
         }
-    }
-
-    /// Fonction expérimentale permettant de générer du code en D depuis le bytecode.
-    void aot() {
-        AOTCompiler compiler = new AOTCompiler(this);
-        std.file.write("aot_test.d", compiler.compile());
     }
 
     /// Formate la liste des instructions du bytecode dans un format lisible.
