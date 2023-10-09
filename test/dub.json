@@ -4,6 +4,7 @@
 	"dependencies": {
 		"grimoire": {"path": "../"}
 	},
+    "dflags": ["-gf"],
 	"targetPath": "bin",
 	"workingDirectory": "."
 }

@@ -25,10 +25,10 @@ void main() {
         GrCompiler compiler = new GrCompiler;
         compiler.addLibrary(stdlib);
 
-        compiler.addSource(`
+        /*compiler.addSource(`
 export func foo()(string) {
     return "Hello";
-}`);
+}`);*/
         compiler.addFile("script/test.gr");
 
         GrBytecode bytecode = compiler.compile(GrOption.symbols | GrOption.safe, locale);
@@ -40,6 +40,8 @@ export func foo()(string) {
             bytecode.save("test.grb");
             bytecode = null;
         }
+
+        bytecode.aot();
 
         auto compilationTime = MonoTime.currTime() - startTime;
 
