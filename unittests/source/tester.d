@@ -73,8 +73,7 @@ final class UnitTester {
         shared bool _isLoaded = false;
         TimeoutThread _timeout;
 
-        GrLibrary _stdlib, _testlib;
-        GrCompiler _compiler;
+        GrLibrary _stdlib;
         GrLocale _locale;
         GrEngine _engine;
     }
@@ -83,17 +82,18 @@ final class UnitTester {
         _locale = locale;
 
         _stdlib = grLoadStdLibrary();
-        _compiler = new GrCompiler;
-        _compiler.addLibrary(_stdlib);
     }
 
     TestSerie run(string fileName) {
         TestSerie testSerie;
 
-        GrBytecode bytecode = _compiler.compileFile(fileName,
-            GrOption.symbols | GrOption.safe, _locale);
+        GrCompiler compiler = new GrCompiler;
+        compiler.addLibrary(_stdlib);
+        compiler.addFile(fileName);
+
+        GrBytecode bytecode = compiler.compile(GrOption.symbols | GrOption.safe, _locale);
         if (!bytecode) {
-            testSerie.comment = _compiler.getError().prettify(GrLocale.fr_FR);
+            testSerie.comment = compiler.getError().prettify(GrLocale.fr_FR);
             return testSerie;
         }
         testSerie.hasCompiled = true;

@@ -10,51 +10,51 @@ Maths related functions.
 |Opérator|Input|Output|
 |-|-|-|
 |**|**int**, **int**|**int**|
-|**|**float**, **float**|**float**|
+|**|**double**, **double**|**double**|
 ## Functions
 |Function|Input|Output|
 |-|-|-|
-|[abs](#func_0)|*x*: **float**|**float**|
+|[abs](#func_0)|*x*: **double**|**double**|
 |[abs](#func_1)|*x*: **int**|**int**|
-|[acos](#func_2)|*radians*: **float**|**float**|
-|[approach](#func_3)|*x*: **float**, *target*: **float**, *step*: **float**|**float**|
+|[acos](#func_2)|*radians*: **double**|**double**|
+|[approach](#func_3)|*x*: **double**, *target*: **double**, *step*: **double**|**double**|
 |[approach](#func_4)|*x*: **int**, *target*: **int**, *step*: **int**|**int**|
-|[asin](#func_5)|*radians*: **float**|**float**|
-|[atan](#func_6)|*radians*: **float**|**float**|
-|[atan2](#func_7)|*a*: **float**, *b*: **float**|**float**|
-|[ceil](#func_8)|*x*: **float**|**float**|
+|[asin](#func_5)|*radians*: **double**|**double**|
+|[atan](#func_6)|*radians*: **double**|**double**|
+|[atan2](#func_7)|*a*: **double**, *b*: **double**|**double**|
+|[ceil](#func_8)|*x*: **double**|**double**|
 |[clamp](#func_9)|*x*: **int**, *min*: **int**, *max*: **int**|**int**|
-|[clamp](#func_10)|*x*: **float**, *min*: **float**, *max*: **float**|**float**|
-|[cos](#func_11)|*radians*: **float**|**float**|
-|[deg](#func_12)|*radians*: **float**|**float**|
-|[exp](#func_13)|*x*: **float**|**float**|
-|[floor](#func_14)|*x*: **float**|**float**|
-|[isNaN](#func_15)|*x*: **float**|**bool**|
-|[lerp](#func_16)|*source*: **float**, *destination*: **float**, *t*: **float**|**float**|
-|[log](#func_17)|*x*: **float**|**float**|
-|[log10](#func_18)|*x*: **float**|**float**|
-|[log2](#func_19)|*x*: **float**|**float**|
+|[clamp](#func_10)|*x*: **double**, *min*: **double**, *max*: **double**|**double**|
+|[cos](#func_11)|*radians*: **double**|**double**|
+|[deg](#func_12)|*radians*: **double**|**double**|
+|[exp](#func_13)|*x*: **double**|**double**|
+|[floor](#func_14)|*x*: **double**|**double**|
+|[isNaN](#func_15)|*x*: **double**|**bool**|
+|[lerp](#func_16)|*source*: **double**, *destination*: **double**, *t*: **double**|**double**|
+|[log](#func_17)|*x*: **double**|**double**|
+|[log10](#func_18)|*x*: **double**|**double**|
+|[log2](#func_19)|*x*: **double**|**double**|
 |[max](#func_20)|*a*: **int**, *b*: **int**|**int**|
-|[max](#func_21)|*a*: **float**, *b*: **float**|**float**|
-|[min](#func_22)|*a*: **float**, *b*: **float**|**float**|
+|[max](#func_21)|*a*: **double**, *b*: **double**|**double**|
+|[min](#func_22)|*a*: **double**, *b*: **double**|**double**|
 |[min](#func_23)|*a*: **int**, *b*: **int**|**int**|
-|[rad](#func_24)|*degrees*: **float**|**float**|
+|[rad](#func_24)|*degrees*: **double**|**double**|
 |[rand](#func_25)|*min*: **int**, *max*: **int**|**int**|
-|[rand](#func_26)||**float**|
-|[rand](#func_27)|*min*: **float**, *max*: **float**|**float**|
-|[rlerp](#func_28)|*source*: **float**, *destination*: **float**, *value*: **float**|**float**|
-|[round](#func_29)|*x*: **float**|**float**|
-|[sin](#func_30)|*radians*: **float**|**float**|
-|[sqrt](#func_31)|*x*: **float**|**float**|
-|[tan](#func_32)|*radians*: **float**|**float**|
-|[truncate](#func_33)|*x*: **float**|**float**|
+|[rand](#func_26)||**double**|
+|[rand](#func_27)|*min*: **double**, *max*: **double**|**double**|
+|[rlerp](#func_28)|*source*: **double**, *destination*: **double**, *value*: **double**|**double**|
+|[round](#func_29)|*x*: **double**|**double**|
+|[sin](#func_30)|*radians*: **double**|**double**|
+|[sqrt](#func_31)|*x*: **double**|**double**|
+|[tan](#func_32)|*radians*: **double**|**double**|
+|[truncate](#func_33)|*x*: **double**|**double**|
 
 
 ***
 ## Function descriptions
 
 <a id="func_0"></a>
-> abs (*x*: **float**) (**float**)
+> abs (*x*: **double**) (**double**)
 
 Returns the absolute value of `x`.
 
@@ -64,12 +64,12 @@ Returns the absolute value of `x`.
 Returns the absolute value of `x`.
 
 <a id="func_2"></a>
-> acos (*radians*: **float**) (**float**)
+> acos (*radians*: **double**) (**double**)
 
 Returns the arc cosine of `radians`.
 
 <a id="func_3"></a>
-> approach (*x*: **float**, *target*: **float**, *step*: **float**) (**float**)
+> approach (*x*: **double**, *target*: **double**, *step*: **double**) (**double**)
 
 Approach `x` up to `target` by increment of `step` without overshooting it.
 
@@ -83,22 +83,22 @@ Approach `x` up to `target` by increment of `step` without overshooting it.
 A negative step distances from `target` by that much.
 
 <a id="func_5"></a>
-> asin (*radians*: **float**) (**float**)
+> asin (*radians*: **double**) (**double**)
 
 Returns the arc sine of `radians`.
 
 <a id="func_6"></a>
-> atan (*radians*: **float**) (**float**)
+> atan (*radians*: **double**) (**double**)
 
 Returns the arc tangent of `radians`.
 
 <a id="func_7"></a>
-> atan2 (*a*: **float**, *b*: **float**) (**float**)
+> atan2 (*a*: **double**, *b*: **double**) (**double**)
 
 Variant of `atan`.
 
 <a id="func_8"></a>
-> ceil (*x*: **float**) (**float**)
+> ceil (*x*: **double**) (**double**)
 
 Returns the rounded value of `x` not smaller than `x`.
 
@@ -108,52 +108,52 @@ Returns the rounded value of `x` not smaller than `x`.
 Restrict `x` between `min` and `max`.
 
 <a id="func_10"></a>
-> clamp (*x*: **float**, *min*: **float**, *max*: **float**) (**float**)
+> clamp (*x*: **double**, *min*: **double**, *max*: **double**) (**double**)
 
 Restrict `x` between `min` and `max`.
 
 <a id="func_11"></a>
-> cos (*radians*: **float**) (**float**)
+> cos (*radians*: **double**) (**double**)
 
 Returns the cosine of `radians`.
 
 <a id="func_12"></a>
-> deg (*radians*: **float**) (**float**)
+> deg (*radians*: **double**) (**double**)
 
 Converts `radians` in degrees.
 
 <a id="func_13"></a>
-> exp (*x*: **float**) (**float**)
+> exp (*x*: **double**) (**double**)
 
 Returns the exponential of `x`.
 
 <a id="func_14"></a>
-> floor (*x*: **float**) (**float**)
+> floor (*x*: **double**) (**double**)
 
 Returns the rounded value of `x` not greater than `x`.
 
 <a id="func_15"></a>
-> isNaN (*x*: **float**) (**bool**)
+> isNaN (*x*: **double**) (**bool**)
 
 Checks if `x` is a valid float value or not.
 
 <a id="func_16"></a>
-> lerp (*source*: **float**, *destination*: **float**, *t*: **float**) (**float**)
+> lerp (*source*: **double**, *destination*: **double**, *t*: **double**) (**double**)
 
 Interpolate between `source` and `destination` using `t` between 0 and 1.
 
 <a id="func_17"></a>
-> log (*x*: **float**) (**float**)
+> log (*x*: **double**) (**double**)
 
 Returns the natural logarithm of `x`.
 
 <a id="func_18"></a>
-> log10 (*x*: **float**) (**float**)
+> log10 (*x*: **double**) (**double**)
 
 Returns the base 10 logarithm of `x`.
 
 <a id="func_19"></a>
-> log2 (*x*: **float**) (**float**)
+> log2 (*x*: **double**) (**double**)
 
 Returns the base 2 logarithm of `x`.
 
@@ -163,12 +163,12 @@ Returns the base 2 logarithm of `x`.
 Returns the greatest value between `a` et `b`.
 
 <a id="func_21"></a>
-> max (*a*: **float**, *b*: **float**) (**float**)
+> max (*a*: **double**, *b*: **double**) (**double**)
 
 Returns the greatest value between `a` et `b`.
 
 <a id="func_22"></a>
-> min (*a*: **float**, *b*: **float**) (**float**)
+> min (*a*: **double**, *b*: **double**) (**double**)
 
 Returns the smallest value between `a` and `b`.
 
@@ -178,7 +178,7 @@ Returns the smallest value between `a` and `b`.
 Returns the smallest value between `a` and `b`.
 
 <a id="func_24"></a>
-> rad (*degrees*: **float**) (**float**)
+> rad (*degrees*: **double**) (**double**)
 
 Converts `degrees` in radians.
 
@@ -188,44 +188,44 @@ Converts `degrees` in radians.
 Returns a random value between `min` and `max` included.
 
 <a id="func_26"></a>
-> rand (**float**)
+> rand (**double**)
 
 Returns a random value between 0 and 1 excluded.
 
 <a id="func_27"></a>
-> rand (*min*: **float**, *max*: **float**) (**float**)
+> rand (*min*: **double**, *max*: **double**) (**double**)
 
 Returns a random value between `min` and `max` included.
 
 <a id="func_28"></a>
-> rlerp (*source*: **float**, *destination*: **float**, *value*: **float**) (**float**)
+> rlerp (*source*: **double**, *destination*: **double**, *value*: **double**) (**double**)
 
 Reverse lerp operation.
 
 Returns the ratio between 0 and 1 of `value` from `source` to `destination`.
 
 <a id="func_29"></a>
-> round (*x*: **float**) (**float**)
+> round (*x*: **double**) (**double**)
 
 Returns the nearest rounded value of `x`.
 
 <a id="func_30"></a>
-> sin (*radians*: **float**) (**float**)
+> sin (*radians*: **double**) (**double**)
 
 Returns the sine of `radians`.
 
 <a id="func_31"></a>
-> sqrt (*x*: **float**) (**float**)
+> sqrt (*x*: **double**) (**double**)
 
 Returns the square root of `x`.
 
 <a id="func_32"></a>
-> tan (*radians*: **float**) (**float**)
+> tan (*radians*: **double**) (**double**)
 
 Returns the tangent of `radians`.
 
 <a id="func_33"></a>
-> truncate (*x*: **float**) (**float**)
+> truncate (*x*: **double**) (**double**)
 
 Returns the integer part of `x`.
 
