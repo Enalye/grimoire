@@ -312,7 +312,7 @@ package GrType[] grUnpackTuple(GrType type) {
 }
 
 /// Représente une variable en grimoire
-package class GrVariable {
+package final class GrVariable {
     /// Type de la variable
     GrType type;
     /// Son registre
@@ -341,6 +341,28 @@ package class GrVariable {
     bool isOptional;
     /// Position de l’instruction optionnelle
     uint optionalPosition;
+
+    /// Init
+    this() {
+    }
+
+    /// Copie
+    this(GrVariable other) {
+        type = other.type;
+        register = other.register;
+        isGlobal = other.isGlobal;
+        isField = other.isField;
+        isInitialized = other.isInitialized;
+        isAuto = other.isAuto;
+        isConst = other.isConst;
+        name = other.name;
+        isExport = other.isExport;
+        fileId = other.fileId;
+        lexPosition = other.lexPosition;
+        hasLexPosition = other.hasLexPosition;
+        isOptional = other.isOptional;
+        optionalPosition = other.optionalPosition;
+    }
 }
 
 /// Représente un type opaque
@@ -627,8 +649,16 @@ package class GrFunction {
         if (!anonParent || anonParent.name == "@global")
             return;
 
-        registerAvailables = anonParent.registerAvailables;
-        scopes = anonParent.scopes;
+        registerAvailables = anonParent.registerAvailables.dup;
+        scopes.length = 0;
+        foreach (ref scope_; anonParent.scopes) {
+            Scope nScope;
+            foreach (string name, GrVariable var; scope_.localVariables) {
+                nScope.localVariables[name] = new GrVariable(var);
+            }
+            scopes ~= nScope;
+        }
+        openScope();
         localsCount = anonParent.localsCount;
     }
 
