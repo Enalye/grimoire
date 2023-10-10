@@ -4787,48 +4787,56 @@ final class GrParser {
                 addDie();
         }
         else {
+            if (!currentFunction.outSignature.length && get().type != GrLexeme.Type.semicolon) {
+                logError(getError(Error.mismatchedNumRetVal),
+                    format(getError(Error.expectedXRetValFoundY),
+                        currentFunction.outSignature.length, 1));
+            }
+
             GrType[] expressionTypes;
-            for (;;) {
-                if (expressionTypes.length >= currentFunction.outSignature.length) {
-                    logError(getError(Error.expectedXRetValFoundY),
-                        format(getError(currentFunction.outSignature.length > 1 ?
-                            Error.expectedXRetValsFoundY : Error.expectedXRetValFoundY),
-                            currentFunction.outSignature.length, expressionTypes.length),
-                        format(getError(Error.retSignatureOfTypeX),
-                            getPrettyFunctionCall("", currentFunction.outSignature)), -1);
-                }
-                GrType type = parseSubExpression(
-                    GR_SUBEXPR_TERMINATE_SEMICOLON | GR_SUBEXPR_TERMINATE_COMMA |
-                        GR_SUBEXPR_EXPECTING_VALUE).type;
-                if (type.base == GrType.Base.internalTuple) {
-                    auto types = grUnpackTuple(type);
-                    if (types.length) {
-                        foreach (subType; types) {
-                            if (expressionTypes.length >= currentFunction.outSignature.length) {
-                                logError(getError(Error.expectedXRetValFoundY),
-                                    format(getError(currentFunction.outSignature.length > 1 ?
-                                        Error.expectedXRetValsFoundY
-                                        : Error.expectedXRetValFoundY),
-                                        currentFunction.outSignature.length, expressionTypes.length),
-                                    format(getError(Error.retSignatureOfTypeX),
-                                        getPrettyFunctionCall("", currentFunction.outSignature)),
-                                    -1);
-                            }
-                            expressionTypes ~= convertType(subType,
-                                currentFunction.outSignature[expressionTypes.length], fileId);
-                        }
+            if (currentFunction.outSignature.length) {
+                for (;;) {
+                    if (expressionTypes.length >= currentFunction.outSignature.length) {
+                        logError(getError(Error.mismatchedNumRetVal),
+                            format(getError(currentFunction.outSignature.length > 1 ?
+                                Error.expectedXRetValsFoundY : Error.expectedXRetValFoundY),
+                                currentFunction.outSignature.length, expressionTypes.length + 1),
+                            format(getError(Error.retSignatureOfTypeX),
+                                getPrettyFunctionCall("", currentFunction.outSignature)), -1);
                     }
-                    else
-                        logError(getError(Error.exprYieldsNoVal),
-                            getError(Error.expectedValFoundNothing));
+                    GrType type = parseSubExpression(
+                        GR_SUBEXPR_TERMINATE_SEMICOLON |
+                            GR_SUBEXPR_TERMINATE_COMMA | GR_SUBEXPR_EXPECTING_VALUE).type;
+                    if (type.base == GrType.Base.internalTuple) {
+                        auto types = grUnpackTuple(type);
+                        if (types.length) {
+                            foreach (subType; types) {
+                                if (expressionTypes.length >= currentFunction.outSignature.length) {
+                                    logError(getError(Error.mismatchedNumRetVal),
+                                        format(getError(currentFunction.outSignature.length > 1 ?
+                                            Error.expectedXRetValsFoundY
+                                            : Error.expectedXRetValFoundY),
+                                            currentFunction.outSignature.length, types.length),
+                                        format(getError(Error.retSignatureOfTypeX),
+                                            getPrettyFunctionCall("", currentFunction.outSignature)),
+                                        -1);
+                                }
+                                expressionTypes ~= convertType(subType,
+                                    currentFunction.outSignature[expressionTypes.length], fileId);
+                            }
+                        }
+                        else
+                            logError(getError(Error.exprYieldsNoVal),
+                                getError(Error.expectedValFoundNothing));
+                    }
+                    else if (type.base != GrType.Base.void_) {
+                        expressionTypes ~= convertType(type,
+                            currentFunction.outSignature[expressionTypes.length], fileId);
+                    }
+                    if (get().type != GrLexeme.Type.comma)
+                        break;
+                    checkAdvance();
                 }
-                else if (type.base != GrType.Base.void_) {
-                    expressionTypes ~= convertType(type,
-                        currentFunction.outSignature[expressionTypes.length], fileId);
-                }
-                if (get().type != GrLexeme.Type.comma)
-                    break;
-                checkAdvance();
             }
             if (get().type != GrLexeme.Type.semicolon)
                 logError(getError(Error.missingSemicolonAfterExprList), format(getError(Error.expectedXFoundY),
