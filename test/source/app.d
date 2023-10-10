@@ -17,7 +17,10 @@ void main() {
         SetConsoleOutputCP(65_001);
     }
     try {
+        // Options
         bool testBytecode = false;
+        bool showBytecode = true;
+
         const GrLocale locale = GrLocale.fr_FR;
         auto startTime = MonoTime.currTime();
         GrLibrary stdlib = grLoadStdLibrary();
@@ -25,10 +28,6 @@ void main() {
         GrCompiler compiler = new GrCompiler;
         compiler.addLibrary(stdlib);
 
-        /*compiler.addSource(`
-export func foo()(string) {
-    return "Hello";
-}`);*/
         compiler.addFile("script/test.gr");
 
         GrBytecode bytecode = compiler.compile(GrOption.symbols | GrOption.safe, locale);
@@ -41,15 +40,15 @@ export func foo()(string) {
             bytecode = null;
         }
 
-        bytecode.aot();
-
         auto compilationTime = MonoTime.currTime() - startTime;
 
         if (testBytecode) {
             bytecode = new GrBytecode;
             bytecode.load("test.grb");
         }
-        writeln(bytecode.prettify());
+        if (showBytecode) {
+            writeln(bytecode.prettify());
+        }
 
         GrEngine engine = new GrEngine;
         engine.addLibrary(stdlib);
@@ -59,7 +58,7 @@ export func foo()(string) {
             return;
         }
 
-        engine.callEvent("main");
+        engine.callEvent("app");
 
         write("> ");
         startTime = MonoTime.currTime();

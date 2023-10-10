@@ -8,6 +8,8 @@ module grimoire.runtime.closure;
 import grimoire.runtime.task;
 import grimoire.runtime.value;
 
+/// Tâche ayant accès au contexte parent. \
+/// La pile locale y est référencé par copie.
 final class GrClosure {
     package {
         uint pc;
@@ -21,7 +23,7 @@ final class GrClosure {
 
         if (caller) {
             locals = caller.locals[caller.localsPos .. caller.localsPos +
-                caller.callStack[caller.stackFramePos].localStackSize];
+                caller.callStack[caller.stackFramePos].localStackSize].dup;
         }
     }
 
@@ -30,7 +32,7 @@ final class GrClosure {
         caller = caller_;
 
         if (caller) {
-            locals = caller.locals[caller.localsPos .. caller.localsPos + size];
+            locals = caller.locals[caller.localsPos .. caller.localsPos + size].dup;
         }
     }
 }

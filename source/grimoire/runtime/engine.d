@@ -1288,8 +1288,11 @@ class GrEngine {
                     break;
                 case concatenate_string:
                     currentTask.stackPos--;
-                    (cast(GrString) currentTask.stack[currentTask.stackPos]._ptrValue).pushBack(
+                    GrString str = cast(GrString) currentTask.stack[currentTask.stackPos]._ptrValue;
+                    str = new GrString(str);
+                    str.pushBack(
                         (cast(GrString) currentTask.stack[currentTask.stackPos + 1]._ptrValue));
+                    currentTask.stack[currentTask.stackPos]._ptrValue = cast(void*) str;
                     currentTask.pc++;
                     break;
                 case substract_int:
@@ -1734,7 +1737,8 @@ class GrEngine {
                     const uint pc = _bytecode.uintConsts[grGetInstructionUnsignedValue(opcode)];
 
                     // Cet opcode est forcément suivi de extend
-                    const uint size = grGetInstructionUnsignedValue(_bytecode.opcodes[currentTask.pc + 1]);
+                    const uint size = grGetInstructionUnsignedValue(
+                        _bytecode.opcodes[currentTask.pc + 1]);
 
                     GrClosure closure = new GrClosure(currentTask, pc, size);
                     currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer) closure;
