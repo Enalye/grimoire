@@ -5,14 +5,15 @@ Time related functions.
 |Function|Input|Output|
 |-|-|-|
 |[hours](#func_0)|*h*: **int**|**int**|
-|[hours](#func_1)|*h*: **float**|**int**|
+|[hours](#func_1)|*h*: **double**|**double**|
 |[minutes](#func_2)|*m*: **int**|**int**|
-|[minutes](#func_3)|*m*: **float**|**int**|
+|[minutes](#func_3)|*m*: **double**|**double**|
 |[seconds](#func_4)|*s*: **int**|**int**|
-|[seconds](#func_5)|*s*: **float**|**int**|
-|[sleep](#func_6)|*ms*: **int**||
-|[time](#func_7)||**int**|
-|[wait](#func_8)|*x*: **int**||
+|[seconds](#func_5)|*s*: **double**|**double**|
+|[sleep](#func_6)|*ms*: **uint**||
+|[sleep](#func_7)|*ms*: **double**||
+|[time](#func_8)||**int**|
+|[wait](#func_9)|*x*: **uint**||
 
 
 ***
@@ -24,7 +25,7 @@ Time related functions.
 Converts `h` hours in milliseconds.
 
 <a id="func_1"></a>
-> hours (*h*: **float**) (**int**)
+> hours (*h*: **double**) (**double**)
 
 Converts `h` hours in milliseconds.
 
@@ -34,7 +35,7 @@ Converts `h` hours in milliseconds.
 Converts `m` seconds in milliseconds.
 
 <a id="func_3"></a>
-> minutes (*m*: **float**) (**int**)
+> minutes (*m*: **double**) (**double**)
 
 Converts `m` seconds in milliseconds.
 
@@ -44,22 +45,27 @@ Converts `m` seconds in milliseconds.
 Converts `s` seconds in milliseconds.
 
 <a id="func_5"></a>
-> seconds (*s*: **float**) (**int**)
+> seconds (*s*: **double**) (**double**)
 
 Converts `s` seconds in milliseconds.
 
 <a id="func_6"></a>
-> sleep (*ms*: **int**)
+> sleep (*ms*: **uint**)
 
 Blocks the task during `ms` milliseconds.
 
 <a id="func_7"></a>
+> sleep (*ms*: **double**)
+
+Blocks the task during `ms` milliseconds.
+
+<a id="func_8"></a>
 > time (**int**)
 
 Returns the elapsed time.
 
-<a id="func_8"></a>
-> wait (*x*: **int**)
+<a id="func_9"></a>
+> wait (*x*: **uint**)
 
 Blocks the task during `x` passes.
 
