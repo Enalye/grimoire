@@ -1,4 +1,6 @@
-# Grimoire
+<p align="center" >
+<img src="https://raw.githubusercontent.com/enalye/grimoire/master/docs/_media/logo.png" alt="Grimoire" title="Grimoire">
+</p>
 
 Grimoire is a simple and fast concurrent programming language that can easily be embedded into another D programs.
 You can very easily interface your program with Grimoire's scripts.
@@ -13,14 +15,14 @@ What it looks like:
 
 ```cpp
 //Hello World
-event main() {
-    "Hello World!":print;
+event app {
+    "Hello World!".print;
 }
 ```
 
 ```go
 //Invert a string
-event main() {
+event app {
     assert("Hello World !".invert == "! dlroW olleH");
 }
 
@@ -34,7 +36,7 @@ func invert(str: string) (string) {
 
 ```go
 //Fibonacci
-event fib() {
+event fib {
     assert(
         function(n: int) (int) {
             if(n < 2) return n;
