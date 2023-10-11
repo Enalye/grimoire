@@ -545,6 +545,15 @@ final class GrParser {
             GrFunction func;
         }
 
+        Result result;
+
+        foreach (ref GrType type; signature) {
+            if (!type.isValid) {
+                logError(format(getError(Error.cantUseTypeAsParam),
+                        getPrettyType(type)), getError(Error.invalidParamType));
+            }
+        }
+
         size_t arity = signature.length;
 
         if (name == "@as") {
@@ -589,8 +598,6 @@ final class GrParser {
             }
             return true;
         }
-
-        Result result;
 
         struct AvailableFunc {
             enum Type {
@@ -6684,7 +6691,7 @@ final class GrParser {
 
                 GrLexeme.Type operatorType = get(1).type;
 
-                if (operatorType == GrLexeme.Type.leftParenthesis) {
+                if (!requireLValue(operatorType)) {
                     uint nbReturnValues;
 
                     GrType selfType = grVoid;
