@@ -1,0 +1,34 @@
+func worker(msg: string) (channel<string>) {
+    var c = channel<string>;
+    task(c: channel<string>, msg: string) {
+        var i: int;
+        loop {
+            c <- (msg ~ " " ~ i);
+            i ++;
+            sleep(rand(0f, 1f.seconds));
+        }
+    }(c, msg);
+    return c;
+}
+
+func fanIn(in1: channel<string>, in2: channel<string>) (channel<string>) {
+    var out: channel<string>;
+    task(out: channel<string>, in1: channel<string>, in2: channel<string>) {
+        loop {
+            var msg: string;
+            select
+            case(msg = <-in1) { out <- msg; }
+            case(msg = <-in2) { out <- msg; }
+        }
+    }(out, in1, in2);
+    return out;
+}
+
+event app {
+    var c = fanIn(worker("Numé"), worker("Lucelle"));
+    loop(10) {
+        print(<- c);
+    }
+    print("Fin.");
+    exit;
+} 

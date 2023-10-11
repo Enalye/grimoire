@@ -1,0 +1,23 @@
+func worker(msg: string) (channel<string>) {
+    var c: channel<string>;
+    task {
+        var i: int;
+        loop {
+            c <- (msg ~ " " ~ i);
+            i ++;
+            sleep(rand(0f, 1f.seconds) as<int>);
+        }
+    }();
+    return c;
+}
+
+event app {
+    var numé = worker("Numé");
+    var lucelle = worker("Lucelle");
+    loop(5) {
+        print(<- numé);
+        print(<- lucelle);
+    }
+    print("Fin");
+    exit;
+} 

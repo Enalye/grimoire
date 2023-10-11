@@ -1,0 +1,10 @@
+func foo(a: int) (func(int) (int)) {
+    return func(b: int) (int) {
+        return a + b;
+    };
+}
+
+event app {
+    var adder = foo(40);
+    5.adder.print;  //45
+}
