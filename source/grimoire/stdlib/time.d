@@ -27,33 +27,33 @@ void grLoadStdLibTime(GrLibDefinition library) {
     library.setParameters(GrLocale.en_US, ["x"]);
     library.addFunction(&_wait, "wait", [grUInt]);
 
-    library.setDescription(GrLocale.fr_FR, "Bloque la tâche durant `ms` millisecondes.");
-    library.setDescription(GrLocale.en_US, "Blocks the task during `ms` milliseconds.");
-    library.setParameters(GrLocale.fr_FR, ["ms"]);
-    library.setParameters(GrLocale.en_US, ["ms"]);
-    library.addFunction(&_sleep_u, "sleep", [grUInt]);
-    library.addFunction(&_sleep_d, "sleep", [grDouble]);
+    GrType type;
+    static foreach (T; ["Int", "UInt", "Float", "Double"]) {
+        mixin("type = gr", T, ";");
+        library.setDescription(GrLocale.fr_FR, "Bloque la tâche durant `ms` millisecondes.");
+        library.setDescription(GrLocale.en_US, "Blocks the task during `ms` milliseconds.");
+        library.setParameters(GrLocale.fr_FR, ["ms"]);
+        library.setParameters(GrLocale.en_US, ["ms"]);
+        library.addFunction(&_sleep!T, "sleep", [type]);
 
-    library.setDescription(GrLocale.fr_FR, "Convertit `s` secondes en millisecondes.");
-    library.setDescription(GrLocale.en_US, "Converts `s` seconds in milliseconds.");
-    library.setParameters(GrLocale.fr_FR, ["s"]);
-    library.setParameters(GrLocale.en_US, ["s"]);
-    library.addFunction(&_seconds_i, "seconds", [grInt], [grInt]);
-    library.addFunction(&_seconds_d, "seconds", [grDouble], [grDouble]);
+        library.setDescription(GrLocale.fr_FR, "Convertit `s` secondes en millisecondes.");
+        library.setDescription(GrLocale.en_US, "Converts `s` seconds in milliseconds.");
+        library.setParameters(GrLocale.fr_FR, ["s"]);
+        library.setParameters(GrLocale.en_US, ["s"]);
+        library.addFunction(&_seconds!T, "seconds", [type], [type]);
 
-    library.setDescription(GrLocale.fr_FR, "Convertit `m` secondes en millisecondes.");
-    library.setDescription(GrLocale.en_US, "Converts `m` seconds in milliseconds.");
-    library.setParameters(GrLocale.fr_FR, ["m"]);
-    library.setParameters(GrLocale.en_US, ["m"]);
-    library.addFunction(&_minutes_i, "minutes", [grInt], [grInt]);
-    library.addFunction(&_minutes_d, "minutes", [grDouble], [grDouble]);
+        library.setDescription(GrLocale.fr_FR, "Convertit `m` secondes en millisecondes.");
+        library.setDescription(GrLocale.en_US, "Converts `m` seconds in milliseconds.");
+        library.setParameters(GrLocale.fr_FR, ["m"]);
+        library.setParameters(GrLocale.en_US, ["m"]);
+        library.addFunction(&_minutes!T, "minutes", [type], [type]);
 
-    library.setDescription(GrLocale.fr_FR, "Convertit `h` heures en millisecondes.");
-    library.setDescription(GrLocale.en_US, "Converts `h` hours in milliseconds.");
-    library.setParameters(GrLocale.fr_FR, ["h"]);
-    library.setParameters(GrLocale.en_US, ["h"]);
-    library.addFunction(&_hours_i, "hours", [grInt], [grInt]);
-    library.addFunction(&_hours_d, "hours", [grDouble], [grDouble]);
+        library.setDescription(GrLocale.fr_FR, "Convertit `h` heures en millisecondes.");
+        library.setDescription(GrLocale.en_US, "Converts `h` hours in milliseconds.");
+        library.setParameters(GrLocale.fr_FR, ["h"]);
+        library.setParameters(GrLocale.en_US, ["h"]);
+        library.addFunction(&_hours!T, "hours", [type], [type]);
+    }
 }
 
 private void _time(GrCall call) {
@@ -97,34 +97,18 @@ final class SleepBlocker(T) : GrBlocker {
     }
 }
 
-private void _sleep_u(GrCall call) {
-    call.block(new SleepBlocker!(GrUInt)(call.getUInt(0)));
+private void _sleep(string T)(GrCall call) {
+    mixin("call.block(new SleepBlocker!(Gr", T, ")(call.get", T, "(0)));");
 }
 
-private void _sleep_d(GrCall call) {
-    call.block(new SleepBlocker!(GrDouble)(call.getDouble(0)));
+private void _seconds(string T)(GrCall call) {
+    mixin("call.set", T, "(call.get", T, "(0) * 1_000);");
 }
 
-private void _seconds_i(GrCall call) {
-    call.setInt(call.getInt(0) * 1_000);
+private void _minutes(string T)(GrCall call) {
+    mixin("call.set", T, "(call.get", T, "(0) * 60_000);");
 }
 
-private void _seconds_d(GrCall call) {
-    call.setDouble(call.getDouble(0) * 1_000.0);
-}
-
-private void _minutes_i(GrCall call) {
-    call.setInt(call.getInt(0) * 60_000);
-}
-
-private void _minutes_d(GrCall call) {
-    call.setDouble(call.getDouble(0) * 60_000.0);
-}
-
-private void _hours_i(GrCall call) {
-    call.setInt(call.getInt(0) * 3_600_000);
-}
-
-private void _hours_d(GrCall call) {
-    call.setDouble(call.getDouble(0) * 3_600_000.0);
+private void _hours(string T)(GrCall call) {
+    mixin("call.set", T, "(call.get", T, "(0) * 3_600_000);");
 }
