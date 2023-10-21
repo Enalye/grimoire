@@ -360,7 +360,7 @@ final class GrList {
     }
 
     pragma(inline) GrUInt find(ref bool found, GrValue value) {
-        for (long index; index < _data.length; ++index) {
+        for (size_t index; index < _data.length; ++index) {
             if (_data[index] == value) {
                 found = true;
                 return cast(GrUInt) index;
@@ -372,7 +372,7 @@ final class GrList {
     }
 
     pragma(inline) GrUInt rfind(ref bool found, GrValue value) {
-        for (long index = (cast(GrInt) _data.length) - 1; index > 0; --index) {
+        for (size_t index = (cast(GrInt) _data.length) - 1; index > 0; --index) {
             if (_data[index] == value) {
                 found = true;
                 return cast(GrUInt) index;

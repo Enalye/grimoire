@@ -1990,10 +1990,10 @@ class GrEngine {
         import std.conv : to;
 
         string report;
-        ulong functionNameLength = 10;
-        ulong countLength = 10;
-        ulong totalLength = 10;
-        ulong averageLength = 10;
+        size_t functionNameLength = 10;
+        size_t countLength = 10;
+        size_t totalLength = 10;
+        size_t averageLength = 10;
         foreach (func; dumpProfiling()) {
             functionNameLength = max(func.name.length, functionNameLength);
             countLength = max(to!string(func.count).length, countLength);

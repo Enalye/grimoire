@@ -187,7 +187,7 @@ final class GrString {
             }
             else {
                 immutable len = strideBack(cast(string) _bytes);
-                for (long i = (cast(long) _bytes.length) - 1; (i + len) >= _bytes.length;
+                for (size_t i = cast(size_t) ((cast(long) _bytes.length) - 1); (i + len) >= _bytes.length;
                     --i)
                     str._bytes = _bytes[i] ~ str._bytes;
                 _bytes.length -= len;
@@ -203,7 +203,7 @@ final class GrString {
         _bytes.length += len;
 
         if (_bytes.length) {
-            for (long i = (cast(long) _bytes.length) - 1; i >= len; --i)
+            for (ptrdiff_t i = (cast(ptrdiff_t) _bytes.length) - 1; i >= len; --i)
                 _bytes[i] = _bytes[i - len];
         }
 
@@ -342,7 +342,7 @@ final class GrString {
             return str;
         }
 
-        for (long index = _bytes.length; index > 0;) {
+        for (size_t index = _bytes.length; index > 0;) {
             if (_bytes[index - 1] < 0x80) {
                 str._bytes ~= _bytes[index - 1];
                 index--;
@@ -350,7 +350,7 @@ final class GrString {
             else {
                 immutable len = strideBack(cast(string) _bytes, index);
                 index -= len;
-                for (long i = index; i < index + len; ++i)
+                for (size_t i = index; i < index + len; ++i)
                     str._bytes ~= _bytes[i];
             }
         }
