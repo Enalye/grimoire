@@ -5034,7 +5034,7 @@ final class GrParser {
             GrType srcType = srcSignature[i];
             GrType dstType = dstSignature[i];
 
-            if ((i + 1) >= arity) {
+            if ((i + 1) > arity) {
                 if (!_data.isSignatureCompatible([srcType], [dstType], isAbstract, fileId)) {
                     return false;
                 }
