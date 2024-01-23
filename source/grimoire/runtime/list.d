@@ -9,10 +9,11 @@ import std.exception : enforce;
 
 import grimoire.assembly;
 
-import grimoire.runtime.value;
-import grimoire.runtime.string;
-import grimoire.runtime.object;
 import grimoire.runtime.channel;
+import grimoire.runtime.error;
+import grimoire.runtime.object;
+import grimoire.runtime.string;
+import grimoire.runtime.value;
 
 /// Collection contenant plusieurs valeurs
 final class GrList {
@@ -190,12 +191,12 @@ final class GrList {
     }
 
     pragma(inline) GrValue front() {
-        enforce(_data.length > 0, "empty list");
+        enforce!GrRuntimeException(_data.length > 0, "empty list");
         return _data[0];
     }
 
     pragma(inline) GrValue back() {
-        enforce(_data.length > 0, "empty list");
+        enforce!GrRuntimeException(_data.length > 0, "empty list");
         return _data[$ - 1];
     }
 

@@ -10,9 +10,9 @@ import std.exception : enforce;
 
 import grimoire.assembly;
 import grimoire.compiler;
-
 import grimoire.runtime.channel;
 import grimoire.runtime.closure;
+import grimoire.runtime.error;
 import grimoire.runtime.event;
 import grimoire.runtime.list;
 import grimoire.runtime.object;
@@ -68,7 +68,7 @@ final class GrCall {
         const int stackIndex = (_task.stackPos + 1) - _params;
 
         static if (isSafe) {
-            enforce(stackIndex >= 0,
+            enforce!GrRuntimeException(stackIndex >= 0,
                 "stack corrupted before the call of the primitive `" ~ prettify() ~ "`");
         }
 
@@ -76,7 +76,7 @@ final class GrCall {
         _callback(this);
 
         static if (isSafe) {
-            enforce(_results == _outSignature.length || _hasError,
+            enforce!GrRuntimeException(_results == _outSignature.length || _hasError,
                 "the primitive `" ~ prettify() ~ "` returned " ~ to!string(
                     _results) ~ " value(s) instead of " ~ to!string(_outSignature.length));
         }
@@ -226,7 +226,7 @@ final class GrCall {
     }
 
     pragma(inline) void setEvent(GrEvent value) {
-        enforce(value.closure, "event has no closure");
+        enforce!GrRuntimeException(value.closure, "event has no closure");
         setResult!GrPointer(cast(GrPointer) value.closure);
     }
 

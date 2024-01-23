@@ -8,6 +8,7 @@ module grimoire.runtime.channel;
 import std.exception : enforce;
 
 import grimoire.assembly;
+import grimoire.runtime.error;
 import grimoire.runtime.value;
 
 /// Canal permettant la communication synchrone entre tâches
@@ -67,7 +68,7 @@ final class GrChannel {
 
     /// À appeler après avoir vérifié `canSend()` avant.
     void send()(auto ref GrValue value) {
-        enforce(_size != _capacity /* || (_capacity == 1u && !_isReceiverReady)*/ ,
+        enforce!GrRuntimeException(_size != _capacity /* || (_capacity == 1u && !_isReceiverReady)*/ ,
             "attempting to write on a full channel");
 
         _buffer ~= value;
@@ -76,7 +77,7 @@ final class GrChannel {
 
     /// À appeler après avoir vérifié `canReceive()` avant.
     GrValue receive() {
-        enforce(_size != 0, "attempting to read on an empty channel");
+        enforce!GrRuntimeException(_size != 0, "attempting to read on an empty channel");
 
         GrValue value = _buffer[0];
         _buffer = _buffer[1 .. $];

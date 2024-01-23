@@ -9,12 +9,13 @@ import std.conv : to;
 import std.exception : enforce;
 
 import grimoire.runtime;
+import grimoire.compiler.constraint;
+import grimoire.compiler.error;
+import grimoire.compiler.library;
+import grimoire.compiler.mangle;
+import grimoire.compiler.pretty;
 import grimoire.compiler.primitive;
 import grimoire.compiler.type;
-import grimoire.compiler.constraint;
-import grimoire.compiler.mangle;
-import grimoire.compiler.library;
-import grimoire.compiler.pretty;
 
 /**
 Contient les informations de types et les fonctions en D liées. \
@@ -417,12 +418,12 @@ final class GrData {
 
         void checkPrimitiveSignature(GrPrimitive primitive) {
             foreach (type; primitive.inSignature) {
-                enforce(checkType(type), "type `" ~ grGetPrettyType(
+                enforce!GrCompilerException(checkType(type), "type `" ~ grGetPrettyType(
                         type) ~ "` is not declared in primitive `" ~ getPrettyPrimitive(
                         primitive) ~ "`");
             }
             foreach (type; primitive.outSignature) {
-                enforce(checkType(type), "type `" ~ grGetPrettyType(
+                enforce!GrCompilerException(checkType(type), "type `" ~ grGetPrettyType(
                         type) ~ "` is not declared in primitive `" ~ getPrettyPrimitive(
                         primitive) ~ "`");
             }
@@ -430,14 +431,15 @@ final class GrData {
 
         void checkClassSignature(GrClassDefinition class_) {
             foreach (type; class_.signature) {
-                enforce(checkType(type),
+                enforce!GrCompilerException(checkType(type),
                     "type `" ~ grGetPrettyType(
                         type) ~ "` is not declared in class `" ~ class_.name ~ "`");
             }
         }
 
         foreach (alias_; _aliasDefinitions) {
-            enforce(checkType(alias_.type), "type `" ~ grGetPrettyType(
+            enforce!GrCompilerException(checkType(alias_.type),
+                "type `" ~ grGetPrettyType(
                     alias_.type) ~ "` is not declared in alias `" ~ alias_.name ~ "`");
         }
 
@@ -458,7 +460,8 @@ final class GrData {
         }
 
         foreach (variable; _variableDefinitions) {
-            enforce(checkType(variable.type), "type `" ~ grGetPrettyType(
+            enforce!GrCompilerException(checkType(variable.type),
+                "type `" ~ grGetPrettyType(
                     variable.type) ~ "` is not declared in variable `" ~ variable.name ~ "`");
         }
     }
@@ -472,18 +475,20 @@ final class GrData {
         for (int i; i < primitive.inSignature.length; ++i) {
             primitive.inSignature[i] = reifyType(primitive.inSignature[i]);
             checkUnknownClasses(primitive.inSignature[i]);
-            enforce(!primitive.inSignature[i].isAbstract, "the primitive `" ~ grGetPrettyFunction(primitive.name,
+            enforce!GrCompilerException(!primitive.inSignature[i].isAbstract,
+                "the primitive `" ~ grGetPrettyFunction(primitive.name,
                     primitive.inSignature, primitive.outSignature) ~ "` is abstract");
         }
         for (int i; i < primitive.outSignature.length; ++i) {
             primitive.outSignature[i] = reifyType(primitive.outSignature[i]);
             checkUnknownClasses(primitive.outSignature[i]);
-            enforce(!primitive.outSignature[i].isAbstract, "the primitive `" ~ grGetPrettyFunction(primitive.name,
+            enforce!GrCompilerException(!primitive.outSignature[i].isAbstract,
+                "the primitive `" ~ grGetPrettyFunction(primitive.name,
                     primitive.inSignature, primitive.outSignature) ~ "` is abstract");
         }
         primitive.mangledName = grMangleComposite(primitive.name, primitive.inSignature);
         primitive.index = cast(uint) _primitives.length;
-        enforce(!isPrimitiveDeclared(primitive.mangledName),
+        enforce!GrCompilerException(!isPrimitiveDeclared(primitive.mangledName),
             "`" ~ getPrettyPrimitive(primitive) ~ "` is already declared");
         _primitives ~= primitive;
         return primitive;
@@ -493,7 +498,7 @@ final class GrData {
     private GrType reifyType(const GrType type) {
         GrType result = type;
         if (type.isAny) {
-            enforce(_anyData, "missing template database");
+            enforce!GrCompilerException(_anyData, "missing template database");
             result = _anyData.get(type.mangledType);
             if (result.base == GrType.Base.void_)
                 result.isAbstract = true;
@@ -571,7 +576,7 @@ final class GrData {
         switch (type.base) with (GrType.Base) {
         case class_:
             GrClassDefinition classDef = getClass(type.mangledType, 0, true);
-            enforce(classDef,
+            enforce!GrCompilerException(classDef,
                 "undefined class `" ~ type.mangledType ~ "` in `" ~ getPrettyPrimitive(
                     _currentPrimitive) ~ "`");
             foreach (GrType fieldType; classDef.signature) {
@@ -697,7 +702,8 @@ final class GrData {
                         continue __signatureLoop;
                     }
                     const GrClassDefinition classType = getClass(className, fileId, isExport);
-                    enforce(classType, "class type `" ~ className ~ "` does not exist");
+                    enforce!GrCompilerException(classType,
+                        "class type `" ~ className ~ "` does not exist");
 
                     if (!classType.parent.length)
                         return false;
@@ -720,7 +726,8 @@ final class GrData {
                         continue __signatureLoop;
                     }
                     const GrNativeDefinition nativeType = getNative(nativeName);
-                    enforce(nativeType, "native type `" ~ nativeName ~ "` does not exist");
+                    enforce!GrCompilerException(nativeType,
+                        "native type `" ~ nativeName ~ "` does not exist");
 
                     if (!nativeType.parent.length)
                         return false;
@@ -821,7 +828,7 @@ final class GrData {
 
     /// Formate une primitive pour être affichable
     private string getPrimitiveDisplayById(uint id) {
-        enforce(id < _primitives.length, "invalid primitive id");
+        enforce!GrCompilerException(id < _primitives.length, "invalid primitive id");
         return getPrettyPrimitive(_primitives[id]);
     }
 

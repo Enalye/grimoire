@@ -10,8 +10,9 @@ import std.conv : to, ConvOverflowException;
 import std.algorithm : canFind;
 
 import grimoire.assembly;
-
-import grimoire.compiler.data, grimoire.compiler.error, grimoire.compiler.util;
+import grimoire.compiler.data;
+import grimoire.compiler.error;
+import grimoire.compiler.util;
 
 /// Décrit la plus petite unité lexicale présent dans un fichier source
 struct GrLexeme {
@@ -2034,7 +2035,7 @@ string grGetPrettyLexemeType(GrLexeme.Type lexType) {
 }
 
 /// Décrit une erreur lexicale
-package final class GrLexerException : Exception {
+package final class GrLexerException : GrCompilerException {
     GrError error;
 
     this(GrError error_, string _file = __FILE__, size_t _line = __LINE__) {

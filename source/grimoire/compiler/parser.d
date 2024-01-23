@@ -352,7 +352,7 @@ final class GrParser {
     }
 
     private void endGlobalScope() {
-        enforce(functionStack.length, "global scope mismatch");
+        enforce!GrCompilerException(functionStack.length, "global scope mismatch");
 
         currentFunction = functionStack[$ - 1];
         functionStack.length--;
@@ -483,13 +483,15 @@ final class GrParser {
 
         currentFunction.offset += prependInstructionCount;
 
-        enforce(functionStack.length, "attempting to close a non-existing function");
+        enforce!GrCompilerException(functionStack.length,
+            "attempting to close a non-existing function");
         currentFunction = functionStack[$ - 1];
         functionStack.length--;
     }
 
     private void preEndFunction() {
-        enforce(functionStack.length, "attempting to close a non-existing function");
+        enforce!GrCompilerException(functionStack.length,
+            "attempting to close a non-existing function");
         currentFunction = functionStack[$ - 1];
         functionStack.length--;
     }
@@ -1099,13 +1101,13 @@ final class GrParser {
     }
 
     private void addInstruction(GrOpcode opcode, int value = 0, bool isSigned = false) {
-        enforce(currentFunction,
+        enforce!GrCompilerException(currentFunction,
             "the expression is located outside of a function, task, or event which is forbidden");
 
         GrInstruction instruction;
         instruction.opcode = opcode;
         if (isSigned) {
-            enforce((value < 0x800000) && (-value < 0x800000),
+            enforce!GrCompilerException((value < 0x800000) && (-value < 0x800000),
                 "an opcode's signed value is exceeding limits");
             instruction.value = value + 0x800000;
         }
@@ -1119,13 +1121,13 @@ final class GrParser {
     }
 
     private void addInstructionInFront(GrOpcode opcode, int value = 0, bool isSigned = false) {
-        enforce(currentFunction,
+        enforce!GrCompilerException(currentFunction,
             "the expression is located outside of a function, task or event which is forbidden");
 
         GrInstruction instruction;
         instruction.opcode = opcode;
         if (isSigned) {
-            enforce((value < 0x800000) && (-value < 0x800000),
+            enforce!GrCompilerException((value < 0x800000) && (-value < 0x800000),
                 "an opcode's signed value is exceeding limits");
             instruction.value = value + 0x800000;
         }
@@ -1154,16 +1156,16 @@ final class GrParser {
     }
 
     private void setInstruction(GrOpcode opcode, uint index, int value = 0u, bool isSigned = false) {
-        enforce(currentFunction,
+        enforce!GrCompilerException(currentFunction,
             "the expression is located outside of a function, task or event which is forbidden");
 
-        enforce(index < currentFunction.instructions.length,
+        enforce!GrCompilerException(index < currentFunction.instructions.length,
             "an instruction's index is exeeding the function size");
 
         GrInstruction instruction;
         instruction.opcode = opcode;
         if (isSigned) {
-            enforce((value < 0x800000) && (-value < 0x800000),
+            enforce!GrCompilerException((value < 0x800000) && (-value < 0x800000),
                 "an opcode's signed value is exceeding limits");
             instruction.value = value + 0x800000;
         }
@@ -1927,7 +1929,7 @@ final class GrParser {
             allowOptimization = false;
         }
 
-        enforce(!variable.isField, "attempt to get field value");
+        enforce!GrCompilerException(!variable.isField, "attempt to get field value");
 
         if (variable.isGlobal) {
             if (variable.type.isInternal) {
@@ -2054,7 +2056,7 @@ final class GrParser {
         GrInstruction instruction;
         instruction.opcode = opcode;
         if (isSigned) {
-            enforce((value < 0x800000) && (-value < 0x800000),
+            enforce!GrCompilerException((value < 0x800000) && (-value < 0x800000),
                 "an opcode's signed value is exceeding limits");
             instruction.value = value + 0x800000;
         }
@@ -3722,7 +3724,7 @@ final class GrParser {
     }
 
     private void closeDeferrableSection() {
-        enforce(currentFunction.deferrableSections.length,
+        enforce!GrCompilerException(currentFunction.deferrableSections.length,
             "attempting to close a non-existing function");
 
         foreach (deferBlock; currentFunction.deferrableSections[$ - 1].deferredBlocks) {
@@ -3792,7 +3794,8 @@ final class GrParser {
 
     // Ferme une section pouvant être quitté
     private void closeBreakableSection() {
-        enforce(breaksJumps.length, "attempting to close a non-existing function");
+        enforce!GrCompilerException(breaksJumps.length,
+            "attempting to close a non-existing function");
 
         uint[] breaks = breaksJumps[$ - 1];
         breaksJumps.length--;
@@ -3826,7 +3829,8 @@ final class GrParser {
 
     // Ferme une section pouvant être réitéré
     private void closeContinuableSection() {
-        enforce(continuesJumps.length, "attempting to close a non-existing function");
+        enforce!GrCompilerException(continuesJumps.length,
+            "attempting to close a non-existing function");
 
         uint[] continues = continuesJumps[$ - 1];
         const uint destination = continuesDestinations[$ - 1];
@@ -8708,7 +8712,7 @@ final class GrParser {
 }
 
 /// Décrit une erreur syntaxique
-package final class GrParserException : Exception {
+package final class GrParserException : GrCompilerException {
     GrError error;
 
     this(GrError error_, string file = __FILE__, size_t line = __LINE__) {

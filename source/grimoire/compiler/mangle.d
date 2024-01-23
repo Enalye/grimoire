@@ -9,6 +9,7 @@ import std.exception : enforce;
 import std.conv : to;
 import std.string : indexOf;
 
+import grimoire.compiler.error;
 import grimoire.compiler.type;
 
 /**
@@ -37,7 +38,7 @@ GrType[] grUnmangleSignature(const string mangledSignature) {
     int i;
     while (i < mangledSignature.length) {
         // Séparateur de type
-        enforce(mangledSignature[i] == '$',
+        enforce!GrCompilerException(mangledSignature[i] == '$',
             "invalid unmangle signature mangling format, missing `$`");
 
         i++;
@@ -101,13 +102,15 @@ GrType[] grUnmangleSignature(const string mangledSignature) {
             break;
         case 'k':
             currentType.base = GrType.Base.class_;
-            enforce((i + 2) < mangledSignature.length, "invalid mangling format");
+            enforce!GrCompilerException((i + 2) < mangledSignature.length,
+                "invalid mangling format");
             i++;
             currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             break;
         case 'n':
             currentType.base = GrType.Base.native;
-            enforce((i + 2) < mangledSignature.length, "invalid mangling format");
+            enforce!GrCompilerException((i + 2) < mangledSignature.length,
+                "invalid mangling format");
             i++;
             currentType.mangledType = grUnmangleBlock(mangledSignature, i);
             break;
@@ -181,8 +184,8 @@ auto grUnmangleComposite(const string mangledSignature) {
 string grUnmangleBlock(const string mangledSignature, ref int i) {
     string subString;
     int blockCount = 1;
-    enforce(i < mangledSignature.length && mangledSignature[i] == '(',
-        "invalid subType mangling format, missing `(`");
+    enforce!GrCompilerException(i < mangledSignature.length &&
+            mangledSignature[i] == '(', "invalid subType mangling format, missing `(`");
     i++;
 
     for (; i < mangledSignature.length; i++) {
@@ -291,7 +294,8 @@ GrType grUnmangle(const string mangledSignature) {
     int i;
     if (i < mangledSignature.length) {
         // Séparateur de type
-        enforce(mangledSignature[i] == '$', "invalid unmangle mangling format, missing `$`");
+        enforce!GrCompilerException(mangledSignature[i] == '$',
+            "invalid unmangle mangling format, missing `$`");
         i++;
 
         if (mangledSignature[i] == '@') {

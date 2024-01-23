@@ -6,7 +6,9 @@
 module grimoire.compiler.pretty;
 
 import std.conv : to;
-import grimoire.compiler.util, grimoire.compiler.type, grimoire.compiler.mangle;
+import grimoire.compiler.mangle;
+import grimoire.compiler.type;
+import grimoire.compiler.util;
 
 /// Enjolive un type dans un format présentable
 string grGetPrettyType(const GrType variableType, bool showModifiers = true) {

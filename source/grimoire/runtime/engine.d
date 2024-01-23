@@ -13,11 +13,12 @@ import std.algorithm.mutation : swapAt;
 import std.typecons : Nullable;
 import std.exception : enforce;
 
-import grimoire.compiler, grimoire.assembly;
-
+import grimoire.compiler;
+import grimoire.assembly;
 import grimoire.runtime.call;
 import grimoire.runtime.channel;
 import grimoire.runtime.closure;
+import grimoire.runtime.error;
 import grimoire.runtime.event;
 import grimoire.runtime.list;
 import grimoire.runtime.object;
@@ -123,7 +124,7 @@ class GrEngine {
 
         // Prépare les primitives
         for (uint i; i < _bytecode.primitives.length; ++i) {
-            enforce(_bytecode.primitives[i].index < _callbacks.length,
+            enforce!GrRuntimeException(_bytecode.primitives[i].index < _callbacks.length,
                 "callback index out of bounds");
 
             _calls ~= new GrCall(_callbacks[_bytecode.primitives[i].index],
@@ -210,7 +211,8 @@ class GrEngine {
         if (event is null)
             return null;
 
-        enforce(signature.length == parameters.length, "the number of parameters (" ~ to!string(
+        enforce!GrRuntimeException(signature.length == parameters.length,
+            "the number of parameters (" ~ to!string(
                 parameters.length) ~ ") of `" ~ grGetPrettyFunctionCall(
                 mangledName) ~ "` mismatch its definition");
 
@@ -240,7 +242,8 @@ class GrEngine {
         if (!isRunning || !_allowEventCall || event is null)
             return null;
 
-        enforce(event.signature.length == parameters.length, "the number of parameters (" ~ to!string(
+        enforce!GrRuntimeException(event.signature.length == parameters.length,
+            "the number of parameters (" ~ to!string(
                 parameters.length) ~ ") of `" ~ grGetPrettyFunctionCall(event.name,
                 event.signature) ~ "` mismatch its definition");
 
@@ -422,7 +425,7 @@ class GrEngine {
 
     pragma(inline) private T getVariable(T)(string name) const {
         const auto variable = name in _bytecode.variables;
-        enforce(variable, "no global variable `" ~ name ~ "` defined");
+        enforce!GrRuntimeException(variable, "no global variable `" ~ name ~ "` defined");
 
         static if (is(T == GrInt)) {
             return _globals[variable.index]._intValue;
@@ -492,7 +495,7 @@ class GrEngine {
 
     pragma(inline) private void setVariable(T)(string name, T value) {
         const auto variable = name in _bytecode.variables;
-        enforce(variable, "no global variable `" ~ name ~ "` defined");
+        enforce!GrRuntimeException(variable, "no global variable `" ~ name ~ "` defined");
 
         static if (is(T == GrInt) || is(T == GrBool)) {
             _globals[variable.index]._intValue = value;
@@ -1915,7 +1918,7 @@ class GrEngine {
     GrObject createObject(string name) {
         GrClassBuilder* builder = (name in _classBuilders);
         if (builder) {
-            enforce(!builder.inheritFromNative,
+            enforce!GrRuntimeException(!builder.inheritFromNative,
                 "this class inherits from a native parent, use `createObject(T)(string name, T nativeParent)` instead");
             GrObject obj = new GrObject(*builder);
             return obj;
@@ -1927,9 +1930,9 @@ class GrEngine {
     GrObject createObject(T)(string name, T nativeParent) if (is(T == class)) {
         GrClassBuilder* builder = (name in _classBuilders);
         if (builder) {
-            enforce(!builder.inheritFromNative,
+            enforce!GrRuntimeException(!builder.inheritFromNative,
                 "this class doesn't inherit from a native parent, use `createObject(T)(string name)` instead");
-            enforce(nativeParent, "the `nativeParent` attribute can't be null");
+            enforce!GrRuntimeException(nativeParent, "the `nativeParent` attribute can't be null");
             GrObject obj = new GrObject(*builder);
             obj._nativeParent = *(cast(GrPointer*)&nativeParent);
             return obj;

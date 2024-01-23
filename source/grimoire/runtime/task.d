@@ -12,6 +12,7 @@ import grimoire.assembly;
 import grimoire.runtime.channel;
 import grimoire.runtime.closure;
 import grimoire.runtime.engine;
+import grimoire.runtime.error;
 import grimoire.runtime.list;
 import grimoire.runtime.object;
 import grimoire.runtime.string;
@@ -213,7 +214,7 @@ final class GrTask {
 
     /// Récupère un aperçu de l’état de la tâche
     void restoreState() {
-        enforce(states.length, "no task state to restore");
+        enforce!GrRuntimeException(states.length, "no task state to restore");
 
         GrTaskState state = states[$ - 1];
         stackPos = state.stackPos;

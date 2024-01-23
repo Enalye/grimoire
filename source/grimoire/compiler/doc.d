@@ -4,12 +4,12 @@ import std.conv : to;
 import std.algorithm : min, sort;
 
 import grimoire.runtime;
-import grimoire.compiler.library;
-import grimoire.compiler.primitive;
-import grimoire.compiler.type;
 import grimoire.compiler.constraint;
+import grimoire.compiler.library;
 import grimoire.compiler.mangle;
 import grimoire.compiler.pretty;
+import grimoire.compiler.primitive;
+import grimoire.compiler.type;
 import grimoire.compiler.util;
 
 /// Contient les informations de types et les primitives de façon à générer une documentation

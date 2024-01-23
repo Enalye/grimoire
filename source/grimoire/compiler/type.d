@@ -8,11 +8,12 @@ module grimoire.compiler.type;
 import std.conv : to;
 import std.exception : enforce;
 
-import grimoire.runtime;
 import grimoire.assembly;
-import grimoire.compiler.mangle;
-import grimoire.compiler.data;
+import grimoire.runtime;
 import grimoire.compiler.constraint;
+import grimoire.compiler.data;
+import grimoire.compiler.error;
+import grimoire.compiler.mangle;
 
 /// Représente un type pour le compilateur de grimoire
 struct GrType {
@@ -307,7 +308,8 @@ package GrType grPackTuple(const GrType[] types) {
 
 /// Déballe plusieurs types depuis un seul
 package GrType[] grUnpackTuple(GrType type) {
-    enforce(type.base == GrType.Base.internalTuple, "the packed value is not a tuple");
+    enforce!GrCompilerException(type.base == GrType.Base.internalTuple,
+        "the packed value is not a tuple");
     return grUnmangleSignature(type.mangledType);
 }
 

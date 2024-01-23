@@ -5,7 +5,15 @@
  */
 module grimoire.compiler.error;
 
+import std.exception;
+
+import grimoire.error;
 import grimoire.compiler.util;
+
+/// Décrit une erreur de compilation
+class GrCompilerException : GrException {
+    mixin basicExceptionCtors;
+}
 
 /// Contient beaucoup d’information sur l’erreur qui s’est produit
 final class GrError {

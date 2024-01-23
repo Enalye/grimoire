@@ -8,6 +8,7 @@ module grimoire.runtime;
 public {
     import grimoire.runtime.engine;
     import grimoire.runtime.task;
+    import grimoire.runtime.error;
     import grimoire.runtime.event;
     import grimoire.runtime.value;
     import grimoire.runtime.object;

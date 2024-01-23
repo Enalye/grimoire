@@ -10,4 +10,5 @@ public {
     import grimoire.compiler;
     import grimoire.runtime;
     import grimoire.stdlib;
+    import grimoire.error;
 }

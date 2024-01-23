@@ -10,11 +10,11 @@ import std.conv;
 import std.stdio;
 
 import grimoire.runtime;
+import grimoire.compiler.constraint;
+import grimoire.compiler.data;
+import grimoire.compiler.mangle;
 import grimoire.compiler.parser;
 import grimoire.compiler.type;
-import grimoire.compiler.constraint;
-import grimoire.compiler.mangle;
-import grimoire.compiler.data;
 
 /// Fonction en D appelable en grimoire
 class GrPrimitive {
