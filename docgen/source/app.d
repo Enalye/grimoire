@@ -85,8 +85,8 @@ void generate(GrLocale locale) {
         foreach (fileName; modules) {
             string line;
 
-            line = "\t- [" ~ fileName ~ "](" ~ buildNormalizedPath("lib",
-                folderName, "lib", fileName) ~ ")\n";
+            line = "\t- [" ~ fileName ~ "](" ~ buildNormalizedPath(folderName,
+                "lib", fileName) ~ ")\n";
 
             generatedText ~= line;
         }
