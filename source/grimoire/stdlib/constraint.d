@@ -9,7 +9,7 @@ import grimoire.compiler;
 import grimoire.stdlib.util;
 
 void grLoadStdLibConstraint(GrLibDefinition library) {
-    library.setModule(["std", "constraint"]);
+    library.setModule("constraint");
 
     library.setModuleInfo(GrLocale.fr_FR, "Constraintes de base.");
     library.setModuleInfo(GrLocale.en_US, "Basic constraints.");

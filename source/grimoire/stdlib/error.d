@@ -8,7 +8,7 @@ module grimoire.stdlib.error;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 void grLoadStdLibError(GrLibDefinition library) {
-    library.setModule(["std", "error"]);
+    library.setModule("error");
 
     library.setModuleInfo(GrLocale.fr_FR, "Fonctions pour aider la gestion d’erreur.");
     library.setModuleInfo(GrLocale.en_US, "Functions to help error handling.");

@@ -10,7 +10,7 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 void grLoadStdLibRange(GrLibDefinition library) {
-    library.setModule(["std", "range"]);
+    library.setModule("range");
 
     library.setModuleInfo(GrLocale.fr_FR, "Fonctions pour itérer sur des séries de nombres.");
     library.setModuleInfo(GrLocale.en_US, "Functions to iterate on series of numbers.");

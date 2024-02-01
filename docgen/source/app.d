@@ -39,25 +39,58 @@ alias LibLoader = void function(GrLibDefinition);
 void generate(GrLocale locale) {
     LibLoader[] libLoaders = grGetStdLibraryLoaders();
 
+    string folderName = to!string(locale);
+    auto parts = folderName.split("_");
+    if (parts.length >= 1)
+        folderName = parts[0];
+
+    string[] modules;
     int i;
     foreach (libLoader; libLoaders) {
-        GrDoc doc = new GrDoc(["docgen" ~ to!string(i)]);
+        GrDoc doc = new GrDoc("docgen" ~ to!string(i));
         libLoader(doc);
 
         const string generatedText = doc.generate(locale);
 
-        string fileName;
-        foreach (part; doc.getModule()) {
-            if (fileName.length)
-                fileName ~= "_";
-            fileName ~= part;
-        }
-        fileName ~= ".md";
-        string folderName = to!string(locale);
-        auto parts = folderName.split("_");
-        if (parts.length >= 1)
-            folderName = parts[0];
+        string fileName = doc.getModule() ~ ".md";
+        modules ~= doc.getModule();
+
         std.file.write(buildNormalizedPath("docs", folderName, "lib", fileName), generatedText);
         i++;
+    }
+
+    { // Barre latérale
+        string generatedText;
+
+        string[4] categories = ["/", "/lang", "/api", "/lib"];
+        string[] categoriesName;
+        final switch (locale) with (GrLocale) {
+        case fr_FR:
+            categoriesName = [
+                "Accueil", "Langage", "Intégration", "Bibliothèque standard"
+            ];
+            break;
+        case en_US:
+            categoriesName = [
+                "Homepage", "Language", "Integration", "Standard library"
+            ];
+            break;
+        }
+        assert(categoriesName.length == categories.length);
+
+        for (int t; t < 4; t++) {
+            generatedText ~= "* [" ~ categoriesName[t] ~ "](/" ~ folderName ~ categories[t] ~ ")\n";
+        }
+
+        foreach (fileName; modules) {
+            string line;
+
+            line = "\t- [" ~ fileName ~ "](" ~ buildNormalizedPath("lib",
+                folderName, "lib", fileName) ~ ")\n";
+
+            generatedText ~= line;
+        }
+        std.file.write(buildNormalizedPath("docs", folderName, "lib",
+                "_sidebar.md"), generatedText);
     }
 }

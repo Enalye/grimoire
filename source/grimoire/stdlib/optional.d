@@ -9,7 +9,7 @@ import grimoire.compiler, grimoire.runtime, grimoire.assembly;
 import grimoire.stdlib.util;
 
 void grLoadStdLibOptional(GrLibDefinition library) {
-    library.setModule(["std", "optional"]);
+    library.setModule("optional");
 
     library.setModuleInfo(GrLocale.fr_FR, "Fonctions pour la manipulation d’optionnels.");
     library.setModuleInfo(GrLocale.en_US, "Optionals handling functions.");
@@ -74,7 +74,8 @@ Otherwise, the non-optional version of `x` is returned.");
 
     static foreach (op; ["+", "-"]) {
         library.addOperator(&_opUnary!(op, "Int"), op, [grOptional(grInt)], grOptional(grInt));
-        library.addOperator(&_opUnary!(op, "Float"), op, [grOptional(grFloat)], grOptional(grFloat));
+        library.addOperator(&_opUnary!(op, "Float"), op,
+            [grOptional(grFloat)], grOptional(grFloat));
     }
 
     static foreach (op; ["+", "-", "*", "/", "%"]) {

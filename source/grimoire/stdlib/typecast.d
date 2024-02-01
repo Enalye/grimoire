@@ -9,7 +9,7 @@ import std.conv;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 void grLoadStdLibTypecast(GrLibDefinition library) {
-    library.setModule(["std", "typecast"]);
+    library.setModule("typecast");
 
     library.setModuleInfo(GrLocale.fr_FR, "Fonctions de conversion.");
     library.setModuleInfo(GrLocale.en_US, "Conversion functions.");

@@ -55,7 +55,7 @@ interface GrLibDefinition {
     }
 
     /// Assigne un nom au module (ex: `["std", "hashmap"]`)
-    void setModule(string[] name);
+    void setModule(string name);
 
     /// Ajoute une description à la déclaration suivante
     void setDescription(GrLocale locale, string message = "");
@@ -161,7 +161,7 @@ final class GrLibrary : GrLibDefinition {
         GrConstraint.Data[string] _constraints;
     }
 
-    override void setModule(string[]) {
+    override void setModule(string) {
     }
 
     override void setDescription(GrLocale, string = "") {

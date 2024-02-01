@@ -10,7 +10,7 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 void grLoadStdLibIo(GrLibDefinition library) {
-    library.setModule(["std", "io"]);
+    library.setModule("io");
 
     library.setDescription(GrLocale.fr_FR, "Affiche le contenu de `valeur`.");
     library.setDescription(GrLocale.en_US, "Display `value`'s content.");

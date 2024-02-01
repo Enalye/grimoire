@@ -9,7 +9,7 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 void grLoadStdLibCircularBuffer(GrLibDefinition library) {
-    library.setModule(["std", "circularbuffer"]);
+    library.setModule("circularbuffer");
 
     GrType bufType = library.addNative("CircularBuffer", ["T"]);
 

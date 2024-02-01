@@ -10,7 +10,7 @@ import std.algorithm.comparison : clamp;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 void grLoadStdLibMath(GrLibDefinition library) {
-    library.setModule(["std", "math"]);
+    library.setModule("math");
 
     library.setModuleDescription(GrLocale.fr_FR, "Fonctions liées aux maths.");
     library.setModuleDescription(GrLocale.en_US, "Maths related functions.");

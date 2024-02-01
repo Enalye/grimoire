@@ -8,7 +8,7 @@ module grimoire.stdlib.pair;
 import grimoire.compiler, grimoire.runtime;
 
 void grLoadStdLibPair(GrLibDefinition library) {
-    library.setModule(["std", "pair"]);
+    library.setModule("pair");
 
     library.setModuleInfo(GrLocale.fr_FR, "Paire de clé/valeur.");
     library.setModuleInfo(GrLocale.en_US, "Pair of key/value.");

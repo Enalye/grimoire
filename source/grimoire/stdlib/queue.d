@@ -9,7 +9,7 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 void grLoadStdLibQueue(GrLibDefinition library) {
-    library.setModule(["std", "queue"]);
+    library.setModule("queue");
 
     library.setModuleInfo(GrLocale.fr_FR,
         "Une queue est une collection pouvant être manipulé par les deux bouts.");

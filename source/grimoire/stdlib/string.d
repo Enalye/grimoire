@@ -11,7 +11,7 @@ import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 import grimoire.stdlib.util;
 
 void grLoadStdLibString(GrLibDefinition library) {
-    library.setModule(["std", "string"]);
+    library.setModule("string");
 
     library.setModuleInfo(GrLocale.fr_FR, "Type de base.");
     library.setModuleInfo(GrLocale.en_US, "Built-in type.");

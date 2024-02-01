@@ -38,7 +38,7 @@ private final class HashMapIterator {
 }
 
 void grLoadStdLibHashMap(GrLibDefinition library) {
-    library.setModule(["std", "hashmap"]);
+    library.setModule("hashmap");
 
     library.setModuleInfo(GrLocale.fr_FR, "Dictionnaire associant des valeurs par clés.");
     library.setModuleInfo(GrLocale.en_US, "Dictionary that associates values by keys.");

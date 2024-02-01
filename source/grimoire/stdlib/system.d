@@ -9,7 +9,7 @@ import grimoire.compiler, grimoire.runtime, grimoire.assembly;
 import grimoire.stdlib.util;
 
 void grLoadStdLibSystem(GrLibDefinition library) {
-    library.setModule(["std", "system"]);
+    library.setModule("system");
 
     library.setModuleInfo(GrLocale.fr_FR, "Fonctions basiques.");
     library.setModuleInfo(GrLocale.en_US, "Basic functions.");

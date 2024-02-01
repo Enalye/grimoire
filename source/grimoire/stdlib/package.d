@@ -8,24 +8,24 @@ module grimoire.stdlib;
 import grimoire.compiler;
 
 public {
-    import grimoire.stdlib.util;
+    import grimoire.stdlib.bitmanip;
+    import grimoire.stdlib.channel;
+    import grimoire.stdlib.circularbuffer;
     import grimoire.stdlib.constraint;
-    import grimoire.stdlib.optional;
-    import grimoire.stdlib.system;
-    import grimoire.stdlib.list;
+    import grimoire.stdlib.error;
     import grimoire.stdlib.hashmap;
+    import grimoire.stdlib.io;
+    import grimoire.stdlib.list;
+    import grimoire.stdlib.math;
+    import grimoire.stdlib.optional;
+    import grimoire.stdlib.pair;
+    import grimoire.stdlib.queue;
     import grimoire.stdlib.range;
     import grimoire.stdlib.string;
-    import grimoire.stdlib.channel;
-    import grimoire.stdlib.io;
-    import grimoire.stdlib.math;
-    import grimoire.stdlib.error;
+    import grimoire.stdlib.system;
     import grimoire.stdlib.time;
     import grimoire.stdlib.typecast;
-    import grimoire.stdlib.pair;
-    import grimoire.stdlib.bitmanip;
-    import grimoire.stdlib.queue;
-    import grimoire.stdlib.circularbuffer;
+    import grimoire.stdlib.util;
 }
 
 /// Charge la bibliothèque standard
@@ -42,11 +42,11 @@ GrLibrary grLoadStdLibrary() {
 /// Retourne les fonctions de chargement de la bibliothèque standard
 GrLibLoader[] grGetStdLibraryLoaders() {
     return [
-        &grLoadStdLibConstraint, &grLoadStdLibSystem, &grLoadStdLibOptional,
-        &grLoadStdLibIo, &grLoadStdLibList, &grLoadStdLibRange,
-        &grLoadStdLibString, &grLoadStdLibChannel, &grLoadStdLibMath,
-        &grLoadStdLibError, &grLoadStdLibTime, &grLoadStdLibTypecast,
-        &grLoadStdLibPair, &grLoadStdLibBitmanip, &grLoadStdLibHashMap,
-        &grLoadStdLibQueue, &grLoadStdLibCircularBuffer
+        &grLoadStdLibBitmanip, &grLoadStdLibChannel, &grLoadStdLibCircularBuffer,
+        &grLoadStdLibConstraint, &grLoadStdLibError, &grLoadStdLibHashMap,
+        &grLoadStdLibIo, &grLoadStdLibList, &grLoadStdLibMath,
+        &grLoadStdLibOptional, &grLoadStdLibPair, &grLoadStdLibQueue,
+        &grLoadStdLibRange, &grLoadStdLibString, &grLoadStdLibSystem,
+        &grLoadStdLibTime, &grLoadStdLibTypecast
     ];
 }

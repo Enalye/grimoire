@@ -10,7 +10,7 @@ import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 void grLoadStdLibTime(GrLibDefinition library) {
-    library.setModule(["std", "time"]);
+    library.setModule("time");
 
     library.setModuleInfo(GrLocale.fr_FR, "Fonctions liées au temps.");
     library.setModuleInfo(GrLocale.en_US, "Time related functions.");

@@ -9,7 +9,7 @@ import std.range;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
 
 void grLoadStdLibChannel(GrLibDefinition library) {
-    library.setModule(["std", "channel"]);
+    library.setModule("channel");
 
     library.setModuleInfo(GrLocale.fr_FR, "Type de base.");
     library.setModuleInfo(GrLocale.en_US, "Built-in type.");

@@ -15,7 +15,7 @@ import grimoire.compiler.util;
 /// Contient les informations de types et les primitives de façon à générer une documentation
 final class GrDoc : GrLibDefinition {
     private {
-        string[] _module;
+        string _module;
         string[GrLocale] _moduleInfo, _moduleDescription, _comments;
         string[][GrLocale] _parameters;
 
@@ -128,16 +128,16 @@ final class GrDoc : GrLibDefinition {
         Constraint[] _constraints;
     }
 
-    this(string[] moduleName)
+    this(string moduleName)
     in (moduleName.length) {
         _module = moduleName;
     }
 
-    override void setModule(string[] name) {
+    override void setModule(string name) {
         _module = name;
     }
 
-    string[] getModule() {
+    string getModule() {
         return _module;
     }
 
@@ -495,13 +495,7 @@ final class GrDoc : GrLibDefinition {
         }
 
         // En-tête
-        string moduleName;
-        foreach (part; _module) {
-            if (moduleName.length)
-                moduleName ~= ".";
-            moduleName ~= part;
-        }
-        md.addHeader(moduleName);
+        md.addHeader(_module);
         md.skipLine();
 
         const auto moduleInfo = locale in _moduleInfo;
