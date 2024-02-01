@@ -80,7 +80,7 @@ void generate(GrLocale locale) {
 
         for (int t; t < 4; t++) {
             generatedText ~= "* [" ~ categoriesName[t] ~ "](/" ~ folderName ~ "/" ~
-                categories[t] ~ ")\n";
+                categories[t] ~ "/)\n";
         }
 
         foreach (fileName; modules) {
