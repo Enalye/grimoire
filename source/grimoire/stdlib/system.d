@@ -36,8 +36,6 @@ void grLoadStdLibSystem(GrLibDefinition library) {
     library.setParameters(GrLocale.fr_FR, ["valeur"]);
     library.setParameters(GrLocale.en_US, ["value"]);
     library.addFunction(&_typeOf, "typeOf", [grAny("T")], [grString]);
-
-    library.addFunction(&_testa, "testa", [grEvent([grString])]);
 }
 
 private void _swap_2(GrCall call) {
@@ -54,9 +52,4 @@ private void _cond(GrCall call) {
 
 private void _typeOf(GrCall call) {
     call.setString(grGetPrettyType(grUnmangle(call.getInType(0))));
-}
-
-private void _testa(GrCall call) {
-    auto a = call.getEvent(0);
-    call.callEvent(a, [GrValue("BOnjour à tous")]);
 }
