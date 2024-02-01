@@ -1,4 +1,6 @@
 * [Homepage](/en/)
+* [Integration](/en/api/)
+* [Standard library](/en/lib/)
 * [Language](/en/lang/)
     1. [Comments](/en/lang/comments)
     1. [Import](/en/lang/import)
@@ -24,5 +26,3 @@
     1. [Error](/en/lang/error)
     1. [Defer](/en/lang/defer)
     1. [Operators](/en/lang/operators)
-* [Integration](/en/api/)
-* [Standard library](/en/lib/)
