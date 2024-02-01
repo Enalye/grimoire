@@ -62,7 +62,7 @@ void generate(GrLocale locale) {
     { // Barre latérale
         string generatedText;
 
-        string[4] categories = ["/", "/lang", "/api", "/lib"];
+        string[4] categories = ["", "lang", "api", "lib"];
         string[] categoriesName;
         final switch (locale) with (GrLocale) {
         case fr_FR:
@@ -79,15 +79,13 @@ void generate(GrLocale locale) {
         assert(categoriesName.length == categories.length);
 
         for (int t; t < 4; t++) {
-            generatedText ~= "* [" ~ categoriesName[t] ~ "](/" ~ folderName ~ categories[t] ~ ")\n";
+            generatedText ~= "* [" ~ categoriesName[t] ~ "](/" ~ folderName ~ "/" ~
+                categories[t] ~ ")\n";
         }
 
         foreach (fileName; modules) {
             string line;
-
-            line = "\t- [" ~ fileName ~ "](" ~ buildNormalizedPath(folderName,
-                "lib", fileName) ~ ")\n";
-
+            line = "\t- [" ~ fileName ~ "](" ~ folderName ~ "/lib/" ~ fileName ~ ")\n";
             generatedText ~= line;
         }
         std.file.write(buildNormalizedPath("docs", folderName, "lib",
