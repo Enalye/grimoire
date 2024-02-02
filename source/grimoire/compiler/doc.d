@@ -612,9 +612,12 @@ final class GrDoc : GrLibDefinition {
 
             foreach (enum_; _enums) {
                 string fields = "{";
+                bool started = false;
                 foreach (field; enum_.fields) {
-                    if (fields.length)
+                    if (started) {
                         fields ~= ", ";
+                        started = true;
+                    }
                     fields ~= field;
                 }
                 fields ~= "}";
