@@ -616,8 +616,8 @@ final class GrDoc : GrLibDefinition {
                 foreach (field; enum_.fields) {
                     if (started) {
                         fields ~= ", ";
-                        started = true;
                     }
+                    started = true;
                     fields ~= field;
                 }
                 fields ~= "}";
