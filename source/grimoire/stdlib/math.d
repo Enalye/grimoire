@@ -24,8 +24,7 @@ void grLoadStdLibMath(GrLibDefinition library) {
     library.setDescription(GrLocale.fr_FR,
         "Retourne une valeur aléatoire comprise entre 0 et 1 exclus.");
     library.setDescription(GrLocale.en_US, "Returns a random value between 0 and 1 excluded.");
-    library.setParameters(GrLocale.fr_FR);
-    library.setParameters(GrLocale.en_US);
+    library.setParameters();
     library.addFunction(&_rand01, "rand", [], [grDouble]);
 
     GrType type;
@@ -34,8 +33,7 @@ void grLoadStdLibMath(GrLibDefinition library) {
 
         library.setDescription(GrLocale.fr_FR, "Renvoie la plus petite valeur entre `a` et `b`.");
         library.setDescription(GrLocale.en_US, "Returns the smallest value between `a` and `b`.");
-        library.setParameters(GrLocale.fr_FR, ["a", "b"]);
-        library.setParameters(GrLocale.en_US, ["a", "b"]);
+        library.setParameters(["a", "b"]);
         library.addFunction(&_min!T, "min", [type, type], [type]);
 
         library.setDescription(GrLocale.fr_FR, "Renvoie la plus grande valeur entre `a` et `b`.");
@@ -44,35 +42,30 @@ void grLoadStdLibMath(GrLibDefinition library) {
 
         library.setDescription(GrLocale.fr_FR, "Restreint `x` entre `min` et `max`.");
         library.setDescription(GrLocale.en_US, "Restrict `x` between `min` and `max`.");
-        library.setParameters(GrLocale.fr_FR, ["x", "min", "max"]);
-        library.setParameters(GrLocale.en_US, ["x", "min", "max"]);
+        library.setParameters(["x", "min", "max"]);
         library.addFunction(&_clamp!T, "clamp", [type, type, type], [type]);
 
         library.setDescription(GrLocale.fr_FR,
             "Retourne une valeur aléatoire comprise entre `min` et `max` inclus.");
         library.setDescription(GrLocale.en_US,
             "Returns a random value between `min` and `max` included.");
-        library.setParameters(GrLocale.fr_FR, ["min", "max"]);
-        library.setParameters(GrLocale.en_US, ["min", "max"]);
+        library.setParameters(["min", "max"]);
         library.addFunction(&_rand!T, "rand", [type, type], [type]);
 
         static if (T == "Float" || T == "Double") {
             library.setDescription(GrLocale.fr_FR, "Convertit `radians` en degrés .");
             library.setDescription(GrLocale.en_US, "Converts `radians` in degrees.");
-            library.setParameters(GrLocale.fr_FR, ["radians"]);
-            library.setParameters(GrLocale.en_US, ["radians"]);
+            library.setParameters(["radians"]);
             library.addFunction(&_deg!T, "deg", [type], [type]);
 
             library.setDescription(GrLocale.fr_FR, "Convertit `degrés`  en radians.");
             library.setDescription(GrLocale.en_US, "Converts `degrees` in radians.");
-            library.setParameters(GrLocale.fr_FR, ["degrés"]);
-            library.setParameters(GrLocale.en_US, ["degrees"]);
+            library.setParameters(["degrees"]);
             library.addFunction(&_rad!T, "rad", [type], [type]);
 
             library.setDescription(GrLocale.fr_FR, "Retourne le cosinus de `radians`.");
             library.setDescription(GrLocale.en_US, "Returns the cosine of `radians`.");
-            library.setParameters(GrLocale.fr_FR, ["radians"]);
-            library.setParameters(GrLocale.en_US, ["radians"]);
+            library.setParameters(["radians"]);
             library.addFunction(&_cos!T, "cos", [type], [type]);
 
             library.setDescription(GrLocale.fr_FR, "Retourne le sinus de `radians`.");
@@ -97,14 +90,12 @@ void grLoadStdLibMath(GrLibDefinition library) {
 
             library.setDescription(GrLocale.fr_FR, "Variation d’`atan`.");
             library.setDescription(GrLocale.en_US, "Variant of `atan`.");
-            library.setParameters(GrLocale.fr_FR, ["a", "b"]);
-            library.setParameters(GrLocale.en_US, ["a", "b"]);
+            library.setParameters(["a", "b"]);
             library.addFunction(&_atan2!T, "atan2", [type, type], [type]);
 
             library.setDescription(GrLocale.fr_FR, "Retourne l’exponentielle de `x`.");
             library.setDescription(GrLocale.en_US, "Returns the exponential of `x`.");
-            library.setParameters(GrLocale.fr_FR, ["x"]);
-            library.setParameters(GrLocale.en_US, ["x"]);
+            library.setParameters(["x"]);
             library.addFunction(&_exp!T, "exp", [type], [type]);
 
             library.setDescription(GrLocale.fr_FR, "Renvoie le logarithme naturel de `x`.");
@@ -130,39 +121,31 @@ void grLoadStdLibMath(GrLibDefinition library) {
 
         static if (T == "Float" || T == "Double") {
             library.setDescription(GrLocale.fr_FR,
-                "Interpole entre `source` et `destination` en fonction de `t` compris entre 0 et 1.");
+                "Interpole entre `src` et `dest` en fonction de `t` compris entre 0 et 1.");
             library.setDescription(GrLocale.en_US,
-                "Interpolate between `source` and `destination` using `t` clamped between 0 and 1.");
-            library.setParameters(GrLocale.fr_FR, ["source", "destination", "t"]);
-            library.setParameters(GrLocale.en_US, ["source", "destination", "t"]);
+                "Interpolate between `src` and `dest` using `t` clamped between 0 and 1.");
+            library.setParameters(["src", "dest", "t"]);
             library.addFunction(&_lerp!T, "lerp", [type, type, type], [type]);
 
             library.setDescription(GrLocale.fr_FR,
-                "Interpole entre `source` et `destination` en fonction de `t` compris entre 0 et 1 avec extrapolation.");
+                "Interpole entre `src` et `dest` en fonction de `t` compris entre 0 et 1 avec extrapolation.");
             library.setDescription(GrLocale.en_US,
-                "Interpolate between `source` and `destination` using `t` between 0 and 1 with extrapolation.");
-            library.setParameters(GrLocale.fr_FR, ["source", "destination", "t"]);
-            library.setParameters(GrLocale.en_US, ["source", "destination", "t"]);
+                "Interpolate between `src` and `dest` using `t` between 0 and 1 with extrapolation.");
+            library.setParameters(["src", "dest", "t"]);
             library.addFunction(&_ulerp!T, "ulerp", [type, type, type], [type]);
 
             library.setDescription(GrLocale.fr_FR, "Opération inverse de lerp.
-Retourne le ratio entre 0 et 1 de `valeur` par rapport à `source` et `destination`");
+Retourne le ratio entre 0 et 1 de `valeur` par rapport à `src` et `dest`");
             library.setDescription(GrLocale.en_US, "Reverse lerp operation.
-Returns the ratio between 0 and 1 of `value` from `source` to `destination`.");
-            library.setParameters(GrLocale.fr_FR, [
-                    "source", "destination", "valeur"
-                ]);
-            library.setParameters(GrLocale.en_US, [
-                    "source", "destination", "value"
-                ]);
+Returns the ratio between 0 and 1 of `value` from `src` to `dest`.");
+            library.setParameters(["src", "dest", "value"]);
             library.addFunction(&_rlerp!T, "rlerp", [type, type, type], [type]);
         }
 
         static if (T != "UInt") {
             library.setDescription(GrLocale.fr_FR, "Retourne la valeur absolue de `x`.");
             library.setDescription(GrLocale.en_US, "Returns the absolute value of `x`.");
-            library.setParameters(GrLocale.fr_FR, ["x"]);
-            library.setParameters(GrLocale.en_US, ["x"]);
+            library.setParameters(["x"]);
             library.addFunction(&_abs!T, "abs", [type], [type]);
         }
 
@@ -200,8 +183,7 @@ Un pas négatif l’éloigne de `target` d’autant.");
         library.setDescription(GrLocale.en_US,
             "Approach `x` up to `target` by increment of `step` without overshooting it.
 A negative step distances from `target` by that much.");
-        library.setParameters(GrLocale.fr_FR, ["x", "target", "step"]);
-        library.setParameters(GrLocale.en_US, ["x", "target", "step"]);
+        library.setParameters(["x", "target", "step"]);
         library.addFunction(&_approach!T, "approach", [type, type, type], [type]);
     }
 }

@@ -16,8 +16,7 @@ void grLoadStdLibSystem(GrLibDefinition library) {
 
     library.setDescription(GrLocale.fr_FR, "Renvoie `a` et `b` dans l’ordre inverse.");
     library.setDescription(GrLocale.en_US, "Returns `a` and `b` in reverse order.");
-    library.setParameters(GrLocale.fr_FR, ["a", "b"]);
-    library.setParameters(GrLocale.en_US, ["a", "b"]);
+    library.setParameters(["a", "b"]);
     library.addFunction(&_swap_2, "swap", [grAny("T1"), grAny("T2")], [
             grAny("T2"), grAny("T1")
         ]);
@@ -25,16 +24,14 @@ void grLoadStdLibSystem(GrLibDefinition library) {
     library.setDescription(GrLocale.fr_FR,
         "Renvoie `a` si `condition` est vrai, sinon renvoie `b`.");
     library.setDescription(GrLocale.en_US, "Returns `a` if `condition` is true, else returns `b`.");
-    library.setParameters(GrLocale.fr_FR, ["condition", "a", "b"]);
-    library.setParameters(GrLocale.en_US, ["condition", "a", "b"]);
+    library.setParameters(["condition", "a", "b"]);
     library.addFunction(&_cond, "cond", [grBool, grAny("T"), grAny("T")], [
             grAny("T")
         ]);
 
     library.setDescription(GrLocale.fr_FR, "Retourne le type de `valeur`.");
     library.setDescription(GrLocale.en_US, "Returns the type of `value`.");
-    library.setParameters(GrLocale.fr_FR, ["valeur"]);
-    library.setParameters(GrLocale.en_US, ["value"]);
+    library.setParameters(["value"]);
     library.addFunction(&_typeOf, "typeOf", [grAny("T")], [grString]);
 }
 

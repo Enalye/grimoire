@@ -10,7 +10,7 @@
 ## Function descriptions
 
 <a id="func_0"></a>
-> print (*value*: **pure T**)
+> print(*value*: **pure T**)
 
 Display `value`'s content.
 

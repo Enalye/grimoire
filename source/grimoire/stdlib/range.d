@@ -23,8 +23,7 @@ void grLoadStdLibRange(GrLibDefinition library) {
 
     library.setDescription(GrLocale.fr_FR, "Avance jusqu’au nombre suivant de la série.");
     library.setDescription(GrLocale.en_US, "Advance until the next number in the serie.");
-    library.setParameters(GrLocale.fr_FR, ["itérateur"]);
-    library.setParameters(GrLocale.en_US, ["iterator"]);
+    library.setParameters(["iterator"]);
     library.addFunction(&_range_next_i, "next", [rangeIteratorIntType], [
             grOptional(grInt),
         ]);
@@ -36,8 +35,7 @@ void grLoadStdLibRange(GrLibDefinition library) {
         "Retourne un itérateur qui part de `start` jusqu’à `end` inclus.");
     library.setDescription(GrLocale.en_US,
         "Returns an iterator that start from `start` and end with `end` included.");
-    library.setParameters(GrLocale.fr_FR, ["start", "end"]);
-    library.setParameters(GrLocale.en_US, ["start", "end"]);
+    library.setParameters(["start", "end"]);
     library.addFunction(&_range_i, "range", [grInt, grInt], [
             rangeIteratorIntType
         ]);
@@ -46,16 +44,14 @@ void grLoadStdLibRange(GrLibDefinition library) {
         "Retourne un itérateur qui part de `start` jusqu’à `end` inclus par pas de `step`.");
     library.setDescription(GrLocale.en_US,
         "Returns an iterator that start from `start` and end with `end` included by increments of `step`.");
-    library.setParameters(GrLocale.fr_FR, ["start", "end", "step"]);
-    library.setParameters(GrLocale.en_US, ["start", "end", "step"]);
+    library.setParameters(["start", "end", "step"]);
     library.addFunction(&_range_step_i, "range", [grInt, grInt, grInt], [
             rangeIteratorIntType
         ]);
 
     library.setDescription(GrLocale.fr_FR, "Avance jusqu’au nombre suivant de la série.");
     library.setDescription(GrLocale.en_US, "Advance until the next number in the serie.");
-    library.setParameters(GrLocale.fr_FR, ["itérateur"]);
-    library.setParameters(GrLocale.en_US, ["iterator"]);
+    library.setParameters(["iterator"]);
     library.addFunction(&_range_next_r, "next", [rangeIteratorFloatType], [
             grOptional(grFloat)
         ]);
@@ -66,8 +62,7 @@ void grLoadStdLibRange(GrLibDefinition library) {
         "Retourne un itérateur qui part de `start` jusqu’à `end` inclus.");
     library.setDescription(GrLocale.en_US,
         "Returns an iterator that start from `start` and end with `end` included.");
-    library.setParameters(GrLocale.fr_FR, ["start", "end"]);
-    library.setParameters(GrLocale.en_US, ["start", "end"]);
+    library.setParameters(["start", "end"]);
     library.addFunction(&_range_r, "range", [grFloat, grFloat], [
             rangeIteratorFloatType
         ]);
@@ -76,8 +71,7 @@ void grLoadStdLibRange(GrLibDefinition library) {
         "Retourne un itérateur qui part de `start` jusqu’à `end` inclus par pas de `step`.");
     library.setDescription(GrLocale.en_US,
         "Returns an iterator that start from `start` and end with `end` included by increments of `step`.");
-    library.setParameters(GrLocale.fr_FR, ["start", "end", "step"]);
-    library.setParameters(GrLocale.en_US, ["start", "end", "step"]);
+    library.setParameters(["start", "end", "step"]);
     library.addFunction(&_range_step_r, "range", [grFloat, grFloat, grFloat],
         [rangeIteratorFloatType]);
 }

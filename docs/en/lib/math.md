@@ -47,8 +47,8 @@ Maths related functions.
 |[floor](#func_28)|*x*: **float**|**float**|
 |[isNaN](#func_29)|*x*: **double**|**bool**|
 |[isNaN](#func_30)|*x*: **float**|**bool**|
-|[lerp](#func_31)|*source*: **float**, *destination*: **float**, *t*: **float**|**float**|
-|[lerp](#func_32)|*source*: **double**, *destination*: **double**, *t*: **double**|**double**|
+|[lerp](#func_31)|*src*: **float**, *dest*: **float**, *t*: **float**|**float**|
+|[lerp](#func_32)|*src*: **double**, *dest*: **double**, *t*: **double**|**double**|
 |[log](#func_33)|*x*: **float**|**float**|
 |[log](#func_34)|*x*: **double**|**double**|
 |[log10](#func_35)|*x*: **float**|**float**|
@@ -70,8 +70,8 @@ Maths related functions.
 |[rand](#func_51)|*min*: **float**, *max*: **float**|**float**|
 |[rand](#func_52)|*min*: **uint**, *max*: **uint**|**uint**|
 |[rand](#func_53)|*min*: **int**, *max*: **int**|**int**|
-|[rlerp](#func_54)|*source*: **float**, *destination*: **float**, *value*: **float**|**float**|
-|[rlerp](#func_55)|*source*: **double**, *destination*: **double**, *value*: **double**|**double**|
+|[rlerp](#func_54)|*src*: **float**, *dest*: **float**, *value*: **float**|**float**|
+|[rlerp](#func_55)|*src*: **double**, *dest*: **double**, *value*: **double**|**double**|
 |[round](#func_56)|*x*: **float**|**float**|
 |[round](#func_57)|*x*: **double**|**double**|
 |[sin](#func_58)|*radians*: **float**|**float**|
@@ -82,362 +82,362 @@ Maths related functions.
 |[tan](#func_63)|*radians*: **float**|**float**|
 |[truncate](#func_64)|*x*: **float**|**float**|
 |[truncate](#func_65)|*x*: **double**|**double**|
-|[ulerp](#func_66)|*source*: **float**, *destination*: **float**, *t*: **float**|**float**|
-|[ulerp](#func_67)|*source*: **double**, *destination*: **double**, *t*: **double**|**double**|
+|[ulerp](#func_66)|*src*: **float**, *dest*: **float**, *t*: **float**|**float**|
+|[ulerp](#func_67)|*src*: **double**, *dest*: **double**, *t*: **double**|**double**|
 
 
 ***
 ## Function descriptions
 
 <a id="func_0"></a>
-> abs (*x*: **double**) (**double**)
+> abs(*x*: **double**) (**double**)
 
 Returns the absolute value of `x`.
 
 <a id="func_1"></a>
-> abs (*x*: **int**) (**int**)
+> abs(*x*: **int**) (**int**)
 
 Returns the absolute value of `x`.
 
 <a id="func_2"></a>
-> abs (*x*: **float**) (**float**)
+> abs(*x*: **float**) (**float**)
 
 Returns the absolute value of `x`.
 
 <a id="func_3"></a>
-> acos (*radians*: **double**) (**double**)
+> acos(*radians*: **double**) (**double**)
 
 Returns the arc cosine of `radians`.
 
 <a id="func_4"></a>
-> acos (*radians*: **float**) (**float**)
+> acos(*radians*: **float**) (**float**)
 
 Returns the arc cosine of `radians`.
 
 <a id="func_5"></a>
-> approach (*x*: **double**, *target*: **double**, *step*: **double**) (**double**)
+> approach(*x*: **double**, *target*: **double**, *step*: **double**) (**double**)
 
 Approach `x` up to `target` by increment of `step` without overshooting it.
 
 A negative step distances from `target` by that much.
 
 <a id="func_6"></a>
-> approach (*x*: **int**, *target*: **int**, *step*: **int**) (**int**)
+> approach(*x*: **int**, *target*: **int**, *step*: **int**) (**int**)
 
 Approach `x` up to `target` by increment of `step` without overshooting it.
 
 A negative step distances from `target` by that much.
 
 <a id="func_7"></a>
-> approach (*x*: **uint**, *target*: **uint**, *step*: **uint**) (**uint**)
+> approach(*x*: **uint**, *target*: **uint**, *step*: **uint**) (**uint**)
 
 Approach `x` up to `target` by increment of `step` without overshooting it.
 
 A negative step distances from `target` by that much.
 
 <a id="func_8"></a>
-> approach (*x*: **float**, *target*: **float**, *step*: **float**) (**float**)
+> approach(*x*: **float**, *target*: **float**, *step*: **float**) (**float**)
 
 Approach `x` up to `target` by increment of `step` without overshooting it.
 
 A negative step distances from `target` by that much.
 
 <a id="func_9"></a>
-> asin (*radians*: **double**) (**double**)
+> asin(*radians*: **double**) (**double**)
 
 Returns the arc sine of `radians`.
 
 <a id="func_10"></a>
-> asin (*radians*: **float**) (**float**)
+> asin(*radians*: **float**) (**float**)
 
 Returns the arc sine of `radians`.
 
 <a id="func_11"></a>
-> atan (*radians*: **double**) (**double**)
+> atan(*radians*: **double**) (**double**)
 
 Returns the arc tangent of `radians`.
 
 <a id="func_12"></a>
-> atan (*radians*: **float**) (**float**)
+> atan(*radians*: **float**) (**float**)
 
 Returns the arc tangent of `radians`.
 
 <a id="func_13"></a>
-> atan2 (*a*: **double**, *b*: **double**) (**double**)
+> atan2(*a*: **double**, *b*: **double**) (**double**)
 
 Variant of `atan`.
 
 <a id="func_14"></a>
-> atan2 (*a*: **float**, *b*: **float**) (**float**)
+> atan2(*a*: **float**, *b*: **float**) (**float**)
 
 Variant of `atan`.
 
 <a id="func_15"></a>
-> ceil (*x*: **double**) (**double**)
+> ceil(*x*: **double**) (**double**)
 
 Returns the rounded value of `x` not smaller than `x`.
 
 <a id="func_16"></a>
-> ceil (*x*: **float**) (**float**)
+> ceil(*x*: **float**) (**float**)
 
 Returns the rounded value of `x` not smaller than `x`.
 
 <a id="func_17"></a>
-> clamp (*x*: **int**, *min*: **int**, *max*: **int**) (**int**)
+> clamp(*x*: **int**, *min*: **int**, *max*: **int**) (**int**)
 
 Restrict `x` between `min` and `max`.
 
 <a id="func_18"></a>
-> clamp (*x*: **uint**, *min*: **uint**, *max*: **uint**) (**uint**)
+> clamp(*x*: **uint**, *min*: **uint**, *max*: **uint**) (**uint**)
 
 Restrict `x` between `min` and `max`.
 
 <a id="func_19"></a>
-> clamp (*x*: **float**, *min*: **float**, *max*: **float**) (**float**)
+> clamp(*x*: **float**, *min*: **float**, *max*: **float**) (**float**)
 
 Restrict `x` between `min` and `max`.
 
 <a id="func_20"></a>
-> clamp (*x*: **double**, *min*: **double**, *max*: **double**) (**double**)
+> clamp(*x*: **double**, *min*: **double**, *max*: **double**) (**double**)
 
 Restrict `x` between `min` and `max`.
 
 <a id="func_21"></a>
-> cos (*radians*: **double**) (**double**)
+> cos(*radians*: **double**) (**double**)
 
 Returns the cosine of `radians`.
 
 <a id="func_22"></a>
-> cos (*radians*: **float**) (**float**)
+> cos(*radians*: **float**) (**float**)
 
 Returns the cosine of `radians`.
 
 <a id="func_23"></a>
-> deg (*radians*: **float**) (**float**)
+> deg(*radians*: **float**) (**float**)
 
 Converts `radians` in degrees.
 
 <a id="func_24"></a>
-> deg (*radians*: **double**) (**double**)
+> deg(*radians*: **double**) (**double**)
 
 Converts `radians` in degrees.
 
 <a id="func_25"></a>
-> exp (*x*: **double**) (**double**)
+> exp(*x*: **double**) (**double**)
 
 Returns the exponential of `x`.
 
 <a id="func_26"></a>
-> exp (*x*: **float**) (**float**)
+> exp(*x*: **float**) (**float**)
 
 Returns the exponential of `x`.
 
 <a id="func_27"></a>
-> floor (*x*: **double**) (**double**)
+> floor(*x*: **double**) (**double**)
 
 Returns the rounded value of `x` not greater than `x`.
 
 <a id="func_28"></a>
-> floor (*x*: **float**) (**float**)
+> floor(*x*: **float**) (**float**)
 
 Returns the rounded value of `x` not greater than `x`.
 
 <a id="func_29"></a>
-> isNaN (*x*: **double**) (**bool**)
+> isNaN(*x*: **double**) (**bool**)
 
 Checks if `x` is a valid float value or not.
 
 <a id="func_30"></a>
-> isNaN (*x*: **float**) (**bool**)
+> isNaN(*x*: **float**) (**bool**)
 
 Checks if `x` is a valid float value or not.
 
 <a id="func_31"></a>
-> lerp (*source*: **float**, *destination*: **float**, *t*: **float**) (**float**)
+> lerp(*src*: **float**, *dest*: **float**, *t*: **float**) (**float**)
 
-Interpolate between `source` and `destination` using `t` clamped between 0 and 1.
+Interpolate between `src` and `dest` using `t` clamped between 0 and 1.
 
 <a id="func_32"></a>
-> lerp (*source*: **double**, *destination*: **double**, *t*: **double**) (**double**)
+> lerp(*src*: **double**, *dest*: **double**, *t*: **double**) (**double**)
 
-Interpolate between `source` and `destination` using `t` clamped between 0 and 1.
+Interpolate between `src` and `dest` using `t` clamped between 0 and 1.
 
 <a id="func_33"></a>
-> log (*x*: **float**) (**float**)
+> log(*x*: **float**) (**float**)
 
 Returns the natural logarithm of `x`.
 
 <a id="func_34"></a>
-> log (*x*: **double**) (**double**)
+> log(*x*: **double**) (**double**)
 
 Returns the natural logarithm of `x`.
 
 <a id="func_35"></a>
-> log10 (*x*: **float**) (**float**)
+> log10(*x*: **float**) (**float**)
 
 Returns the base 10 logarithm of `x`.
 
 <a id="func_36"></a>
-> log10 (*x*: **double**) (**double**)
+> log10(*x*: **double**) (**double**)
 
 Returns the base 10 logarithm of `x`.
 
 <a id="func_37"></a>
-> log2 (*x*: **float**) (**float**)
+> log2(*x*: **float**) (**float**)
 
 Returns the base 2 logarithm of `x`.
 
 <a id="func_38"></a>
-> log2 (*x*: **double**) (**double**)
+> log2(*x*: **double**) (**double**)
 
 Returns the base 2 logarithm of `x`.
 
 <a id="func_39"></a>
-> max (*a*: **double**, *b*: **double**) (**double**)
+> max(*a*: **double**, *b*: **double**) (**double**)
 
 Returns the greatest value between `a` et `b`.
 
 <a id="func_40"></a>
-> max (*a*: **int**, *b*: **int**) (**int**)
+> max(*a*: **int**, *b*: **int**) (**int**)
 
 Returns the greatest value between `a` et `b`.
 
 <a id="func_41"></a>
-> max (*a*: **float**, *b*: **float**) (**float**)
+> max(*a*: **float**, *b*: **float**) (**float**)
 
 Returns the greatest value between `a` et `b`.
 
 <a id="func_42"></a>
-> max (*a*: **uint**, *b*: **uint**) (**uint**)
+> max(*a*: **uint**, *b*: **uint**) (**uint**)
 
 Returns the greatest value between `a` et `b`.
 
 <a id="func_43"></a>
-> min (*a*: **int**, *b*: **int**) (**int**)
+> min(*a*: **int**, *b*: **int**) (**int**)
 
 Returns the smallest value between `a` and `b`.
 
 <a id="func_44"></a>
-> min (*a*: **double**, *b*: **double**) (**double**)
+> min(*a*: **double**, *b*: **double**) (**double**)
 
 Returns the smallest value between `a` and `b`.
 
 <a id="func_45"></a>
-> min (*a*: **float**, *b*: **float**) (**float**)
+> min(*a*: **float**, *b*: **float**) (**float**)
 
 Returns the smallest value between `a` and `b`.
 
 <a id="func_46"></a>
-> min (*a*: **uint**, *b*: **uint**) (**uint**)
+> min(*a*: **uint**, *b*: **uint**) (**uint**)
 
 Returns the smallest value between `a` and `b`.
 
 <a id="func_47"></a>
-> rad (*degrees*: **float**) (**float**)
+> rad(*degrees*: **float**) (**float**)
 
 Converts `degrees` in radians.
 
 <a id="func_48"></a>
-> rad (*degrees*: **double**) (**double**)
+> rad(*degrees*: **double**) (**double**)
 
 Converts `degrees` in radians.
 
 <a id="func_49"></a>
-> rand (**double**)
+> rand() (**double**)
 
 Returns a random value between 0 and 1 excluded.
 
 <a id="func_50"></a>
-> rand (*min*: **double**, *max*: **double**) (**double**)
+> rand(*min*: **double**, *max*: **double**) (**double**)
 
 Returns a random value between `min` and `max` included.
 
 <a id="func_51"></a>
-> rand (*min*: **float**, *max*: **float**) (**float**)
+> rand(*min*: **float**, *max*: **float**) (**float**)
 
 Returns a random value between `min` and `max` included.
 
 <a id="func_52"></a>
-> rand (*min*: **uint**, *max*: **uint**) (**uint**)
+> rand(*min*: **uint**, *max*: **uint**) (**uint**)
 
 Returns a random value between `min` and `max` included.
 
 <a id="func_53"></a>
-> rand (*min*: **int**, *max*: **int**) (**int**)
+> rand(*min*: **int**, *max*: **int**) (**int**)
 
 Returns a random value between `min` and `max` included.
 
 <a id="func_54"></a>
-> rlerp (*source*: **float**, *destination*: **float**, *value*: **float**) (**float**)
+> rlerp(*src*: **float**, *dest*: **float**, *value*: **float**) (**float**)
 
 Reverse lerp operation.
 
-Returns the ratio between 0 and 1 of `value` from `source` to `destination`.
+Returns the ratio between 0 and 1 of `value` from `src` to `dest`.
 
 <a id="func_55"></a>
-> rlerp (*source*: **double**, *destination*: **double**, *value*: **double**) (**double**)
+> rlerp(*src*: **double**, *dest*: **double**, *value*: **double**) (**double**)
 
 Reverse lerp operation.
 
-Returns the ratio between 0 and 1 of `value` from `source` to `destination`.
+Returns the ratio between 0 and 1 of `value` from `src` to `dest`.
 
 <a id="func_56"></a>
-> round (*x*: **float**) (**float**)
+> round(*x*: **float**) (**float**)
 
 Returns the nearest rounded value of `x`.
 
 <a id="func_57"></a>
-> round (*x*: **double**) (**double**)
+> round(*x*: **double**) (**double**)
 
 Returns the nearest rounded value of `x`.
 
 <a id="func_58"></a>
-> sin (*radians*: **float**) (**float**)
+> sin(*radians*: **float**) (**float**)
 
 Returns the sine of `radians`.
 
 <a id="func_59"></a>
-> sin (*radians*: **double**) (**double**)
+> sin(*radians*: **double**) (**double**)
 
 Returns the sine of `radians`.
 
 <a id="func_60"></a>
-> sqrt (*x*: **float**) (**float**)
+> sqrt(*x*: **float**) (**float**)
 
 Returns the square root of `x`.
 
 <a id="func_61"></a>
-> sqrt (*x*: **double**) (**double**)
+> sqrt(*x*: **double**) (**double**)
 
 Returns the square root of `x`.
 
 <a id="func_62"></a>
-> tan (*radians*: **double**) (**double**)
+> tan(*radians*: **double**) (**double**)
 
 Returns the tangent of `radians`.
 
 <a id="func_63"></a>
-> tan (*radians*: **float**) (**float**)
+> tan(*radians*: **float**) (**float**)
 
 Returns the tangent of `radians`.
 
 <a id="func_64"></a>
-> truncate (*x*: **float**) (**float**)
+> truncate(*x*: **float**) (**float**)
 
 Returns the integer part of `x`.
 
 <a id="func_65"></a>
-> truncate (*x*: **double**) (**double**)
+> truncate(*x*: **double**) (**double**)
 
 Returns the integer part of `x`.
 
 <a id="func_66"></a>
-> ulerp (*source*: **float**, *destination*: **float**, *t*: **float**) (**float**)
+> ulerp(*src*: **float**, *dest*: **float**, *t*: **float**) (**float**)
 
-Interpolate between `source` and `destination` using `t` between 0 and 1 with extrapolation.
+Interpolate between `src` and `dest` using `t` between 0 and 1 with extrapolation.
 
 <a id="func_67"></a>
-> ulerp (*source*: **double**, *destination*: **double**, *t*: **double**) (**double**)
+> ulerp(*src*: **double**, *dest*: **double**, *t*: **double**) (**double**)
 
-Interpolate between `source` and `destination` using `t` between 0 and 1 with extrapolation.
+Interpolate between `src` and `dest` using `t` between 0 and 1 with extrapolation.
 

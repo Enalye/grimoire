@@ -61,7 +61,7 @@ interface GrLibDefinition {
     void setDescription(GrLocale locale, string message = "");
 
     /// Ajoute des paramètres d’entrée à la déclaration suivante
-    void setParameters(GrLocale locale, string[] parameters = []);
+    void setParameters(string[] parameters = []);
 
     /// Ajoute un message sous le nom du module
     void setModuleInfo(GrLocale locale, string message);
@@ -167,7 +167,7 @@ final class GrLibrary : GrLibDefinition {
     override void setDescription(GrLocale, string = "") {
     }
 
-    override void setParameters(GrLocale, string[] = []) {
+    override void setParameters(string[] = []) {
     }
 
     override void setModuleInfo(GrLocale, string) {

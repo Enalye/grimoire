@@ -7,7 +7,7 @@ Iterate on a circular buffer.
 ## Constructors
 |Function|Input|
 |-|-|
-|[@**CircularBuffer\<T>**](#ctor_0)|**int** *param0*|
+|[@**CircularBuffer\<T>**](#ctor_0)| *param0*: **int**|
 ## Functions
 |Function|Input|Output|
 |-|-|-|
@@ -25,48 +25,48 @@ Iterate on a circular buffer.
 ## Function descriptions
 
 <a id="func_0"></a>
-> back (*buffer*: **pure CircularBuffer\<T>**) (**T?**)
+> back(*buffer*: **pure CircularBuffer\<T>**) (**T?**)
 
 Returns the last element of `buffer`.
 
 If it doesn't exist, returns `null<T>`.
 
 <a id="func_1"></a>
-> capacity (*buffer*: **pure CircularBuffer\<T>**) (**int**)
+> capacity(*buffer*: **pure CircularBuffer\<T>**) (**int**)
 
 Returns the `buffer`'s capacity.
 
 <a id="func_2"></a>
-> front (*buffer*: **pure CircularBuffer\<T>**) (**T?**)
+> front(*buffer*: **pure CircularBuffer\<T>**) (**T?**)
 
 Returns the first element of `buffer`.
 
 If it doesn't exist, returns `null<T>`.
 
 <a id="func_3"></a>
-> isEmpty (*buffer*: **pure CircularBuffer\<T>**) (**bool**)
+> isEmpty(*buffer*: **pure CircularBuffer\<T>**) (**bool**)
 
 Returns `true` if `buffer` contains nothing.
 
 <a id="func_4"></a>
-> isFull (*buffer*: **pure CircularBuffer\<T>**) (**bool**)
+> isFull(*buffer*: **pure CircularBuffer\<T>**) (**bool**)
 
 Returns `true` if `buffer` is full.
 
 <a id="func_5"></a>
-> pop (*buffer*: **CircularBuffer\<T>**) (**T?**)
+> pop(*buffer*: **CircularBuffer\<T>**) (**T?**)
 
 Removes an element of the `buffer` and returns it.
 
 If there aren't any, returns `null<T>`.
 
 <a id="func_6"></a>
-> push (*buffer*: **CircularBuffer\<T>**, *value*: **T**)
+> push(*buffer*: **CircularBuffer\<T>**, *value*: **T**)
 
 Appends `value` to the `buffer`.
 
 <a id="func_7"></a>
-> size (*buffer*: **pure CircularBuffer\<T>**) (**int**)
+> size(*buffer*: **pure CircularBuffer\<T>**) (**int**)
 
 Returns the `buffer`'s size.
 

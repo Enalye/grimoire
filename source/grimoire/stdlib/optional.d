@@ -23,8 +23,7 @@ Its null type is equal to `null<T>` where `T` is the referenced type.");
 
     library.setDescription(GrLocale.fr_FR, "Retourne une version optionnelle du type.");
     library.setDescription(GrLocale.en_US, "Returns an optional version of the type.");
-    library.setParameters(GrLocale.fr_FR, ["x"]);
-    library.setParameters(GrLocale.en_US, ["x"]);
+    library.setParameters(["x"]);
     library.addFunction(&_some, "some", [grAny("T")],
         [grOptional(grAny("T"))], [grConstraint("NotNullable", grAny("T"))]);
 
@@ -34,8 +33,7 @@ Sinon, la version non-optionnel de `x` est renvoyé.");
     library.setDescription(GrLocale.en_US, "Checks if an optionnal is null.
 If it is, the exception `error` is thrown.
 Otherwise, the non-optional version of `x` is returned.");
-    library.setParameters(GrLocale.fr_FR, ["x", "erreur"]);
-    library.setParameters(GrLocale.en_US, ["x", "error"]);
+    library.setParameters(["x", "error"]);
     library.addFunction(&_expect, "expect", [
             grOptional(grAny("T")), grPure(grString)
         ], [grAny("T")]);
@@ -46,8 +44,7 @@ Sinon, la version non-optionnel de `x` est renvoyé.");
     library.setDescription(GrLocale.en_US, "Checks if an optionnal is null.
 If it is, the exception `\"UnwrapError\"` is thrown.
 Otherwise, the non-optional version of `x` is returned.");
-    library.setParameters(GrLocale.fr_FR, ["x"]);
-    library.setParameters(GrLocale.en_US, ["x"]);
+    library.setParameters(["x"]);
     library.addFunction(&_unwrap, "unwrap", [grOptional(grAny("T"))], [
             grAny("T")
         ]);
@@ -58,8 +55,7 @@ Sinon, la version non-optionnel de `x` est renvoyé.");
     library.setDescription(GrLocale.en_US, "Checks if an optionnal is null.
 If it is, the `default` value is returned.
 Otherwise, the non-optional version of `x` is returned.");
-    library.setParameters(GrLocale.fr_FR, ["x", "défaut"]);
-    library.setParameters(GrLocale.en_US, ["x", "default"]);
+    library.setParameters(["x", "default"]);
     library.addFunction(&_unwrapOr, "unwrapOr", [
             grOptional(grAny("T")), grAny("T")
         ], [grAny("T")]);

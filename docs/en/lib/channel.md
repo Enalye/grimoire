@@ -16,22 +16,22 @@ A channel is a messaging and synchronization tool between tasks.
 ## Function descriptions
 
 <a id="func_0"></a>
-> capacity (*chan*: **pure channel\<T>**) (**int**)
+> capacity(*chan*: **pure channel\<T>**) (**int**)
 
 Returns the channel's capacity.
 
 <a id="func_1"></a>
-> isEmpty (*chan*: **pure channel\<T>**) (**bool**)
+> isEmpty(*chan*: **pure channel\<T>**) (**bool**)
 
 Returns `true` if the channel contains nothing.
 
 <a id="func_2"></a>
-> isFull (*chan*: **pure channel\<T>**) (**bool**)
+> isFull(*chan*: **pure channel\<T>**) (**bool**)
 
 Returns `true` if the channel has reached its maximum capacity.
 
 <a id="func_3"></a>
-> size (*chan*: **pure channel\<T>**) (**int**)
+> size(*chan*: **pure channel\<T>**) (**int**)
 
 Returns the channel's size.
 

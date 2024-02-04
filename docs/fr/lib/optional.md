@@ -69,17 +69,17 @@ Son type nul correspondant vaut `null<T>` où `T` est le type concerné.
 ## Fonctions
 |Fonction|Entrée|Sortie|
 |-|-|-|
-|[expect](#func_0)|*x*: **T?**, *erreur*: **pure string**|**T**|
+|[expect](#func_0)|*x*: **T?**, *error*: **pure string**|**T**|
 |[some](#func_1)|*x*: **T**|**T?**|
 |[unwrap](#func_2)|*x*: **T?**|**T**|
-|[unwrapOr](#func_3)|*x*: **T?**, *défaut*: **T**|**T**|
+|[unwrapOr](#func_3)|*x*: **T?**, *default*: **T**|**T**|
 
 
 ***
 ## Description des fonctions
 
 <a id="func_0"></a>
-> expect (*x*: **T?**, *erreur*: **pure string**) (**T**)
+> expect(*x*: **T?**, *error*: **pure string**) (**T**)
 
 Vérifie si un optionnel est nul.
 
@@ -88,12 +88,12 @@ S’il est nul, l’exception `erreur` est lancé.
 Sinon, la version non-optionnel de `x` est renvoyé.
 
 <a id="func_1"></a>
-> some (*x*: **T**) (**T?**)
+> some(*x*: **T**) (**T?**)
 
 Retourne une version optionnelle du type.
 
 <a id="func_2"></a>
-> unwrap (*x*: **T?**) (**T**)
+> unwrap(*x*: **T?**) (**T**)
 
 Vérifie si un optionnel est nul.
 
@@ -102,7 +102,7 @@ S’il est nul, l’exception `"UnwrapError"` est lancé.
 Sinon, la version non-optionnel de `x` est renvoyé.
 
 <a id="func_3"></a>
-> unwrapOr (*x*: **T?**, *défaut*: **T**) (**T**)
+> unwrapOr(*x*: **T?**, *default*: **T**) (**T**)
 
 Vérifie si un optionnel est nul.
 

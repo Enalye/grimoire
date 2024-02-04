@@ -17,14 +17,12 @@ void grLoadStdLibError(GrLibDefinition library) {
         "Si `value` est faux, lance une exception `\"AssertError\"`.");
     library.setDescription(GrLocale.en_US,
         "If `value` is false, throw an exception `\"AssertError\"`.");
-    library.setParameters(GrLocale.fr_FR, ["value"]);
-    library.setParameters(GrLocale.en_US, ["value"]);
+    library.setParameters(["value"]);
     library.addFunction(&_assert, "assert", [grBool]);
 
     library.setDescription(GrLocale.fr_FR, "Si `value` est faux, lance l’exception.");
     library.setDescription(GrLocale.en_US, "If `value` is false, throw the exception.");
-    library.setParameters(GrLocale.fr_FR, ["value", "erreur"]);
-    library.setParameters(GrLocale.en_US, ["value", "error"]);
+    library.setParameters(["value", "error"]);
     library.addFunction(&_assert_msg, "assert", [grBool, grPure(grString)]);
 }
 

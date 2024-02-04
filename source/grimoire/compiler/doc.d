@@ -17,7 +17,7 @@ final class GrDoc : GrLibDefinition {
     private {
         string _module;
         string[GrLocale] _moduleInfo, _moduleDescription, _comments;
-        string[][GrLocale] _parameters;
+        string[] _parameters;
 
         struct Variable {
             GrType type;
@@ -65,7 +65,7 @@ final class GrDoc : GrLibDefinition {
             GrType[] inSignature, outSignature;
             GrConstraint[] constraints;
             string[GrLocale] comments;
-            string[][GrLocale] parameters;
+            string[] parameters;
         }
 
         struct OperatorFunction {
@@ -88,7 +88,7 @@ final class GrDoc : GrLibDefinition {
             GrType[] inSignature;
             GrConstraint[] constraints;
             string[GrLocale] comments;
-            string[][GrLocale] parameters;
+            string[] parameters;
         }
 
         struct Static {
@@ -97,7 +97,7 @@ final class GrDoc : GrLibDefinition {
             GrType[] inSignature, outSignature;
             GrConstraint[] constraints;
             string[GrLocale] comments;
-            string[][GrLocale] parameters;
+            string[] parameters;
         }
 
         struct Property {
@@ -155,8 +155,8 @@ final class GrDoc : GrLibDefinition {
         _comments[locale] = message.replace("\n", "\n\n");
     }
 
-    override void setParameters(GrLocale locale, string[] parameters = []) {
-        _parameters[locale] = parameters;
+    override void setParameters(string[] parameters = []) {
+        _parameters = parameters;
     }
 
     override GrType addVariable(string name, GrType type) {
@@ -840,17 +840,12 @@ final class GrDoc : GrLibDefinition {
             foreach (ctor; _constructors) {
                 string funcName = "@" ~ _getPrettyType(ctor.type);
                 string inSignature;
-                string[] parametersName;
-                auto parameters = locale in ctor.parameters;
-                if (parameters) {
-                    parametersName = *parameters;
-                }
+                string[] parametersName = ctor.parameters;
 
                 int paramIdx;
                 foreach (type; ctor.inSignature) {
                     if (inSignature.length)
                         inSignature ~= ", ";
-                    inSignature ~= _getPrettyType(type);
 
                     if (parametersName.length) {
                         inSignature ~= " *" ~ parametersName[0] ~ "*";
@@ -859,6 +854,7 @@ final class GrDoc : GrLibDefinition {
                     else {
                         inSignature ~= " *param" ~ to!string(paramIdx) ~ "*";
                     }
+                    inSignature ~= ": " ~ _getPrettyType(type);
                     paramIdx++;
                 }
 
@@ -915,11 +911,7 @@ final class GrDoc : GrLibDefinition {
             foreach (static_; _statics) {
                 string funcName = "@" ~ _getPrettyType(static_.type) ~ "." ~ static_.name;
                 string inSignature, outSignature;
-                string[] parametersName;
-                auto parameters = locale in static_.parameters;
-                if (parameters) {
-                    parametersName = *parameters;
-                }
+                string[] parametersName = static_.parameters;
 
                 int paramIdx;
                 foreach (type; static_.inSignature) {
@@ -965,11 +957,7 @@ final class GrDoc : GrLibDefinition {
             int i;
             foreach (func; _functions) {
                 string inSignature, outSignature;
-                string[] parametersName;
-                auto parameters = locale in func.parameters;
-                if (parameters) {
-                    parametersName = *parameters;
-                }
+                string[] parametersName = func.parameters;
 
                 int paramIdx;
                 foreach (type; func.inSignature) {
@@ -1002,6 +990,67 @@ final class GrDoc : GrLibDefinition {
 
         md.addSeparator();
 
+        if (_statics.length) {
+            final switch (locale) with (GrLocale) {
+            case fr_FR:
+                md.addHeader("Description des fonctions statiques", 2);
+                break;
+            case en_US:
+                md.addHeader("Static function descriptions", 2);
+                break;
+            }
+
+            md.skipLine();
+            int i;
+            foreach (func; _statics) {
+                md.addLink("static_" ~ to!string(i));
+                string name = "> @" ~ _getPrettyType(func.type) ~ "." ~ func.name;
+                string[] parametersName = func.parameters;
+
+                {
+                    string inSignature;
+                    name ~= "(";
+                    int paramIdx;
+                    foreach (type; func.inSignature) {
+                        if (inSignature.length)
+                            inSignature ~= ", ";
+                        if (parametersName.length) {
+                            inSignature ~= "*" ~ parametersName[0] ~ "*";
+                            parametersName = parametersName[1 .. $];
+                        }
+                        else {
+                            inSignature ~= "*param" ~ to!string(paramIdx) ~ "*";
+                        }
+                        inSignature ~= ": " ~ _getPrettyType(type);
+                        paramIdx++;
+                    }
+                    name ~= inSignature;
+                    name ~= ")";
+                }
+
+                if (func.outSignature.length) {
+                    string outSignature;
+                    name ~= " (";
+                    foreach (type; func.outSignature) {
+                        if (outSignature.length)
+                            outSignature ~= ", ";
+                        outSignature ~= _getPrettyType(type);
+                    }
+                    name ~= outSignature;
+                    name ~= ")";
+                }
+
+                md.addText(name);
+                md.skipLine();
+                auto comment = locale in func.comments;
+                if (comment) {
+                    md.addText(*comment);
+                    md.skipLine();
+                }
+                i++;
+            }
+        }
+
         if (_functions.length) {
             final switch (locale) with (GrLocale) {
             case fr_FR:
@@ -1017,16 +1066,11 @@ final class GrDoc : GrLibDefinition {
             foreach (func; _functions) {
                 md.addLink("func_" ~ to!string(i));
                 string name = "> " ~ func.name;
+                string[] parametersName = func.parameters;
 
-                string[] parametersName;
-                auto parameters = locale in func.parameters;
-                if (parameters) {
-                    parametersName = *parameters;
-                }
-
-                if (func.inSignature.length) {
+                {
                     string inSignature;
-                    name ~= " (";
+                    name ~= "(";
                     int paramIdx;
                     foreach (type; func.inSignature) {
                         if (inSignature.length)

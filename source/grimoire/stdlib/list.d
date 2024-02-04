@@ -22,44 +22,40 @@ void grLoadStdLibList(GrLibDefinition library) {
 
     library.setDescription(GrLocale.fr_FR, "Retourne une copie de la liste.");
     library.setDescription(GrLocale.en_US, "Returns a copy of the list.");
-    library.setParameters(GrLocale.fr_FR, ["self"]);
-    library.setParameters(GrLocale.en_US, ["self"]);
+    library.setParameters(["array"]);
     library.addFunction(&_copy, "copy", [grPure(grList(grAny("T")))], [
             grList(grAny("T"))
         ]);
 
     library.setDescription(GrLocale.fr_FR, "Renvoie la taille de la liste.");
     library.setDescription(GrLocale.en_US, "Returns the size of the list.");
+    library.setParameters(["array"]);
     library.addFunction(&_size, "size", [grPure(grList(grAny("T")))], [grInt]);
 
     library.setDescription(GrLocale.fr_FR, "Redimmensionne la liste.
-Si `len` est plus grand que la taille de la liste, l’exédent est initialisé avec `def`.");
+Si `len` est plus grand que la taille de la liste, l’exédent est initialisé avec `default`.");
     library.setDescription(GrLocale.en_US, "Resize the list.
-If `len` is greater than the size of the list, the rest is filled with `def`.");
-    library.setParameters(GrLocale.fr_FR, ["self", "len", "def"]);
-    library.setParameters(GrLocale.en_US, ["self", "len", "def"]);
+If `len` is greater than the size of the list, the rest is filled with `default`.");
+    library.setParameters(["array", "length", "default"]);
     library.addFunction(&_resize, "resize", [
             grList(grAny("T")), grInt, grAny("T")
         ]);
 
     library.setDescription(GrLocale.fr_FR, "Renvoie `true` si la liste est vide.");
     library.setDescription(GrLocale.en_US, "Returns `true` if the list is empty.");
-    library.setParameters(GrLocale.fr_FR, ["self"]);
-    library.setParameters(GrLocale.en_US, ["self"]);
+    library.setParameters(["array"]);
     library.addFunction(&_isEmpty, "isEmpty", [grPure(grList(grAny("T")))], [
             grBool
         ]);
 
     library.setDescription(GrLocale.fr_FR, "Remplace le contenu de la liste par `value`.");
     library.setDescription(GrLocale.en_US, "Replace the content of the list by `value`.");
-    library.setParameters(GrLocale.fr_FR, ["self", "value"]);
-    library.setParameters(GrLocale.en_US, ["self", "value"]);
+    library.setParameters(["array", "value"]);
     library.addFunction(&_fill, "fill", [grList(grAny("T")), grAny("T")]);
 
     library.setDescription(GrLocale.fr_FR, "Vide la liste.");
     library.setDescription(GrLocale.en_US, "Clear the list.");
-    library.setParameters(GrLocale.fr_FR, ["self"]);
-    library.setParameters(GrLocale.en_US, ["self"]);
+    library.setParameters(["array"]);
     library.addFunction(&_clear, "clear", [grList(grAny("T"))]);
 
     library.setDescription(GrLocale.fr_FR, "Retourne l’élément à l’index indiqué, s’il existe.
@@ -68,41 +64,38 @@ Un index négatif est calculé à partir de la fin de la liste.");
     library.setDescription(GrLocale.en_US, "Returns the element at index position.
 If it doesn't exist, returns `null<T>`.
 A negative index is calculated from the back of the list.");
-    library.setParameters(GrLocale.fr_FR, ["self", "idx"]);
-    library.setParameters(GrLocale.en_US, ["self", "idx"]);
+    library.setParameters(["array", "idx"]);
     library.addFunction(&_get, "get", [grPure(grList(grAny("T"))), grInt],
         [grOptional(grAny("T"))]);
 
     library.setDescription(GrLocale.fr_FR, "Retourne l’élément à l’index indiqué, s’il existe.
-Sinon, retourne la value par défaut `def`.
+Sinon, retourne la value par défaut `default`.
 Un index négatif est calculé à partir de la fin de la liste.");
     library.setDescription(GrLocale.en_US, "Returns the element at index position.
-If it doesn't exist, returns the default `def` value.
+If it doesn't exist, returns the default `default` value.
 A negative index is calculated from the back of the list.");
-    library.setParameters(GrLocale.fr_FR, ["self", "idx", "def"]);
-    library.setParameters(GrLocale.en_US, ["self", "idx", "def"]);
+    library.setParameters(["array", "idx", "default"]);
     library.addFunction(&_getOr, "getOr", [
             grPure(grList(grAny("T"))), grInt, grAny("T")
         ], [grAny("T")]);
 
     library.setDescription(GrLocale.fr_FR, "Ajoute `value` au début de la liste.");
     library.setDescription(GrLocale.en_US, "Prepends `value` to the front of the list.");
-    library.setParameters(GrLocale.fr_FR, ["self", "value"]);
-    library.setParameters(GrLocale.en_US, ["self", "value"]);
+    library.setParameters(["array", "value"]);
     library.addFunction(&_pushFront, "pushFront", [
             grList(grAny("T")), grAny("T")
         ]);
 
     library.setDescription(GrLocale.fr_FR, "Ajoute `value` à la fin de la liste.");
     library.setDescription(GrLocale.en_US, "Appends `value` to the back of the list.");
+    library.setParameters(["array", "value"]);
     library.addFunction(&_pushBack, "pushBack", [grList(grAny("T")), grAny("T")]);
 
     library.setDescription(GrLocale.fr_FR, "Retire le premier élément de la liste et les retourne.
 S’il n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US, "Removes the first element of the list and returns it.
 If it doesn't exist, returns `null<T>`.");
-    library.setParameters(GrLocale.fr_FR, ["self"]);
-    library.setParameters(GrLocale.en_US, ["self"]);
+    library.setParameters(["array"]);
     library.addFunction(&_popFront, "popFront", [grList(grAny("T"))], [
             grOptional(grAny("T"))
         ]);
@@ -111,6 +104,7 @@ If it doesn't exist, returns `null<T>`.");
 S’il n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US, "Removes the last element of the list and returns it.
 If it doesn't exist, returns `null<T>`.");
+    library.setParameters(["array"]);
     library.addFunction(&_popBack, "popBack", [grList(grAny("T"))], [
             grOptional(grAny("T"))
         ]);
@@ -119,8 +113,7 @@ If it doesn't exist, returns `null<T>`.");
         "Retire les N premiers éléments de la liste et les retourne.");
     library.setDescription(GrLocale.en_US,
         "Removes the first N elements from the list and returns them.");
-    library.setParameters(GrLocale.fr_FR, ["self", "count"]);
-    library.setParameters(GrLocale.en_US, ["self", "count"]);
+    library.setParameters(["array", "count"]);
     library.addFunction(&_popFront_count, "popFront", [
             grList(grAny("T")), grUInt
         ], [grList(grAny("T"))]);
@@ -129,6 +122,7 @@ If it doesn't exist, returns `null<T>`.");
         "Retire les N derniers éléments de la liste et les retourne.");
     library.setDescription(GrLocale.en_US,
         "Removes the last N elements from the list and returns them.");
+    library.setParameters(["array", "count"]);
     library.addFunction(&_popBack_count, "popBack", [grList(grAny("T")),
             grInt], [grList(grAny("T"))]);
 
@@ -136,8 +130,7 @@ If it doesn't exist, returns `null<T>`.");
 S’il n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US, "Returns the first element of the list.
 If it doesn't exist, returns `null<T>`.");
-    library.setParameters(GrLocale.fr_FR, ["self"]);
-    library.setParameters(GrLocale.en_US, ["self"]);
+    library.setParameters(["array"]);
     library.addFunction(&_front, "front", [grPure(grList(grAny("T")))], [
             grOptional(grAny("T"))
         ]);
@@ -146,6 +139,7 @@ If it doesn't exist, returns `null<T>`.");
 S’il n’existe pas, retourne `null<T>`.");
     library.setDescription(GrLocale.en_US, "Returns the last element of the list.
 If it doesn't exist, returns `null<T>`.");
+    library.setParameters(["array"]);
     library.addFunction(&_back, "back", [grPure(grList(grAny("T")))], [
             grOptional(grAny("T"))
         ]);
@@ -154,16 +148,14 @@ If it doesn't exist, returns `null<T>`.");
 Un index négatif est calculé à partir de la fin de la liste.");
     library.setDescription(GrLocale.en_US, "Removes the element at the specified index.
 A negative index is calculated from the back of the list.");
-    library.setParameters(GrLocale.fr_FR, ["self", "idx"]);
-    library.setParameters(GrLocale.en_US, ["self", "idx"]);
+    library.setParameters(["array", "idx"]);
     library.addFunction(&_remove_idx, "remove", [grList(grAny("T")), grInt]);
 
     library.setDescription(GrLocale.fr_FR, "Retire les éléments de `start` à `end` inclus.
 Un index négatif est calculé à partir de la fin de la liste.");
     library.setDescription(GrLocale.en_US, "Removes the elements from `start` to `end` included.
 A negative index is calculated from the back of the list.");
-    library.setParameters(GrLocale.fr_FR, ["self", "start", "end"]);
-    library.setParameters(GrLocale.en_US, ["self", "start", "end"]);
+    library.setParameters(["array", "start", "end"]);
     library.addFunction(&_remove_slice, "remove", [
             grList(grAny("T")), grInt, grInt
         ]);
@@ -174,14 +166,14 @@ Un index négatif est calculé à partir de la fin de la liste.");
     library.setDescription(GrLocale.en_US,
         "Returns a slice of the list from `start` to `end` included.
 A negative index is calculated from the back of the list.");
+    library.setParameters(["array", "start", "end"]);
     library.addFunction(&_slice, "slice", [
             grPure(grList(grAny("T"))), grInt, grInt
         ], [grList(grAny("T"))]);
 
     library.setDescription(GrLocale.fr_FR, "Retourne une version inversée de la liste.");
     library.setDescription(GrLocale.en_US, "Returns an inverted version of the list.");
-    library.setParameters(GrLocale.fr_FR, ["self"]);
-    library.setParameters(GrLocale.en_US, ["self"]);
+    library.setParameters(["array"]);
     library.addFunction(&_reverse, "reverse", [grPure(grList(grAny("T")))], [
             grList(grAny("T"))
         ]);
@@ -192,8 +184,7 @@ Un index négatif est calculé à partir de la fin de la liste.");
     library.setDescription(GrLocale.en_US, "Insert `value` in the list at the specified `index`.
 If `index` is greater than the size of the list, `value` is appended at the back of the list.
 A negative index is calculated from the back of the list.");
-    library.setParameters(GrLocale.fr_FR, ["self", "idx", "value"]);
-    library.setParameters(GrLocale.en_US, ["self", "idx", "value"]);
+    library.setParameters(["array", "idx", "value"]);
     library.addFunction(&_insert, "insert", [
             grList(grAny("T")), grInt, grAny("T")
         ]);
@@ -206,8 +197,7 @@ Un index négatif est calculé à partir de la fin de la liste.");
         "Returns the first occurence of `value` in the list, starting from the index.
 If `value` does't exist, `null<int> is returned.
 A negative index is calculated from the back of the list.");
-    library.setParameters(GrLocale.fr_FR, ["self", "value"]);
-    library.setParameters(GrLocale.en_US, ["self", "value"]);
+    library.setParameters(["array", "value"]);
     library.addFunction(&_find, "find", [
             grPure(grList(grAny("T"))), grPure(grAny("T"))
         ], [grOptional(grUInt)]);
@@ -220,6 +210,7 @@ Un index négatif est calculé à partir de la fin de la liste.");
         "Returns the last occurence of `value` in the list, starting from the index.
 If `value` does't exist, `null<int> is returned.
 A negative index is calculated from the back of the list.");
+    library.setParameters(["array", "value"]);
     library.addFunction(&_rfind, "rfind", [
             grPure(grList(grAny("T"))), grPure(grAny("T"))
         ], [grOptional(grUInt)]);
@@ -232,8 +223,7 @@ A negative index is calculated from the back of the list.");
 
     library.setDescription(GrLocale.fr_FR, "Trie la liste.");
     library.setDescription(GrLocale.en_US, "Sorts the list.");
-    library.setParameters(GrLocale.fr_FR, ["self"]);
-    library.setParameters(GrLocale.en_US, ["self"]);
+    library.setParameters(["array"]);
     library.addFunction(&_sort_!"int", "sort", [grList(grInt)]);
     library.addFunction(&_sort_!"float", "sort", [grList(grFloat)]);
     library.addFunction(&_sort_!"string", "sort", [grList(grString)]);
@@ -246,14 +236,12 @@ A negative index is calculated from the back of the list.");
         "Returne un itérateur permettant d’itérer sur chaque élément de la liste.");
     library.setDescription(GrLocale.en_US,
         "Returns an iterator that iterate through each element of the list.");
-    library.setParameters(GrLocale.fr_FR, ["self"]);
-    library.setParameters(GrLocale.en_US, ["self"]);
+    library.setParameters(["array"]);
     library.addFunction(&_each, "each", [grList(grAny("T"))], [iteratorType]);
 
     library.setDescription(GrLocale.fr_FR, "Avance l’itérateur à l’élément suivant.");
     library.setDescription(GrLocale.en_US, "Advance the iterator to the next element.");
-    library.setParameters(GrLocale.fr_FR, ["itérateur"]);
-    library.setParameters(GrLocale.en_US, ["iterator"]);
+    library.setParameters(["iterator"]);
     library.addFunction(&_next, "next", [iteratorType], [grOptional(grAny("T"))]);
 }
 

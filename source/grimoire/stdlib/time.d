@@ -17,14 +17,12 @@ void grLoadStdLibTime(GrLibDefinition library) {
 
     library.setDescription(GrLocale.fr_FR, "Renvoie le temps écoulé.");
     library.setDescription(GrLocale.en_US, "Returns the elapsed time.");
-    library.setParameters(GrLocale.fr_FR);
-    library.setParameters(GrLocale.en_US);
+    library.setParameters();
     library.addFunction(&_time, "time", [], [grInt]);
 
     library.setDescription(GrLocale.fr_FR, "Bloque la tâche durant `x` passes.");
     library.setDescription(GrLocale.en_US, "Blocks the task during `x` passes.");
-    library.setParameters(GrLocale.fr_FR, ["x"]);
-    library.setParameters(GrLocale.en_US, ["x"]);
+    library.setParameters(["x"]);
     library.addFunction(&_wait, "wait", [grUInt]);
 
     GrType type;
@@ -32,26 +30,22 @@ void grLoadStdLibTime(GrLibDefinition library) {
         mixin("type = gr", T, ";");
         library.setDescription(GrLocale.fr_FR, "Bloque la tâche durant `ms` millisecondes.");
         library.setDescription(GrLocale.en_US, "Blocks the task during `ms` milliseconds.");
-        library.setParameters(GrLocale.fr_FR, ["ms"]);
-        library.setParameters(GrLocale.en_US, ["ms"]);
+        library.setParameters(["msecs"]);
         library.addFunction(&_sleep!T, "sleep", [type]);
 
         library.setDescription(GrLocale.fr_FR, "Convertit `s` secondes en millisecondes.");
         library.setDescription(GrLocale.en_US, "Converts `s` seconds in milliseconds.");
-        library.setParameters(GrLocale.fr_FR, ["s"]);
-        library.setParameters(GrLocale.en_US, ["s"]);
+        library.setParameters(["secs"]);
         library.addFunction(&_seconds!T, "seconds", [type], [type]);
 
         library.setDescription(GrLocale.fr_FR, "Convertit `m` secondes en millisecondes.");
         library.setDescription(GrLocale.en_US, "Converts `m` seconds in milliseconds.");
-        library.setParameters(GrLocale.fr_FR, ["m"]);
-        library.setParameters(GrLocale.en_US, ["m"]);
+        library.setParameters(["mins"]);
         library.addFunction(&_minutes!T, "minutes", [type], [type]);
 
         library.setDescription(GrLocale.fr_FR, "Convertit `h` heures en millisecondes.");
         library.setDescription(GrLocale.en_US, "Converts `h` hours in milliseconds.");
-        library.setParameters(GrLocale.fr_FR, ["h"]);
-        library.setParameters(GrLocale.en_US, ["h"]);
+        library.setParameters(["hrs"]);
         library.addFunction(&_hours!T, "hours", [type], [type]);
     }
 }

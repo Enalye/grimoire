@@ -21,25 +21,26 @@ void grLoadStdLibChannel(GrLibDefinition library) {
 
     GrType chanType = grPure(grChannel(grAny("T")));
 
-    library.setParameters(GrLocale.fr_FR, ["canal"]);
-    library.setParameters(GrLocale.en_US, ["chan"]);
-
     library.setDescription(GrLocale.fr_FR, "Retourne la taille actuelle du canal.");
     library.setDescription(GrLocale.en_US, "Returns the channel's size.");
+    library.setParameters(["chan"]);
     library.addFunction(&_size, "size", [chanType], [grInt]);
 
     library.setDescription(GrLocale.fr_FR, "Retourne la capacité maximale du canal.");
     library.setDescription(GrLocale.en_US, "Returns the channel's capacity.");
+    library.setParameters(["chan"]);
     library.addFunction(&_capacity, "capacity", [chanType], [grInt]);
 
     library.setDescription(GrLocale.fr_FR, "Renvoie `true` si le canal ne contient rien.");
     library.setDescription(GrLocale.en_US, "Returns `true` if the channel contains nothing.");
+    library.setParameters(["chan"]);
     library.addFunction(&_isEmpty, "isEmpty", [chanType], [grBool]);
 
     library.setDescription(GrLocale.fr_FR,
         "Renvoie `true` si le canal a atteint sa capacité maximale.");
     library.setDescription(GrLocale.en_US,
         "Returns `true` if the channel has reached its maximum capacity.");
+    library.setParameters(["chan"]);
     library.addFunction(&_isFull, "isFull", [chanType], [grBool]);
 }
 

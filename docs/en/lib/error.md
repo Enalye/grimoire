@@ -12,12 +12,12 @@ Functions to help error handling.
 ## Function descriptions
 
 <a id="func_0"></a>
-> assert (*value*: **bool**)
+> assert(*value*: **bool**)
 
 If `value` is false, throw an exception `"AssertError"`.
 
 <a id="func_1"></a>
-> assert (*value*: **bool**, *error*: **pure string**)
+> assert(*value*: **bool**, *error*: **pure string**)
 
 If `value` is false, throw the exception.
 

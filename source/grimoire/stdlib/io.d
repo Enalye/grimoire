@@ -14,10 +14,7 @@ void grLoadStdLibIo(GrLibDefinition library) {
 
     library.setDescription(GrLocale.fr_FR, "Affiche le contenu de `valeur`.");
     library.setDescription(GrLocale.en_US, "Display `value`'s content.");
-
-    library.setParameters(GrLocale.fr_FR, ["valeur"]);
-    library.setParameters(GrLocale.en_US, ["value"]);
-
+    library.setParameters(["value"]);
     library.addFunction(&_print, "print", [grPure(grAny("T"))]);
 }
 
