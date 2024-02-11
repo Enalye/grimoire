@@ -389,7 +389,8 @@ final class GrParser {
         if (isAnonymous) {
             func.anonParent = currentFunction;
             func.anonReference = cast(uint) currentFunction.instructions.length;
-            func.name = currentFunction.name ~ "@anon" ~ to!string(func.index);
+            func.name = currentFunction.name ~ "@anon" ~ to!string(currentFunction.anonCount);
+            currentFunction.anonCount ++;
             func.mangledName = grMangleComposite(func.name, func.inSignature);
             anonymousFunctions ~= func;
             func.lexPosition = current;

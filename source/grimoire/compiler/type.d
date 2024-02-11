@@ -597,6 +597,8 @@ package class GrFunction {
     uint nbParameters;
     uint localsCount;
 
+    uint anonCount;
+
     GrDeferrableSection[] deferrableSections;
     GrDeferBlock[] registeredDeferBlocks;
     bool[] isDeferrableSectionLocked = [false];
