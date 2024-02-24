@@ -782,11 +782,11 @@ final class GrDoc : GrLibDefinition {
             final switch (locale) with (GrLocale) {
             case fr_FR:
                 md.addHeader("Alias", 2);
-                md.addTableHeader(["Alias", "Type", "Commentaire"]);
+                md.addTableHeader(["Alias", "Type", "Description"]);
                 break;
             case en_US:
                 md.addHeader("Aliases", 2);
-                md.addTableHeader(["Alias", "Type", "Comment"]);
+                md.addTableHeader(["Alias", "Type", "Description"]);
                 break;
             }
 
@@ -851,11 +851,11 @@ final class GrDoc : GrLibDefinition {
             final switch (locale) with (GrLocale) {
             case fr_FR:
                 md.addHeader("Constructeurs", 2);
-                md.addTableHeader(["Fonction", "Entrée"]);
+                md.addTableHeader(["Fonction", "Entrée", "Description"]);
                 break;
             case en_US:
                 md.addHeader("Constructors", 2);
-                md.addTableHeader(["Function", "Input"]);
+                md.addTableHeader(["Function", "Input", "Description"]);
                 break;
             }
 
@@ -881,8 +881,10 @@ final class GrDoc : GrLibDefinition {
                     paramIdx++;
                 }
 
+                auto comment = locale in ctor.comments;
                 md.addTable([
-                    asLink(funcName, "ctor_" ~ to!string(i)), inSignature
+                    asLink(funcName, "ctor_" ~ to!string(i)), inSignature,
+                    comment ? *comment: ""
                 ]);
                 i++;
             }
@@ -894,7 +896,8 @@ final class GrDoc : GrLibDefinition {
             case fr_FR:
                 md.addHeader("Propriétés", 2);
                 md.addTableHeader([
-                    "Propriété", "Natif", "Type", "Accesseur", "Modifieur"
+                    "Propriété", "Natif", "Type", "Accesseur", "Modifieur",
+                    "Description"
                 ]);
                 _yes = "oui";
                 _no = "non";
@@ -902,7 +905,8 @@ final class GrDoc : GrLibDefinition {
             case en_US:
                 md.addHeader("Properties", 2);
                 md.addTableHeader([
-                    "Property", "Native", "Type", "Setter", "Getter"
+                    "Property", "Native", "Type", "Setter", "Getter",
+                    "Description"
                 ]);
                 _yes = "yes";
                 _no = "no";
@@ -910,10 +914,12 @@ final class GrDoc : GrLibDefinition {
             }
 
             foreach (property_; _properties) {
+                auto comment = locale in property_.comments;
                 md.addTable([
                     property_.name, _getPrettyType(property_.nativeType),
                     _getPrettyType(property_.propertyType),
-                    property_.hasGet ? _yes: _no, property_.hasSet ? _yes: _no
+                    property_.hasGet ? _yes: _no, property_.hasSet ? _yes: _no,
+                    comment ? *comment: ""
                 ]);
             }
         }
