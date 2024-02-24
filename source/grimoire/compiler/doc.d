@@ -16,7 +16,7 @@ import grimoire.compiler.util;
 final class GrDoc : GrLibDefinition {
     private {
         string _module;
-        string[GrLocale] _moduleInfo, _moduleDescription, _comments;
+        string[GrLocale] _moduleInfo, _moduleDescription, _moduleExample, _comments, _examples;
         string[] _parameters;
 
         struct Variable {
@@ -65,6 +65,7 @@ final class GrDoc : GrLibDefinition {
             GrType[] inSignature, outSignature;
             GrConstraint[] constraints;
             string[GrLocale] comments;
+            string[GrLocale] examples;
             string[] parameters;
         }
 
@@ -97,6 +98,7 @@ final class GrDoc : GrLibDefinition {
             GrType[] inSignature, outSignature;
             GrConstraint[] constraints;
             string[GrLocale] comments;
+            string[GrLocale] examples;
             string[] parameters;
         }
 
@@ -149,10 +151,20 @@ final class GrDoc : GrLibDefinition {
         _moduleDescription[locale] = msg;
     }
 
+    override void setModuleExample(GrLocale locale, string msg) {
+        _moduleExample[locale] = msg;
+    }
+
     override void setDescription(GrLocale locale, string message = "") {
         import std.array : replace;
 
         _comments[locale] = message.replace("\n", "\n\n");
+    }
+
+    override void setExample(GrLocale locale, string message = "") {
+        import std.array : replace;
+
+        _examples[locale] = message.replace("\n", "\n\n");
     }
 
     override void setParameters(string[] parameters = []) {
@@ -259,6 +271,7 @@ final class GrDoc : GrLibDefinition {
         func.outSignature = outSignature;
         func.constraints = constraints;
         func.comments = _comments.dup;
+        func.examples = _examples.dup;
         func.parameters = _parameters.dup;
         _functions ~= func;
         return null;
@@ -402,6 +415,7 @@ final class GrDoc : GrLibDefinition {
         static_.outSignature = outSignature;
         static_.constraints = constraints;
         static_.comments = _comments.dup;
+        static_.examples = _examples.dup;
         static_.parameters = _parameters.dup;
         _statics ~= static_;
         return null;
@@ -504,7 +518,8 @@ final class GrDoc : GrLibDefinition {
         }
 
         const auto description = locale in _moduleDescription;
-        if (description) {
+        const auto moduleExample = locale in _moduleExample;
+        if (description || moduleExample) {
             final switch (locale) with (GrLocale) {
             case fr_FR:
                 md.addHeader("Description", 2);
@@ -514,7 +529,15 @@ final class GrDoc : GrLibDefinition {
                 break;
             }
 
-            md.addText(*description);
+            if (description) {
+                md.addText(*description);
+            }
+
+            if (moduleExample) {
+                md.addText("```grimoire\n" ~ *moduleExample ~ "\n```");
+            }
+
+            md.skipLine();
         }
 
         if (_constraints.length) {
@@ -1043,8 +1066,14 @@ final class GrDoc : GrLibDefinition {
                 md.addText(name);
                 md.skipLine();
                 auto comment = locale in func.comments;
-                if (comment) {
-                    md.addText(*comment);
+                auto example = locale in func.examples;
+                if (comment || example) {
+                    if (comment) {
+                        md.addText(*comment);
+                    }
+                    if (example) {
+                        md.addText("```grimoire\n" ~ *example ~ "\n```");
+                    }
                     md.skipLine();
                 }
                 i++;
@@ -1104,8 +1133,14 @@ final class GrDoc : GrLibDefinition {
                 md.addText(name);
                 md.skipLine();
                 auto comment = locale in func.comments;
-                if (comment) {
-                    md.addText(*comment);
+                auto example = locale in func.examples;
+                if (comment || example) {
+                    if (comment) {
+                        md.addText(*comment);
+                    }
+                    if (example) {
+                        md.addText("```grimoire\n" ~ *example ~ "\n```");
+                    }
                     md.skipLine();
                 }
                 i++;

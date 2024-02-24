@@ -60,6 +60,9 @@ interface GrLibDefinition {
     /// Ajoute une description à la déclaration suivante
     void setDescription(GrLocale locale, string message = "");
 
+    /// Ajoute un example à la description de la déclaration suivante
+    void setExample(GrLocale locale, string message = "");
+
     /// Ajoute des paramètres d’entrée à la déclaration suivante
     void setParameters(string[] parameters = []);
 
@@ -68,6 +71,9 @@ interface GrLibDefinition {
 
     /// Ajoute une description au module
     void setModuleDescription(GrLocale locale, string message);
+
+    /// Ajoute un example à la description au module
+    void setModuleExample(GrLocale locale, string message);
 
     /// Définit une variable
     GrType addVariable(string name, GrType type);
@@ -167,6 +173,9 @@ final class GrLibrary : GrLibDefinition {
     override void setDescription(GrLocale, string = "") {
     }
 
+    override void setExample(GrLocale, string = "") {
+    }
+
     override void setParameters(string[] = []) {
     }
 
@@ -174,6 +183,9 @@ final class GrLibrary : GrLibDefinition {
     }
 
     override void setModuleDescription(GrLocale, string) {
+    }
+
+    override void setModuleExample(GrLocale, string) {
     }
 
     /// Définit une variable
