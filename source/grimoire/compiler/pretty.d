@@ -244,6 +244,36 @@ string grGetPrettyFunctionCall(const string name, const GrType[] inSignature) {
 }
 
 /// Enjolive une fonction.
+string grGetPrettyFunctionBasic(const string name, const GrType[] inSignature, const GrType[] outSignature) {
+    string result;
+    GrType[] signature = inSignature.dup;
+
+    result = name;
+
+    result ~= "(";
+
+    int i;
+    foreach (type; signature) {
+        result ~= grGetPrettyType(type);
+        if ((i + 2) <= signature.length)
+            result ~= ", ";
+        i++;
+    }
+    result ~= ")";
+    if (outSignature.length)
+        result ~= "(";
+    foreach (type; outSignature) {
+        result ~= grGetPrettyType(type);
+        if ((i + 2) <= outSignature.length)
+            result ~= ", ";
+        i++;
+    }
+    if (outSignature.length)
+        result ~= ")";
+    return result;
+}
+
+/// Enjolive une fonction.
 string grGetPrettyFunction(const string name, const GrType[] inSignature, const GrType[] outSignature) {
     import std.string : indexOf;
 

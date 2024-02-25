@@ -984,7 +984,7 @@ final class GrBytecode {
                             outSignature ~= grUnmangle(type);
                         }
 
-                        line ~= grGetPrettyFunction(primitive.name, inSignature, outSignature);
+                        line ~= grGetPrettyFunctionBasic(primitive.name, inSignature, outSignature);
                     }
                     else {
                         line ~= to!string(index);
