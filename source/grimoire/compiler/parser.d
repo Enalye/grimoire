@@ -390,7 +390,7 @@ final class GrParser {
             func.anonParent = currentFunction;
             func.anonReference = cast(uint) currentFunction.instructions.length;
             func.name = currentFunction.name ~ "@anon" ~ to!string(currentFunction.anonCount);
-            currentFunction.anonCount ++;
+            currentFunction.anonCount++;
             func.mangledName = grMangleComposite(func.name, func.inSignature);
             anonymousFunctions ~= func;
             func.lexPosition = current;
@@ -5035,7 +5035,7 @@ final class GrParser {
 
         int[] swapOperations;
 
-        for (size_t i = 0; (i + 1) < len; ++i) {
+        for (size_t i = 0; i < len; ++i) {
             GrType srcType = srcSignature[i];
             GrType dstType = dstSignature[i];
 
@@ -5043,25 +5043,23 @@ final class GrParser {
                 if (!_data.isSignatureCompatible([srcType], [dstType], isAbstract, fileId)) {
                     return false;
                 }
+                break;
             }
 
             if (!_data.isSignatureCompatible([srcType], [dstType], isAbstract, fileId)) {
                 int op = (cast(int)(arity - i)) - 1;
-                swapOperations ~= op;
-
-                if (!isTest)
+                if (!isTest && op > 0) {
+                    swapOperations ~= op;
                     addInstruction(GrOpcode.swap, op);
+                }
 
                 GrType result = convertType(srcType, dstType, fileId, true, false, isTest);
                 if (result.base == GrType.Base.void_)
                     return false;
-                operations++;
-            }
-        }
 
-        if (!isTest) {
-            foreach_reverse (op; swapOperations) {
-                addInstruction(GrOpcode.swap, op);
+                if (!isTest && op > 0)
+                    addInstruction(GrOpcode.swap, op);
+                operations++;
             }
         }
 
