@@ -2331,7 +2331,7 @@ final class GrParser {
         current = func.lexPosition;
         parseWhereStatement(func.templateVariables);
         openDeferrableSection();
-        parseBlock(false, true);
+        parseBlock(false, false, true);
         if (func.isTask || func.isEvent) {
             if (!currentFunction.instructions.length ||
                 currentFunction.instructions[$ - 1].opcode != GrOpcode.die)
@@ -3314,7 +3314,7 @@ final class GrParser {
         preBeginFunction("$anon", nameLexPosition, get().fileId, inSignature,
             inputs, isTask, outSignature, true, isEvent);
         openDeferrableSection();
-        parseBlock();
+        parseBlock(false);
 
         if (isTask || isEvent) {
             if (!currentFunction.instructions.length ||
@@ -3349,7 +3349,8 @@ final class GrParser {
     /**
     Parse either multiple lines between `{` and `}` or a single expression.
     */
-    private void parseBlock(bool changeOptimizationBlockLevel = false, bool mustBeMultiline = false) {
+    private void parseBlock(bool createScope = true,
+        bool changeOptimizationBlockLevel = false, bool mustBeMultiline = false) {
         if (changeOptimizationBlockLevel)
             _isAssignationOptimizable = false;
         bool isMultiline;
@@ -3365,7 +3366,9 @@ final class GrParser {
                     getPrettyLexemeType(GrLexeme.Type.leftCurlyBrace),
                     getPrettyLexemeType(get().type)));
         }
-        openBlock();
+
+        if (createScope)
+            openBlock();
 
         void parseStatement() {
             switch (get().type) with (GrLexeme.Type) {
@@ -3459,7 +3462,10 @@ final class GrParser {
                         getPrettyLexemeType(get().type)));
             checkAdvance();
         }
-        closeBlock();
+
+        if (createScope)
+            closeBlock();
+
         if (changeOptimizationBlockLevel)
             _isAssignationOptimizable = false;
     }
@@ -3691,7 +3697,7 @@ final class GrParser {
             addInstruction(GrOpcode.globalPop);
             addSetInstruction(errVariable, fileId, grString);
 
-            parseBlock(true);
+            parseBlock(true, true);
 
             const auto endPosition = currentFunction.instructions.length;
 
@@ -3777,7 +3783,7 @@ final class GrParser {
             scopeLevel = deferBlock.scopeLevel;
 
             currentFunction.isDeferrableSectionLocked[$ - 1] = true;
-            parseBlock(true);
+            parseBlock(true, true);
             currentFunction.isDeferrableSectionLocked[$ - 1] = false;
 
             addInstruction(GrOpcode.unwind);
@@ -3939,7 +3945,7 @@ final class GrParser {
         uint jumpPosition = cast(uint) currentFunction.instructions.length;
         addInstruction(isNegative ? GrOpcode.jumpNotEqual : GrOpcode.jumpEqual);
 
-        parseBlock(true); //{ .. }
+        parseBlock(true, true); //{ .. }
 
         // Si des `else` sont présent, alors on doit pouvoir sortir du bloc avec un saut
         uint[] exitJumps;
@@ -3977,7 +3983,7 @@ final class GrParser {
                     // Si le `if` ou  `unless` n’est pas vérifié, on saute vers la fin du bloc
                     addInstruction(isNegative ? GrOpcode.jumpNotEqual : GrOpcode.jumpEqual);
 
-                    parseBlock(true); //{ .. }
+                    parseBlock(true, true); //{ .. }
 
                     // On sort du bloc avec un saut
                     exitJumps ~= cast(uint) currentFunction.instructions.length;
@@ -3988,7 +3994,7 @@ final class GrParser {
                         cast(int)(currentFunction.instructions.length - jumpPosition), true);
                 }
                 else
-                    parseBlock(true);
+                    parseBlock(true, true);
             }
         }
         while (isElseIf);
@@ -4109,7 +4115,7 @@ final class GrParser {
             jumpPosition = cast(uint) currentFunction.instructions.length;
             addInstruction(GrOpcode.jumpEqual);
 
-            parseBlock(true);
+            parseBlock(true, true);
 
             exitJumps ~= cast(uint) currentFunction.instructions.length;
             addInstruction(GrOpcode.jump);
@@ -4122,7 +4128,7 @@ final class GrParser {
         if (hasDefaultCase) {
             const uint tmp = current;
             current = defaultCasePosition;
-            parseBlock(true);
+            parseBlock(true, true);
             current = tmp;
         }
 
@@ -4182,7 +4188,7 @@ final class GrParser {
 
             addInstruction(GrOpcode.checkChannel);
 
-            parseBlock(true);
+            parseBlock(true, true);
 
             exitJumps ~= cast(uint) currentFunction.instructions.length;
             addInstruction(GrOpcode.jump);
@@ -4196,7 +4202,7 @@ final class GrParser {
             // De même, ça rend l’opération `select` non-bloquante care au moins un cas est garanti de s’exécuter.
             const uint tmp = current;
             current = defaultCasePosition;
-            parseBlock(true);
+            parseBlock(true, true);
             current = tmp;
         }
         else {
@@ -4254,7 +4260,7 @@ final class GrParser {
         conditionPosition = cast(uint) currentFunction.instructions.length;
         addInstruction(GrOpcode.jumpEqual);
 
-        parseBlock(true);
+        parseBlock(true, true);
 
         if (isYieldable)
             addInstruction(GrOpcode.yield);
@@ -4290,7 +4296,7 @@ final class GrParser {
 
         uint blockPosition = cast(uint) currentFunction.instructions.length;
 
-        parseBlock(true);
+        parseBlock(true, true);
 
         bool isNegative;
         if (get().type == GrLexeme.Type.until)
@@ -4439,7 +4445,7 @@ final class GrParser {
                 convertType(subType, variable.type, fileId);
                 addSetInstruction(variable, fileId);
 
-                parseBlock(true);
+                parseBlock(true, true);
 
                 if (isYieldable)
                     addInstruction(GrOpcode.yield);
@@ -4764,7 +4770,7 @@ final class GrParser {
             }
         }
 
-        parseBlock(true);
+        parseBlock(true, true);
 
         if (isYieldable)
             addInstruction(GrOpcode.yield);
