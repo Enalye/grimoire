@@ -5069,22 +5069,6 @@ final class GrParser {
             }
         }
 
-        if (len >= 1) {
-            GrType srcType = srcSignature[$ - 1];
-            GrType dstType = dstSignature[$ - 1];
-
-            if (!_data.isSignatureCompatible([srcType], [dstType], isAbstract, fileId)) {
-                if (len > arity) {
-                    return false;
-                }
-                else {
-                    GrType result = convertType(srcType, dstType, fileId, true, false, isTest);
-                    if (result.base == GrType.Base.void_)
-                        return false;
-                    operations++;
-                }
-            }
-        }
         return true;
     }
 
