@@ -5,10 +5,11 @@
  */
 module grimoire.runtime.list;
 
+import std.conv : to;
 import std.exception : enforce;
+import std.traits : isSomeString;
 
 import grimoire.assembly;
-
 import grimoire.runtime.channel;
 import grimoire.runtime.error;
 import grimoire.runtime.object;
@@ -102,6 +103,15 @@ final class GrList {
         return cast(GrString[]) cast(GrPointer[]) _data;
     }
 
+    pragma(inline) T[] getStrings(T)() if (isSomeString!T) {
+        GrString[] grlist = cast(GrString[]) cast(GrPointer[]) _data;
+        T[] result;
+        foreach (string str; grlist) {
+            result ~= to!T(str);
+        }
+        return result;
+    }
+
     pragma(inline) GrList[] getLists() {
         return cast(GrList[]) cast(GrPointer[]) _data;
     }
@@ -158,6 +168,14 @@ final class GrList {
 
     pragma(inline) void setStrings(GrString[] values) {
         _data = cast(GrValue[]) values;
+    }
+
+    pragma(inline) void setStrings(T)(T[] values) if (isSomeString!T) {
+        GrString[] result;
+        foreach (T str; values) {
+            result ~= new GrString(str);
+        }
+        _data = cast(GrValue[]) result;
     }
 
     pragma(inline) void setLists(GrList[] values) {
