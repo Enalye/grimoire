@@ -6,7 +6,6 @@
 module grimoire.stdlib.circularbuffer;
 
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
-import grimoire.stdlib.util;
 
 void grLoadStdLibCircularBuffer(GrLibDefinition library) {
     library.setModule("circularbuffer");

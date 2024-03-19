@@ -8,7 +8,6 @@ module grimoire.stdlib.hashmap;
 import std.typecons : Tuple, tuple;
 import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
-import grimoire.stdlib.util;
 import grimoire.stdlib.pair;
 
 /// HashMap
@@ -291,5 +290,5 @@ private void _print_(string T)(GrCall call) {
             static assert(false);
     }
     result ~= "}";
-    grPrint(result);
+    call.task.engine.print(result);
 }

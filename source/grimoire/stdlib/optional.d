@@ -6,7 +6,6 @@
 module grimoire.stdlib.optional;
 
 import grimoire.compiler, grimoire.runtime, grimoire.assembly;
-import grimoire.stdlib.util;
 
 void grLoadStdLibOptional(GrLibDefinition library) {
     library.setModule("optional");

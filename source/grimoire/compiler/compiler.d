@@ -19,7 +19,7 @@ final class GrCompiler {
     private {
         GrData _data;
         GrError _error;
-        GrScriptFile[] _files;
+        GrImportFile[] _files;
         uint _userVersion;
     }
 
@@ -39,12 +39,17 @@ final class GrCompiler {
     }
     /// Ditto
     void addSource(dstring source, string file = __FILE_FULL_PATH__, size_t line = __LINE__) {
-        _files ~= GrScriptFile.fromSource(source, file, line);
+        _files ~= GrImportFile.fromSource(source, file, line);
     }
 
     /// Ajoute un fichier à la liste des scripts à compiler
     void addFile(string path) {
-        _files ~= GrScriptFile.fromPath(path);
+        _files ~= GrImportFile.fromPath(path);
+    }
+
+    /// Ajoute une bibliothèque
+    void addLibrary(string path) {
+        _files ~= GrImportFile.fromLibrary(path);
     }
 
     /** 
@@ -63,11 +68,14 @@ final class GrCompiler {
         try {
             GrLexer lexer = new GrLexer(locale);
 
-            foreach (GrScriptFile file; _files) {
+            foreach (GrImportFile file; _files) {
                 lexer.addFile(file);
             }
 
             lexer.scan(_data);
+            foreach (library; lexer.getLibraries()) {
+                addLibrary(library);
+            }
 
             GrParser parser = new GrParser(locale);
             parser.parseScript(_data, lexer, options);
@@ -100,6 +108,10 @@ final class GrCompiler {
 
         bytecode.grimoireVersion = GR_VERSION;
         bytecode.userVersion = _userVersion;
+
+        foreach (file; lexer.libraries()) {
+            bytecode.libraries ~= file.getPath();
+        }
 
         foreach (func; parser.functions)
             nbOpcodes += cast(uint) func.instructions.length;

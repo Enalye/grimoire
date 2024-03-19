@@ -7,7 +7,6 @@ module grimoire.stdlib.list;
 
 import std.range;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
-import grimoire.stdlib.util;
 
 void grLoadStdLibList(GrLibDefinition library) {
     library.setModule("list");

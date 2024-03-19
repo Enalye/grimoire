@@ -6,7 +6,6 @@
 module grimoire.stdlib.queue;
 
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
-import grimoire.stdlib.util;
 
 void grLoadStdLibQueue(GrLibDefinition library) {
     library.setModule("queue");

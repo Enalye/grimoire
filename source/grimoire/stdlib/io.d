@@ -7,7 +7,6 @@ module grimoire.stdlib.io;
 
 import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
-import grimoire.stdlib.util;
 
 void grLoadStdLibIo(GrLibDefinition library) {
     library.setModule("io");
@@ -85,5 +84,5 @@ private void _print(GrCall call) {
         }
     }
 
-    grPrint(formatValue(grUnmangle(call.getInType(0)), call.getValue(0)));
+    call.task.engine.print(formatValue(grUnmangle(call.getInType(0)), call.getValue(0)));
 }

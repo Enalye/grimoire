@@ -1,0 +1,11 @@
+{
+	"name": "libtest",
+	"targetName": "libtest",
+    "targetType": "dynamicLibrary",
+	"dependencies": {
+		"grimoire": {"path": "../"}
+	},
+    "dflags": ["-gf"],
+	"targetPath": "./bin",
+	"workingDirectory": "."
+}

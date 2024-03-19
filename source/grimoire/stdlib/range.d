@@ -7,7 +7,6 @@ module grimoire.stdlib.range;
 
 import std.range;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
-import grimoire.stdlib.util;
 
 void grLoadStdLibRange(GrLibDefinition library) {
     library.setModule("range");

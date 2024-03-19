@@ -6,7 +6,6 @@
 module grimoire.stdlib.system;
 
 import grimoire.compiler, grimoire.runtime, grimoire.assembly;
-import grimoire.stdlib.util;
 
 void grLoadStdLibSystem(GrLibDefinition library) {
     library.setModule("system");

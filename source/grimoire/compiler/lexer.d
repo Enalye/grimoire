@@ -5,14 +5,23 @@
  */
 module grimoire.compiler.lexer;
 
-import std.stdio, std.string, std.array, std.math, std.file;
-import std.conv : to, ConvOverflowException;
 import std.algorithm : canFind;
+import std.array;
+import std.exception : enforce;
+import std.conv : to, ConvOverflowException;
+import std.file;
+import std.math;
+import std.path : setExtension;
+import std.stdio;
+import std.string;
 
 import grimoire.assembly;
 import grimoire.compiler.data;
 import grimoire.compiler.error;
+import grimoire.compiler.library;
 import grimoire.compiler.util;
+
+private void _GRLIBSYMBOL(GrLibDefinition);
 
 /// Décrit la plus petite unité lexicale présent dans un fichier source
 struct GrLexeme {
@@ -154,7 +163,7 @@ struct GrLexeme {
         size_t _fileId;
 
         /// Le fichier dans lequel il est présent
-        GrScriptFile _file;
+        GrImportFile _file;
 
         /// Informations sur sa position en cas d’erreur
         size_t _line, _column, _textLength = 1;
@@ -250,13 +259,14 @@ struct GrLexeme {
 }
 
 /// Fichier de compilation
-package final class GrScriptFile {
-    private {
-        enum Type {
-            virtual,
-            system
-        }
+package final class GrImportFile {
+    enum Type {
+        virtual,
+        system,
+        library
+    }
 
+    private {
         Type _type;
 
         string _path;
@@ -264,23 +274,34 @@ package final class GrScriptFile {
         dstring _source;
     }
 
+    @property Type type() const {
+        return _type;
+    }
+
     static {
         /// Construit un fichier depuis du code source
-        GrScriptFile fromSource(dstring source, string path, size_t line) {
-            GrScriptFile file = new GrScriptFile;
+        GrImportFile fromSource(dstring source, string path, size_t line) {
+            GrImportFile file = new GrImportFile;
             file._make!(Type.virtual)(source, path, line);
             return file;
         }
 
         /// Construit un fichier depuis un fichier système
-        GrScriptFile fromPath(string path, GrScriptFile relativeTo = null) {
-            GrScriptFile file = new GrScriptFile;
+        GrImportFile fromPath(string path, GrImportFile relativeTo = null) {
+            GrImportFile file = new GrImportFile;
             file._make!(Type.system)(_sanitizePath(path, relativeTo));
             return file;
         }
 
+        /// Construit un fichier depuis un fichier système
+        GrImportFile fromLibrary(string path, GrImportFile relativeTo = null) {
+            GrImportFile file = new GrImportFile;
+            file._make!(Type.library)(_sanitizePath(path, relativeTo));
+            return file;
+        }
+
         /// Transforme le chemin en chemin natif du système
-        private string _sanitizePath(string path, GrScriptFile relativeTo = null) {
+        private string _sanitizePath(string path, GrImportFile relativeTo = null) {
             import std.path : dirName, buildNormalizedPath, absolutePath;
             import std.regex : replaceAll, regex;
             import std.path : dirSeparator;
@@ -320,6 +341,8 @@ package final class GrScriptFile {
             return _source;
         case system:
             return to!dstring(readText(_path));
+        case library:
+            assert(false, "can’t fetch text of a library");
         }
     }
 
@@ -335,15 +358,18 @@ package final class GrScriptFile {
             return _line;
         case system:
             return 1; // Par convention, la première ligne commence à 1, et non 0.
+        case library:
+            assert(false, "can’t fetch line of a library");
         }
     }
 
-    bool opEquals(const GrScriptFile other) const {
+    bool opEquals(const GrImportFile other) const {
         final switch (_type) with (Type) {
         case virtual:
             return false;
         case system:
-            return (other._type == Type.system) && (_path == other._path);
+        case library:
+            return (_type == other._type) && (_path == other._path);
         }
     }
 
@@ -356,14 +382,15 @@ package final class GrScriptFile {
 /// puis génère une série de lexème qui seront analysé par le parseur.
 package final class GrLexer {
     private {
-        GrScriptFile[] _filesToImport, _filesImported;
-        GrScriptFile _file;
+        GrImportFile[] _filesToImport, _filesImported, _libraries;
+        GrImportFile _file;
         dstring[] _lines;
         dstring _text;
         size_t _line, _current, _positionOfLine, _fileId;
         GrLexeme[] _lexemes;
         GrLocale _locale;
         GrData _data;
+        GrLibrary[] _librariesImported;
     }
 
     @property {
@@ -371,24 +398,44 @@ package final class GrLexer {
         GrLexeme[] lexemes() {
             return _lexemes;
         }
+
+        /// Les bibliothèques chargés
+        GrImportFile[] libraries() {
+            return _libraries;
+        }
     }
 
     this(GrLocale locale) {
         _locale = locale;
     }
 
-    void addFile(GrScriptFile file) {
-        foreach (other; _filesToImport) {
-            if (file == other)
-                return;
+    void addFile(GrImportFile file) {
+        final switch (file.type) with (GrImportFile.Type) {
+        case library: {
+                foreach (other; _libraries) {
+                    if (file == other)
+                        return;
+                }
+
+                _libraries ~= file;
+                break;
+            }
+        case virtual:
+        case system: {
+                foreach (other; _filesToImport) {
+                    if (file == other)
+                        return;
+                }
+
+                foreach (other; _filesImported) {
+                    if (file == other)
+                        return;
+                }
+            }
+            _filesToImport ~= file;
+            break;
         }
 
-        foreach (other; _filesImported) {
-            if (file == other)
-                return;
-        }
-
-        _filesToImport ~= file;
     }
 
     /// Analyse le fichier racine et toutes ses dépendances.
@@ -410,6 +457,44 @@ package final class GrLexer {
 
             _fileId++;
         }
+
+        importLibraries();
+    }
+
+    private void importLibraries() {
+        import core.runtime;
+
+        enum symbol = "_D3app9grLibraryFC8grimoire8compiler7library15GrLibDefinitionZv";
+
+        foreach (file; _libraries) {
+            assert(file.type == GrImportFile.Type.library, "invalid library file type");
+            string filePath = file.getPath();
+
+            void* dlib = Runtime.loadLibrary(filePath);
+            enforce!GrCompilerException(dlib, format(getError(Error.libXNotFound), filePath));
+
+            typeof(&_GRLIBSYMBOL) libFunc;
+
+            version (Windows) {
+                import core.sys.windows.winbase : GetProcAddress;
+
+                libFunc = cast(typeof(&_GRLIBSYMBOL)) GetProcAddress(dlib, toStringz(symbol));
+            }
+            else version (Posix) {
+                import core.sys.posix.dlfcn : dlsym;
+
+                libFunc = cast(typeof(&_GRLIBSYMBOL)) dlsym(dlib, toStringz(symbol));
+            }
+            enforce!GrCompilerException(libFunc, format(getError(Error.libXNotValid), filePath));
+
+            GrLibrary grlib = new GrLibrary;
+            libFunc(grlib);
+            _librariesImported ~= grlib;
+        }
+    }
+
+    package GrLibrary[] getLibraries() {
+        return _librariesImported;
     }
 
     /// Ditto
@@ -423,7 +508,7 @@ package final class GrLexer {
     private dchar get(int offset = 0) {
         const uint position = to!int(_current) + offset;
         if (position < 0 || position >= _text.length)
-            raiseError(Error.unexpectedEndOfFile);
+            logError(Error.unexpectedEndOfFile);
         return _text[position];
     }
 
@@ -757,7 +842,7 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.int_;
             lex.intValue = 0;
             _lexemes ~= lex;
-            raiseError(Error.emptyNumber);
+            logError(Error.emptyNumber);
         }
 
         try {
@@ -806,7 +891,7 @@ package final class GrLexer {
                     lex.type = GrLexeme.Type.int_;
                     lex.intValue = 0;
                     _lexemes ~= lex;
-                    raiseError(Error.numberTooBig);
+                    logError(Error.numberTooBig);
                 }
             }
         }
@@ -814,7 +899,7 @@ package final class GrLexer {
             lex.type = GrLexeme.Type.int_;
             lex.intValue = 0;
             _lexemes ~= lex;
-            raiseError(Error.numberTooBig);
+            logError(Error.numberTooBig);
         }
         _lexemes ~= lex;
     }
@@ -877,7 +962,7 @@ package final class GrLexer {
             if (get() != '{') {
                 lex = GrLexeme(this);
                 _lexemes ~= lex;
-                raiseError(Error.expectedLeftCurlyBraceInUnicode);
+                logError(Error.expectedLeftCurlyBraceInUnicode);
             }
             _current++;
             textLength++;
@@ -892,7 +977,7 @@ package final class GrLexer {
                 else {
                     lex = GrLexeme(this);
                     _lexemes ~= lex;
-                    raiseError(Error.unexpectedSymbolInUnicode);
+                    logError(Error.unexpectedSymbolInUnicode);
                 }
                 _current++;
             }
@@ -904,14 +989,14 @@ package final class GrLexer {
                 if (value > 0x10FFFF) {
                     lex.textLength = textLength;
                     _lexemes ~= lex;
-                    raiseError(Error.unicodeTooBig);
+                    logError(Error.unicodeTooBig);
                 }
                 symbol = cast(dchar) value;
             }
             catch (ConvOverflowException e) {
                 lex.textLength = textLength;
                 _lexemes ~= lex;
-                raiseError(Error.unicodeTooBig);
+                logError(Error.unicodeTooBig);
             }
 
             break;
@@ -935,7 +1020,7 @@ package final class GrLexer {
             lex = GrLexeme(this);
             lex.isLiteral = true;
             _lexemes ~= lex;
-            raiseError(Error.expectedQuoteStartChar);
+            logError(Error.expectedQuoteStartChar);
         }
         _current++;
         textLength++;
@@ -959,7 +1044,7 @@ package final class GrLexer {
             lex = GrLexeme(this);
             lex.isLiteral = true;
             _lexemes ~= lex;
-            raiseError(Error.missingQuoteEndChar);
+            logError(Error.missingQuoteEndChar);
         }
     }
 
@@ -971,14 +1056,14 @@ package final class GrLexer {
         uint textLength = 0;
 
         if (get() != '\"')
-            raiseError(Error.expectedQuoteStartString);
+            logError(Error.expectedQuoteStartString);
         _current++;
         textLength++;
 
         string buffer;
         for (;;) {
             if (_current >= _text.length)
-                raiseError(Error.missingQuoteEndString);
+                logError(Error.missingQuoteEndString);
             const dchar symbol = get();
 
             if (symbol == '\n') {
@@ -1016,7 +1101,7 @@ package final class GrLexer {
                     if (get() != '}') {
                         lex = GrLexeme(this);
                         _lexemes ~= lex;
-                        raiseError(Error.invalidOp);
+                        logError(Error.invalidOp);
                     }
 
                     // Concaténation
@@ -1345,7 +1430,7 @@ package final class GrLexer {
             }
             break;
         default:
-            raiseError(Error.invalidOp);
+            logError(Error.invalidOp);
         }
 
         _lexemes ~= lex;
@@ -1394,7 +1479,7 @@ package final class GrLexer {
 
         switch (buffer) {
         case "import":
-            scanUse();
+            scanImport();
             return;
         case "export":
             lex.type = GrLexeme.Type.export_;
@@ -1614,27 +1699,44 @@ package final class GrLexer {
 
     /// Ajoute un seul chemin de fichier délimité par `"` à la liste de fichiers à importer.
     private void scanFilePath() {
-        if (get() != '\"')
-            raiseError(Error.expectedQuoteStartString);
+        dchar endChar;
+        bool isLibrary;
+
+        switch (get()) {
+        case '\"':
+            endChar = '\"';
+            break;
+        case '<':
+            endChar = '>';
+            isLibrary = true;
+            break;
+        default:
+            logError(Error.expectedQuoteStartString);
+        }
         _current++;
 
         string buffer;
         for (;;) {
             if (_current >= _text.length)
-                raiseError(Error.missingQuoteEndString);
+                logError(Error.missingQuoteEndString);
             const dchar symbol = get();
             if (symbol == '\n') {
                 _positionOfLine = _current;
                 _line++;
             }
-            else if (symbol == '\"')
+            else if (symbol == endChar)
                 break;
 
             buffer ~= symbol;
             _current++;
         }
 
-        addFile(GrScriptFile.fromPath(buffer, _file));
+        if (isLibrary) {
+            addFile(GrImportFile.fromLibrary(buffer, _file));
+        }
+        else {
+            addFile(GrImportFile.fromPath(buffer, _file));
+        }
     }
 
     /// Analyse la directive `import`.
@@ -1643,7 +1745,7 @@ package final class GrLexer {
     /// `import { "CHEMIN1" "CHEMIN2" "CHEMIN3" }`
     /// ___
     /// Ajoute des fichier à la liste des fichiers à importer.
-    private void scanUse() {
+    private void scanImport() {
         advance();
 
         // Import de plusieurs fichiers
@@ -1653,14 +1755,14 @@ package final class GrLexer {
             for (;;) {
                 if (isFirst)
                     isFirst = false;
-                else if (get() == '\"')
+                else if (get() == '\"' || get() == '>')
                     advance();
                 else
-                    raiseError(Error.missingQuoteEndString);
+                    logError(Error.missingQuoteEndString);
 
                 // Fin du fichier
                 if (_current >= _text.length)
-                    raiseError(Error.missingRightCurlyBraceAfterUsedFilesList);
+                    logError(Error.missingRightCurlyBraceAfterUsedFilesList);
 
                 // Fin de la liste
                 if (get() == '}')
@@ -1677,11 +1779,11 @@ package final class GrLexer {
     }
 
     /// Erreur lexicale.
-    private void raiseError(Error error) {
-        raiseError(getLexerError(error, _locale));
+    private void logError(Error error) {
+        logError(getError(error));
     }
     /// Ditto
-    private void raiseError(string message) {
+    private void logError(string message) {
         GrError error = new GrError;
         error.type = GrError.Type.lexer;
 
@@ -1721,11 +1823,13 @@ package final class GrLexer {
         expectedQuoteStartString,
         missingQuoteEndString,
         invalidOp,
-        missingRightCurlyBraceAfterUsedFilesList
+        missingRightCurlyBraceAfterUsedFilesList,
+        libXNotFound,
+        libXNotValid
     }
 
-    private string getLexerError(Error error, GrLocale locale) {
-        final switch (locale) with (GrLocale) {
+    private string getError(Error error) {
+        final switch (_locale) with (GrLocale) {
         case en_US:
             final switch (error) with (Error) {
             case lexFileIdOutOfBounds:
@@ -1756,6 +1860,10 @@ package final class GrLexer {
                 return "invalid operator";
             case missingRightCurlyBraceAfterUsedFilesList:
                 return "missing `}` after used files list";
+            case libXNotFound:
+                return "the library `%s` can’t be found";
+            case libXNotValid:
+                return "the library `%s` is not a valid library";
             }
         case fr_FR:
             final switch (error) with (Error) {
@@ -1787,6 +1895,10 @@ package final class GrLexer {
                 return "opérateur invalide";
             case missingRightCurlyBraceAfterUsedFilesList:
                 return "`}` manquant après la liste des fichiers utilisés";
+            case libXNotFound:
+                return "la bibliothèque `%s` est introuvable";
+            case libXNotValid:
+                return "la bibliothèque `%s` n’est pas une bibliothèque valide";
             }
         }
     }

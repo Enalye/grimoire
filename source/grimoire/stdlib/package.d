@@ -25,7 +25,6 @@ public {
     import grimoire.stdlib.system;
     import grimoire.stdlib.time;
     import grimoire.stdlib.typecast;
-    import grimoire.stdlib.util;
 }
 
 /// Charge la bibliothèque standard

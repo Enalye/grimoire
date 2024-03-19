@@ -6,7 +6,6 @@
 module grimoire.stdlib.constraint;
 
 import grimoire.compiler;
-import grimoire.stdlib.util;
 
 void grLoadStdLibConstraint(GrLibDefinition library) {
     library.setModule("constraint");

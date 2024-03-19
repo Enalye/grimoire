@@ -26,6 +26,8 @@ import grimoire.runtime.string;
 import grimoire.runtime.task;
 import grimoire.runtime.value;
 
+private void _GRLIBSYMBOL(GrLibDefinition);
+
 /// La machine virtuelle de grimoire
 class GrEngine {
     private {
@@ -62,6 +64,9 @@ class GrEngine {
 
         /// Classes
         GrClassBuilder[string] _classBuilders;
+
+        /// Sortie par défaut
+        void function(string) _stdOut = &_defaultOutput;
     }
 
     enum Priority {
@@ -109,6 +114,34 @@ class GrEngine {
         _callbacks ~= library._callbacks;
     }
 
+    /// Ditto
+    final void addLibrary(string filePath) {
+        import core.runtime;
+
+        enum symbol = "_D3app9grLibraryFC8grimoire8compiler7library15GrLibDefinitionZv";
+
+        void* dlib = Runtime.loadLibrary(filePath);
+        enforce!GrRuntimeException(dlib, format!"library `%s` not found"(filePath));
+
+        typeof(&_GRLIBSYMBOL) libFunc;
+
+        version (Windows) {
+            import core.sys.windows.winbase : GetProcAddress;
+
+            libFunc = cast(typeof(&_GRLIBSYMBOL)) GetProcAddress(dlib, toStringz(symbol));
+        }
+        else version (Posix) {
+            import core.sys.posix.dlfcn : dlsym;
+
+            libFunc = cast(typeof(&_GRLIBSYMBOL)) dlsym(dlib, toStringz(symbol));
+        }
+        enforce!GrRuntimeException(libFunc, format!"library `%s` is not valid"(filePath));
+
+        GrLibrary grlib = new GrLibrary;
+        libFunc(grlib);
+        _callbacks ~= grlib._callbacks;
+    }
+
     /// Charge le bytecode.
     final bool load(GrBytecode bytecode) {
         isRunning = false;
@@ -116,6 +149,10 @@ class GrEngine {
         if (!bytecode.checkVersion(_userVersion)) {
             _bytecode = null;
             return false;
+        }
+
+        foreach (filePath; bytecode.libraries) {
+            addLibrary(filePath);
         }
 
         _bytecode = bytecode;
@@ -1974,6 +2011,25 @@ class GrEngine {
         return 0;
     }
 
+    /// Change la fonction de la sortie standard
+    void setPrintOutput(void function(string) callback) {
+        if (!callback) {
+            _stdOut = &_defaultOutput;
+            return;
+        }
+        _stdOut = callback;
+    }
+
+    /// Récupère la fonction de la sortie standard
+    void function(string) getPrintOutput() {
+        return _stdOut;
+    }
+
+    /// Affiche un message dans la sortie standard
+    void print(string message) {
+        _stdOut(message);
+    }
+
     import core.time : MonoTime, Duration;
 
     private {
@@ -2074,4 +2130,10 @@ class GrEngine {
             _debugFunctionsStack ~= debugFunc;
         }
     }
+}
+
+private void _defaultOutput(string message) {
+    import std.stdio : writeln;
+
+    writeln(message);
 }

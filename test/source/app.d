@@ -10,6 +10,9 @@ import std.conv : to;
 
 import grimoire;
 
+private void _print(string msg) {
+    writeln("Intercepté: `" ~ msg ~ "`");
+}
 void main() {
     version (Windows) {
         import core.sys.windows.windows : SetConsoleOutputCP;
@@ -52,6 +55,7 @@ void main() {
 
         GrEngine engine = new GrEngine;
         engine.addLibrary(stdlib);
+        engine.setPrintOutput(&_print);
 
         if (!engine.load(bytecode)) {
             writeln("bytecode incompatible");

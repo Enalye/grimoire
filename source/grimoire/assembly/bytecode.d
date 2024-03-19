@@ -298,6 +298,9 @@ final class GrBytecode {
         /// Variables globales
         Variable[string] variables;
 
+        /// Dépendances à des bibliothèques externes
+        string[] libraries;
+
         /// Symboles de déboguage
         GrSymbol[] symbols;
     }
@@ -323,6 +326,7 @@ final class GrBytecode {
         globalsCount = bytecode.globalsCount;
         events = bytecode.events;
         variables = bytecode.variables;
+        libraries = bytecode.libraries;
         symbols = bytecode.symbols.dup; //@TODO: changer la copie superficielle
     }
 
@@ -379,6 +383,7 @@ final class GrBytecode {
         buffer.append!uint(cast(uint) enums.length);
         buffer.append!uint(cast(uint) classes.length);
         buffer.append!uint(cast(uint) variables.length);
+        buffer.append!uint(cast(uint) libraries.length);
         buffer.append!uint(cast(uint) symbols.length);
 
         foreach (GrInt i; intConsts)
@@ -454,6 +459,10 @@ final class GrBytecode {
                 writeStr(buffer, reference.strValue);
         }
 
+        foreach (string i; libraries) {
+            writeStr(buffer, i);
+        }
+
         // Sérialise les symboles
         foreach (GrSymbol symbol; symbols) {
             buffer.append!uint(symbol.type);
@@ -507,6 +516,7 @@ final class GrBytecode {
         enums.length = buffer.read!uint();
         classes.length = buffer.read!uint();
         const uint variableCount = buffer.read!uint();
+        libraries.length = buffer.read!uint();
         symbols.length = buffer.read!uint();
 
         for (uint i; i < intConsts.length; ++i) {
@@ -605,6 +615,10 @@ final class GrBytecode {
             else if (reference.typeMask & GR_MASK_STRING)
                 reference.strValue = readStr(buffer);
             variables[name] = reference;
+        }
+
+        for (uint i; i < libraries.length; ++i) {
+            libraries[i] = readStr(buffer);
         }
 
         // Désérialise les symboles

@@ -13,6 +13,7 @@
 	"-ddoxTool": "scod",
 	"subPackages": [
 		"./test",
+		"./libtest",
         "./unittests",
         "./docgen"
 	]

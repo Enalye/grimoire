@@ -8,7 +8,6 @@ module grimoire.stdlib.string;
 import std.string, std.utf, std.range;
 import std.conv : to;
 import grimoire.assembly, grimoire.compiler, grimoire.runtime;
-import grimoire.stdlib.util;
 
 void grLoadStdLibString(GrLibDefinition library) {
     library.setModule("string");
