@@ -3,11 +3,11 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
-module grimoire.stdlib.pair;
+module grimoire.library.pair;
 
-import grimoire.compiler, grimoire.runtime;
+import grimoire;
 
-void grLoadStdLibPair(GrLibDefinition library) {
+void grLoadStdLibPair(GrModule library) {
     library.setModule("pair");
 
     library.setModuleInfo(GrLocale.fr_FR, "Paire de clé/valeur.");
@@ -15,7 +15,7 @@ void grLoadStdLibPair(GrLibDefinition library) {
 
     GrType pairType = library.addNative("Pair", ["K", "V"]);
 
-    library.addOperator(&_new, GrLibDefinition.Operator.arrow, [
+    library.addOperator(&_new, GrModule.Operator.arrow, [
             grAny("K"), grAny("V")
         ], pairType);
 

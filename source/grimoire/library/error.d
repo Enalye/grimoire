@@ -3,11 +3,11 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
-module grimoire.stdlib.error;
+module grimoire.library.error;
 
-import grimoire.assembly, grimoire.compiler, grimoire.runtime;
+import grimoire;
 
-void grLoadStdLibError(GrLibDefinition library) {
+void grLoadStdLibError(GrModule library) {
     library.setModule("error");
 
     library.setModuleInfo(GrLocale.fr_FR, "Fonctions pour aider la gestion d’erreur.");

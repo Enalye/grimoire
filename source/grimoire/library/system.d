@@ -3,11 +3,11 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
-module grimoire.stdlib.system;
+module grimoire.library.system;
 
-import grimoire.compiler, grimoire.runtime, grimoire.assembly;
+import grimoire;
 
-void grLoadStdLibSystem(GrLibDefinition library) {
+void grLoadStdLibSystem(GrModule library) {
     library.setModule("system");
 
     library.setModuleInfo(GrLocale.fr_FR, "Fonctions basiques.");

@@ -1,0 +1,10 @@
+{
+	"name": "gris",
+	"targetName": "grimoire",
+	"targetType": "executable",
+	"dependencies": {
+		"grimoire": {"path": "../"}
+	},
+	"targetPath": "bin",
+	"workingDirectory": "."
+}

@@ -3,13 +3,13 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
-module grimoire.stdlib.math;
+module grimoire.library.math;
 
 import std.random, std.math;
 import std.algorithm.comparison : clamp;
-import grimoire.assembly, grimoire.compiler, grimoire.runtime;
+import grimoire;
 
-void grLoadStdLibMath(GrLibDefinition library) {
+void grLoadStdLibMath(GrModule library) {
     library.setModule("math");
 
     library.setModuleDescription(GrLocale.fr_FR, "Fonctions liées aux maths.");
@@ -115,7 +115,7 @@ void grLoadStdLibMath(GrLibDefinition library) {
             library.addFunction(&_sqrt!T, "sqrt", [type], [type]);
         }
 
-        library.addOperator(&_pow!T, GrLibDefinition.Operator.power, [
+        library.addOperator(&_pow!T, GrModule.Operator.power, [
                 type, type
             ], type);
 

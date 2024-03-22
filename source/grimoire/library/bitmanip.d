@@ -3,64 +3,64 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
-module grimoire.stdlib.bitmanip;
+module grimoire.library.bitmanip;
 
 import std.range;
-import grimoire.assembly, grimoire.compiler, grimoire.runtime;
+import grimoire;
 
-void grLoadStdLibBitmanip(GrLibDefinition library) {
+void grLoadStdLibBitmanip(GrModule library) {
     library.setModule("bitmanip");
 
     library.setModuleInfo(GrLocale.fr_FR, "Opérations pour effectuer des opérations binaires.");
     library.setModuleInfo(GrLocale.en_US, "Operations to make binary operations.");
 
-    library.addOperator(&_shiftLeft!GrInt, GrLibrary.Operator.leftShift, [
+    library.addOperator(&_shiftLeft!GrInt, GrModuleDef.Operator.leftShift, [
             grInt, grInt
         ], grInt);
-    library.addOperator(&_shiftLeft!GrUInt, GrLibrary.Operator.leftShift,
+    library.addOperator(&_shiftLeft!GrUInt, GrModuleDef.Operator.leftShift,
         [grUInt, grUInt], grUInt);
-    library.addOperator(&_shiftLeft!GrByte, GrLibrary.Operator.leftShift,
+    library.addOperator(&_shiftLeft!GrByte, GrModuleDef.Operator.leftShift,
         [grByte, grByte], grByte);
 
-    library.addOperator(&_shiftRight!GrInt, GrLibrary.Operator.rightShift, [
+    library.addOperator(&_shiftRight!GrInt, GrModuleDef.Operator.rightShift, [
             grInt, grInt
         ], grInt);
-    library.addOperator(&_shiftRight!GrUInt, GrLibrary.Operator.rightShift,
+    library.addOperator(&_shiftRight!GrUInt, GrModuleDef.Operator.rightShift,
         [grUInt, grUInt], grUInt);
-    library.addOperator(&_shiftRight!GrByte, GrLibrary.Operator.rightShift,
+    library.addOperator(&_shiftRight!GrByte, GrModuleDef.Operator.rightShift,
         [grByte, grByte], grByte);
 
-    library.addOperator(&_and!GrInt, GrLibrary.Operator.bitwiseAnd, [
+    library.addOperator(&_and!GrInt, GrModuleDef.Operator.bitwiseAnd, [
             grInt, grInt
         ], grInt);
-    library.addOperator(&_and!GrUInt, GrLibrary.Operator.bitwiseAnd, [
+    library.addOperator(&_and!GrUInt, GrModuleDef.Operator.bitwiseAnd, [
             grUInt, grUInt
         ], grUInt);
-    library.addOperator(&_and!GrByte, GrLibrary.Operator.bitwiseAnd, [
+    library.addOperator(&_and!GrByte, GrModuleDef.Operator.bitwiseAnd, [
             grByte, grByte
         ], grByte);
 
-    library.addOperator(&_or!GrInt, GrLibrary.Operator.bitwiseOr, [grInt, grInt], grInt);
-    library.addOperator(&_or!GrUInt, GrLibrary.Operator.bitwiseOr, [
+    library.addOperator(&_or!GrInt, GrModuleDef.Operator.bitwiseOr, [grInt, grInt], grInt);
+    library.addOperator(&_or!GrUInt, GrModuleDef.Operator.bitwiseOr, [
             grUInt, grUInt
         ], grUInt);
-    library.addOperator(&_or!GrByte, GrLibrary.Operator.bitwiseOr, [
+    library.addOperator(&_or!GrByte, GrModuleDef.Operator.bitwiseOr, [
             grByte, grByte
         ], grByte);
 
-    library.addOperator(&_xor!GrInt, GrLibrary.Operator.bitwiseXor, [
+    library.addOperator(&_xor!GrInt, GrModuleDef.Operator.bitwiseXor, [
             grByte, grByte
         ], grByte);
-    library.addOperator(&_xor!GrUInt, GrLibrary.Operator.bitwiseXor, [
+    library.addOperator(&_xor!GrUInt, GrModuleDef.Operator.bitwiseXor, [
             grUInt, grUInt
         ], grUInt);
-    library.addOperator(&_xor!GrByte, GrLibrary.Operator.bitwiseXor, [
+    library.addOperator(&_xor!GrByte, GrModuleDef.Operator.bitwiseXor, [
             grByte, grByte
         ], grByte);
 
-    library.addOperator(&_not!GrInt, GrLibrary.Operator.bitwiseNot, [grInt], grInt);
-    library.addOperator(&_not!GrUInt, GrLibrary.Operator.bitwiseNot, [grUInt], grUInt);
-    library.addOperator(&_not!GrByte, GrLibrary.Operator.bitwiseNot, [grByte], grByte);
+    library.addOperator(&_not!GrInt, GrModuleDef.Operator.bitwiseNot, [grInt], grInt);
+    library.addOperator(&_not!GrUInt, GrModuleDef.Operator.bitwiseNot, [grUInt], grUInt);
+    library.addOperator(&_not!GrByte, GrModuleDef.Operator.bitwiseNot, [grByte], grByte);
 }
 
 private void _shiftLeft(T)(GrCall call) {

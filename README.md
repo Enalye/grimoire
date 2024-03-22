@@ -57,11 +57,11 @@ Grimoire is in 2 parts:
 
 ### Compilation
 
-To bind functions defined in D and add other types, you can create a `GrLibrary` which will store primitives and type information. The `GrLibrary` object can be shared between multiple compilations.
+To bind functions defined in D and add other types, you can create a `GrModuleDef` which will store primitives and type information. The `GrModuleDef` object can be shared between multiple compilations.
 
 To compile, you need a compiler `GrCompiler` which will turn your scripts into bytecode with `compile`.
 
-You must add the `GrLibrary` objects to the compiler before calling `compile` with `addLibrary`.
+You must add the `GrModuleDef` objects to the compiler before calling `compile` with `addLibrary`.
 You must also add at least one file or source to compile with `addFile` or `addSource` before compiling (further files can be added with `import` directives).
 If the compilation fails, you can fetch the error with `getError()`.
 
@@ -69,7 +69,7 @@ If it's successful, the `compile` function will returns a `GrBytecode` that stor
 
 ```d
 // Some basic functions are provided by the default library.
-GrLibrary stdlib = grLoadStdLibrary(); 
+GrModuleDef stdlib = grLoadStdLibrary(); 
 
 GrCompiler compiler = new GrCompiler;
 

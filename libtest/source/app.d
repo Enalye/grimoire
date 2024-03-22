@@ -16,8 +16,14 @@ version (Windows) {
     mixin SimpleDllMain;
 }
 
-export extern (D) void grLibrary(GrLibDefinition library) {
-    library.addFunction(&_testFunc, "saucisse", [grString]);
+export extern (D) GrLibrary grLibrary() {
+    GrLibrary library = new GrLibrary(0);
+    library.addModule(&_module);
+    return library;
+}
+
+private void _module(GrModule mod) {
+    mod.addFunction(&_testFunc, "saucisse", [grString]);
 }
 
 private void _testFunc(GrCall call) {

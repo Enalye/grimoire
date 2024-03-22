@@ -5,9 +5,9 @@
 ### CircularBufferIterator\<T>
 Iterate on a circular buffer.
 ## Constructors
-|Function|Input|
-|-|-|
-|[@**CircularBuffer\<T>**](#ctor_0)| *param0*: **int**|
+|Function|Input|Description|
+|-|-|-|
+|[@**CircularBuffer\<T>**](#ctor_0)| *param0*: **int**|Iterate on a circular buffer.|
 ## Functions
 |Function|Input|Output|
 |-|-|-|

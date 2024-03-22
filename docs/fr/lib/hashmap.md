@@ -7,11 +7,11 @@ Dictionnaire associant des valeurs par clés.
 ### HashMapIterator\<T>
 Itère sur les éléments d’une hashmap.
 ## Constructeurs
-|Fonction|Entrée|
-|-|-|
-|[@**HashMap\<T>**](#ctor_0)||
-|[@**HashMap\<T>**](#ctor_1)| *param0*: **pure [string]**,  *param1*: **pure [T]**|
-|[@**HashMap\<T>**](#ctor_2)| *param0*: **pure [Pair\<string, T>]**|
+|Fonction|Entrée|Description|
+|-|-|-|
+|[@**HashMap\<T>**](#ctor_0)||Itère sur les éléments d’une hashmap.|
+|[@**HashMap\<T>**](#ctor_1)| *param0*: **pure [string]**,  *param1*: **pure [T]**|Itère sur les éléments d’une hashmap.|
+|[@**HashMap\<T>**](#ctor_2)| *param0*: **pure [Pair\<string, T>]**|Itère sur les éléments d’une hashmap.|
 ## Fonctions
 |Fonction|Entrée|Sortie|
 |-|-|-|

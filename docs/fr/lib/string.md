@@ -3,6 +3,7 @@
 Type de base.
 ## Description
 Type pouvant contenir des caractères UTF-8.
+
 ## Natifs
 ### Bytes
 Itère sur chaque octet d’une chaîne.

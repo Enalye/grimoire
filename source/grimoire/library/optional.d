@@ -3,11 +3,11 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
-module grimoire.stdlib.optional;
+module grimoire.library.optional;
 
-import grimoire.compiler, grimoire.runtime, grimoire.assembly;
+import grimoire;
 
-void grLoadStdLibOptional(GrLibDefinition library) {
+void grLoadStdLibOptional(GrModule library) {
     library.setModule("optional");
 
     library.setModuleInfo(GrLocale.fr_FR, "Fonctions pour la manipulation d’optionnels.");
@@ -60,7 +60,7 @@ Otherwise, the non-optional version of `x` is returned.");
         ], [grAny("T")]);
 
     library.addOperator(&_opUnary!("~", "Int"),
-        GrLibDefinition.Operator.bitwiseNot, [grOptional(grInt)], grOptional(grInt));
+        GrModule.Operator.bitwiseNot, [grOptional(grInt)], grOptional(grInt));
 
     static foreach (op; ["&", "|", "^", "<<", ">>"]) {
         library.addOperator(&_opBinary!(op, "Int", "Int", "Int"), op,
@@ -88,7 +88,7 @@ Otherwise, the non-optional version of `x` is returned.");
     }
 
     library.addOperator(&_opUnary!("!", "Bool"),
-        GrLibDefinition.Operator.not, [grOptional(grBool)], grOptional(grBool));
+        GrModule.Operator.not, [grOptional(grBool)], grOptional(grBool));
 
     static foreach (op; ["&&", "||"]) {
         library.addOperator(&_opBinary!(op, "Bool", "Bool", "Bool"), op,

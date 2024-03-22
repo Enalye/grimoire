@@ -7,9 +7,9 @@ A queue is a collection that can be manipulated on both ends.
 ### QueueIterator\<T>
 Iterate on the elements of a queue.
 ## Constructors
-|Function|Input|
-|-|-|
-|[@**Queue\<T>**](#ctor_0)||
+|Function|Input|Description|
+|-|-|-|
+|[@**Queue\<T>**](#ctor_0)||Iterate on the elements of a queue.|
 ## Functions
 |Function|Input|Output|
 |-|-|-|

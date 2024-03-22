@@ -10,7 +10,7 @@ engine.callEvent("main");
 
 L’ajout de bibliothèques doit se faire avant le chargement du bytecode.
 ```d
-GrLibrary stdlib = grLoadStdLibrary();
+GrModuleDef stdlib = grLoadStdLibrary();
 
 GrEngine engine = new GrEngine;
 engine.addLibrary(stdlib);

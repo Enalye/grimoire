@@ -3,12 +3,12 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
-module grimoire.stdlib.typecast;
+module grimoire.library.typecast;
 
 import std.conv;
-import grimoire.assembly, grimoire.compiler, grimoire.runtime;
+import grimoire;
 
-void grLoadStdLibTypecast(GrLibDefinition library) {
+void grLoadStdLibTypecast(GrModule library) {
     library.setModule("typecast");
 
     library.setModuleInfo(GrLocale.fr_FR, "Fonctions de conversion.");

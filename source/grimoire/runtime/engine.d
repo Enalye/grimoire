@@ -26,8 +26,6 @@ import grimoire.runtime.string;
 import grimoire.runtime.task;
 import grimoire.runtime.value;
 
-private void _GRLIBSYMBOL(GrLibDefinition);
-
 /// La machine virtuelle de grimoire
 class GrEngine {
     private {
@@ -111,14 +109,16 @@ class GrEngine {
     Et elle doit être appelé dans le même ordre.
     */
     final void addLibrary(GrLibrary library) {
-        _callbacks ~= library._callbacks;
+        foreach (loader; library.loaders) {
+            GrModuleDef def = new GrModuleDef;
+            loader(def);
+            _callbacks ~= def._callbacks;
+        }
     }
 
     /// Ditto
     final void addLibrary(string filePath) {
         import core.runtime;
-
-        enum symbol = "_D3app9grLibraryFC8grimoire8compiler7library15GrLibDefinitionZv";
 
         void* dlib = Runtime.loadLibrary(filePath);
         enforce!GrRuntimeException(dlib, format!"library `%s` not found"(filePath));
@@ -128,18 +128,22 @@ class GrEngine {
         version (Windows) {
             import core.sys.windows.winbase : GetProcAddress;
 
-            libFunc = cast(typeof(&_GRLIBSYMBOL)) GetProcAddress(dlib, toStringz(symbol));
+            libFunc = cast(typeof(&_GRLIBSYMBOL)) GetProcAddress(dlib,
+                toStringz(_GRLIBSYMBOLMANGLED));
         }
         else version (Posix) {
             import core.sys.posix.dlfcn : dlsym;
 
-            libFunc = cast(typeof(&_GRLIBSYMBOL)) dlsym(dlib, toStringz(symbol));
+            libFunc = cast(typeof(&_GRLIBSYMBOL)) dlsym(dlib, toStringz(_GRLIBSYMBOLMANGLED));
         }
         enforce!GrRuntimeException(libFunc, format!"library `%s` is not valid"(filePath));
 
-        GrLibrary grlib = new GrLibrary;
-        libFunc(grlib);
-        _callbacks ~= grlib._callbacks;
+        GrLibrary library = libFunc();
+        foreach (loader; library.loaders) {
+            GrModuleDef def = new GrModuleDef;
+            loader(def);
+            _callbacks ~= def._callbacks;
+        }
     }
 
     /// Charge le bytecode.

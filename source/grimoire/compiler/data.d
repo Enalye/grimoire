@@ -59,23 +59,31 @@ final class GrData {
 
     /// Ajoute une nouvelle bibliothèque contenant ses définitions de type et de primitives
     void addLibrary(GrLibrary library) {
-        _abstractNativeDefinitions ~= library._abstractNativeDefinitions;
-        _aliasDefinitions ~= library._aliasDefinitions;
-        _abstractClassDefinitions ~= library._abstractClassDefinitions;
-        _variableDefinitions ~= library._variableDefinitions;
-        foreach (GrEnumDefinition enum_; library._enumDefinitions) {
+        foreach (loader; library.loaders) {
+            GrModuleDef def = new GrModuleDef;
+            loader(def);
+            addModuleDef(def);
+        }
+    }
+
+    void addModuleDef(GrModuleDef def) {
+        _abstractNativeDefinitions ~= def._abstractNativeDefinitions;
+        _aliasDefinitions ~= def._aliasDefinitions;
+        _abstractClassDefinitions ~= def._abstractClassDefinitions;
+        _variableDefinitions ~= def._variableDefinitions;
+        foreach (GrEnumDefinition enum_; def._enumDefinitions) {
             enum_.index = _enumDefinitions.length;
             _enumDefinitions ~= enum_;
         }
         const uint libStartIndex = cast(uint) _callbacks.length;
-        foreach (GrPrimitive primitive; library._abstractPrimitives) {
+        foreach (GrPrimitive primitive; def._abstractPrimitives) {
             GrPrimitive prim = new GrPrimitive(primitive);
             prim.callbackId += libStartIndex;
             _abstractPrimitives ~= prim;
         }
-        _callbacks ~= library._callbacks;
+        _callbacks ~= def._callbacks;
 
-        foreach (string name, GrConstraint.Data constraint; library._constraints) {
+        foreach (string name, GrConstraint.Data constraint; def._constraints) {
             _constraints[name] = new GrConstraint.Data(constraint);
         }
     }

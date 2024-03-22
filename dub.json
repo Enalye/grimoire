@@ -1,20 +1,32 @@
 {
-	"name": "grimoire",
-	"description": "A fast, concurrent based scripting language for D",
-	"copyright": "Copyright © 2018, Enalye",
-	"license": "Zlib",
-	"authors": [
-		"Enalye"
-	],
-	"targetName": "grimoire",
-	"targetType": "library",
-	"targetPath": "bin",
-	"workingDirectory": "bin",
-	"-ddoxTool": "scod",
-	"subPackages": [
-		"./test",
-		"./libtest",
+    "name": "grimoire",
+    "description": "A fast, concurrent based scripting language for D",
+    "copyright": "Copyright © 2018, Enalye",
+    "license": "Zlib",
+    "authors": [
+        "Enalye"
+    ],
+    "targetName": "grimoire",
+    "targetPath": "bin",
+    "workingDirectory": "bin",
+    "-ddoxTool": "scod",
+    "subPackages": [
+        "./test",
+        "./libtest",
         "./unittests",
         "./docgen"
-	]
+    ],
+    "configurations": [
+        {
+            "name": "lib",
+            "targetType": "library"
+        },
+        {
+            "name": "cli",
+            "targetType": "executable",
+            "versions": [
+                "GrimoireCli"
+            ]
+        }
+    ]
 }

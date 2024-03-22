@@ -3,12 +3,12 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
-module grimoire.stdlib.channel;
+module grimoire.library.channel;
 
 import std.range;
-import grimoire.assembly, grimoire.compiler, grimoire.runtime;
+import grimoire;
 
-void grLoadStdLibChannel(GrLibDefinition library) {
+void grLoadStdLibChannel(GrModule library) {
     library.setModule("channel");
 
     library.setModuleInfo(GrLocale.fr_FR, "Type de base.");

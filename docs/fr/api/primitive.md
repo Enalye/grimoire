@@ -1,6 +1,6 @@
 # Primitive
 
-Les primitives ajoutées dans `GrLibrary` se présentent sous la forme `void function(GrCall)`.
+Les primitives ajoutées dans `GrModuleDef` se présentent sous la forme `void function(GrCall)`.
 
 ```grimoire
 void maPrimitive(GrCall call) {

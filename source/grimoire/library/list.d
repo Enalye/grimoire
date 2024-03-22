@@ -3,12 +3,12 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
-module grimoire.stdlib.list;
+module grimoire.library.list;
 
 import std.range;
-import grimoire.assembly, grimoire.compiler, grimoire.runtime;
+import grimoire;
 
-void grLoadStdLibList(GrLibDefinition library) {
+void grLoadStdLibList(GrModule library) {
     library.setModule("list");
 
     library.setModuleInfo(GrLocale.fr_FR, "Type de base.");

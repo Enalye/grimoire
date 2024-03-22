@@ -81,7 +81,7 @@ final class UnitTester {
     this(GrLocale locale) {
         _locale = locale;
 
-        _stdlib = grLoadStdLibrary();
+        _stdlib = grGetStandardLibrary();
     }
 
     TestSerie run(string fileName) {

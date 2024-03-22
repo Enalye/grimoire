@@ -3,12 +3,12 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
-module grimoire.stdlib.range;
+module grimoire.library.range;
 
 import std.range;
-import grimoire.assembly, grimoire.compiler, grimoire.runtime;
+import grimoire;
 
-void grLoadStdLibRange(GrLibDefinition library) {
+void grLoadStdLibRange(GrModule library) {
     library.setModule("range");
 
     library.setModuleInfo(GrLocale.fr_FR, "Fonctions pour itérer sur des séries de nombres.");
@@ -26,7 +26,7 @@ void grLoadStdLibRange(GrLibDefinition library) {
     library.addFunction(&_range_next_i, "next", [rangeIteratorIntType], [
             grOptional(grInt),
         ]);
-    library.addOperator(&_range_i, GrLibDefinition.Operator.interval, [
+    library.addOperator(&_range_i, GrModule.Operator.interval, [
             grInt, grInt
         ], rangeIteratorIntType);
 
@@ -54,7 +54,7 @@ void grLoadStdLibRange(GrLibDefinition library) {
     library.addFunction(&_range_next_r, "next", [rangeIteratorFloatType], [
             grOptional(grFloat)
         ]);
-    library.addOperator(&_range_r, GrLibDefinition.Operator.interval,
+    library.addOperator(&_range_r, GrModule.Operator.interval,
         [grFloat, grFloat], rangeIteratorFloatType);
 
     library.setDescription(GrLocale.fr_FR,

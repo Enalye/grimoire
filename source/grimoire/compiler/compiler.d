@@ -5,14 +5,27 @@
  */
 module grimoire.compiler.compiler;
 
+import std.array;
+import std.conv;
 import std.exception : enforce;
-import std.stdio, std.string, std.array, std.conv, std.math, std.file;
+import std.file;
+import std.math;
+import std.path : baseName;
+import std.stdio;
+import std.string;
 
-import grimoire.runtime, grimoire.assembly;
-import grimoire.compiler.util, grimoire.compiler.lexer, grimoire.compiler.parser,
-    grimoire.compiler.primitive, grimoire.compiler.type, grimoire.compiler.data,
-    grimoire.compiler.error, grimoire.compiler.mangle,
-    grimoire.compiler.library, grimoire.compiler.pretty;
+import grimoire.runtime;
+import grimoire.assembly;
+import grimoire.compiler.data;
+import grimoire.compiler.error;
+import grimoire.compiler.lexer;
+import grimoire.compiler.library;
+import grimoire.compiler.mangle;
+import grimoire.compiler.parser;
+import grimoire.compiler.pretty;
+import grimoire.compiler.primitive;
+import grimoire.compiler.type;
+import grimoire.compiler.util;
 
 /// Compile un fichier source en un bytecode exécutable
 final class GrCompiler {
@@ -110,7 +123,7 @@ final class GrCompiler {
         bytecode.userVersion = _userVersion;
 
         foreach (file; lexer.libraries()) {
-            bytecode.libraries ~= file.getPath();
+            bytecode.libraries ~= baseName(file.getPath());
         }
 
         foreach (func; parser.functions)

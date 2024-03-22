@@ -3,13 +3,13 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
-module grimoire.stdlib.time;
+module grimoire.library.time;
 
 import std.datetime;
 import std.conv : to;
-import grimoire.assembly, grimoire.compiler, grimoire.runtime;
+import grimoire;
 
-void grLoadStdLibTime(GrLibDefinition library) {
+void grLoadStdLibTime(GrModule library) {
     library.setModule("time");
 
     library.setModuleInfo(GrLocale.fr_FR, "Fonctions liées au temps.");

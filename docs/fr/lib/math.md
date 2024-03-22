@@ -2,6 +2,7 @@
 
 ## Description
 Fonctions liées aux maths.
+
 ## Variables
 |Variable|Type|Valeur|Description|
 |-|-|-|-|

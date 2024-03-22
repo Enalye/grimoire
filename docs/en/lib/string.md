@@ -3,6 +3,7 @@
 Built-in type.
 ## Description
 Type that contains UTF-8 characters.
+
 ## Natives
 ### Bytes
 Iterates on each byte of a string.

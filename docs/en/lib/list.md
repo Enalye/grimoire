@@ -3,6 +3,7 @@
 Built-in type.
 ## Description
 A list is a collection of values of the same type.
+
 ## Natives
 ### ListIterator\<T>
 Iterate on a list.

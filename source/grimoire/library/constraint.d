@@ -3,11 +3,11 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
-module grimoire.stdlib.constraint;
+module grimoire.library.constraint;
 
-import grimoire.compiler;
+import grimoire;
 
-void grLoadStdLibConstraint(GrLibDefinition library) {
+void grLoadStdLibConstraint(GrModule library) {
     library.setModule("constraint");
 
     library.setModuleInfo(GrLocale.fr_FR, "Constraintes de base.");

@@ -27,7 +27,7 @@ if (!bytecode)
 
 L’ajout des bibliothèques ainsi que des scripts doit se faire avant la compilation.
 ```d
-GrLibrary stdlib = grLoadStdLibrary(); 
+GrModuleDef stdlib = grLoadStdLibrary(); 
 
 GrCompiler compiler = new GrCompiler;
 compiler.addLibrary(stdlib);

@@ -3,6 +3,7 @@
 Type de base.
 ## Description
 Une liste est une collection de valeurs d’un même type.
+
 ## Natifs
 ### ListIterator\<T>
 Itère sur une liste.

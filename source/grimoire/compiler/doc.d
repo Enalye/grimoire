@@ -13,7 +13,7 @@ import grimoire.compiler.type;
 import grimoire.compiler.util;
 
 /// Contient les informations de types et les primitives de façon à générer une documentation
-final class GrDoc : GrLibDefinition {
+final class GrModuleDoc : GrModule {
     private {
         string _module;
         string[GrLocale] _moduleInfo, _moduleDescription, _moduleExample, _comments, _examples;

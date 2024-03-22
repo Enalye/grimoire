@@ -2,7 +2,7 @@
 
 ```d
 // Libraries
-GrLibrary stdlib = grLoadStdLibrary();
+GrModuleDef stdlib = grLoadStdLibrary();
 
 // Compilation
 GrCompiler compiler = new GrCompiler;

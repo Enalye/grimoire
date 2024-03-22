@@ -3,6 +3,7 @@
 Type de base.
 ## Description
 Un canal est un moyen de communication et de synchronisation entre tâches.
+
 ## Fonctions
 |Fonction|Entrée|Sortie|
 |-|-|-|

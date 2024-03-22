@@ -8,7 +8,7 @@ module grimoire;
 public {
     import grimoire.assembly;
     import grimoire.compiler;
+    import grimoire.library;
     import grimoire.runtime;
-    import grimoire.stdlib;
     import grimoire.error;
 }

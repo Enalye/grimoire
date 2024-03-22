@@ -27,7 +27,7 @@ if (!bytecode)
 
 Required libraries and scripts must be added before compiling.
 ```d
-GrLibrary stdlib = grLoadStdLibrary(); 
+GrModuleDef stdlib = grLoadStdLibrary(); 
 
 GrCompiler compiler = new GrCompiler;
 compiler.addLibrary(stdlib);

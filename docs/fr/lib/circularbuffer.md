@@ -5,9 +5,9 @@
 ### CircularBufferIterator\<T>
 Itère sur un buffer circulaire.
 ## Constructeurs
-|Fonction|Entrée|
-|-|-|
-|[@**CircularBuffer\<T>**](#ctor_0)| *param0*: **int**|
+|Fonction|Entrée|Description|
+|-|-|-|
+|[@**CircularBuffer\<T>**](#ctor_0)| *param0*: **int**|Itère sur un buffer circulaire.|
 ## Fonctions
 |Fonction|Entrée|Sortie|
 |-|-|-|

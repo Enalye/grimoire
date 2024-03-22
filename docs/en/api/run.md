@@ -10,7 +10,7 @@ engine.callEvent("main");
 
 Required libraries must be added before loading the bytecode.
 ```d
-GrLibrary stdlib = grLoadStdLibrary();
+GrModuleDef stdlib = grLoadStdLibrary();
 
 GrEngine engine = new GrEngine;
 engine.addLibrary(stdlib);

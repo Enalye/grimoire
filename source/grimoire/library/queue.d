@@ -3,11 +3,11 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
-module grimoire.stdlib.queue;
+module grimoire.library.queue;
 
-import grimoire.assembly, grimoire.compiler, grimoire.runtime;
+import grimoire;
 
-void grLoadStdLibQueue(GrLibDefinition library) {
+void grLoadStdLibQueue(GrModule library) {
     library.setModule("queue");
 
     library.setModuleInfo(GrLocale.fr_FR,

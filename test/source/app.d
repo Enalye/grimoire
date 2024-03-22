@@ -10,9 +10,6 @@ import std.conv : to;
 
 import grimoire;
 
-private void _print(string msg) {
-    writeln("Intercepté: `" ~ msg ~ "`");
-}
 void main() {
     version (Windows) {
         import core.sys.windows.windows : SetConsoleOutputCP;
@@ -26,8 +23,7 @@ void main() {
 
         const GrLocale locale = GrLocale.fr_FR;
         auto startTime = MonoTime.currTime();
-        GrLibrary stdlib = grLoadStdLibrary();
-
+        GrLibrary stdlib = grGetStandardLibrary();
         GrCompiler compiler = new GrCompiler;
         compiler.addLibrary(stdlib);
 
@@ -55,7 +51,6 @@ void main() {
 
         GrEngine engine = new GrEngine;
         engine.addLibrary(stdlib);
-        engine.setPrintOutput(&_print);
 
         if (!engine.load(bytecode)) {
             writeln("bytecode incompatible");

@@ -3,12 +3,12 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
-module grimoire.stdlib.io;
+module grimoire.library.io;
 
 import std.conv : to;
-import grimoire.assembly, grimoire.compiler, grimoire.runtime;
+import grimoire;
 
-void grLoadStdLibIo(GrLibDefinition library) {
+void grLoadStdLibIo(GrModule library) {
     library.setModule("io");
 
     library.setDescription(GrLocale.fr_FR, "Affiche le contenu de `valeur`.");

@@ -3,12 +3,12 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
-module grimoire.stdlib.hashmap;
+module grimoire.library.hashmap;
 
 import std.typecons : Tuple, tuple;
 import std.conv : to;
-import grimoire.assembly, grimoire.compiler, grimoire.runtime;
-import grimoire.stdlib.pair;
+import grimoire;
+import grimoire.library.pair;
 
 /// HashMap
 private final class HashMap {
@@ -36,7 +36,7 @@ private final class HashMapIterator {
     size_t index;
 }
 
-void grLoadStdLibHashMap(GrLibDefinition library) {
+void grLoadStdLibHashMap(GrModule library) {
     library.setModule("hashmap");
 
     library.setModuleInfo(GrLocale.fr_FR, "Dictionnaire associant des valeurs par clés.");

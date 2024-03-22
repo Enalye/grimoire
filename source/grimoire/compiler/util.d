@@ -154,7 +154,7 @@ struct GrNativeEnum {
     GrInt[] values;
 }
 
-/// Retourne les champs et les valeurs d’une énumération en D pour GrLibDefinition
+/// Retourne les champs et les valeurs d’une énumération en D pour GrModule
 GrNativeEnum grNativeEnum(T)() if (is(T == enum) && isIntegral!(OriginalType!T)) {
     GrNativeEnum loader;
     loader.fields = [__traits(allMembers, T)];

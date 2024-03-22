@@ -1,6 +1,6 @@
 # Primitive
 
-Primitives added in `GrLibrary` are defined as `void function(GrCall)`.
+Primitives added in `GrModuleDef` are defined as `void function(GrCall)`.
 
 ```grimoire
 void myPrimitive(GrCall call) {

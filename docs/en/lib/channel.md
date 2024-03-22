@@ -3,6 +3,7 @@
 Built-in type.
 ## Description
 A channel is a messaging and synchronization tool between tasks.
+
 ## Functions
 |Function|Input|Output|
 |-|-|-|

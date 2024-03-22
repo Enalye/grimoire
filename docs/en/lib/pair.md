@@ -8,10 +8,10 @@ Pair of key/value.
 |-|-|-|
 |=>|**K**, **V**|**Pair\<K, V>**|
 ## Properties
-|Property|Native|Type|Setter|Getter|
-|-|-|-|-|-|
-|key|**Pair\<K, V>**|**K**|yes|yes|
-|value|**Pair\<K, V>**|**V**|yes|yes|
+|Property|Native|Type|Setter|Getter|Description|
+|-|-|-|-|-|-|
+|key|**Pair\<K, V>**|**K**|yes|yes||
+|value|**Pair\<K, V>**|**V**|yes|yes||
 
 
 ***

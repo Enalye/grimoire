@@ -3,11 +3,11 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
-module grimoire.stdlib.circularbuffer;
+module grimoire.library.circularbuffer;
 
-import grimoire.assembly, grimoire.compiler, grimoire.runtime;
+import grimoire;
 
-void grLoadStdLibCircularBuffer(GrLibDefinition library) {
+void grLoadStdLibCircularBuffer(GrModule library) {
     library.setModule("circularbuffer");
 
     GrType bufType = library.addNative("CircularBuffer", ["T"]);

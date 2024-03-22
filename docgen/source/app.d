@@ -35,9 +35,8 @@ void main() {
     }
 }
 
-alias LibLoader = void function(GrLibDefinition);
 void generate(GrLocale locale) {
-    LibLoader[] libLoaders = grGetStdLibraryLoaders();
+    GrLibrary library = grGetStandardLibrary();
 
     string folderName = to!string(locale);
     auto parts = folderName.split("_");
@@ -46,9 +45,9 @@ void generate(GrLocale locale) {
 
     string[] modules;
     int i;
-    foreach (libLoader; libLoaders) {
-        GrDoc doc = new GrDoc("docgen" ~ to!string(i));
-        libLoader(doc);
+    foreach (loader; library.loaders) {
+        GrModuleDoc doc = new GrModuleDoc("docgen" ~ to!string(i));
+        loader(doc);
 
         const string generatedText = doc.generate(locale);
 

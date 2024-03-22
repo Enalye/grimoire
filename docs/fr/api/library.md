@@ -1,9 +1,9 @@
 # Bibliothèques
 
-L’ajout de nouvelles définitions se fait au sein d’une bibliothèque `GrLibrary`.
+L’ajout de nouvelles définitions se fait au sein d’une bibliothèque `GrModuleDef`.
 
 ```d
-GrLibrary library = new GrLibrary;
+GrModuleDef library = new GrModuleDef;
 ```
 
 * * *
@@ -58,7 +58,7 @@ void maConv(GrCall call) {
 `addOperator` permet la surcharge d’opérateur.
 
 ```d
-library.addOperator(&additionner, GrLibrary.Operator.add, [grFloat, grInt], grFloat);
+library.addOperator(&additionner, GrModuleDef.Operator.add, [grFloat, grInt], grFloat);
 // Ou
 library.addOperator(&additionner, "+", [grFloat, grInt], grFloat);
 

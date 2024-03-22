@@ -21,8 +21,6 @@ import grimoire.compiler.error;
 import grimoire.compiler.library;
 import grimoire.compiler.util;
 
-private void _GRLIBSYMBOL(GrLibDefinition);
-
 /// Décrit la plus petite unité lexicale présent dans un fichier source
 struct GrLexeme {
     /// Type de jetons valides
@@ -464,8 +462,6 @@ package final class GrLexer {
     private void importLibraries() {
         import core.runtime;
 
-        enum symbol = "_D3app9grLibraryFC8grimoire8compiler7library15GrLibDefinitionZv";
-
         foreach (file; _libraries) {
             assert(file.type == GrImportFile.Type.library, "invalid library file type");
             string filePath = file.getPath();
@@ -478,18 +474,17 @@ package final class GrLexer {
             version (Windows) {
                 import core.sys.windows.winbase : GetProcAddress;
 
-                libFunc = cast(typeof(&_GRLIBSYMBOL)) GetProcAddress(dlib, toStringz(symbol));
+                libFunc = cast(typeof(&_GRLIBSYMBOL)) GetProcAddress(dlib,
+                    toStringz(_GRLIBSYMBOLMANGLED));
             }
             else version (Posix) {
                 import core.sys.posix.dlfcn : dlsym;
 
-                libFunc = cast(typeof(&_GRLIBSYMBOL)) dlsym(dlib, toStringz(symbol));
+                libFunc = cast(typeof(&_GRLIBSYMBOL)) dlsym(dlib, toStringz(_GRLIBSYMBOLMANGLED));
             }
             enforce!GrCompilerException(libFunc, format(getError(Error.libXNotValid), filePath));
 
-            GrLibrary grlib = new GrLibrary;
-            libFunc(grlib);
-            _librariesImported ~= grlib;
+            _librariesImported ~= libFunc();
         }
     }
 

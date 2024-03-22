@@ -7,11 +7,11 @@ Dictionary that associates values by keys.
 ### HashMapIterator\<T>
 Iterate on the elements of a hashmap.
 ## Constructors
-|Function|Input|
-|-|-|
-|[@**HashMap\<T>**](#ctor_0)||
-|[@**HashMap\<T>**](#ctor_1)| *param0*: **pure [string]**,  *param1*: **pure [T]**|
-|[@**HashMap\<T>**](#ctor_2)| *param0*: **pure [Pair\<string, T>]**|
+|Function|Input|Description|
+|-|-|-|
+|[@**HashMap\<T>**](#ctor_0)||Iterate on the elements of a hashmap.|
+|[@**HashMap\<T>**](#ctor_1)| *param0*: **pure [string]**,  *param1*: **pure [T]**|Iterate on the elements of a hashmap.|
+|[@**HashMap\<T>**](#ctor_2)| *param0*: **pure [Pair\<string, T>]**|Iterate on the elements of a hashmap.|
 ## Functions
 |Function|Input|Output|
 |-|-|-|

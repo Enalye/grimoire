@@ -16,12 +16,38 @@ import grimoire.compiler.mangle;
 import grimoire.compiler.pretty;
 import grimoire.compiler.util;
 
+/// Fonction renseignant une partie de bibliothèque
+alias GrModuleLoader = void function(GrModule);
+
+/// Définit une bibliothèque
+final class GrLibrary {
+    private {
+        uint _version;
+        GrModuleLoader[] _loaders;
+    }
+
+    @property GrModuleLoader[] loaders() {
+        return _loaders;
+    }
+
+    this(uint version_) {
+        _version = version_;
+    }
+
+    void addModule(GrModuleLoader loader) {
+        _loaders ~= loader;
+    }
+}
+
+package(grimoire) GrLibrary _GRLIBSYMBOL();
+package(grimoire) enum _GRLIBSYMBOLMANGLED = "_D3app9grLibraryFZC8grimoire8compiler7library9GrLibrary";
+
 /**
 Renseigne les types et primitives de la bibliothèque. \
-* Utilisez `GrLibrary` pour la compilation et l’exécution.
-* Utilisez `GrDoc` pour la documentation.
+* Utilisez `GrModuleDef` pour la compilation et l’exécution.
+* Utilisez `GrModuleDoc` pour la documentation.
 */
-interface GrLibDefinition {
+interface GrModule {
     /// Type d’opérateur à surcharger
     enum Operator {
         plus,
@@ -136,11 +162,8 @@ interface GrLibDefinition {
     void addConstraint(GrConstraint.Predicate predicate, const string name, uint arity = 0);
 }
 
-/// Fonction renseignant une bibliothèque
-alias GrLibLoader = void function(GrLibDefinition);
-
 /// Contient les informations de types et les fonctions en D liées
-final class GrLibrary : GrLibDefinition {
+final class GrModuleDef : GrModule {
     package(grimoire) {
         /// Types de pointeurs opaques. \
         /// Ils ne sont utilisables que par des primitives.
