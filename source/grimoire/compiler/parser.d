@@ -2675,7 +2675,6 @@ final class GrParser {
     }
 
     private void skipDeclaration() {
-        checkAdvance();
         while (!isEnd()) {
             if (get().type != GrLexeme.Type.leftCurlyBrace) {
                 checkAdvance();
