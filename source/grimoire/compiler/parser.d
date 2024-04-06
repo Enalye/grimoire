@@ -1197,6 +1197,24 @@ final class GrParser {
             return false;
     }
 
+    private bool isOperatorCommutative(GrLexeme.Type lexType) {
+        if (!isBinaryOperator(lexType))
+            return false;
+        switch (lexType) with (GrLexeme.Type) {
+        case bitwiseAnd:
+        case bitwiseOr:
+        case bitwiseXor:
+        case and:
+        case or:
+        case optionalOr:
+        case add:
+        case multiply:
+            return true;
+        default:
+            return false;
+        }
+    }
+
     private GrType addCustomBinaryOperator(GrLexeme.Type lexType,
         GrType leftType, GrType rightType, size_t fileId) {
         string name = "@operator_" ~ getPrettyLexemeType(lexType);
@@ -1321,6 +1339,9 @@ final class GrParser {
             rightType.base == GrType.Base.string_ && leftType != rightType) {
             addInstruction(GrOpcode.swap, 1);
             convertType(leftType, rightType, fileId);
+            if (!isOperatorCommutative(lexType)) {
+                addInstruction(GrOpcode.swap, 1);
+            }
             resultType = addInternalOperator(lexType, rightType, true);
         }
         else if (leftType.isFloating && rightType.isIntegral) {
@@ -1338,6 +1359,9 @@ final class GrParser {
             // et d’inverser les deux valeurs
             addInstruction(GrOpcode.swap, 1);
             convertType(leftType, rightType, fileId);
+            if (!isOperatorCommutative(lexType)) {
+                addInstruction(GrOpcode.swap, 1);
+            }
             resultType = addInternalOperator(lexType, rightType, true);
 
             // Puis on cherche un opérateur surchargé
@@ -1354,6 +1378,9 @@ final class GrParser {
                 else {
                     addInstruction(GrOpcode.swap, 1);
                     convertType(leftType, rightType, fileId);
+                    if (!isOperatorCommutative(lexType)) {
+                        addInstruction(GrOpcode.swap, 1);
+                    }
                     resultType = addInternalOperator(lexType, rightType, true);
                 }
             }
@@ -4808,6 +4835,11 @@ final class GrParser {
                 logError(getError(Error.mismatchedNumRetVal),
                     format(getError(Error.expectedXRetValFoundY),
                         currentFunction.outSignature.length, 1));
+            }
+            else if (currentFunction.outSignature.length && get().type == GrLexeme.Type.semicolon) {
+                logError(getError(Error.mismatchedNumRetVal),
+                    format(getError(Error.expectedXRetValFoundY),
+                        currentFunction.outSignature.length, 0));
             }
 
             GrType[] expressionTypes;
