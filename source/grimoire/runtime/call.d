@@ -424,6 +424,16 @@ final class GrCall {
         return _task.engine.getEnumFieldValue(enumName, fieldName);
     }
 
+    /// Vérifie l’existance du nom d’un champ de l’énumération
+    bool hasEnumFieldName(string enumName, string fieldName) {
+        return _task.engine.hasEnumFieldName(enumName, fieldName);
+    }
+
+    /// Vérifie l’existance d’une valeur d’un champ de l’énumération
+    bool hasEnumFieldValue(string enumName, int fieldValue) {
+        return _task.engine.hasEnumFieldValue(enumName, fieldValue);
+    }
+
     /**
     Crée une nouvelle tâche à partir d’un événement.
     ---

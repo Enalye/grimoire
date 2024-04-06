@@ -2015,6 +2015,40 @@ class GrEngine {
         return 0;
     }
 
+    /// Vérifie l’existance d’une valeur d’un champ de l’énumération
+    bool hasEnumFieldValue(string enumName, int fieldValue) {
+        foreach (enum_; _bytecode.enums) {
+            if (enum_.name == enumName) {
+                foreach (ref field; enum_.fields) {
+                    if (field.value == fieldValue) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    /// Vérifie l’existance du nom d’un champ de l’énumération
+    bool hasEnumFieldName(string enumName, string fieldName) {
+        foreach (enum_; _bytecode.enums) {
+            if (enum_.name == enumName) {
+                foreach (ref field; enum_.fields) {
+                    if (field.name == fieldName) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        return false;
+    }
+
     /// Change la fonction de la sortie standard
     void setPrintOutput(void function(string) callback) {
         if (!callback) {

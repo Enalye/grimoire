@@ -60,9 +60,20 @@ void grLoadStdLibTypecast(GrModule library) {
     library.addCast(&byte_as_str, grByte, grString);
     library.addCast(&listStr_as_str, grPure(grList(grString)), grString);
     library.addCast(&listChar_as_str, grPure(grList(grChar)), grString);
+    library.addCast(&enum_as_str, grAny("T"), grString, false, [
+            grConstraint("Enum", grAny("T"))
+        ]);
 
     // as<list<string>>
     library.addCast(&str_as_listChar, grPure(grString), grList(grChar));
+
+    // as<enum>
+    library.addCast(&int_as_enum, grInt, grAny("T"), false, [
+            grConstraint("Enum", grAny("T"))
+        ]);
+    library.addCast(&str_as_enum, grString, grAny("T"), false, [
+            grConstraint("Enum", grAny("T"))
+        ]);
 }
 
 // as<int>
@@ -257,6 +268,11 @@ private void listChar_as_str(GrCall call) {
     call.setString(new GrString(call.getList(0).getChars()));
 }
 
+private void enum_as_str(GrCall call) {
+    call.setString(call.getEnumFieldName(grUnmangle(call.getInType(0))
+            .mangledType, call.getInt(0)));
+}
+
 // as<list<char>>
 private void str_as_listChar(GrCall call) {
     GrValue[] result;
@@ -265,4 +281,23 @@ private void str_as_listChar(GrCall call) {
     }
 
     call.setList(result);
+}
+
+private void int_as_enum(GrCall call) {
+    GrInt value = call.getInt(0);
+    if (!call.hasEnumFieldValue(grUnmangle(call.getOutType(0)).mangledType, value)) {
+        call.raise("ConvError");
+        return;
+    }
+    call.setInt(value);
+}
+
+private void str_as_enum(GrCall call) {
+    GrString field = call.getString(0);
+    string type = grUnmangle(call.getOutType(0)).mangledType;
+    if (!call.hasEnumFieldName(type, field)) {
+        call.raise("ConvError");
+        return;
+    }
+    call.setInt(call.getEnumFieldValue(type, field));
 }
