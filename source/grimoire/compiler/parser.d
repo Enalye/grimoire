@@ -1447,16 +1447,28 @@ final class GrParser {
                 addInstruction(GrOpcode.notEqual_int);
                 return GrType(GrType.Base.bool_);
             case greater:
-                addInstruction(GrOpcode.greater_int);
+                if (isSwapped)
+                    addInstruction(GrOpcode.lesserOrEqual_int);
+                else
+                    addInstruction(GrOpcode.greater_int);
                 return GrType(GrType.Base.bool_);
             case greaterOrEqual:
-                addInstruction(GrOpcode.greaterOrEqual_int);
+                if (isSwapped)
+                    addInstruction(GrOpcode.lesser_int);
+                else
+                    addInstruction(GrOpcode.greaterOrEqual_int);
                 return GrType(GrType.Base.bool_);
             case lesser:
-                addInstruction(GrOpcode.lesser_int);
+                if (isSwapped)
+                    addInstruction(GrOpcode.greaterOrEqual_int);
+                else
+                    addInstruction(GrOpcode.lesser_int);
                 return GrType(GrType.Base.bool_);
             case lesserOrEqual:
-                addInstruction(GrOpcode.lesserOrEqual_int);
+                if (isSwapped)
+                    addInstruction(GrOpcode.greater_int);
+                else
+                    addInstruction(GrOpcode.lesserOrEqual_int);
                 return GrType(GrType.Base.bool_);
             default:
                 break;
