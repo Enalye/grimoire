@@ -1197,24 +1197,6 @@ final class GrParser {
             return false;
     }
 
-    private bool isOperatorCommutative(GrLexeme.Type lexType) {
-        if (!isBinaryOperator(lexType))
-            return false;
-        switch (lexType) with (GrLexeme.Type) {
-        case bitwiseAnd:
-        case bitwiseOr:
-        case bitwiseXor:
-        case and:
-        case or:
-        case optionalOr:
-        case add:
-        case multiply:
-            return true;
-        default:
-            return false;
-        }
-    }
-
     private GrType addCustomBinaryOperator(GrLexeme.Type lexType,
         GrType leftType, GrType rightType, size_t fileId) {
         string name = "@operator_" ~ getPrettyLexemeType(lexType);
@@ -1339,9 +1321,6 @@ final class GrParser {
             rightType.base == GrType.Base.string_ && leftType != rightType) {
             addInstruction(GrOpcode.swap, 1);
             convertType(leftType, rightType, fileId);
-            if (!isOperatorCommutative(lexType)) {
-                addInstruction(GrOpcode.swap, 1);
-            }
             resultType = addInternalOperator(lexType, rightType, true);
         }
         else if (leftType.isFloating && rightType.isIntegral) {
@@ -1359,9 +1338,6 @@ final class GrParser {
             // et d’inverser les deux valeurs
             addInstruction(GrOpcode.swap, 1);
             convertType(leftType, rightType, fileId);
-            if (!isOperatorCommutative(lexType)) {
-                addInstruction(GrOpcode.swap, 1);
-            }
             resultType = addInternalOperator(lexType, rightType, true);
 
             // Puis on cherche un opérateur surchargé
@@ -1378,9 +1354,6 @@ final class GrParser {
                 else {
                     addInstruction(GrOpcode.swap, 1);
                     convertType(leftType, rightType, fileId);
-                    if (!isOperatorCommutative(lexType)) {
-                        addInstruction(GrOpcode.swap, 1);
-                    }
                     resultType = addInternalOperator(lexType, rightType, true);
                 }
             }
@@ -1510,15 +1483,21 @@ final class GrParser {
                 addInstruction(GrOpcode.add_int);
                 return GrType(GrType.Base.int_);
             case substract:
+                if (isSwapped)
+                    addInstruction(GrOpcode.swap, 1);
                 addInstruction(GrOpcode.substract_int);
                 return GrType(GrType.Base.int_);
             case multiply:
                 addInstruction(GrOpcode.multiply_int);
                 return GrType(GrType.Base.int_);
             case divide:
+                if (isSwapped)
+                    addInstruction(GrOpcode.swap, 1);
                 addInstruction(GrOpcode.divide_int);
                 return GrType(GrType.Base.int_);
             case remainder:
+                if (isSwapped)
+                    addInstruction(GrOpcode.swap, 1);
                 addInstruction(GrOpcode.remainder_int);
                 return GrType(GrType.Base.int_);
             case minus:
@@ -1539,16 +1518,28 @@ final class GrParser {
                 addInstruction(GrOpcode.notEqual_int);
                 return GrType(GrType.Base.bool_);
             case greater:
-                addInstruction(GrOpcode.greater_int);
+                if (isSwapped)
+                    addInstruction(GrOpcode.lesserOrEqual_int);
+                else
+                    addInstruction(GrOpcode.greater_int);
                 return GrType(GrType.Base.bool_);
             case greaterOrEqual:
-                addInstruction(GrOpcode.greaterOrEqual_int);
+                if (isSwapped)
+                    addInstruction(GrOpcode.lesser_int);
+                else
+                    addInstruction(GrOpcode.greaterOrEqual_int);
                 return GrType(GrType.Base.bool_);
             case lesser:
-                addInstruction(GrOpcode.lesser_int);
+                if (isSwapped)
+                    addInstruction(GrOpcode.greaterOrEqual_int);
+                else
+                    addInstruction(GrOpcode.lesser_int);
                 return GrType(GrType.Base.bool_);
             case lesserOrEqual:
-                addInstruction(GrOpcode.lesserOrEqual_int);
+                if (isSwapped)
+                    addInstruction(GrOpcode.greater_int);
+                else
+                    addInstruction(GrOpcode.lesserOrEqual_int);
                 return GrType(GrType.Base.bool_);
             case not:
                 addInstruction(GrOpcode.not_int);
@@ -1563,15 +1554,21 @@ final class GrParser {
                 addInstruction(GrOpcode.add_uint);
                 return GrType(GrType.Base.uint_);
             case substract:
+                if (isSwapped)
+                    addInstruction(GrOpcode.swap, 1);
                 addInstruction(GrOpcode.substract_uint);
                 return GrType(GrType.Base.uint_);
             case multiply:
                 addInstruction(GrOpcode.multiply_uint);
                 return GrType(GrType.Base.uint_);
             case divide:
+                if (isSwapped)
+                    addInstruction(GrOpcode.swap, 1);
                 addInstruction(GrOpcode.divide_uint);
                 return GrType(GrType.Base.uint_);
             case remainder:
+                if (isSwapped)
+                    addInstruction(GrOpcode.swap, 1);
                 addInstruction(GrOpcode.remainder_uint);
                 return GrType(GrType.Base.uint_);
             case plus:
@@ -1589,16 +1586,28 @@ final class GrParser {
                 addInstruction(GrOpcode.notEqual_uint);
                 return GrType(GrType.Base.bool_);
             case greater:
-                addInstruction(GrOpcode.greater_uint);
+                if (isSwapped)
+                    addInstruction(GrOpcode.lesserOrEqual_uint);
+                else
+                    addInstruction(GrOpcode.greater_uint);
                 return GrType(GrType.Base.bool_);
             case greaterOrEqual:
-                addInstruction(GrOpcode.greaterOrEqual_uint);
+                if (isSwapped)
+                    addInstruction(GrOpcode.lesser_uint);
+                else
+                    addInstruction(GrOpcode.greaterOrEqual_uint);
                 return GrType(GrType.Base.bool_);
             case lesser:
-                addInstruction(GrOpcode.lesser_uint);
+                if (isSwapped)
+                    addInstruction(GrOpcode.greaterOrEqual_uint);
+                else
+                    addInstruction(GrOpcode.lesser_uint);
                 return GrType(GrType.Base.bool_);
             case lesserOrEqual:
-                addInstruction(GrOpcode.lesserOrEqual_uint);
+                if (isSwapped)
+                    addInstruction(GrOpcode.greater_uint);
+                else
+                    addInstruction(GrOpcode.lesserOrEqual_uint);
                 return GrType(GrType.Base.bool_);
             default:
                 break;
@@ -1622,15 +1631,21 @@ final class GrParser {
                 addInstruction(GrOpcode.add_byte);
                 return GrType(GrType.Base.byte_);
             case substract:
+                if (isSwapped)
+                    addInstruction(GrOpcode.swap, 1);
                 addInstruction(GrOpcode.substract_byte);
                 return GrType(GrType.Base.byte_);
             case multiply:
                 addInstruction(GrOpcode.multiply_byte);
                 return GrType(GrType.Base.byte_);
             case divide:
+                if (isSwapped)
+                    addInstruction(GrOpcode.swap, 1);
                 addInstruction(GrOpcode.divide_byte);
                 return GrType(GrType.Base.byte_);
             case remainder:
+                if (isSwapped)
+                    addInstruction(GrOpcode.swap, 1);
                 addInstruction(GrOpcode.remainder_byte);
                 return GrType(GrType.Base.byte_);
             case plus:
@@ -1648,16 +1663,28 @@ final class GrParser {
                 addInstruction(GrOpcode.notEqual_byte);
                 return GrType(GrType.Base.bool_);
             case greater:
-                addInstruction(GrOpcode.greater_byte);
+                if (isSwapped)
+                    addInstruction(GrOpcode.lesserOrEqual_byte);
+                else
+                    addInstruction(GrOpcode.greater_byte);
                 return GrType(GrType.Base.bool_);
             case greaterOrEqual:
-                addInstruction(GrOpcode.greaterOrEqual_byte);
+                if (isSwapped)
+                    addInstruction(GrOpcode.lesser_byte);
+                else
+                    addInstruction(GrOpcode.greaterOrEqual_byte);
                 return GrType(GrType.Base.bool_);
             case lesser:
-                addInstruction(GrOpcode.lesser_byte);
+                if (isSwapped)
+                    addInstruction(GrOpcode.greaterOrEqual_byte);
+                else
+                    addInstruction(GrOpcode.lesser_byte);
                 return GrType(GrType.Base.bool_);
             case lesserOrEqual:
-                addInstruction(GrOpcode.lesserOrEqual_byte);
+                if (isSwapped)
+                    addInstruction(GrOpcode.greater_byte);
+                else
+                    addInstruction(GrOpcode.lesserOrEqual_byte);
                 return GrType(GrType.Base.bool_);
             default:
                 break;
