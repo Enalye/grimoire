@@ -5643,7 +5643,7 @@ final class GrParser {
                             getPrettyType(listType)), getError(Error.invalidListType));
                 }
 
-                addInstruction(GrOpcode.index_list);
+                addInstruction(GrOpcode.index2_list);
 
                 bool isPure = listType.isPure;
                 listType = subType;
