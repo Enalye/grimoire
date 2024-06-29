@@ -4210,7 +4210,7 @@ final class GrParser {
     select
     case(SUBEXPR) BLOCK
     case(SUBEXPR) BLOCK
-    case() BLOCK
+    default BLOCK
     ---
     */
     private void parseSelectStatement() {
@@ -6480,6 +6480,53 @@ final class GrParser {
                 break;
             case period:
                 checkAdvance();
+                if (!hadValue) { // Enumération implicite
+                    string enumName = currentFunction.getImplicitEnum();
+                    if (!enumName.length)
+                        logError(getError(Error.cantInferEnum),
+                            format(getError(Error.expectedEnumNameFoundX), "."), "", -1);
+
+                    const GrEnumDefinition definition = _data.getEnum(enumName, fileId);
+                    if (get().type != GrLexeme.Type.identifier)
+                        logError(getError(Error.expectedConstNameAfterEnumType),
+                            getError(Error.missingEnumConstantName));
+                    const string fieldName = get().strValue;
+                    if (!definition.hasField(fieldName)) {
+                        string[] fieldNames;
+                        foreach (field; definition.fields) {
+                            fieldNames ~= field.name;
+                        }
+                        const string[] nearestValues = findNearestStrings(fieldName, fieldNames);
+                        string errorNote;
+                        if (nearestValues.length) {
+                            foreach (size_t i, const string value; nearestValues) {
+                                errorNote ~= "`" ~ value ~ "`";
+                                if ((i + 1) < nearestValues.length)
+                                    errorNote ~= ", ";
+                            }
+                            errorNote ~= ".";
+                        }
+                        logError(format(getError(Error.noFieldXOnTypeY), fieldName, definition.name),
+                            getError(Error.unknownField),
+                            format(getError(Error.availableFieldsAreX), errorNote));
+                    }
+                    checkAdvance();
+
+                    currentType = GrType(GrType.Base.enum_);
+                    currentType.mangledType = definition.name;
+                    addIntConstant(definition.getField(fieldName));
+
+                    if (hadValue)
+                        typeStack[$ - 1] = currentType;
+                    else
+                        typeStack ~= currentType;
+
+                    hasValue = true;
+                    hadValue = false;
+                    hasLValue = false;
+                    hadLValue = false;
+                    break;
+                }
                 bool isOptionalCall;
                 bool hasField;
                 uint optionalCallPosition;
@@ -7507,12 +7554,15 @@ final class GrParser {
 
             returnType = GrType(GrType.Base.enum_);
             returnType.mangledType = definition.name;
+            currentFunction.setImplicitEnum(definition.name);
             addIntConstant(definition.getField(fieldName));
         }
         else {
             // Variable déclarée
             variableRef = getVariable(identifierName, fileId);
             returnType = variableRef.type;
+            if (returnType.base == GrType.Base.enum_)
+                currentFunction.setImplicitEnum(returnType.mangledType);
             // Si c’est une assignation, on veut que l’instruction pour charger la valeur
             // soit après l’assignation et non avant.
             const auto nextLexeme = get();
@@ -7834,6 +7884,7 @@ final class GrParser {
         expectedXArgsFoundY,
         funcOrTaskExpectedFoundX,
         funcDefHere,
+        cantInferEnum,
         expectedDotAfterEnumType,
         missingEnumConstantName,
         missingEnumConstantValue,
@@ -8286,6 +8337,8 @@ final class GrParser {
                 return "function or task expected, found `%s`";
             case funcDefHere:
                 return "function defined here";
+            case cantInferEnum:
+                return "can't infer the enum type";
             case expectedDotAfterEnumType:
                 return "expected a `.` after the enum type";
             case missingEnumConstantName:
@@ -8745,6 +8798,8 @@ final class GrParser {
                 return "fonction ou tâche attendu, `%s` trouvé";
             case funcDefHere:
                 return "fonction définie là";
+            case cantInferEnum:
+                return "impossible d’inférer le type de l’énumération";
             case expectedDotAfterEnumType:
                 return "`.` attendu après le type de l’énumération";
             case missingEnumConstantName:

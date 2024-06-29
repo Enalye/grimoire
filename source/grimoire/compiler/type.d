@@ -569,6 +569,9 @@ package class GrFunction {
     struct Scope {
         /// Toutes les variables déclarées dans cette portée
         GrVariable[string] localVariables;
+
+        /// Enum inférée (par exemple lors d’un switch case)
+        string implicitEnum;
     }
     /// Ditto
     Scope[] scopes;
@@ -618,6 +621,19 @@ package class GrFunction {
 
     this() {
         scopes.length = 1;
+    }
+
+    string getImplicitEnum() {
+        foreach_reverse (ref Scope scope_; scopes) {
+            if (scope_.implicitEnum.length) {
+                return scope_.implicitEnum;
+            }
+        }
+        return "";
+    }
+
+    void setImplicitEnum(string name) {
+        scopes[$ - 1].implicitEnum = name;
     }
 
     GrVariable getLocal(string name) {
