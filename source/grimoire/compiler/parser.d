@@ -7343,7 +7343,7 @@ final class GrParser {
     private GrType parseIdentifier(ref GrVariable variableRef,
         GrType expectedType, GrType selfType = grVoid, bool isAssignment = false) {
         GrType returnType = GrType.Base.void_;
-        const GrLexeme identifier = get();
+        GrLexeme identifier = get();
         bool isFunctionCall = false, isMethodCall = false, hasParenthesis = false;
         string identifierName = identifier.strValue;
         const size_t fileId = identifier.fileId;
@@ -7471,6 +7471,8 @@ final class GrParser {
                     addInstruction(GrOpcode.anonymousCall, 0u);
                 else if (variable.type.base == GrType.Base.task)
                     addInstruction(GrOpcode.anonymousTask, 0u);
+
+                _data.addDefinition(identifier, variable);
             }
             else {
                 if (isMethodCall) {
@@ -7511,9 +7513,11 @@ final class GrParser {
                     addInstruction(_options & GrOption.safe ? GrOpcode.safePrimitiveCall
                             : GrOpcode.primitiveCall, matching.prim.index);
                     returnType = grPackTuple(matching.prim.outSignature);
+                    _data.addDefinition(identifier, matching.prim);
                 }
                 else if (matching.func) {
                     returnType = grPackTuple(addFunctionCall(matching.func, fileId));
+                    _data.addDefinition(identifier, matching.func);
                 }
                 else {
                     logError(format(getError(Error.xNotDecl), getPrettyFunctionCall(identifierName,
@@ -7523,13 +7527,17 @@ final class GrParser {
         }
         else if (_data.isEnum(identifier.strValue, fileId, false)) {
             const GrEnumDefinition definition = _data.getEnum(identifier.strValue, fileId);
+            _data.addDefinition(identifier, definition);
+
             if (get().type != GrLexeme.Type.period)
                 logError(getError(Error.expectedDotAfterEnumType),
                     getError(Error.missingEnumConstantName));
             checkAdvance();
+
             if (get().type != GrLexeme.Type.identifier)
                 logError(getError(Error.expectedConstNameAfterEnumType),
                     getError(Error.missingEnumConstantName));
+
             const string fieldName = get().strValue;
             if (!definition.hasField(fieldName)) {
                 string[] fieldNames;
@@ -7550,6 +7558,7 @@ final class GrParser {
                     getError(Error.unknownField),
                     format(getError(Error.availableFieldsAreX), errorNote));
             }
+            _data.addDefinition(get(), definition);
             checkAdvance();
 
             returnType = GrType(GrType.Base.enum_);
@@ -7560,6 +7569,8 @@ final class GrParser {
         else {
             // Variable déclarée
             variableRef = getVariable(identifierName, fileId);
+            _data.addDefinition(identifier, variableRef);
+
             returnType = variableRef.type;
             if (returnType.base == GrType.Base.enum_)
                 currentFunction.setImplicitEnum(returnType.mangledType);

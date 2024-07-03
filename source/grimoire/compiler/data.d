@@ -11,11 +11,13 @@ import std.exception : enforce;
 import grimoire.runtime;
 import grimoire.compiler.constraint;
 import grimoire.compiler.error;
+import grimoire.compiler.lexer;
 import grimoire.compiler.library;
 import grimoire.compiler.mangle;
 import grimoire.compiler.pretty;
 import grimoire.compiler.primitive;
 import grimoire.compiler.type;
+import grimoire.compiler.util;
 
 /**
 Contient les informations de types et les fonctions en D liées. \
@@ -55,6 +57,15 @@ final class GrData {
         GrConstraint.Data[string] _constraints;
 
         GrPrimitive _currentPrimitive;
+
+        GrDefinitionTable definitionTable;
+    }
+
+    package(grimoire) void addDefinition(T)(GrLexeme lexeme, T value) {
+        if (!definitionTable)
+            return;
+
+        definitionTable.addDefinition(lexeme, value);
     }
 
     /// Ajoute une nouvelle bibliothèque contenant ses définitions de type et de primitives

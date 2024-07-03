@@ -19,7 +19,7 @@ void main() {
     try {
         // Options
         bool testBytecode = false;
-        bool showBytecode = true;
+        bool showBytecode = false;
 
         const GrLocale locale = GrLocale.fr_FR;
         auto startTime = MonoTime.currTime();
@@ -29,7 +29,7 @@ void main() {
 
         compiler.addFile("script/test.gr");
 
-        GrBytecode bytecode = compiler.compile(GrOption.symbols | GrOption.safe, locale);
+        GrBytecode bytecode = compiler.compile(GrOption.all, locale);
         if (!bytecode) {
             writeln(compiler.getError().prettify(locale));
             return;
@@ -48,6 +48,8 @@ void main() {
         if (showBytecode) {
             writeln(bytecode.prettify());
         }
+
+        compiler.fetchDefinition("script/test.gr", 9, 13);
 
         GrEngine engine = new GrEngine;
         engine.addLibrary(stdlib);

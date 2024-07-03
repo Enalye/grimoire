@@ -78,6 +78,10 @@ final class GrCompiler {
         _error = null;
         _data.checkUnknownTypes();
 
+        if (options & GrOption.definitions) {
+            _data.definitionTable = new GrDefinitionTable;
+        }
+
         try {
             GrLexer lexer = new GrLexer(locale);
 
@@ -103,6 +107,13 @@ final class GrCompiler {
             _error = e.error;
             return null;
         }
+    }
+
+    void fetchDefinition(string path, size_t line, size_t column) {
+        if (!_data.definitionTable)
+            return;
+
+        _data.definitionTable.fetchDefinition(path, line, column);
     }
 
     /// Si une erreur survient, récupèrez l’erreur ici

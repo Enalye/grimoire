@@ -451,12 +451,20 @@ package final class GrLexer {
             _positionOfLine = 0u;
             _lines = split(_text, "\n");
 
+            if (data.definitionTable) {
+                data.definitionTable.addFile(_fileId, _file.getPath());
+            }
+
             scanScript();
 
             _fileId++;
         }
 
         importLibraries();
+
+        if (data.definitionTable) {
+            data.definitionTable.setLexemes(_lexemes);
+        }
     }
 
     private void importLibraries() {
