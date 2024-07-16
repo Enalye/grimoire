@@ -33,9 +33,8 @@ enum GrLocale {
     fr_FR
 }
 
-/// Information sur la définition des symboles
-final class GrDefinitionTable {
-    struct Definition {
+struct GrDefinition {
+    private {
         enum Type {
             none,
             variable,
@@ -45,19 +44,56 @@ final class GrDefinitionTable {
         }
 
         union {
-            GrVariable variable;
-            GrFunction function_;
-            GrPrimitive primitive;
-            GrEnumDefinition enum_;
+            GrVariable _variable;
+            GrFunction _function;
+            GrPrimitive _primitive;
+            GrEnumDefinition _enum;
         }
 
-        Type type;
-        GrLexeme lexeme;
+        Type _type;
+        GrLexeme _lexeme;
+        GrDefinitionTable _table;
     }
 
+    string getName() {
+        final switch (_type) with (GrDefinition.Type) {
+        case none:
+            return "";
+        case function_:
+            return grGetPrettyFunction(_function);
+        case primitive:
+            return grGetPrettyFunction(_primitive.name, _primitive.inSignature,
+                _primitive.outSignature);
+        case variable:
+            return grGetPrettyType(_variable.type, true);
+        case enum_:
+            return grGetPrettyType(grGetEnumType(_enum.name));
+        }
+    }
+
+    GrLexeme getDeclaration() {
+        final switch (_type) with (GrDefinition.Type) {
+        case none:
+            return _lexeme;
+        case function_:
+            return _table._lexemes[_function.nameLexPosition];
+        case primitive:
+            return _lexeme;
+        case variable:
+            if (_variable.hasLexPosition)
+                return _table._lexemes[_variable.lexPosition];
+            return _lexeme;
+        case enum_:
+            return _lexeme;
+        }
+    }
+}
+
+/// Information sur la définition des symboles
+final class GrDefinitionTable {
     private {
         GrLexeme[] _lexemes;
-        Definition[] _definitions;
+        GrDefinition[] _definitions;
         size_t[string] _filePaths;
     }
 
@@ -70,25 +106,26 @@ final class GrDefinitionTable {
     }
 
     package(grimoire) void addDefinition(T)(GrLexeme lexeme, T value) {
-        Definition def;
-        def.type = Definition.Type.none;
-        def.lexeme = lexeme;
+        GrDefinition def;
+        def._table = this;
+        def._type = GrDefinition.Type.none;
+        def._lexeme = lexeme;
 
         static if (is(T == GrVariable)) {
-            def.type = Definition.Type.variable;
-            def.variable = value;
+            def._type = GrDefinition.Type.variable;
+            def._variable = value;
         }
         else static if (is(T == GrFunction)) {
-            def.type = Definition.Type.function_;
-            def.function_ = value;
+            def._type = GrDefinition.Type.function_;
+            def._function = value;
         }
         else static if (is(T == GrPrimitive)) {
-            def.type = Definition.Type.primitive;
-            def.primitive = value;
+            def._type = GrDefinition.Type.primitive;
+            def._primitive = value;
         }
         else static if (is(T == GrEnumDefinition)) {
-            def.type = Definition.Type.enum_;
-            def.enum_ = value;
+            def._type = GrDefinition.Type.enum_;
+            def._enum_ = value;
         }
 
         _definitions ~= def;
@@ -106,67 +143,43 @@ final class GrDefinitionTable {
         return absolutePath(path);
     }
 
-    Definition* getDefinitionAt(size_t fileId, size_t line, size_t column) {
-        foreach (ref Definition def; _definitions) {
-            if (def.lexeme.fileId != fileId || def.lexeme.line != line)
+    GrDefinition* getDefinitionAt(size_t fileId, size_t line, size_t column) {
+        import std.stdio;
+
+        writeln("Recherche: ", fileId, " -> ", line, ":", column);
+        foreach (ref GrDefinition def; _definitions) {
+            if (def._lexeme.fileId == fileId) {
+                writeln(def._lexeme.line, ":", def._lexeme.column, " -> ", def._lexeme.getLine());
+            }
+            if (def._lexeme.fileId != fileId || def._lexeme.line != line)
                 continue;
 
-            if (column >= def.lexeme.column && column < (def.lexeme.column + def.lexeme.textLength)) {
+            if (column >= def._lexeme.column && column < (
+                    def._lexeme.column + def._lexeme.textLength)) {
                 return &def;
             }
         }
         return null;
     }
 
-    struct DefinitionInfo {
+    GrDefinition fetchDefinition(string path, size_t line, size_t column) {
+        GrDefinition noDef;
 
-    }
-
-    void fetchDefinition(string path, size_t line, size_t column) {
         path = _sanitizePath(path);
         auto p = path in _filePaths;
         if (!p)
-            return;
+            return noDef;
 
         const size_t fileId = *p;
 
         import std.stdio;
 
-        Definition* def = getDefinitionAt(fileId, line, column);
+        GrDefinition* def = getDefinitionAt(fileId, line, column);
         if (!def) {
-            writeln("not found");
-            return;
+            return noDef;
         }
 
-        GrLexeme lex;
-        string type;
-        final switch (def.type) with (Definition.Type) {
-        case none:
-            lex = def.lexeme;
-            break;
-        case function_:
-            lex = _lexemes[def.function_.nameLexPosition];
-            type = grGetPrettyFunction(def.function_);
-            break;
-        case primitive:
-            lex = def.lexeme;
-            type = grGetPrettyFunction(def.primitive.name,
-                def.primitive.inSignature, def.primitive.outSignature);
-            break;
-        case variable:
-            if (def.variable.hasLexPosition)
-                lex = _lexemes[def.variable.lexPosition];
-            else
-                lex = def.lexeme;
-            type = grGetPrettyType(def.variable.type, true);
-            break;
-        case enum_:
-            lex = def.lexeme;
-            type = grGetPrettyType(grGetEnumType(def.enum_.name));
-            break;
-        }
-
-        writeln(type);
+        return *def;
     }
 }
 

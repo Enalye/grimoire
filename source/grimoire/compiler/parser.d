@@ -4400,6 +4400,7 @@ final class GrParser {
         GrType type;
         bool isAuto, isTyped = true;
 
+        uint lexPosition = current;
         if (get().type != GrLexeme.Type.identifier)
             logError(format(getError(Error.expectedIdentifierFoundX),
                     getPrettyLexemeType(get().type)), getError(Error.missingIdentifier));
@@ -4414,7 +4415,8 @@ final class GrParser {
             isAuto = true;
         }
 
-        return registerVariable(identifier, type, isTyped ? isAuto : true, false, false, false);
+        return registerVariable(identifier, type, isTyped ? isAuto : true, false,
+            false, false, false, lexPosition, true);
     }
 
     /// Permet l’itération sur une liste ou un itérateur

@@ -109,11 +109,11 @@ final class GrCompiler {
         }
     }
 
-    void fetchDefinition(string path, size_t line, size_t column) {
+    GrDefinition fetchDefinition(string path, size_t line, size_t column) {
         if (!_data.definitionTable)
-            return;
+            return GrDefinition();
 
-        _data.definitionTable.fetchDefinition(path, line, column);
+        return _data.definitionTable.fetchDefinition(path, line, column);
     }
 
     /// Si une erreur survient, récupèrez l’erreur ici

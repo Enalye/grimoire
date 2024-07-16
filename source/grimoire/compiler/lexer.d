@@ -148,7 +148,8 @@ struct GrLexeme {
     private this(GrLexer _lexer) {
         _file = _lexer._file;
         _line = _lexer._line;
-        _column = _lexer._current - _lexer._positionOfLine;
+        _column = _lexer._current >= _lexer._positionOfLine ?
+            (_lexer._current - _lexer._positionOfLine) : 0;
         _fileId = _lexer._fileId;
         lexer = _lexer;
     }
@@ -171,6 +172,10 @@ struct GrLexeme {
         /// Sa ligne
         size_t line() const {
             return _line + _file.getLineOffset();
+        }
+        /// Ditto
+        size_t rawLine() const {
+            return _line;
         }
         /// Sa colonne
         size_t column() const {
@@ -532,7 +537,7 @@ package final class GrLexer {
             symbol = _text[_current];
 
             if (symbol == '\n') {
-                _positionOfLine = _current;
+                _positionOfLine = _current + 1;
                 _line++;
             }
             else if (symbol == '#') {
@@ -542,7 +547,7 @@ package final class GrLexer {
                     _current++;
                 }
                 while (_text[_current] != '\n');
-                _positionOfLine = _current;
+                _positionOfLine = _current + 1;
                 _line++;
             }
             else if (symbol == '/') {
@@ -557,7 +562,7 @@ package final class GrLexer {
                         _current++;
                     }
                     while (_current < _text.length && _text[_current] != '\n');
-                    _positionOfLine = _current;
+                    _positionOfLine = _current + 1;
                     _line++;
                     break;
                 case '*':
@@ -571,7 +576,7 @@ package final class GrLexer {
                         }
 
                         if (_text[_current] == '\n') {
-                            _positionOfLine = _current;
+                            _positionOfLine = _current + 1;
                             _line++;
                         }
                         if (_text[_current] == '/' && _text[_current + 1] == '*') {
@@ -1070,7 +1075,7 @@ package final class GrLexer {
             const dchar symbol = get();
 
             if (symbol == '\n') {
-                _positionOfLine = _current;
+                _positionOfLine = _current + 1;
                 _line++;
 
                 buffer ~= get();
@@ -1724,7 +1729,7 @@ package final class GrLexer {
                 logError(Error.missingQuoteEndString);
             const dchar symbol = get();
             if (symbol == '\n') {
-                _positionOfLine = _current;
+                _positionOfLine = _current + 1;
                 _line++;
             }
             else if (symbol == endChar)
@@ -1805,7 +1810,7 @@ package final class GrLexer {
             error.filePath = to!string(_file);
             error.lineText = to!string(_lines[_line]);
             error.line = _line + 1u; // Par convention, la première ligne commence à partir de 1, et non 0
-            error.column = _current - _positionOfLine;
+            error.column = _current >= _positionOfLine ? (_current - _positionOfLine) : 0;
             error.textLength = 0u;
         }
 
