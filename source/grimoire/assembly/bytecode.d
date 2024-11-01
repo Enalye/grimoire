@@ -36,6 +36,7 @@ enum GrOpcode {
     yield,
     task,
     anonymousTask,
+    self,
     new_,
 
     channel,
@@ -664,6 +665,8 @@ final class GrBytecode {
                 return "task";
             case anonymousTask:
                 return "atask";
+            case self:
+                return "self";
             case new_:
                 return "new";
             case channel:

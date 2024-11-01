@@ -1,8 +1,8 @@
-function fib(int n) (int) {
+func fib(n: int) (int) {
     if(n < 2) return n;
-    return self(n - 1) + self(n - 2);
+    return function(n - 1) + function(n - 2);
 }
 
-event onLoad() {
-    34:fib:print;
+event app {
+    print(fib(34));
 }

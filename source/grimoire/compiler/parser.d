@@ -506,8 +506,6 @@ final class GrParser {
             }
 
             currentFunction.nbParameters++;
-            if (currentFunction.isTask && !currentFunction.isEvent)
-                addInstruction(GrOpcode.globalPop, 0u);
 
             GrVariable newVar = new GrVariable;
             newVar.type = type;
@@ -584,6 +582,7 @@ final class GrParser {
                 case func:
                 case task:
                 case event:
+                case instance:
                 case internalTuple:
                     continue;
                 case string_:
@@ -2079,14 +2078,13 @@ final class GrParser {
         GrFunction func = getFunction(name, signature, call.fileId, false);
         if (func) {
             call.functionToCall = func;
-            if (func.isTask) {
-                if (func.nbParameters > 0)
-                    addInstruction(GrOpcode.globalPush, func.nbParameters);
-            }
 
             call.position = cast(uint) currentFunction.instructions.length;
             addInstruction(GrOpcode.call, 0);
 
+            if (func.isTask) {
+                addInstruction(GrOpcode.extend, func.nbParameters);
+            }
             return func.outSignature;
         }
         else
@@ -2107,14 +2105,13 @@ final class GrParser {
         call.fileId = fileId;
 
         call.functionToCall = func;
-        if (func.isTask) {
-            if (func.nbParameters > 0)
-                addInstruction(GrOpcode.globalPush, func.nbParameters);
-        }
 
         call.position = cast(uint) currentFunction.instructions.length;
         addInstruction(GrOpcode.call, 0);
 
+        if (func.isTask) {
+            addInstruction(GrOpcode.extend, func.nbParameters);
+        }
         return func.outSignature;
     }
 
@@ -2919,6 +2916,10 @@ final class GrParser {
                 checkAdvance();
                 currentType.mangledType = grMangleSignature(parseSignature(templateVariables));
                 break;
+            case instance:
+                currentType.base = GrType.Base.instance;
+                checkAdvance();
+                break;
             case channelType:
                 currentType.base = GrType.Base.channel;
                 checkAdvance();
@@ -3345,6 +3346,9 @@ final class GrParser {
             else
                 outSignature = parseSignature();
         }
+        else {
+            outSignature = [grInstance];
+        }
 
         GrFunction func = new GrFunction;
         func.isTask = temp.isTask;
@@ -3375,6 +3379,9 @@ final class GrParser {
         if (!isTask && !isEvent) {
             // Type de retour
             outSignature = parseSignature();
+        }
+        else {
+            outSignature = [grInstance];
         }
         preBeginFunction("$anon", nameLexPosition, get().fileId, inSignature,
             inputs, isTask, outSignature, true, isEvent);
@@ -5172,6 +5179,7 @@ final class GrParser {
             case double_:
             case string_:
             case enum_:
+            case instance:
                 return dst;
             case class_:
                 string className = src.mangledType;
@@ -6000,6 +6008,7 @@ final class GrParser {
                 goto case void_;
             }
             break;
+        case instance:
         case reference:
         case void_:
         case null_:
@@ -6021,6 +6030,7 @@ final class GrParser {
         case func:
         case task:
         case event:
+        case instance:
         case enum_:
         case float_:
         case double_:
@@ -7002,14 +7012,15 @@ final class GrParser {
                 hasValue = true;
                 hadValue = false;
                 break;
-            case self:
+            case function_:
                 // Se réfère à la fonction actuelle
                 checkAdvance();
                 currentType = addFunctionAddress(currentFunction, get().fileId);
                 if (currentType.base == GrType.Base.void_)
-                    logError(format(getError(Error.xMustBeInsideFuncOrTask), getPrettyLexemeType(GrLexeme.Type.self)),
+                    logError(format(getError(Error.xMustBeInsideFuncOrTask),
+                            getPrettyLexemeType(GrLexeme.Type.function_)),
                         format(getError(Error.xRefNoFuncNorTask),
-                            getPrettyLexemeType(GrLexeme.Type.self)), "", -1);
+                            getPrettyLexemeType(GrLexeme.Type.function_)), "", -1);
                 typeStack ~= currentType;
                 hasValue = true;
                 break;
@@ -7025,6 +7036,12 @@ final class GrParser {
                 break;
             case event:
                 currentType = parseAnonymousFunction(false, true);
+                typeStack ~= currentType;
+                hasValue = true;
+                break;
+            case self:
+                addInstruction(GrOpcode.self);
+                currentType = grInstance;
                 typeStack ~= currentType;
                 hasValue = true;
                 break;
@@ -7320,10 +7337,6 @@ final class GrParser {
                 format(getError(Error.funcIsOfTypeX), getPrettyType(type)));
         }
 
-        // Pousse les valeurs sur la pile globale pour la tâche créée
-        if (type.base == GrType.Base.task)
-            addGlobalPush(signature);
-
         // Appel anonyme
         GrType retTypes = grPackTuple(grUnmangleSignature(type.mangledReturnType));
 
@@ -7337,6 +7350,11 @@ final class GrParser {
         }
         else
             addInstruction(GrOpcode.anonymousTask, 0u);
+
+        // Récupère les paramètres de la tâche créée
+        if (type.base == GrType.Base.task)
+            addInstruction(GrOpcode.extend, cast(int) signature.length);
+
         return retTypes;
     }
 
@@ -7460,10 +7478,6 @@ final class GrParser {
                     }
                 }
 
-                // Pousse les valeurs sur la pile globale pour la tâche créée
-                if (variable.type.base == GrType.Base.task)
-                    addGlobalPush(signature);
-
                 // Appel anonyme
                 addGetInstruction(variable);
 
@@ -7473,6 +7487,10 @@ final class GrParser {
                     addInstruction(GrOpcode.anonymousCall, 0u);
                 else if (variable.type.base == GrType.Base.task)
                     addInstruction(GrOpcode.anonymousTask, 0u);
+
+                // Récupère les paramètres de la tâche créée
+                if (variable.type.base == GrType.Base.task)
+                    addInstruction(GrOpcode.extend, cast(int) signature.length);
 
                 _data.addDefinition(identifier, variable);
             }

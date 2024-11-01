@@ -17,5 +17,6 @@
 	- [range](fr/lib/range)
 	- [string](fr/lib/string)
 	- [system](fr/lib/system)
+	- [task](fr/lib/task)
 	- [time](fr/lib/time)
 	- [typecast](fr/lib/typecast)

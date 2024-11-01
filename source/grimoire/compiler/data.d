@@ -531,6 +531,7 @@ final class GrData {
         case double_:
         case bool_:
         case string_:
+        case instance:
             break;
         case list:
         case channel:
@@ -653,6 +654,7 @@ final class GrData {
             case double_:
             case bool_:
             case string_:
+            case instance:
                 if (first[i].base == second[i].base)
                     continue;
                 return false;
@@ -785,6 +787,7 @@ final class GrData {
         case bool_:
         case string_:
         case enum_:
+        case instance:
         case void_:
         case null_:
         case internalTuple:

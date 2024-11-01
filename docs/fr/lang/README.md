@@ -9,7 +9,7 @@ Ce guide assume que vous ayez une certaine connaissance d’au moins un autre la
 Ce guide est basé sur la version 0.8 de grimoire.
 
 ```grimoire
-event main() {
+event app {
   print("Hello World!");
 }
 ```

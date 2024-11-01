@@ -37,7 +37,10 @@ Fonctions de conversion.
 |**byte**|**string**|
 |**pure [string]**|**string**|
 |**pure [char]**|**string**|
+|**T**|**string**|
 |**pure string**|**[char]**|
+|**int**|**T**|
+|**string**|**T**|
 
 
 ***

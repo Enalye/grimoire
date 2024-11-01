@@ -41,20 +41,20 @@ func auCarré(i: int) (int) {
 
 event main() {
 	var f1 = &aucarré; //Error, & has no way to know the type at during compilation (aucarré could be overloaded).
-	var f2 = &<function(int) (int)> aucarré; //Valid, an explicit type prevent this problem.
+	var f2 = &<func(int) (int)> aucarré; //Valid, an explicit type prevent this problem.
 	f2 = &aucarré; //Now valid, because it's now typed by the previous assignment.
 
-	var f3: function(int) (int) = &aucarré; //Error, can't know the type of f3 since f3 doesn't exist at the time of declaration.
+	var f3: func(int) (int) = &aucarré; //Error, can't know the type of f3 since f3 doesn't exist at the time of declaration.
 	f3 = &aucarré; //Valid, since f3 is already declared with a type.
 }
 ```
 
-Le mot-clé `self` permet de récupérer une référence à la fonction actuelle.
+Le mot-clé `function` permet de récupérer une référence à la fonction actuelle.
 ```grimoire
 // Fibonacci
 func(n: int) (int) {
     if(n < 2) return n;
-    return self(n - 1) + self(n - 2);
+    return function(n - 1) + function(n - 2);
 }(10).print;
 ```
 

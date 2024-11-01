@@ -9,7 +9,7 @@ This guide assumes you have a basic understanding of at least one other programm
 This guide is based on the version 0.8 of grimoire.
 
 ```grimoire
-event main() {
+event app {
   print("Hello World!");
 }
 ```

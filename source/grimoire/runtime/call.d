@@ -129,6 +129,10 @@ final class GrCall {
         return cast(GrList) getParameter!GrPointer(index);
     }
 
+    pragma(inline) GrTask getTask(uint index) const {
+        return cast(GrTask) getParameter!GrPointer(index);
+    }
+
     pragma(inline) GrChannel getChannel(uint index) const {
         return cast(GrChannel) getParameter!GrPointer(index);
     }
@@ -215,6 +219,10 @@ final class GrCall {
 
     pragma(inline) void setList(GrValue[] value) {
         setResult!GrPointer(cast(GrPointer) new GrList(value));
+    }
+
+    pragma(inline) void setTask(GrTask value) {
+        setResult!GrPointer(cast(GrPointer) value);
     }
 
     pragma(inline) void setChannel(GrChannel value) {
@@ -312,6 +320,10 @@ final class GrCall {
         return cast(GrList) _task.engine.getListVariable(name);
     }
 
+    GrTask getTaskVariable(string name) const {
+        return cast(GrTask) _task.engine.getTaskVariable(name);
+    }
+
     GrChannel getChannelVariable(string name) const {
         return cast(GrChannel) _task.engine.getChannelVariable(name);
     }
@@ -362,6 +374,10 @@ final class GrCall {
 
     void setObjectVariable(string name, GrObject value) {
         _task.engine.setObjectVariable(name, value);
+    }
+
+    void setTaskVariable(string name, GrTask value) {
+        _task.engine.setTaskVariable(name, value);
     }
 
     void setChannelVariable(string name, GrChannel value) {

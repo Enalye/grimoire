@@ -53,6 +53,9 @@ string grGetPrettyType(const GrType variableType, bool showModifiers = true) {
         case string_:
             result ~= "string";
             break;
+        case instance:
+            result ~= "instance";
+            break;
         case optional:
             int i;
             auto parameters = grUnmangleSignature(variableType.mangledType);
@@ -244,7 +247,8 @@ string grGetPrettyFunctionCall(const string name, const GrType[] inSignature) {
 }
 
 /// Enjolive une fonction.
-string grGetPrettyFunctionBasic(const string name, const GrType[] inSignature, const GrType[] outSignature) {
+string grGetPrettyFunctionBasic(const string name, const GrType[] inSignature,
+    const GrType[] outSignature) {
     string result;
     GrType[] signature = inSignature.dup;
 

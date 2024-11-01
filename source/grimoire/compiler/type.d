@@ -30,6 +30,7 @@ struct GrType {
         double_,
         bool_,
         string_,
+        instance,
         optional,
         list,
         func,
@@ -201,6 +202,8 @@ const GrType grChar = GrType(GrType.Base.char_);
 const GrType grByte = GrType(GrType.Base.byte_);
 /// Chaîne de caractères
 const GrType grString = GrType(GrType.Base.string_);
+/// Instance d’une tâche ou d’un événement
+const GrType grInstance = GrType(GrType.Base.instance);
 
 /// Crée une version optionnel du type
 GrType grOptional(GrType subType) {
@@ -696,6 +699,7 @@ package class GrFunction {
         case float_:
         case double_:
         case string_:
+        case instance:
         case list:
         case optional:
         case class_:

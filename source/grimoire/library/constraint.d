@@ -120,12 +120,13 @@ private bool _register(GrData, GrType type, const GrType[] types) {
     case func:
     case task:
     case event:
+    case instance:
     case reference:
     case null_:
         return type == GrType.Base.optional || type == GrType.Base.class_ ||
             type == GrType.Base.list || type == GrType.Base.native ||
-            type == GrType.Base.channel || type == GrType.Base.reference || type == GrType
-            .Base.null_;
+            type == GrType.Base.channel || type == GrType.Base.instance ||
+            type == GrType.Base.reference || type == GrType.Base.null_;
     case void_:
     case internalTuple:
         return false;
@@ -187,6 +188,7 @@ private bool _notnullable(GrData, GrType type, const GrType[]) {
     case channel:
     case func:
     case task:
+    case instance:
     case event:
     case class_:
     case native:
@@ -215,6 +217,7 @@ private bool _nullable(GrData, GrType type, const GrType[]) {
     case channel:
     case func:
     case task:
+    case instance:
     case event:
     case class_:
     case native:

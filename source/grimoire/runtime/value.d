@@ -10,6 +10,7 @@ import grimoire.runtime.string;
 import grimoire.runtime.list;
 import grimoire.runtime.object;
 import grimoire.runtime.channel;
+import grimoire.runtime.task;
 
 package(grimoire) enum GR_NULL = 0xffffUL << 48;
 
@@ -146,6 +147,10 @@ struct GrValue {
         return cast(GrList) _ptrValue;
     }
 
+    pragma(inline) GrTask getTask() const {
+        return cast(GrTask) _ptrValue;
+    }
+
     pragma(inline) GrChannel getChannel() const {
         return cast(GrChannel) _ptrValue;
     }
@@ -208,6 +213,10 @@ struct GrValue {
 
     pragma(inline) void setList(GrValue[] value) {
         _ptrValue = cast(GrPointer) new GrList(value);
+    }
+
+    pragma(inline) void setTask(GrTask value) {
+        _ptrValue = cast(GrPointer) value;
     }
 
     pragma(inline) void setChannel(GrChannel value) {

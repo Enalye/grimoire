@@ -56,10 +56,10 @@ abstract class GrBlocker {
 
 /// Tâche représentant un fil d’exécution indépendant et concurrent (coroutine)
 final class GrTask {
-    this(GrEngine engine_) {
+    this(GrEngine engine_, uint minStackSize = 8) {
         engine = engine_;
         setupCallStack(4);
-        setupStack(8);
+        setupStack(minStackSize);
         setupLocals(2);
     }
 
@@ -236,5 +236,9 @@ final class GrTask {
     /// Débloque la tâche du bloqueur
     void unblock() {
         blocker = null;
+    }
+
+    void kill() {
+        engine.killTask(this);
     }
 }

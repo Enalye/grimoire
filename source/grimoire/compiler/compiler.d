@@ -324,6 +324,7 @@ final class GrCompiler {
             case native:
             case channel:
             case optional:
+            case instance:
                 variable.typeMask = GR_MASK_POINTER;
                 break;
             case void_:
@@ -396,6 +397,7 @@ final class GrCompiler {
                 case native:
                 case channel:
                 case optional:
+                case instance:
                     mask = GR_MASK_POINTER;
                     break;
                 case void_:

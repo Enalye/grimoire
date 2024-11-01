@@ -41,20 +41,20 @@ func square(i: int) (int) {
 
 event main() {
 	var f1 = &square; //Error, & has no way to know the type at during compilation (square could be overloaded).
-	var f2 = &<function(int) (int)> square; //Valid, an explicit type prevent this problem.
+	var f2 = &<func(int) (int)> square; //Valid, an explicit type prevent this problem.
 	f2 = &square; //Now valid, because it's now typed by the previous assignment.
 
-	var f3: function(int) (int) = &square; //Error, can't know the type of f3 since f3 doesn't exist at the time of declaration.
+	var f3: func(int) (int) = &square; //Error, can't know the type of f3 since f3 doesn't exist at the time of declaration.
 	f3 = &square; //Valid, since f3 is already declared with a type.
 }
 ```
 
-The `self` keyword allows us to fetch a reference to the current function.
+The `function` keyword allows us to fetch a reference to the current function.
 ```grimoire
 // Fibonacci
 func(n: int) (int) {
     if(n < 2) return n;
-    return self(n - 1) + self(n - 2);
+    return function(n - 1) + function(n - 2);
 }(10).print;
 ```
 

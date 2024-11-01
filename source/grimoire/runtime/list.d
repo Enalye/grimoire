@@ -14,6 +14,7 @@ import grimoire.runtime.channel;
 import grimoire.runtime.error;
 import grimoire.runtime.object;
 import grimoire.runtime.string;
+import grimoire.runtime.task;
 import grimoire.runtime.value;
 
 /// Collection contenant plusieurs valeurs
@@ -116,6 +117,10 @@ final class GrList {
         return cast(GrList[]) cast(GrPointer[]) _data;
     }
 
+    pragma(inline) GrTask[] getTasks() {
+        return cast(GrTask[]) cast(GrPointer[]) _data;
+    }
+
     pragma(inline) GrChannel[] getChannels() {
         return cast(GrChannel[]) cast(GrPointer[]) _data;
     }
@@ -179,6 +184,10 @@ final class GrList {
     }
 
     pragma(inline) void setLists(GrList[] values) {
+        _data = cast(GrValue[]) values;
+    }
+
+    pragma(inline) void setTasks(GrTask[] values) {
         _data = cast(GrValue[]) values;
     }
 

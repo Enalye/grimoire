@@ -261,6 +261,7 @@ final class GrModuleDef : GrModule {
         case event:
         case list:
         case native:
+        case instance:
         case void_:
         case null_:
         case internalTuple:

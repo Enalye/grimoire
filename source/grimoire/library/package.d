@@ -23,6 +23,7 @@ private {
     import grimoire.library.range;
     import grimoire.library.string;
     import grimoire.library.system;
+    import grimoire.library.task;
     import grimoire.library.time;
     import grimoire.library.typecast;
 }
@@ -33,7 +34,7 @@ private GrModuleLoader[] _libLoaders = [
     &grLoadStdLibIo, &grLoadStdLibList, &grLoadStdLibMath,
     &grLoadStdLibOptional, &grLoadStdLibPair, &grLoadStdLibQueue,
     &grLoadStdLibRange, &grLoadStdLibString, &grLoadStdLibSystem,
-    &grLoadStdLibTime, &grLoadStdLibTypecast
+    &grLoadStdLibTask, &grLoadStdLibTime, &grLoadStdLibTypecast
 ];
 
 GrLibrary grGetStandardLibrary() {

@@ -123,6 +123,7 @@ struct GrLexeme {
         func,
         task,
         event,
+        instance,
         var,
         if_,
         unless,
@@ -138,6 +139,7 @@ struct GrLexeme {
         loop,
         return_,
         self,
+        function_,
         die,
         exit,
         yield,
@@ -1552,6 +1554,9 @@ package final class GrLexer {
         case "self":
             lex.type = GrLexeme.Type.self;
             break;
+        case "function":
+            lex.type = GrLexeme.Type.function_;
+            break;
         case "die":
             lex.type = GrLexeme.Type.die;
             break;
@@ -1592,6 +1597,10 @@ package final class GrLexer {
             break;
         case "event":
             lex.type = GrLexeme.Type.event;
+            lex.isType = true;
+            break;
+        case "instance":
+            lex.type = GrLexeme.Type.instance;
             lex.isType = true;
             break;
         case "int":
@@ -2111,6 +2120,8 @@ string grGetPrettyLexemeType(GrLexeme.Type lexType) {
         return "task";
     case event:
         return "event";
+    case instance:
+        return "instance";
     case var:
         return "var";
     case if_:
@@ -2141,6 +2152,8 @@ string grGetPrettyLexemeType(GrLexeme.Type lexType) {
         return "return";
     case self:
         return "self";
+    case function_:
+        return "function";
     case die:
         return "die";
     case exit:

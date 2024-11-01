@@ -36,10 +36,10 @@ class GrEngine {
         GrValue[] _globals;
 
         /// La pile globale
-        GrValue[] _globalStackIn, _globalStackOut;
+        GrValue[] _globalStack;
 
         /// Liste des tâche en exécution
-        GrTask[] _tasks, _createdTasks;
+        GrTask[] _tasks;
 
         /// Empêche la création de nouvelles tâches après un exit
         bool _allowEventCall;
@@ -78,7 +78,7 @@ class GrEngine {
     @property {
         /// Vérifie si une tâche est en cours d’exécution
         bool hasTasks() const {
-            return (_tasks.length + _createdTasks.length) > 0uL;
+            return _tasks.length > 0uL;
         }
 
         /// Est-ce que la machine virtuelle est en panique ?
@@ -240,8 +240,8 @@ class GrEngine {
     }
     ---
     */
-    GrTask callEvent(const string name, const GrType[] signature = [],
-        GrValue[] parameters = [], Priority priority = Priority.normal) {
+    GrTask callEvent(const string name, const GrType[] signature = [], GrValue[] parameters = [
+        ]) {
 
         if (!isRunning || !_allowEventCall)
             return null;
@@ -267,19 +267,12 @@ class GrEngine {
             task.stack[i] = parameters[i];
         task.stackPos = (cast(int) parameters.length) - 1;
 
-        final switch (priority) with (Priority) {
-        case immediate:
-            _tasks ~= task;
-            break;
-        case normal:
-            _createdTasks ~= task;
-            break;
-        }
+        _tasks ~= task;
         return task;
     }
 
     /// Ditto
-    GrTask callEvent(GrEvent event, GrValue[] parameters = [], Priority priority = Priority.normal) {
+    GrTask callEvent(GrEvent event, GrValue[] parameters = []) {
         if (!isRunning || !_allowEventCall || event is null)
             return null;
 
@@ -299,14 +292,7 @@ class GrEngine {
         task.stackPos = (cast(int) parameters.length) - 1;
         task.closure = event.closure;
 
-        final switch (priority) with (Priority) {
-        case immediate:
-            _tasks ~= task;
-            break;
-        case normal:
-            _createdTasks ~= task;
-            break;
-        }
+        _tasks ~= task;
         return task;
     }
 
@@ -402,7 +388,7 @@ class GrEngine {
             return;
 
         // Message d’erreur
-        _globalStackIn ~= GrValue(message);
+        _globalStack ~= GrValue(message);
 
         generateStackTrace(task);
 
@@ -426,8 +412,15 @@ class GrEngine {
             task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
             task.isKilled = true;
         }
-        _createdTasks.length = 0;
         _allowEventCall = false;
+    }
+
+    /// Signale la tâche comme morte
+    void killTask(GrTask task) {
+        if (task.engine != this)
+            return;
+        task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
+        task.isKilled = true;
     }
 
     alias getBoolVariable = getVariable!bool;
@@ -449,6 +442,10 @@ class GrEngine {
 
     pragma(inline) GrList getListVariable(string name) const {
         return cast(GrList) getVariable!GrPointer(name);
+    }
+
+    pragma(inline) GrTask getTaskVariable(string name) const {
+        return cast(GrTask) getVariable!GrPointer(name);
     }
 
     pragma(inline) GrChannel getChannelVariable(string name) const {
@@ -522,6 +519,10 @@ class GrEngine {
         setVariable!GrPointer(name, cast(GrPointer) new GrList(value));
     }
 
+    pragma(inline) void setTaskVariable(string name, GrTask value) {
+        setVariable!GrPointer(name, cast(GrPointer) value);
+    }
+
     pragma(inline) void setChannelVariable(string name, GrChannel value) {
         setVariable!GrPointer(name, cast(GrPointer) value);
     }
@@ -565,13 +566,14 @@ class GrEngine {
     void process() {
         import std.algorithm.mutation : remove, swap;
 
+        /*
         if (_createdTasks.length) {
             foreach_reverse (task; _createdTasks)
                 _tasks ~= task;
             _createdTasks.length = 0;
 
-            swap(_globalStackIn, _globalStackOut);
-        }
+            swap(_globalStack, _globalStackOut);
+        }*/
 
         tasksLabel: for (uint index = 0u; index < _tasks.length;) {
             GrTask currentTask = _tasks[index];
@@ -595,7 +597,7 @@ class GrEngine {
                 case throw_:
                     if (!currentTask.isPanicking) {
                         // Message d’erreur
-                        _globalStackIn ~= currentTask.stack[currentTask.stackPos];
+                        _globalStack ~= currentTask.stack[currentTask.stackPos];
                         currentTask.stackPos--;
                         generateStackTrace(currentTask);
 
@@ -636,8 +638,8 @@ class GrEngine {
 
                         // La machine virtuelle est maintenant en panique
                         _isPanicking = true;
-                        _panicMessage = (cast(GrString) _globalStackIn[$ - 1]._ptrValue).str;
-                        _globalStackIn.length--;
+                        _panicMessage = (cast(GrString) _globalStack[$ - 1]._ptrValue).str;
+                        _globalStack.length--;
 
                         // Tous les appels différés ont été exécuté, on tue la tâche
                         _tasks = _tasks.remove(index);
@@ -661,14 +663,34 @@ class GrEngine {
                     }
                     break;
                 case task:
-                    GrTask nTask = new GrTask(this);
-                    nTask.pc = grGetInstructionUnsignedValue(opcode);
-                    _createdTasks ~= nTask;
-                    currentTask.pc++;
+                    const uint pc = grGetInstructionUnsignedValue(opcode);
+
+                    // Cet opcode est forcément suivi de extend
+                    const uint size = grGetInstructionUnsignedValue(
+                        _bytecode.opcodes[currentTask.pc + 1]);
+
+                    GrTask nTask = new GrTask(this, size + 4);
+                    nTask.pc = pc;
+                    _tasks ~= nTask;
+
+                    currentTask.stackPos++;
+                    currentTask.stackPos -= size;
+                    nTask.stack[0 .. size] =
+                        currentTask.stack[currentTask.stackPos .. currentTask.stackPos + size];
+                    nTask.stackPos = (cast(int) size) - 1;
+
+                    currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer) nTask;
+
+                    currentTask.pc += 2;
                     break;
                 case anonymousTask:
-                    GrTask nTask = new GrTask(this);
+                    // Cet opcode est forcément suivi de extend
+                    const uint size = grGetInstructionUnsignedValue(
+                        _bytecode.opcodes[currentTask.pc + 1]);
 
+                    GrTask nTask = new GrTask(this, size + 4);
+
+                    currentTask.stackPos -= size;
                     GrClosure closure = cast(GrClosure) currentTask
                         .stack[currentTask.stackPos]._ptrValue;
                     nTask.pc = closure.pc;
@@ -676,9 +698,19 @@ class GrEngine {
                     if (closure.caller) {
                         nTask.closure = closure;
                     }
+                    _tasks ~= nTask;
 
-                    currentTask.stackPos--;
-                    _createdTasks ~= nTask;
+                    nTask.stack[0 .. size] =
+                        currentTask.stack[currentTask.stackPos + 1 .. currentTask.stackPos + 1 +
+                            size];
+                    nTask.stackPos = (cast(int) size) - 1;
+
+                    currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer) nTask;
+                    currentTask.pc += 2;
+                    break;
+                case self:
+                    currentTask.stackPos++;
+                    currentTask.stack[currentTask.stackPos]._ptrValue = cast(GrPointer) currentTask;
                     currentTask.pc++;
                     break;
                 case die:
@@ -1009,7 +1041,7 @@ class GrEngine {
                 case globalPush:
                     const uint nbParams = grGetInstructionUnsignedValue(opcode);
                     for (uint i = 1u; i <= nbParams; i++)
-                        _globalStackOut ~= currentTask.stack[(currentTask.stackPos - nbParams) + i];
+                        _globalStack ~= currentTask.stack[(currentTask.stackPos - nbParams) + i];
                     currentTask.stackPos -= nbParams;
                     currentTask.pc++;
                     break;
@@ -1017,8 +1049,8 @@ class GrEngine {
                     currentTask.stackPos++;
                     if (currentTask.stackPos == currentTask.stack.length)
                         currentTask.stack.length *= 2;
-                    currentTask.stack[currentTask.stackPos] = _globalStackIn[$ - 1];
-                    _globalStackIn.length--;
+                    currentTask.stack[currentTask.stackPos] = _globalStack[$ - 1];
+                    _globalStack.length--;
                     currentTask.pc++;
                     break;
                 case equal_int:
@@ -1712,12 +1744,11 @@ class GrEngine {
                                 otherTask.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
                                 otherTask.isKilled = true;
                             }
-                            _createdTasks.length = 0;
 
                             // La machine virtuelle est en panique
                             _isPanicking = true;
-                            _panicMessage = (cast(GrString) _globalStackIn[$ - 1]._ptrValue).str;
-                            _globalStackIn.length--;
+                            _panicMessage = (cast(GrString) _globalStack[$ - 1]._ptrValue).str;
+                            _globalStack.length--;
 
                             // Tous les appels différés ont été exécuté, on tue la tâche
                             _tasks = _tasks.remove(index);
@@ -1807,8 +1838,10 @@ class GrEngine {
                     }
 
                     // On décale toute la signature
-                    while (pos != currentTask.stackPos)
-                        currentTask.stack[pos] = currentTask.stack[++pos];
+                    while (pos != currentTask.stackPos) {
+                        currentTask.stack[pos] = currentTask.stack[pos + 1];
+                        pos++;
+                    }
 
                     currentTask.stackPos--;
                     break;

@@ -73,6 +73,8 @@ private void _print(GrCall call) {
             }
             txt ~= "}";
             return txt;
+        case instance:
+            return "instance";
         case internalTuple:
             return "(tuple)";
         case reference:
