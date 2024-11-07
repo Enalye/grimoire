@@ -222,7 +222,7 @@ final class GrParser {
             bool isAlreadyDeclared, hasDeclPosition;
             uint declPosition;
 
-            foreach (GrVariable variable; globalVariables) {
+            /*foreach (GrVariable variable; globalVariables) {
                 if (variable.name == name && (variable.fileId == fileId ||
                         variable.isExport || isExport)) {
                     isAlreadyDeclared = true;
@@ -250,6 +250,7 @@ final class GrParser {
                     }
                 }
             }
+            */
 
             if (isAlreadyDeclared) {
                 if (hasPosition) {
