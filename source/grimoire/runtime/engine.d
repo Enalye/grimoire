@@ -120,7 +120,14 @@ class GrEngine {
     final void addLibrary(string filePath) {
         import core.runtime;
 
-        void* dlib = Runtime.loadLibrary(filePath);
+        void* dlib;
+        version (Windows) {
+            dlib = Runtime.loadLibrary(filePath);
+        }
+        else version (Posix) {
+            dlib = dlopen(filePath, RTLD_LAZY);
+        }
+
         enforce!GrRuntimeException(dlib, format!"library `%s` not found"(filePath));
 
         typeof(&_GRLIBSYMBOL) libFunc;

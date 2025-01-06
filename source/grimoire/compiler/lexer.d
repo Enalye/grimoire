@@ -481,7 +481,14 @@ package final class GrLexer {
             assert(file.type == GrImportFile.Type.library, "invalid library file type");
             string filePath = file.getPath();
 
-            void* dlib = Runtime.loadLibrary(filePath);
+            void* dlib;
+
+            version (Windows) {
+                dlib = Runtime.loadLibrary(filePath);
+            }
+            else version (Posix) {
+                dlib = dlopen(filePath, RTLD_LAZY);
+            }
             enforce!GrCompilerException(dlib, format(getError(Error.libXNotFound), filePath));
 
             typeof(&_GRLIBSYMBOL) libFunc;
