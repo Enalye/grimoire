@@ -487,7 +487,7 @@ package final class GrLexer {
                 dlib = Runtime.loadLibrary(filePath);
             }
             else version (Posix) {
-                import core.sys.posix.dlfcn : dlopen;
+                import core.sys.posix.dlfcn : dlopen, RTLD_LAZY;
 
                 dlib = dlopen(filePath, RTLD_LAZY);
             }
