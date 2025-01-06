@@ -125,6 +125,8 @@ class GrEngine {
             dlib = Runtime.loadLibrary(filePath);
         }
         else version (Posix) {
+            import core.sys.posix.dlfcn : dlopen;
+
             dlib = dlopen(filePath, RTLD_LAZY);
         }
 
