@@ -489,7 +489,7 @@ package final class GrLexer {
             else version (Posix) {
                 import core.sys.posix.dlfcn : dlopen, RTLD_LAZY;
 
-                dlib = dlopen(filePath, RTLD_LAZY);
+                dlib = dlopen(toStringz(filePath), RTLD_LAZY);
             }
             enforce!GrCompilerException(dlib, format(getError(Error.libXNotFound), filePath));
 

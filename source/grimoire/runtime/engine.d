@@ -127,7 +127,7 @@ class GrEngine {
         else version (Posix) {
             import core.sys.posix.dlfcn : dlopen, RTLD_LAZY;
 
-            dlib = dlopen(filePath, RTLD_LAZY);
+            dlib = dlopen(toStringz(filePath), RTLD_LAZY);
         }
 
         enforce!GrRuntimeException(dlib, format!"library `%s` not found"(filePath));
