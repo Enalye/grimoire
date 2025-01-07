@@ -345,7 +345,10 @@ package final class GrImportFile {
         case virtual:
             return _source;
         case system:
-            return to!dstring(readText(_path));
+            if (exists(_path))
+                return to!dstring(readText(_path));
+            else
+                return "";
         case library:
             assert(false, "can’t fetch text of a library");
         }
