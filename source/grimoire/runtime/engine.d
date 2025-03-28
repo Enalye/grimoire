@@ -415,13 +415,12 @@ class GrEngine {
         }
     }
 
-    /// Marque toutes les tâches comme morte et empêche toute nouvelle tâche d’être créée
-    private void killTasks() {
+    /// Marque toutes les tâches comme morte
+    void killTasks() {
         foreach (task; _tasks) {
             task.pc = cast(uint)(cast(int) _bytecode.opcodes.length - 1);
             task.isKilled = true;
         }
-        _allowEventCall = false;
     }
 
     /// Signale la tâche comme morte
@@ -573,16 +572,7 @@ class GrEngine {
 
     /// Exécute la machine virtuelle jusqu’à ce que toutes les tâches finissent ou soient suspendues
     void process() {
-        import std.algorithm.mutation : remove, swap;
-
-        /*
-        if (_createdTasks.length) {
-            foreach_reverse (task; _createdTasks)
-                _tasks ~= task;
-            _createdTasks.length = 0;
-
-            swap(_globalStack, _globalStackOut);
-        }*/
+        import std.algorithm.mutation : remove;
 
         tasksLabel: for (uint index = 0u; index < _tasks.length;) {
             GrTask currentTask = _tasks[index];
@@ -644,6 +634,9 @@ class GrEngine {
                     else {
                         // On tue les autres tâches
                         killTasks();
+
+                        // On empêche toute nouvelle tâche d’être créée
+                        _allowEventCall = false;
 
                         // La machine virtuelle est maintenant en panique
                         _isPanicking = true;
@@ -750,7 +743,11 @@ class GrEngine {
                     }
                     break;
                 case exit:
+                    // On tue toutes les tâches
                     killTasks();
+
+                    // On empêche toute nouvelle tâche d’être créée
+                    _allowEventCall = false;
                     index++;
                     continue tasksLabel;
                 case yield:

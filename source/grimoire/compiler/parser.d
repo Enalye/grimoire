@@ -2235,6 +2235,9 @@ final class GrParser {
             case func:
                 skipDeclaration();
                 break;
+            case nothing:
+                checkAdvance();
+                break;
             case alias_:
             default:
                 skipExpression();
@@ -2265,6 +2268,9 @@ final class GrParser {
             case class_:
             case enum_:
                 skipDeclaration();
+                break;
+            case nothing:
+                checkAdvance();
                 break;
             default:
                 skipExpression();
@@ -2317,6 +2323,9 @@ final class GrParser {
             case alias_:
                 skipExpression();
                 break;
+            case nothing:
+                checkAdvance();
+                break;
             default:
                 logError(getError(Error.globalDeclExpected),
                     format(getError(Error.globalDeclExpectedFoundX),
@@ -2358,6 +2367,9 @@ final class GrParser {
                 break;
             case alias_:
                 skipExpression();
+                break;
+            case nothing:
+                checkAdvance();
                 break;
             default:
                 logError(getError(Error.globalDeclExpected),
@@ -6152,7 +6164,7 @@ final class GrParser {
         GrType[] typeStack;
         GrType currentType = grVoid, lastType = grVoid;
         bool hasValue = false, hadValue = false, hasLValue = false, hadLValue = false, hasReference = false,
-            hadReference = false, isRightUnaryOperator = true, isEndOfExpression = false;
+        hadReference = false, isRightUnaryOperator = true, isEndOfExpression = false;
 
         GrSubExprResult result;
         size_t fileId;
@@ -7452,8 +7464,7 @@ final class GrParser {
                                         Error.funcTakesXArgsButYWereSupplied : Error.funcTakesXArgButYWereSupplied),
                                         anonSignature.length, signature.length),
                                     format(getError(anonSignature.length > 1 ?
-                                        Error.expectedXArgsFoundY
-                                        : Error.expectedXArgFoundY),
+                                        Error.expectedXArgsFoundY : Error.expectedXArgFoundY),
                                         anonSignature.length, signature.length),
                                     format(getError(Error.funcIsOfTypeX),
                                         getPrettyType(variable.type)));
@@ -7472,8 +7483,7 @@ final class GrParser {
                         logError(format(getError(anonSignature.length > 1 ?
                                 Error.funcTakesXArgsButYWereSupplied : Error.funcTakesXArgButYWereSupplied),
                                 anonSignature.length, signature.length),
-                            format(getError(anonSignature.length > 1 ? Error.expectedXArgsFoundY
-                                : Error.expectedXArgFoundY),
+                            format(getError(anonSignature.length > 1 ? Error.expectedXArgsFoundY : Error.expectedXArgFoundY),
                                 anonSignature.length, signature.length),
                             format(getError(Error.funcIsOfTypeX), getPrettyType(variable.type)));
                     }
