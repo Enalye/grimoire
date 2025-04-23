@@ -147,9 +147,6 @@ final class GrDefinitionTable {
 
     GrDefinition* getDefinitionAt(size_t fileId, size_t line, size_t column) {
         foreach (ref GrDefinition def; _definitions) {
-            if (def._lexeme.fileId == fileId) {
-                writeln(def._lexeme.line, ":", def._lexeme.column, " -> ", def._lexeme.getLine());
-            }
             if (def._lexeme.fileId != fileId || def._lexeme.line != line)
                 continue;
 
