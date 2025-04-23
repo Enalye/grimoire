@@ -65,9 +65,11 @@ struct GrDefinition {
             return grGetPrettyFunction(_primitive.name, _primitive.inSignature,
                 _primitive.outSignature);
         case variable:
-            return grGetPrettyType(_variable.type, true);
+            return (_variable.isConst ? "const " : "var ") ~
+                _variable.name ~ ": " ~
+                grGetPrettyType(_variable.type, true);
         case enum_:
-            return grGetPrettyType(grGetEnumType(_enum.name));
+            return "enum " ~ grGetPrettyType(grGetEnumType(_enum.name));
         }
     }
 
@@ -144,9 +146,6 @@ final class GrDefinitionTable {
     }
 
     GrDefinition* getDefinitionAt(size_t fileId, size_t line, size_t column) {
-        import std.stdio;
-
-        writeln("Recherche: ", fileId, " -> ", line, ":", column);
         foreach (ref GrDefinition def; _definitions) {
             if (def._lexeme.fileId == fileId) {
                 writeln(def._lexeme.line, ":", def._lexeme.column, " -> ", def._lexeme.getLine());

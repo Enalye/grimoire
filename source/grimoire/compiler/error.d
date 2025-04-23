@@ -179,55 +179,89 @@ final class GrError {
     }
 
     /// Formate l’erreur pour le rendre présentable
-    string prettify(GrLocale locale) {
+    string prettify(GrLocale locale, bool useTermColors = true) {
         import std.conv : to;
         import std.algorithm.comparison : clamp;
 
         string report, lineNumber;
 
+        if (useTermColors) {
+            report ~= "\033[0;91m";
+        }
+
         final switch (locale) with (GrLocale) {
         case fr_FR:
-            report ~= "\033[0;91merreur";
+            report ~= "erreur";
             break;
         case en_US:
-            report ~= "\033[0;91merror";
+            report ~= "error";
             break;
         }
         //report ~= "\033[0;93mwarning";
 
         // Message d’erreur
-        report ~= "\033[37;1m: " ~ _message ~ "\n";
+        if (useTermColors) {
+            report ~= "\033[37;1m";
+        }
+        report ~= ": " ~ _message ~ "\n";
 
         // Informations additionnelles
         if (_otherInfo.length) {
-            report ~= "\033[37;0m";
+            if (useTermColors) {
+                report ~= "\033[37;0m";
+            }
 
             // Chemin du fichier
             lineNumber = to!string(_otherLine) ~ "| ";
             foreach (x; 1 .. lineNumber.length)
                 report ~= " ";
 
-            report ~= "\033[1;34m->\033[0m " ~ _otherFilePath ~ "(" ~ to!string(
+            if (useTermColors) {
+                report ~= "\033[1;34m";
+            }
+            report ~= "->";
+            if (useTermColors) {
+                report ~= "\033[0m";
+            }
+            report ~= " " ~ _otherFilePath ~ "(" ~ to!string(
                 _otherLine) ~ "," ~ to!string(_otherColumn) ~ ")\n";
 
-            report ~= "\033[1;36m";
+            if (useTermColors) {
+                report ~= "\033[1;36m";
+            }
 
             foreach (x; 1 .. lineNumber.length)
                 report ~= " ";
-            report ~= "\033[1;34m|\n";
+
+            if (useTermColors) {
+                report ~= "\033[1;34m";
+            }
 
             // Aperçu du script
-            report ~= " " ~ lineNumber;
-            report ~= "\033[1;34m" ~ _otherLineText ~ "\033[1;34m\n";
+            report ~= "|\n " ~ lineNumber;
+
+            if (useTermColors) {
+                report ~= "\033[1;34m";
+            }
+            report ~= _otherLineText;
+
+            if (useTermColors) {
+                report ~= "\033[1;34m\n";
+            }
 
             // Sousligner en rouge
             foreach (x; 1 .. lineNumber.length)
                 report ~= " ";
-            report ~= "\033[1;34m|";
+
+            if (useTermColors) {
+                report ~= "\033[1;34m";
+            }
+            report ~= "|";
             foreach (x; 0 .. _otherColumn)
                 report ~= " ";
-
-            report ~= "\033[1;36m";
+            if (useTermColors) {
+                report ~= "\033[1;36m";
+            }
 
             foreach (x; 0 .. _otherTextLength)
                 report ~= "-";
@@ -243,44 +277,87 @@ final class GrError {
         foreach (x; 1 .. lineNumber.length)
             report ~= " ";
 
-        report ~= "\033[1;34m->\033[0m " ~ _filePath ~ "(" ~ to!string(
+        if (useTermColors) {
+            report ~= "\033[1;34m";
+        }
+        report ~= "->";
+        if (useTermColors) {
+            report ~= "\033[0m";
+        }
+        report ~= " " ~ _filePath ~ "(" ~ to!string(
             _line) ~ "," ~ to!string(_column) ~ ")\n";
 
-        report ~= "\033[1;36m";
+        if (useTermColors) {
+            report ~= "\033[1;36m";
+        }
 
         foreach (x; 1 .. lineNumber.length)
             report ~= " ";
-        report ~= "\033[1;34m|\n";
+
+        if (useTermColors) {
+            report ~= "\033[1;34m";
+        }
+        report ~= "|\n";
 
         // Aperçu du script
         report ~= " " ~ lineNumber;
-        report ~= "\033[1;34m" ~ _lineText ~ "\033[1;34m\n";
+
+        if (useTermColors) {
+            report ~= "\033[1;34m";
+        }
+        report ~= _lineText;
+        if (useTermColors) {
+            report ~= "\033[1;34m";
+        }
+        report ~= "\n";
 
         // Sousligner en rouge
         foreach (x; 1 .. lineNumber.length)
             report ~= " ";
-        report ~= "\033[1;34m|";
+
+        if (useTermColors) {
+            report ~= "\033[1;34m";
+        }
+        report ~= "|";
         foreach (x; 0 .. clamp(_column, 0, _lineText.length))
             report ~= " ";
 
-        report ~= "\033[1;31m"; // En rouge
-        //report ~= "\033[1;93m"; // En orange
+        if (useTermColors) {
+            report ~= "\033[1;31m"; // En rouge
+            //report ~= "\033[1;93m"; // En orange
+        }
 
         foreach (x; 0 .. _textLength)
             report ~= "^";
 
         // Description de l’erreur
-        report ~= "\033[1;31m"; // En rouge
-        //report ~= "\033[0;93m"; // En orange
+        if (useTermColors) {
+            report ~= "\033[1;31m"; // En rouge
+            //report ~= "\033[0;93m"; // En orange
+        }
 
         if (_info.length)
             report ~= "  " ~ _info;
 
         if (note.length) {
-            report ~= "\n\033[1;36mnote\033[1;37m: " ~ _note ~ "\033[37;0m";
+            report ~= "\n";
+
+            if (useTermColors) {
+                report ~= "\033[1;36m";
+            }
+            report ~= "note";
+            if (useTermColors) {
+                report ~= "\033[1;37m";
+            }
+            report ~= ": " ~ _note;
+            if (useTermColors) {
+                report ~= "\033[37;0m";
+            }
         }
         else {
-            report ~= "\033[37;0m";
+            if (useTermColors) {
+                report ~= "\033[37;0m";
+            }
         }
         return report;
     }
