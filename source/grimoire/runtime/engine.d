@@ -692,9 +692,9 @@ class GrEngine {
 
                     GrTask nTask = new GrTask(this, size + 4);
 
-                    currentTask.stackPos -= size;
                     GrClosure closure = cast(GrClosure) currentTask
                         .stack[currentTask.stackPos]._ptrValue;
+                    currentTask.stackPos -= size;
                     nTask.pc = closure.pc;
 
                     if (closure.caller) {
@@ -703,7 +703,7 @@ class GrEngine {
                     _tasks ~= nTask;
 
                     nTask.stack[0 .. size] =
-                        currentTask.stack[currentTask.stackPos + 1 .. currentTask.stackPos + 1 +
+                        currentTask.stack[currentTask.stackPos .. currentTask.stackPos +
                             size];
                     nTask.stackPos = (cast(int) size) - 1;
 
