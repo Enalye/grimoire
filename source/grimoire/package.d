@@ -7,6 +7,7 @@ module grimoire;
 
 public {
     import grimoire.assembly;
+    import grimoire.cli;
     import grimoire.compiler;
     import grimoire.library;
     import grimoire.runtime;

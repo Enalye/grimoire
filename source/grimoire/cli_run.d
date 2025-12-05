@@ -3,12 +3,14 @@
  * Licence: Zlib
  * Auteur: Enalye
  */
+module grimoire.cli_run;
+
 version (GrimoireCli)  :  //
 
 import std.stdio : writeln;
 import grimoire.cli;
 
-void main(string[] args) {
+void grCliRun(string[] args) {
     version (Windows) {
         import core.sys.windows.windows : DWORD, HANDLE, SetConsoleOutputCP, GetStdHandle, GetConsoleMode,
             SetConsoleMode, STD_OUTPUT_HANDLE, ENABLE_VIRTUAL_TERMINAL_PROCESSING;
