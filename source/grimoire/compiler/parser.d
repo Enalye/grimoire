@@ -216,7 +216,7 @@ final class GrParser {
     private GrVariable registerVariable(string name, GrType type, bool isAuto, bool isGlobal, bool isConst,
         bool isExport, bool isDeferred = false, uint lexPosition = 0, bool hasPosition = false) {
 
-        size_t fileId = get().fileId;
+        size_t fileId = isEnd() ? 0 : get().fileId;
 
         { // On vérifie si d’autres définitions existent
             bool isAlreadyDeclared, hasDeclPosition;
